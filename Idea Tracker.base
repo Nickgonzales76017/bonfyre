@@ -1,0 +1,46 @@
+headerOrder:
+  - name
+  - verdict
+  - status
+  - stage
+  - system_role
+  - project_created
+  - project_status
+  - updated
+columns:
+  name:
+    type: text
+    label: Idea
+  verdict:
+    type: text
+    label: Verdict
+  status:
+    type: text
+    label: Status
+  stage:
+    type: text
+    label: Stage
+  system_role:
+    type: text
+    label: Role
+  project_created:
+    type: text
+    label: Has Project
+  project_status:
+    type: text
+    label: Project Status
+  updated:
+    type: date
+    label: Updated
+formulaEnabled: false
+order:
+  - column: verdict
+    direction: asc
+sources:
+  - type: folder
+    id: 01-Ideas
+filters:
+  and: []
+views:
+  - type: table
+    name: Table

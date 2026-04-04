@@ -1,0 +1,42 @@
+{
+  "proof_slug": "customer-sample-gaurav-deep",
+  "proof_label": "Customer Sample - Gaurav Deep",
+  "promoted_at": "2026-04-04T04:41:37.755573+00:00",
+  "source_job_output": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs/customer-sample-gaurav-conversations-deep-clip",
+  "job_name": "Customer Sample - Gaurav Conversations Deep Clip",
+  "job_slug": "customer-sample-gaurav-conversations-deep-clip",
+  "source_kind": "audio_file",
+  "summary_bullets": 5,
+  "quality": {
+    "score": 95,
+    "status": "strong",
+    "raw_sentence_count": 192,
+    "cleaned_sentence_count": 192,
+    "summary_count": 5,
+    "valid_summary_count": 5,
+    "junk_summary_count": 0,
+    "action_item_count": 4,
+    "valid_action_item_count": 4,
+    "junk_action_item_count": 0,
+    "cleanup_changed_text": true,
+    "filler_tokens_removed": 0
+  },
+  "intake_manifest": {
+    "jobId": "sample-customer-01-gaurav-conversations-deep",
+    "jobSlug": "customer-01-gaurav-conversations-deep",
+    "clientName": "Public Sample",
+    "clientContact": "public-source",
+    "jobTitle": "Customer Sample - Gaurav Conversations Deep Clip",
+    "outputGoal": "transcript-summary-actions",
+    "contextNotes": "Public customer-conversation sample. Focus on the middle of the conversation where pivots, ICP changes, and customer-learning signals should be clearer.",
+    "status": "ready",
+    "createdAt": "2026-04-03T00:00:00Z",
+    "fileName": "customer-01-gaurav-conversations-deep.mp3"
+  },
+  "copied_files": [
+    "deliverable.md",
+    "transcript.txt",
+    "raw_transcript.txt",
+    "meta.json"
+  ]
+}

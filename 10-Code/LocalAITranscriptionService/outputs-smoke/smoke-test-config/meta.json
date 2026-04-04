@@ -1,0 +1,22 @@
+{
+  "job_name": "smoke-test-config",
+  "job_slug": "smoke-test-config",
+  "created_at": "2026-04-03T20:23:03.551163+00:00",
+  "source_kind": "audio_file",
+  "summary_bullets": 5,
+  "audio_wrapper_used": true,
+  "whisper_model": "base",
+  "language": "en",
+  "audio_wrapper": {
+    "source_audio_path": "tmp/silence.wav",
+    "prepared_audio_path": "outputs-smoke/smoke-test-config/silence.normalized.wav",
+    "normalized": true,
+    "transcript_path": "outputs-smoke/smoke-test-config/silence.normalized.txt",
+    "whisper_model": "base",
+    "language": "en",
+    "environment": {
+      "whisper_binary": "/Users/nickgonzales/Library/Python/3.9/bin/whisper",
+      "ffmpeg_binary": "/opt/homebrew/bin/ffmpeg"
+    }
+  }
+}

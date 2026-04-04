@@ -1,0 +1,24 @@
+{
+  "created_at": "2026-04-04T04:41:37.472472+00:00",
+  "updated_at": "2026-04-04T04:41:37.472473+00:00",
+  "offers": [
+    {
+      "offer_name": "Founder Sample - PickFu Offer",
+      "buyer_segment": "founders and operators",
+      "price": "$18",
+      "proof_asset": "Founder Sample - PickFu",
+      "review_score": 100,
+      "vault_note_name": "Offer - Founder Sample - PickFu Offer.md",
+      "generated_at": "2026-04-04T04:41:37.472544+00:00"
+    },
+    {
+      "offer_name": "Customer Sample - Gaurav Deep Offer",
+      "buyer_segment": "customer-research teams",
+      "price": "$18",
+      "proof_asset": "Customer Sample - Gaurav Deep",
+      "review_score": 100,
+      "vault_note_name": "Offer - Customer Sample - Gaurav Deep Offer.md",
+      "generated_at": "2026-04-04T04:41:37.472607+00:00"
+    }
+  ]
+}

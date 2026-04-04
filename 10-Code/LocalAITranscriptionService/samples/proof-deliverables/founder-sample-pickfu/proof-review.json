@@ -1,0 +1,17 @@
+{
+  "proof_slug": "founder-sample-pickfu",
+  "proof_label": "Founder Sample - PickFu",
+  "review_score": 100,
+  "recommendation": "promote",
+  "findings": [],
+  "quality_snapshot": {
+    "score": 95,
+    "status": "strong",
+    "raw_sentence_count": 114,
+    "cleaned_sentence_count": 114,
+    "summary_count": 5,
+    "action_item_count": 5,
+    "cleanup_changed_text": true,
+    "filler_tokens_removed": 0
+  }
+}

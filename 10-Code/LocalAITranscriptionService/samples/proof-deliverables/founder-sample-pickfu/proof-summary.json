@@ -1,0 +1,44 @@
+{
+  "proof_slug": "founder-sample-pickfu",
+  "proof_label": "Founder Sample - PickFu",
+  "promoted_at": "2026-04-04T00:58:13.458325+00:00",
+  "source_job_output": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs/founder-sample-pickfu-assumptions",
+  "job_name": "Founder Sample - PickFu Assumptions",
+  "job_slug": "founder-sample-pickfu-assumptions",
+  "source_kind": "audio_file",
+  "summary_bullets": 5,
+  "quality": {
+    "score": 95,
+    "status": "strong",
+    "raw_sentence_count": 114,
+    "cleaned_sentence_count": 114,
+    "summary_count": 5,
+    "action_item_count": 5,
+    "cleanup_changed_text": true,
+    "filler_tokens_removed": 0
+  },
+  "intake_manifest": {
+    "jobId": "sample-founder-01-pickfu-assumptions",
+    "jobSlug": "founder-01-pickfu-assumptions",
+    "clientName": "Public Sample",
+    "clientContact": "public-source",
+    "jobTitle": "Founder Sample - PickFu Assumptions",
+    "outputGoal": "transcript-summary-actions",
+    "contextNotes": "Public founder interview sample. Focus on startup assumptions, tests, and next-step insights that would read well as proof-of-work.",
+    "status": "ready",
+    "fileName": "founder-01-pickfu-assumptions.mp3",
+    "fileType": "audio/mpeg",
+    "fileSize": 23788210,
+    "createdAt": "2026-04-03T23:59:00Z",
+    "handoffNotes": [
+      "Public sample clip from John Li / PickFu interview.",
+      "12 minute proof clip for founder recap workflow validation."
+    ]
+  },
+  "copied_files": [
+    "deliverable.md",
+    "transcript.txt",
+    "raw_transcript.txt",
+    "meta.json"
+  ]
+}

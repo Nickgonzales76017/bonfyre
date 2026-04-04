@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bonfyre.nightly-brainstorm</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/perl</string>
+        <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/nightly.pl</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm</string>
+
+    <!-- Run at 2:00 AM every night -->
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>2</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/logs/launchd-stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/logs/launchd-stderr.log</string>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/Users/nickgonzales/Library/Python/3.9/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <!-- Don't run if machine is asleep; run on wake if missed -->
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

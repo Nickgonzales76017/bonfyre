@@ -1,0 +1,159 @@
+/* ═══════════════════════════════════════════════════════════
+   BONFYRE VAULT — MAXIMALIST VISUAL SYSTEM
+   Works on BOTH light and dark themes.
+   cssclasses in frontmatter → Obsidian adds them to the
+   view container (.markdown-source-view / .markdown-preview-view)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── TYPE-BASED STYLING (via cssclasses frontmatter) ─────── */
+/* In Obsidian, cssclasses are applied to the view containers:
+   .markdown-source-view.project / .markdown-preview-view.project
+   AND to the parent: div.mod-active has no cssclass, but the
+   view inside does. We target both for safety. */
+
+/* --- PROJECTS = blue --- */
+.project .inline-title { color: #2563eb !important; }
+.project { border-left: 5px solid #2563eb !important; }
+
+/* --- IDEAS = amber/orange --- */
+.idea .inline-title { color: #d97706 !important; }
+.idea { border-left: 5px solid #d97706 !important; }
+
+/* --- SYSTEMS = purple --- */
+.system .inline-title { color: #7c3aed !important; }
+.system { border-left: 5px solid #7c3aed !important; }
+
+/* --- RESEARCH = teal --- */
+.research .inline-title { color: #0d9488 !important; }
+.research { border-left: 5px solid #0d9488 !important; }
+
+/* --- OFFERS = green --- */
+.offer .inline-title { color: #16a34a !important; }
+.offer { border-left: 5px solid #16a34a !important; }
+
+/* --- CONCEPTS = rose/pink --- */
+.concept .inline-title { color: #e11d48 !important; }
+.concept { border-left: 5px solid #e11d48 !important; }
+
+/* --- PIPELINES = orange --- */
+.pipeline .inline-title { color: #ea580c !important; }
+.pipeline { border-left: 5px solid #ea580c !important; }
+
+/* --- LOGS = slate gray --- */
+.log .inline-title { color: #64748b !important; }
+.log { border-left: 5px solid #94a3b8 !important; }
+
+/* --- META = cyan --- */
+.meta .inline-title { color: #0891b2 !important; }
+.meta { border-left: 5px solid #0891b2 !important; }
+
+/* ── ACTIVE PROJECT: pulsing green dot after title ───────── */
+.active-project .inline-title::after {
+  content: "  ●  ACTIVE";
+  color: #16a34a;
+  font-size: 0.45em;
+  vertical-align: super;
+  letter-spacing: 0.05em;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── TASK CHECKBOXES ────────────────────────────────────── */
+input[type="checkbox"] {
+  width: 18px !important;
+  height: 18px !important;
+}
+input[type="checkbox"]:not(:checked) {
+  border: 2px solid #e11d48 !important;
+  border-radius: 3px !important;
+}
+input[type="checkbox"]:checked {
+  accent-color: #16a34a !important;
+}
+
+/* ── TAG PILLS ──────────────────────────────────────────── */
+a.tag {
+  background-color: rgba(37, 99, 235, 0.1) !important;
+  border: 1px solid rgba(37, 99, 235, 0.3) !important;
+  border-radius: 12px !important;
+  padding: 2px 10px !important;
+  font-size: 0.85em !important;
+  font-weight: 500 !important;
+}
+a.tag[href="#ACTIVE"],
+a.tag[href="#active"] {
+  background-color: rgba(22, 163, 74, 0.15) !important;
+  border-color: rgba(22, 163, 74, 0.4) !important;
+  color: #16a34a !important;
+  font-weight: 700 !important;
+}
+a.tag[href="#project"] {
+  background-color: rgba(37, 99, 235, 0.12) !important;
+  border-color: rgba(37, 99, 235, 0.3) !important;
+  color: #2563eb !important;
+}
+a.tag[href="#execution"] {
+  background-color: rgba(234, 88, 12, 0.12) !important;
+  border-color: rgba(234, 88, 12, 0.3) !important;
+  color: #ea580c !important;
+}
+
+/* ── HEADINGS ───────────────────────────────────────────── */
+.markdown-rendered h1,
+.cm-header-1 {
+  border-bottom: 2px solid rgba(37, 99, 235, 0.25) !important;
+  padding-bottom: 6px !important;
+}
+.markdown-rendered h2,
+.cm-header-2 {
+  border-bottom: 1px solid rgba(37, 99, 235, 0.12) !important;
+  padding-bottom: 3px !important;
+}
+
+/* ── INTERNAL LINKS ─────────────────────────────────────── */
+a.internal-link {
+  color: #2563eb !important;
+  text-decoration: none !important;
+  border-bottom: 1px dashed rgba(37, 99, 235, 0.35) !important;
+  font-weight: 500 !important;
+}
+a.internal-link:hover {
+  color: #7c3aed !important;
+  border-bottom-color: #7c3aed !important;
+}
+a.internal-link.is-unresolved {
+  color: #e11d48 !important;
+  border-bottom: 1px dashed #e11d48 !important;
+  opacity: 0.75;
+}
+
+/* ── FRONTMATTER PROPERTIES BOX ─────────────────────────── */
+.metadata-container {
+  border: 1px solid rgba(37, 99, 235, 0.15) !important;
+  border-radius: 10px !important;
+  padding: 10px 12px !important;
+  background-color: rgba(37, 99, 235, 0.02) !important;
+  margin-bottom: 12px !important;
+}
+
+/* ── BLOCKQUOTES ────────────────────────────────────────── */
+blockquote {
+  border-left: 4px solid #7c3aed !important;
+  background-color: rgba(124, 58, 237, 0.04) !important;
+  padding: 8px 16px !important;
+  border-radius: 0 8px 8px 0 !important;
+}
+
+/* ── SIDEBAR FOLDER EMOJIS ──────────────────────────────── */
+.nav-folder-title[data-path="00-Inbox"] .nav-folder-title-content::before { content: "📥 "; }
+.nav-folder-title[data-path="01-Ideas"] .nav-folder-title-content::before { content: "💡 "; }
+.nav-folder-title[data-path="02-Projects"] .nav-folder-title-content::before { content: "🔨 "; }
+.nav-folder-title[data-path="03-Research"] .nav-folder-title-content::before { content: "🔬 "; }
+.nav-folder-title[data-path="04-Systems"] .nav-folder-title-content::before { content: "⚙️ "; }
+.nav-folder-title[data-path="05-Monetization"] .nav-folder-title-content::before { content: "💰 "; }
+.nav-folder-title[data-path="06-Logs"] .nav-folder-title-content::before { content: "📓 "; }
+.nav-folder-title[data-path="10-Code"] .nav-folder-title-content::before { content: "🖥️ "; }
+.nav-folder-title[data-path="Templates"] .nav-folder-title-content::before { content: "📋 "; }

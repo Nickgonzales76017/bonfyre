@@ -1,0 +1,8 @@
+{
+  "project": "ServiceArbitrageHub",
+  "service_count": 1,
+  "job_count": 1,
+  "handoff_count": 1,
+  "best_service": "AI Transcription Pilot",
+  "best_margin_pct": 88.6
+}

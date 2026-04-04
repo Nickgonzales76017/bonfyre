@@ -1,0 +1,178 @@
+Hi there, I'm Lance Cottrell, your host at Feel the Boot.
+And today I'm talking to John Lee of Pickfoo.
+He's got an interesting story and company, but I brought him on in particular because
+of his interest in testing assumptions in businesses.
+So he's built an entire platform around testing, messaging, testing ideas, pricing, images,
+product design, almost anything.
+And he really has a strong passion in the importance of doing this kind of testing very
+early before you spend time and money and effort into building solutions to make sure
+that you're actually building the right thing.
+And I'm excited enough about what he's doing that I asked him to give us a coupon code.
+I'm going to put it down in the description where you'll be able to get a substantial
+discount off the first test that you run on the Pickfoo platform.
+And I'm not an affiliate, I don't take anything from this, but I think it'll be a great
+tool for you going forward.
+And I hope you enjoy the interview.
+John, welcome to Feel the Boot.
+Thanks so much for having me.
+So we've talked a little bit before this recording and we exchanged some emails.
+Can you tell us a little bit just for context of what your startup does?
+Yeah.
+So my startup is named is called Pickfoo.
+You can think of Pickfoo as a digital focus group.
+So the same way that large brands and CPGs like Procter & Gamble use large focus groups
+to figure out their product packaging, testing, marketing, all of that stuff, Pickfoo lets
+you do that in a self-service way.
+And we tap into the same global consumer panels that are used by the large CPGs.
+So Pickfoo is self-service, you can come on the site, choose your target audience, ask
+a question, post up to eight different options to either choose from or get feedback from,
+and you can get responses and feedback from your target audience in typically 30 minutes
+or less.
+Very cool, but that's not actually where you started, right?
+No, it's not.
+So why don't you tell us that story?
+I think pivot stores are always interesting because so many companies end up doing things
+that are radically different than where they started.
+Yeah, so it's kind of a pivot story, it's kind of not really a pivot story.
+So my co-founder and I, we have been entrepreneurs for over a dozen years working together.
+Our backgrounds were in large software development.
+I was at Microsoft and he was at Ulyr Packard.
+We left our jobs to start building websites, actually.
+So our initial company together was building a site that aggregated restaurant menus and
+put those online, learned a lot about sort of just building sites, monetizing sites,
+SEO or getting traffic and so on.
+Along the way, we built a handful of other side projects.
+But the main thing where pick food came from is that being a team of two, we kept having
+disagreements about design decisions, like both of us are software engineers and so without
+a ton of design experience and so his guess was as good as mine and my guess was as good
+as his and we would butt heads.
+We'd ask our friends and family for feedback and we knew that they would be biased and
+at some point they kind of got tired of giving feedback.
+And so when faced with a problem of trying to get unbiased feedback, we did what software
+engineers do, which is we built a tool.
+So we built a tool to get us unbiased feedback on our design decisions, logos, logos, page
+layouts, marketing, copy, collateral, all of that stuff.
+And we just kind of put it on the side.
+I think we put like a pay valve button on it, posted it to a handful of communities but
+continued working on our main project and that went on for a couple of years.
+And at every couple of months or so, we would check in and we saw that pick food was growing,
+you know, hey, more and more people found it, see people seem to like it.
+And then we'd go back to our main, then we'd go back to our main project a couple of
+more months past, we'd check again.
+Same thing.
+Oh, now it's showing up and being used in other verticals as well.
+That's fascinating.
+And then we'd focus on the main project again.
+And so eventually, after a couple of iterations of that, we realized that, you know, despite
+our best wishes, the traction on our main project was not going where we wanted it to go.
+And the traction on pick food was growing.
+And so we decided to make up pivot there in terms of focusing our efforts, our time
+and energy on pick food and growing it.
+And that's what we've been doing ever since.
+Yeah, it's funny how building a product to solve a problem that you can't find a good
+solution to tends to be a good way of identifying problems that need solving.
+Yeah.
+When, yeah, when you're, I guess the easiest way to build something that people might
+want is to start looking at your own problems first, solving those.
+And maybe if that's a big enough problem that you're solving, then that solution could
+prove useful for other people too.
+So obviously, you take testing seriously.
+How do you feel the testing fits into the process of building a startup, building a company
+of any sort?
+I think that testing assumptions and, you know, there's a phrase we use like test before
+you invest, like testing your assumptions, testing your hypotheses, not only potentially
+lead to better outcomes, but they reduce a lot of downside risk.
+So I see it, it's kind of like the two aren't exactly the same, right?
+Like you can't, you can't test a hypothesis and prove that it's going to skyrocket.
+Like it's going to be a rocket ship.
+But you can very quickly, and if you can test, you can very quickly disprove a hypothesis
+about, oh, well, you know, I think that this kind of marketing, this kind of marketing
+message towards this audience is going to be the thing that resonates or this kind of
+product feature or this kind of product benefit towards this potential target customer
+set is going to resonate or not.
+If you can test that out before you actually commit it to whether it's code or print
+or publication or whatnot, then you improve your chances of having a better outcome for
+that project.
+Right.
+Yeah, the more ways that you can fail, you eliminate before you spend money, the better
+off you are.
+Exactly.
+So, there are some examples of cases where your testing and experimentation led to important
+savings or failed directions or made a critical impact on your path.
+Yeah.
+On our path or on our customers?
+On yours, but or your customers?
+Sure.
+I mean, we've definitely helped a lot of customers and some of the biggest names in e-commerce
+as well.
+There was one company where we work with a lot of people who sell on Amazon.
+There was a company named Thrasio where they had a business which was to buy up individual
+Amazon shops and then optimize their offerings, like their listings and then their products
+and so on.
+There was this one product called Angry Orange.
+It was a pet deodorizing product.
+It worked really well.
+It worked really well, but the design on the bottle and everything else was kind of subpar.
+So, the theory, the thesis behind that the Thrasio team had was that they could purchase
+this listing, rebrand the product, rebrand the bottle and do everything.
+Don't change the composition of the product at all and that it could do better.
+So, the decision that they faced was that rebranding, they actually went through about 300 different
+designs for the rebranding process and the one that they wanted involved a $50,000 production
+design change because they wanted an orange bottle because the product was named Angry
+Orange.
+They wanted it to pop in the listings and on the store shelves and everything.
+And so, to justify that decision, that go-no-go decision, they went to pick food and ran about
+six pulls, cost about $500 in total, pulled about 200 to 300 people.
+So, they got those results in about three days and those results validated that, yes, not
+just did not only did the design that they wanted to go with, beat out the original design,
+it also beat out all the other variations that they were considering.
+So, those tests gave them the confidence to pull the trigger on that rebranding decision.
+And then they pulled the trigger on it and the day after they relaunched the product on
+Amazon with the new packaging and everything else, their sales 10xed overnight.
+So it went from a $2 million a year brand to a $19.5 million a year listing purely on the
+basis of the rebranding, full marketing rebrand and the packaging and everything else.
+That just just to show how much of the decision making that we do, we like to pretend that
+we're rational about these things, but the packaging to look, the feel, the name, all those
+things matter so much.
+So what sorts of things does Pickfood lend itself to testing, where are the boundaries
+around that?
+Sure.
+I mean, so on Pickfood, you can ask open-ended feedback.
+So Pickfood basically lets you get votes and written feedback from a large set of panelists.
+We have about 15 million panelists globally.
+You can test between one to eight different options.
+So you can get open-ended feedback.
+If you had an idea for a startup, let's say around like nursing homes or car washers or
+so on, you could just put that idea concept, including pricing and everything out there
+and get feedback on that idea.
+If you needed to test eight different images for a Facebook ad or something, you could put
+that there too.
+You can test images, audio, text, video.
+And the nice thing is that because all the panelists provide written responses, you
+not only understand which option they prefer, you also understand why.
+And what's the ability to target a particular type of user, demographic or background?
+Absolutely.
+We are really proud of the depth of targeting that we offer.
+So we cover all the standard demographics of age, gender, income, and so on.
+And then we also have really deep targeting.
+If you're an Amazon Prime member, if you're a pet owner, if you're specifically a dog
+or a cat or a horse or a fish owner, if you exercise frequently, whether you take nutritional
+supplements, the types of video games that you'd like to play.
+So almost anything that, if you're selling online, almost any product category, a lot
+of digital entertainment categories as well.
+And we're constantly actually building new targeting capabilities based on the requests
+from our users.
+Yeah, it sounds very B2C oriented.
+Do you have options for more of a B2B kind of targeting?
+We have some options.
+Our main focus is because our panels draw from general consumer panels, most of our targeting
+is B2C targeting.
+We do offer some limited B2B targeting, like small business owners and so on.
+But we're looking to expand those options too.
+So what's you thinking about how to test kind of larger questions about the model?
+So it's the examples you're giving tend to be sort of here's the name, here's the price,
+here's the image, things like that.
+But try to validate whether or not kind of the concept is moving in the right direction.
+Do you have thoughts about the best way to do that?
+Yeah.
+And so it's, it can be challenging to ask if...

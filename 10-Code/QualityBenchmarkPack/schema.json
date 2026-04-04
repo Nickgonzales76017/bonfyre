@@ -1,0 +1,37 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Transcript Quality Rating",
+  "type": "object",
+  "required": ["transcript_accuracy", "summary_quality", "action_items_relevant"],
+  "properties": {
+    "transcript_accuracy": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "How accurately does the transcript capture the spoken words? (1=unusable, 5=perfect)"
+    },
+    "summary_quality": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "How useful is the generated summary? (1=useless, 5=buyer-ready)"
+    },
+    "action_items_relevant": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5,
+      "description": "Are the extracted action items accurate and relevant? (1=wrong, 5=complete)"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Free-text notes about quality issues or strengths"
+    },
+    "rated_by": {
+      "type": "string"
+    },
+    "rated_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

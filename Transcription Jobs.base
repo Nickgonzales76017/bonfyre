@@ -1,0 +1,42 @@
+headerOrder:
+  - name
+  - quality_score
+  - quality_status
+  - source_kind
+  - sentences
+  - action_items
+  - created
+columns:
+  name:
+    type: text
+    label: Job
+  quality_score:
+    type: number
+    label: Score
+  quality_status:
+    type: text
+    label: Quality
+  source_kind:
+    type: text
+    label: Source
+  sentences:
+    type: number
+    label: Sentences
+  action_items:
+    type: number
+    label: Actions
+  created:
+    type: date
+    label: Date
+formulaEnabled: false
+order:
+  - column: created
+    direction: desc
+sources:
+  - type: folder
+    id: 08-Transcriptions
+filters:
+  and: []
+views:
+  - type: table
+    name: Table

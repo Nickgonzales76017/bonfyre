@@ -1,0 +1,79 @@
+{
+  "collapse-filter": true,
+  "search": "-path:10-Code -path:Templates -path:.bonfyre-runtime -path:07-Audio -path:08-Transcriptions",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": true,
+  "showOrphans": false,
+  "collapse-color-groups": true,
+  "colorGroups": [
+    {
+      "query": "file:\"Dashboard\" OR file:\"Meta-System\" OR file:\"Vault Operating System\"",
+      "color": {
+        "a": 1,
+        "rgb": 16714250
+      }
+    },
+    {
+      "query": "path:01-Ideas",
+      "color": {
+        "a": 1,
+        "rgb": 8050687
+      }
+    },
+    {
+      "query": "path:02-Projects",
+      "color": {
+        "a": 1,
+        "rgb": 16114191
+      }
+    },
+    {
+      "query": "path:04-Systems/01-Core Systems OR path:04-Systems/02-Pipelines OR path:04-Systems/04-Meta",
+      "color": {
+        "a": 1,
+        "rgb": 14175743
+      }
+    },
+    {
+      "query": "path:04-Systems/03-Concepts",
+      "color": {
+        "a": 1,
+        "rgb": 16218662
+      }
+    },
+    {
+      "query": "path:05-Monetization",
+      "color": {
+        "a": 1,
+        "rgb": 6084188
+      }
+    },
+    {
+      "query": "path:06-Logs OR path:03-Research",
+      "color": {
+        "a": 1,
+        "rgb": 10796626
+      }
+    },
+    {
+      "query": "tag:#ACTIVE OR tag:#active",
+      "color": {
+        "a": 1,
+        "rgb": 12451774
+      }
+    }
+  ],
+  "collapse-display": false,
+  "showArrow": false,
+  "textFadeMultiplier": -1.9,
+  "nodeSizeMultiplier": 3.11060763888889,
+  "lineSizeMultiplier": 1.63465277777778,
+  "collapse-forces": true,
+  "centerStrength": 0.348828125,
+  "repelStrength": 20,
+  "linkStrength": 1,
+  "linkDistance": 500,
+  "scale": 0.3854978003342894,
+  "close": false
+}

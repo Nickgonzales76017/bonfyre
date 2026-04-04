@@ -1,0 +1,46 @@
+{
+  "created_at": "2026-04-04T00:58:13.459157+00:00",
+  "updated_at": "2026-04-04T04:41:37.756287+00:00",
+  "proofs": [
+    {
+      "proof_slug": "founder-sample-pickfu",
+      "proof_label": "Founder Sample - PickFu",
+      "promoted_at": "2026-04-04T00:58:13.458325+00:00",
+      "source_job_output": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs/founder-sample-pickfu-assumptions",
+      "deliverable_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/proof-deliverables/founder-sample-pickfu/deliverable.md",
+      "proof_summary_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/proof-deliverables/founder-sample-pickfu/proof-summary.json",
+      "quality": {
+        "score": 95,
+        "status": "strong",
+        "raw_sentence_count": 114,
+        "cleaned_sentence_count": 114,
+        "summary_count": 5,
+        "action_item_count": 5,
+        "cleanup_changed_text": true,
+        "filler_tokens_removed": 0
+      }
+    },
+    {
+      "proof_slug": "customer-sample-gaurav-deep",
+      "proof_label": "Customer Sample - Gaurav Deep",
+      "promoted_at": "2026-04-04T04:41:37.755573+00:00",
+      "source_job_output": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs/customer-sample-gaurav-conversations-deep-clip",
+      "deliverable_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/proof-deliverables/customer-sample-gaurav-deep/deliverable.md",
+      "proof_summary_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/proof-deliverables/customer-sample-gaurav-deep/proof-summary.json",
+      "quality": {
+        "score": 95,
+        "status": "strong",
+        "raw_sentence_count": 192,
+        "cleaned_sentence_count": 192,
+        "summary_count": 5,
+        "valid_summary_count": 5,
+        "junk_summary_count": 0,
+        "action_item_count": 4,
+        "valid_action_item_count": 4,
+        "junk_action_item_count": 0,
+        "cleanup_changed_text": true,
+        "filler_tokens_removed": 0
+      }
+    }
+  ]
+}

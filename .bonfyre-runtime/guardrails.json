@@ -1,0 +1,8 @@
+{
+  "default_max_load_avg": 12.0,
+  "process_limits": {
+    "nightly_brainstorm": 8.0,
+    "local_ai_transcription_service": 12.0,
+    "local_ai_transcription_service:model_warmup": 5.0
+  }
+}

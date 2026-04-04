@@ -1,0 +1,29 @@
+{
+  "proof_slug": "customer-sample-gaurav-deep",
+  "proof_label": "Customer Sample - Gaurav Deep",
+  "review_score": 100,
+  "recommendation": "promote",
+  "findings": [],
+  "quality_snapshot": {
+    "score": 95,
+    "status": "strong",
+    "raw_sentence_count": 192,
+    "cleaned_sentence_count": 192,
+    "summary_count": 5,
+    "valid_summary_count": 5,
+    "junk_summary_count": 0,
+    "action_item_count": 4,
+    "valid_action_item_count": 4,
+    "junk_action_item_count": 0,
+    "cleanup_changed_text": true,
+    "filler_tokens_removed": 0
+  },
+  "review_snapshot": {
+    "summary_bullet_count": 5,
+    "action_bullet_count": 4,
+    "junk_summary_bullets": [],
+    "generic_summary_bullets": [],
+    "junk_action_bullets": [],
+    "transcript_like_action_bullets": []
+  }
+}

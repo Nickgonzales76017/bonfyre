@@ -1,0 +1,23 @@
+{
+  "promptDelete": false,
+  "userIgnoreFilters": [
+    "Templates/",
+    "06-Logs/",
+    "07-Audio/",
+    "10-Code/"
+  ],
+  "alwaysUpdateLinks": true,
+  "showFrontmatter": true,
+  "foldHeading": true,
+  "foldIndent": true,
+  "autoConvertHtml": true,
+  "defaultViewMode": "source",
+  "livePreview": true,
+  "showLineNumber": true,
+  "strictLineBreaks": true,
+  "readableLineLength": true,
+  "vimMode": false,
+  "spellcheck": true,
+  "autoPairBrackets": true,
+  "autoPairMarkdown": true
+}

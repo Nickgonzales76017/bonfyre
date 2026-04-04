@@ -1,0 +1,17 @@
+{
+   "date" : "2026-04-03",
+   "dry_run" : false,
+   "elapsed" : 229,
+   "entries" : [
+      {
+         "output_length" : 2347,
+         "pass" : "idea_expand",
+         "path" : "/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/../../01-Ideas/Ambient Logistics Layer.md",
+         "title" : "Ambient Logistics Layer",
+         "type" : "idea"
+      }
+   ],
+   "passes" : [
+      "idea_expand"
+   ]
+}

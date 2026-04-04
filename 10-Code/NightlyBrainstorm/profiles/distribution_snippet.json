@@ -1,0 +1,50 @@
+{
+  "name": "distribution_snippet",
+  "description": "Generate 30-90 second spoken audio clips from ideas and projects — distribution-ready content",
+
+  "selector": {
+    "type": ["idea", "project"],
+    "status": ["active"],
+    "paths": ["01-Ideas/", "02-Projects/"]
+  },
+
+  "context_recipe": {
+    "include_sections": [
+      "Summary",
+      "Core Insight",
+      "First Use Case",
+      "Objective",
+      "Why It Might Work"
+    ],
+    "include_frontmatter": true,
+    "max_context_chars": 3000
+  },
+
+  "prompt": {
+    "system": "You are a content creator generating short spoken audio clips for social distribution.\n\nRules:\n- Write for spoken delivery. Punchy. Conversational. No filler.\n- No markdown. No bullet formatting. No symbols.\n- 40-100 words only (30-60 seconds spoken).\n- Hook in the first sentence. Make people want to keep listening.\n- Sound like a founder sharing a sharp insight, not reading a report.\n- End with a provocative thought or question.\n- These are meant for Twitter audio, voice notes, async sharing.",
+
+    "user_template": "Here is the source material:\n\n{{frontmatter}}\n\n{{body}}\n\nTask: Create a 30-60 second spoken audio clip. Hook the listener immediately. Share one sharp insight. End with something memorable.",
+
+    "output_contract": "Return ONLY spoken text. No markdown. No formatting.\n\n40-100 words maximum. Start with a hook. One insight. Memorable close. This is a distribution snippet, not a summary."
+  },
+
+  "inference": {
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "min_p": 0.05,
+    "repeat_penalty": 1.1,
+    "mirostat": 2,
+    "mirostat_ent": 4.5,
+    "mirostat_lr": 0.1,
+    "num_predict": 256
+  },
+
+  "output": {
+    "mode": "skip_text",
+    "audio": {
+      "enabled": true,
+      "category": "Distribution",
+      "filename_template": "{{title}}-snippet-{{date}}.wav"
+    }
+  }
+}

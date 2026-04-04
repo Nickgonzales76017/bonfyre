@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonfyre</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+
+      <!-- ───── DROP ZONE (the whole point) ───── -->
+      <section id="drop-section" class="drop-section">
+        <div id="drop-zone" class="drop-zone" tabindex="0" role="button" aria-label="Drop an audio file or click to browse">
+          <div class="drop-zone-inner">
+            <div class="drop-icon" aria-hidden="true">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            </div>
+            <h1 class="drop-headline">Drop your audio</h1>
+            <p class="drop-sub">We'll transcribe it and send you the results.<br>Your file stays in this browser until you say otherwise.</p>
+            <button type="button" id="browse-btn" class="browse-btn">Or choose a file</button>
+            <input id="audio-file" type="file" accept="audio/*,.m4a,.mp3,.wav,.webm,.ogg" hidden />
+          </div>
+        </div>
+
+        <!-- file accepted: shows after drop, before submit -->
+        <div id="file-ready" class="file-ready hidden">
+          <div class="file-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+            <div>
+              <p id="file-name" class="file-name"></p>
+              <p id="file-size" class="file-meta"></p>
+            </div>
+            <button type="button" id="clear-file" class="clear-file" aria-label="Remove file">&times;</button>
+          </div>
+
+          <form id="context-form" class="context-form">
+            <input id="job-title" type="text" placeholder="What should we call this?" required />
+
+            <div class="quick-picks">
+              <span class="pick-label">This is a&hellip;</span>
+              <button type="button" class="pick" data-preset="founder-memo">Founder Memo</button>
+              <button type="button" class="pick" data-preset="customer-call">Customer Call</button>
+              <button type="button" class="pick" data-preset="consultant-recap">Consultant Recap</button>
+            </div>
+
+            <details class="more-details">
+              <summary>Add more context <span class="optional-tag">optional</span></summary>
+              <div class="extra-fields">
+                <input id="client-name" type="text" placeholder="Client or project name" />
+                <input id="client-contact" type="text" placeholder="Email or handle" />
+                <select id="output-goal">
+                  <option value="transcript-summary-actions">Transcript + Summary + Actions</option>
+                  <option value="meeting-recap">Meeting Recap</option>
+                  <option value="voice-memo-to-plan">Voice Memo → Plan</option>
+                  <option value="custom">Custom</option>
+                </select>
+                <select id="turnaround-target">
+                  <option value="flexible">Whenever it's ready</option>
+                  <option value="same-day">Same Day</option>
+                  <option value="24h">Within 24 Hours</option>
+                  <option value="48h">Within 48 Hours</option>
+                </select>
+                <textarea id="context-notes" rows="3" placeholder="Anything else we should know about this recording?"></textarea>
+              </div>
+            </details>
+
+            <button type="submit" class="submit-btn">Submit</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- ───── YOUR FILES ───── -->
+      <section id="files-section" class="files-section hidden">
+        <div class="files-header">
+          <h2>Your files</h2>
+          <div class="files-controls">
+            <input id="job-search" type="search" placeholder="Search&hellip;" />
+            <select id="status-filter">
+              <option value="all">All</option>
+              <option value="captured">New</option>
+              <option value="ready">Ready</option>
+              <option value="processing">Processing</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+        </div>
+        <div id="job-list" class="job-list"></div>
+      </section>
+
+      <!-- ───── DETAIL DRAWER ───── -->
+      <section id="detail-drawer" class="detail-drawer hidden">
+        <div class="drawer-header">
+          <div>
+            <p class="drawer-client" id="detail-client"></p>
+            <h2 id="detail-title" class="drawer-title"></h2>
+          </div>
+          <button type="button" id="close-drawer" class="close-btn" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="drawer-status-row">
+          <select id="detail-status">
+            <option value="captured">New</option>
+            <option value="ready">Ready</option>
+            <option value="processing">Processing</option>
+            <option value="done">Done</option>
+          </select>
+          <button type="button" id="save-status" class="pill-btn">Update</button>
+        </div>
+
+        <div class="drawer-meta">
+          <div><span>File</span><p id="detail-file"></p></div>
+          <div><span>Goal</span><p id="detail-goal"></p></div>
+          <div><span>Contact</span><p id="detail-contact"></p></div>
+          <div><span>Turnaround</span><p id="detail-turnaround"></p></div>
+          <div><span>Submitted</span><p id="detail-created"></p></div>
+          <div><span>Completed</span><p id="detail-completed"></p></div>
+        </div>
+
+        <div id="detail-context-block" class="drawer-block">
+          <span>Notes</span>
+          <p id="detail-context" class="drawer-context"></p>
+        </div>
+
+        <!-- Results section: prominent when present -->
+        <div class="drawer-block results-block">
+          <span>Results</span>
+          <div id="deliverable-empty" class="results-empty">
+            <p>No results yet.</p>
+            <button type="button" id="import-results-btn" class="pill-btn">Import deliverable</button>
+            <input id="import-results" type="file" accept=".md,.txt,.markdown" hidden />
+          </div>
+          <div id="deliverable-content" class="hidden">
+            <pre id="deliverable-text" class="results-text"></pre>
+            <div class="results-actions">
+              <button type="button" id="copy-deliverable" class="pill-btn">Copy</button>
+              <button type="button" id="export-deliverable" class="pill-btn">Download</button>
+              <button type="button" id="clear-deliverable" class="pill-btn pill-danger">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <details class="drawer-advanced">
+          <summary>Advanced</summary>
+          <div class="advanced-inner">
+            <div class="drawer-block">
+              <span>Brief</span>
+              <textarea id="detail-brief" class="drawer-brief" rows="6" readonly></textarea>
+            </div>
+            <div class="advanced-actions">
+              <button type="button" id="copy-brief" class="pill-btn">Copy Brief</button>
+              <button type="button" id="export-brief" class="pill-btn">Export Brief</button>
+              <button type="button" id="export-manifest" class="pill-btn">Export Manifest</button>
+              <button type="button" id="export-package" class="pill-btn">Export Package</button>
+              <button type="button" id="download-audio" class="pill-btn">Download Audio</button>
+            </div>
+          </div>
+        </details>
+
+        <div class="drawer-danger-zone">
+          <button type="button" id="delete-job" class="pill-btn pill-danger">Delete this file</button>
+        </div>
+      </section>
+    </main>
+
+    <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+    <dialog id="confirm-dialog" class="confirm-dialog">
+      <p id="confirm-message"></p>
+      <div class="dialog-actions">
+        <button id="confirm-yes" class="pill-btn pill-danger">Delete</button>
+        <button id="confirm-no" class="pill-btn" autofocus>Cancel</button>
+      </div>
+    </dialog>
+
+    <template id="job-card-template">
+      <article class="job-card" tabindex="0">
+        <div class="job-card-body">
+          <h3 class="job-card-title"></h3>
+          <p class="job-card-meta"></p>
+        </div>
+        <span class="job-card-status"></span>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>

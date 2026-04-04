@@ -1,0 +1,75 @@
+{
+  "command_timeout": 5,
+  "templates_folder": "Templates",
+  "templates_pairs": [
+    [
+      "",
+      ""
+    ]
+  ],
+  "trigger_on_file_creation": true,
+  "auto_jump_to_cursor": false,
+  "enable_system_commands": false,
+  "shell_path": "",
+  "user_scripts_folder": "",
+  "enable_folder_templates": true,
+  "folder_templates": [
+    {
+      "folder": "01-Ideas",
+      "template": "Templates/-_tpl Idea - Capture.md"
+    },
+    {
+      "folder": "02-Projects",
+      "template": "Templates/-_tpl Project - Capture.md"
+    },
+    {
+      "folder": "04-Systems/01-Core Systems",
+      "template": "Templates/-_tpl System Template.md"
+    },
+    {
+      "folder": "04-Systems/02-Pipelines",
+      "template": "Templates/-_tpl Pipeline.md"
+    },
+    {
+      "folder": "04-Systems/03-Concepts",
+      "template": "Templates/-_tpl Concept.md"
+    },
+    {
+      "folder": "03-Research",
+      "template": "Templates/-_tpl Research Note.md"
+    },
+    {
+      "folder": "05-Monetization",
+      "template": "Templates/-_tpl Offer.md"
+    },
+    {
+      "folder": "06-Logs",
+      "template": "Templates/-_tpl Daily Log.md"
+    }
+  ],
+  "enable_file_templates": false,
+  "file_templates": [
+    {
+      "regex": ".*",
+      "template": ""
+    }
+  ],
+  "syntax_highlighting": true,
+  "syntax_highlighting_mobile": false,
+  "enabled_templates_hotkeys": [
+    "Templates/-_tpl Idea - Full.md",
+    "Templates/-_tpl Idea - Review.md",
+    "Templates/-_tpl Idea - Expand.md",
+    "Templates/-_tpl Project - Capture.md",
+    "Templates/-_tpl Project - Execute.md",
+    "Templates/-_tpl Project - Full.md",
+    "Templates/-_tpl Daily Log.md",
+    "Templates/-_tpl Weekly Review.md",
+    "Templates/-_tpl Research Note.md",
+    "Templates/-_tpl Offer.md"
+  ],
+  "startup_templates": [
+    ""
+  ],
+  "intellisense_render": 1
+}

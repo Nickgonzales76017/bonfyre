@@ -1,0 +1,31 @@
+{
+  "created_at": "2026-04-04T00:34:39.628259+00:00",
+  "updated_at": "2026-04-04T18:21:37.909880+00:00",
+  "items": [
+    {
+      "job_id": "customer-01-gaurav-conversations.intake-package",
+      "source_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/intake-packages/customer-01-gaurav-conversations.intake-package.json",
+      "status": "completed",
+      "queued_at": "2026-04-04T00:34:39.628921+00:00",
+      "started_at": "2026-04-04T02:26:55.144466+00:00",
+      "completed_at": "2026-04-04T02:27:37.385323+00:00",
+      "failed_at": null,
+      "attempt_count": 1,
+      "last_error": null,
+      "last_output": "outputs/customer-sample-gaurav-conversations"
+    },
+    {
+      "job_id": "founder-01-pickfu-assumptions-full",
+      "source_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions-full.mp3",
+      "source_kind": "audio_file",
+      "status": "completed",
+      "queued_at": "2026-04-04T17:56:34.432025+00:00",
+      "started_at": "2026-04-04T18:01:28.490336+00:00",
+      "completed_at": "2026-04-04T18:21:37.909783+00:00",
+      "failed_at": null,
+      "attempt_count": 1,
+      "last_error": null,
+      "last_output": "outputs/founder-01-pickfu-assumptions-full"
+    }
+  ]
+}

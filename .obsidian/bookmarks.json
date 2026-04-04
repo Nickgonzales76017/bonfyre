@@ -1,0 +1,103 @@
+{
+  "items": [
+    {
+      "type": "file",
+      "ctime": 1743638400000,
+      "path": "Dashboard.md",
+      "title": "🔥 Dashboard"
+    },
+    {
+      "type": "group",
+      "ctime": 1743638400000,
+      "title": "Active Projects",
+      "items": [
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Local AI Transcription Service.md",
+          "title": "Transcription Service"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Web Worker SaaS.md",
+          "title": "Web Worker SaaS"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Quiet Distribution Engine.md",
+          "title": "Quiet Distribution"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Service Arbitrage Hub.md",
+          "title": "Service Arbitrage"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Personal Data Engine.md",
+          "title": "Personal Data Engine"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Personal Market Layer.md",
+          "title": "Personal Market Layer"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - Repackaged Service Marketplace.md",
+          "title": "Repackaged Services"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "02-Projects/Project - AI + Overseas Labor Pipeline.md",
+          "title": "AI + Overseas Labor"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "ctime": 1743638400000,
+      "title": "Meta Systems",
+      "items": [
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "04-Systems/04-Meta/Meta-System.md",
+          "title": "Meta System"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "04-Systems/04-Meta/Tooling Stack.md",
+          "title": "Tooling Stack"
+        },
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "04-Systems/04-Meta/n8n Workflow Map.md",
+          "title": "n8n Workflows"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "ctime": 1743638400000,
+      "title": "Monetization",
+      "items": [
+        {
+          "type": "file",
+          "ctime": 1743638400000,
+          "path": "05-Monetization/Offer - Local AI Transcription Service.md",
+          "title": "Transcription Offer"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+# Core Systems Index
+
+Generated systems index.
+
+## Systems
+
+- [[04-Systems/01-Core Systems/Local AI Transcription Service.md]]
+- [[04-Systems/01-Core Systems/Personal Data Engine.md]]
+- [[04-Systems/01-Core Systems/Personal Market Layer.md]]
+- [[04-Systems/01-Core Systems/Piper Audio Layer.md]]
+- [[04-Systems/01-Core Systems/Quiet Distribution Engine.md]]
+- [[04-Systems/01-Core Systems/Repackaged Service Marketplace.md]]
+- [[04-Systems/01-Core Systems/Service Arbitrage Hub.md]]
+- [[04-Systems/01-Core Systems/Web Worker SaaS.md]]
+- [[04-Systems/01-Core Systems/Whisper + FFmpeg Wrapper Kit.md]]
+- [[04-Systems/01-Core Systems/_Index.md]]
+- [[04-Systems/02-Pipelines/AI + Overseas Labor Pipeline.md]]
+- [[04-Systems/02-Pipelines/Automation-and-External-Pipeline.md]]
+- [[04-Systems/02-Pipelines/Transcription Pipeline.md]]
+- [[04-Systems/02-Pipelines/_Index.md]]
+- [[04-Systems/03-Concepts/Arbitrage.md]]
+- [[04-Systems/03-Concepts/Automation.md]]
+- [[04-Systems/03-Concepts/Coordination.md]]
+- [[04-Systems/03-Concepts/Data.md]]
+- [[04-Systems/03-Concepts/Decentralization.md]]
+- [[04-Systems/03-Concepts/Distribution.md]]
+- [[04-Systems/03-Concepts/Feedback Loops.md]]
+- [[04-Systems/03-Concepts/Infrastructure.md]]
+- [[04-Systems/03-Concepts/Local-First.md]]
+- [[04-Systems/03-Concepts/Monetization.md]]
+- [[04-Systems/03-Concepts/Network Effects.md]]
+- [[04-Systems/03-Concepts/Packaging.md]]
+- [[04-Systems/03-Concepts/Personal Agency.md]]
+- [[04-Systems/03-Concepts/WebAssembly.md]]
+- [[04-Systems/04-Meta/Meta-System.md]]
+- [[04-Systems/04-Meta/Tooling Stack.md]]
+- [[04-Systems/04-Meta/Vault Operating System.md]]
+- [[04-Systems/04-Meta/n8n Workflow Map.md]]

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bonfyre.drain-all-queues</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime/drain_all_queues.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime</string>
+
+    <key>StartInterval</key>
+    <integer>1200</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime/logs/drain-stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/.bonfyre-runtime/logs/drain-stderr.log</string>
+
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>

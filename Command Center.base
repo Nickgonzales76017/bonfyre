@@ -1,0 +1,42 @@
+headerOrder:
+  - name
+  - priority
+  - status
+  - stage
+  - review_cadence
+  - updated
+  - idea_link
+columns:
+  name:
+    type: text
+    label: Project
+  priority:
+    type: text
+    label: Priority
+  status:
+    type: text
+    label: Status
+  stage:
+    type: text
+    label: Stage
+  review_cadence:
+    type: text
+    label: Review
+  updated:
+    type: date
+    label: Updated
+  idea_link:
+    type: text
+    label: Source Idea
+formulaEnabled: false
+order:
+  - column: priority
+    direction: asc
+sources:
+  - type: folder
+    id: 02-Projects
+filters:
+  and: []
+views:
+  - type: table
+    name: Table

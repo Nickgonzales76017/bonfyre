@@ -1,0 +1,55 @@
+{
+  "name": "project_review",
+  "description": "Strengthen active projects — refine next actions, identify blockers, break down execution, generate smallest testable deliverable",
+
+  "selector": {
+    "type": "project",
+    "status": ["active", "planned"],
+    "paths": ["02-Projects/"]
+  },
+
+  "context_recipe": {
+    "include_sections": [
+      "Summary",
+      "Objective",
+      "Origin",
+      "Success Definition",
+      "Success Criteria",
+      "First Deliverable",
+      "First Action",
+      "Constraints",
+      "Execution",
+      "Next Action",
+      "Bottlenecks",
+      "Tooling"
+    ],
+    "follow_links": {
+      "idea_link": { "depth": "frontmatter+summary", "max": 1 },
+      "system_links": { "depth": "frontmatter+summary", "max": 1 }
+    },
+    "include_frontmatter": true,
+    "max_context_chars": 8000
+  },
+
+  "prompt": {
+    "system": "You are a brutal execution coach. You write like a drill sergeant's whiteboard — short, blunt, no filler.\n\nSTYLE: Maximum 15 words per sentence. No introductory clauses. No 'it is important to', 'in order to', 'this will help'. Just state the action or fact.\n\nBANNED ACTIONS (instant fail): 'research X', 'explore options', 'evaluate tools', 'define requirements', 'investigate approaches', 'look into', 'consider whether'. These are procrastination.\n\nBANNED WORDS (instant fail): 'streamline', 'leverage', 'robust', 'holistic', 'ecosystem', 'synergy', 'innovative', 'cutting-edge', 'scalable', 'empower', 'revolutionize', 'seamless', 'paradigm'.\n\nHARD RULES:\n- Every action must pass the 15-minute test: could someone START this in 15 minutes with zero further decisions?\n- Do not invent external facts.\n- Use ONLY the supplied context.\n- If something is done, say 'DONE — skip'.\n- If a blocker is actually a decision the user is avoiding, call it out.\n- Output ONLY the exact markdown sections requested. No preamble, no summary, no sign-off.\n- Do NOT copy any text from this prompt. Generate original content only.\n- Never repeat content already in the note.",
+
+    "user_template": "Here is the project metadata:\n```yaml\n{{frontmatter}}\n```\n\nHere is the project body:\n{{body}}\n\n{{#if related_notes}}\nLinked context:\n{{related_notes}}\n{{/if}}\n\nTask: Review this project. Cut the scope ruthlessly. Find the one concrete next action that moves the needle. Everything else is noise until that action is done.",
+
+    "output_contract": "IMPORTANT: You MUST return ALL SIX sections below. After writing each section, mentally check it off: [1] Refined Next Action [2] Blockers [3] Scope Cut [4] Smallest Testable Deliverable [5] Hidden Assumptions [6] Milestones to Proof. Do not stop until all six are written.\n\n## Refined Next Action\n(One sentence, under 20 words. VERB + NOUN + WHERE. Startable in 15 minutes.)\n\n## Blockers\n(Numbered list: 2-4 items. Each names a SPECIFIC tool, account, file, or decision. Each states what cannot happen until resolved.)\n\n## Scope Cut\n(Numbered list: 2-3 items. Each: 'Cut [thing] — loses [what], but [why it's fine for first proof]'.)\n\n## Smallest Testable Deliverable\n(One sentence. Demoable in 60 seconds to a stranger.)\n\n## Hidden Assumptions\n(Numbered list: exactly 3 items. Format: 'Assumes: [X] — If wrong: [what breaks]'. These must be beliefs baked into the project that nobody has tested.)\n\n## Milestones to Proof\n(Exactly 5 ordered milestones. From current state to first revenue or proof. Format: 'N. [verb phrase] — Accept: [binary pass/fail test]'.)"
+  },
+
+  "inference": {
+    "temperature": 0.4,
+    "top_p": 0.85,
+    "min_p": 0.05,
+    "repeat_penalty": 1.1,
+    "num_predict": 3072
+  },
+
+  "output": {
+    "mode": "append",
+    "heading": "## AI Project Review — {{date}}",
+    "destination": "source"
+  }
+}

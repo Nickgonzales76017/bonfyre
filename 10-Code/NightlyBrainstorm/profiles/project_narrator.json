@@ -1,0 +1,54 @@
+{
+  "name": "project_narrator",
+  "description": "Generate spoken audio summaries for each active project — status, next actions, and what matters",
+
+  "selector": {
+    "type": "project",
+    "status": ["active"],
+    "paths": ["02-Projects/"]
+  },
+
+  "context_recipe": {
+    "include_sections": [
+      "Summary",
+      "Objective",
+      "Success Criteria",
+      "Success Definition",
+      "Next Action",
+      "First Deliverable",
+      "Bottlenecks",
+      "Execution",
+      "Constraints"
+    ],
+    "include_frontmatter": true,
+    "max_context_chars": 6000
+  },
+
+  "prompt": {
+    "system": "You are a project narrator creating a spoken audio update for a solo founder.\n\nRules:\n- Write for spoken delivery. Short sentences. Clear phrasing.\n- No markdown. No bullet formatting. No symbols.\n- Be concise. Each project update should be 100-250 words (30-90 seconds spoken).\n- Start with project name and current status.\n- Focus on what matters: next action, blockers, progress.\n- Sound like a sharp coworker giving a standup update.",
+
+    "user_template": "Here is the project:\n\n{{frontmatter}}\n\n{{body}}\n\nTask: Create a spoken project update. What is the status, what is the next concrete action, and what is blocking progress?",
+
+    "output_contract": "Return ONLY spoken text. No markdown. No formatting.\n\n100-250 words. Start with the project name. Cover: current status, what was accomplished, next action, any blockers. End with one sentence on what success looks like for this project this week."
+  },
+
+  "inference": {
+    "temperature": 0.45,
+    "top_p": 0.85,
+    "min_p": 0.05,
+    "repeat_penalty": 1.15,
+    "mirostat": 2,
+    "mirostat_ent": 3.5,
+    "mirostat_lr": 0.1,
+    "num_predict": 512
+  },
+
+  "output": {
+    "mode": "skip_text",
+    "audio": {
+      "enabled": true,
+      "category": "Projects",
+      "filename_template": "{{title}}-{{date}}.wav"
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+   "created_at" : "2026-04-04T00:55:01+00:00",
+   "items" : [
+      {
+         "attempt_count" : 1,
+         "completed_at" : "2026-04-04T03:55:21+00:00",
+         "failed_at" : null,
+         "job_id" : "nightly-idea_expand-20260403195501",
+         "last_error" : null,
+         "limit" : 2,
+         "no_audio" : true,
+         "pass_name" : "idea_expand",
+         "queued_at" : "2026-04-04T00:55:01+00:00",
+         "started_at" : "2026-04-04T03:47:20+00:00",
+         "status" : "completed"
+      },
+      {
+         "attempt_count" : 1,
+         "completed_at" : "2026-04-04T03:58:38+00:00",
+         "failed_at" : null,
+         "job_id" : "nightly-project_review-20260403195642",
+         "last_error" : null,
+         "limit" : 1,
+         "no_audio" : false,
+         "pass_name" : "project_review",
+         "queued_at" : "2026-04-04T00:56:42+00:00",
+         "started_at" : "2026-04-04T03:55:21+00:00",
+         "status" : "completed"
+      }
+   ],
+   "updated_at" : "2026-04-04T03:58:38+00:00"
+}

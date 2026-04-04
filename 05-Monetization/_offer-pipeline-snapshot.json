@@ -1,0 +1,22 @@
+{
+  "created_at": "2026-04-04T04:41:37.472467+00:00",
+  "updated_at": "2026-04-04T04:41:37.472469+00:00",
+  "reviewed_proof_count": 2,
+  "generated_offer_count": 2,
+  "offers": [
+    {
+      "offer_name": "Founder Sample - PickFu Offer",
+      "proof_asset": "Founder Sample - PickFu",
+      "buyer_segment": "founders and operators",
+      "recommendation": "promote",
+      "review_score": 100
+    },
+    {
+      "offer_name": "Customer Sample - Gaurav Deep Offer",
+      "proof_asset": "Customer Sample - Gaurav Deep",
+      "buyer_segment": "customer-research teams",
+      "recommendation": "promote",
+      "review_score": 100
+    }
+  ]
+}

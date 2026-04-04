@@ -1,0 +1,49 @@
+{
+  "created_at": "2026-04-04T04:41:37.467724+00:00",
+  "offer_name": "Founder Sample - PickFu Offer",
+  "headline": "Local-first transcript deliverables for founders and operators",
+  "promise": "Send one messy recording. Get back a clean transcript, a structured summary, and candidate next steps.",
+  "buyer_segment": "founders and operators",
+  "proof_asset": "Founder Sample - PickFu",
+  "price": "$18",
+  "turnaround": "same day for short files",
+  "source_kind": "audio_file",
+  "review_score": 100,
+  "recommendation": "promote",
+  "proof_quality": {
+    "score": 95,
+    "status": "strong",
+    "raw_sentence_count": 114,
+    "cleaned_sentence_count": 114,
+    "summary_count": 5,
+    "action_item_count": 5,
+    "cleanup_changed_text": true,
+    "filler_tokens_removed": 0
+  },
+  "offer_angle": "This proof passed a stricter review gate at score 100 with 5 summary bullets and 5 action items, which makes it credible enough to use as a buyer-facing before/after example.",
+  "deliverables": [
+    "clean transcript",
+    "executive summary",
+    "action items",
+    "processing notes"
+  ],
+  "segment_variants": [
+    {
+      "segment": "founders and operators",
+      "headline": "Turn founder voice notes into decision-ready output",
+      "hook": "Send one messy memo and get back a transcript, summary, and next steps you can act on today."
+    },
+    {
+      "segment": "consultants and agencies",
+      "headline": "Turn client recordings into clean recap deliverables",
+      "hook": "Use local-first processing to return polished recaps without shipping client audio to SaaS tools."
+    },
+    {
+      "segment": "customer-research teams",
+      "headline": "Turn customer calls into structured insight snapshots",
+      "hook": "Pull pain points, themes, and next actions from interviews faster than manual note cleanup."
+    }
+  ],
+  "outreach_hook": "I turned a messy public recording into a structured deliverable with 5 usable next steps. I can do the same for one of your calls or voice notes.",
+  "deliverable_excerpt": "# Founder Sample - PickFu Assumptions\n\n## Executive Snapshot\n- source: audio_file\n- summary bullets: 5\n- action items: 5\n- transcript paragraphs: 38\n\n## Quality\n- status: strong\n- score: 95\n- summary bullets: 5\n- action items: 5\n\n## Processing Notes\n- Deliverable rebuilt from saved transcript artifacts without rerunning Whisper.\n- Job metadata imported from browser intake manifest.\n- Cleanup pass adjusted transcript text before formatting.\n- Transcript formatted into 38 paragraph blocks.\n\n## Intake Context\n- client: Public Sample\n- output goal: transcript-summary-actions\n- context: Public founder interview sample. Focus on startup assumptions, tests, and next-step insights that would read well as proof-of-work.\n\n## Source\n- kind: audio_file\n\n## Summary\n- But the main thing where pick food came from is that being a team of two, we kept having disagreements about design decisions, like both of us are software engineers and so without a ton of design experience and so his guess was as good as mine and my guess was as good as his and we would butt heads.\n- And so eventually, after a couple of iterations of that, we realized that, you know, despite our best wishes, the traction on our main project was not going where we wanted it to go.\n- And so we decided to make up pivot there in terms of focusing our efforts, our time and energy on pick food and growing it.\n- I think that testing"
+}
