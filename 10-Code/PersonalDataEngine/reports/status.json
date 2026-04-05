@@ -1,6 +1,6 @@
 {
   "project": "PersonalDataEngine",
-  "generated_at": "2026-04-04T13:48:41",
+  "generated_at": "2026-04-04T19:52:54",
   "recent_log_count": 2,
   "project_count": 25,
   "active_project_count": 4,
@@ -11,7 +11,7 @@
   "top_projects": [
     {
       "name": "Personal Market Layer",
-      "score": 92
+      "score": 100
     },
     {
       "name": "Local AI Transcription Service",
@@ -19,15 +19,15 @@
     },
     {
       "name": "Quiet Distribution Engine",
-      "score": 62
+      "score": 72
     },
     {
       "name": "Whisper + FFmpeg Wrapper Kit",
-      "score": 55
+      "score": 65
     },
     {
       "name": "Service Arbitrage Hub",
-      "score": 50
+      "score": 60
     }
   ]
 }

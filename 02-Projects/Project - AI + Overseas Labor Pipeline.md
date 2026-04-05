@@ -4,7 +4,7 @@ cssclasses:
   - project
 title: AI + Overseas Labor Pipeline
 created: 2026-04-03
-updated: 2026-04-03
+updated: 2026-04-04
 status: planned
 stage: setup
 priority: medium
@@ -101,6 +101,9 @@ Define a viable hybrid fulfillment loop that improves quality without destroying
 ### 2026-04-03
 - project created from the hybrid labor idea
 - tied directly to transcription as the first proving ground
+### 2026-04-04
+- downstream delivery state is now part of the named `service-delivery` loop in `10-Code/ProductPipelines/orchestrate.py`
+- this project is now wired as the fulfillment leg instead of staying as a standalone tracker
 
 ## Decisions
 - do not activate this before the manual transcription loop exists

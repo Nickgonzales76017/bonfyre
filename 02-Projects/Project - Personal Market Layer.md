@@ -4,7 +4,7 @@ cssclasses:
   - project
 title: Personal Market Layer
 created: 2026-04-03
-updated: 2026-04-03
+updated: 2026-04-04
 status: active
 stage: build
 priority: high
@@ -105,10 +105,16 @@ The vault is already generating potential assets. The missing layer is packaging
 - narrowed to turning real outputs into marketable offers
 - `10-Code/PersonalMarketLayer` now generates `offer.json`, `offer.md`, `outreach.md`, and `listing.md` from reviewed proof assets
 - the first generated vault monetization note now exists at `05-Monetization/Offer - Founder Sample - PickFu Offer.md`
+### 2026-04-04
+- offer generation now reads richer intake context when present, including buyer, service lane, output shape, and next-step hints
+- generated vault offers now document routing as part of the sales/delivery surface
+- generated offer catalog now carries service-lane and output-shape metadata for live offers
+- `10-Code/ProductPipelines/orchestrate.py` now ties this project into the named `transcription-revenue` loop with distribution and analytics refresh
 
 ## Decisions
 - first offer should come from a real working workflow
 - direct, plain-language positioning beats clever branding
+- market packaging should inherit structured intake context instead of re-inferring everything from proof labels
 
 ## Links
 ### Source Idea

@@ -1,0 +1,27 @@
+{
+  "pipeline": "browser-fulfillment",
+  "generated_at": "2026-04-05T00:52:54.217380+00:00",
+  "browser": {
+    "pwa_manifest": true,
+    "service_worker": true,
+    "status_import": true,
+    "package_export": true
+  },
+  "local": {
+    "intake_package_count": 3,
+    "recent_packages": [
+      "customer-01-gaurav-conversations-deep.intake-package.json",
+      "customer-01-gaurav-conversations.intake-package.json",
+      "founder-01-pickfu-assumptions.intake-package.json"
+    ]
+  },
+  "sync": {
+    "status_sync_count": 1,
+    "recent_status_syncs": [
+      "founder-sample-pickfu-assumptions/browser-status.json"
+    ]
+  },
+  "proof": {
+    "proof_count": 2
+  }
+}

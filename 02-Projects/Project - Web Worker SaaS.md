@@ -91,22 +91,27 @@ Customer's Browser
 | **Manifest builder** | `app.js` | **Working** — structured JSON with full metadata |
 | **Package builder** | `app.js` | **Working** — one-file base64 embedded export |
 | **Intake brief** | `app.js` | **Working** — human-readable markdown brief |
+| **Routing layer** | `app.js` | **Working** — buyer, service lane, output shape, and next-step hints |
 | **Job queue UI** | `index.html` | **Working** — status badges, search, filters |
+| **Batch operator bar** | `index.html` + `app.js` | **Working** — select visible, mark ready, bulk export manifests/packages |
+| **Bulk results import** | `index.html` + `app.js` | **Working** — selected jobs can ingest multiple deliverables by slug |
+| **Operator mode** | `index.html` + `app.js` | **Working** — hides completed jobs so the queue reads like live work |
+| **Result rendering** | `app.js` + `index.html` | **Working** — imported markdown now renders as structured sections and nested bullets |
+| **PWA shell** | `manifest.webmanifest` + `sw.js` | **Working** — install prompt, app manifest, asset caching, offline fallback |
+| **Status sync** | `app.js` + `browser-status.json` | **Working** — browser imports pipeline status JSON by `jobId`/`jobSlug` and merges deliverables back in |
 | **Presets** | `app.js` | **Working** — Founder Memo, Customer Call, Consultant Recap |
 | **Styles** | `styles.css` | **Working** — warm paper aesthetic, responsive layout |
 | **README** | `README.md` | **Working** — setup, purpose, one-file handoff docs |
 
 ### What's Missing (Ordered by Blocking Priority)
-1. **Deliverable return path** — customer submits a file but has no way to receive results back in the browser. Currently requires email/DM. The console needs a "results" view.
-2. **PWA shell** — no `manifest.json`, no service worker, no offline install. This should be installable and work without internet.
-3. **Operator dashboard** — no view from the operator side. The operator currently exports packages manually. Needs at minimum a local operator view that shows pending jobs.
-4. **Status sync** — no mechanism for push/poll status updates from pipeline back to browser. Customer sees "processing" forever until someone manually tells them.
-5. **WebAssembly compute** — no in-browser processing. The whisper.cpp WASM port exists in the wild but hasn't been evaluated for our model/quality constraints.
-6. **Multi-service abstraction** — the intake form is hardcoded for transcription. The shell needs to accept pluggable service definitions.
-7. **File size handling** — IndexedDB can handle ~50MB reliably, but there's no validation, no chunking for large files, no progress indicator for big uploads.
-8. **Security hardening** — no CSP headers, no input sanitization beyond browser defaults, no CORS considerations for the eventual sync layer.
-9. **Analytics** — no usage tracking, no conversion funnel data, no way to know how many jobs reach completion.
-10. **PDF/polish exports** — deliverables are markdown only. Customers expect PDF or at minimum styled HTML.
+1. **Operator/customer split** — the operator queue is good enough for local work, but there is still no separate operator/customer split or cross-session sync.
+2. **Live sync** — file-based status sync exists, but there is still no push/poll bridge for automatic updates.
+3. **WebAssembly compute** — no in-browser processing. The whisper.cpp WASM port exists in the wild but hasn't been evaluated for our model/quality constraints.
+4. **Multi-service abstraction** — the intake form is still transcription-first. The shell needs pluggable service definitions.
+5. **File size handling** — IndexedDB can handle ~50MB reliably, but there's no chunking or progress indicator for big uploads.
+6. **Security hardening** — no CSP headers, no input sanitization beyond browser defaults, no CORS considerations for the eventual sync layer.
+7. **Analytics** — no usage tracking, no conversion funnel data, no way to know how many jobs reach completion.
+8. **PDF/polish exports** — deliverables are markdown-backed and browser-rendered, but customers still need better export formats.
 
 ### Technology Map
 | Layer | Technology | Maturity | Notes |
@@ -205,17 +210,20 @@ Initial pricing stays with the transcription tiers ($12-35/file). The console is
 
 ### Phase 1 — Operator Loop (NEXT)
 > **Goal: operator can see jobs and return results without leaving the browser.**
-- [ ] Add operator view: list of all pending exports with batch action buttons
-- [ ] Add "Import Results" — operator drops deliverable markdown back into the console
-- [ ] Results display: transcript, summary, action items rendered in the detail panel
-- [ ] Status auto-updates when results are imported
-- [ ] Copy/download deliverable from the browser
+- [x] Stamp jobs with buyer-aware routing metadata for operator handoff
+- [x] Add operator view: list of all pending exports with batch action buttons
+- [x] Add "Import Results" — operator drops deliverable markdown back into the console
+- [x] Results display: transcript, summary, and nested bullets rendered in the detail panel
+- [x] Add file-based status sync import from pipeline-generated `browser-status.json`
+- [x] Add operator-only mode so live work is visible without done-job clutter
+- [x] Copy/download deliverable from the browser
+- [x] Tie browser intake, local processing, and sync-back into a named `browser-fulfillment` product loop
 
 ### Phase 2 — PWA Shell
 > **Goal: installable, offline-capable, professional.**
-- [ ] Add `manifest.json` with icons, name, theme colors
-- [ ] Add service worker for static asset caching
-- [ ] Add offline fallback page
+- [x] Add `manifest.webmanifest` with icons, name, theme colors
+- [x] Add service worker for static asset caching
+- [x] Add offline fallback page
 - [ ] Test PWA install on macOS Safari, iOS Safari, Chrome
 - [ ] Add viewport meta tag for mobile
 - [ ] Add loading states for large file uploads
@@ -258,6 +266,14 @@ Initial pricing stays with the transcription tiers ($12-35/file). The console is
 ### Phase 7 — Distribution
 > **Goal: strangers can find and use this.**
 - [ ] Deploy static files to a free host (GitHub Pages, Cloudflare Pages, Netlify)
+
+## Execution Log
+### 2026-04-04
+- intake jobs now carry structured routing data: buyer, service lane, output shape, and next step
+- detail drawer now shows buyer and routing so the operator sees downstream fit without reading raw notes
+- exported manifests and briefs now preserve that routing layer for downstream systems
+- queue now has a lightweight operator batch bar for bulk selection, bulk export, and bulk `ready` updates
+- queue now supports bulk results import by matching selected jobs against deliverable filenames
 - [ ] Add landing page with value prop, demo, install instructions
 - [ ] Add link from [[02-Projects/Project - Quiet Distribution Engine]] for distribution
 - [ ] Submit to Product Hunt / Hacker News "Show HN"

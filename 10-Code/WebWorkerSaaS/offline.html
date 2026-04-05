@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonfyre Offline</title>
+    <style>
+      :root {
+        --ink: #171217;
+        --muted: #6a6267;
+        --paper: #fffaf3;
+        --accent: #d55d3f;
+        --line: rgba(23, 18, 23, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        color: var(--ink);
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+        background:
+          radial-gradient(circle at top left, rgba(213, 93, 63, 0.18), transparent 28%),
+          linear-gradient(180deg, #f8eede 0%, #f4efe9 100%);
+      }
+      .card {
+        width: min(560px, 100%);
+        padding: 28px;
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        background: rgba(255, 250, 243, 0.92);
+      }
+      h1 { margin: 0 0 12px; font-size: 2rem; }
+      p { margin: 0 0 12px; line-height: 1.6; }
+      .muted { color: var(--muted); }
+      a {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <h1>Bonfyre is offline.</h1>
+      <p>Your installed shell is still available, but this page was not in cache yet.</p>
+      <p class="muted">Go back once you reconnect, then reopen the app so the full shell can cache locally.</p>
+      <a href="./index.html">Return to app</a>
+    </main>
+  </body>
+</html>

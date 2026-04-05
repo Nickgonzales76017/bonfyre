@@ -74,7 +74,14 @@ my $config = load_config($config_path);
 $config->{dry_run} = 1 if $opt_dry_run;
 
 my $vault_root = $config->{vault_root} || File::Spec->catdir($Bin, '..', '..');
-$vault_root = File::Spec->rel2abs($vault_root);
+# If the configured vault_root is a relative path, resolve it against the
+# script location ($Bin) so the program behaves consistently regardless of
+# the current working directory used to invoke the script.
+if (File::Spec->file_name_is_absolute($vault_root)) {
+    $vault_root = File::Spec->rel2abs($vault_root);
+} else {
+    $vault_root = File::Spec->rel2abs(File::Spec->catfile($Bin, $vault_root));
+}
 
 # ── Queue Commands (exit early, no inference needed) ──
 if ($opt_queue_status) {

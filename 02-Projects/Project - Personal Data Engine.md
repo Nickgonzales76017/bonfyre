@@ -128,10 +128,15 @@ Build a usable weekly review and signal-tracking loop that improves what gets bu
 - NightlyBrainstorm `project_review` pass now generates AI-driven project assessments that feed into this system
 - daily logs for 2026-04-02 and 2026-04-03 exist with real execution data
 - Dashboard.md updated with live priorities and status tracking
+### 2026-04-04
+- `PersonalDataEngine` now reads generated monetization snapshots before raw tool databases
+- distribution traction is now fed from `05-Monetization/_distribution-pipeline-snapshot.json`
+- project momentum now reflects proof, offers, outbound activity, replies, and follow-up pressure from the documented operating surface
 
 ## Decisions
 - start with simple reviews before building automation
 - prioritize behavior-changing insights over dashboards
+- generated vault snapshots are the preferred analytics boundary; raw SQLite is fallback only
 
 ## Links
 ### Source Idea

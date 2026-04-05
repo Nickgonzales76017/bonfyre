@@ -158,6 +158,7 @@ By default jobs are written to `./outputs/<job-slug>/` with:
 - `transcript.txt`
 - `deliverable.md`
 - `meta.json`
+- `browser-status.json`
 - `speech.wav` when `--tts` is enabled
 
 Batch runs also write:
@@ -166,6 +167,18 @@ Batch runs also write:
 
 Benchmark runs write:
 - `benchmark-results.json`
+
+## Browser Status Sync
+```bash
+cd 10-Code/LocalAITranscriptionService
+PYTHONPATH=src python3 -m local_ai_transcription_service.cli --export-status-sync outputs/founder-sample-pickfu-assumptions
+```
+
+Each job now also writes `browser-status.json` automatically. Import that file back into `10-Code/WebWorkerSaaS` to sync:
+- `status`
+- `completedAt`
+- `quality`
+- `deliverableMarkdown`
 
 ## Next Upgrade
 - improve install automation beyond bootstrap planning

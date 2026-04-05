@@ -4,7 +4,7 @@ cssclasses:
   - project
 title: Service Arbitrage Hub
 created: 2026-04-03
-updated: 2026-04-03
+updated: 2026-04-04
 status: active
 stage: validation
 priority: high
@@ -103,6 +103,9 @@ Start with services adjacent to transcription, research, formatting, or lightwei
 ### 2026-04-03
 - project created
 - focused around proving one tight arbitrage loop first
+### 2026-04-04
+- `ServiceArbitrageHub` now feeds the named `service-delivery` loop through `10-Code/ProductPipelines/orchestrate.py`
+- spread, handoff, downstream delivery, and analytics can now be refreshed as one product pipeline instead of isolated status checks
 
 ## Decisions
 - start narrow, not broad

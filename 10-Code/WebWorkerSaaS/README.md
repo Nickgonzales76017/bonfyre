@@ -17,6 +17,8 @@ Everything else — client details, output preferences, turnaround targets — i
 - auto-completes jobs with turnaround timing when results arrive
 - export: brief (markdown), manifest (JSON), full package (JSON + embedded audio)
 - toast notifications on every action, confirm dialog on destructive ops
+- installable PWA shell with offline cache and lightweight install prompt
+- offline fallback page for uncached navigation failures
 
 ## Run
 
@@ -26,6 +28,8 @@ python3 -m http.server 8080
 ```
 
 Open `http://localhost:8080`.
+
+For the install prompt and service worker, use a real origin like `http://localhost:8080`, not `file://`.
 
 ## Workflow
 1. Drop or browse an audio file
@@ -52,6 +56,7 @@ Browser (IndexedDB + vanilla JS, zero deps)
  ├── Submit → job stored in IndexedDB
  ├── Your Files → searchable/filterable job list
  ├── Detail Drawer → status, brief, exports, results
+ ├── PWA Shell → manifest + service worker + install prompt
  └── Lifecycle: captured → ready → processing → done
 ```
 

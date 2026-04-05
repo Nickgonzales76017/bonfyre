@@ -17,6 +17,8 @@ VAULT_ROOT = Path(__file__).resolve().parents[2]
 GENERATED_OFFERS_PATH = VAULT_ROOT / "05-Monetization" / "_generated-offers.json"
 DISTRIBUTION_SNAPSHOT_NOTE = VAULT_ROOT / "05-Monetization" / "_Distribution Pipeline Snapshot.md"
 DISTRIBUTION_SNAPSHOT_JSON = VAULT_ROOT / "05-Monetization" / "_distribution-pipeline-snapshot.json"
+FOLLOWUP_QUEUE_NOTE = VAULT_ROOT / "05-Monetization" / "_Distribution Follow-Up Queue.md"
+FOLLOWUP_QUEUE_JSON = VAULT_ROOT / "05-Monetization" / "_distribution-followup-queue.json"
 
 CHANNELS = {
     "dm": "Direct messages (Twitter, LinkedIn, email)",
@@ -263,6 +265,68 @@ def _write_distribution_snapshot(payload):
     DISTRIBUTION_SNAPSHOT_NOTE.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _followup_queue_payload(db):
+    rows = _pending_rows(db)
+    now = datetime.now(timezone.utc)
+    items = []
+    for row in rows:
+        sent_at = _parse_timestamp(row["sent_at"])
+        age_days = (now - sent_at.astimezone(timezone.utc)).days if sent_at else 0
+        items.append({
+            "id": row["id"],
+            "target": row["target"],
+            "channel": row["channel"],
+            "offer_name": row["offer_name"],
+            "age_days": age_days,
+            "next_move": _followup_move(age_days),
+            "copy": _followup_message(row, _best_offer(str(row["offer_name"] or "")), age_days),
+            "sent_at": row["sent_at"],
+        })
+    return {
+        "generated_at": now_stamp(),
+        "pending_count": len(items),
+        "items": items,
+    }
+
+
+def _write_followup_queue(payload):
+    FOLLOWUP_QUEUE_JSON.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    lines = [
+        "---",
+        "title: Distribution Follow-Up Queue",
+        "type: monetization_snapshot",
+        f"created: {payload['generated_at']}",
+        f"updated: {payload['generated_at']}",
+        "tags:",
+        "  - monetization",
+        "  - distribution",
+        "  - followup",
+        "  - generated",
+        "---",
+        "",
+        "# Distribution Follow-Up Queue",
+        "",
+        f"- Pending sends: `{payload['pending_count']}`",
+        "",
+    ]
+    if payload["items"]:
+        for item in payload["items"]:
+            lines.extend([
+                f"## Send #{item['id']}",
+                f"- target: `{item['target']}`",
+                f"- offer: `{item['offer_name'] or '-'}`",
+                f"- channel: `{item['channel']}`",
+                f"- age: `{item['age_days']}d`",
+                f"- next move: `{item['next_move']}`",
+                "",
+                item["copy"],
+                "",
+            ])
+    else:
+        lines.append("- No pending follow-ups.")
+    FOLLOWUP_QUEUE_NOTE.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def get_db():
     db = sqlite3.connect(str(DB_PATH))
     db.row_factory = sqlite3.Row
@@ -505,6 +569,7 @@ def cmd_status(args):
     db = get_db()
     payload = _status_payload(db)
     _write_distribution_snapshot(payload)
+    _write_followup_queue(_followup_queue_payload(db))
     report = write_json_report(__file__, "status.json", payload)
     print(f"Project: {payload['project']}")
     print(

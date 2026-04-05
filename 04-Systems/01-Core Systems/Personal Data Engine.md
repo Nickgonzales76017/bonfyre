@@ -63,6 +63,8 @@ Daily logs, project updates, offer tests, and outcomes become structured signals
 - the idea exists and the daily log folder is live
 - logging structure is now stronger than before
 - the review loop still needs actual repeated use
+- generated monetization and distribution snapshots are now part of the live input layer
+- analytics now prefer generated vault artifacts over direct tool-database reads when both exist
 
 ## Bottlenecks
 - not enough historical data yet
@@ -75,7 +77,7 @@ Daily logs, project updates, offer tests, and outcomes become structured signals
 - revenue or time saved: reduced wasted effort on low-signal projects
 
 ## Next Improvement
-👉 use the daily log template consistently and create the first weekly review after a few execution days
+👉 keep pressure on real replies so the feedback loop has traction data, not just activity data
 
 ## Links
 ### Source Project

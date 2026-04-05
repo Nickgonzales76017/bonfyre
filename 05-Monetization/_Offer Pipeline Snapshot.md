@@ -1,18 +1,14 @@
 ---
 type: monetization-snapshot
 title: Offer Pipeline Snapshot
-created: 2026-04-04
-updated: 2026-04-04
+created: 2026-04-05
+updated: 2026-04-05
 status: active
 tags:
-  - active
   - monetization
   - generated
   - snapshot
-aliases:
-  - Offer Pipeline Snapshot
 ---
-
 
 # Offer Pipeline Snapshot
 

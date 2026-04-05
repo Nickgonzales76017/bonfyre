@@ -4,7 +4,7 @@ cssclasses:
   - project
 title: Quiet Distribution Engine
 created: 2026-04-03
-updated: 2026-04-03
+updated: 2026-04-04
 status: planned
 stage: setup
 priority: high
@@ -109,6 +109,12 @@ Create one repeatable distribution loop for a proven offer, starting with the tr
 - offer copy written in [[05-Monetization/Offer - Local AI Transcription Service]]
 - primary buyer segment identified: founders and operators (fastest close)
 - cold outbound starting price set at $15 (standard tier)
+### 2026-04-04
+- `QuietDistributionEngine` is now linked to live generated offers in `05-Monetization/_generated-offers.json`
+- status writes a monetization-facing distribution snapshot and follow-up queue into `05-Monetization/`
+- pending sends now have age buckets, recommended next moves, and generated follow-up copy
+- outbound state now feeds back into `PersonalDataEngine` as traction signals instead of staying trapped in SQLite
+- `10-Code/ProductPipelines/orchestrate.py` now ties this project into the named `transcription-revenue` loop so distribution refresh, monetization refresh, and analytics refresh happen together
 
 ## Decisions
 - start with the transcription offer — it's the only one with working proof today
@@ -140,6 +146,7 @@ Create one repeatable distribution loop for a proven offer, starting with the tr
 ## Decisions
 - start with one offer and one channel, not broad multi-channel expansion
 - manual signal before automation
+- document distribution state in generated vault notes so ops and analytics read the same surface
 
 ## Links
 ### Source Idea

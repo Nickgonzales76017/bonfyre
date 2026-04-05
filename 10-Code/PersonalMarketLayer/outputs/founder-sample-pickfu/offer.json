@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-04-04T04:41:37.467724+00:00",
+  "created_at": "2026-04-05T00:52:53.531696+00:00",
   "offer_name": "Founder Sample - PickFu Offer",
   "headline": "Local-first transcript deliverables for founders and operators",
   "promise": "Send one messy recording. Get back a clean transcript, a structured summary, and candidate next steps.",
@@ -8,6 +8,15 @@
   "price": "$18",
   "turnaround": "same day for short files",
   "source_kind": "audio_file",
+  "service_lane": "Local AI Transcription Service",
+  "output_shape": "transcript, executive summary, and action items",
+  "next_step": "route reviewed proof into monetization and distribution",
+  "intake_context": {
+    "job_title": "Founder Sample - PickFu Assumptions",
+    "output_goal": "transcript-summary-actions",
+    "buyer_type": "",
+    "client_name": "Public Sample"
+  },
   "review_score": 100,
   "recommendation": "promote",
   "proof_quality": {

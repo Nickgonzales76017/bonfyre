@@ -46,6 +46,12 @@ Keep this list brutally small.
 - [[02-Projects/Project - Personal Market Layer]]
 - [[05-Monetization/Offer - Local AI Transcription Service]]
 
+### Product Snapshots
+- [[05-Monetization/_Revenue Product Pipeline Snapshot]]
+- [[05-Monetization/_Offer Pipeline Snapshot]]
+- [[05-Monetization/_Distribution Pipeline Snapshot]]
+- [[04-Systems/02-Pipelines/_Browser Fulfillment Pipeline Snapshot]]
+
 ### Scaling Paths
 - [[02-Projects/Project - Service Arbitrage Hub]]
 - [[04-Systems/02-Pipelines/AI + Overseas Labor Pipeline]]
@@ -77,8 +83,12 @@ Keep this list brutally small.
 ---
 
 ## Pipelines
+- [[04-Systems/02-Pipelines/Revenue Product Pipeline]]
+- [[04-Systems/02-Pipelines/Service Delivery Pipeline]]
+- [[04-Systems/02-Pipelines/Browser Fulfillment Pipeline]]
 - [[04-Systems/02-Pipelines/AI + Overseas Labor Pipeline]]
 - [[04-Systems/02-Pipelines/Automation-and-External-Pipeline]]
+- [[04-Systems/02-Pipelines/_Active Product Pipelines]]
 
 ---
 

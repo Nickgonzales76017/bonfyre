@@ -36,6 +36,39 @@ h1, h2, h3, p { margin-top: 0; }
 
 .hidden { display: none !important; }
 
+.install-banner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  border: 1px solid rgba(213, 93, 63, 0.2);
+  border-radius: 18px;
+  background: rgba(255, 250, 243, 0.88);
+  box-shadow: var(--shadow);
+}
+
+.install-kicker {
+  margin: 0 0 4px;
+  color: var(--accent-deep);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.install-title {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.35;
+}
+
+.install-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* ─── DROP ZONE ────────────────────────────────── */
 
 .drop-section {
@@ -294,15 +327,54 @@ h1, h2, h3, p { margin-top: 0; }
 
 .files-controls input { width: 160px; }
 
+.operator-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.operator-toggle input {
+  accent-color: var(--accent);
+}
+
+.operator-bar {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-strong);
+}
+
+.selection-summary {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.operator-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .job-list {
   display: grid;
   gap: 10px;
 }
 
 .job-card {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
+  gap: 12px;
   padding: 16px 20px;
   background: var(--panel-strong);
   border: 1px solid var(--line);
@@ -321,6 +393,18 @@ h1, h2, h3, p { margin-top: 0; }
 .job-card.active {
   border-color: var(--accent);
   box-shadow: inset 0 0 0 1px rgba(213, 93, 63, 0.15);
+}
+
+.job-card-select {
+  display: grid;
+  place-items: center;
+}
+
+.job-select-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+  cursor: pointer;
 }
 
 .job-card-title {
@@ -460,6 +544,79 @@ h1, h2, h3, p { margin-top: 0; }
   color: var(--muted);
   margin-bottom: 10px;
 }
+
+.results-rendered {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 12px;
+}
+
+.results-section {
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.results-section h4 {
+  margin: 0 0 10px;
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.results-paragraph {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.6;
+}
+
+.results-list,
+.results-list ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.results-list {
+  display: grid;
+  gap: 8px;
+}
+
+.results-list li {
+  line-height: 1.55;
+}
+
+.results-list ul {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.results-empty-state {
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.56);
+  color: var(--muted);
+  text-align: center;
+}
+
+.results-raw {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.results-raw summary {
+  padding: 10px 14px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.84rem;
+  list-style: none;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.results-raw summary::-webkit-details-marker { display: none; }
 
 .results-text {
   white-space: pre-wrap;
@@ -644,4 +801,14 @@ h1, h2, h3, p { margin-top: 0; }
 
   .files-controls { flex-direction: column; }
   .files-controls input { width: 100%; }
+  .operator-toggle { justify-content: center; }
+  .install-banner { flex-direction: column; align-items: stretch; }
+
+  .operator-actions {
+    flex-direction: column;
+  }
+
+  .operator-actions .pill-btn {
+    width: 100%;
+  }
 }

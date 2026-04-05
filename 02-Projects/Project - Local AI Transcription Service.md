@@ -116,6 +116,8 @@ outputs/<job-slug>/
 - **Benchmark runner**: can score saved eval packs and write reusable `benchmark-results.json`
 - **Browser intake bridge**: `10-Code/WebWorkerSaaS` now captures files, context, and handoff manifests before local processing
 - **Handoff contract**: intake manifests can now drive job naming, context, and metadata inside `LocalAITranscriptionService`
+- **Browser status sync artifact**: each job now writes `browser-status.json` so browser intake can merge back `done` state, quality, and deliverable markdown without manual status editing
+- **Browser fulfillment loop**: the browser/operator path is now promoted into a named product pipeline through `10-Code/ProductPipelines/orchestrate.py`
 - **Intake batch automation**: `--intake-dir` can now process a folder of exported browser intake jobs
 - **Lightweight queue** (`queue.py` + `cli.py`): intake packages can now be enqueued, inspected, and drained later so heavy jobs do not have to start the second they are captured
 - **Auto-drain scheduler** (`drain_queue.sh` + launchd plist): queued work can now be checked every 20 minutes and drained one job at a time when guardrails allow
@@ -129,7 +131,7 @@ outputs/<job-slug>/
 5. **Transcript structure is better, not finished** — paragraphing, chunking, and nested deep summary now exist, but section-specific rewriting still needs more hardening
 6. **Bootstrap script** — there is a bootstrap planner, but not a one-command installer
 7. **No PDF/export path** — deliverables are markdown only
-8. **Browser intake is connected, but operator flow is still rough** — queueing now exists, but the full handoff still depends on manual exports and local file movement
+8. **Browser intake is connected, but operator flow is still rough** — file-based status sync now exists, but the full handoff still depends on manual exports and local file movement
 9. **Audio output is present, but not packaged** — Piper speech works, but there is no distribution format beyond raw `.wav` yet
 10. **Machine contention is now guarded and queue-aware, but not yet tuned** — default runtime safety and staged execution exist, but we still need to calibrate ideal thresholds against real work sessions on this MacBook
 

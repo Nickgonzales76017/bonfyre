@@ -39,8 +39,69 @@ def create_job_artifacts(base_output_dir: Path, job_name: str) -> JobArtifacts:
         transcript_path=output_dir / "transcript.txt",
         deliverable_path=output_dir / "deliverable.md",
         meta_path=output_dir / "meta.json",
+        status_sync_path=output_dir / "browser-status.json",
         speech_path=output_dir / "speech.wav",
     )
+
+
+def build_status_sync_payload(
+    *,
+    artifacts: JobArtifacts,
+    intake_manifest: Optional[Dict[str, object]],
+    quality: dict,
+    processing_notes: Sequence[str],
+    include_deliverable: bool = True,
+) -> dict:
+    browser_job_id = None
+    browser_job_slug = artifacts.job_slug
+    client_name = None
+    output_goal = None
+    buyer_type = None
+
+    if intake_manifest:
+        browser_job_id = intake_manifest.get("jobId")
+        browser_job_slug = str(intake_manifest.get("jobSlug") or artifacts.job_slug)
+        client_name = intake_manifest.get("clientName")
+        output_goal = intake_manifest.get("outputGoal")
+        buyer_type = intake_manifest.get("buyerType")
+
+    payload = {
+        "schemaVersion": 1,
+        "sourceSystem": "LocalAITranscriptionService",
+        "exportedAt": datetime.now(timezone.utc).isoformat(),
+        "jobId": browser_job_id,
+        "jobSlug": browser_job_slug,
+        "jobName": artifacts.job_name,
+        "status": "done",
+        "completedAt": datetime.now(timezone.utc).isoformat(),
+        "clientName": client_name,
+        "outputGoal": output_goal,
+        "buyerType": buyer_type,
+        "quality": quality,
+        "processingNotes": list(processing_notes),
+        "deliverablePath": str(artifacts.deliverable_path),
+        "metaPath": str(artifacts.meta_path),
+    }
+    if include_deliverable and artifacts.deliverable_path.exists():
+        payload["deliverableMarkdown"] = artifacts.deliverable_path.read_text(encoding="utf-8")
+    return payload
+
+
+def write_status_sync_artifact(
+    *,
+    artifacts: JobArtifacts,
+    intake_manifest: Optional[Dict[str, object]],
+    quality: dict,
+    processing_notes: Sequence[str],
+) -> Path:
+    payload = build_status_sync_payload(
+        artifacts=artifacts,
+        intake_manifest=intake_manifest,
+        quality=quality,
+        processing_notes=processing_notes,
+    )
+    artifacts.status_sync_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    return artifacts.status_sync_path
 
 
 def build_deliverable(
@@ -215,6 +276,7 @@ def rebuild_job_artifacts(
                 "paragraphs": paragraph_result,
                 "extraction_controller": summary_output,
                 "quality": quality,
+                "processing_notes": processing_notes,
                 "tts": tts_payload,
                 "rebuild": {
                     "rebuilt_at": datetime.now(timezone.utc).isoformat(),
@@ -225,6 +287,12 @@ def rebuild_job_artifacts(
         )
         + "\n",
         encoding="utf-8",
+    )
+    write_status_sync_artifact(
+        artifacts=artifacts,
+        intake_manifest=intake_manifest,
+        quality=quality,
+        processing_notes=processing_notes,
     )
     return artifacts
 
@@ -388,6 +456,7 @@ def run_pipeline(
                 "paragraphs": paragraph_result,
                 "extraction_controller": summary_output,
                 "quality": quality,
+                "processing_notes": processing_notes,
                 "intake_manifest": intake_manifest,
                 "audio_wrapper": wrapper_payload,
                 "tts": tts_payload,
@@ -397,6 +466,12 @@ def run_pipeline(
         )
         + "\n",
         encoding="utf-8",
+    )
+    write_status_sync_artifact(
+        artifacts=artifacts,
+        intake_manifest=intake_manifest,
+        quality=quality,
+        processing_notes=processing_notes,
     )
     return artifacts
 

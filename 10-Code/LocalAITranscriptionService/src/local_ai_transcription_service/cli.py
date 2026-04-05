@@ -4,7 +4,14 @@ from .benchmark import run_benchmark_pack
 import json
 from pathlib import Path
 
-from .pipeline import rebuild_job_artifacts, resolve_job_name, run_batch_pipeline, run_intake_batch_pipeline, run_pipeline
+from .pipeline import (
+    build_status_sync_payload,
+    rebuild_job_artifacts,
+    resolve_job_name,
+    run_batch_pipeline,
+    run_intake_batch_pipeline,
+    run_pipeline,
+)
 from .proof import promote_job_to_proof
 from .queue import enqueue_audio_file, enqueue_intake_package, enqueue_transcript_file, mark_queue_item, next_queued_item, queue_status
 from .review import review_proof
@@ -23,6 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--rebuild-job", type=Path, help="Path to an existing job output directory or meta.json to rebuild without rerunning Whisper.")
     parser.add_argument("--promote-proof", type=Path, help="Promote an existing job output directory or meta.json into samples/proof-deliverables.")
     parser.add_argument("--review-proof", type=Path, help="Review a promoted proof directory or proof-summary.json.")
+    parser.add_argument("--export-status-sync", type=Path, help="Export a browser-friendly status sync JSON from a job output directory or meta.json.")
     parser.add_argument("--proof-root", type=Path, default=Path("samples/proof-deliverables"), help="Root folder for promoted proof assets.")
     parser.add_argument("--proof-label", help="Optional label used to name the promoted proof asset.")
     parser.add_argument("--enqueue-intake-package", type=Path, help="Add an intake package to the lightweight local job queue.")
@@ -156,6 +164,7 @@ def main() -> int:
             args.intake_package,
             args.intake_dir,
             args.rebuild_job,
+            args.export_status_sync,
             args.promote_proof,
             args.review_proof,
             args.enqueue_intake_package,
@@ -170,7 +179,7 @@ def main() -> int:
     if source_count == 0:
         parser.error("one input source is required")
     if source_count > 1:
-        parser.error("provide only one of --transcript-file, --audio-file, --intake-package, --intake-dir, --rebuild-job, --transcript-dir, --audio-dir, or --benchmark-dir")
+        parser.error("provide only one of --transcript-file, --audio-file, --intake-package, --intake-dir, --rebuild-job, --export-status-sync, --transcript-dir, --audio-dir, or --benchmark-dir")
 
     if args.rebuild_job:
         artifacts = rebuild_job_artifacts(
@@ -185,6 +194,34 @@ def main() -> int:
         print(f"Meta: {artifacts.meta_path}")
         if artifacts.speech_path and artifacts.speech_path.exists():
             print(f"Speech: {artifacts.speech_path}")
+        print(f"Status Sync: {artifacts.status_sync_path}")
+        return 0
+
+    if args.export_status_sync:
+        job_output = args.export_status_sync
+        if job_output.is_file():
+            if job_output.name != "meta.json":
+                parser.error("--export-status-sync expects a job output directory or meta.json")
+            job_output = job_output.parent
+        meta_path = job_output / "meta.json"
+        if not meta_path.exists():
+            parser.error(f"missing meta.json in {job_output}")
+        meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        from .pipeline import create_job_artifacts, write_status_sync_artifact
+
+        artifacts = create_job_artifacts(job_output.parent, str(meta.get("job_name") or job_output.name))
+        quality = meta.get("quality") if isinstance(meta.get("quality"), dict) else {}
+        intake_manifest = meta.get("intake_manifest") if isinstance(meta.get("intake_manifest"), dict) else None
+        processing_notes = meta.get("processing_notes")
+        if not isinstance(processing_notes, list):
+            processing_notes = []
+        status_path = write_status_sync_artifact(
+            artifacts=artifacts,
+            intake_manifest=intake_manifest,
+            quality=quality,
+            processing_notes=processing_notes,
+        )
+        print(status_path)
         return 0
 
     if args.promote_proof:
@@ -348,6 +385,7 @@ def main() -> int:
         print(f"Transcript: {artifacts.transcript_path}")
         print(f"Deliverable: {artifacts.deliverable_path}")
         print(f"Meta: {artifacts.meta_path}")
+        print(f"Status Sync: {artifacts.status_sync_path}")
         if artifacts.speech_path and artifacts.speech_path.exists():
             print(f"Speech: {artifacts.speech_path}")
         return 0

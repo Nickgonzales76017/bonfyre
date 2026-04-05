@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-04-04T04:41:37.470466+00:00",
+  "created_at": "2026-04-05T00:52:53.534826+00:00",
   "offer_name": "Customer Sample - Gaurav Deep Offer",
   "headline": "Local-first transcript deliverables for customer-research teams",
   "promise": "Send one messy recording. Get back a clean transcript, a structured summary, and candidate next steps.",
@@ -8,6 +8,15 @@
   "price": "$18",
   "turnaround": "same day for short files",
   "source_kind": "audio_file",
+  "service_lane": "Local AI Transcription Service",
+  "output_shape": "transcript, executive summary, and action items",
+  "next_step": "route reviewed proof into monetization and distribution",
+  "intake_context": {
+    "job_title": "Customer Sample - Gaurav Conversations Deep Clip",
+    "output_goal": "transcript-summary-actions",
+    "buyer_type": "",
+    "client_name": "Public Sample"
+  },
   "review_score": 100,
   "recommendation": "promote",
   "proof_quality": {
@@ -49,5 +58,5 @@
     }
   ],
   "outreach_hook": "I turned a messy public recording into a structured deliverable with 4 usable next steps. I can do the same for one of your calls or voice notes.",
-  "deliverable_excerpt": "# Customer Sample - Gaurav Conversations Deep Clip\n\n## Executive Snapshot\n- source: audio_file\n- summary bullets: 5\n- action items: 4\n- transcript paragraphs: 64\n\n## Quality\n- status: strong\n- score: 95\n- summary bullets: 5\n- action items: 4\n\n## Processing Notes\n- Deliverable rebuilt from saved transcript artifacts without rerunning Whisper.\n- Job metadata imported from browser intake manifest.\n- Cleanup pass adjusted transcript text before formatting.\n- Transcript formatted into 64 paragraph blocks.\n\n## Intake Context\n- client: Public Sample\n- output goal: transcript-summary-actions\n- context: Public customer-conversation sample. Focus on the middle of the conversation where pivots, ICP changes, and customer-learning signals should be clearer.\n\n## Source\n- kind: audio_file\n\n## Summary\n- Initial monetization is a 5% fee on performers, with a later customer-side processing fee.\n- The workflow is a two-sided marketplace where event promoters post gigs and the system matches and ranks performers.\n- They are redesigning onboarding around a simpler step-by-step workflow.\n- We're going to talk to them in person, take their feedback in person, and then refine the product as needed, and then take it to just of the California, the Nevada, et cetera.\n- Finding this gig is not my biggest problem.\n\n## Action Items\n- Build one thing, which is the most vital, most valuable.\n- Check out their"
+  "deliverable_excerpt": "# Customer Sample - Gaurav Conversations Deep Clip\n\n## Executive Snapshot\n- source: audio_file\n- summary bullets: 5\n- action items: 4\n- transcript paragraphs: 64\n\n## Quality\n- status: strong\n- score: 95\n- summary bullets: 5\n- action items: 4\n\n## Processing Notes\n- Deliverable rebuilt from saved transcript artifacts without rerunning Whisper.\n- Job metadata imported from browser intake manifest.\n- Cleanup pass adjusted transcript text before formatting.\n- Transcript formatted into 64 paragraph blocks.\n\n## Intake Context\n- client: Public Sample\n- output goal: transcript-summary-actions\n- context: Public customer-conversation sample. Focus on the middle of the conversation where pivots, ICP changes, and customer-learning signals should be clearer.\n\n## Source\n- kind: audio_file\n\n## Summary\n- Initial monetization is a 5% fee on performers, with a later customer-side processing fee.\n- The workflow is a two-sided marketplace where event promoters post gigs and the system matches and ranks performers.\n- They are redesigning onboarding around a simpler step-by-step workflow.\n- The go-to-market plan is to prove the product locally in Pasadena before expanding.\n- Finding this gig is not my biggest problem.\n\n## Action Items\n- Build one thing, which is the most vital, most valuable.\n- Check out their social media.\n- Screen their video, audio, their website, EPK, whatnot, did all those thing"
 }

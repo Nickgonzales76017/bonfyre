@@ -4,7 +4,7 @@ cssclasses:
   - system
 title: Web Worker SaaS
 created: 2026-04-03
-updated: 2026-04-03
+updated: 2026-04-04
 status: planned
 stage: design
 source_project: [[02-Projects/Project - Web Worker SaaS]]
@@ -67,6 +67,13 @@ Browser upload -> local job capture and persistent client-side state -> exportab
 - the strongest initial use case is still tied to transcription, but the intake layer is documented as reusable across adjacent services
 - the browser intake layer now exports a handoff manifest that the local transcription pipeline can consume
 - the local transcription pipeline can now process exported intake folders in batch
+- the intake layer now also exports routing intelligence so jobs arrive as pre-routed operator work, not just uploaded files
+- the queue now supports lightweight batch operator actions without requiring a separate dashboard
+- batch results can now be imported back into the browser queue by slug, reducing one-by-one operator cleanup
+- operator mode now filters out completed jobs so the browser queue behaves more like a live work surface
+- imported markdown deliverables now render as structured sections with nested bullets instead of raw preformatted text
+- the browser shell is now installable, caches its core assets, and has an offline fallback page for uncached navigation
+- a thin file-based status sync now exists: pipeline-generated `browser-status.json` files can be imported by `jobId` or `jobSlug` to update browser jobs without manual status edits
 
 ## Bottlenecks
 - manual transcription flow is not proven yet
@@ -81,7 +88,7 @@ Browser upload -> local job capture and persistent client-side state -> exportab
 - revenue or time saved: reduction in backend dependence and increased product leverage
 
 ## Next Improvement
-👉 reduce the friction of the intake-to-processing bridge, then decide what compute should move browser-side
+👉 pressure-test the installable shell across real browsers, then decide whether the next sync step should be push/poll or stay file-based longer
 
 ## Links
 ### Source Project

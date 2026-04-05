@@ -78,6 +78,12 @@ def reviewed_proofs(index_path: Path) -> List[Dict[str, object]]:
 
 
 def detect_buyer_segment(summary_payload: Dict[str, object]) -> str:
+    intake_manifest = summary_payload.get("intake_manifest", {})
+    if isinstance(intake_manifest, dict):
+        buyer_type = str(intake_manifest.get("buyerType", "")).strip()
+        if buyer_type:
+            return buyer_type
+
     proof_label = str(summary_payload.get("proof_label", "")).lower()
     context = str(summary_payload.get("intake_manifest", {}).get("contextNotes", "")).lower() if isinstance(summary_payload.get("intake_manifest"), dict) else ""
     joined = f"{proof_label} {context}"
@@ -93,6 +99,38 @@ def detect_buyer_segment(summary_payload: Dict[str, object]) -> str:
     return "operators with messy audio inputs"
 
 
+def derive_service_lane(summary_payload: Dict[str, object]) -> str:
+    intake_manifest = summary_payload.get("intake_manifest", {})
+    if isinstance(intake_manifest, dict):
+        service_lane = str(intake_manifest.get("serviceLane", "")).strip()
+        if service_lane:
+            return service_lane
+    return "Local AI Transcription Service"
+
+
+def derive_output_shape(summary_payload: Dict[str, object]) -> str:
+    intake_manifest = summary_payload.get("intake_manifest", {})
+    if isinstance(intake_manifest, dict):
+        output_shape = str(intake_manifest.get("outputShape", "")).strip()
+        if output_shape:
+            return output_shape
+        output_goal = str(intake_manifest.get("outputGoal", "")).strip()
+        if output_goal == "voice-memo-to-plan":
+            return "decision-ready memo with action items"
+        if output_goal == "meeting-recap":
+            return "customer recap with pain points, insights, and follow-ups"
+    return "transcript, executive summary, and action items"
+
+
+def derive_next_step(summary_payload: Dict[str, object]) -> str:
+    intake_manifest = summary_payload.get("intake_manifest", {})
+    if isinstance(intake_manifest, dict):
+        next_step = str(intake_manifest.get("nextStep", "")).strip()
+        if next_step:
+            return next_step
+    return "route reviewed proof into monetization and distribution"
+
+
 def build_offer_payload(
     *,
     summary_payload: Dict[str, object],
@@ -103,7 +141,13 @@ def build_offer_payload(
     if not isinstance(quality, dict):
         quality = {}
 
+    intake_manifest = summary_payload.get("intake_manifest", {})
+    if not isinstance(intake_manifest, dict):
+        intake_manifest = {}
     buyer_segment = detect_buyer_segment(summary_payload)
+    service_lane = derive_service_lane(summary_payload)
+    output_shape = derive_output_shape(summary_payload)
+    next_step = derive_next_step(summary_payload)
     proof_label = str(summary_payload.get("proof_label") or summary_payload.get("job_name") or "Proof Asset")
     source_kind = str(summary_payload.get("source_kind") or "audio_file")
     recommendation = str(review_payload.get("recommendation") or "usable-with-review")
@@ -144,6 +188,15 @@ def build_offer_payload(
         "price": price,
         "turnaround": turnaround,
         "source_kind": source_kind,
+        "service_lane": service_lane,
+        "output_shape": output_shape,
+        "next_step": next_step,
+        "intake_context": {
+            "job_title": str(intake_manifest.get("jobTitle") or ""),
+            "output_goal": str(intake_manifest.get("outputGoal") or ""),
+            "buyer_type": str(intake_manifest.get("buyerType") or ""),
+            "client_name": str(intake_manifest.get("clientName") or ""),
+        },
         "review_score": review_score,
         "recommendation": recommendation,
         "proof_quality": quality,
@@ -178,6 +231,11 @@ def render_offer_markdown(payload: Dict[str, object]) -> str:
 
 ## Buyer
 {payload['buyer_segment']}
+
+## Routing
+- service lane: {payload['service_lane']}
+- output shape: {payload['output_shape']}
+- next step: {payload['next_step']}
 
 ## Pricing
 - price: {payload['price']}
@@ -289,6 +347,11 @@ tags:
 - promised outcome: {payload['promise']}
 - turnaround: {payload['turnaround']}
 
+## Routing
+- service lane: {payload['service_lane']}
+- output shape: {payload['output_shape']}
+- next step: {payload['next_step']}
+
 ## Deliverable
 {deliverables}
 
@@ -311,9 +374,9 @@ tags:
 
 ## Delivery Workflow
 1. intake
-2. local processing
-3. review and package
-4. deliver and use as proof
+2. {payload['service_lane']}
+3. review and package around {payload['output_shape']}
+4. {payload['next_step']}
 
 ## Risks
 - this note is generated from a proof asset and still needs human tightening before outbound
@@ -355,6 +418,8 @@ def render_offer_catalog_note(index_payload: Dict[str, object]) -> str:
                 f"- buyer: {offer.get('buyer_segment', 'unknown')}",
                 f"- price: {offer.get('price', 'n/a')}",
                 f"- proof asset: {offer.get('proof_asset', 'n/a')}",
+                f"- service lane: {offer.get('service_lane', 'n/a')}",
+                f"- output shape: {offer.get('output_shape', 'n/a')}",
                 f"- review score: {offer.get('review_score', 'n/a')}",
                 f"- note: [[05-Monetization/{offer.get('vault_note_name', '')}]]" if offer.get("vault_note_name") else "- note: n/a",
                 "",
@@ -466,6 +531,8 @@ def generate_offer_package(
                 "buyer_segment": payload["buyer_segment"],
                 "price": payload["price"],
                 "proof_asset": payload["proof_asset"],
+                "service_lane": payload["service_lane"],
+                "output_shape": payload["output_shape"],
                 "review_score": payload["review_score"],
                 "vault_note_name": vault_note_name,
                 "generated_at": payload["created_at"],

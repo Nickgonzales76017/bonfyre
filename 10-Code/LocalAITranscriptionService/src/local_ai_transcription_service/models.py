@@ -12,6 +12,7 @@ class JobArtifacts:
     transcript_path: Path
     deliverable_path: Path
     meta_path: Path
+    status_sync_path: Path
     speech_path: Optional[Path] = None
 
 

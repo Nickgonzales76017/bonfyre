@@ -9,6 +9,11 @@ Send one messy recording. Get back a clean transcript, a structured summary, and
 ## Buyer
 customer-research teams
 
+## Routing
+- service lane: Local AI Transcription Service
+- output shape: transcript, executive summary, and action items
+- next step: route reviewed proof into monetization and distribution
+
 ## Pricing
 - price: $18
 - turnaround: same day for short files

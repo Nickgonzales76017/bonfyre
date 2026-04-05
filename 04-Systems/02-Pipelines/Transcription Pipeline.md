@@ -18,6 +18,12 @@ aliases:
 
 This hub links the components that together form the transcription pipeline.
 
+## Active Product Loop
+- upstream product loop: [[04-Systems/02-Pipelines/Revenue Product Pipeline]]
+- browser/operator loop: [[04-Systems/02-Pipelines/Browser Fulfillment Pipeline]]
+- code entrypoint: `10-Code/ProductPipelines/orchestrate.py`
+- current refresh command: `python3 10-Code/ProductPipelines/orchestrate.py run transcription-revenue`
+
 ## Components
 - [[01-Ideas/Audio Intake Normalizer]]
 - [[01-Ideas/Deliverable Formatter Engine]]

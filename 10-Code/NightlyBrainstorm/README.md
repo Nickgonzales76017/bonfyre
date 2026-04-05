@@ -69,6 +69,8 @@ You review with coffee. Approve. Dispatch.
     └── test_pipeline.pl    ← Integration test suite (74 tests)
 ```
 
+Note: the `vault_root` value in `nightly.json` may be a relative path. `nightly.pl` now resolves relative `vault_root` values against the script directory, so the orchestrator will find the vault whether you invoke it from the repository root or another working directory. To force a specific location, set `vault_root` to an absolute path.
+
 ---
 
 ## Core Design Principle

@@ -3,18 +3,14 @@ type: offer
 cssclasses:
   - offer
 title: Founder Sample - PickFu Offer
-created: 2026-04-04
-updated: 2026-04-04
+created: 2026-04-05
+updated: 2026-04-05
 status: draft
 tags:
   - offer
-  - draft
   - monetization
   - generated
-aliases:
-  - Founder Sample - PickFu Offer
 ---
-
 
 # Offer: Founder Sample - PickFu Offer
 
@@ -23,6 +19,11 @@ aliases:
 - painful problem: recordings pile up and never become decision-ready outputs
 - promised outcome: Send one messy recording. Get back a clean transcript, a structured summary, and candidate next steps.
 - turnaround: same day for short files
+
+## Routing
+- service lane: Local AI Transcription Service
+- output shape: transcript, executive summary, and action items
+- next step: route reviewed proof into monetization and distribution
 
 ## Deliverable
 - clean transcript
@@ -51,9 +52,9 @@ aliases:
 
 ## Delivery Workflow
 1. intake
-2. local processing
-3. review and package
-4. deliver and use as proof
+2. Local AI Transcription Service
+3. review and package around transcript, executive summary, and action items
+4. route reviewed proof into monetization and distribution
 
 ## Risks
 - this note is generated from a proof asset and still needs human tightening before outbound

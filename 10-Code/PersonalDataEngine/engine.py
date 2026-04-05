@@ -200,6 +200,38 @@ def _scan_distribution_signals(vault, generated_offers):
             if proof_asset:
                 offer_map[offer_name]["project_names"].add("Local AI Transcription Service")
 
+    snapshot_path = vault / "05-Monetization" / "_distribution-pipeline-snapshot.json"
+    if snapshot_path.exists():
+        payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
+        distribution = ensure("Quiet Distribution Engine")
+        distribution["outreach_sends"] = int(payload.get("total_sends", 0) or 0)
+        distribution["outreach_replied"] = int(payload.get("replied_count", 0) or 0)
+        distribution["outreach_positive"] = int(payload.get("positive_reply_count", 0) or 0)
+        distribution["outreach_waiting"] = int(payload.get("pending_count", 0) or 0)
+        distribution["followup_due"] = int(payload.get("followup_due_count", 0) or 0)
+
+        for row in payload.get("recent_sends", []):
+            offer_name = str(row.get("offer_name") or "").strip()
+            if not offer_name or offer_name not in offer_map:
+                continue
+            mapped = offer_map[offer_name]
+            project_reply = str(row.get("reply_type") or "waiting")
+            for project_name in mapped["project_names"]:
+                project = ensure(project_name)
+                project["outreach_sends"] += 1
+                project["linked_offer_sends"] += 1
+                if project_reply == "positive":
+                    project["outreach_replied"] += 1
+                    project["outreach_positive"] += 1
+                elif project_reply == "negative":
+                    project["outreach_replied"] += 1
+                    project["outreach_negative"] += 1
+                elif project_reply == "neutral":
+                    project["outreach_replied"] += 1
+                else:
+                    project["outreach_waiting"] += 1
+        return signals
+
     db_path = vault / "10-Code" / "QuietDistributionEngine" / "data" / "distribution.db"
     if not db_path.exists():
         return signals

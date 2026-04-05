@@ -4,14 +4,14 @@
    "elapsed" : 0,
    "entries" : [
       {
-         "output_length" : 406,
-         "pass" : "idea_expand",
+         "output_length" : 572,
+         "pass" : "agent_brief",
          "path" : "(dry run â skipped write)",
-         "title" : "Ambient Logistics Layer",
-         "type" : "idea"
+         "title" : "Local AI Transcription Service",
+         "type" : "project"
       }
    ],
    "passes" : [
-      "idea_expand"
+      "agent_brief"
    ]
 }

@@ -4,10 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Bonfyre</title>
+    <meta name="theme-color" content="#d55d3f" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <main class="shell">
+      <section id="install-banner" class="install-banner hidden">
+        <div>
+          <p class="install-kicker">Install Bonfyre</p>
+          <h2 class="install-title">Keep this intake console offline and one tap away.</h2>
+        </div>
+        <div class="install-actions">
+          <button type="button" id="install-app" class="pill-btn">Install App</button>
+          <button type="button" id="dismiss-install" class="pill-btn">Dismiss</button>
+        </div>
+      </section>
 
       <!-- ───── DROP ZONE (the whole point) ───── -->
       <section id="drop-section" class="drop-section">
@@ -83,6 +98,24 @@
               <option value="processing">Processing</option>
               <option value="done">Done</option>
             </select>
+            <label class="operator-toggle">
+              <input id="operator-mode" type="checkbox" />
+              <span>Operator Mode</span>
+            </label>
+          </div>
+        </div>
+        <div class="operator-bar">
+          <p id="selection-summary" class="selection-summary">0 selected</p>
+          <div class="operator-actions">
+            <button type="button" id="select-visible" class="pill-btn">Select Visible</button>
+            <button type="button" id="clear-selection" class="pill-btn">Clear</button>
+            <button type="button" id="mark-selected-ready" class="pill-btn">Mark Ready</button>
+            <button type="button" id="export-selected-manifests" class="pill-btn">Export Manifests</button>
+            <button type="button" id="export-selected-packages" class="pill-btn">Export Packages</button>
+            <button type="button" id="import-selected-status-btn" class="pill-btn">Import Status</button>
+            <input id="import-selected-status" type="file" accept=".json" multiple hidden />
+            <button type="button" id="import-selected-results-btn" class="pill-btn">Import Results</button>
+            <input id="import-selected-results" type="file" accept=".md,.txt,.markdown" multiple hidden />
           </div>
         </div>
         <div id="job-list" class="job-list"></div>
@@ -111,10 +144,16 @@
         <div class="drawer-meta">
           <div><span>File</span><p id="detail-file"></p></div>
           <div><span>Goal</span><p id="detail-goal"></p></div>
+          <div><span>Buyer</span><p id="detail-buyer"></p></div>
           <div><span>Contact</span><p id="detail-contact"></p></div>
           <div><span>Turnaround</span><p id="detail-turnaround"></p></div>
           <div><span>Submitted</span><p id="detail-created"></p></div>
           <div><span>Completed</span><p id="detail-completed"></p></div>
+        </div>
+
+        <div class="drawer-block">
+          <span>Routing</span>
+          <p id="detail-routing" class="drawer-context"></p>
         </div>
 
         <div id="detail-context-block" class="drawer-block">
@@ -127,11 +166,17 @@
           <span>Results</span>
           <div id="deliverable-empty" class="results-empty">
             <p>No results yet.</p>
+            <button type="button" id="import-status-btn" class="pill-btn">Import status</button>
+            <input id="import-status" type="file" accept=".json" hidden />
             <button type="button" id="import-results-btn" class="pill-btn">Import deliverable</button>
             <input id="import-results" type="file" accept=".md,.txt,.markdown" hidden />
           </div>
           <div id="deliverable-content" class="hidden">
-            <pre id="deliverable-text" class="results-text"></pre>
+            <div id="deliverable-rendered" class="results-rendered"></div>
+            <details class="results-raw">
+              <summary>Raw markdown</summary>
+              <pre id="deliverable-text" class="results-text"></pre>
+            </details>
             <div class="results-actions">
               <button type="button" id="copy-deliverable" class="pill-btn">Copy</button>
               <button type="button" id="export-deliverable" class="pill-btn">Download</button>
@@ -175,6 +220,9 @@
 
     <template id="job-card-template">
       <article class="job-card" tabindex="0">
+        <label class="job-card-select">
+          <input type="checkbox" class="job-select-checkbox" />
+        </label>
         <div class="job-card-body">
           <h3 class="job-card-title"></h3>
           <p class="job-card-meta"></p>

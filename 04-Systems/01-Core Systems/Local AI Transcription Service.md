@@ -77,6 +77,7 @@ Audio file -> local transcription -> cleanup -> summarization -> formatted deliv
 - a reusable intake manifest contract now connects browser job metadata to the local processing layer
 - folder-based intake automation now lets the local pipeline process exported browser job bundles
 - one-file intake package import now lets the local pipeline consume browser-exported job bundles without a separate audio download step
+- each completed or rebuilt job now writes a browser-friendly `browser-status.json` artifact so the browser intake layer can sync `done` state, quality, and deliverable content back in
 - a lightweight local queue now lets intake packages be staged and drained later so capture does not have to immediately become heavy compute
 - an optional launchd auto-drain path now lets the queue be checked on a timer while still honoring shared load guardrails
 - the same machine-local Piper voice layer used by `NightlyBrainstorm` is now reused here for optional spoken outputs
@@ -97,7 +98,7 @@ Audio file -> local transcription -> cleanup -> summarization -> formatted deliv
 - transcript paragraphing, section shaping, and nested deep-summary formatting now exist, but section-specific rewriting still needs refinement
 - benchmark infrastructure exists, but a meaningful human-rated eval set is still missing
 - summary and action extraction now look much better on the PickFu sample, but they still need broader validation before they can be trusted as default sellable output
-- browser intake and handoff automation now exist at the folder level, but the overall operator flow is still manual and not yet product-smooth
+- browser intake, handoff automation, and file-based status sync now exist, but the overall operator flow is still manual and not yet product-smooth
 - one-file handoff is smoother, but the real operator loop still needs proof on a customer-like file
 - queueing reduces bottleneck pressure, and scheduled draining now exists, but it still needs a tighter operator workflow overall
 - spoken output exists, but it is still raw `.wav` and not yet packaged for easier client delivery

@@ -1,0 +1,97 @@
+{
+  "pipeline": "transcription-revenue",
+  "generated_at": "2026-04-05T00:52:53.881535+00:00",
+  "proof": {
+    "count": 2,
+    "index_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/proof-deliverables/index.json"
+  },
+  "offers": {
+    "created_at": "2026-04-05T00:52:53.537282+00:00",
+    "updated_at": "2026-04-05T00:52:53.537285+00:00",
+    "reviewed_proof_count": 2,
+    "generated_offer_count": 2,
+    "offers": [
+      {
+        "offer_name": "Founder Sample - PickFu Offer",
+        "proof_asset": "Founder Sample - PickFu",
+        "buyer_segment": "founders and operators",
+        "recommendation": "promote",
+        "review_score": 100
+      },
+      {
+        "offer_name": "Customer Sample - Gaurav Deep Offer",
+        "proof_asset": "Customer Sample - Gaurav Deep",
+        "buyer_segment": "customer-research teams",
+        "recommendation": "promote",
+        "review_score": 100
+      }
+    ]
+  },
+  "distribution": {
+    "project": "QuietDistributionEngine",
+    "generated_at": "2026-04-04T19:52:53",
+    "total_sends": 1,
+    "channels": {
+      "dm": {
+        "sent": 1,
+        "positive": 0,
+        "negative": 0,
+        "neutral": 0,
+        "waiting": 1
+      }
+    },
+    "live_offer_count": 2,
+    "linked_offer_count": 1,
+    "replied_count": 0,
+    "pending_count": 1,
+    "followup_due_count": 0,
+    "response_rate": 0.0,
+    "positive_reply_count": 0,
+    "positive_reply_rate": 0.0,
+    "best_channel": "dm",
+    "best_positive_rate": 0.0,
+    "recent_sends": [
+      {
+        "id": 1,
+        "channel": "dm",
+        "target": "sample-founder",
+        "offer_name": "Founder Sample - PickFu Offer",
+        "reply_type": "waiting",
+        "sent_at": "2026-04-04T13:11:37"
+      }
+    ]
+  },
+  "analytics": {
+    "project": "PersonalDataEngine",
+    "generated_at": "2026-04-04T19:52:53",
+    "recent_log_count": 2,
+    "project_count": 25,
+    "active_project_count": 4,
+    "proof_project_count": 2,
+    "offer_project_count": 0,
+    "outreach_project_count": 3,
+    "positive_reply_project_count": 0,
+    "top_projects": [
+      {
+        "name": "Personal Market Layer",
+        "score": 100
+      },
+      {
+        "name": "Local AI Transcription Service",
+        "score": 89
+      },
+      {
+        "name": "Quiet Distribution Engine",
+        "score": 72
+      },
+      {
+        "name": "Whisper + FFmpeg Wrapper Kit",
+        "score": 65
+      },
+      {
+        "name": "Service Arbitrage Hub",
+        "score": 60
+      }
+    ]
+  }
+}

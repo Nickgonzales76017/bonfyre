@@ -1,0 +1,17 @@
+{
+  "generated_at": "2026-04-05T00:52:54.217869+00:00",
+  "pipelines": [
+    {
+      "pipeline": "transcription-revenue",
+      "generated_at": "2026-04-05T00:52:53.881535+00:00"
+    },
+    {
+      "pipeline": "service-delivery",
+      "generated_at": "2026-04-05T00:52:54.215689+00:00"
+    },
+    {
+      "pipeline": "browser-fulfillment",
+      "generated_at": "2026-04-05T00:52:54.217380+00:00"
+    }
+  ]
+}

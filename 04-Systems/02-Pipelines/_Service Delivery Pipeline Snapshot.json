@@ -1,0 +1,70 @@
+{
+  "pipeline": "service-delivery",
+  "generated_at": "2026-04-05T00:52:54.215689+00:00",
+  "arbitrage": {
+    "project": "ServiceArbitrageHub",
+    "service_count": 1,
+    "job_count": 1,
+    "handoff_count": 1,
+    "best_service": "AI Transcription Pilot",
+    "best_margin_pct": 88.6
+  },
+  "delivery": {
+    "project": "AIOverseasLaborPipeline",
+    "total_jobs": 1,
+    "counts": {
+      "pending": 1,
+      "completed": 0,
+      "needs-rework": 0
+    },
+    "job_types": {
+      "full-deliverable": 1
+    },
+    "source_counts": {
+      "ServiceArbitrageHub": 1
+    },
+    "estimated_revenue": 35.0,
+    "estimated_cost": 5.25,
+    "estimated_margin": 29.75
+  },
+  "marketplace": {
+    "project": "RepackagedServiceMarketplace",
+    "bundle_count": 0,
+    "top_bundle": null,
+    "top_margin": null,
+    "targets": []
+  },
+  "analytics": {
+    "project": "PersonalDataEngine",
+    "generated_at": "2026-04-04T19:52:54",
+    "recent_log_count": 2,
+    "project_count": 25,
+    "active_project_count": 4,
+    "proof_project_count": 2,
+    "offer_project_count": 0,
+    "outreach_project_count": 3,
+    "positive_reply_project_count": 0,
+    "top_projects": [
+      {
+        "name": "Personal Market Layer",
+        "score": 100
+      },
+      {
+        "name": "Local AI Transcription Service",
+        "score": 89
+      },
+      {
+        "name": "Quiet Distribution Engine",
+        "score": 72
+      },
+      {
+        "name": "Whisper + FFmpeg Wrapper Kit",
+        "score": 65
+      },
+      {
+        "name": "Service Arbitrage Hub",
+        "score": 60
+      }
+    ]
+  }
+}

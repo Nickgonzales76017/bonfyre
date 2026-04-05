@@ -13,6 +13,7 @@ This folder contains implementation work for the projects tracked in the vault.
 - `RepackagedServiceMarketplace`
 - `AIOverseasLaborPipeline`
 - `WebWorkerSaaS`
+- `ProductPipelines` — named product loops that tie the active systems together
 
 ### Standalone Projects
 - `AmbientLogisticsLayer` — local logistics coordination

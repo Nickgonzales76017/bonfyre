@@ -11,6 +11,9 @@ const WARN_FILE_SIZE = 25 * 1024 * 1024;
 const dropZone = document.getElementById("drop-zone");
 const browseBtn = document.getElementById("browse-btn");
 const audioInput = document.getElementById("audio-file");
+const installBanner = document.getElementById("install-banner");
+const installAppBtn = document.getElementById("install-app");
+const dismissInstallBtn = document.getElementById("dismiss-install");
 const fileReady = document.getElementById("file-ready");
 const fileNameEl = document.getElementById("file-name");
 const fileSizeEl = document.getElementById("file-size");
@@ -23,6 +26,17 @@ const filesSection = document.getElementById("files-section");
 const jobList = document.getElementById("job-list");
 const jobSearch = document.getElementById("job-search");
 const statusFilter = document.getElementById("status-filter");
+const operatorMode = document.getElementById("operator-mode");
+const selectionSummary = document.getElementById("selection-summary");
+const selectVisibleBtn = document.getElementById("select-visible");
+const clearSelectionBtn = document.getElementById("clear-selection");
+const markSelectedReadyBtn = document.getElementById("mark-selected-ready");
+const exportSelectedManifestsBtn = document.getElementById("export-selected-manifests");
+const exportSelectedPackagesBtn = document.getElementById("export-selected-packages");
+const importSelectedStatusBtn = document.getElementById("import-selected-status-btn");
+const importSelectedStatusInput = document.getElementById("import-selected-status");
+const importSelectedResultsBtn = document.getElementById("import-selected-results-btn");
+const importSelectedResultsInput = document.getElementById("import-selected-results");
 
 const detailDrawer = document.getElementById("detail-drawer");
 const closeDrawerBtn = document.getElementById("close-drawer");
@@ -30,12 +44,14 @@ const detailClient = document.getElementById("detail-client");
 const detailTitle = document.getElementById("detail-title");
 const detailFile = document.getElementById("detail-file");
 const detailGoal = document.getElementById("detail-goal");
+const detailBuyer = document.getElementById("detail-buyer");
 const detailContact = document.getElementById("detail-contact");
 const detailTurnaround = document.getElementById("detail-turnaround");
 const detailCreated = document.getElementById("detail-created");
 const detailCompleted = document.getElementById("detail-completed");
 const detailContext = document.getElementById("detail-context");
 const detailContextBlock = document.getElementById("detail-context-block");
+const detailRouting = document.getElementById("detail-routing");
 const detailBrief = document.getElementById("detail-brief");
 const detailStatus = document.getElementById("detail-status");
 const saveStatusBtn = document.getElementById("save-status");
@@ -47,10 +63,13 @@ const exportPackageBtn = document.getElementById("export-package");
 const downloadAudioBtn = document.getElementById("download-audio");
 const deleteJobBtn = document.getElementById("delete-job");
 
+const importStatusBtn = document.getElementById("import-status-btn");
+const importStatusInput = document.getElementById("import-status");
 const importResultsBtn = document.getElementById("import-results-btn");
 const importResultsInput = document.getElementById("import-results");
 const deliverableEmpty = document.getElementById("deliverable-empty");
 const deliverableContent = document.getElementById("deliverable-content");
+const deliverableRendered = document.getElementById("deliverable-rendered");
 const deliverableText = document.getElementById("deliverable-text");
 const copyDeliverableBtn = document.getElementById("copy-deliverable");
 const exportDeliverableBtn = document.getElementById("export-deliverable");
@@ -66,22 +85,50 @@ let jobs = [];
 let selectedJobId = null;
 let pendingFile = null;
 let activePreset = null;
+let selectedJobIds = new Set();
+let deferredInstallPrompt = null;
 
 const PRESETS = {
   "founder-memo": {
+    buyerType: "founders and operators",
     outputGoal: "voice-memo-to-plan",
     turnaroundTarget: "same-day",
     contextNotes: "Founder voice memo. Pull out key decisions, priorities, and immediate next steps.",
   },
   "customer-call": {
+    buyerType: "customer-research teams",
     outputGoal: "meeting-recap",
     turnaroundTarget: "24h",
     contextNotes: "Customer conversation. Extract pain points, objections, signals, and follow-up actions.",
   },
   "consultant-recap": {
+    buyerType: "consultants and client-service operators",
     outputGoal: "transcript-summary-actions",
     turnaroundTarget: "24h",
     contextNotes: "Client-facing recap. Keep wording crisp and decision-ready for handoff.",
+  },
+};
+
+const ROUTING_RULES = {
+  "voice-memo-to-plan": {
+    serviceLane: "Local AI Transcription Service",
+    outputShape: "decision-ready memo with action items",
+    nextStep: "export one-file package and process through LocalAITranscriptionService",
+  },
+  "meeting-recap": {
+    serviceLane: "Local AI Transcription Service",
+    outputShape: "customer recap with pain points, insights, and follow-ups",
+    nextStep: "export package, then promote strong outputs into PersonalMarketLayer proof assets",
+  },
+  "transcript-summary-actions": {
+    serviceLane: "Local AI Transcription Service",
+    outputShape: "transcript, executive summary, and action list",
+    nextStep: "export package for processing, then route reviewed proof into monetization and distribution",
+  },
+  custom: {
+    serviceLane: "Operator Review",
+    outputShape: "custom deliverable",
+    nextStep: "review job context before assigning downstream system",
   },
 };
 
@@ -154,6 +201,10 @@ function fmtTurnaround(v) {
   return "Flexible";
 }
 
+function fmtBuyerType(v) {
+  return v || "\u2014";
+}
+
 function statusLabel(s) {
   if (s === "ready") return "Ready";
   if (s === "processing") return "Processing";
@@ -170,6 +221,15 @@ function toast(msg, type = "info", ms = 3000) {
     el.classList.add("toast-out");
     el.addEventListener("animationend", () => el.remove());
   }, ms);
+}
+
+function setInstallBannerVisible(visible) {
+  if (!installBanner) return;
+  installBanner.classList.toggle("hidden", !visible);
+}
+
+function updateSelectionSummary() {
+  selectionSummary.textContent = `${selectedJobIds.size} selected`;
 }
 
 function confirmAction(msg) {
@@ -211,9 +271,209 @@ function blobToBase64(blob) {
   });
 }
 
+function headingLabel(line) {
+  return line.replace(/^#{1,6}\s+/, "").trim();
+}
+
+function bulletMatch(line) {
+  return line.match(/^(\s*)-\s+(.*)$/);
+}
+
+function parseDeliverable(markdown) {
+  const lines = (markdown || "").replace(/\r\n/g, "\n").split("\n");
+  const sections = [];
+  let current = { title: "Deliverable", blocks: [] };
+  let paragraphLines = [];
+
+  function flushParagraph() {
+    const text = paragraphLines.join(" ").replace(/\s+/g, " ").trim();
+    if (text) current.blocks.push({ type: "paragraph", text });
+    paragraphLines = [];
+  }
+
+  function flushSection() {
+    flushParagraph();
+    if (current.blocks.length || current.title) sections.push(current);
+  }
+
+  function ensureListBlock() {
+    const last = current.blocks[current.blocks.length - 1];
+    if (last && last.type === "list") return last;
+    const block = { type: "list", items: [] };
+    current.blocks.push(block);
+    return block;
+  }
+
+  function addListItem(items, depth, text) {
+    if (depth <= 0) {
+      items.push({ text, children: [] });
+      return;
+    }
+    const last = items[items.length - 1];
+    if (!last) {
+      items.push({ text, children: [] });
+      return;
+    }
+    addListItem(last.children, depth - 1, text);
+  }
+
+  for (const line of lines) {
+    if (!line.trim()) {
+      flushParagraph();
+      continue;
+    }
+
+    if (/^#{1,6}\s+/.test(line)) {
+      flushSection();
+      current = { title: headingLabel(line), blocks: [] };
+      continue;
+    }
+
+    const bullet = bulletMatch(line);
+    if (bullet) {
+      flushParagraph();
+      const indent = Math.floor(bullet[1].length / 2);
+      const text = bullet[2].trim();
+      if (text) {
+        const list = ensureListBlock();
+        addListItem(list.items, indent, text);
+      }
+      continue;
+    }
+
+    paragraphLines.push(line.trim());
+  }
+
+  flushSection();
+  return sections.filter((section) => section.blocks.length);
+}
+
+function buildList(items) {
+  const ul = document.createElement("ul");
+  ul.className = "results-list";
+  for (const item of items) {
+    const li = document.createElement("li");
+    li.textContent = item.text;
+    if (item.children.length) {
+      li.appendChild(buildList(item.children));
+    }
+    ul.appendChild(li);
+  }
+  return ul;
+}
+
+function findJobForStatusPayload(payload) {
+  if (!payload || typeof payload !== "object") return null;
+  if (payload.jobId) {
+    const match = jobs.find((job) => job.id === String(payload.jobId));
+    if (match) return match;
+  }
+  if (payload.jobSlug) {
+    return jobBySlug(String(payload.jobSlug));
+  }
+  return null;
+}
+
+function mergeStatusPayload(job, payload) {
+  let changed = false;
+
+  if (payload.status && job.status !== String(payload.status)) {
+    job.status = String(payload.status);
+    changed = true;
+  }
+
+  if (payload.completedAt && job.completedAt !== String(payload.completedAt)) {
+    job.completedAt = String(payload.completedAt);
+    changed = true;
+  }
+
+  if (payload.deliverableMarkdown && job.deliverable !== String(payload.deliverableMarkdown)) {
+    job.deliverable = String(payload.deliverableMarkdown);
+    changed = true;
+  }
+
+  if (payload.quality && typeof payload.quality === "object") {
+    job.syncQuality = payload.quality;
+    changed = true;
+  }
+
+  if (payload.processingNotes && Array.isArray(payload.processingNotes)) {
+    job.syncNotes = payload.processingNotes;
+    changed = true;
+  }
+
+  job.lastSyncedAt = payload.exportedAt ? String(payload.exportedAt) : new Date().toISOString();
+  return changed;
+}
+
+async function importStatusFiles(files, { selectedOnly = false } = {}) {
+  let imported = 0;
+
+  for (const file of files) {
+    let payload;
+    try {
+      payload = JSON.parse(await file.text());
+    } catch {
+      continue;
+    }
+
+    const job = findJobForStatusPayload(payload);
+    if (!job) continue;
+    if (selectedOnly && !selectedJobIds.has(job.id)) continue;
+    if (!mergeStatusPayload(job, payload)) continue;
+
+    await saveJob(job);
+    imported += 1;
+  }
+
+  jobs = await loadJobs();
+  renderFilesList();
+  renderDrawer();
+
+  if (imported) toast(`Imported ${imported} status file${imported === 1 ? "" : "s"}`, "success");
+  else toast("No matching jobs found in these status files", "warn");
+}
+
+function renderDeliverable(markdown) {
+  deliverableRendered.innerHTML = "";
+  const sections = parseDeliverable(markdown);
+  if (!sections.length) {
+    const empty = document.createElement("div");
+    empty.className = "results-empty-state";
+    empty.textContent = "The imported file did not contain structured markdown yet.";
+    deliverableRendered.appendChild(empty);
+    return;
+  }
+
+  for (const section of sections) {
+    const article = document.createElement("article");
+    article.className = "results-section";
+
+    if (section.title && section.title !== "Deliverable") {
+      const heading = document.createElement("h4");
+      heading.textContent = section.title;
+      article.appendChild(heading);
+    }
+
+    for (const block of section.blocks) {
+      if (block.type === "paragraph") {
+        const p = document.createElement("p");
+        p.className = "results-paragraph";
+        p.textContent = block.text;
+        article.appendChild(p);
+      } else if (block.type === "list") {
+        article.appendChild(buildList(block.items));
+      }
+    }
+
+    deliverableRendered.appendChild(article);
+  }
+}
+
 /* ─── manifest / brief / package builders ──────── */
 
 function buildManifest(job) {
+  const routing = getRoutingProfile(job);
   return {
     jobId: job.id,
     jobSlug: job.jobSlug,
@@ -223,6 +483,9 @@ function buildManifest(job) {
     outputGoal: job.outputGoal,
     presetType: job.presetType || null,
     buyerType: job.buyerType || null,
+    serviceLane: routing.serviceLane,
+    outputShape: routing.outputShape,
+    nextStep: routing.nextStep,
     turnaroundTarget: job.turnaroundTarget,
     contextNotes: job.contextNotes,
     status: job.status,
@@ -238,18 +501,28 @@ function buildManifest(job) {
 }
 
 function buildBrief(job) {
+  const routing = getRoutingProfile(job);
   const lines = [
     `Job: ${job.jobTitle}`,
     job.clientName ? `Client: ${job.clientName}` : null,
+    job.buyerType ? `Buyer: ${job.buyerType}` : null,
     `Turnaround: ${fmtTurnaround(job.turnaroundTarget)}`,
     `Goal: ${job.outputGoal}`,
+    `Service Lane: ${routing.serviceLane}`,
+    `Output Shape: ${routing.outputShape}`,
     `Status: ${statusLabel(job.status)}`,
     `File: ${job.fileName} (${fmtBytes(job.fileSize)})`,
     `Submitted: ${fmtDate(job.createdAt)}`,
     "",
+    `Next Step:\n${routing.nextStep}`,
+    "",
     job.contextNotes ? `Notes:\n${job.contextNotes}` : null,
   ];
   return lines.filter(Boolean).join("\n");
+}
+
+function getRoutingProfile(job) {
+  return ROUTING_RULES[job.outputGoal] || ROUTING_RULES.custom;
 }
 
 async function buildPackage(job) {
@@ -338,6 +611,7 @@ pickButtons.forEach((btn) => {
     pickButtons.forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     activePreset = key;
+    document.getElementById("job-title").placeholder = btn.textContent.trim();
     document.getElementById("output-goal").value = preset.outputGoal;
     document.getElementById("turnaround-target").value = preset.turnaroundTarget;
     document.getElementById("context-notes").value = preset.contextNotes;
@@ -367,7 +641,7 @@ contextForm.addEventListener("submit", async (e) => {
     clientContact,
     outputGoal,
     presetType: activePreset,
-    buyerType: null,
+    buyerType: activePreset && PRESETS[activePreset] ? PRESETS[activePreset].buyerType : null,
     turnaroundTarget,
     contextNotes,
     status: "captured",
@@ -399,10 +673,19 @@ function filteredJobs() {
   const q = jobSearch.value.trim().toLowerCase();
   const s = statusFilter.value;
   return jobs.filter((j) => {
+    if (operatorMode.checked && j.status === "done") return false;
     if (s !== "all" && j.status !== s) return false;
     if (!q) return true;
     return [j.jobTitle, j.clientName, j.fileName].filter(Boolean).join(" ").toLowerCase().includes(q);
   });
+}
+
+function selectedJobs() {
+  return jobs.filter((job) => selectedJobIds.has(job.id));
+}
+
+function jobBySlug(slug) {
+  return jobs.find((job) => job.jobSlug === slug);
 }
 
 function renderFilesList() {
@@ -423,11 +706,19 @@ function renderFilesList() {
   visible.forEach((job) => {
     const frag = cardTemplate.content.cloneNode(true);
     const card = frag.querySelector(".job-card");
+    const checkbox = frag.querySelector(".job-select-checkbox");
     frag.querySelector(".job-card-title").textContent = job.jobTitle;
     frag.querySelector(".job-card-meta").textContent = `${job.fileName} · ${fmtDate(job.createdAt)}`;
     const badge = frag.querySelector(".job-card-status");
     badge.textContent = statusLabel(job.status);
     badge.dataset.status = job.status;
+    checkbox.checked = selectedJobIds.has(job.id);
+    checkbox.addEventListener("click", (e) => e.stopPropagation());
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) selectedJobIds.add(job.id);
+      else selectedJobIds.delete(job.id);
+      updateSelectionSummary();
+    });
 
     if (job.id === selectedJobId) card.classList.add("active");
 
@@ -436,10 +727,12 @@ function renderFilesList() {
 
     jobList.appendChild(frag);
   });
+  updateSelectionSummary();
 }
 
 jobSearch.addEventListener("input", renderFilesList);
 statusFilter.addEventListener("change", renderFilesList);
+operatorMode.addEventListener("change", renderFilesList);
 
 /* ─── detail drawer rendering ──────────────────── */
 
@@ -455,11 +748,14 @@ function renderDrawer() {
   detailTitle.textContent = job.jobTitle;
   detailFile.textContent = `${job.fileName} (${fmtBytes(job.fileSize)})`;
   detailGoal.textContent = job.outputGoal;
+  detailBuyer.textContent = fmtBuyerType(job.buyerType);
   detailContact.textContent = job.clientContact || "\u2014";
   detailTurnaround.textContent = fmtTurnaround(job.turnaroundTarget);
   detailCreated.textContent = fmtDate(job.createdAt);
   detailStatus.value = job.status;
   detailBrief.value = buildBrief(job);
+  const routing = getRoutingProfile(job);
+  detailRouting.textContent = `${routing.serviceLane} -> ${routing.outputShape}. Next: ${routing.nextStep}.`;
 
   if (job.completedAt) {
     const h = Math.round((new Date(job.completedAt) - new Date(job.createdAt)) / 3600000);
@@ -478,10 +774,12 @@ function renderDrawer() {
   if (job.deliverable) {
     deliverableEmpty.classList.add("hidden");
     deliverableContent.classList.remove("hidden");
+    renderDeliverable(job.deliverable);
     deliverableText.textContent = job.deliverable;
   } else {
     deliverableEmpty.classList.remove("hidden");
     deliverableContent.classList.add("hidden");
+    deliverableRendered.innerHTML = "";
     deliverableText.textContent = "";
   }
 
@@ -566,7 +864,20 @@ deleteJobBtn.addEventListener("click", async () => {
 
 /* ─── deliverable import / export ──────────────── */
 
+importStatusBtn.addEventListener("click", () => importStatusInput.click());
 importResultsBtn.addEventListener("click", () => importResultsInput.click());
+
+importStatusInput.addEventListener("change", async () => {
+  const files = Array.from(importStatusInput.files || []);
+  if (!files.length) return;
+  try {
+    await importStatusFiles(files);
+  } catch (err) {
+    toast(`Status import failed: ${err.message}`, "error");
+  } finally {
+    importStatusInput.value = "";
+  }
+});
 
 importResultsInput.addEventListener("change", async () => {
   const file = importResultsInput.files[0];
@@ -612,9 +923,159 @@ clearDeliverableBtn.addEventListener("click", async () => {
   } catch (err) { toast(`Failed: ${err.message}`, "error"); }
 });
 
+/* ─── operator batch actions ───────────────────── */
+
+selectVisibleBtn.addEventListener("click", () => {
+  filteredJobs().forEach((job) => selectedJobIds.add(job.id));
+  renderFilesList();
+  toast("Visible jobs selected", "success");
+});
+
+clearSelectionBtn.addEventListener("click", () => {
+  selectedJobIds.clear();
+  renderFilesList();
+});
+
+markSelectedReadyBtn.addEventListener("click", async () => {
+  const targets = selectedJobs();
+  if (!targets.length) { toast("Select jobs first", "warn"); return; }
+  try {
+    for (const job of targets) {
+      if (job.status === "captured") {
+        job.status = "ready";
+        await saveJob(job);
+      }
+    }
+    jobs = await loadJobs();
+    renderFilesList();
+    renderDrawer();
+    toast("Selected jobs marked ready", "success");
+  } catch (err) {
+    toast(`Batch update failed: ${err.message}`, "error");
+  }
+});
+
+exportSelectedManifestsBtn.addEventListener("click", () => {
+  const targets = selectedJobs();
+  if (!targets.length) { toast("Select jobs first", "warn"); return; }
+  for (const job of targets) {
+    downloadBlob(new Blob([JSON.stringify(buildManifest(job), null, 2)], { type: "application/json" }), `${job.jobSlug}.manifest.json`);
+  }
+  toast(`Exported ${targets.length} manifest${targets.length === 1 ? "" : "s"}`, "success");
+});
+
+exportSelectedPackagesBtn.addEventListener("click", async () => {
+  const targets = selectedJobs();
+  if (!targets.length) { toast("Select jobs first", "warn"); return; }
+  try {
+    for (const job of targets) {
+      const pkg = await buildPackage(job);
+      downloadBlob(new Blob([JSON.stringify(pkg, null, 2)], { type: "application/json" }), `${job.jobSlug}.package.json`);
+    }
+    toast(`Exported ${targets.length} package${targets.length === 1 ? "" : "s"}`, "success");
+  } catch (err) {
+    toast(`Batch export failed: ${err.message}`, "error");
+  }
+});
+
+importSelectedStatusBtn.addEventListener("click", () => {
+  if (!selectedJobIds.size) { toast("Select jobs first", "warn"); return; }
+  importSelectedStatusInput.click();
+});
+
+importSelectedStatusInput.addEventListener("change", async () => {
+  const files = Array.from(importSelectedStatusInput.files || []);
+  if (!files.length) return;
+  try {
+    await importStatusFiles(files, { selectedOnly: true });
+  } catch (err) {
+    toast(`Bulk status import failed: ${err.message}`, "error");
+  } finally {
+    importSelectedStatusInput.value = "";
+  }
+});
+
+importSelectedResultsBtn.addEventListener("click", () => {
+  if (!selectedJobIds.size) { toast("Select jobs first", "warn"); return; }
+  importSelectedResultsInput.click();
+});
+
+importSelectedResultsInput.addEventListener("change", async () => {
+  const files = Array.from(importSelectedResultsInput.files || []);
+  if (!files.length) return;
+
+  let imported = 0;
+  try {
+    for (const file of files) {
+      const slug = file.name.replace(/\.(md|txt|markdown)$/i, "");
+      const job = jobBySlug(slug);
+      if (!job || !selectedJobIds.has(job.id)) continue;
+      job.deliverable = await file.text();
+      if (job.status !== "done") {
+        job.status = "done";
+        job.completedAt = new Date().toISOString();
+      }
+      await saveJob(job);
+      imported += 1;
+    }
+    jobs = await loadJobs();
+    renderFilesList();
+    renderDrawer();
+    if (imported) toast(`Imported ${imported} result${imported === 1 ? "" : "s"}`, "success");
+    else toast("No matching selected jobs found for these files", "warn");
+  } catch (err) {
+    toast(`Bulk import failed: ${err.message}`, "error");
+  } finally {
+    importSelectedResultsInput.value = "";
+  }
+});
+
+/* ─── PWA shell ────────────────────────────────── */
+
+async function registerServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  try {
+    await navigator.serviceWorker.register("./sw.js");
+  } catch (err) {
+    console.error("service worker registration failed", err);
+  }
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  setInstallBannerVisible(true);
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  setInstallBannerVisible(false);
+  toast("App installed", "success");
+});
+
+installAppBtn?.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) {
+    toast("Install is not available in this browser yet", "warn");
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  const choice = await deferredInstallPrompt.userChoice;
+  if (choice.outcome !== "accepted") {
+    setInstallBannerVisible(true);
+    return;
+  }
+  deferredInstallPrompt = null;
+  setInstallBannerVisible(false);
+});
+
+dismissInstallBtn?.addEventListener("click", () => {
+  setInstallBannerVisible(false);
+});
+
 /* ─── boot ─────────────────────────────────────── */
 
 async function boot() {
+  await registerServiceWorker();
   db = await openDatabase();
   jobs = await loadJobs();
   renderFilesList();
