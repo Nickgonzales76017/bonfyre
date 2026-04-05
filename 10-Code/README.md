@@ -14,6 +14,7 @@ This folder contains implementation work for the projects tracked in the vault.
 - `AIOverseasLaborPipeline`
 - `WebWorkerSaaS`
 - `ProductPipelines` — named product loops that tie the active systems together
+- `BonfyreMediaPrep` — first native low-level audio binary
 
 ### Standalone Projects
 - `AmbientLogisticsLayer` — local logistics coordination

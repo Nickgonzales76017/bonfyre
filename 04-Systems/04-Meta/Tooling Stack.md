@@ -96,6 +96,16 @@ Primary notes:
 - [[04-Systems/01-Core Systems/Local AI Transcription Service]]
 - [[04-Systems/01-Core Systems/Piper Audio Layer]]
 
+### 9. Native Binary Tooling
+- small C-native binaries for hot-path local work
+- thin orchestration over proven tools like `ffmpeg`, `ffprobe`, and future `whisper.cpp`
+- intended for startup-speed, portability, and cleaner shared contracts than project-specific glue
+- first binary: `10-Code/BonfyreMediaPrep`
+
+Primary notes:
+- [[04-Systems/01-Core Systems/Bonfyre Media Prep]]
+- [[04-Systems/01-Core Systems/Whisper + FFmpeg Wrapper Kit]]
+
 ## Documentation Rule
 - if the tool is specific to one project, define it in that project note
 - if the tool is reused across projects, add or link it here
@@ -118,6 +128,7 @@ Primary notes:
 - future n8n orchestration
 - markdown-first offer and research notes
 - WebAssembly as a planned shared compute primitive for browser-facing projects
+- small native binaries as a planned shared execution primitive for hot local paths
 
 ## Next Improvement
 - add concrete WebAssembly candidate modules and wrapper opportunities once the first browser compute path is scoped
