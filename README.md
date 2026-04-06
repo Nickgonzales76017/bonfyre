@@ -5,7 +5,7 @@
   </p>
   <p align="center">
     <a href="#install">Install</a> ·
-    <a href="#what-is-this">What is this</a> ·
+    <a href="#use-cases">Use Cases</a> ·
     <a href="#benchmarks">Benchmarks</a> ·
     <a href="#all-38-binaries">All 38 binaries</a> ·
     <a href="#docs">Docs</a> ·
@@ -16,55 +16,149 @@
 ---
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nickgonzales/bonfyre/main/install.sh | sh
+git clone https://github.com/Nickgonzales76017/bonfyre.git && cd bonfyre && make
 ```
 
-That installs 38 binaries into `~/.local/bin`. Total disk: **~1.6 MB**. No Node.js. No Python. No Docker. No npm. Just C and SQLite.
+That builds 38 binaries. Total disk: **~1.6 MB**. No Node.js. No Python. No Docker. No npm. Just C and SQLite.
 
 ---
 
-## What is this
+## Use cases
 
-Bonfyre is a complete self-hosted backend platform built as composable C11 binaries.
+<blockquote>
+<strong>Pick the one that matches your problem.</strong> Each is a standalone entry point — you don't need to understand the whole system.
+</blockquote>
 
-It started as a replacement for Strapi:
+### → I want a lightweight CMS that isn't 500 MB of node_modules
 
-| | **Strapi** | **Bonfyre CMS** |
+**You need:** `bonfyre-cms` (299 KB)
+
+```bash
+make -C cmd/BonfyreCMS
+./cmd/BonfyreCMS/bonfyre-cms serve --port 8800
+# REST API at http://localhost:8800 — dynamic schemas, token auth, zero deps
+```
+
+| | Strapi | Bonfyre CMS |
 |---|---|---|
 | Install size | ~500 MB | **299 KB** |
 | Dependencies | Node.js + 400 npm packages | libc + SQLite |
 | Startup | 30–120 seconds | **< 50 ms** |
-| Language | JavaScript | C11 |
+| Memory (idle) | ~200 MB | **15 MB** |
 
-Then it grew into a full audio-to-invoice pipeline, API gateway, auth system, payment engine, and more — all as standalone static binaries that compose via stdin/stdout and SQLite.
+**[Full CMS guide →](docs/cms.md)**
 
-### The compression engine
+---
 
-Bonfyre includes **Lambda Tensors** (`liblambda-tensors`), a structural compression library that encodes the *generative structure* behind data rather than just the bytes:
+### → I want to transcribe audio locally without cloud APIs
 
-| Method | Size (N=10,000 JSON records) | Random access |
+**You need:** `bonfyre-transcribe` + `bonfyre-media-prep`
+
+```bash
+bonfyre-media-prep normalize interview.mp3          # → 16kHz mono WAV
+bonfyre-transcribe run interview.wav --out transcript.json  # → local Whisper
+bonfyre-brief generate transcript.json --out summary.md     # → executive summary
+```
+
+Everything runs on your machine. No OpenAI key. No internet. No per-minute billing.
+
+**[Full pipeline guide →](docs/pipeline.md)**
+
+---
+
+### → I want to shrink my JSON API payloads
+
+**You need:** `liblambda-tensors` (41 KB library)
+
+```c
+#include <lambda_tensors.h>
+
+LT_Family *fam = lt_family_create();
+lt_family_add(fam, json_str_1, len_1);  // add records
+lt_family_add(fam, json_str_2, len_2);
+lt_family_finalize(fam);
+
+// Read ONE field from record 3000 — without decompressing anything
+const char *val = lt_family_read_field(fam, 3000, field_idx);
+```
+
+| Method | Size | Random access |
 |---|---|---|
 | Raw JSON | 100% | ✓ |
 | gzip | 5.5% | ✗ |
-| **Lambda Tensors (Huffman)** | **13.5%** | **✓** |
+| **Lambda Tensors** | **13.5%** | **✓** |
 
-2.4× larger than gzip — but with O(1) per-field random access that gzip can never have. For structured data (APIs, configs, archives), that's a different category of tool.
+Not a gzip replacement — a structured data tool. O(1) per-field reads on compressed data.
+
+**[Full Lambda Tensors guide →](docs/lambda-tensors.md)**
+
+---
+
+### → I want a full audio-to-invoice pipeline
+
+**You need:** `bonfyre-pipeline` (all 10 steps in one binary, 5–8 ms)
+
+```bash
+bonfyre-pipeline run --input interview.mp3 --out ./output
+```
+
+That runs: ingest → normalize → hash → transcribe → clean → paragraph → brief → proof → offer → pack. Output: ZIP with transcript, summary, action items, quality score, and pricing proposal.
+
+**[Full pipeline guide →](docs/pipeline.md)** · **[Run the demo →](examples/full-pipeline/)**
+
+---
+
+### → I want to self-host a complete SaaS backend
+
+**You need:** `bonfyre-api` + `bonfyre-auth` + `bonfyre-pay` + `bonfyre-gate`
+
+```bash
+bonfyre-api --port 9090 --static frontend/ serve &    # HTTP gateway + dashboard
+bonfyre-auth signup --email user@example.com --password ...  # user management
+bonfyre-gate issue --email user@example.com --tier pro       # API key provisioning
+bonfyre-pay invoice --user-id 1 --period 2026-04              # billing
+```
+
+Auth, payments, usage metering, API keys, rate limiting — all as composable binaries. Total: ~240 KB.
+
+**[API reference →](docs/api.md)** · **[Run the demo →](examples/saas-backend/)**
+
+---
+
+### → I want to embed a compression library in my project
+
+**You need:** `liblambda-tensors` (41 KB static `.a` + shared `.so`)
+
+```bash
+cd lib/liblambda-tensors
+make                    # → liblambda-tensors.a + liblambda-tensors.so
+make install PREFIX=/usr/local  # → installs header + lib
+```
+
+Then link it:
+```bash
+cc -o myapp myapp.c -llambda-tensors -lm
+```
+
+MIT licensed. Embed it anywhere — your app, your library, your product. Like SQLite but for structured compression.
+
+**[Full Lambda Tensors guide →](docs/lambda-tensors.md)**
 
 ## Install
+
+### From source (recommended)
+
+```bash
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
+make            # builds all 38 binaries + liblambda-tensors
+make install    # copies to ~/.local/bin (or PREFIX=/usr/local make install)
+```
 
 ### One command (macOS / Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/nickgonzales/bonfyre/main/install.sh | sh
-```
-
-### From source
-
-```bash
-git clone https://github.com/nickgonzales/bonfyre.git
-cd bonfyre
-make            # builds all 38 binaries + liblambda-tensors
-make install    # copies to ~/.local/bin (or PREFIX=/usr/local make install)
+curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre/main/install.sh | sh
 ```
 
 ### npm (bindings coming soon)
@@ -78,42 +172,6 @@ npm install bonfyre
 - C11 compiler (gcc or clang)
 - SQLite3 development headers (`libsqlite3-dev` / `sqlite3` on macOS)
 - zlib (`zlib1g-dev` / included on macOS)
-
-## Quick start
-
-### Start the CMS
-
-```bash
-bonfyre-cms serve --port 8800
-# REST API running at http://localhost:8800
-# Dynamic schemas, token auth, Lambda Tensors compression — 299 KB binary
-```
-
-### Run the full audio pipeline
-
-```bash
-bonfyre-pipeline run --input interview.mp3 --out ./output
-# Ingest → Normalize → Hash → Transcribe → Clean → Paragraph → Brief → Proof → Offer → Pack
-# 5–8 ms end-to-end on Apple Silicon
-```
-
-### Or run each step individually
-
-```bash
-bonfyre-ingest intake interview.mp3 --out ./work/
-bonfyre-media-prep normalize ./work/interview.mp3
-bonfyre-transcribe run ./work/interview.wav --out transcript.json
-bonfyre-brief generate transcript.json --out brief.md
-bonfyre-pack bundle ./work/ --out deliverable.zip
-```
-
-### Start the HTTP gateway + dashboard
-
-```bash
-bonfyre-api --port 9090 --static frontend/ serve
-# Dashboard at http://localhost:9090
-# REST API at http://localhost:9090/api/
-```
 
 ## Benchmarks
 
@@ -239,20 +297,6 @@ Audio File
 
 Or skip all that and run `bonfyre-pipeline run` for the unified 5–8 ms fast path.
 
-## When to use Bonfyre
-
-**Use Bonfyre if you:**
-- Want a self-hosted CMS that isn't 500 MB of node_modules
-- Process audio and need transcription → summary → delivery
-- Want to build a SaaS on static binaries with zero cloud dependency
-- Need structured JSON compression with random access
-- Like Unix philosophy: small tools, stdin/stdout, SQLite
-
-**Don't use Bonfyre if you:**
-- Need a GUI content editor (use Strapi or WordPress)
-- Want a managed cloud service (Bonfyre Cloud coming soon)
-- Work exclusively with unstructured binary data (Lambda Tensors wins on structured data)
-
 ## Docs
 
 | Document | Description |
@@ -279,4 +323,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). We welcome:
 
 [MIT](LICENSE) — do whatever you want with it.
 
-Made by [Nick Gonzales](https://github.com/nickgonzales).
+Made by [Nick Gonzales](https://github.com/Nickgonzales76017).
