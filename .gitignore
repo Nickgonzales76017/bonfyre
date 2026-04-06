@@ -1,0 +1,45 @@
+# Compiled binaries
+cmd/*/bonfyre-*
+!cmd/*/src/
+lib/liblambda-tensors/*.a
+lib/liblambda-tensors/*.so
+lib/liblambda-tensors/*.o
+lib/liblambda-tensors/src/*.o
+lib/liblambda-tensors/test_lambda_tensors
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.dSYM/
+
+# SQLite databases (runtime state)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Runtime data
+uploads/
+--out/
+
+# Node
+node_modules/
+dist/
+.npmrc
+
+# Test outputs
+outputs-*/
+cmd/BonfyreCLI/bonfyre

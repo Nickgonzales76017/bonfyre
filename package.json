@@ -1,0 +1,52 @@
+{
+  "name": "bonfyre",
+  "version": "0.1.0",
+  "description": "38 static C binaries. 1.6 MB total. A complete backend platform.",
+  "homepage": "https://github.com/nickgonzales/bonfyre",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nickgonzales/bonfyre.git"
+  },
+  "author": "Nick Gonzales",
+  "license": "MIT",
+  "keywords": [
+    "cms",
+    "transcription",
+    "compression",
+    "lambda-tensors",
+    "c11",
+    "sqlite",
+    "self-hosted",
+    "pipeline",
+    "audio",
+    "static-binary"
+  ],
+  "scripts": {
+    "postinstall": "node scripts/build.js",
+    "build": "node scripts/build.js",
+    "test": "node scripts/test.js"
+  },
+  "bin": {
+    "bonfyre-cms": "bin/bonfyre-cms",
+    "bonfyre-api": "bin/bonfyre-api",
+    "bonfyre-pipeline": "bin/bonfyre-pipeline",
+    "bonfyre-ingest": "bin/bonfyre-ingest",
+    "bonfyre-transcribe": "bin/bonfyre-transcribe",
+    "bonfyre-brief": "bin/bonfyre-brief",
+    "bonfyre-pack": "bin/bonfyre-pack"
+  },
+  "files": [
+    "cmd/",
+    "lib/",
+    "frontend/",
+    "scripts/",
+    "bin/",
+    "Makefile",
+    "install.sh",
+    "LICENSE",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
+}
