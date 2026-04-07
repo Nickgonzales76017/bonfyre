@@ -77,12 +77,48 @@ static void iso_timestamp(char *buffer, size_t size) {
     strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
 }
 
+/* Return 1 if the whisper binary is whisper.cpp (whisper-cli), 0 for Python whisper. */
+static int is_whisper_cpp(const char *binary_path) {
+    const char *base = strrchr(binary_path, '/');
+    base = base ? base + 1 : binary_path;
+    return (strstr(base, "whisper-cli") != NULL ||
+            strstr(base, "whisper-cpp") != NULL);
+}
+
+/* Resolve a model name (e.g. "base") to a ggml model file path for whisper.cpp. */
+static int resolve_whisper_cpp_model(const char *model_name, char *out, size_t out_size) {
+    /* If already a path, use directly */
+    if (strchr(model_name, '/') || strchr(model_name, '.')) {
+        if (access(model_name, F_OK) == 0) {
+            snprintf(out, out_size, "%s", model_name);
+            return 0;
+        }
+        return -1;
+    }
+    /* Try common locations */
+    const char *home = getenv("HOME");
+    const char *suffixes[] = { ".en", "", NULL };
+    for (int i = 0; suffixes[i]; i++) {
+        if (home) {
+            snprintf(out, out_size, "%s/.local/share/whisper/ggml-%s%s.bin",
+                     home, model_name, suffixes[i]);
+            if (access(out, F_OK) == 0) return 0;
+        }
+        snprintf(out, out_size, "/tmp/ggml-%s%s.bin", model_name, suffixes[i]);
+        if (access(out, F_OK) == 0) return 0;
+    }
+    return -1;
+}
+
 static const char *default_whisper_binary(void) {
     const char *env = getenv("BONFYRE_WHISPER_BINARY");
     if (env && env[0] != '\0') return env;
-    if (access("/Users/nickgonzales/Library/Python/3.9/bin/whisper", X_OK) == 0) {
-        return "/Users/nickgonzales/Library/Python/3.9/bin/whisper";
-    }
+    /* Prefer whisper-cli (whisper.cpp) if available */
+    if (access("/opt/homebrew/bin/whisper-cli", X_OK) == 0)
+        return "/opt/homebrew/bin/whisper-cli";
+    if (access("/usr/local/bin/whisper-cli", X_OK) == 0)
+        return "/usr/local/bin/whisper-cli";
+    /* Fall back to Python whisper on PATH */
     return "whisper";
 }
 
@@ -328,21 +364,47 @@ int main(int argc, char **argv) {
             snprintf(chunk_audio, sizeof(chunk_audio), "%s/chunk-%03d.wav", chunk_dir, i);
             snprintf(chunk_txt, sizeof(chunk_txt), "%s/chunk-%03d.txt", chunk_dir, i);
 
-            char *whisper_argv[16];
+            char *whisper_argv[20];
             int idx = 0;
+            char model_path[PATH_MAX];
+            char of_prefix[PATH_MAX];
             whisper_argv[idx++] = (char *)whisper_binary;
-            whisper_argv[idx++] = chunk_audio;
-            whisper_argv[idx++] = "--task";
-            whisper_argv[idx++] = "transcribe";
-            whisper_argv[idx++] = "--model";
-            whisper_argv[idx++] = (char *)model;
-            whisper_argv[idx++] = "--output_format";
-            whisper_argv[idx++] = "txt";
-            whisper_argv[idx++] = "--output_dir";
-            whisper_argv[idx++] = chunk_dir;
-            if (language) {
-                whisper_argv[idx++] = "--language";
-                whisper_argv[idx++] = (char *)language;
+
+            if (is_whisper_cpp(whisper_binary)) {
+                /* whisper.cpp: -f <file> -m <model.bin> --output-txt -of <prefix> */
+                if (resolve_whisper_cpp_model(model, model_path, sizeof(model_path)) != 0) {
+                    fprintf(stderr, "Cannot find whisper.cpp model for '%s'\n", model);
+                    fclose(combined);
+                    return 1;
+                }
+                snprintf(of_prefix, sizeof(of_prefix), "%s/chunk-%03d", chunk_dir, i);
+                whisper_argv[idx++] = "-f";
+                whisper_argv[idx++] = chunk_audio;
+                whisper_argv[idx++] = "-m";
+                whisper_argv[idx++] = model_path;
+                whisper_argv[idx++] = "--output-txt";
+                whisper_argv[idx++] = "-of";
+                whisper_argv[idx++] = of_prefix;
+                whisper_argv[idx++] = "--no-prints";
+                if (language) {
+                    whisper_argv[idx++] = "-l";
+                    whisper_argv[idx++] = (char *)language;
+                }
+            } else {
+                /* Python whisper: positional audio, --task, --model name, --output_format, --output_dir */
+                whisper_argv[idx++] = chunk_audio;
+                whisper_argv[idx++] = "--task";
+                whisper_argv[idx++] = "transcribe";
+                whisper_argv[idx++] = "--model";
+                whisper_argv[idx++] = (char *)model;
+                whisper_argv[idx++] = "--output_format";
+                whisper_argv[idx++] = "txt";
+                whisper_argv[idx++] = "--output_dir";
+                whisper_argv[idx++] = chunk_dir;
+                if (language) {
+                    whisper_argv[idx++] = "--language";
+                    whisper_argv[idx++] = (char *)language;
+                }
             }
             whisper_argv[idx] = NULL;
 
@@ -369,21 +431,46 @@ int main(int argc, char **argv) {
         fclose(combined);
         write_chunk_progress(progress_path, chunk_count, completed_chunks, "completed");
     } else {
-        char *whisper_argv[16];
+        char *whisper_argv[20];
         int idx = 0;
+        char model_path[PATH_MAX];
+        char of_prefix[PATH_MAX];
         whisper_argv[idx++] = (char *)whisper_binary;
-        whisper_argv[idx++] = normalized_path;
-        whisper_argv[idx++] = "--task";
-        whisper_argv[idx++] = "transcribe";
-        whisper_argv[idx++] = "--model";
-        whisper_argv[idx++] = (char *)model;
-        whisper_argv[idx++] = "--output_format";
-        whisper_argv[idx++] = "txt";
-        whisper_argv[idx++] = "--output_dir";
-        whisper_argv[idx++] = (char *)output_dir;
-        if (language) {
-            whisper_argv[idx++] = "--language";
-            whisper_argv[idx++] = (char *)language;
+
+        if (is_whisper_cpp(whisper_binary)) {
+            /* whisper.cpp: -f <file> -m <model.bin> --output-txt -of <prefix> */
+            if (resolve_whisper_cpp_model(model, model_path, sizeof(model_path)) != 0) {
+                fprintf(stderr, "Cannot find whisper.cpp model for '%s'\n", model);
+                return 1;
+            }
+            snprintf(of_prefix, sizeof(of_prefix), "%s/normalized", output_dir);
+            whisper_argv[idx++] = "-f";
+            whisper_argv[idx++] = normalized_path;
+            whisper_argv[idx++] = "-m";
+            whisper_argv[idx++] = model_path;
+            whisper_argv[idx++] = "--output-txt";
+            whisper_argv[idx++] = "-of";
+            whisper_argv[idx++] = of_prefix;
+            whisper_argv[idx++] = "--no-prints";
+            if (language) {
+                whisper_argv[idx++] = "-l";
+                whisper_argv[idx++] = (char *)language;
+            }
+        } else {
+            /* Python whisper: positional audio, --task, --model name, --output_format, --output_dir */
+            whisper_argv[idx++] = normalized_path;
+            whisper_argv[idx++] = "--task";
+            whisper_argv[idx++] = "transcribe";
+            whisper_argv[idx++] = "--model";
+            whisper_argv[idx++] = (char *)model;
+            whisper_argv[idx++] = "--output_format";
+            whisper_argv[idx++] = "txt";
+            whisper_argv[idx++] = "--output_dir";
+            whisper_argv[idx++] = (char *)output_dir;
+            if (language) {
+                whisper_argv[idx++] = "--language";
+                whisper_argv[idx++] = (char *)language;
+            }
         }
         whisper_argv[idx] = NULL;
 

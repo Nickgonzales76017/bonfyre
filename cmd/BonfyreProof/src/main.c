@@ -245,13 +245,155 @@ static int command_bundle(const char *proof_dir, const char *output_dir) {
     return 0;
 }
 
+/* ── score command: compute quality metrics from a brief + transcript ── */
+static int command_score(const char *brief_dir, const char *output_dir) {
+    char brief_path[MAX_PATH];
+    char transcript_path[MAX_PATH];
+    char summary_path[MAX_PATH];
+    char review_path[MAX_PATH];
+    char deliverable_path[MAX_PATH];
+    char transcript_out[MAX_PATH];
+
+    /* Find brief.md and the transcript it references */
+    path_join(brief_path, sizeof(brief_path), brief_dir, "brief.md");
+    path_join(deliverable_path, sizeof(deliverable_path), brief_dir, "brief.md");
+
+    /* Look for transcript in parent dir or sibling */
+    snprintf(transcript_path, sizeof(transcript_path), "%s/../normalized.txt", brief_dir);
+    if (access(transcript_path, F_OK) != 0) {
+        snprintf(transcript_path, sizeof(transcript_path), "%s/transcript.txt", brief_dir);
+    }
+
+    long brief_size = 0;
+    char *brief = read_file(brief_path, &brief_size);
+    if (!brief) {
+        fprintf(stderr, "Missing brief.md in %s\n", brief_dir);
+        return 1;
+    }
+
+    long trans_size = 0;
+    char *transcript = read_file(transcript_path, &trans_size);
+    /* Transcript is optional for scoring */
+
+    if (ensure_dir(output_dir) != 0) {
+        free(brief); free(transcript);
+        return 1;
+    }
+
+    /* Compute quality metrics from the brief */
+    int word_count = 0;
+    int sentence_count = 0;
+    int filler_count = 0;
+    int has_summary = (strstr(brief, "## Summary") != NULL) ? 1 : 0;
+    int has_action = (strstr(brief, "## Action Items") != NULL) ? 1 : 0;
+    int has_transcript = (strstr(brief, "## Transcript") != NULL) ? 1 : 0;
+
+    for (const char *p = brief; *p; p++) {
+        if (*p == ' ' || *p == '\n') word_count++;
+        if (*p == '.' || *p == '!' || *p == '?') sentence_count++;
+    }
+
+    /* Count filler patterns */
+    const char *fillers[] = {"like,", "you know", "kind of", "sort of", "I mean", "basically", NULL};
+    for (int i = 0; fillers[i]; i++) {
+        const char *p = brief;
+        while ((p = strstr(p, fillers[i])) != NULL) {
+            filler_count++;
+            p += strlen(fillers[i]);
+        }
+    }
+
+    /* Quality scoring rubric:
+       - Base: 50
+       - +10 if has summary section
+       - +10 if has action items
+       - +10 if has transcript
+       - +5 if sentence_count > 10
+       - +5 if word_count > 500
+       - -5 per 10 filler words (max -20)
+       - +10 if filler_count < 5 (clean text)
+    */
+    int score = 50;
+    if (has_summary) score += 10;
+    if (has_action) score += 10;
+    if (has_transcript) score += 10;
+    if (sentence_count > 10) score += 5;
+    if (word_count > 500) score += 5;
+    if (filler_count < 5) score += 10;
+    else score -= (filler_count / 10) * 5;
+    if (score > 100) score = 100;
+    if (score < 0) score = 0;
+
+    int review_score = score >= 80 ? 90 : score >= 50 ? 70 : 40;
+    const char *status = score >= 80 ? "pass" : score >= 50 ? "marginal" : "fail";
+    const char *recommendation = score >= 80 ? "approve" : score >= 50 ? "review" : "reject";
+
+    /* Generate slug from brief dir name */
+    const char *slug = strrchr(brief_dir, '/');
+    slug = slug ? slug + 1 : brief_dir;
+
+    char timestamp[32];
+    iso_timestamp(timestamp, sizeof(timestamp));
+
+    /* Write proof-summary.json */
+    path_join(summary_path, sizeof(summary_path), output_dir, "proof-summary.json");
+    FILE *sfp = fopen(summary_path, "w");
+    if (!sfp) { free(brief); free(transcript); return 1; }
+    fprintf(sfp,
+            "{\n"
+            "  \"proof_slug\": \"%s\",\n"
+            "  \"proof_label\": \"Quality proof for %s\",\n"
+            "  \"score\": %d,\n"
+            "  \"status\": \"%s\",\n"
+            "  \"word_count\": %d,\n"
+            "  \"sentence_count\": %d,\n"
+            "  \"filler_count\": %d,\n"
+            "  \"scored_at\": \"%s\"\n"
+            "}\n",
+            slug, slug, score, status, word_count, sentence_count, filler_count, timestamp);
+    fclose(sfp);
+
+    /* Write proof-review.json */
+    path_join(review_path, sizeof(review_path), output_dir, "proof-review.json");
+    FILE *rfp = fopen(review_path, "w");
+    if (!rfp) { free(brief); free(transcript); return 1; }
+    fprintf(rfp,
+            "{\n"
+            "  \"review_score\": %d,\n"
+            "  \"recommendation\": \"%s\",\n"
+            "  \"reviewed_at\": \"%s\"\n"
+            "}\n",
+            review_score, recommendation, timestamp);
+    fclose(rfp);
+
+    /* Copy deliverable.md and transcript.txt into output */
+    path_join(deliverable_path, sizeof(deliverable_path), output_dir, "deliverable.md");
+    copy_file(brief_path, deliverable_path);
+
+    path_join(transcript_out, sizeof(transcript_out), output_dir, "transcript.txt");
+    if (transcript) copy_file(transcript_path, transcript_out);
+
+    printf("Score: %d/100 (%s)\n", score, status);
+    printf("Recommendation: %s\n", recommendation);
+    printf("Summary: %s\n", summary_path);
+    printf("Review: %s\n", review_path);
+
+    free(brief);
+    free(transcript);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc < 3) {
         fprintf(stderr,
                 "Usage:\n"
+                "  bonfyre-proof score <brief-dir> <output-dir>\n"
                 "  bonfyre-proof inspect <proof-dir>\n"
                 "  bonfyre-proof bundle <proof-dir> <output-dir>\n");
         return 1;
+    }
+    if (strcmp(argv[1], "score") == 0 && argc == 4) {
+        return command_score(argv[2], argv[3]);
     }
     if (strcmp(argv[1], "inspect") == 0 && argc == 3) {
         return command_inspect(argv[2]);

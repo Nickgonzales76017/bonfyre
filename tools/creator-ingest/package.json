@@ -1,0 +1,13 @@
+{
+  "name": "bonfyre-creator-ingest",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Puppeteer-based YouTube channel scraper for Bonfyre creator demos",
+  "scripts": {
+    "scrape": "node scrape-channels.js",
+    "scrape:batch": "node scrape-channels.js --batch creators.json --count 3 --output-dir ./output"
+  },
+  "dependencies": {
+    "puppeteer": "^23.0.0"
+  }
+}

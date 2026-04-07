@@ -1,0 +1,68 @@
+{
+  "groups": [
+    {
+      "name": "Group 1 — High-volume podcast",
+      "wave": "future",
+      "creators": [
+        {"name": "Alex Hormozi",       "yt": "@AlexHormozi"},
+        {"name": "My First Million",   "yt": "@MyFirstMillionPod"},
+        {"name": "Chris Williamson",   "yt": "@ChrisWillx"},
+        {"name": "Lex Fridman",        "yt": "@lexfridman"},
+        {"name": "Andrew Huberman",    "yt": "@hubaboratory"},
+        {"name": "Steven Bartlett",    "yt": "@SteveBartlettSh"},
+        {"name": "Noah Kagan",         "yt": "@NoahKagan"},
+        {"name": "Ali Abdaal",         "yt": "@aliabdaal"},
+        {"name": "Colin and Samir",    "yt": "@ColinandSamir"},
+        {"name": "Nathan Barry",       "yt": "@nathanbarry"}
+      ]
+    },
+    {
+      "name": "Group 2 — Idea-heavy builders",
+      "wave": "wave2",
+      "creators": [
+        {"name": "Shaan Puri",         "yt": "@ShaanVP"},
+        {"name": "Dan Koe",            "yt": "@DanKoe"},
+        {"name": "George Mack",        "yt": "@georgemack"},
+        {"name": "Codie Sanchez",      "yt": "@CodieSanchezCT"},
+        {"name": "Dickie Bush",        "yt": "@DickieBush"},
+        {"name": "Nicolas Cole",       "yt": "@NicolasCole"},
+        {"name": "Justin Welsh",       "yt": "@JustinWelsh"},
+        {"name": "Arvid Kahl",         "yt": "@arvidkahl"},
+        {"name": "Kieran Drew",        "yt": "@kierandrew"},
+        {"name": "Sahil Bloom",        "yt": "@SahilBloom"}
+      ]
+    },
+    {
+      "name": "Group 3 — Short-form grinders",
+      "wave": "wave3",
+      "creators": [
+        {"name": "Gary Vaynerchuk",    "yt": "@garyvee"},
+        {"name": "Iman Gadzhi",        "yt": "@ImanGadzhi"},
+        {"name": "Jordan Welch",       "yt": "@JordanWelch"},
+        {"name": "Sebastian Ghiorghiu","yt": "@SebastianGhiorghiu"},
+        {"name": "Grant Cardone",      "yt": "@GrantCardone"},
+        {"name": "Patrick Bet-David",  "yt": "@PatrickBetDavid"},
+        {"name": "Biaheza",            "yt": "@Biaheza"},
+        {"name": "Hamza Ahmed",        "yt": "@HamzaAhmed"},
+        {"name": "Alex Becker",        "yt": "@AlexBecker"},
+        {"name": "Austin Hankwitz",    "yt": "@AustinHankwitz"}
+      ]
+    },
+    {
+      "name": "Group 4 — Course creators",
+      "wave": "wave3",
+      "creators": [
+        {"name": "Justin Sung",        "yt": "@JustinSung"},
+        {"name": "Thomas Frank",       "yt": "@Thomasfrank"},
+        {"name": "Matt D'Avella",      "yt": "@MattDAvella"},
+        {"name": "Rob Dial",           "yt": "@RobDialJr"},
+        {"name": "Vanessa Lau",        "yt": "@VanessaLau"},
+        {"name": "Sunny Lenarduzzi",   "yt": "@SunnyLenarduzzi"},
+        {"name": "Amy Porterfield",    "yt": "@AmyPorterfield"},
+        {"name": "Pat Flynn",          "yt": "@PatFlynn"},
+        {"name": "Neil Patel",         "yt": "@NeilPatel"},
+        {"name": "Ryan Deiss",         "yt": "@RyanDeiss"}
+      ]
+    }
+  ]
+}
