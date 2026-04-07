@@ -9,7 +9,6 @@
  * Usage:
  *   bonfyre-pipeline run <input> --type TYPE --out DIR [--artifacts DIR] [--key KEY] [--tier TIER]
  */
-#include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
@@ -28,92 +27,8 @@
 extern char **environ;
 
 /* ================================================================
- * SHA-256 (FIPS 180-4) — inline, no deps
- * ================================================================ */
-
-static const uint32_t K256[64] = {
-    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
-    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
-    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
-    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
-    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
-    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
-    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
-    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
-};
-
-#define RR(x,n) (((x)>>(n))|((x)<<(32-(n))))
-#define SHA_S0(x) (RR(x,2)^RR(x,13)^RR(x,22))
-#define SHA_S1(x) (RR(x,6)^RR(x,11)^RR(x,25))
-#define SHA_s0(x) (RR(x,7)^RR(x,18)^((x)>>3))
-#define SHA_s1(x) (RR(x,17)^RR(x,19)^((x)>>10))
-#define CH(x,y,z) (((x)&(y))^((~(x))&(z)))
-#define MAJ(x,y,z) (((x)&(y))^((x)&(z))^((y)&(z)))
-
-typedef struct { uint32_t h[8]; uint8_t buf[64]; uint64_t total; } SHA256_CTX;
-
-static void sha256_init(SHA256_CTX *c) {
-    c->h[0]=0x6a09e667; c->h[1]=0xbb67ae85; c->h[2]=0x3c6ef372; c->h[3]=0xa54ff53a;
-    c->h[4]=0x510e527f; c->h[5]=0x9b05688c; c->h[6]=0x1f83d9ab; c->h[7]=0x5be0cd19;
-    c->total = 0;
-}
-
-static void sha256_block(SHA256_CTX *c, const uint8_t *d) {
-    uint32_t W[64], a,b,cc2,dd,e,f,g,h;
-    for (int i=0;i<16;i++) W[i]=(uint32_t)d[i*4]<<24|(uint32_t)d[i*4+1]<<16|(uint32_t)d[i*4+2]<<8|d[i*4+3];
-    for (int i=16;i<64;i++) W[i]=SHA_s1(W[i-2])+W[i-7]+SHA_s0(W[i-15])+W[i-16];
-    a=c->h[0];b=c->h[1];cc2=c->h[2];dd=c->h[3];e=c->h[4];f=c->h[5];g=c->h[6];h=c->h[7];
-    for (int i=0;i<64;i++){
-        uint32_t t1=h+SHA_S1(e)+CH(e,f,g)+K256[i]+W[i];
-        uint32_t t2=SHA_S0(a)+MAJ(a,b,cc2);
-        h=g;g=f;f=e;e=dd+t1;dd=cc2;cc2=b;b=a;a=t1+t2;
-    }
-    c->h[0]+=a;c->h[1]+=b;c->h[2]+=cc2;c->h[3]+=dd;c->h[4]+=e;c->h[5]+=f;c->h[6]+=g;c->h[7]+=h;
-}
-
-/* #1: Block-aligned update — process full 64-byte blocks directly,
-   only buffer the partial tail. Eliminates per-byte copy + branch. */
-static void sha256_update(SHA256_CTX *c, const uint8_t *data, size_t len) {
-    size_t off = c->total % 64;
-    c->total += len;
-    if (off > 0) {
-        size_t fill = 64 - off;
-        if (len < fill) { memcpy(c->buf + off, data, len); return; }
-        memcpy(c->buf + off, data, fill);
-        sha256_block(c, c->buf);
-        data += fill; len -= fill;
-    }
-    while (len >= 64) { sha256_block(c, data); data += 64; len -= 64; }
-    if (len > 0) memcpy(c->buf, data, len);
-}
-
-static void sha256_final(SHA256_CTX *c, uint8_t *hash) {
-    size_t off = c->total % 64;
-    c->buf[off++] = 0x80;
-    if (off > 56) { memset(c->buf+off, 0, 64-off); sha256_block(c, c->buf); off = 0; }
-    memset(c->buf+off, 0, 56-off);
-    uint64_t bits = c->total * 8;
-    for (int i = 0; i < 8; i++) c->buf[56+i] = (uint8_t)(bits >> (56 - 8*i));
-    sha256_block(c, c->buf);
-    for (int i = 0; i < 8; i++) {
-        hash[i*4]   = (uint8_t)(c->h[i]>>24);
-        hash[i*4+1] = (uint8_t)(c->h[i]>>16);
-        hash[i*4+2] = (uint8_t)(c->h[i]>>8);
-        hash[i*4+3] = (uint8_t)(c->h[i]);
-    }
-}
-
-/* #2: Hex lookup table — no sprintf overhead */
-static const char HEX_LUT[16] = "0123456789abcdef";
-
-/* ================================================================
  * Utilities
  * ================================================================ */
-
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static int file_exists(const char *p) { struct stat st; return stat(p, &st) == 0; }
@@ -206,10 +121,8 @@ static int pipeline_gate(const char *key, const char *key_file,
  * ================================================================ */
 
 static void sha256_hex(const uint8_t hash[32], char hex[65]) {
-    for (int i = 0; i < 32; i++) {
-        hex[i*2]   = HEX_LUT[hash[i] >> 4];
-        hex[i*2+1] = HEX_LUT[hash[i] & 0x0f];
-    }
+    for (int i = 0; i < 32; i++)
+        snprintf(hex + i * 2, 3, "%02x", hash[i]);
     hex[64] = '\0';
 }
 
@@ -232,8 +145,8 @@ static int pipeline_ingest(const char *input, const char *type, const char *outd
     if (!out) { fclose(in); return 1; }
 
     /* #4: SHA-256 context lives here — hash inline during write, no double read */
-    SHA256_CTX sha_ctx;
-    sha256_init(&sha_ctx);
+    BfSha256 sha_ctx;
+    bf_sha256_init(&sha_ctx);
 
     if (is_text) {
         /* #12: getline() handles arbitrary-length lines (no silent truncation) */
@@ -254,8 +167,8 @@ static int pipeline_ingest(const char *input, const char *type, const char *outd
                                      p[line_len-1] == '\t'))
                 line_len--;
             /* Hash + write normalized line + \n */
-            sha256_update(&sha_ctx, (const uint8_t *)p, (size_t)line_len);
-            sha256_update(&sha_ctx, (const uint8_t *)"\n", 1);
+            bf_sha256_update(&sha_ctx, (const uint8_t *)p, (size_t)line_len);
+            bf_sha256_update(&sha_ctx, (const uint8_t *)"\n", 1);
             fwrite(p, 1, (size_t)line_len, out);
             fwrite("\n", 1, 1, out);
         }
@@ -264,7 +177,7 @@ static int pipeline_ingest(const char *input, const char *type, const char *outd
         /* Raw copy for binary/audio/image, hash inline */
         uint8_t buf[8192]; size_t n;
         while ((n = fread(buf, 1, sizeof(buf), in)) > 0) {
-            sha256_update(&sha_ctx, buf, n);
+            bf_sha256_update(&sha_ctx, buf, n);
             fwrite(buf, 1, n, out);
         }
     }
@@ -272,7 +185,7 @@ static int pipeline_ingest(const char *input, const char *type, const char *outd
 
     /* Finalize hash — no re-read needed (#4) */
     uint8_t hash_raw[32];
-    sha256_final(&sha_ctx, hash_raw);
+    bf_sha256_final(&sha_ctx, hash_raw);
     sha256_hex(hash_raw, hash_out);
 
     long sz = file_size(norm_path_out);
@@ -283,198 +196,6 @@ static int pipeline_ingest(const char *input, const char *type, const char *outd
 /* ================================================================
  * STEP 3: Index — build SQLite index of artifacts (in-process)
  * ================================================================ */
-
-typedef struct {
-    char artifact_id[512];
-    char artifact_type[128];
-    char source_system[128];
-    char created_at[128];
-    char root_hash[128];
-    char family_key[17];
-    char canonical_key[17];
-    int atoms_count;
-    int operators_count;
-    int realizations_count;
-    int component_total;
-} ManifestSummary;
-
-typedef struct {
-    char magic[8];
-    ManifestSummary summary;
-} ManifestCacheRecord;
-
-typedef struct {
-    char magic[8];
-    long long json_size;
-    long long json_mtime;
-    ManifestSummary summary;
-} ManifestBinaryRecord;
-
-#define MANIFEST_CACHE_MAGIC "BFSM01"
-#define MANIFEST_BINARY_MAGIC "BFAR01"
-
-static unsigned long long fnv1a64_update(unsigned long long h, const void *data, size_t len) {
-    const unsigned char *p = (const unsigned char *)data;
-    for (size_t i = 0; i < len; ++i) {
-        h ^= (unsigned long long)p[i];
-        h *= 1099511628211ULL;
-    }
-    return h;
-}
-
-static void normalize_equivalence_token(char *dst, size_t dst_sz, const char *src) {
-    size_t j = 0;
-    int last_dash = 0;
-    if (dst_sz == 0) return;
-    if (!src || !src[0]) {
-        snprintf(dst, dst_sz, "unknown");
-        return;
-    }
-    for (size_t i = 0; src[i] && j + 1 < dst_sz; ++i) {
-        unsigned char ch = (unsigned char)src[i];
-        if (isalnum(ch)) {
-            dst[j++] = (char)tolower(ch);
-            last_dash = 0;
-        } else if (!last_dash && j > 0) {
-            dst[j++] = '-';
-            last_dash = 1;
-        }
-    }
-    while (j > 0 && dst[j - 1] == '-') j--;
-    if (j == 0) {
-        snprintf(dst, dst_sz, "unknown");
-        return;
-    }
-    dst[j] = '\0';
-}
-
-static void compute_canonical_key(ManifestSummary *summary) {
-    unsigned long long h = 1469598103934665603ULL;
-    unsigned long long family_h = 1469598103934665603ULL;
-    char counts[96];
-    char type_norm[128];
-    char system_norm[128];
-    snprintf(
-        counts, sizeof(counts), "%d|%d|%d",
-        summary->atoms_count,
-        summary->operators_count,
-        summary->realizations_count
-    );
-    normalize_equivalence_token(type_norm, sizeof(type_norm), summary->artifact_type);
-    normalize_equivalence_token(system_norm, sizeof(system_norm), summary->source_system);
-    family_h = fnv1a64_update(family_h, type_norm, strlen(type_norm));
-    family_h = fnv1a64_update(family_h, "|", 1);
-    family_h = fnv1a64_update(family_h, system_norm, strlen(system_norm));
-    h = fnv1a64_update(h, type_norm, strlen(type_norm));
-    h = fnv1a64_update(h, "|", 1);
-    h = fnv1a64_update(h, system_norm, strlen(system_norm));
-    h = fnv1a64_update(h, "|", 1);
-    h = fnv1a64_update(h, counts, strlen(counts));
-    summary->component_total = summary->atoms_count + summary->operators_count + summary->realizations_count;
-    snprintf(summary->family_key, sizeof(summary->family_key), "%016llx", family_h);
-    snprintf(summary->canonical_key, sizeof(summary->canonical_key), "%016llx", h);
-}
-
-static void copy_json_token(char *dst, size_t dst_sz, const char *start, size_t len) {
-    if (dst_sz == 0) return;
-    size_t n = len < dst_sz - 1 ? len : dst_sz - 1;
-    memcpy(dst, start, n);
-    dst[n] = '\0';
-}
-
-static void manifest_summary_init(ManifestSummary *summary) {
-    memset(summary, 0, sizeof(*summary));
-}
-
-static void scan_manifest_summary(const char *json, ManifestSummary *summary) {
-    manifest_summary_init(summary);
-    int object_depth = 0;
-    int array_depth = 0;
-    int in_string = 0;
-    int escape = 0;
-    int pending_top_level_key = 0;
-    const char *string_start = NULL;
-    size_t string_len = 0;
-    char current_key[64] = {0};
-    enum { ARRAY_NONE, ARRAY_ATOMS, ARRAY_OPERATORS, ARRAY_REALIZATIONS } active_array = ARRAY_NONE;
-
-    for (const char *p = json; *p; ++p) {
-        char ch = *p;
-        if (in_string) {
-            if (escape) {
-                escape = 0;
-                continue;
-            }
-            if (ch == '\\') {
-                escape = 1;
-                continue;
-            }
-            if (ch == '"') {
-                in_string = 0;
-                const char *look = p + 1;
-                while (*look == ' ' || *look == '\n' || *look == '\r' || *look == '\t') look++;
-                if (object_depth == 1 && array_depth == 0 && *look == ':') {
-                    copy_json_token(current_key, sizeof(current_key), string_start, string_len);
-                    pending_top_level_key = 1;
-                } else if (pending_top_level_key && object_depth == 1 && array_depth == 0) {
-                    if (strcmp(current_key, "artifact_id") == 0) {
-                        copy_json_token(summary->artifact_id, sizeof(summary->artifact_id), string_start, string_len);
-                    } else if (strcmp(current_key, "artifact_type") == 0) {
-                        copy_json_token(summary->artifact_type, sizeof(summary->artifact_type), string_start, string_len);
-                    } else if (strcmp(current_key, "source_system") == 0) {
-                        copy_json_token(summary->source_system, sizeof(summary->source_system), string_start, string_len);
-                    } else if (strcmp(current_key, "created_at") == 0) {
-                        copy_json_token(summary->created_at, sizeof(summary->created_at), string_start, string_len);
-                    } else if (strcmp(current_key, "root_hash") == 0) {
-                        copy_json_token(summary->root_hash, sizeof(summary->root_hash), string_start, string_len);
-                    }
-                    pending_top_level_key = 0;
-                    current_key[0] = '\0';
-                }
-                continue;
-            }
-            string_len++;
-            continue;
-        }
-
-        if (ch == '"') {
-            in_string = 1;
-            string_start = p + 1;
-            string_len = 0;
-            continue;
-        }
-
-        if (pending_top_level_key && object_depth == 1 && array_depth == 0 && ch == '[') {
-            if (strcmp(current_key, "atoms") == 0) active_array = ARRAY_ATOMS;
-            else if (strcmp(current_key, "operators") == 0) active_array = ARRAY_OPERATORS;
-            else if (strcmp(current_key, "realizations") == 0) active_array = ARRAY_REALIZATIONS;
-        }
-
-        if (ch == '{') {
-            if (active_array != ARRAY_NONE && array_depth == 1) {
-                if (active_array == ARRAY_ATOMS) summary->atoms_count++;
-                else if (active_array == ARRAY_OPERATORS) summary->operators_count++;
-                else if (active_array == ARRAY_REALIZATIONS) summary->realizations_count++;
-            }
-            object_depth++;
-        } else if (ch == '}') {
-            if (object_depth > 0) object_depth--;
-        } else if (ch == '[') {
-            array_depth++;
-        } else if (ch == ']') {
-            if (array_depth > 0) array_depth--;
-            if (array_depth == 0) {
-                active_array = ARRAY_NONE;
-                pending_top_level_key = 0;
-                current_key[0] = '\0';
-            }
-        } else if (pending_top_level_key && object_depth == 1 && array_depth == 0 && ch != ' ' && ch != '\n' && ch != '\r' && ch != '\t' && ch != ':') {
-            pending_top_level_key = 0;
-            current_key[0] = '\0';
-        }
-    }
-    compute_canonical_key(summary);
-}
 
 typedef struct {
     sqlite3 *db;
@@ -571,40 +292,40 @@ static void manifest_binary_path(const char *json_path, char *out, size_t out_sz
     snprintf(out, out_sz, "%s.bfrec", json_path);
 }
 
-static int load_manifest_binary_if_fresh(const char *json_path, const struct stat *json_st, ManifestSummary *summary) {
+static int load_manifest_binary_if_fresh(const char *json_path, const struct stat *json_st, BfArtifact *summary) {
     char record_path[PATH_MAX];
     manifest_binary_path(json_path, record_path, sizeof(record_path));
 
     FILE *f = fopen(record_path, "rb");
     if (!f) return 0;
-    ManifestBinaryRecord record;
+    BfBinaryRecord record;
     size_t n = fread(&record, 1, sizeof(record), f);
     fclose(f);
     if (n != sizeof(record)) return 0;
-    if (strncmp(record.magic, MANIFEST_BINARY_MAGIC, strlen(MANIFEST_BINARY_MAGIC)) != 0) return 0;
+    if (strncmp(record.magic, BF_BINARY_MAGIC, strlen(BF_BINARY_MAGIC)) != 0) return 0;
     if (record.json_size != (long long)json_st->st_size) return 0;
     if (record.json_mtime != (long long)json_st->st_mtime) return 0;
-    *summary = record.summary;
-    if (summary->canonical_key[0] == '\0') compute_canonical_key(summary);
+    *summary = record.artifact;
+    if (summary->canonical_key[0] == '\0') bf_artifact_compute_keys(summary);
     return 1;
 }
 
-static void save_manifest_binary(const char *json_path, const struct stat *json_st, const ManifestSummary *summary) {
+static void save_manifest_binary(const char *json_path, const struct stat *json_st, const BfArtifact *summary) {
     char record_path[PATH_MAX];
     manifest_binary_path(json_path, record_path, sizeof(record_path));
     FILE *rf = fopen(record_path, "wb");
     if (!rf) return;
-    ManifestBinaryRecord binary;
+    BfBinaryRecord binary;
     memset(&binary, 0, sizeof(binary));
-    memcpy(binary.magic, MANIFEST_BINARY_MAGIC, strlen(MANIFEST_BINARY_MAGIC));
+    memcpy(binary.magic, BF_BINARY_MAGIC, strlen(BF_BINARY_MAGIC));
     binary.json_size = (long long)json_st->st_size;
     binary.json_mtime = (long long)json_st->st_mtime;
-    binary.summary = *summary;
+    binary.artifact = *summary;
     fwrite(&binary, 1, sizeof(binary), rf);
     fclose(rf);
 }
 
-static int load_manifest_cache_if_fresh(const char *json_path, ManifestSummary *summary) {
+static int load_manifest_cache_if_fresh(const char *json_path, BfArtifact *summary) {
     struct stat json_st, cache_st;
     char cache_path[PATH_MAX];
     if (stat(json_path, &json_st) != 0) return 0;
@@ -616,18 +337,18 @@ static int load_manifest_cache_if_fresh(const char *json_path, ManifestSummary *
 
     FILE *f = fopen(cache_path, "rb");
     if (!f) return 0;
-    ManifestCacheRecord record;
+    BfCacheRecord record;
     size_t n = fread(&record, 1, sizeof(record), f);
     fclose(f);
     if (n != sizeof(record)) return 0;
-    if (strncmp(record.magic, MANIFEST_CACHE_MAGIC, strlen(MANIFEST_CACHE_MAGIC)) != 0) return 0;
-    *summary = record.summary;
-    if (summary->canonical_key[0] == '\0') compute_canonical_key(summary);
+    if (strncmp(record.magic, BF_CACHE_MAGIC, strlen(BF_CACHE_MAGIC)) != 0) return 0;
+    *summary = record.artifact;
+    if (summary->canonical_key[0] == '\0') bf_artifact_compute_keys(summary);
     save_manifest_binary(json_path, &json_st, summary);
     return 1;
 }
 
-static void save_manifest_cache(const char *json_path, const ManifestSummary *summary) {
+static void save_manifest_cache(const char *json_path, const BfArtifact *summary) {
     struct stat json_st;
     char cache_path[PATH_MAX];
     manifest_cache_path(json_path, cache_path, sizeof(cache_path));
@@ -638,16 +359,16 @@ static void save_manifest_cache(const char *json_path, const ManifestSummary *su
 
     FILE *f = fopen(cache_path, "wb");
     if (!f) return;
-    ManifestCacheRecord record;
+    BfCacheRecord record;
     memset(&record, 0, sizeof(record));
-    memcpy(record.magic, MANIFEST_CACHE_MAGIC, strlen(MANIFEST_CACHE_MAGIC));
-    record.summary = *summary;
+    memcpy(record.magic, BF_CACHE_MAGIC, strlen(BF_CACHE_MAGIC));
+    record.artifact = *summary;
     fwrite(&record, 1, sizeof(record), f);
     fclose(f);
 }
 
 static void pipeline_index_artifact_file(PipelineIndexCtx *ctx, const char *path) {
-    ManifestSummary summary;
+    BfArtifact summary;
     if (load_manifest_cache_if_fresh(path, &summary)) {
         ctx->cache_hits++;
     } else {
@@ -664,7 +385,7 @@ static void pipeline_index_artifact_file(PipelineIndexCtx *ctx, const char *path
         json[sz] = '\0';
         fclose(f);
         ctx->bytes_scanned += sz;
-        scan_manifest_summary(json, &summary);
+        bf_artifact_parse(&summary, json);
         save_manifest_cache(path, &summary);
         ctx->cache_misses++;
     }
@@ -867,7 +588,7 @@ static void write_pipeline_telemetry(
     FILE *f = fopen(path, "w");
     if (!f) return;
     char ts[64];
-    iso_timestamp(ts, sizeof(ts));
+    bf_iso_timestamp(ts, sizeof(ts));
     fprintf(
         f,
         "{\n"
@@ -1062,7 +783,7 @@ int main(int argc, char *argv[]) {
 
     /* #13: Single timestamp for all stages */
     char ts[64];
-    iso_timestamp(ts, sizeof(ts));
+    bf_iso_timestamp(ts, sizeof(ts));
 
     long long total_started = monotonic_ns();
     long long gate_started, ingest_started, index_started, meter_started, stitch_started, ledger_started, compress_wait_started;

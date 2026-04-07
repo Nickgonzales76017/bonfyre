@@ -692,18 +692,69 @@ const BfOperator BF_OPERATORS[] = {
 
 const int BF_OPERATOR_COUNT = sizeof(BF_OPERATORS) / sizeof(BF_OPERATORS[0]);
 
-const BfOperator *bf_operator_find(const char *binary_name) {
-    for (int i = 0; i < BF_OPERATOR_COUNT; i++) {
-        if (strcmp(BF_OPERATORS[i].binary, binary_name) == 0)
-            return &BF_OPERATORS[i];
+/* ── P4: FNV-1a hash table for O(1) operator lookups ─────────────── */
+
+#define OP_HT_SIZE 128  /* power-of-2, fits 39 operators at ~30% load */
+
+typedef struct {
+    int idx[OP_HT_SIZE]; /* index into BF_OPERATORS, -1 = empty */
+} OpHashTable;
+
+static OpHashTable g_ht_name;      /* keyed by .name */
+static OpHashTable g_ht_binary;    /* keyed by .binary */
+static int g_ht_ready = 0;
+
+static unsigned fnv1a(const char *s) {
+    unsigned h = 2166136261u;
+    for (; *s; s++) h = (h ^ (unsigned char)*s) * 16777619u;
+    return h;
+}
+
+static void ht_init(OpHashTable *ht) {
+    for (int i = 0; i < OP_HT_SIZE; i++) ht->idx[i] = -1;
+}
+
+static void ht_insert(OpHashTable *ht, const char *key, int val) {
+    unsigned slot = fnv1a(key) & (OP_HT_SIZE - 1);
+    while (ht->idx[slot] >= 0)
+        slot = (slot + 1) & (OP_HT_SIZE - 1);
+    ht->idx[slot] = val;
+}
+
+static int ht_find(const OpHashTable *ht, const char *key,
+                   const char *(*get_key)(int)) {
+    unsigned slot = fnv1a(key) & (OP_HT_SIZE - 1);
+    for (int i = 0; i < OP_HT_SIZE; i++) {
+        int idx = ht->idx[slot];
+        if (idx < 0) return -1;
+        if (strcmp(get_key(idx), key) == 0) return idx;
+        slot = (slot + 1) & (OP_HT_SIZE - 1);
     }
-    return NULL;
+    return -1;
+}
+
+static const char *get_name(int i)   { return BF_OPERATORS[i].name; }
+static const char *get_binary(int i) { return BF_OPERATORS[i].binary; }
+
+static void ensure_ht(void) {
+    if (g_ht_ready) return;
+    ht_init(&g_ht_name);
+    ht_init(&g_ht_binary);
+    for (int i = 0; i < BF_OPERATOR_COUNT; i++) {
+        ht_insert(&g_ht_name, BF_OPERATORS[i].name, i);
+        ht_insert(&g_ht_binary, BF_OPERATORS[i].binary, i);
+    }
+    g_ht_ready = 1;
+}
+
+const BfOperator *bf_operator_find(const char *binary_name) {
+    ensure_ht();
+    int i = ht_find(&g_ht_binary, binary_name, get_binary);
+    return i >= 0 ? &BF_OPERATORS[i] : NULL;
 }
 
 const BfOperator *bf_operator_find_by_name(const char *name) {
-    for (int i = 0; i < BF_OPERATOR_COUNT; i++) {
-        if (strcmp(BF_OPERATORS[i].name, name) == 0)
-            return &BF_OPERATORS[i];
-    }
-    return NULL;
+    ensure_ht();
+    int i = ht_find(&g_ht_name, name, get_name);
+    return i >= 0 ? &BF_OPERATORS[i] : NULL;
 }

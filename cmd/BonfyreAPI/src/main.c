@@ -17,9 +17,11 @@
 #include <dirent.h>
 #include <errno.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <pthread.h>
 #include <signal.h>
 #include <stdarg.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,8 +37,11 @@
 #define MAX_PATH_SEGS 16
 #define MAX_PATH_LEN  2048
 #define MAX_RESULT    (1024*1024)    /* 1MB result buffer */
+#define MAX_THREADS   64             /* P4: connection limit */
+#define THREAD_STACK  (256*1024)     /* P4: 256KB vs 8MB */
 
 static volatile int g_running = 1;
+static atomic_int g_thread_count = 0;
 static sqlite3 *g_db = NULL;
 static pthread_mutex_t g_db_mutex = PTHREAD_MUTEX_INITIALIZER;
 static char g_static_dir[MAX_PATH_LEN] = "";
@@ -97,13 +102,11 @@ static void http_resp_send(HttpResponse *r) {
 static void http_resp_json(HttpResponse *r, int status, const char *fmt, ...) {
     r->status=status;
     free(r->buf);
-    char tmp[8192];
+    /* P4: vasprintf avoids 8KB stack buffer + copy */
     va_list ap; va_start(ap,fmt);
-    int n=vsnprintf(tmp,sizeof(tmp),fmt,ap);
+    int n=vasprintf(&r->buf,fmt,ap);
     va_end(ap);
     r->buf_len=(size_t)(n>0?n:0);
-    r->buf=malloc(r->buf_len+1);
-    memcpy(r->buf,tmp,r->buf_len+1);
 }
 
 static int parse_http_request(int fd, HttpRequest *req) {
@@ -449,12 +452,17 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
     pthread_mutex_unlock(&g_db_mutex);
 
     /* Route to appropriate binary */
-    char result[MAX_RESULT];
+    /* P4: heap-alloc result buffer instead of 1MB on stack */
+    char *result=malloc(MAX_RESULT);
+    if (!result) {
+        http_resp_json(resp,500,"{\"error\":\"out of memory\"}");
+        return;
+    }
     char bin_name[64];
     snprintf(bin_name,sizeof(bin_name),"bonfyre-%s",type);
 
     char *argv_run[]={bin_name,input,"--out",outdir,NULL};
-    int rc=run_binary(bin_name,argv_run,result,sizeof(result));
+    int rc=run_binary(bin_name,argv_run,result,MAX_RESULT);
 
     char done_ts[64]; iso_now(done_ts,sizeof(done_ts));
 
@@ -474,6 +482,8 @@ static void handle_job_submit(HttpRequest *req, HttpResponse *resp) {
     }
     sqlite3_step(st); sqlite3_finalize(st);
     pthread_mutex_unlock(&g_db_mutex);
+
+    free(result);  /* P4: heap-allocated result buffer */
 
     http_resp_json(resp,201,
         "{\"data\":{\"id\":%d,\"type\":\"%s\",\"status\":\"%s\"},\"meta\":{\"created\":true}}",
@@ -724,10 +734,14 @@ static void *connection_handler(void *arg) {
     free_request(req);
     free(req);
     close(fd);
+    atomic_fetch_sub(&g_thread_count, 1);  /* P4: track active threads */
     return NULL;
 }
 
 static int start_server(int port) {
+    /* P4: ignore SIGPIPE — write() to closed socket kills process otherwise */
+    signal(SIGPIPE, SIG_IGN);
+
     int sfd=socket(AF_INET,SOCK_STREAM,0);
     if (sfd<0) { perror("socket"); return -1; }
     int opt=1; setsockopt(sfd,SOL_SOCKET,SO_REUSEADDR,&opt,sizeof(opt));
@@ -760,12 +774,26 @@ static int start_server(int port) {
         int cfd=accept(sfd,(struct sockaddr*)&ca,&cl);
         if (cfd<0) { if (!g_running) break; continue; }
 
+        /* P4: TCP_NODELAY eliminates 40ms Nagle delay on responses */
+        int one=1;
+        setsockopt(cfd,IPPROTO_TCP,TCP_NODELAY,&one,sizeof(one));
+
+        /* P4: enforce connection limit — reject with 503 if overloaded */
+        if (atomic_load(&g_thread_count) >= MAX_THREADS) {
+            const char *busy="HTTP/1.1 503 Service Unavailable\r\n"
+                "Content-Length: 0\r\nConnection: close\r\n\r\n";
+            write(cfd,busy,strlen(busy));
+            close(cfd);
+            continue;
+        }
+        atomic_fetch_add(&g_thread_count, 1);
+
         int *pfd=malloc(sizeof(int)); *pfd=cfd;
         pthread_t tid;
         pthread_attr_t attr;
         pthread_attr_init(&attr);
         pthread_attr_setdetachstate(&attr,PTHREAD_CREATE_DETACHED);
-        pthread_attr_setstacksize(&attr,8*1024*1024);
+        pthread_attr_setstacksize(&attr,THREAD_STACK);
         pthread_create(&tid,&attr,connection_handler,pfd);
         pthread_attr_destroy(&attr);
     }

@@ -1,7 +1,8 @@
 # libbonfyre — shared Bonfyre runtime library
 
 CC      ?= cc
-CFLAGS  ?= -O2 -Wall -Wextra -std=c11
+OPTFLAGS ?= -O2 -Wall -Wextra -std=c11
+CFLAGS   = $(OPTFLAGS) -I$(INCDIR)
 AR      ?= ar
 RANLIB  ?= ranlib
 

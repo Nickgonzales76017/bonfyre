@@ -1,6 +1,7 @@
 CC       ?= cc
 AR       ?= ar
-CFLAGS   ?= -O2 -Wall -Wextra -std=c11 -Iinclude
+OPTFLAGS ?= -O2 -Wall -Wextra -std=c11
+CFLAGS    = $(OPTFLAGS) -Iinclude
 LDFLAGS  ?= -lm
 
 SRC       = src/lt_core.c

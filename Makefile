@@ -7,7 +7,7 @@ LIBDIR  = $(PREFIX)/lib
 INCDIR  = $(PREFIX)/include
 
 CC     ?= cc
-CFLAGS ?= -O3 -march=native -flto=auto -Wall -Wextra -std=c11
+CFLAGS ?= -O3 -march=native -flto=auto -ffunction-sections -fdata-sections -Wall -Wextra -std=c11
 
 # Every directory under cmd/ with a Makefile
 BINARIES := $(sort $(dir $(wildcard cmd/*/Makefile)))
@@ -19,9 +19,9 @@ all: lib binaries
 # ── Libraries ────────────────────────────────────────────────
 lib:
 	@echo "=== Building liblambda-tensors ==="
-	$(MAKE) -C lib/liblambda-tensors CC="$(CC)"
+	$(MAKE) -C lib/liblambda-tensors CC="$(CC)" OPTFLAGS="$(CFLAGS)"
 	@echo "=== Building libbonfyre ==="
-	$(MAKE) -C lib/libbonfyre CC="$(CC)"
+	$(MAKE) -C lib/libbonfyre CC="$(CC)" OPTFLAGS="$(CFLAGS)"
 
 # ── Binaries ─────────────────────────────────────────────────
 binaries: lib
@@ -87,18 +87,36 @@ test: all
 sanitize:
 	@echo "=== Building with AddressSanitizer + UndefinedBehaviorSanitizer ==="
 	$(MAKE) -C lib/liblambda-tensors clean
-	$(MAKE) -C lib/liblambda-tensors CC="$(CC)" CFLAGS="-g -fsanitize=address,undefined -fno-omit-frame-pointer -std=c11"
+	$(MAKE) -C lib/liblambda-tensors CC="$(CC)" OPTFLAGS="-g -fsanitize=address,undefined -fno-omit-frame-pointer -std=c11"
 	$(MAKE) -C lib/libbonfyre clean
-	$(MAKE) -C lib/libbonfyre CC="$(CC)" CFLAGS="-g -fsanitize=address,undefined -fno-omit-frame-pointer -std=c11"
+	$(MAKE) -C lib/libbonfyre CC="$(CC)" OPTFLAGS="-g -fsanitize=address,undefined -fno-omit-frame-pointer -std=c11"
 	@for dir in $(BINARIES); do \
 		$(MAKE) -C $$dir CC="$(CC)" CFLAGS="-g -fsanitize=address,undefined -fno-omit-frame-pointer -std=c11" \
 			LDFLAGS="-fsanitize=address,undefined" 2>/dev/null || true; \
 	done
 	@echo "=== Sanitizer build done. Run binaries to detect memory errors. ==="
 
+# ── Profile-Guided Optimization ──────────────────────────────
+# Step 1: `make pgo-gen` → builds with profiling instrumentation
+# Step 2: Run representative workloads on the instrumented binaries
+# Step 3: `make pgo-use` → rebuilds using collected profile data
+PGO_DIR = $(CURDIR)/pgo-data
+
+pgo-gen: clean
+	@echo "=== PGO: instrumented build ==="
+	$(MAKE) all CFLAGS="$(CFLAGS) -fprofile-generate=$(PGO_DIR)"
+
+pgo-use:
+	@echo "=== PGO: optimized build from profile data ==="
+	$(MAKE) clean
+	$(MAKE) all CFLAGS="$(CFLAGS) -fprofile-use=$(PGO_DIR) -fprofile-correction"
+
+pgo-clean:
+	rm -rf $(PGO_DIR)
+
 # ── Help ─────────────────────────────────────────────────────
 help:
-	@echo "Bonfyre — 38 static C binaries + 2 libraries, ~1.6 MB total"
+	@echo "Bonfyre — 47 static C binaries + 2 libraries, ~1.6 MB total"
 	@echo ""
 	@echo "  make           Build everything"
 	@echo "  make lib       Build liblambda-tensors + libbonfyre"
@@ -106,4 +124,7 @@ help:
 	@echo "  make clean     Remove all build artifacts"
 	@echo "  make test      Run all test suites"
 	@echo "  make sanitize  Rebuild with ASan + UBSan for testing"
+	@echo "  make pgo-gen   Build with profiling instrumentation"
+	@echo "  make pgo-use   Rebuild using collected profile data"
+	@echo "  make pgo-clean Remove collected profile data"
 	@echo "  make help      This message"

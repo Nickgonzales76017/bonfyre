@@ -19,6 +19,7 @@
 #include <errno.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <poll.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -163,6 +164,7 @@ typedef struct {
     int    fd;
     char   buf[BUF_SIZE];
     size_t buf_len;
+    size_t scan_off;  /* P4: avoid re-scanning for \n\n from byte 0 */
 } EslConn;
 
 static int esl_connect(EslConn *c, const char *host, int port) {
@@ -195,6 +197,11 @@ static int esl_connect(EslConn *c, const char *host, int port) {
     }
 
     freeaddrinfo(res);
+
+    /* P4: TCP_NODELAY eliminates 40ms Nagle delay on small ESL commands */
+    int one = 1;
+    setsockopt(c->fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one));
+    setsockopt(c->fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
 
     /* Set receive timeout so event loop can check g_running */
     struct timeval tv = {.tv_sec = RECV_TIMEOUT_S, .tv_usec = 0};
@@ -237,8 +244,9 @@ static int esl_send(EslConn *c, const char *fmt, ...) {
  * Returns number of bytes in event, or 0 on timeout, -1 on error. */
 static int esl_recv_event(EslConn *c, char *out, size_t out_sz) {
     for (;;) {
-        /* Check if we already have a complete event in buffer */
-        char *end = strstr(c->buf, "\n\n");
+        /* P4: scan only from where we left off, not byte 0 */
+        char *start = c->buf + (c->scan_off > 0 ? c->scan_off - 1 : 0);
+        char *end = strstr(start, "\n\n");
         if (end) {
             size_t event_len = (size_t)(end - c->buf + 2);
             if (event_len >= out_sz) event_len = out_sz - 1;
@@ -249,13 +257,16 @@ static int esl_recv_event(EslConn *c, char *out, size_t out_sz) {
             if (remain > 0) memmove(c->buf, end + 2, remain);
             c->buf_len = remain;
             c->buf[c->buf_len] = '\0';
+            c->scan_off = 0;
             return (int)event_len;
         }
+        c->scan_off = c->buf_len > 0 ? c->buf_len : 0;
 
         if (c->buf_len >= BUF_SIZE - 1) {
             /* Buffer full without complete event — discard */
             c->buf_len = 0;
             c->buf[0] = '\0';
+            c->scan_off = 0;
         }
 
         ssize_t n = recv(c->fd, c->buf + c->buf_len, BUF_SIZE - 1 - c->buf_len, 0);
@@ -1193,10 +1204,8 @@ static int cmd_verify_send(const char *host, int port, const char *password,
         return 1;
     }
 
-    /* Generate 6-digit code */
-    unsigned seed = (unsigned)(time(NULL) ^ getpid());
-    srand(seed);
-    int code = 100000 + (rand() % 900000);
+    /* P4: arc4random is CSPRNG — srand/rand is predictable and exploitable */
+    int code = 100000 + (int)(arc4random_uniform(900000));
     char code_str[8];
     snprintf(code_str, sizeof(code_str), "%d", code);
 
