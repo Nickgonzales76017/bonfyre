@@ -310,6 +310,25 @@ bonfyre-embed --text input.txt --out embedding.vecf --output-format binary
 | All 46 binaries disk | — | **2.0 MB total** | — |
 | Test suite | — | **68 tests, all pass** | — |
 
+## Examples
+
+Standalone repos you can clone and run independently. Each builds only the binaries it needs.
+
+| Repo | What it does | Time to run | CEO pitch |
+|---|---|---|---|
+| **[quickstart](https://github.com/Nickgonzales76017/bonfyre-example-quickstart)** | Clone → build → CMS + embed + search | 30 sec | "Entire backend in 2 MB" |
+| **[semantic-search](https://github.com/Nickgonzales76017/bonfyre-example-semantic-search)** | Embed 20 docs, search by meaning | 5 min | "Replace $250/mo Pinecone — local, 5 ms queries" |
+| **[transcribe](https://github.com/Nickgonzales76017/bonfyre-example-transcribe)** | Audio → transcript → summary → tags → ZIP | 5 min | "Replace $0.006/min Deepgram — $0, offline, private" |
+| **[compress](https://github.com/Nickgonzales76017/bonfyre-example-compress)** | Compress 10K JSON records, random access | 2 min | "13.5% of JSON with O(1) field access" |
+| **[saas-stack](https://github.com/Nickgonzales76017/bonfyre-example-saas-stack)** | Auth + billing + API gateway + CMS | 5 min | "Replace $2,500/mo SaaS stack — 240 KB, zero vendors" |
+
+```bash
+# Pick one and go:
+git clone https://github.com/Nickgonzales76017/bonfyre-example-semantic-search.git
+cd bonfyre-example-semantic-search
+./setup.sh && ./run.sh
+```
+
 ## All 46 binaries
 
 ### Infrastructure
