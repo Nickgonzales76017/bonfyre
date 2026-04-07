@@ -98,6 +98,30 @@ BonfyreVec: SQLite C API + sqlite-vec extension, no Python.
 | Single-threaded (`intra_op=1`, `ORT_ENABLE_BASIC`) | 304 ms | 119% |
 | **Multi-threaded (`intra_op=ncpu`, `ORT_ENABLE_ALL`)** | **227 ms** | **187%** |
 
+### Trie tokenizer (P1)
+
+Replaced hash-table Vocab with trie-based tokenizer:
+
+| Aspect | Hash table | Trie |
+|---|---|---|
+| Lookup | O(n) shrinking-substring probes | **O(word_len) single traversal** |
+| Subword matching | Rebuild `##` prefix per probe | **Dedicated sub_trie (keys without `##`)** |
+| Memory layout | 30K hash buckets | **128-wide ASCII children, pool-allocated** |
+| Correctness | Identical | **Verified: 384-dim output matches within 1e-6** |
+
+### `--insert-db` inline insertion (P1)
+
+Embed + insert into sqlite-vec in a single process, zero intermediate file I/O:
+
+```bash
+bonfyre-embed --text doc.txt --insert-db my.db --backend onnx
+```
+
+| Mode | Steps | File I/O |
+|---|---|---|
+| Separate binaries | embed → write VECF → read VECF → insert | 2 writes + 1 read |
+| **`--insert-db`** | **embed → insert (in-process)** | **0** |
+
 ### Vector output format
 
 | Format | Size (384-dim) | Parse overhead |

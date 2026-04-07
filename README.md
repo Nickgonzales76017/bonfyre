@@ -231,6 +231,25 @@ BonfyreEmbed and BonfyreVec were rewritten from Python subprocess wrappers to pu
 
 **Measured:** 187% CPU utilization (multi-core ONNX), 25% faster wall time on embeddings.
 
+### P1 optimizations (shipped)
+
+| Optimization | Impact | Details |
+|---|---|---|
+| Trie-based tokenizer | **O(word_len) per piece** | 128-wide ASCII trie replaces hash table; dual tries for vocab + `##` subwords |
+| `--insert-db` inline insertion | **Zero intermediate file I/O** | Embed + insert into sqlite-vec DB in one process — skips JSON/VECF write entirely |
+| Optional `--out` | Simpler batch pipelines | `--out` can be omitted when `--insert-db` is provided |
+
+`--insert-db` eliminates the embed → write → read → insert round-trip:
+
+```bash
+# Before (two binaries, file I/O in between)
+bonfyre-embed --text doc.txt --out doc.vecf --output-format binary
+bonfyre-vec insert my.db doc.vecf --doc-id doc
+
+# After (single binary, zero file I/O)
+bonfyre-embed --text doc.txt --insert-db my.db --backend onnx
+```
+
 ### Binary vector format (VECF)
 
 BonfyreEmbed can output raw float32 vectors instead of JSON:
@@ -284,7 +303,7 @@ bonfyre-embed --text input.txt --out embedding.vecf --output-format binary
 | `bonfyre-proof` | 34 KB | Quality scoring + review |
 | `bonfyre-pack` | 33 KB | Deliverable packaging (ZIP + manifest) |
 | `bonfyre-compress` | 33 KB | File compression (zstd, async) |
-| `bonfyre-embed` | 34 KB | Text embeddings (ONNX Runtime C API, BERT WordPiece tokenizer) |
+| `bonfyre-embed` | 34 KB | Text embeddings (ONNX Runtime C API, trie tokenizer, `--insert-db` inline vec insertion) |
 | `bonfyre-vec` | 34 KB | Local vector search (sqlite-vec, pure C) |
 | `bonfyre-segment` | 33 KB | Speaker segmentation |
 | `bonfyre-speechloop` | 33 KB | Live speech loop |
