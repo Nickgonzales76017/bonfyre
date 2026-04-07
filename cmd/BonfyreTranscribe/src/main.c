@@ -1,7 +1,6 @@
 #include <errno.h>
 #include <ctype.h>
 #include <dirent.h>
-#include <fcntl.h>
 #include <limits.h>
 #include <math.h>
 #include <stdio.h>
@@ -15,39 +14,65 @@
 #include <bonfyre.h>
 
 /* ================================================================
- * Vocabulary Accumulator — the learning curve engine.
+ * Vocabulary Accumulator — information-theoretic learning engine.
  *
- * Every transcription feeds its output text back into a SQLite vocab
- * database. The more audio processed, the richer the prompt becomes.
- * Improvement follows: quality(n) = 1 - e^(-k * n)
- * where n = total words observed and k = learning rate.
+ * Flat binary format (.bfvocab) — zero external dependencies.
+ * In-process FNV-1a hash map for O(1) term lookup during ingestion.
+ * TF-IDF weighting aligned with lambda-tensors frequency cost models.
+ * Shannon entropy convergence metric.
  *
- * The vocab DB stores:
- *   term       — lowercased word or multi-word phrase
- *   frequency  — total occurrences across all transcriptions
- *   first_seen — ISO timestamp of first observation
- *   last_seen  — ISO timestamp of most recent observation
- *   source     — "transcribe" or "manual"
+ * File layout (little-endian):
+ *   [6]  magic "BFVD01"
+ *   [2]  version     (uint16_t)
+ *   [4]  total_files (uint32_t)
+ *   [4]  total_words (uint32_t)
+ *   [4]  entry_count (uint32_t)
+ *   Per entry:
+ *     [4]  freq      (uint32_t)  — total occurrences across all files
+ *     [2]  doc_freq  (uint16_t)  — distinct files containing this term
+ *     [2]  term_len  (uint16_t)
+ *     [N]  term      (UTF-8, no NUL)
  *
- * The prompt generator selects the top-N terms by frequency,
- * weighted so that domain-specific terms (proper nouns, jargon)
- * that appear repeatedly rise to the top.
+ * Term weighting:
+ *   w(t) = log(1 + freq) * log(1 + N/df)
+ *   Sublinear TF suppresses common words. IDF lifts domain terms.
+ *   Matches lambda-tensors' Huffman code-length relationship:
+ *     code_len ~ ceil(-log2(p)) <-> w(t) ~ -log(p_background)
  *
- * On first run: no vocab → no prompt → full Whisper cold decode.
- * After 1 file:  ~50 terms → weak prompt → marginal speedup.
- * After 10 files: ~300 terms → strong prompt → measurable speedup.
- * After 100 files: ~1000+ terms → saturated prompt → near-optimal.
+ * Convergence:
+ *   knowledge = 1 - H/H_max
+ *   where H = Shannon entropy of observed term distribution,
+ *   H_max = log2(unique_terms). Measures distribution peakedness —
+ *   a peaked distribution means strong domain signal.
  *
- * The model never forgets: terms accumulate monotonically. Rare
- * terms naturally fall out of the prompt as higher-frequency terms
- * dominate the top-N window.
+ * Zero friction: single read on load, single write on save.
+ * No process spawns, no external binaries, no SQL.
  * ================================================================ */
 
-#define VOCAB_DB_NAME       "bonfyre_vocab.db"
-#define VOCAB_PROMPT_MAX    200   /* max terms in the whisper prompt      */
-#define VOCAB_MIN_FREQ      2     /* min frequency to enter prompt        */
-#define VOCAB_MIN_LEN       3     /* ignore words shorter than this       */
-#define VOCAB_PROMPT_CHARS  1024  /* max bytes in the prompt string       */
+#define BFVOCAB_MAGIC       "BFVD01"
+#define BFVOCAB_MAGIC_LEN   6
+#define BFVOCAB_VERSION     1
+#define BFVOCAB_NAME        "bonfyre_vocab.bfvocab"
+#define VOCAB_PROMPT_MAX    200
+#define VOCAB_PROMPT_CHARS  1024
+#define VOCAB_MIN_LEN       3
+#define VOCAB_HASH_INIT     4096  /* power of 2 */
+
+typedef struct {
+    char     term[128];
+    uint32_t freq;       /* total occurrences across all files */
+    uint16_t doc_freq;   /* number of distinct files containing this term */
+} VocabEntry;
+
+typedef struct {
+    VocabEntry *entries;
+    int         count;
+    int         cap;
+    uint32_t    total_files;
+    uint32_t    total_words;
+    int        *hash_slots;  /* FNV-1a open-addressing -> entry index */
+    int         hash_cap;    /* always power of 2 */
+} VocabStore;
 
 /* Stopwords — common English words we never want in the prompt. */
 static const char *STOPWORDS[] = {
@@ -87,256 +112,312 @@ static void normalize_word(char *w) {
     if (start != w) memmove(w, start, strlen(start) + 1);
 }
 
-/* ----------------------------------------------------------------
- * Vocab DB operations — light SQLite via fork+exec to sqlite3 CLI.
- * This keeps BonfyreTranscribe zero-dep (no libsqlite3 link).
- * The vocab DB lives next to the output directory or at a
- * configurable path via $BONFYRE_VOCAB_DB.
- * ---------------------------------------------------------------- */
+/* ── Vocab path resolution ────────────────────────────────── */
 
-static void resolve_vocab_db(char *out, size_t size) {
+static void resolve_vocab_path(char *out, size_t size) {
     const char *env = getenv("BONFYRE_VOCAB_DB");
-    if (env && env[0]) {
-        snprintf(out, size, "%s", env);
-        return;
-    }
+    if (env && env[0]) { snprintf(out, size, "%s", env); return; }
     const char *home = getenv("HOME");
-    if (home) {
-        snprintf(out, size, "%s/.local/share/bonfyre/%s", home, VOCAB_DB_NAME);
+    if (home)
+        snprintf(out, size, "%s/.local/share/bonfyre/%s", home, BFVOCAB_NAME);
+    else
+        snprintf(out, size, "/tmp/%s", BFVOCAB_NAME);
+}
+
+/* ── TF-IDF term weight ──────────────────────────────────── */
+/*
+ * w(t) = log(1 + freq) * log(1 + total_files / doc_freq)
+ *
+ * Sublinear TF: log(1+f) prevents high-frequency words from
+ * dominating. Identical to BM25's logarithmic TF component.
+ *
+ * Smoothed IDF: log(1+N/df) measures term specificity.
+ * Domain jargon appearing in few files -> high IDF.
+ * Ubiquitous words -> IDF near 0.
+ *
+ * This mirrors lambda-tensors' frequency cost model:
+ *   Huffman code_len = ceil(-log2(p_symbol))
+ *   String table dedup: inline_cost vs reference_cost
+ *   Both reduce to: weight ~ -log(p)
+ */
+static double vocab_tfidf(const VocabEntry *e, uint32_t total_files) {
+    double tf  = log(1.0 + (double)e->freq);
+    double idf = log(1.0 + (double)total_files /
+                     (double)(e->doc_freq ? e->doc_freq : 1));
+    return tf * idf;
+}
+
+/* ── FNV-1a hash map (open-addressing, matching bf_fnv1a64) ── */
+
+static void vocab_hash_rebuild(VocabStore *v) {
+    free(v->hash_slots);
+    int cap = VOCAB_HASH_INIT;
+    while (cap < v->count * 3 + 16) cap <<= 1;
+    v->hash_slots = malloc((size_t)cap * sizeof(int));
+    v->hash_cap = cap;
+    for (int i = 0; i < cap; i++) v->hash_slots[i] = -1;
+    for (int i = 0; i < v->count; i++) {
+        uint64_t h = bf_fnv1a64(BF_FNV1A_INIT, v->entries[i].term,
+                                 strlen(v->entries[i].term));
+        int slot = (int)(h & (uint64_t)(cap - 1));
+        while (v->hash_slots[slot] >= 0) slot = (slot + 1) & (cap - 1);
+        v->hash_slots[slot] = i;
+    }
+}
+
+static int vocab_hash_find(const VocabStore *v, const char *term) {
+    if (!v->hash_slots || v->hash_cap == 0) return -1;
+    uint64_t h = bf_fnv1a64(BF_FNV1A_INIT, term, strlen(term));
+    int mask = v->hash_cap - 1;
+    int slot = (int)(h & (uint64_t)mask);
+    while (v->hash_slots[slot] >= 0) {
+        if (strcmp(v->entries[v->hash_slots[slot]].term, term) == 0)
+            return v->hash_slots[slot];
+        slot = (slot + 1) & mask;
+    }
+    return -1;
+}
+
+static int vocab_entry_add(VocabStore *v, const char *term) {
+    if (v->count >= v->cap) {
+        v->cap = v->cap ? v->cap * 2 : 256;
+        v->entries = realloc(v->entries, (size_t)v->cap * sizeof(VocabEntry));
+    }
+    int idx = v->count++;
+    VocabEntry *e = &v->entries[idx];
+    snprintf(e->term, sizeof(e->term), "%s", term);
+    e->freq = 0;
+    e->doc_freq = 0;
+    if (v->count * 3 > v->hash_cap) {
+        vocab_hash_rebuild(v);
     } else {
-        snprintf(out, size, "/tmp/%s", VOCAB_DB_NAME);
+        uint64_t h = bf_fnv1a64(BF_FNV1A_INIT, term, strlen(term));
+        int mask = v->hash_cap - 1;
+        int slot = (int)(h & (uint64_t)mask);
+        while (v->hash_slots[slot] >= 0) slot = (slot + 1) & mask;
+        v->hash_slots[slot] = idx;
     }
+    return idx;
 }
 
-static int run_sqlite3(const char *db_path, const char *sql) {
-    char *argv[] = {
-        "sqlite3", (char *)db_path, (char *)sql, NULL
-    };
-    pid_t pid = fork();
-    if (pid < 0) return 1;
-    if (pid == 0) {
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull >= 0) { dup2(devnull, 2); close(devnull); }
-        execvp("sqlite3", argv);
-        _exit(127);
-    }
-    int status = 0;
-    waitpid(pid, &status, 0);
-    return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
-}
+/* ── Store I/O (flat binary, matching VECF/BfCacheRecord) ── */
 
-/* Read output from sqlite3 into a buffer (caller frees). */
-static char *run_sqlite3_query(const char *db_path, const char *sql, size_t *out_len) {
-    int pipefd[2];
-    if (pipe(pipefd) < 0) return NULL;
+static void vocab_store_init(VocabStore *v) { memset(v, 0, sizeof(*v)); }
 
-    pid_t pid = fork();
-    if (pid < 0) { close(pipefd[0]); close(pipefd[1]); return NULL; }
-    if (pid == 0) {
-        close(pipefd[0]);
-        dup2(pipefd[1], 1);
-        close(pipefd[1]);
-        int devnull = open("/dev/null", O_WRONLY);
-        if (devnull >= 0) { dup2(devnull, 2); close(devnull); }
-        char *argv[] = { "sqlite3", (char *)db_path, (char *)sql, NULL };
-        execvp("sqlite3", argv);
-        _exit(127);
-    }
-    close(pipefd[1]);
-
-    size_t cap = 4096, len = 0;
-    char *buf = malloc(cap);
-    if (!buf) { close(pipefd[0]); waitpid(pid, NULL, 0); return NULL; }
-    ssize_t n;
-    while ((n = read(pipefd[0], buf + len, cap - len - 1)) > 0) {
-        len += (size_t)n;
-        if (len + 1 >= cap) { cap *= 2; buf = realloc(buf, cap); }
-    }
-    buf[len] = '\0';
-    close(pipefd[0]);
-    waitpid(pid, NULL, 0);
-    if (out_len) *out_len = len;
-    return buf;
-}
-
-static int vocab_db_init(const char *db_path) {
+static int vocab_store_load(VocabStore *v, const char *path) {
+    vocab_store_init(v);
     /* Ensure parent directory exists */
     char dir[PATH_MAX];
-    snprintf(dir, sizeof(dir), "%s", db_path);
-    char *slash = strrchr(dir, '/');
-    if (slash) { *slash = '\0'; bf_ensure_dir(dir); }
+    snprintf(dir, sizeof(dir), "%s", path);
+    char *sl = strrchr(dir, '/');
+    if (sl) { *sl = '\0'; bf_ensure_dir(dir); }
 
-    return run_sqlite3(db_path,
-        "CREATE TABLE IF NOT EXISTS vocab ("
-        "  term TEXT PRIMARY KEY,"
-        "  frequency INTEGER DEFAULT 1,"
-        "  first_seen TEXT NOT NULL,"
-        "  last_seen TEXT NOT NULL,"
-        "  source TEXT DEFAULT 'transcribe'"
-        ");"
-        "CREATE TABLE IF NOT EXISTS stats ("
-        "  key TEXT PRIMARY KEY,"
-        "  value TEXT"
-        ");"
-        "INSERT OR IGNORE INTO stats(key, value) VALUES('total_words', '0');"
-        "INSERT OR IGNORE INTO stats(key, value) VALUES('total_files', '0');"
-    );
+    size_t flen = 0;
+    char *data = bf_read_file(path, &flen);
+    if (!data || flen < BFVOCAB_MAGIC_LEN + 14) {
+        free(data);
+        vocab_hash_rebuild(v);  /* empty table */
+        return 0;
+    }
+    const uint8_t *p = (const uint8_t *)data;
+    if (memcmp(p, BFVOCAB_MAGIC, BFVOCAB_MAGIC_LEN) != 0) {
+        fprintf(stderr, "[vocab] bad magic in %s\n", path);
+        free(data); vocab_hash_rebuild(v); return -1;
+    }
+    p += BFVOCAB_MAGIC_LEN;
+    /* uint16_t version */ p += 2;
+    memcpy(&v->total_files, p, 4); p += 4;
+    memcpy(&v->total_words, p, 4); p += 4;
+    uint32_t cnt; memcpy(&cnt, p, 4); p += 4;
+
+    v->cap = (int)(cnt ? cnt * 2 : 256);
+    v->entries = malloc((size_t)v->cap * sizeof(VocabEntry));
+    const uint8_t *end = (const uint8_t *)data + flen;
+    for (uint32_t i = 0; i < cnt && p + 8 <= end; i++) {
+        VocabEntry *e = &v->entries[v->count];
+        memcpy(&e->freq, p, 4); p += 4;
+        memcpy(&e->doc_freq, p, 2); p += 2;
+        uint16_t tlen; memcpy(&tlen, p, 2); p += 2;
+        if (p + tlen > end) break;
+        size_t copy = tlen < sizeof(e->term) - 1 ? tlen : sizeof(e->term) - 1;
+        memcpy(e->term, p, copy); e->term[copy] = '\0';
+        p += tlen;
+        v->count++;
+    }
+    free(data);
+    vocab_hash_rebuild(v);
+    return 0;
 }
 
-/* Ingest a transcript file into the vocab DB. Returns words processed. */
-static int vocab_ingest(const char *db_path, const char *transcript_path) {
+/* Sort comparator — TF-IDF descending */
+static uint32_t g_sort_total_files;
+static int vocab_cmp_weight(const void *a, const void *b) {
+    double wa = vocab_tfidf((const VocabEntry *)a, g_sort_total_files);
+    double wb = vocab_tfidf((const VocabEntry *)b, g_sort_total_files);
+    return (wa > wb) ? -1 : (wa < wb) ? 1 : 0;
+}
+
+static int vocab_store_save(VocabStore *v, const char *path) {
+    /* Sort by TF-IDF weight so top terms are at file head */
+    g_sort_total_files = v->total_files;
+    qsort(v->entries, (size_t)v->count, sizeof(VocabEntry), vocab_cmp_weight);
+    vocab_hash_rebuild(v);
+
+    size_t sz = BFVOCAB_MAGIC_LEN + 2 + 4 + 4 + 4;
+    for (int i = 0; i < v->count; i++)
+        sz += 4 + 2 + 2 + strlen(v->entries[i].term);
+
+    uint8_t *buf = malloc(sz), *p = buf;
+    if (!buf) return -1;
+    memcpy(p, BFVOCAB_MAGIC, BFVOCAB_MAGIC_LEN); p += BFVOCAB_MAGIC_LEN;
+    uint16_t ver = BFVOCAB_VERSION; memcpy(p, &ver, 2); p += 2;
+    memcpy(p, &v->total_files, 4); p += 4;
+    memcpy(p, &v->total_words, 4); p += 4;
+    uint32_t cnt = (uint32_t)v->count; memcpy(p, &cnt, 4); p += 4;
+
+    for (int i = 0; i < v->count; i++) {
+        const VocabEntry *e = &v->entries[i];
+        memcpy(p, &e->freq, 4); p += 4;
+        memcpy(p, &e->doc_freq, 2); p += 2;
+        uint16_t tlen = (uint16_t)strlen(e->term);
+        memcpy(p, &tlen, 2); p += 2;
+        memcpy(p, e->term, tlen); p += tlen;
+    }
+
+    FILE *fp = fopen(path, "wb");
+    if (!fp) { free(buf); return -1; }
+    fwrite(buf, 1, sz, fp);
+    fclose(fp);
+    free(buf);
+    return 0;
+}
+
+static void vocab_store_free(VocabStore *v) {
+    free(v->entries);
+    free(v->hash_slots);
+    memset(v, 0, sizeof(*v));
+}
+
+/* ── Ingestion ───────────────────────────────────────────── */
+
+static int vocab_ingest(VocabStore *v, const char *transcript_path) {
     size_t txt_len = 0;
     char *text = bf_read_file(transcript_path, &txt_len);
     if (!text || txt_len == 0) { free(text); return 0; }
 
-    char timestamp[32];
-    bf_iso_timestamp(timestamp, sizeof(timestamp));
-
-    /* Build a single SQL transaction with all UPSERTs */
-    size_t sql_cap = txt_len * 4 + 4096;
-    char *sql = malloc(sql_cap);
-    if (!sql) { free(text); return 0; }
-    size_t sql_len = 0;
+    /* Track which entries are seen in THIS file (for doc_freq) */
+    int seen_cap = v->count + 4096;
+    uint8_t *seen = calloc((size_t)seen_cap, 1);
     int word_count = 0;
 
-    sql_len += (size_t)snprintf(sql + sql_len, sql_cap - sql_len, "BEGIN;\n");
-
-    /* Tokenize on whitespace */
     char *saveptr = NULL;
     char *tok = strtok_r(text, " \t\n\r", &saveptr);
     while (tok) {
-        char word[256];
+        char word[128];
         snprintf(word, sizeof(word), "%s", tok);
         normalize_word(word);
-
         size_t wlen = strlen(word);
         if (wlen >= VOCAB_MIN_LEN && !is_stopword(word)) {
-            /* Escape single quotes for SQL */
-            char escaped[512];
-            size_t ei = 0;
-            for (size_t wi = 0; wi < wlen && ei < sizeof(escaped) - 2; wi++) {
-                if (word[wi] == '\'') escaped[ei++] = '\'';
-                escaped[ei++] = word[wi];
+            int idx = vocab_hash_find(v, word);
+            if (idx < 0) {
+                idx = vocab_entry_add(v, word);
+                if (idx >= seen_cap) {
+                    int new_cap = idx * 2 + 1;
+                    seen = realloc(seen, (size_t)new_cap);
+                    memset(seen + seen_cap, 0, (size_t)(new_cap - seen_cap));
+                    seen_cap = new_cap;
+                }
             }
-            escaped[ei] = '\0';
-
-            sql_len += (size_t)snprintf(sql + sql_len, sql_cap - sql_len,
-                "INSERT INTO vocab(term, frequency, first_seen, last_seen, source) "
-                "VALUES('%s', 1, '%s', '%s', 'transcribe') "
-                "ON CONFLICT(term) DO UPDATE SET "
-                "frequency = frequency + 1, last_seen = '%s';\n",
-                escaped, timestamp, timestamp, timestamp);
+            v->entries[idx].freq++;
+            if (idx < seen_cap && !seen[idx]) {
+                seen[idx] = 1;
+                v->entries[idx].doc_freq++;
+            }
         }
         word_count++;
         tok = strtok_r(NULL, " \t\n\r", &saveptr);
-
-        /* Flush if SQL buffer is getting large */
-        if (sql_len > sql_cap - 1024) {
-            snprintf(sql + sql_len, sql_cap - sql_len, "COMMIT;\n");
-            run_sqlite3(db_path, sql);
-            sql_len = 0;
-            sql_len += (size_t)snprintf(sql + sql_len, sql_cap - sql_len, "BEGIN;\n");
-        }
     }
 
-    /* Update running totals */
-    sql_len += (size_t)snprintf(sql + sql_len, sql_cap - sql_len,
-        "UPDATE stats SET value = CAST(CAST(value AS INTEGER) + %d AS TEXT) WHERE key = 'total_words';\n"
-        "UPDATE stats SET value = CAST(CAST(value AS INTEGER) + 1 AS TEXT) WHERE key = 'total_files';\n",
-        word_count);
-
-    snprintf(sql + sql_len, sql_cap - sql_len, "COMMIT;\n");
-    run_sqlite3(db_path, sql);
-
-    free(sql);
+    v->total_files++;
+    v->total_words += (uint32_t)word_count;
+    free(seen);
     free(text);
     return word_count;
 }
 
-/* Build a whisper prompt from the vocab DB.
- * Returns a malloc'd string of the top-N terms sorted by frequency.
- * The prompt follows the exponential curve: more files processed →
- * richer prompt → better decoder guidance → faster/more accurate.
- *
- * Prompt quality follows: q(n) ≈ 1 - e^(-0.05 * n)
- * where n = total files processed.
- *   n=0:   q=0.00  (no prompt — cold start)
- *   n=1:   q=0.05  (weak: ~10 terms)
- *   n=5:   q=0.22  (growing: ~44 terms)
- *   n=10:  q=0.39  (solid: ~78 terms)
- *   n=20:  q=0.63  (strong: ~127 terms)
- *   n=50:  q=0.92  (near-saturated: ~184 terms)
- *   n=100: q=0.99  (saturated: 199 terms)
- *   n→∞:   q→1.00  (200 terms, optimally weighted)
- */
-static char *vocab_build_prompt(const char *db_path) {
-    /* How many files have we processed? */
-    char *files_str = run_sqlite3_query(db_path,
-        "SELECT value FROM stats WHERE key = 'total_files';", NULL);
-    int total_files = 0;
-    if (files_str) { total_files = atoi(files_str); free(files_str); }
+/* ── Prompt builder (TF-IDF ranked) ──────────────────────── */
 
-    if (total_files == 0) return NULL; /* cold start — no prompt */
+static char *vocab_build_prompt(VocabStore *v) {
+    if (v->count == 0 || v->total_files == 0) return NULL;
 
-    /* Exponential learning curve: how many terms to include */
-    double curve = 1.0 - exp(-0.05 * (double)total_files);
-    int prompt_terms = (int)(curve * VOCAB_PROMPT_MAX);
-    if (prompt_terms < 5) prompt_terms = 5;
-    if (prompt_terms > VOCAB_PROMPT_MAX) prompt_terms = VOCAB_PROMPT_MAX;
+    /* Sort by TF-IDF weight, rebuild hash for subsequent ingest */
+    g_sort_total_files = v->total_files;
+    qsort(v->entries, (size_t)v->count, sizeof(VocabEntry), vocab_cmp_weight);
+    vocab_hash_rebuild(v);
 
-    /* Query top terms by frequency, minimum VOCAB_MIN_FREQ */
-    char sql[512];
-    snprintf(sql, sizeof(sql),
-        "SELECT term FROM vocab "
-        "WHERE frequency >= %d AND source = 'transcribe' "
-        "ORDER BY frequency DESC LIMIT %d;",
-        VOCAB_MIN_FREQ, prompt_terms);
-
-    size_t result_len = 0;
-    char *result = run_sqlite3_query(db_path, sql, &result_len);
-    if (!result || result_len == 0) { free(result); return NULL; }
-
-    /* Convert newline-separated terms to comma-separated prompt */
     char *prompt = malloc(VOCAB_PROMPT_CHARS + 64);
-    if (!prompt) { free(result); return NULL; }
+    if (!prompt) return NULL;
     size_t plen = 0;
-    int term_count = 0;
+    int n = 0;
 
     plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen,
-        "Context: ");
+                              "Context: ");
 
-    char *line = strtok(result, "\n");
-    while (line && plen < VOCAB_PROMPT_CHARS - 64) {
-        if (term_count > 0) {
-            plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen, ", ");
-        }
-        plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen, "%s", line);
-        term_count++;
-        line = strtok(NULL, "\n");
+    for (int i = 0; i < v->count && n < VOCAB_PROMPT_MAX &&
+             plen < VOCAB_PROMPT_CHARS - 64; i++) {
+        if (v->entries[i].freq < 2) continue;  /* skip hapax legomena */
+        if (n > 0)
+            plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen,
+                                      ", ");
+        plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen,
+                                  "%s", v->entries[i].term);
+        n++;
     }
 
-    free(result);
+    if (n == 0) { free(prompt); return NULL; }
 
-    if (term_count == 0) { free(prompt); return NULL; }
+    /* Convergence: fraction of total TF-IDF mass captured in prompt */
+    double total_w = 0, prompt_w = 0;
+    for (int i = 0; i < v->count; i++) {
+        double w = vocab_tfidf(&v->entries[i], v->total_files);
+        total_w += w;
+        if (i < n) prompt_w += w;
+    }
+    double conv = total_w > 0 ? prompt_w / total_w : 0;
 
-    fprintf(stderr, "[vocab] learning curve: %.0f%% (%d files → %d/%d terms in prompt)\n",
-            curve * 100.0, total_files, term_count, prompt_terms);
+    fprintf(stderr,
+            "[vocab] %d/%d terms (TF-IDF), %.1f%% information captured"
+            " (%u files)\n", n, v->count, conv * 100.0, v->total_files);
     return prompt;
 }
 
-/* Write vocab stats to a JSON file alongside the transcript. */
-static void vocab_write_stats(const char *db_path, const char *output_dir) {
-    char *words_str = run_sqlite3_query(db_path,
-        "SELECT value FROM stats WHERE key = 'total_words';", NULL);
-    char *files_str = run_sqlite3_query(db_path,
-        "SELECT value FROM stats WHERE key = 'total_files';", NULL);
-    char *unique_str = run_sqlite3_query(db_path,
-        "SELECT COUNT(*) FROM vocab;", NULL);
+/* ── Stats writer (Shannon entropy + TF-IDF convergence) ── */
 
-    int total_words = words_str ? atoi(words_str) : 0;
-    int total_files = files_str ? atoi(files_str) : 0;
-    int unique_terms = unique_str ? atoi(unique_str) : 0;
-    double curve = 1.0 - exp(-0.05 * (double)total_files);
+static void vocab_write_stats(const VocabStore *v, const char *output_dir,
+                              const char *vocab_path) {
+    /* Shannon entropy of observed term distribution (bits) */
+    double entropy = 0;
+    if (v->total_words > 0) {
+        double total = (double)v->total_words;
+        for (int i = 0; i < v->count; i++) {
+            double p = (double)v->entries[i].freq / total;
+            if (p > 0) entropy -= p * log(p) / log(2.0);
+        }
+    }
+    double h_max = v->count > 1 ? log((double)v->count) / log(2.0) : 1.0;
+    double knowledge = h_max > 0 ? 1.0 - entropy / h_max : 0;
+
+    /* TF-IDF convergence of prompt */
+    double total_w = 0, prompt_w = 0;
+    int prompt_n = 0;
+    for (int i = 0; i < v->count; i++) {
+        double w = vocab_tfidf(&v->entries[i], v->total_files);
+        total_w += w;
+        if (prompt_n < VOCAB_PROMPT_MAX && v->entries[i].freq >= 2) {
+            prompt_w += w; prompt_n++;
+        }
+    }
+    double convergence = total_w > 0 ? prompt_w / total_w : 0;
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/vocab-stats.json", output_dir);
@@ -345,26 +426,23 @@ static void vocab_write_stats(const char *db_path, const char *output_dir) {
         fprintf(fp,
             "{\n"
             "  \"sourceSystem\": \"BonfyreTranscribe\",\n"
-            "  \"vocabDb\": \"%s\",\n"
-            "  \"totalFilesProcessed\": %d,\n"
-            "  \"totalWordsProcessed\": %d,\n"
+            "  \"vocabPath\": \"%s\",\n"
+            "  \"format\": \"bfvocab\",\n"
+            "  \"totalFilesProcessed\": %u,\n"
+            "  \"totalWordsObserved\": %u,\n"
             "  \"uniqueTerms\": %d,\n"
-            "  \"learningCurve\": %.4f,\n"
-            "  \"promptTermsUsed\": %d,\n"
-            "  \"promptTermsMax\": %d,\n"
-            "  \"convergence\": \"%.1f%%\"\n"
+            "  \"shannonEntropy\": %.4f,\n"
+            "  \"maxEntropy\": %.4f,\n"
+            "  \"knowledge\": %.4f,\n"
+            "  \"tfidfConvergence\": %.4f,\n"
+            "  \"promptTerms\": %d,\n"
+            "  \"promptTermsMax\": %d\n"
             "}\n",
-            db_path, total_files, total_words, unique_terms,
-            curve,
-            (int)(curve * VOCAB_PROMPT_MAX),
-            VOCAB_PROMPT_MAX,
-            curve * 100.0);
+            vocab_path, v->total_files, v->total_words, v->count,
+            entropy, h_max, knowledge, convergence,
+            prompt_n, VOCAB_PROMPT_MAX);
         fclose(fp);
     }
-
-    free(words_str);
-    free(files_str);
-    free(unique_str);
 }
 
 /* ================================================================
@@ -571,15 +649,15 @@ static void print_usage(void) {
             "                      [--vocab-db PATH] [--no-vocab]\n"
             "\n"
             "Vocabulary learning:\n"
-            "  Transcription output is fed back into a vocabulary database that grows\n"
-            "  with every file processed. The accumulated vocabulary is used as a\n"
-            "  decoder prompt (--prompt) for subsequent transcriptions, improving\n"
-            "  both speed and accuracy over time.\n"
+            "  Flat binary .bfvocab format. Zero SQLite, zero process spawns.\n"
+            "  TF-IDF weighted terms injected as whisper --prompt.\n"
+            "  Shannon entropy tracks convergence toward domain mastery.\n"
             "\n"
-            "  Learning curve: quality(n) = 1 - e^(-0.05 * n)\n"
-            "    n=1: 5%%  | n=10: 39%% | n=50: 92%% | n=100: 99%%\n"
+            "  w(t) = log(1+freq) * log(1+N/df)   [TF-IDF]\n"
+            "  H    = -sum(p_i * log2(p_i))        [Shannon entropy]\n"
+            "  knowledge = 1 - H/H_max             [convergence]\n"
             "\n"
-            "  Disable with --no-vocab. Custom DB path with --vocab-db.\n");
+            "  Disable with --no-vocab. Custom path with --vocab-db.\n");
 }
 
 /* Detect number of CPU cores. */
@@ -718,21 +796,22 @@ int main(int argc, char **argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Initialize vocabulary DB and build decoder prompt.
-     * The prompt is the accumulated knowledge from all prior
-     * transcriptions — it biases the decoder toward known terms,
-     * speeding up decoding and improving accuracy.
+     * Load vocabulary store and build decoder prompt.
+     * Flat binary format — single read, zero process spawns.
+     * TF-IDF weighted prompt biases decoder toward domain terms.
      * ---------------------------------------------------------------- */
-    char vocab_db_path[PATH_MAX];
+    char vocab_path[PATH_MAX];
+    VocabStore vocab_store;
+    vocab_store_init(&vocab_store);
     char *vocab_prompt = NULL;
     if (!no_vocab) {
         if (vocab_db_override) {
-            snprintf(vocab_db_path, sizeof(vocab_db_path), "%s", vocab_db_override);
+            snprintf(vocab_path, sizeof(vocab_path), "%s", vocab_db_override);
         } else {
-            resolve_vocab_db(vocab_db_path, sizeof(vocab_db_path));
+            resolve_vocab_path(vocab_path, sizeof(vocab_path));
         }
-        vocab_db_init(vocab_db_path);
-        vocab_prompt = vocab_build_prompt(vocab_db_path);
+        vocab_store_load(&vocab_store, vocab_path);
+        vocab_prompt = vocab_build_prompt(&vocab_store);
     }
 
     /* Thread count and beam-size as strings for argv */
@@ -954,17 +1033,18 @@ int main(int argc, char **argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Post-transcription: feed transcript back into vocabulary DB.
-     * This is where the learning curve compounds — every file makes
-     * the next file cheaper. The curve follows 1 - e^(-0.05 * n).
+     * Post-transcription: ingest transcript into vocabulary store.
+     * TF-IDF weights update, distribution sharpens, entropy drops.
      * ---------------------------------------------------------------- */
     int words_ingested = 0;
     if (!no_vocab && access(transcript_path, F_OK) == 0) {
-        words_ingested = vocab_ingest(vocab_db_path, transcript_path);
-        vocab_write_stats(vocab_db_path, output_dir);
+        words_ingested = vocab_ingest(&vocab_store, transcript_path);
+        vocab_store_save(&vocab_store, vocab_path);
+        vocab_write_stats(&vocab_store, output_dir, vocab_path);
         fprintf(stderr, "[vocab] ingested %d words from transcript\n", words_ingested);
     }
     free(vocab_prompt);
+    vocab_store_free(&vocab_store);
 
     char timestamp[32];
     iso_timestamp(timestamp, sizeof(timestamp));
