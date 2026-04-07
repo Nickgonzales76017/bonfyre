@@ -8,6 +8,7 @@
 #include <string.h>
 #include <strings.h>
 #include <sys/stat.h>
+#include <bonfyre.h>
 
 #define TARGET_SENTENCES 4
 #define MAX_SENTENCES 7
@@ -20,22 +21,7 @@ typedef struct {
     size_t capacity;
 } StringList;
 
-static int ensure_dir(const char *path) {
-    char tmp[PATH_MAX];
-    size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    strcpy(tmp, path);
-    for (size_t i = 1; i < len; i++) {
-        if (tmp[i] == '/') {
-            tmp[i] = '\0';
-            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-            tmp[i] = '/';
-        }
-    }
-    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-    return 0;
-}
-
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static char *read_file(const char *path) {
     FILE *in = fopen(path, "rb");
     char *buffer;

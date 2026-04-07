@@ -163,6 +163,37 @@ Self-match: cosine = 1.00000000, distance = 0.00000000.
 
 Binaries: Repurpose, Segment, Clips, SpeechLoop, Tone, Canon, Query, Tag.
 
+## P3: Connection pooling, full libbonfyre, native fastText
+
+### BonfyreTag: fastText inference in pure C
+
+| Metric | Before (Python subprocess) | After (native C) |
+|---|---|---|
+| Python dependency | Required (fasttext pip package) | **None for inference** |
+| Process overhead | fork+exec per prediction | **Single process** |
+| Model loading | Per invocation via Python | **Once, reused for batch** |
+| Binary size | ~50 KB + Python runtime | ~55 KB standalone |
+
+### BonfyreEmbed: batch DB connection pooling
+
+| Metric | Before | After |
+|---|---|---|
+| DB opens per batch | N (one per file) | **1** |
+| sqlite3_load_extension calls | N | **1** |
+| Prepared statements | Created+finalized per file | **Created once, reset per file** |
+
+### libbonfyre linkage (expanded)
+
+| Metric | P2 | P3 |
+|---|---|---|
+| Binaries linked | 8 | **29** |
+| `ensure_dir` copies eliminated | 8 | **29 (all instances)** |
+| `read_file_contents` copies eliminated | 4 | **5 (all instances)** |
+
+Binaries added in P3: Brief, CMS, Compress, Embed, Emit, Graph, Ingest, MediaPrep,
+MFADict, Narrate, Offer, Pack, Paragraph, Pipeline, Proof, Render, Stitch,
+Transcribe, TranscriptClean, TranscriptFamily, WeaviateIndex.
+
 ## Comparison: Bonfyre CMS vs Strapi
 
 | Metric | Strapi | Bonfyre CMS |

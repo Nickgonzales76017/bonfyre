@@ -6,26 +6,12 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <bonfyre.h>
 
 #define MAX_TEXT 16384
 #define MAX_PATH 2048
 
-static int ensure_dir(const char *path) {
-    char tmp[MAX_PATH];
-    size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    snprintf(tmp, sizeof(tmp), "%s", path);
-    for (size_t i = 1; i < len; i++) {
-        if (tmp[i] == '/') {
-            tmp[i] = '\0';
-            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-            tmp[i] = '/';
-        }
-    }
-    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-    return 0;
-}
-
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static void iso_timestamp(char *buffer, size_t size) {
     time_t now = time(NULL);
     struct tm tm_utc;

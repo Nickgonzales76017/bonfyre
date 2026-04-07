@@ -1,5 +1,7 @@
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
+LOCAL_CFLAGS = -I../../lib/libbonfyre/include
+LDFLAGS  = -L../../lib/libbonfyre -lbonfyre
 TARGET = bonfyre-cms
 COMPACT_PROBE = tests/compact-probe
 
@@ -24,10 +26,10 @@ $(LT_LIB):
 	$(MAKE) -C $(LT_DIR) liblambda-tensors.a
 
 $(TARGET): $(SRC) $(HDR) $(LT_LIB)
-	$(CC) $(CFLAGS) $(LT_INC) -o $(TARGET) $(SRC) $(LT_LIB) -lsqlite3 -lpthread -lm -lz
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) $(LT_INC) -o $(TARGET) $(SRC) $(LT_LIB) -lsqlite3 -lpthread -lm -lz $(LDFLAGS)
 
 $(COMPACT_PROBE): tests/compact_probe.c src/compact_bindings.c src/compact_bindings.h src/bench_metrics.c src/bench_metrics.h $(LT_LIB)
-	$(CC) $(CFLAGS) -Isrc $(LT_INC) -o $(COMPACT_PROBE) tests/compact_probe.c src/compact_bindings.c src/bench_metrics.c $(LT_LIB) -lsqlite3 -lm
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Isrc $(LT_INC) -o $(COMPACT_PROBE) tests/compact_probe.c src/compact_bindings.c src/bench_metrics.c $(LT_LIB) -lsqlite3 -lm
 
 compact-probe: $(COMPACT_PROBE)
 

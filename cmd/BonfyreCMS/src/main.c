@@ -58,6 +58,7 @@
 #include "transfer.h"
 #include "compact_bindings.h"
 #include "bench_metrics.h"
+#include <bonfyre.h>
 
 #define VERSION "0.1.0"
 #define MAX_BODY   (1024 * 1024)   /* 1 MB max request body */
@@ -84,18 +85,7 @@ void iso_timestamp(char *buf, size_t sz) {
     strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
 }
 
-static int ensure_dir(const char *path)
-    __attribute__((unused));
-static int ensure_dir(const char *path) {
-    char tmp[PATH_MAX]; size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    memcpy(tmp, path, len + 1);
-    for (char *p = tmp + 1; *p; p++) {
-        if (*p == '/') { *p = '\0'; mkdir(tmp, 0755); *p = '/'; }
-    }
-    return mkdir(tmp, 0755) == 0 || errno == EEXIST ? 0 : 1;
-}
-
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static char *read_file_full(const char *path, long *out_size) {
     FILE *f = fopen(path, "rb");
     if (!f) return NULL;

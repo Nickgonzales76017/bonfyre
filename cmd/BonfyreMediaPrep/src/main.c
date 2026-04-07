@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <bonfyre.h>
 
 #define MAX_SILENCES 2048
 
@@ -209,22 +210,7 @@ static int extract_output_dir(char *buffer, size_t size, const char *pattern) {
     return 0;
 }
 
-static int ensure_dir_recursive(const char *path) {
-    char tmp[PATH_MAX];
-    size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    snprintf(tmp, sizeof(tmp), "%s", path);
-    for (size_t i = 1; i < len; i++) {
-        if (tmp[i] == '/') {
-            tmp[i] = '\0';
-            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-            tmp[i] = '/';
-        }
-    }
-    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-    return 0;
-}
-
+static int ensure_dir_recursive(const char *path) { return bf_ensure_dir(path); }
 static int extract_segment(const char *input, const char *output, double start_time, double end_time) {
     char start_arg[64];
     char end_arg[64];

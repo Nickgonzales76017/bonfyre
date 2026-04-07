@@ -3,25 +3,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <bonfyre.h>
 
 #define MAX_PATH 2048
 
-static int ensure_dir(const char *path) {
-    char tmp[MAX_PATH];
-    size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    snprintf(tmp, sizeof(tmp), "%s", path);
-    for (size_t i = 1; i < len; i++) {
-        if (tmp[i] == '/') {
-            tmp[i] = '\0';
-            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-            tmp[i] = '/';
-        }
-    }
-    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-    return 0;
-}
-
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static void path_join(char *buffer, size_t size, const char *left, const char *right) {
     snprintf(buffer, size, "%s/%s", left, right);
 }

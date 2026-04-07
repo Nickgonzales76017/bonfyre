@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define MAX_PATH  2048
 #define MAX_IDS   512
@@ -152,20 +153,7 @@ static void iso_timestamp(char *buf, size_t sz) {
     strftime(buf,sz,"%Y-%m-%dT%H:%M:%SZ",&t);
 }
 
-static int ensure_dir(const char *path) {
-    char tmp[MAX_PATH]; size_t len=strlen(path);
-    if (!len||len>=sizeof(tmp)) return 1;
-    snprintf(tmp,sizeof(tmp),"%s",path);
-    for (size_t i=1;i<len;i++){
-        if (tmp[i]=='/'){
-            tmp[i]='\0';
-            if (mkdir(tmp,0755)!=0&&errno!=EEXIST) return 1;
-            tmp[i]='/';
-        }
-    }
-    return (mkdir(tmp,0755)!=0&&errno!=EEXIST)?1:0;
-}
-
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 /* ── Tiny JSON parser (read-only, no deps) ────────────────────────────── */
 
 static const char *skip_ws(const char *p) {

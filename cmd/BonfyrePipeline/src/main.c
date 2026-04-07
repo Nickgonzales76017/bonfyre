@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <spawn.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 extern char **environ;
 
@@ -114,16 +115,7 @@ static void iso_timestamp(char *buf, size_t sz) {
     strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
 }
 
-static int ensure_dir(const char *path) {
-    char tmp[PATH_MAX]; size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    memcpy(tmp, path, len + 1);
-    for (size_t i = 1; i < len; i++) {
-        if (tmp[i] == '/') { tmp[i] = '\0'; mkdir(tmp, 0755); tmp[i] = '/'; }
-    }
-    mkdir(tmp, 0755); return 0;
-}
-
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static int file_exists(const char *p) { struct stat st; return stat(p, &st) == 0; }
 
 static long file_size(const char *p) { struct stat st; return stat(p, &st) == 0 ? st.st_size : 0; }

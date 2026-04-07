@@ -258,6 +258,22 @@ bonfyre-embed --text doc.txt --insert-db my.db --backend onnx
 | Batch embedding mode | **Single model load for N files** | `--input-dir` amortizes ONNX session startup across directory of .txt files |
 | libbonfyre shared runtime | **8 binaries refactored** | Replaces duplicated `ensure_dir` + `read_file_contents` with `bf_ensure_dir` / `bf_read_file` |
 
+### P3 optimizations (shipped)
+
+| Optimization | Impact | Details |
+|---|---|---|
+| BonfyreTag pure C inference | **Zero Python deps for predict/batch/lang** | Loads .bin models natively — model parse, ngram hash, matrix multiply, softmax all in C11. Training still uses Python wrapper |
+| libbonfyre full linkage | **29/46 binaries linked** | All binaries with `ensure_dir` now use `bf_ensure_dir` via libbonfyre. Eliminated 21 duplicate implementations |
+| Batch DB connection pooling | **Single sqlite3 open for N inserts** | `--input-dir --insert-db` holds one connection + prepared statements across all files instead of open/close per file |
+
+```bash
+# Native fastText prediction (no Python)
+bonfyre-tag predict model.bin input.txt output/ --top 5
+
+# Batch embed + insert with pooled DB connection
+bonfyre-embed --input-dir corpus/ --insert-db vectors.db --backend onnx
+```
+
 ```bash
 # Batch embed a directory (one model load)
 bonfyre-embed --input-dir corpus/ --insert-db vectors.db --backend onnx

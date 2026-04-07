@@ -22,6 +22,7 @@
 #include <sys/stat.h>
 #include <onnxruntime_c_api.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 /* portable CPU count (macOS + Linux) */
 #ifdef __APPLE__
@@ -46,37 +47,8 @@ static int get_cpu_count(void) {
 
 /* ── utilities ──────────────────────────────────────────────── */
 
-static int ensure_dir(const char *path) {
-    char tmp[PATH_MAX];
-    size_t len = strlen(path);
-    if (len == 0 || len >= sizeof(tmp)) return 1;
-    strcpy(tmp, path);
-    for (size_t i = 1; i < len; i++) {
-        if (tmp[i] == '/') {
-            tmp[i] = '\0';
-            if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-            tmp[i] = '/';
-        }
-    }
-    if (mkdir(tmp, 0755) != 0 && errno != EEXIST) return 1;
-    return 0;
-}
-
-static char *read_file_contents(const char *path, size_t *out_len) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    if (sz < 0) { fclose(f); return NULL; }
-    char *buf = malloc((size_t)sz + 1);
-    if (!buf) { fclose(f); return NULL; }
-    size_t rd = fread(buf, 1, (size_t)sz, f);
-    fclose(f);
-    buf[rd] = '\0';
-    if (out_len) *out_len = rd;
-    return buf;
-}
+static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
+static char *read_file_contents(const char *path, size_t *out_len) { return bf_read_file(path, out_len); }
 
 /* ── BERT WordPiece tokenizer (trie-based) ──────────────────── */
 
@@ -504,65 +476,73 @@ static const char *resolve_vec_ext(void) {
     return "vec0";
 }
 
-static int insert_into_vec_db(const char *db_path, const char *doc_id,
-                               const char *text, const float *embedding,
-                               int dims) {
-    sqlite3 *db = NULL;
-    if (sqlite3_open(db_path, &db) != SQLITE_OK) {
-        fprintf(stderr, "[embed] Cannot open DB: %s\n", sqlite3_errmsg(db));
+typedef struct {
+    sqlite3 *db;
+    sqlite3_stmt *meta_stmt;
+    sqlite3_stmt *vec_stmt;
+} VecDB;
+
+static int vec_db_open(VecDB *vdb, const char *db_path, int dims) {
+    memset(vdb, 0, sizeof(*vdb));
+    if (sqlite3_open(db_path, &vdb->db) != SQLITE_OK) {
+        fprintf(stderr, "[embed] Cannot open DB: %s\n", sqlite3_errmsg(vdb->db));
         return -1;
     }
-    sqlite3_enable_load_extension(db, 1);
+    sqlite3_enable_load_extension(vdb->db, 1);
     const char *ext = resolve_vec_ext();
     char *err = NULL;
-    if (sqlite3_load_extension(db, ext, NULL, &err) != SQLITE_OK) {
+    if (sqlite3_load_extension(vdb->db, ext, NULL, &err) != SQLITE_OK) {
         fprintf(stderr, "[embed] Failed to load sqlite-vec: %s\n", err ? err : "unknown");
         sqlite3_free(err);
-        sqlite3_close(db);
+        sqlite3_close(vdb->db);
+        vdb->db = NULL;
         return -1;
     }
 
-    /* Ensure tables exist */
     char create_vec[256];
     snprintf(create_vec, sizeof(create_vec),
         "CREATE VIRTUAL TABLE IF NOT EXISTS vec_artifacts USING vec0("
         "  id TEXT PRIMARY KEY, embedding float[%d])", dims);
-    sqlite3_exec(db,
+    sqlite3_exec(vdb->db,
         "CREATE TABLE IF NOT EXISTS artifacts("
         "  id TEXT PRIMARY KEY, source TEXT, type TEXT, text TEXT,"
         "  metadata TEXT, created_at TEXT)", NULL, NULL, NULL);
-    sqlite3_exec(db, create_vec, NULL, NULL, NULL);
+    sqlite3_exec(vdb->db, create_vec, NULL, NULL, NULL);
 
-    sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
-
-    /* Insert metadata */
-    sqlite3_stmt *meta = NULL;
-    sqlite3_prepare_v2(db,
+    sqlite3_prepare_v2(vdb->db,
         "INSERT OR REPLACE INTO artifacts(id, source, type, text, metadata, created_at) "
         "VALUES (?, 'BonfyreEmbed', 'embedding', ?, '{}', datetime('now'))",
-        -1, &meta, NULL);
-    if (meta) {
-        sqlite3_bind_text(meta, 1, doc_id, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_text(meta, 2, text, -1, SQLITE_TRANSIENT);
-        sqlite3_step(meta);
-        sqlite3_finalize(meta);
-    }
-
-    /* Insert vector */
-    sqlite3_stmt *vec = NULL;
-    sqlite3_prepare_v2(db,
+        -1, &vdb->meta_stmt, NULL);
+    sqlite3_prepare_v2(vdb->db,
         "INSERT OR REPLACE INTO vec_artifacts(id, embedding) VALUES (?, ?)",
-        -1, &vec, NULL);
-    if (vec) {
-        sqlite3_bind_text(vec, 1, doc_id, -1, SQLITE_TRANSIENT);
-        sqlite3_bind_blob(vec, 2, embedding, dims * (int)sizeof(float), SQLITE_TRANSIENT);
-        sqlite3_step(vec);
-        sqlite3_finalize(vec);
-    }
-
-    sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);
-    sqlite3_close(db);
+        -1, &vdb->vec_stmt, NULL);
     return 0;
+}
+
+static int vec_db_insert(VecDB *vdb, const char *doc_id, const char *text,
+                          const float *embedding, int dims) {
+    sqlite3_exec(vdb->db, "BEGIN", NULL, NULL, NULL);
+    if (vdb->meta_stmt) {
+        sqlite3_reset(vdb->meta_stmt);
+        sqlite3_bind_text(vdb->meta_stmt, 1, doc_id, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(vdb->meta_stmt, 2, text, -1, SQLITE_TRANSIENT);
+        sqlite3_step(vdb->meta_stmt);
+    }
+    if (vdb->vec_stmt) {
+        sqlite3_reset(vdb->vec_stmt);
+        sqlite3_bind_text(vdb->vec_stmt, 1, doc_id, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(vdb->vec_stmt, 2, embedding, dims * (int)sizeof(float), SQLITE_TRANSIENT);
+        sqlite3_step(vdb->vec_stmt);
+    }
+    sqlite3_exec(vdb->db, "COMMIT", NULL, NULL, NULL);
+    return 0;
+}
+
+static void vec_db_close(VecDB *vdb) {
+    if (vdb->meta_stmt) sqlite3_finalize(vdb->meta_stmt);
+    if (vdb->vec_stmt) sqlite3_finalize(vdb->vec_stmt);
+    if (vdb->db) sqlite3_close(vdb->db);
+    memset(vdb, 0, sizeof(*vdb));
 }
 
 /* ── output writers ─────────────────────────────────────────── */
@@ -708,6 +688,14 @@ int main(int argc, char **argv) {
 
         if (out_path) ensure_dir(out_path);
 
+        VecDB vdb = {0};
+        if (insert_db && vec_db_open(&vdb, insert_db, dims) != 0) {
+            fprintf(stderr, "[embed] Cannot open vec DB for batch\n");
+            if (use_onnx) { ort_session_close(&ort_ctx); vocab_free(&vocab); }
+            for (int i = 0; i < nfiles; i++) free(files[i]);
+            free(files); return 1;
+        }
+
         int ok = 0, fail = 0;
         for (int fi = 0; fi < nfiles; fi++) {
             size_t tlen = 0;
@@ -740,7 +728,7 @@ int main(int argc, char **argv) {
 
             if (insert_db) {
                 char *ft = read_file_contents(files[fi], NULL);
-                insert_into_vec_db(insert_db, fid, ft ? ft : "", embedding, edims);
+                vec_db_insert(&vdb, fid, ft ? ft : "", embedding, edims);
                 free(ft);
             }
             if (out_path) {
@@ -762,6 +750,7 @@ int main(int argc, char **argv) {
         }
 
         if (use_onnx) { ort_session_close(&ort_ctx); vocab_free(&vocab); }
+        if (insert_db) vec_db_close(&vdb);
         free(files);
         printf("Batch complete: %d/%d succeeded\n", ok, ok + fail);
         return fail > 0 ? 1 : 0;
@@ -847,11 +836,13 @@ int main(int argc, char **argv) {
             if (dot) *dot = '\0';
             doc_id = auto_id;
         }
-        char *t_text = read_file_contents(text_path, NULL);
-        if (insert_into_vec_db(insert_db, doc_id, t_text ? t_text : "", embedding, dims) != 0) {
-            free(t_text); free(embedding);
-            return 1;
+        VecDB vdb = {0};
+        if (vec_db_open(&vdb, insert_db, dims) != 0) {
+            free(embedding); return 1;
         }
+        char *t_text = read_file_contents(text_path, NULL);
+        vec_db_insert(&vdb, doc_id, t_text ? t_text : "", embedding, dims);
+        vec_db_close(&vdb);
         printf("Inserted %s into %s  [%d dims, %s]\n", doc_id, insert_db, dims, backend_label);
         free(t_text);
     }
