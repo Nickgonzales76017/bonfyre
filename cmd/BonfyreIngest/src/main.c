@@ -78,6 +78,9 @@ static IngestType detect_type(const char *path, const char *hint) {
         if (strcmp(hint, "image") == 0) return TYPE_IMAGE;
         if (strcmp(hint, "url")   == 0) return TYPE_URL;
     }
+    /* detect URLs */
+    if (strncmp(path, "http://", 7) == 0 || strncmp(path, "https://", 8) == 0)
+        return TYPE_URL;
     const char *ext = extension(path);
     if (strcasecmp(ext, "wav") == 0 || strcasecmp(ext, "mp3") == 0 ||
         strcasecmp(ext, "flac") == 0 || strcasecmp(ext, "m4a") == 0 ||
@@ -179,6 +182,159 @@ static int normalize_image(const char *input, const char *outdir, char *out_path
     snprintf(out_path, out_sz, "%s/normalized.png", outdir);
     const char *argv[] = { "magick", input, "-strip", "-resize", "2048x2048>", out_path, NULL };
     return run_cmd(argv);
+}
+
+/* ---------- yt-dlp URL intake ---------- */
+
+static const char *resolve_ytdlp(void) {
+    const char *env = getenv("BONFYRE_YTDLP");
+    if (env && env[0]) return env;
+    /* common fallback paths */
+    static const char *paths[] = {
+        "/Users/nickgonzales/Library/Python/3.9/bin/yt-dlp",
+        "/opt/homebrew/bin/yt-dlp",
+        "/usr/local/bin/yt-dlp",
+        NULL
+    };
+    for (int i = 0; paths[i]; i++) {
+        if (access(paths[i], X_OK) == 0) return paths[i];
+    }
+    return "yt-dlp"; /* hope it's in PATH */
+}
+
+static int run_cmd_capture(const char *const argv[], char *out, size_t out_sz) {
+    int pipefd[2];
+    if (pipe(pipefd) < 0) return -1;
+    pid_t pid = fork();
+    if (pid < 0) { close(pipefd[0]); close(pipefd[1]); return -1; }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        execvp(argv[0], (char *const *)argv);
+        _exit(127);
+    }
+    close(pipefd[1]);
+    size_t total = 0;
+    ssize_t rd;
+    while ((rd = read(pipefd[0], out + total, out_sz - total - 1)) > 0)
+        total += (size_t)rd;
+    close(pipefd[0]);
+    out[total] = '\0';
+    int st; waitpid(pid, &st, 0);
+    return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+static int ingest_url(const char *url, const char *outdir, char *out_path, size_t out_sz) {
+    const char *ytdlp = resolve_ytdlp();
+    fprintf(stderr, "[ingest] Downloading from URL via yt-dlp: %s\n", url);
+
+    /* Step 1: Extract audio as WAV */
+    char audio_template[PATH_MAX];
+    snprintf(audio_template, sizeof(audio_template), "%s/downloaded.%%(ext)s", outdir);
+    snprintf(out_path, out_sz, "%s/downloaded.wav", outdir);
+
+    const char *dl_argv[] = {
+        ytdlp,
+        "--no-playlist",
+        "-x",                       /* extract audio */
+        "--audio-format", "wav",    /* convert to WAV */
+        "--audio-quality", "0",     /* best quality */
+        "-o", audio_template,
+        url,
+        NULL
+    };
+    int rc = run_cmd(dl_argv);
+    if (rc != 0) {
+        fprintf(stderr, "[ingest] yt-dlp audio download failed (rc=%d)\n", rc);
+        return rc;
+    }
+
+    /* Step 2: Extract metadata JSON */
+    char meta_path[PATH_MAX];
+    snprintf(meta_path, sizeof(meta_path), "%s/source-metadata.json", outdir);
+
+    const char *meta_argv[] = {
+        ytdlp,
+        "--no-playlist",
+        "--skip-download",
+        "--write-info-json",
+        "-o", meta_path,
+        url,
+        NULL
+    };
+    /* yt-dlp writes to <output>.info.json */
+    run_cmd(meta_argv);  /* non-fatal if metadata fails */
+
+    /* Rename .info.json if yt-dlp appended it */
+    char info_path[PATH_MAX];
+    snprintf(info_path, sizeof(info_path), "%s.info.json", meta_path);
+    if (access(info_path, F_OK) == 0) {
+        rename(info_path, meta_path);
+    }
+
+    /* Step 3: Extract key metadata fields for the manifest */
+    char title_buf[512] = "unknown";
+    char duration_buf[64] = "0";
+    char uploader_buf[256] = "unknown";
+
+    const char *title_argv[] = {
+        ytdlp, "--no-playlist", "--skip-download",
+        "--print", "%(title)s", url, NULL
+    };
+    run_cmd_capture(title_argv, title_buf, sizeof(title_buf));
+    title_buf[strcspn(title_buf, "\r\n")] = '\0';
+
+    const char *dur_argv[] = {
+        ytdlp, "--no-playlist", "--skip-download",
+        "--print", "%(duration)s", url, NULL
+    };
+    run_cmd_capture(dur_argv, duration_buf, sizeof(duration_buf));
+    duration_buf[strcspn(duration_buf, "\r\n")] = '\0';
+
+    const char *up_argv[] = {
+        ytdlp, "--no-playlist", "--skip-download",
+        "--print", "%(uploader)s", url, NULL
+    };
+    run_cmd_capture(up_argv, uploader_buf, sizeof(uploader_buf));
+    uploader_buf[strcspn(uploader_buf, "\r\n")] = '\0';
+
+    /* Write URL metadata as separate JSON */
+    char url_meta_path[PATH_MAX];
+    snprintf(url_meta_path, sizeof(url_meta_path), "%s/url-intake.json", outdir);
+    FILE *uf = fopen(url_meta_path, "w");
+    if (uf) {
+        fprintf(uf,
+            "{\n"
+            "  \"url\": \"%s\",\n"
+            "  \"title\": \"%s\",\n"
+            "  \"duration_seconds\": %s,\n"
+            "  \"uploader\": \"%s\",\n"
+            "  \"audio_path\": \"%s\",\n"
+            "  \"metadata_path\": \"%s\",\n"
+            "  \"backend\": \"yt-dlp\"\n"
+            "}\n",
+            url, title_buf, duration_buf, uploader_buf,
+            basename_of(out_path),
+            access(meta_path, F_OK) == 0 ? "source-metadata.json" : "none");
+        fclose(uf);
+    }
+
+    /* Step 4: Normalize the downloaded audio */
+    char norm_path[PATH_MAX];
+    snprintf(norm_path, sizeof(norm_path), "%s/normalized.wav", outdir);
+    const char *norm_argv[] = {
+        "ffmpeg", "-y", "-i", out_path,
+        "-ac", "1", "-ar", "16000", "-sample_fmt", "s16",
+        "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
+        norm_path, NULL
+    };
+    if (run_cmd(norm_argv) == 0) {
+        snprintf(out_path, out_sz, "%s", norm_path);
+    }
+
+    fprintf(stderr, "[ingest] URL intake complete: %s → %s\n", title_buf, basename_of(out_path));
+    return 0;
 }
 
 /* ---------- SHA-256 (FIPS 180-4, inline, zero deps) ---------- */
@@ -306,6 +462,9 @@ int main(int argc, char *argv[]) {
             break;
         case TYPE_IMAGE:
             norm_ok = normalize_image(input, outdir, norm_path, sizeof(norm_path));
+            break;
+        case TYPE_URL:
+            norm_ok = ingest_url(input, outdir, norm_path, sizeof(norm_path));
             break;
         default:
             /* copy as-is using C I/O (no fork) */
