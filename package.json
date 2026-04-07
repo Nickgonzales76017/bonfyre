@@ -2,10 +2,10 @@
   "name": "bonfyre",
   "version": "0.1.0",
   "description": "38 static C binaries. 1.6 MB total. A complete backend platform.",
-  "homepage": "https://github.com/nickgonzales/bonfyre",
+  "homepage": "https://github.com/Nickgonzales76017/bonfyre",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nickgonzales/bonfyre.git"
+    "url": "git+https://github.com/Nickgonzales76017/bonfyre.git"
   },
   "author": "Nick Gonzales",
   "license": "MIT",
