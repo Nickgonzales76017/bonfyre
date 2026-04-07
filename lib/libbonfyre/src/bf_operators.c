@@ -386,6 +386,76 @@ const BfOperator BF_OPERATORS[] = {
         .layer = "transform",
         .group = "transform"
     },
+    {
+        .name = "tone",
+        .binary = "bonfyre-tone",
+        .description = "Speech tone/emotion/rhythm extraction (OpenSMILE eGeMAPSv02)",
+        .input_types = {"audio", NULL},
+        .output_types = {"tone-features", "tone-profile", "tone-diff", NULL},
+        .input_count = 1,
+        .output_count = 3,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
+    {
+        .name = "canon",
+        .binary = "bonfyre-canon",
+        .description = "Structural canonicalization + hashing (Tree-sitter AST)",
+        .input_types = {"json", "text", NULL},
+        .output_types = {"ast", "structural-hash", "structural-diff", NULL},
+        .input_count = 2,
+        .output_count = 3,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
+    {
+        .name = "query",
+        .binary = "bonfyre-query",
+        .description = "Local artifact analytics engine (DuckDB SQL over artifacts)",
+        .input_types = {"json", "duckdb", NULL},
+        .output_types = {"query-results", "artifact-stats", NULL},
+        .input_count = 2,
+        .output_count = 2,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
+    {
+        .name = "vec",
+        .binary = "bonfyre-vec",
+        .description = "Local vector search — single-file retrieval (sqlite-vec)",
+        .input_types = {"embeddings", "query-embedding", NULL},
+        .output_types = {"search-results", NULL},
+        .input_count = 2,
+        .output_count = 1,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
+    {
+        .name = "tag",
+        .binary = "bonfyre-tag",
+        .description = "Instant topic/intent tagging (fastText, 2ms, no GPU)",
+        .input_types = {"text", NULL},
+        .output_types = {"text-tags", "language-detection", NULL},
+        .input_count = 1,
+        .output_count = 2,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
 
     /* ================================================================
      * SURFACE — product-facing, stateful services

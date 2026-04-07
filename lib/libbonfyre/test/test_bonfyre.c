@@ -191,7 +191,7 @@ TEST(json_int) {
 }
 
 TEST(operator_registry_count) {
-    assert(BF_OPERATOR_COUNT == 41);
+    assert(BF_OPERATOR_COUNT == 46);
 }
 
 TEST(operator_find) {
