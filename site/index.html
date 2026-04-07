@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bonfyre — 38 static C binaries. 1.6 MB. A complete backend.</title>
+<meta name="description" content="Bonfyre is 38 composable C11 binaries that replace an entire backend stack. CMS, transcription, auth, payments, compression — each under 70 KB. MIT licensed.">
+<meta property="og:title" content="Bonfyre — A complete backend in 1.6 MB">
+<meta property="og:description" content="38 static C binaries. CMS, transcription, auth, payments, compression. MIT licensed.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://nickgonzales76017.github.io/bonfyre/">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --accent: #f97316;
+  --accent-dim: #c2410c;
+  --green: #3fb950;
+  --blue: #58a6ff;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "SF Mono", "Fira Code", "Fira Mono", Menlo, Consolas, monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.container { max-width: 960px; margin: 0 auto; padding: 0 24px; }
+
+/* Hero */
+.hero {
+  text-align: center;
+  padding: 80px 0 60px;
+  border-bottom: 1px solid var(--border);
+}
+.hero h1 {
+  font-size: 3.2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+.hero h1 span { color: var(--accent); }
+.hero .tagline {
+  font-size: 1.25rem;
+  color: var(--text-dim);
+  max-width: 600px;
+  margin: 0 auto 32px;
+}
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  margin-bottom: 36px;
+  flex-wrap: wrap;
+}
+.hero-stat {
+  text-align: center;
+}
+.hero-stat .num {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+}
+.hero-stat .label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Install box */
+.install-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 24px;
+  max-width: 640px;
+  margin: 0 auto 24px;
+  position: relative;
+}
+.install-box code {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  color: var(--green);
+}
+.install-box .comment { color: var(--text-dim); }
+
+.btn-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-dim); text-decoration: none; }
+.btn-outline { border: 1px solid var(--border); color: var(--text); }
+.btn-outline:hover { border-color: var(--text-dim); text-decoration: none; }
+
+/* Sections */
+section { padding: 64px 0; border-bottom: 1px solid var(--border); }
+section:last-child { border-bottom: none; }
+section h2 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 8px;
+  letter-spacing: -0.01em;
+}
+section .subtitle {
+  color: var(--text-dim);
+  margin-bottom: 36px;
+  font-size: 1.05rem;
+}
+
+/* Use case cards */
+.use-cases {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+.use-case {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  transition: border-color 0.15s;
+}
+.use-case:hover { border-color: var(--accent); }
+.use-case h3 {
+  font-size: 1rem;
+  color: var(--accent);
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+.use-case p { font-size: 0.9rem; color: var(--text-dim); margin-bottom: 12px; }
+.use-case code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.use-case .time {
+  font-size: 0.8rem;
+  color: var(--green);
+  font-weight: 600;
+}
+
+/* Comparison table */
+.cmp-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  font-size: 0.9rem;
+}
+.cmp-table th, .cmp-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.cmp-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.cmp-table td:first-child { font-weight: 600; }
+.cmp-table .highlight { color: var(--accent); font-weight: 700; }
+
+/* Layer diagram */
+.layers {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+.layer {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+}
+.layer-name {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  min-width: 100px;
+  color: var(--accent);
+}
+.layer-bins {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+/* Benchmarks */
+.bench-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.bench-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+}
+.bench-card .value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  display: block;
+  margin-bottom: 4px;
+}
+.bench-card .metric {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* Binary list */
+.binary-group { margin-bottom: 32px; }
+.binary-group h3 {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.binary-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 8px;
+}
+.binary-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 4px 0;
+}
+.binary-item .name {
+  font-family: var(--mono);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.binary-item .size {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+.binary-item .desc {
+  color: var(--text-dim);
+  font-size: 0.8rem;
+}
+
+/* Footer */
+footer {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+footer a { color: var(--text-dim); }
+footer a:hover { color: var(--text); }
+
+/* Responsive */
+@media (max-width: 640px) {
+  .hero h1 { font-size: 2.2rem; }
+  .hero-stats { gap: 24px; }
+  .hero-stat .num { font-size: 1.5rem; }
+  section { padding: 40px 0; }
+  .layer { flex-direction: column; gap: 4px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="container">
+    <h1>🔥 <span>Bonfyre</span></h1>
+    <p class="tagline">
+      38 composable C11 binaries that replace your entire backend stack.
+      CMS, transcription, auth, payments, compression — each under 70 KB.
+    </p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num">38</span>
+        <span class="label">Binaries</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">1.6 MB</span>
+        <span class="label">Total Disk</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">5–8 ms</span>
+        <span class="label">Pipeline Latency</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">13.5%</span>
+        <span class="label">JSON Compression</span>
+      </div>
+    </div>
+    <div class="install-box">
+      <code>git clone https://github.com/Nickgonzales76017/bonfyre.git && cd bonfyre && make</code>
+    </div>
+    <div class="btn-row">
+      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">
+        View on GitHub
+      </a>
+      <a href="#use-cases" class="btn btn-outline">
+        Pick a use case ↓
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Use Cases -->
+<section id="use-cases">
+  <div class="container">
+    <h2>Pick the one that matches your problem</h2>
+    <p class="subtitle">Each is a standalone entry point — you don't need to understand the whole system.</p>
+    <div class="use-cases">
+      <div class="use-case">
+        <h3>Lightweight CMS</h3>
+        <p>Replace Strapi's 500 MB install with a 299 KB binary. Dynamic schemas, token auth, REST API.</p>
+        <code>bonfyre-cms serve --port 8800</code>
+        <br><span class="time">2 min to try</span>
+      </div>
+      <div class="use-case">
+        <h3>Local Transcription</h3>
+        <p>Transcribe audio without cloud APIs. No OpenAI key. No per-minute billing. Everything local.</p>
+        <code>bonfyre-transcribe run audio.wav</code>
+        <br><span class="time">5 min to try</span>
+      </div>
+      <div class="use-case">
+        <h3>JSON Compression</h3>
+        <p>Shrink JSON API payloads to 13.5% with random field access. O(1) per-field reads on compressed data.</p>
+        <code>liblambda-tensors</code>
+        <br><span class="time">10 min to try</span>
+      </div>
+      <div class="use-case">
+        <h3>Audio-to-Invoice Pipeline</h3>
+        <p>Audio → transcript → summary → quality score → pricing → packaged deliverable. One command.</p>
+        <code>bonfyre-pipeline run --input audio.mp3</code>
+        <br><span class="time">2 min to try</span>
+      </div>
+      <div class="use-case">
+        <h3>Self-Host a SaaS Backend</h3>
+        <p>Auth, payments, usage metering, API keys, rate limiting — all as composable binaries. ~240 KB total.</p>
+        <code>bonfyre-api + auth + pay + gate</code>
+        <br><span class="time">15 min to try</span>
+      </div>
+      <div class="use-case">
+        <h3>Embeddable Compression Library</h3>
+        <p>41 KB static .a + shared .so. MIT licensed. Embed it anywhere — your app, your library, your product.</p>
+        <code>cc -o myapp myapp.c -llambda-tensors</code>
+        <br><span class="time">5 min to try</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Comparison -->
+<section id="comparison">
+  <div class="container">
+    <h2>How Bonfyre compares</h2>
+    <p class="subtitle">Against the tools you'd normally reach for.</p>
+    <table class="cmp-table">
+      <thead>
+        <tr><th></th><th>Strapi</th><th>Express + Prisma</th><th class="highlight">Bonfyre</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Install size</td><td>~500 MB</td><td>~200 MB</td><td class="highlight">1.6 MB</td></tr>
+        <tr><td>Dependencies</td><td>Node + 400 packages</td><td>Node + 80 packages</td><td class="highlight">libc + SQLite</td></tr>
+        <tr><td>Startup time</td><td>30–120 sec</td><td>2–5 sec</td><td class="highlight">&lt; 50 ms</td></tr>
+        <tr><td>Idle memory</td><td>~200 MB</td><td>~80 MB</td><td class="highlight">15 MB</td></tr>
+        <tr><td>Build step</td><td>npm install</td><td>npm install</td><td class="highlight">make</td></tr>
+        <tr><td>Runtime</td><td>Node.js 18+</td><td>Node.js 18+</td><td class="highlight">None (static binary)</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Benchmarks -->
+<section id="benchmarks">
+  <div class="container">
+    <h2>Benchmarks</h2>
+    <p class="subtitle">Apple M-series, single file / N=10,000 records.</p>
+    <div class="bench-grid">
+      <div class="bench-card">
+        <span class="value">5–8 ms</span>
+        <span class="metric">Unified pipeline latency</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">13.5%</span>
+        <span class="metric">Lambda Tensors compression (vs raw JSON)</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">921 μs</span>
+        <span class="metric">CMS create operation</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">89 μs</span>
+        <span class="metric">Lambda Tensors reconstruct</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">2.36 MB</span>
+        <span class="metric">Peak RSS (3,000 artifacts)</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">1.13 ms</span>
+        <span class="metric">ANN k-NN query (N=10K)</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Architecture -->
+<section id="architecture">
+  <div class="container">
+    <h2>Architecture</h2>
+    <p class="subtitle">Four layers. Every binary declares its behavioral class.</p>
+    <div class="layers">
+      <div class="layer">
+        <span class="layer-name">Surface</span>
+        <span class="layer-bins">cms · api · auth · pipeline · cli · transcript-family · project</span>
+      </div>
+      <div class="layer">
+        <span class="layer-name">Value</span>
+        <span class="layer-bins">offer · gate · meter · ledger · finance · outreach · pay · pack · distribute</span>
+      </div>
+      <div class="layer">
+        <span class="layer-name">Transform</span>
+        <span class="layer-bins">media-prep · transcribe · transcript-clean · paragraph · brief · proof · embed · narrate · render · emit · mfa-dict · weaviate-index</span>
+      </div>
+      <div class="layer">
+        <span class="layer-name">Substrate</span>
+        <span class="layer-bins">ingest · hash · index · compress · stitch · graph · runtime · queue · sync</span>
+      </div>
+      <div class="layer">
+        <span class="layer-name">Libraries</span>
+        <span class="layer-bins">libbonfyre (runtime contract, operators, SHA-256) · liblambda-tensors (family compression)</span>
+      </div>
+    </div>
+    <p style="text-align:center; margin-top:24px; color:var(--text-dim); font-size:0.9rem;">
+      <strong>Transform</strong> binaries are pure — same inputs, same outputs, cacheable.
+      <strong>Surface</strong> binaries own state and serve HTTP.
+      <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/docs/architecture.md">Full architecture doc →</a>
+    </p>
+  </div>
+</section>
+
+<!-- All binaries -->
+<section id="binaries">
+  <div class="container">
+    <h2>All 38 binaries</h2>
+    <p class="subtitle">Every binary is standalone. Use one or use all.</p>
+
+    <div class="binary-group">
+      <h3>Substrate</h3>
+      <div class="binary-list">
+        <div class="binary-item"><span class="name">bonfyre-ingest</span> <span class="size">33 KB</span> <span class="desc">— intake + type detection</span></div>
+        <div class="binary-item"><span class="name">bonfyre-hash</span> <span class="size">34 KB</span> <span class="desc">— SHA-256 content addressing</span></div>
+        <div class="binary-item"><span class="name">bonfyre-index</span> <span class="size">68 KB</span> <span class="desc">— SQLite artifact index + FTS</span></div>
+        <div class="binary-item"><span class="name">bonfyre-compress</span> <span class="size">33 KB</span> <span class="desc">— zstd family-aware compression</span></div>
+        <div class="binary-item"><span class="name">bonfyre-stitch</span> <span class="size">33 KB</span> <span class="desc">— DAG materializer</span></div>
+        <div class="binary-item"><span class="name">bonfyre-graph</span> <span class="size">51 KB</span> <span class="desc">— Merkle-DAG artifact graph</span></div>
+        <div class="binary-item"><span class="name">bonfyre-runtime</span> <span class="size">33 KB</span> <span class="desc">— process lifecycle</span></div>
+        <div class="binary-item"><span class="name">bonfyre-queue</span> <span class="size">33 KB</span> <span class="desc">— persistent job queue</span></div>
+        <div class="binary-item"><span class="name">bonfyre-sync</span> <span class="size">33 KB</span> <span class="desc">— cross-instance replication</span></div>
+      </div>
+    </div>
+
+    <div class="binary-group">
+      <h3>Transform</h3>
+      <div class="binary-list">
+        <div class="binary-item"><span class="name">bonfyre-media-prep</span> <span class="size">34 KB</span> <span class="desc">— audio normalization</span></div>
+        <div class="binary-item"><span class="name">bonfyre-transcribe</span> <span class="size">34 KB</span> <span class="desc">— speech-to-text (Whisper)</span></div>
+        <div class="binary-item"><span class="name">bonfyre-transcript-clean</span> <span class="size">34 KB</span> <span class="desc">— remove filler words</span></div>
+        <div class="binary-item"><span class="name">bonfyre-paragraph</span> <span class="size">34 KB</span> <span class="desc">— structure paragraphs</span></div>
+        <div class="binary-item"><span class="name">bonfyre-brief</span> <span class="size">34 KB</span> <span class="desc">— summary + action items</span></div>
+        <div class="binary-item"><span class="name">bonfyre-proof</span> <span class="size">34 KB</span> <span class="desc">— quality scoring</span></div>
+        <div class="binary-item"><span class="name">bonfyre-embed</span> <span class="size">34 KB</span> <span class="desc">— text embeddings (ONNX)</span></div>
+        <div class="binary-item"><span class="name">bonfyre-narrate</span> <span class="size">34 KB</span> <span class="desc">— text-to-speech (Piper)</span></div>
+        <div class="binary-item"><span class="name">bonfyre-render</span> <span class="size">33 KB</span> <span class="desc">— template rendering</span></div>
+        <div class="binary-item"><span class="name">bonfyre-emit</span> <span class="size">33 KB</span> <span class="desc">— HTML/PDF/EPUB output</span></div>
+        <div class="binary-item"><span class="name">bonfyre-mfa-dict</span> <span class="size">34 KB</span> <span class="desc">— pronunciation dictionary</span></div>
+        <div class="binary-item"><span class="name">bonfyre-weaviate-index</span> <span class="size">34 KB</span> <span class="desc">— vector search index</span></div>
+        <div class="binary-item"><span class="name">bonfyre-transcript-family</span> <span class="size">34 KB</span> <span class="desc">— full transcription chain</span></div>
+      </div>
+    </div>
+
+    <div class="binary-group">
+      <h3>Surface</h3>
+      <div class="binary-list">
+        <div class="binary-item"><span class="name">bonfyre-cms</span> <span class="size">299 KB</span> <span class="desc">— CMS + Lambda Tensors</span></div>
+        <div class="binary-item"><span class="name">bonfyre-api</span> <span class="size">69 KB</span> <span class="desc">— HTTP gateway + dashboard</span></div>
+        <div class="binary-item"><span class="name">bonfyre-auth</span> <span class="size">35 KB</span> <span class="desc">— user auth + sessions</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pipeline</span> <span class="size">51 KB</span> <span class="desc">— unified 5-8 ms pipeline</span></div>
+        <div class="binary-item"><span class="name">bonfyre-cli</span> <span class="size">33 KB</span> <span class="desc">— unified dispatcher</span></div>
+        <div class="binary-item"><span class="name">bonfyre-project</span> <span class="size">33 KB</span> <span class="desc">— project scaffolding</span></div>
+      </div>
+    </div>
+
+    <div class="binary-group">
+      <h3>Value</h3>
+      <div class="binary-list">
+        <div class="binary-item"><span class="name">bonfyre-offer</span> <span class="size">33 KB</span> <span class="desc">— dynamic pricing</span></div>
+        <div class="binary-item"><span class="name">bonfyre-gate</span> <span class="size">33 KB</span> <span class="desc">— API key tiers</span></div>
+        <div class="binary-item"><span class="name">bonfyre-meter</span> <span class="size">34 KB</span> <span class="desc">— usage tracking</span></div>
+        <div class="binary-item"><span class="name">bonfyre-ledger</span> <span class="size">33 KB</span> <span class="desc">— financial records</span></div>
+        <div class="binary-item"><span class="name">bonfyre-finance</span> <span class="size">51 KB</span> <span class="desc">— bundle pricing</span></div>
+        <div class="binary-item"><span class="name">bonfyre-outreach</span> <span class="size">34 KB</span> <span class="desc">— outreach tracking</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pay</span> <span class="size">35 KB</span> <span class="desc">— invoicing + payments</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pack</span> <span class="size">33 KB</span> <span class="desc">— deliverable packaging</span></div>
+        <div class="binary-item"><span class="name">bonfyre-distribute</span> <span class="size">33 KB</span> <span class="desc">— email/Slack/webhooks</span></div>
+      </div>
+    </div>
+
+    <div class="binary-group">
+      <h3>Libraries</h3>
+      <div class="binary-list">
+        <div class="binary-item"><span class="name">libbonfyre</span> <span class="size"></span> <span class="desc">— runtime contract, operator registry, SHA-256</span></div>
+        <div class="binary-item"><span class="name">liblambda-tensors</span> <span class="size">41 KB</span> <span class="desc">— structural JSON compression</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Install -->
+<section id="install">
+  <div class="container">
+    <h2>Install</h2>
+    <p class="subtitle">Build from source in under 60 seconds.</p>
+    <div class="install-box" style="max-width:100%;margin-bottom:16px;">
+      <code>
+        <span class="comment"># From source (recommended)</span><br>
+        git clone https://github.com/Nickgonzales76017/bonfyre.git<br>
+        cd bonfyre<br>
+        make <span class="comment"># builds 2 libraries + 37 binaries</span><br>
+        make install <span class="comment"># copies to ~/.local/bin</span>
+      </code>
+    </div>
+    <div class="install-box" style="max-width:100%;margin-bottom:16px;">
+      <code>
+        <span class="comment"># One command (macOS / Linux)</span><br>
+        curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre/main/install.sh | sh
+      </code>
+    </div>
+    <p style="color:var(--text-dim);font-size:0.9rem;">
+      <strong>Requirements:</strong> C11 compiler (gcc or clang), SQLite3 dev headers, zlib.
+    </p>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="text-align:center; padding:80px 0;">
+  <div class="container">
+    <h2>MIT Licensed. Do whatever you want with it.</h2>
+    <p class="subtitle">One repo. Every binary. 1.6 MB.</p>
+    <div class="btn-row">
+      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">
+        View on GitHub
+      </a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/CONTRIBUTING.md" class="btn btn-outline">
+        Contributing guide
+      </a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <p>
+      Made by <a href="https://github.com/Nickgonzales76017">Nick Gonzales</a> ·
+      <a href="https://github.com/Nickgonzales76017/bonfyre">GitHub</a> ·
+      <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">MIT License</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
