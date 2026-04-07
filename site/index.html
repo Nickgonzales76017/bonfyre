@@ -451,7 +451,7 @@ footer a:hover { color: var(--text); }
       </div>
       <div class="hero-stat">
         <span class="num">5–8 ms</span>
-        <span class="label">Pipeline Latency</span>
+        <span class="label">Per-Stage Latency</span>
       </div>
       <div class="hero-stat">
         <span class="num">9.3%</span>
@@ -565,7 +565,7 @@ footer a:hover { color: var(--text); }
       </div>
       <div class="use-case">
         <h3>Audio-to-Invoice Pipeline</h3>
-        <p>Audio → transcript → summary → quality score → pricing → packaged deliverable. One command, 5–8 ms.</p>
+        <p>Audio → transcript → summary → quality score → pricing → packaged deliverable. One command, 5–8 ms per stage.</p>
         <code>bonfyre-pipeline run --input audio.mp3</code>
         <br><span class="time">2 min to try</span>
       </div>
@@ -593,7 +593,7 @@ footer a:hover { color: var(--text); }
     <div class="bench-grid">
       <div class="bench-card">
         <span class="value">5–8 ms</span>
-        <span class="metric">Unified pipeline (was 76 ms)</span>
+        <span class="metric">Per-stage latency (was 76 ms)</span>
       </div>
       <div class="bench-card">
         <span class="value">9.3%</span>
@@ -771,7 +771,7 @@ footer a:hover { color: var(--text); }
         <div class="binary-item"><span class="name">bonfyre-cms</span> <span class="size">287 KB</span> <span class="desc">— CMS + Lambda Tensors</span></div>
         <div class="binary-item"><span class="name">bonfyre-api</span> <span class="size">69 KB</span> <span class="desc">— HTTP gateway + dashboard</span></div>
         <div class="binary-item"><span class="name">bonfyre-auth</span> <span class="size">35 KB</span> <span class="desc">— user auth + sessions</span></div>
-        <div class="binary-item"><span class="name">bonfyre-pipeline</span> <span class="size">52 KB</span> <span class="desc">— unified 5-8 ms pipeline</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pipeline</span> <span class="size">52 KB</span> <span class="desc">— unified pipeline (5-8 ms/stage)</span></div>
         <div class="binary-item"><span class="name">bonfyre</span> <span class="size">34 KB</span> <span class="desc">— unified CLI dispatcher</span></div>
         <div class="binary-item"><span class="name">bonfyre-project</span> <span class="size">34 KB</span> <span class="desc">— project scaffolding</span></div>
         <div class="binary-item"><span class="name">bonfyre-tel</span> <span class="size">68 KB</span> <span class="desc">— FreeSWITCH telephony (SIP/RTP)</span></div>

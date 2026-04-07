@@ -2,8 +2,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <spawn.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
+
+extern char **environ;
 
 #define MAX_TEXT 65536
+#define MAX_TARGETS 16
+#define MAX_URL    2048
 
 static char *read_file(const char *path, long *size_out) {
     FILE *fp = fopen(path, "rb");
@@ -129,6 +137,78 @@ static int command_message(const char *offers_path, const char *offer_name, cons
     return 0;
 }
 
+/* ── send command: POST JSON payload to webhook URLs via curl ── */
+
+static int curl_post(const char *url, const char *json_path) {
+    pid_t pid;
+    char content_type[] = "Content-Type: application/json";
+    char *argv[] = {
+        "curl", "-s", "-S", "-f",
+        "-X", "POST",
+        "-H", content_type,
+        "-d", NULL,   /* will be @path */
+        (char *)url,
+        NULL
+    };
+    char at_path[MAX_URL];
+    snprintf(at_path, sizeof(at_path), "@%s", json_path);
+    argv[9] = at_path;
+
+    posix_spawnattr_t attr;
+    posix_spawnattr_init(&attr);
+    int rc = posix_spawnp(&pid, "curl", NULL, &attr, argv, environ);
+    posix_spawnattr_destroy(&attr);
+    if (rc != 0) {
+        fprintf(stderr, "  ✗ Failed to spawn curl: %s\n", strerror(rc));
+        return 1;
+    }
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+}
+
+static int command_send(const char *payload_path, int target_count, char **targets) {
+    if (target_count == 0) {
+        fprintf(stderr, "No targets specified. Use --webhook <URL> one or more times.\n");
+        return 1;
+    }
+
+    long size = 0;
+    char *json = read_file(payload_path, &size);
+    if (!json) {
+        fprintf(stderr, "Failed to read payload: %s\n", payload_path);
+        return 1;
+    }
+    free(json); /* just validate it's readable */
+
+    struct timespec t0;
+    clock_gettime(CLOCK_MONOTONIC, &t0);
+
+    int ok = 0, fail = 0;
+    for (int i = 0; i < target_count; i++) {
+        fprintf(stderr, "  → %s ... ", targets[i]);
+        int rc = curl_post(targets[i], payload_path);
+        if (rc == 0) {
+            fprintf(stderr, "✓\n");
+            ok++;
+        } else {
+            fprintf(stderr, "✗ (exit %d)\n", rc);
+            fail++;
+        }
+    }
+
+    struct timespec t1;
+    clock_gettime(CLOCK_MONOTONIC, &t1);
+    double elapsed = (double)(t1.tv_sec - t0.tv_sec) +
+                     (double)(t1.tv_nsec - t0.tv_nsec) / 1e9;
+
+    printf("{\"kind\":\"distribution-result\",\"payload\":\"%s\","
+           "\"targets\":%d,\"delivered\":%d,\"failed\":%d,"
+           "\"elapsed_ms\":%.1f}\n",
+           payload_path, target_count, ok, fail, elapsed * 1000.0);
+    return fail > 0 ? 1 : 0;
+}
+
 int main(int argc, char **argv) {
     if (argc >= 3 && strcmp(argv[1], "offers") == 0) {
         return command_offers(argv[2]);
@@ -139,10 +219,22 @@ int main(int argc, char **argv) {
     if (argc >= 5 && strcmp(argv[1], "message") == 0) {
         return command_message(argv[2], argv[3], argv[4]);
     }
+    if (argc >= 3 && strcmp(argv[1], "send") == 0) {
+        const char *payload = argv[2];
+        char *webhooks[MAX_TARGETS];
+        int wh_count = 0;
+        for (int i = 3; i < argc - 1; i++) {
+            if (strcmp(argv[i], "--webhook") == 0 && wh_count < MAX_TARGETS) {
+                webhooks[wh_count++] = argv[++i];
+            }
+        }
+        return command_send(payload, wh_count, webhooks);
+    }
     fprintf(stderr,
             "Usage:\n"
             "  bonfyre-distribute offers <_generated-offers.json>\n"
             "  bonfyre-distribute snapshot <_distribution-pipeline-snapshot.json>\n"
-            "  bonfyre-distribute message <_generated-offers.json> <offer-name> <channel>\n");
+            "  bonfyre-distribute message <_generated-offers.json> <offer-name> <channel>\n"
+            "  bonfyre-distribute send <payload.json> --webhook <URL> [--webhook <URL> ...]\n");
     return 1;
 }

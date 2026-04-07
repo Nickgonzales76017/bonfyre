@@ -1,6 +1,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,12 +12,22 @@
 #define MAX_SENTENCES 1024
 #define MAX_LINE 8192
 #define MAX_BULLETS 6
+#define MAX_VOCAB  4096
 
 typedef struct {
     char *text;
     int score;
     int is_action;
 } Sentence;
+
+/* ── TF-IDF vocabulary ── */
+typedef struct {
+    char word[64];
+    int doc_freq;   /* number of sentences containing this word */
+} VocabEntry;
+
+static VocabEntry g_vocab[MAX_VOCAB];
+static int g_vocab_count = 0;
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static void iso_timestamp(char *buffer, size_t size) {
@@ -37,6 +48,98 @@ static char *trim_copy(const char *src) {
     return out;
 }
 
+static void lowercase_word(const char *src, char *dst, size_t dst_sz) {
+    size_t i = 0;
+    while (src[i] && i < dst_sz - 1) {
+        dst[i] = (char)tolower((unsigned char)src[i]);
+        i++;
+    }
+    dst[i] = '\0';
+}
+
+static int vocab_find_or_add(const char *word) {
+    char lw[64];
+    lowercase_word(word, lw, sizeof(lw));
+    if (lw[0] == '\0' || strlen(lw) < 3) return -1;
+    /* Skip stopwords */
+    static const char *stops[] = {
+        "the", "and", "that", "this", "with", "from", "have", "has", "had",
+        "was", "were", "been", "are", "for", "not", "but", "what", "all",
+        "can", "her", "his", "one", "our", "out", "you", "its", "they",
+        "she", "him", "how", "about", "just", "into", "your", "some",
+        "them", "than", "then", "now", "look", "only", "come", "could",
+        "will", "would", "also", "back", "after", "use", "two", "way",
+        "because", "any", "these", "give", "day", "most", "find",
+        "here", "thing", "many", "well", "very", "when", "where", "which",
+        "their", "said", "each", "tell", "does", "set", "three", "want",
+        "did", "get", "make", "like", "going", "know", "really", NULL
+    };
+    for (int i = 0; stops[i]; i++)
+        if (strcmp(lw, stops[i]) == 0) return -1;
+
+    for (int i = 0; i < g_vocab_count; i++)
+        if (strcmp(g_vocab[i].word, lw) == 0) return i;
+    if (g_vocab_count >= MAX_VOCAB) return -1;
+    int idx = g_vocab_count++;
+    snprintf(g_vocab[idx].word, sizeof(g_vocab[idx].word), "%s", lw);
+    g_vocab[idx].doc_freq = 0;
+    return idx;
+}
+
+static void build_idf(Sentence *sentences, int count) {
+    /* Count document frequency: how many sentences contain each word */
+    for (int s = 0; s < count; s++) {
+        /* Track which vocab entries we've already counted for this sentence */
+        int seen[MAX_VOCAB] = {0};
+        const char *p = sentences[s].text;
+        while (*p) {
+            while (*p && !isalpha((unsigned char)*p)) p++;
+            if (!*p) break;
+            const char *start = p;
+            while (*p && isalpha((unsigned char)*p)) p++;
+            size_t wlen = (size_t)(p - start);
+            if (wlen >= 64) continue;
+            char word[64];
+            memcpy(word, start, wlen);
+            word[wlen] = '\0';
+            int idx = vocab_find_or_add(word);
+            if (idx >= 0 && !seen[idx]) {
+                g_vocab[idx].doc_freq++;
+                seen[idx] = 1;
+            }
+        }
+    }
+}
+
+static double tfidf_score(const char *text, int total_docs) {
+    /* Compute TF-IDF sum for this sentence */
+    double score = 0.0;
+    int word_count = 0;
+    const char *p = text;
+    while (*p) {
+        while (*p && !isalpha((unsigned char)*p)) p++;
+        if (!*p) break;
+        const char *start = p;
+        while (*p && isalpha((unsigned char)*p)) p++;
+        size_t wlen = (size_t)(p - start);
+        if (wlen >= 64) continue;
+        char word[64];
+        memcpy(word, start, wlen);
+        word[wlen] = '\0';
+        char lw[64];
+        lowercase_word(word, lw, sizeof(lw));
+        for (int i = 0; i < g_vocab_count; i++) {
+            if (strcmp(g_vocab[i].word, lw) == 0 && g_vocab[i].doc_freq > 0) {
+                score += log((double)total_docs / (double)g_vocab[i].doc_freq);
+                break;
+            }
+        }
+        word_count++;
+    }
+    /* Normalize by word count to avoid length bias */
+    return word_count > 0 ? score / word_count : 0.0;
+}
+
 static int contains_any(const char *text, const char *words[]) {
     for (int i = 0; words[i]; i++) {
         if (strstr(text, words[i])) return 1;
@@ -44,24 +147,40 @@ static int contains_any(const char *text, const char *words[]) {
     return 0;
 }
 
-static int sentence_score(const char *text) {
+static int sentence_score(const char *text, int total_docs) {
     static const char *summary_words[] = {
         "problem", "customer", "market", "revenue", "pricing", "workflow",
         "decision", "learned", "traction", "focus", "strategy", "validation",
-        "founder", "operator", "pain", "channel", "segment", NULL
+        "founder", "operator", "pain", "channel", "segment", "growth",
+        "insight", "opportunity", "challenge", "solution", "result",
+        "metric", "data", "evidence", "pattern", "trend", NULL
     };
     static const char *action_words[] = {
         "should", "need to", "must", "next", "plan", "test", "focus", "send",
-        "build", "validate", "launch", "review", "write", "ship", NULL
+        "build", "validate", "launch", "review", "write", "ship", "consider",
+        "evaluate", "implement", "schedule", "prioritize", "follow up", NULL
     };
     int score = 0;
     size_t len = strlen(text);
+
+    /* Length bonuses */
     if (len > 30) score += 1;
     if (len > 80) score += 1;
-    if (contains_any(text, summary_words)) score += 3;
+    if (len > 200) score -= 1; /* penalize overly long sentences */
+
+    /* Domain keyword bonuses */
+    if (contains_any(text, summary_words)) score += 2;
     if (contains_any(text, action_words)) score += 2;
-    if (strchr(text, '$') || strstr(text, "percent")) score += 2;
-    if (strstr(text, "I think") || strstr(text, "yeah") || strstr(text, "like")) score -= 2;
+    if (strchr(text, '$') || strstr(text, "percent") || strstr(text, "%")) score += 2;
+
+    /* Filler / low-quality penalties */
+    if (strstr(text, "I think") || strstr(text, "yeah") || strstr(text, "you know")) score -= 2;
+    if (strstr(text, "um ") || strstr(text, "uh ") || strstr(text, "hmm")) score -= 1;
+
+    /* TF-IDF bonus: sentences with rare/distinctive terms score higher */
+    double idf = tfidf_score(text, total_docs);
+    score += (int)(idf * 3.0); /* scale TF-IDF contribution */
+
     return score;
 }
 
@@ -93,7 +212,7 @@ static int split_sentences(const char *text, Sentence *sentences, int max_senten
                 char *trimmed = trim_copy(buffer);
                 if (trimmed && trimmed[0] != '\0' && count < max_sentences) {
                     sentences[count].text = trimmed;
-                    sentences[count].score = sentence_score(trimmed);
+                    sentences[count].score = 0; /* scored after IDF built */
                     sentences[count].is_action = is_action_sentence(trimmed);
                     count++;
                 } else if (trimmed) {
@@ -198,6 +317,13 @@ int main(int argc, char **argv) {
 
     Sentence sentences[MAX_SENTENCES] = {0};
     int count = split_sentences(buffer, sentences, MAX_SENTENCES);
+
+    /* Build TF-IDF vocabulary from all sentences, then score */
+    g_vocab_count = 0;
+    build_idf(sentences, count);
+    for (int i = 0; i < count; i++) {
+        sentences[i].score = sentence_score(sentences[i].text, count);
+    }
 
     char brief_path[PATH_MAX];
     char meta_path[PATH_MAX];

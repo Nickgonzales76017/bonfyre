@@ -303,24 +303,79 @@ static int command_score(const char *brief_dir, const char *output_dir) {
         }
     }
 
-    /* Quality scoring rubric:
-       - Base: 50
-       - +10 if has summary section
-       - +10 if has action items
-       - +10 if has transcript
-       - +5 if sentence_count > 10
-       - +5 if word_count > 500
-       - -5 per 10 filler words (max -20)
-       - +10 if filler_count < 5 (clean text)
-    */
-    int score = 50;
-    if (has_summary) score += 10;
-    if (has_action) score += 10;
-    if (has_transcript) score += 10;
-    if (sentence_count > 10) score += 5;
-    if (word_count > 500) score += 5;
-    if (filler_count < 5) score += 10;
-    else score -= (filler_count / 10) * 5;
+    /* ── Multi-dimensional quality rubric ──
+     *
+     * Dimension 1 — Structure (0-25):  section presence + balance
+     * Dimension 2 — Density (0-25):    information density (unique/total words)
+     * Dimension 3 — Clarity (0-25):    filler ratio, sentence length variance
+     * Dimension 4 — Coverage (0-25):   word count relative to expected
+     *
+     * Total: 0-100
+     */
+
+    /* Dimension 1: Structure */
+    int structure_score = 0;
+    if (has_summary) structure_score += 8;
+    if (has_action) structure_score += 8;
+    if (has_transcript) structure_score += 4;
+    /* Bonus for balanced sections (not just headers with empty content) */
+    if (has_summary && word_count > 100) structure_score += 3;
+    if (has_action && sentence_count > 3) structure_score += 2;
+    if (structure_score > 25) structure_score = 25;
+
+    /* Dimension 2: Density — unique words / total words */
+    int unique_words = 0;
+    {
+        /* Simple unique word count via hash set */
+        #define HASH_BUCKETS 2048
+        unsigned int seen[HASH_BUCKETS];
+        memset(seen, 0, sizeof(seen));
+        const char *wp = brief;
+        while (*wp) {
+            while (*wp && !isalpha((unsigned char)*wp)) wp++;
+            if (!*wp) break;
+            const char *wstart = wp;
+            while (*wp && isalpha((unsigned char)*wp)) wp++;
+            size_t wlen = (size_t)(wp - wstart);
+            if (wlen < 2) continue;
+            /* FNV-1a hash */
+            unsigned int h = 2166136261u;
+            for (size_t i = 0; i < wlen; i++) {
+                h ^= (unsigned int)(unsigned char)tolower((unsigned char)wstart[i]);
+                h *= 16777619u;
+            }
+            unsigned int bucket = h % HASH_BUCKETS;
+            if (seen[bucket] != h) { seen[bucket] = h; unique_words++; }
+        }
+    }
+    double density = word_count > 0 ? (double)unique_words / (double)word_count : 0;
+    int density_score = (int)(density * 50.0); /* 0.5 ratio → 25 */
+    if (density_score > 25) density_score = 25;
+
+    /* Dimension 3: Clarity — penalize fillers, reward clean prose */
+    int clarity_score = 20; /* start optimistic */
+    double filler_ratio = word_count > 0 ? (double)filler_count / (double)word_count : 0;
+    if (filler_ratio > 0.05) clarity_score -= 10;
+    else if (filler_ratio > 0.02) clarity_score -= 5;
+    else if (filler_ratio < 0.005) clarity_score += 5; /* very clean */
+    /* Penalize very short sentences (likely fragments) */
+    double avg_sent_len = sentence_count > 0 ? (double)word_count / (double)sentence_count : 0;
+    if (avg_sent_len < 5) clarity_score -= 5;
+    if (avg_sent_len > 8 && avg_sent_len < 30) clarity_score += 3; /* good range */
+    if (clarity_score < 0) clarity_score = 0;
+    if (clarity_score > 25) clarity_score = 25;
+
+    /* Dimension 4: Coverage — enough content to be useful */
+    int coverage_score = 0;
+    if (word_count > 50) coverage_score += 5;
+    if (word_count > 200) coverage_score += 5;
+    if (word_count > 500) coverage_score += 5;
+    if (word_count > 1000) coverage_score += 5;
+    if (sentence_count > 5) coverage_score += 3;
+    if (sentence_count > 20) coverage_score += 2;
+    if (coverage_score > 25) coverage_score = 25;
+
+    int score = structure_score + density_score + clarity_score + coverage_score;
     if (score > 100) score = 100;
     if (score < 0) score = 0;
 
@@ -345,12 +400,16 @@ static int command_score(const char *brief_dir, const char *output_dir) {
             "  \"proof_label\": \"Quality proof for %s\",\n"
             "  \"score\": %d,\n"
             "  \"status\": \"%s\",\n"
+            "  \"dimensions\": {\"structure\": %d, \"density\": %d, \"clarity\": %d, \"coverage\": %d},\n"
             "  \"word_count\": %d,\n"
+            "  \"unique_words\": %d,\n"
             "  \"sentence_count\": %d,\n"
             "  \"filler_count\": %d,\n"
             "  \"scored_at\": \"%s\"\n"
             "}\n",
-            slug, slug, score, status, word_count, sentence_count, filler_count, timestamp);
+            slug, slug, score, status,
+            structure_score, density_score, clarity_score, coverage_score,
+            word_count, unique_words, sentence_count, filler_count, timestamp);
     fclose(sfp);
 
     /* Write proof-review.json */

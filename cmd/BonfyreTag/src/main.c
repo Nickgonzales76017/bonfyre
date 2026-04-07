@@ -557,34 +557,97 @@ static int cmd_detect_lang(const char *text_file, const char *out_dir) {
     char *text = read_file_contents(text_file, &tlen);
     if (!text) { ft_model_free(&lang_model); return 1; }
 
-    /* Collapse newlines, truncate to 5000 chars */
-    for (size_t i = 0; i < tlen; i++) if (text[i] == '\n') text[i] = ' ';
-    if (tlen > 5000) { text[5000] = '\0'; tlen = 5000; }
+    /* ── Chunked aggregation for language detection ──
+     * Split into ~500 char chunks on word boundaries.
+     * Predict each chunk, accumulate confidence per language.
+     * This avoids the problem of a 20KB single-line input confusing fastText.
+     */
+    #define MAX_LANGS 10
+    typedef struct { char lang[16]; double total_conf; int votes; } LangAccum;
+    LangAccum accum[MAX_LANGS] = {0};
+    int n_langs = 0;
+    int n_chunks = 0;
 
-    FtPred results[5];
-    int nresults = 0;
-    ft_predict(&lang_model, text, 5, results, &nresults);
+    size_t chunk_size = 500;
+    size_t pos = 0;
+    while (pos < tlen) {
+        /* Find a chunk boundary (word boundary near chunk_size) */
+        size_t end = pos + chunk_size;
+        if (end > tlen) end = tlen;
+        else {
+            /* Back up to a space */
+            while (end > pos && text[end] != ' ' && text[end] != '\n') end--;
+            if (end == pos) end = pos + chunk_size; /* no space found, use hard cut */
+            if (end > tlen) end = tlen;
+        }
+
+        /* Prepare chunk: replace newlines with spaces */
+        size_t clen = end - pos;
+        char *chunk = malloc(clen + 1);
+        if (!chunk) break;
+        memcpy(chunk, text + pos, clen);
+        chunk[clen] = '\0';
+        for (size_t i = 0; i < clen; i++)
+            if (chunk[i] == '\n') chunk[i] = ' ';
+
+        /* Skip near-empty chunks */
+        if (clen > 10) {
+            FtPred results[5];
+            int nresults = 0;
+            ft_predict(&lang_model, chunk, 5, results, &nresults);
+
+            for (int r = 0; r < nresults; r++) {
+                const char *lname = ft_label_name(&lang_model, results[r].label_idx);
+                /* Find or add to accum */
+                int found = -1;
+                for (int a = 0; a < n_langs; a++) {
+                    if (strcmp(accum[a].lang, lname) == 0) { found = a; break; }
+                }
+                if (found < 0 && n_langs < MAX_LANGS) {
+                    found = n_langs++;
+                    snprintf(accum[found].lang, sizeof(accum[found].lang), "%s", lname);
+                    accum[found].total_conf = 0;
+                    accum[found].votes = 0;
+                }
+                if (found >= 0) {
+                    accum[found].total_conf += results[r].score;
+                    accum[found].votes++;
+                }
+            }
+            n_chunks++;
+        }
+        free(chunk);
+        pos = end;
+        while (pos < tlen && (text[pos] == ' ' || text[pos] == '\n')) pos++;
+    }
+
+    /* Sort by total confidence descending */
+    for (int i = 0; i < n_langs - 1; i++) {
+        for (int j = i + 1; j < n_langs; j++) {
+            if (accum[j].total_conf > accum[i].total_conf) {
+                LangAccum tmp = accum[i]; accum[i] = accum[j]; accum[j] = tmp;
+            }
+        }
+    }
+    int top_n = n_langs < 5 ? n_langs : 5;
 
     FILE *out = fopen(json_out, "w");
     if (out) {
-        fprintf(out, "{\"type\": \"language-detection\", \"source\": \"%s\", \"languages\": [", text_file);
-        for (int i = 0; i < nresults; i++) {
-            fprintf(out, "%s{\"language\": \"%s\", \"confidence\": %.4f}",
-                    i ? ", " : "",
-                    ft_label_name(&lang_model, results[i].label_idx),
-                    results[i].score);
+        fprintf(out, "{\"type\": \"language-detection\", \"source\": \"%s\", \"chunks\": %d, \"languages\": [", text_file, n_chunks);
+        for (int i = 0; i < top_n; i++) {
+            double avg = n_chunks > 0 ? accum[i].total_conf / n_chunks : 0;
+            fprintf(out, "%s{\"language\": \"%s\", \"confidence\": %.4f, \"votes\": %d}",
+                    i ? ", " : "", accum[i].lang, avg, accum[i].votes);
         }
         fprintf(out, "]}\n");
         fclose(out);
     }
 
-    /* Also print to stdout */
-    printf("{\"type\": \"language-detection\", \"source\": \"%s\", \"languages\": [", text_file);
-    for (int i = 0; i < nresults; i++) {
-        printf("%s{\"language\": \"%s\", \"confidence\": %.4f}",
-               i ? ", " : "",
-               ft_label_name(&lang_model, results[i].label_idx),
-               results[i].score);
+    printf("{\"type\": \"language-detection\", \"source\": \"%s\", \"chunks\": %d, \"languages\": [", text_file, n_chunks);
+    for (int i = 0; i < top_n; i++) {
+        double avg = n_chunks > 0 ? accum[i].total_conf / n_chunks : 0;
+        printf("%s{\"language\": \"%s\", \"confidence\": %.4f, \"votes\": %d}",
+               i ? ", " : "", accum[i].lang, avg, accum[i].votes);
     }
     printf("]}\n");
 

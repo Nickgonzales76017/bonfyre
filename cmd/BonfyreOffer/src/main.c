@@ -90,6 +90,8 @@ static int command_generate(const char *bundle_json_path, const char *output_dir
     char quality_status[128] = "";
     int quality_score = 0;
     int review_score = 0;
+    int word_count = 0;
+    int sentence_count = 0;
     extract_string_value(bundle, "proofSlug", proof_slug, sizeof(proof_slug));
     extract_string_value(bundle, "proofLabel", proof_label, sizeof(proof_label));
     extract_string_value(bundle, "recommendation", recommendation, sizeof(recommendation));
@@ -97,10 +99,58 @@ static int command_generate(const char *bundle_json_path, const char *output_dir
     extract_int_value(bundle, "qualityScore", &quality_score);
     extract_int_value(bundle, "reviewScore", &review_score);
 
+    /* Also try to read proof-summary.json from same dir for word_count */
+    {
+        char summary_path[MAX_PATH];
+        const char *slash = strrchr(bundle_json_path, '/');
+        if (slash) {
+            size_t dir_len = (size_t)(slash - bundle_json_path);
+            snprintf(summary_path, sizeof(summary_path), "%.*s/proof-summary.json", (int)dir_len, bundle_json_path);
+        } else {
+            snprintf(summary_path, sizeof(summary_path), "proof-summary.json");
+        }
+        long ss = 0;
+        char *summary_json = read_file(summary_path, &ss);
+        if (summary_json) {
+            extract_int_value(summary_json, "word_count", &word_count);
+            extract_int_value(summary_json, "sentence_count", &sentence_count);
+            free(summary_json);
+        }
+    }
+
     if (ensure_dir(output_dir) != 0) {
         free(bundle);
         return 1;
     }
+
+    /* ── Dynamic pricing engine ──
+     * Base:       $5.00
+     * Per word:   $0.002 (captures content volume)
+     * Quality:    pass → 1.5×, marginal → 1.0×, fail → 0.5×
+     * Complexity: >50 sentences → +$3, >100 → +$5
+     * Minimum:    $8
+     * Maximum:    $75
+     */
+    double base_price = 5.0;
+    double word_premium = word_count * 0.002;
+    double quality_mult = 1.0;
+    if (strcmp(quality_status, "pass") == 0) quality_mult = 1.5;
+    else if (strcmp(quality_status, "fail") == 0) quality_mult = 0.5;
+    double complexity_bonus = 0.0;
+    if (sentence_count > 100) complexity_bonus = 5.0;
+    else if (sentence_count > 50) complexity_bonus = 3.0;
+    double raw_price = (base_price + word_premium + complexity_bonus) * quality_mult;
+    if (raw_price < 8.0) raw_price = 8.0;
+    if (raw_price > 75.0) raw_price = 75.0;
+    /* Round to nearest dollar */
+    int price_dollars = (int)(raw_price + 0.5);
+
+    const char *turnaround = "same day";
+    if (word_count > 5000) turnaround = "24 hours";
+    else if (word_count > 10000) turnaround = "48 hours";
+
+    char price_str[32];
+    snprintf(price_str, sizeof(price_str), "$%d", price_dollars);
 
     char timestamp[32];
     char offer_name[512];
@@ -129,12 +179,18 @@ static int command_generate(const char *bundle_json_path, const char *output_dir
             "  \"qualityStatus\": \"%s\",\n"
             "  \"reviewScore\": %d,\n"
             "  \"recommendation\": \"%s\",\n"
+            "  \"wordCount\": %d,\n"
+            "  \"sentenceCount\": %d,\n"
             "  \"headline\": \"Local-first proof-backed deliverables\",\n"
             "  \"promise\": \"Send one messy recording and get back a clean transcript, structured summary, and next steps.\",\n"
-            "  \"price\": \"$18\",\n"
-            "  \"turnaround\": \"same day for short files\"\n"
+            "  \"price\": \"%s\",\n"
+            "  \"priceCents\": %d,\n"
+            "  \"pricingFactors\": {\"base\": 5.0, \"wordPremium\": %.2f, \"qualityMult\": %.1f, \"complexityBonus\": %.1f},\n"
+            "  \"turnaround\": \"%s\"\n"
             "}\n",
-            timestamp, offer_name, proof_slug, proof_label, quality_score, quality_status, review_score, recommendation);
+            timestamp, offer_name, proof_slug, proof_label, quality_score, quality_status,
+            review_score, recommendation, word_count, sentence_count,
+            price_str, price_dollars * 100, word_premium, quality_mult, complexity_bonus, turnaround);
     fclose(json_fp);
 
     FILE *md_fp = fopen(offer_md_path, "w");
@@ -153,9 +209,12 @@ static int command_generate(const char *bundle_json_path, const char *output_dir
             "- quality: `%s (%d)`\n"
             "- review: `%s (%d)`\n\n"
             "## Commercial Shape\n"
-            "- price: `$18`\n"
-            "- turnaround: `same day for short files`\n",
-            offer_name, proof_label, quality_status, quality_score, recommendation, review_score);
+            "- price: `%s`\n"
+            "- turnaround: `%s`\n"
+            "- word count: `%d`\n"
+            "- pricing: base $5 + $%.2f word premium × %.1f quality\n",
+            offer_name, proof_label, quality_status, quality_score, recommendation, review_score,
+            price_str, turnaround, word_count, word_premium, quality_mult);
     fclose(md_fp);
 
     FILE *outreach_fp = fopen(outreach_md_path, "w");

@@ -749,6 +749,9 @@ static int pipeline_ledger(const char *outdir, const char *family,
  * Main: run full pipeline
  * ================================================================ */
 
+/* Forward declaration — transcript pipeline defined after main */
+static int pipeline_transcript(const char *audio_input, const char *outdir);
+
 int main(int argc, char *argv[]) {
     const char *input = NULL;
     const char *type = "text";
@@ -770,14 +773,37 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /* Route audio inputs through the transcript pipeline:
+     * Audio → transcript → summary → quality score → pricing → packaged deliverable
+     * This is what the site advertises. */
+    if (input && (strcmp(type, "audio") == 0 ||
+        (strlen(input) > 4 && (strcmp(input + strlen(input) - 4, ".wav") == 0 ||
+                               strcmp(input + strlen(input) - 4, ".mp3") == 0 ||
+                               strcmp(input + strlen(input) - 4, ".m4a") == 0 ||
+                               strcmp(input + strlen(input) - 5, ".flac") == 0 ||
+                               strcmp(input + strlen(input) - 4, ".ogg") == 0)))) {
+        if (!outdir) {
+            /* Default output directory next to input */
+            char auto_out[PATH_MAX];
+            snprintf(auto_out, sizeof(auto_out), "%s-pipeline", input);
+            /* Trim extension */
+            char *dot = strrchr(auto_out, '.');
+            if (dot && dot > strrchr(auto_out, '/')) *dot = '\0';
+            return pipeline_transcript(input, auto_out);
+        }
+        return pipeline_transcript(input, outdir);
+    }
+
     if (!input || !outdir) {
         fprintf(stderr,
             "BonfyrePipeline — unified single-process pipeline\n\n"
             "Usage:\n"
-            "  bonfyre-pipeline run <input> --type TYPE --out DIR [--artifacts DIR]\n"
+            "  bonfyre-pipeline run <input> --out DIR [--type TYPE] [--artifacts DIR]\n"
             "      [--key KEY] [--key-file F] [--tier TIER]\n\n"
-            "Runs: gate -> ingest -> hash -> index -> compress -> meter -> stitch -> ledger\n"
-            "All in-process except compress (forks zstd).\n"
+            "Audio files (.wav/.mp3/.m4a/.flac/.ogg or --type audio):\n"
+            "  Runs transcript pipeline: transcribe → clean → brief → proof → tag → offer → pack\n\n"
+            "Other types:\n"
+            "  Runs data pipeline: gate → ingest → index → compress → meter → stitch → ledger\n"
         );
         return 1;
     }
@@ -893,5 +919,211 @@ int main(int argc, char *argv[]) {
     );
 
     fprintf(stderr, "[pipeline] COMPLETE -> %s\n", outdir);
+    return 0;
+}
+
+/* ================================================================
+ * Transcript pipeline: audio → transcript → summary → score → pricing → pack
+ *
+ * This is what the site advertises:
+ *   bonfyre-pipeline run --input audio.mp3
+ *   "Audio → transcript → summary → quality score → pricing → packaged deliverable"
+ *
+ * Chains: transcribe → transcript-clean → brief → proof score →
+ *         tag → proof bundle → offer → pack
+ * ================================================================ */
+
+static int resolve_bin(char *out, size_t sz, const char *name) {
+    const char *env = getenv("BONFYRE_BIN");
+    const char *home = getenv("HOME");
+    char path[PATH_MAX];
+
+    /* 1. $BONFYRE_BIN/<name> */
+    if (env && env[0]) {
+        snprintf(path, sizeof(path), "%s/%s", env, name);
+        if (access(path, X_OK) == 0) { snprintf(out, sz, "%s", path); return 0; }
+    }
+    /* 2. ~/.local/bin/<name> */
+    if (home) {
+        snprintf(path, sizeof(path), "%s/.local/bin/%s", home, name);
+        if (access(path, X_OK) == 0) { snprintf(out, sz, "%s", path); return 0; }
+    }
+    /* 3. PATH lookup via execvp (return name, let exec find it) */
+    snprintf(out, sz, "%s", name);
+    return 0;
+}
+
+static int run_bin(const char *bin, char *const argv[], long long *elapsed_ns) {
+    long long t0 = monotonic_ns();
+    pid_t pid = 0;
+    int rc = posix_spawn(&pid, bin, NULL, NULL, argv, environ);
+    if (rc != 0) {
+        /* Try PATH lookup */
+        rc = posix_spawnp(&pid, argv[0], NULL, NULL, argv, environ);
+        if (rc != 0) {
+            fprintf(stderr, "[pipeline:transcript] Failed to spawn %s: %s\n", argv[0], strerror(rc));
+            if (elapsed_ns) *elapsed_ns = monotonic_ns() - t0;
+            return 1;
+        }
+    }
+    int status;
+    waitpid(pid, &status, 0);
+    if (elapsed_ns) *elapsed_ns = monotonic_ns() - t0;
+    if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        fprintf(stderr, "[pipeline:transcript] %s exited with %d\n", argv[0],
+                WIFEXITED(status) ? WEXITSTATUS(status) : -1);
+        return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+    }
+    return 0;
+}
+
+static int pipeline_transcript(const char *audio_input, const char *outdir) {
+    ensure_dir(outdir);
+
+    long long total_t0 = monotonic_ns();
+    long long stage_ns;
+    int rc;
+
+    char bin[PATH_MAX];
+    char transcribe_dir[PATH_MAX], clean_txt[PATH_MAX], brief_dir[PATH_MAX];
+    char proof_dir[PATH_MAX], tags_dir[PATH_MAX], offer_dir[PATH_MAX], pack_dir[PATH_MAX];
+    char transcript_txt[PATH_MAX];
+    char bundle_json[PATH_MAX];
+    char media_prep_bin[PATH_MAX];
+
+    snprintf(transcribe_dir, sizeof(transcribe_dir), "%s/transcribe", outdir);
+    snprintf(transcript_txt, sizeof(transcript_txt), "%s/transcribe/normalized.txt", outdir);
+    snprintf(clean_txt, sizeof(clean_txt), "%s/clean.txt", outdir);
+    snprintf(brief_dir, sizeof(brief_dir), "%s/brief", outdir);
+    snprintf(proof_dir, sizeof(proof_dir), "%s/proof", outdir);
+    snprintf(tags_dir, sizeof(tags_dir), "%s/tags", outdir);
+    snprintf(offer_dir, sizeof(offer_dir), "%s/offer", outdir);
+    snprintf(pack_dir, sizeof(pack_dir), "%s/pack", outdir);
+    snprintf(bundle_json, sizeof(bundle_json), "%s/proof/proof-bundle.json", outdir);
+
+    resolve_bin(media_prep_bin, sizeof(media_prep_bin), "bonfyre-media-prep");
+
+    fprintf(stderr, "[pipeline:transcript] Audio → transcript → summary → score → pricing → pack\n");
+
+    /* 1. Transcribe */
+    fprintf(stderr, "[1/8] bonfyre-transcribe...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-transcribe");
+    {
+        char *argv[] = {"bonfyre-transcribe", (char *)audio_input, transcribe_dir,
+                        "--media-prep-binary", media_prep_bin, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  transcribe: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    /* 2. Clean */
+    fprintf(stderr, "[2/8] bonfyre-transcript-clean...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-transcript-clean");
+    {
+        char *argv[] = {"bonfyre-transcript-clean", "--transcript", transcript_txt,
+                        "--out", clean_txt, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  clean: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    /* 3. Brief */
+    fprintf(stderr, "[3/8] bonfyre-brief...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-brief");
+    {
+        char *argv[] = {"bonfyre-brief", clean_txt, brief_dir, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  brief: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    /* Copy transcript into brief dir for proof */
+    {
+        char brief_transcript[PATH_MAX];
+        snprintf(brief_transcript, sizeof(brief_transcript), "%s/transcript.txt", brief_dir);
+        FILE *src = fopen(transcript_txt, "rb");
+        if (src) {
+            FILE *dst = fopen(brief_transcript, "wb");
+            if (dst) {
+                char buf[8192]; size_t n;
+                while ((n = fread(buf, 1, sizeof(buf), src)) > 0) fwrite(buf, 1, n, dst);
+                fclose(dst);
+            }
+            fclose(src);
+        }
+    }
+
+    /* 4. Proof score */
+    fprintf(stderr, "[4/8] bonfyre-proof score...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-proof");
+    {
+        char *argv[] = {"bonfyre-proof", "score", brief_dir, proof_dir, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  proof: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    /* 5. Tag */
+    fprintf(stderr, "[5/8] bonfyre-tag...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-tag");
+    {
+        char *argv[] = {"bonfyre-tag", "detect-lang", clean_txt, tags_dir, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  tag: %.1f ms%s\n", stage_ns / 1e6, rc ? " (WARN)" : "");
+        /* Non-fatal: continue even if tag fails */
+    }
+
+    /* 6. Proof bundle */
+    fprintf(stderr, "[6/8] bonfyre-proof bundle...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-proof");
+    {
+        char *argv[] = {"bonfyre-proof", "bundle", proof_dir, proof_dir, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  bundle: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    /* 7. Offer */
+    fprintf(stderr, "[7/8] bonfyre-offer...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-offer");
+    {
+        char *argv[] = {"bonfyre-offer", "generate", bundle_json, offer_dir, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  offer: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    /* 8. Pack */
+    fprintf(stderr, "[8/8] bonfyre-pack...\n");
+    resolve_bin(bin, sizeof(bin), "bonfyre-pack");
+    {
+        char *argv[] = {"bonfyre-pack", "assemble", proof_dir, offer_dir, pack_dir, NULL};
+        rc = run_bin(bin, argv, &stage_ns);
+        fprintf(stderr, "  pack: %.1f ms%s\n", stage_ns / 1e6, rc ? " (FAILED)" : "");
+        if (rc) return rc;
+    }
+
+    long long total_ns = monotonic_ns() - total_t0;
+    fprintf(stderr, "[pipeline:transcript] COMPLETE in %.1f ms -> %s\n", total_ns / 1e6, outdir);
+
+    /* Write transcript pipeline telemetry */
+    char telem_path[PATH_MAX];
+    snprintf(telem_path, sizeof(telem_path), "%s/pipeline-telemetry.json", outdir);
+    FILE *tf = fopen(telem_path, "w");
+    if (tf) {
+        char ts[64];
+        bf_iso_timestamp(ts, sizeof(ts));
+        fprintf(tf,
+            "{\n"
+            "  \"pipeline\": \"transcript\",\n"
+            "  \"recorded_at\": \"%s\",\n"
+            "  \"input\": \"%s\",\n"
+            "  \"output\": \"%s\",\n"
+            "  \"total_ms\": %.1f,\n"
+            "  \"max_rss_kb\": %ld\n"
+            "}\n", ts, audio_input, outdir, total_ns / 1e6, current_max_rss_kb());
+        fclose(tf);
+    }
+
     return 0;
 }

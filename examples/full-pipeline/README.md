@@ -87,6 +87,6 @@ output/
 ## Performance
 
 On Apple M-series:
-- **Unified pipeline**: 5–8 ms (excluding transcription model load)
+- **Unified pipeline**: 5–8 ms per stage (excluding transcription model load)
 - **Sequential (10 binaries)**: ~76 ms
 - **Memory**: < 3 MB peak RSS

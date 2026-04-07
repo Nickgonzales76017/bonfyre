@@ -276,3 +276,39 @@ echo -e "${BOLD}Bonfyre is ready.${NC}"
 echo "  Run: bonfyre --help"
 echo "  CMS: bonfyre-cms serve"
 echo "  Full pipeline: bonfyre-pipeline --help"
+
+# ---- Models (optional) ----
+echo ""
+log "Checking models..."
+MODDIR="$HOME/.bonfyre/models"
+WHISPER_DIR="$HOME/.local/share/whisper"
+mkdir -p "$MODDIR" "$WHISPER_DIR"
+
+download_model() {
+    local dest="$1" url="$2" label="$3"
+    if [[ -f "$dest" ]]; then
+        ok "$label (exists)"
+    else
+        echo -n "  ↓ $label ... "
+        if curl -fSL -o "$dest" "$url" 2>/dev/null; then
+            echo -e "${GREEN}✓${NC}"
+        else
+            echo -e "${RED}✗${NC}"
+        fi
+    fi
+}
+
+download_model "$WHISPER_DIR/ggml-base.en.bin" \
+    "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin" \
+    "whisper base.en (~140MB)"
+
+download_model "$MODDIR/lid.176.bin" \
+    "https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin" \
+    "fastText lid.176 (~125MB)"
+
+download_model "$MODDIR/all-MiniLM-L6-v2.onnx" \
+    "https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx" \
+    "sentence-transformer ONNX (~22MB)"
+
+echo ""
+echo -e "${BOLD}Installation complete.${NC}"

@@ -505,7 +505,7 @@ const BfOperator BF_OPERATORS[] = {
     {
         .name = "pipeline",
         .binary = "bonfyre-pipeline",
-        .description = "Unified in-process pipeline (5-8 ms end-to-end)",
+        .description = "Unified in-process pipeline (5-8 ms per stage)",
         .input_types = {"audio", "text", NULL},
         .output_types = {"pipeline-bundle", NULL},
         .input_count = 2,

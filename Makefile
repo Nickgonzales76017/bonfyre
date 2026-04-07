@@ -121,6 +121,7 @@ help:
 	@echo "  make           Build everything"
 	@echo "  make lib       Build liblambda-tensors + libbonfyre"
 	@echo "  make install   Install to PREFIX (default: ~/.local)"
+	@echo "  make models    Download required ML models"
 	@echo "  make clean     Remove all build artifacts"
 	@echo "  make test      Run all test suites"
 	@echo "  make sanitize  Rebuild with ASan + UBSan for testing"
@@ -128,3 +129,31 @@ help:
 	@echo "  make pgo-use   Rebuild using collected profile data"
 	@echo "  make pgo-clean Remove collected profile data"
 	@echo "  make help      This message"
+
+# ── Models ───────────────────────────────────────────────────
+WHISPER_DIR  = $(HOME)/.local/share/whisper
+MODEL_DIR    = $(HOME)/.bonfyre/models
+
+.PHONY: models
+models:
+	@echo "=== Downloading models ==="
+	@mkdir -p $(WHISPER_DIR) $(MODEL_DIR)
+	@if [ ! -f $(WHISPER_DIR)/ggml-base.en.bin ]; then \
+		echo "  ↓ whisper base.en (~140MB)..."; \
+		curl -fSL -o $(WHISPER_DIR)/ggml-base.en.bin \
+			"https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin"; \
+		echo "  ✓ ggml-base.en.bin"; \
+	else echo "  ✓ ggml-base.en.bin (exists)"; fi
+	@if [ ! -f $(MODEL_DIR)/lid.176.bin ]; then \
+		echo "  ↓ fastText lid.176 (~125MB)..."; \
+		curl -fSL -o $(MODEL_DIR)/lid.176.bin \
+			"https://dl.fbaipublicfiles.com/fasttext/supervised-models/lid.176.bin"; \
+		echo "  ✓ lid.176.bin"; \
+	else echo "  ✓ lid.176.bin (exists)"; fi
+	@if [ ! -f $(MODEL_DIR)/all-MiniLM-L6-v2.onnx ]; then \
+		echo "  ↓ sentence-transformer ONNX (~22MB)..."; \
+		curl -fSL -o $(MODEL_DIR)/all-MiniLM-L6-v2.onnx \
+			"https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2/resolve/main/onnx/model.onnx"; \
+		echo "  ✓ all-MiniLM-L6-v2.onnx"; \
+	else echo "  ✓ all-MiniLM-L6-v2.onnx (exists)"; fi
+	@echo "=== Models ready ==="
