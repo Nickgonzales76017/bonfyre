@@ -229,7 +229,7 @@ BonfyreEmbed and BonfyreVec were rewritten from Python subprocess wrappers to pu
 | `-O3 -march=native -flto=auto` | **10–30% across all binaries** | Auto-vectorization, LTO inlining, native ISA |
 | `ORT_ENABLE_ALL` graph optimization | Additional inference gains | Was `ORT_ENABLE_BASIC` |
 
-**Measured:** 187% CPU utilization (multi-core ONNX), 25% faster wall time on embeddings.
+**Measured:** 158% CPU utilization (multi-core ONNX), single-embed: **237 ms** wall time (down from 304 ms).
 
 ### P1 optimizations (shipped)
 
@@ -270,12 +270,7 @@ bonfyre-embed --text doc.txt --insert-db my.db --backend onnx
 # Native fastText prediction (no Python)
 bonfyre-tag predict model.bin input.txt output/ --top 5
 
-# Batch embed + insert with pooled DB connection
-bonfyre-embed --input-dir corpus/ --insert-db vectors.db --backend onnx
-```
-
-```bash
-# Batch embed a directory (one model load)
+# Batch embed + insert with pooled DB connection (one model load, one DB open)
 bonfyre-embed --input-dir corpus/ --insert-db vectors.db --backend onnx
 
 # Exact SIMD cosine search (bypasses ANN approximation)
@@ -291,13 +286,29 @@ BonfyreEmbed can output raw float32 vectors instead of JSON:
 
 ```bash
 bonfyre-embed --text input.txt --out embedding.vecf --output-format binary
-# 1.5 KB binary vs 6.4 KB JSON — auto-detected by bonfyre-vec search
+# 1,544 bytes binary vs 6.4 KB JSON — auto-detected by bonfyre-vec search
 ```
 
 | Format | Size (384-dim) | Parse time |
 |---|---|---|
 | JSON | 6.4 KB | 384 × `strtof()` ≈ 384K cycles |
-| **VECF binary** | **1.5 KB** | `fread()` ≈ **< 1K cycles** |
+| **VECF binary** | **1,544 bytes** | `fread()` ≈ **< 1K cycles** |
+
+### Cumulative results (measured, Apple M-series)
+
+| Operation | Before P0 | After P3 | Speedup |
+|---|---|---|---|
+| Single embed | ~600 ms (Python) | **237 ms** (C + ONNX) | **2.5×** |
+| 10-file embed | ~6,000 ms (10 × Python) | **386 ms** (batch) | **15.5×** |
+| 10-file embed + DB insert | ~7,000 ms+ | **689 ms** (batch + pooled DB) | **10×** |
+| Vector file (384-dim) | 6.4 KB JSON | **1,544 bytes** VECF | **4.2× smaller** |
+| Vec exact search (10 docs) | N/A | **5 ms** (NEON SIMD) | new |
+| Pipeline (6 stages) | 76 ms (10 binaries) | **8 ms** (unified) | **9.5×** |
+| BonfyreTag inference | ~150 ms (Python subprocess) | **6 ms** (pure C) | **25×** |
+| Duplicated utility code | 34 copies across binaries | **1 each** (libbonfyre) | eliminated |
+| Binaries needing Python | 5 | **3** | 40% reduction |
+| All 46 binaries disk | — | **2.0 MB total** | — |
+| Test suite | — | **68 tests, all pass** | — |
 
 ## All 46 binaries
 

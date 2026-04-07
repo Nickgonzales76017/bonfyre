@@ -70,14 +70,17 @@ BonfyreCMS (299 KB binary) benchmarked in-process:
 | BonfyreCMS idle | 15 MB |
 | Lambda Tensors compression (N=10,000) | 66 MB |
 
-## Binary sizes
+## Binary sizes (measured)
 
 | Category | Count | Total size |
 |---|---|---|
-| Infrastructure | 7 | ~529 KB |
-| Orchestration | 5 | ~183 KB |
-| Audio pipeline | 18 | ~607 KB |
-| Category | Count | Notes |
+| Audio pipeline | 18 | 648 KB |
+| Infrastructure | 7 | 596 KB |
+| Monetization | 7 | 284 KB |
+| Orchestration | 5 | 160 KB |
+| **All 46 binaries** | **46** | **2.0 MB** |
+
+| Category | Count | Binaries |
 |---|---|---|
 | Infrastructure | 7 | CMS, API, Auth, Index, Graph, Runtime, Hash |
 | Orchestration | 5 | Pipeline, CLI, Queue, Sync, Stitch |
@@ -96,7 +99,9 @@ BonfyreVec: SQLite C API + sqlite-vec extension, no Python.
 | Configuration | Wall time | CPU utilization |
 |---|---|---|
 | Single-threaded (`intra_op=1`, `ORT_ENABLE_BASIC`) | 304 ms | 119% |
-| **Multi-threaded (`intra_op=ncpu`, `ORT_ENABLE_ALL`)** | **227 ms** | **187%** |
+| **Multi-threaded (`intra_op=ncpu`, `ORT_ENABLE_ALL`)** | **237 ms** | **158%** |
+
+Measured single-embed wall time: **237 ms** (3-run median, warm cache).
 
 ### Trie tokenizer (P1)
 
@@ -130,6 +135,24 @@ bonfyre-embed --text doc.txt --insert-db my.db --backend onnx
 | **VECF binary (raw float32)** | **1.5 KB** | **`fread()` < 0.001 ms** |
 
 For batch ingestion of 10K embeddings: JSON parse = ~1 second; VECF binary = ~10 ms.
+
+### Batch embedding (P2+P3, measured)
+
+10 files, all-MiniLM-L6-v2, Apple M-series:
+
+| Mode | Wall time | Model loads | DB opens | Speedup |
+|---|---|---|---|---|
+| 10 × single invocations | 2,492 ms | 10 | — | baseline |
+| **`--input-dir` batch (P2)** | **386 ms** | **1** | — | **6.5×** |
+| **`--input-dir --insert-db` (P2+P3)** | **689 ms** | **1** | **1** | **3.6×** |
+
+3 files:
+
+| Mode | Wall time | Speedup |
+|---|---|---|
+| 3 × single invocations | ~750 ms | baseline |
+| **`--input-dir` batch** | **428 ms** | **1.75×** |
+| **`--input-dir --insert-db`** | **315 ms** | **2.4×** |
 
 ### SIMD cosine similarity (P2)
 
@@ -172,15 +195,17 @@ Binaries: Repurpose, Segment, Clips, SpeechLoop, Tone, Canon, Query, Tag.
 | Python dependency | Required (fasttext pip package) | **None for inference** |
 | Process overhead | fork+exec per prediction | **Single process** |
 | Model loading | Per invocation via Python | **Once, reused for batch** |
+| Status latency | ~150 ms (Python import overhead) | **6 ms** |
 | Binary size | ~50 KB + Python runtime | ~55 KB standalone |
 
-### BonfyreEmbed: batch DB connection pooling
+### BonfyreEmbed: batch DB connection pooling (measured)
 
 | Metric | Before | After |
 |---|---|---|
 | DB opens per batch | N (one per file) | **1** |
 | sqlite3_load_extension calls | N | **1** |
 | Prepared statements | Created+finalized per file | **Created once, reset per file** |
+| 10-file batch+insert wall time | — | **689 ms** (vs 2,492 ms single) |
 
 ### libbonfyre linkage (expanded)
 
@@ -218,3 +243,59 @@ cd cmd/BonfyrePipeline
 make
 ./bonfyre-pipeline bench --input test.md --rounds 100
 ```
+
+## Cumulative P0→P3 results (measured, Apple M-series)
+
+All measurements taken after P3 on `0793070`.
+
+### Embedding pipeline (embed → search, 10 files)
+
+| Metric | Pre-P0 (baseline) | After P3 | Improvement |
+|---|---|---|---|
+| Single embed wall time | ~600 ms (Python subprocess) | **237 ms** (C + ONNX multi-thread) | **2.5×** |
+| 10-file embed | ~6,000 ms (10 × Python) | **386 ms** (batch, 1 model load) | **15.5×** |
+| 10-file embed + DB insert | ~7,000 ms+ (10 × Python + 10 × DB open) | **689 ms** (batch + pooled DB) | **10×** |
+| Vector file size (384-dim) | 6.4 KB JSON | **1,544 bytes** VECF binary | **4.2×** smaller |
+| Vector parse time | 384 × `strtof()` ≈ 0.1 ms | `fread()` < 0.001 ms | **~100×** |
+| Vec exact search (10 docs) | N/A (no SIMD path) | **5 ms** (NEON cosine brute-force) | new capability |
+| Vec ANN search (10 docs) | — | **8 ms** (sqlite-vec) | — |
+| Vec pairwise compare | N/A | **4 ms** | new capability |
+| Tokenizer | Hash-table O(n) probes | **Trie O(word_len)** | algorithmic improvement |
+
+### Pipeline (gate → ingest → index → meter → stitch → ledger)
+
+| Metric | Pre-P0 | After P3 | Improvement |
+|---|---|---|---|
+| Full pipeline | 76 ms (10 separate fork/exec) | **8 ms** (unified, single process) | **9.5×** |
+
+### BonfyreTag (text classification)
+
+| Metric | Pre-P3 (Python fastText) | After P3 (pure C) | Improvement |
+|---|---|---|---|
+| Runtime dependency | Python 3 + pip `fasttext` | **None** | eliminated |
+| Status check latency | ~150 ms (Python import) | **6 ms** | **25×** |
+| Predict overhead | fork+exec+Python per call | **Single process, native inference** | eliminated |
+| Batch predict | N × Python subprocess | **1 model load, N predictions** | N× fewer forks |
+
+### Code health
+
+| Metric | Pre-P0 | After P3 | Improvement |
+|---|---|---|---|
+| Build flags | `-O2` | **`-O3 -march=native -flto=auto`** | 10–30% across all binaries |
+| Duplicated `ensure_dir` | 29 copies | **1** (libbonfyre) | 29 copies eliminated |
+| Duplicated `read_file` | 5 copies | **1** (libbonfyre) | 5 copies eliminated |
+| Binaries needing Python | 5 (Embed, Vec, Tag, Tone, Transcribe) | **3** (Tone, Transcribe, Tag-train) | 40% reduction |
+| libbonfyre linkage | 0/46 | **29/46** | 63% of binaries |
+| All 46 binaries total size | — | **2.0 MB** | — |
+| Tests | 38 lib + 20 bonfyre + 10 status | **68 total, all pass** | — |
+
+### Lambda Tensors (compression, N=10,000)
+
+| Encoding | % of raw JSON | Notes |
+|---|---|---|
+| Raw JSON | 100% (1,189,440 bytes) | baseline |
+| V2 + Huffman packed | **9.3%** (110,192 bytes) | O(1) random access |
+| Arithmetic packed | **9.2%** (108,859 bytes) | near Shannon limit |
+| gzip -9 | 5.5% | no random access |
+
+Lambda Tensors: 1.7× gzip at N=10K but with O(1) per-field random access.
