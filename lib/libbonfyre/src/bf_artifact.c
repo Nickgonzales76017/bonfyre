@@ -7,6 +7,7 @@
 #include "bonfyre.h"
 #include <ctype.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -47,19 +48,23 @@ void bf_artifact_compute_keys(BfArtifact *a) {
     snprintf(counts, sizeof(counts), "%d|%d|%d",
              a->atoms_count, a->operators_count, a->realizations_count);
 
+    size_t type_len = strlen(type_norm);
+    size_t sys_len  = strlen(system_norm);
+    size_t cnt_len  = strlen(counts);
+
     /* family_key: type + system (groups structurally equivalent artifacts) */
     uint64_t fh = BF_FNV1A_INIT;
-    fh = bf_fnv1a64(fh, type_norm, strlen(type_norm));
+    fh = bf_fnv1a64(fh, type_norm, type_len);
     fh = bf_fnv1a64(fh, "|", 1);
-    fh = bf_fnv1a64(fh, system_norm, strlen(system_norm));
+    fh = bf_fnv1a64(fh, system_norm, sys_len);
 
     /* canonical_key: type + system + cardinalities (distinguishes signatures) */
     uint64_t ch = BF_FNV1A_INIT;
-    ch = bf_fnv1a64(ch, type_norm, strlen(type_norm));
+    ch = bf_fnv1a64(ch, type_norm, type_len);
     ch = bf_fnv1a64(ch, "|", 1);
-    ch = bf_fnv1a64(ch, system_norm, strlen(system_norm));
+    ch = bf_fnv1a64(ch, system_norm, sys_len);
     ch = bf_fnv1a64(ch, "|", 1);
-    ch = bf_fnv1a64(ch, counts, strlen(counts));
+    ch = bf_fnv1a64(ch, counts, cnt_len);
 
     a->component_total = a->atoms_count + a->operators_count + a->realizations_count;
     snprintf(a->family_key, sizeof(a->family_key), "%016llx", (unsigned long long)fh);
@@ -211,7 +216,7 @@ void bf_cache_save(const char *json_path, const BfArtifact *a) {
     snprintf(rec_path, sizeof(rec_path), "%s.bfrec", json_path);
 
     BfBinaryRecord rec;
-    memset(&rec, 0, sizeof(rec));
+    memset(&rec, 0, offsetof(BfBinaryRecord, artifact));
     memcpy(rec.magic, BF_BINARY_MAGIC, 6);
     rec.json_size = (long long)json_st.st_size;
     rec.json_mtime = (long long)json_st.st_mtime;
@@ -228,7 +233,7 @@ void bf_cache_save(const char *json_path, const BfArtifact *a) {
     f = fopen(sum_path, "wb");
     if (!f) return;
     BfCacheRecord cache;
-    memset(&cache, 0, sizeof(cache));
+    memset(&cache, 0, offsetof(BfCacheRecord, artifact));
     memcpy(cache.magic, BF_CACHE_MAGIC, 6);
     cache.artifact = *a;
     fwrite(&cache, sizeof(cache), 1, f);

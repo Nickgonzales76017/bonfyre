@@ -131,8 +131,13 @@ static void sha256(const void *data, size_t len, uint8_t out[32]) {
     }
 }
 
+static const char g_hex_lut[16] = "0123456789abcdef";
+
 static void hex_str(const uint8_t *data, int len, char *out) {
-    for(int i=0;i<len;i++) sprintf(out+i*2,"%02x",data[i]);
+    for(int i=0;i<len;i++){
+        out[i*2]  =g_hex_lut[data[i]>>4];
+        out[i*2+1]=g_hex_lut[data[i]&0x0f];
+    }
     out[len*2]='\0';
 }
 
@@ -149,8 +154,12 @@ static void generate_salt(char *salt, size_t sz) {
     uint8_t bytes[16];
     if (f) { fread(bytes,1,sizeof(bytes),f); fclose(f); }
     else { for(int i=0;i<16;i++) bytes[i]=(uint8_t)(rand()&0xff); }
-    for(int i=0;i<16&&(size_t)(i*2+2)<sz;i++) sprintf(salt+i*2,"%02x",bytes[i]);
-    salt[32]='\0';
+    int n=16<(int)(sz/2)?16:(int)(sz/2);
+    for(int i=0;i<n;i++){
+        salt[i*2]  =g_hex_lut[bytes[i]>>4];
+        salt[i*2+1]=g_hex_lut[bytes[i]&0x0f];
+    }
+    salt[n*2]='\0';
 }
 
 static void generate_token(char *token, size_t sz) {
@@ -159,8 +168,14 @@ static void generate_token(char *token, size_t sz) {
     if (f) { fread(bytes,1,sizeof(bytes),f); fclose(f); }
     else { for(int i=0;i<32;i++) bytes[i]=(uint8_t)(rand()&0xff); }
     /* bfy_ prefix for easy identification */
-    snprintf(token,sz,"bfy_");
-    for(int i=0;i<32&&strlen(token)+2<sz;i++) sprintf(token+strlen(token),"%02x",bytes[i]);
+    int off=4;
+    if(sz<5){token[0]='\0';return;}
+    memcpy(token,"bfy_",4);
+    for(int i=0;i<32&&off+2<(int)sz;i++){
+        token[off++]=g_hex_lut[bytes[i]>>4];
+        token[off++]=g_hex_lut[bytes[i]&0x0f];
+    }
+    token[off]='\0';
 }
 
 /* ── Utility ──────────────────────────────────────────────────────── */

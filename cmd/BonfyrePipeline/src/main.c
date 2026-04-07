@@ -121,8 +121,11 @@ static int pipeline_gate(const char *key, const char *key_file,
  * ================================================================ */
 
 static void sha256_hex(const uint8_t hash[32], char hex[65]) {
-    for (int i = 0; i < 32; i++)
-        snprintf(hex + i * 2, 3, "%02x", hash[i]);
+    static const char lut[16] = "0123456789abcdef";
+    for (int i = 0; i < 32; i++) {
+        hex[i*2]   = lut[hash[i] >> 4];
+        hex[i*2+1] = lut[hash[i] & 0x0f];
+    }
     hex[64] = '\0';
 }
 
@@ -285,7 +288,7 @@ static void manifest_binary_path(const char *json_path, char *out, size_t out_sz
         size_t prefix_len = (size_t)(slash - json_path + 1);
         if (prefix_len + strlen("artifact.bfrec") + 1 <= out_sz) {
             memcpy(out, json_path, prefix_len);
-            memcpy(out + prefix_len, "artifact.bfrec", strlen("artifact.bfrec") + 1);
+            memcpy(out + prefix_len, "artifact.bfrec", sizeof("artifact.bfrec"));
             return;
         }
     }
@@ -316,8 +319,8 @@ static void save_manifest_binary(const char *json_path, const struct stat *json_
     FILE *rf = fopen(record_path, "wb");
     if (!rf) return;
     BfBinaryRecord binary;
-    memset(&binary, 0, sizeof(binary));
-    memcpy(binary.magic, BF_BINARY_MAGIC, strlen(BF_BINARY_MAGIC));
+    memset(&binary, 0, offsetof(BfBinaryRecord, artifact));
+    memcpy(binary.magic, BF_BINARY_MAGIC, BF_MAGIC_LEN);
     binary.json_size = (long long)json_st->st_size;
     binary.json_mtime = (long long)json_st->st_mtime;
     binary.artifact = *summary;
@@ -341,7 +344,7 @@ static int load_manifest_cache_if_fresh(const char *json_path, BfArtifact *summa
     size_t n = fread(&record, 1, sizeof(record), f);
     fclose(f);
     if (n != sizeof(record)) return 0;
-    if (strncmp(record.magic, BF_CACHE_MAGIC, strlen(BF_CACHE_MAGIC)) != 0) return 0;
+    if (memcmp(record.magic, BF_CACHE_MAGIC, BF_MAGIC_LEN) != 0) return 0;
     *summary = record.artifact;
     if (summary->canonical_key[0] == '\0') bf_artifact_compute_keys(summary);
     save_manifest_binary(json_path, &json_st, summary);
@@ -360,8 +363,8 @@ static void save_manifest_cache(const char *json_path, const BfArtifact *summary
     FILE *f = fopen(cache_path, "wb");
     if (!f) return;
     BfCacheRecord record;
-    memset(&record, 0, sizeof(record));
-    memcpy(record.magic, BF_CACHE_MAGIC, strlen(BF_CACHE_MAGIC));
+    memset(&record, 0, offsetof(BfCacheRecord, artifact));
+    memcpy(record.magic, BF_CACHE_MAGIC, BF_MAGIC_LEN);
     record.artifact = *summary;
     fwrite(&record, 1, sizeof(record), f);
     fclose(f);
@@ -654,12 +657,13 @@ static pid_t pipeline_compress_start(const char *input, const char *outdir) {
  * ================================================================ */
 
 static double op_cost(const char *op, long bytes) {
-    if (strcmp(op, "Ingest") == 0) return 0.001;
-    if (strcmp(op, "Brief") == 0) return 0.01;
-    if (strcmp(op, "Proof") == 0) return 0.02;
-    if (strcmp(op, "Offer") == 0) return 0.05;
-    if (strcmp(op, "Compress") == 0) return 0.0001 * ((double)bytes / (1024.0 * 1024.0));
-    if (strcmp(op, "Index") == 0) return 0.001;
+    switch (op[0]) {
+    case 'I': return (op[1]=='n') ? 0.001 : 0.001;  /* Ingest / Index */
+    case 'B': return 0.01;   /* Brief */
+    case 'P': return 0.02;   /* Proof */
+    case 'O': return 0.05;   /* Offer */
+    case 'C': return 0.0001 * ((double)bytes / (1024.0 * 1024.0));  /* Compress */
+    }
     return 0.0;
 }
 

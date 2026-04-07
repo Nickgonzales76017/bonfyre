@@ -88,14 +88,23 @@ void bf_sha256_final(BfSha256 *c, uint8_t hash[32]) {
     }
 }
 
+static const char hex_lut[16] = "0123456789abcdef";
+
+static void hash_to_hex(const uint8_t hash[32], char hex[65]) {
+    for (int i = 0; i < 32; i++) {
+        hex[i*2]   = hex_lut[hash[i] >> 4];
+        hex[i*2+1] = hex_lut[hash[i] & 0x0f];
+    }
+    hex[64] = '\0';
+}
+
 void bf_sha256_hex(const uint8_t *data, size_t len, char hex[65]) {
     BfSha256 ctx;
     uint8_t hash[32];
     bf_sha256_init(&ctx);
     bf_sha256_update(&ctx, data, len);
     bf_sha256_final(&ctx, hash);
-    for (int i = 0; i < 32; i++)
-        snprintf(hex + i * 2, 3, "%02x", hash[i]);
+    hash_to_hex(hash, hex);
 }
 
 int bf_sha256_file(const char *path, char hex[65]) {
@@ -113,7 +122,6 @@ int bf_sha256_file(const char *path, char hex[65]) {
 
     uint8_t hash[32];
     bf_sha256_final(&ctx, hash);
-    for (int i = 0; i < 32; i++)
-        snprintf(hex + i * 2, 3, "%02x", hash[i]);
+    hash_to_hex(hash, hex);
     return 0;
 }

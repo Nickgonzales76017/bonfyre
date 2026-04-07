@@ -90,17 +90,17 @@ static void ensure_schema(sqlite3 *db) {
 }
 
 static double op_cost(const char *op, long bytes) {
-    if (strcmp(op, "Ingest") == 0) return 0.001;
-    if (strcmp(op, "Brief") == 0) return 0.01;
-    if (strcmp(op, "Proof") == 0) return 0.02;
-    if (strcmp(op, "Offer") == 0) return 0.05;
-    if (strcmp(op, "Narrate") == 0) return 0.03;
-    if (strcmp(op, "Pack") == 0) return 0.01;
-    if (strcmp(op, "Distribute") == 0) return 0.10;
-    if (strcmp(op, "Emit") == 0) return 0.005;
-    if (strcmp(op, "Compress") == 0) return 0.0001 * ((double)bytes / (1024.0 * 1024.0));
-    if (strcmp(op, "Index") == 0) return 0.001;
-    return 0.0; /* Hash, etc. — free */
+    switch (op[0]) {
+    case 'I': return (op[1]=='n') ? 0.001 : 0.001;  /* Ingest / Index */
+    case 'B': return 0.01;   /* Brief */
+    case 'P': return (op[1]=='r') ? 0.02 : 0.01;  /* Proof / Pack */
+    case 'O': return 0.05;   /* Offer */
+    case 'N': return 0.03;   /* Narrate */
+    case 'D': return 0.10;   /* Distribute */
+    case 'E': return 0.005;  /* Emit */
+    case 'C': return 0.0001 * ((double)bytes / (1024.0 * 1024.0));  /* Compress */
+    }
+    return 0.0;
 }
 
 /* ---------- commands ---------- */

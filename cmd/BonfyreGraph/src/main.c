@@ -110,11 +110,16 @@ static void sha256_final(Sha256 *ctx, unsigned char hash[32]) {
     }
 }
 
+static const char g_hex_lut[16] = "0123456789abcdef";
+
 static void sha256_hex(const unsigned char *data, size_t len, char out[65]) {
     Sha256 ctx; sha256_init(&ctx);
     sha256_update(&ctx, data, len);
     unsigned char hash[32]; sha256_final(&ctx, hash);
-    for (int i=0;i<32;i++) sprintf(out+i*2, "%02x", hash[i]);
+    for (int i=0;i<32;i++){
+        out[i*2]  =g_hex_lut[hash[i]>>4];
+        out[i*2+1]=g_hex_lut[hash[i]&0x0f];
+    }
     out[64]='\0';
 }
 
@@ -329,21 +334,29 @@ static void compute_node_hash(const char *op, const char *params,
         for (int j=i+1;j<ninputs;j++)
             if (strcmp(sorted[i],sorted[j])>0){ const char *t=sorted[i]; sorted[i]=sorted[j]; sorted[j]=t; }
 
-    /* Build canonical JSON */
+    /* Build canonical JSON via memcpy — no format parsing overhead */
     char canonical[MAX_LINE];
-    int off=0;
-    off+=snprintf(canonical+off,sizeof(canonical)-off,
-        "{\"inputs_hashes\":[");
+    char *p=canonical;
+    #define CPLIT(s) do{ memcpy(p,s,sizeof(s)-1); p+=sizeof(s)-1; }while(0)
+    CPLIT("{\"inputs_hashes\":[");
     for (int i=0;i<ninputs;i++){
-        if (i) off+=snprintf(canonical+off,sizeof(canonical)-off,",");
-        off+=snprintf(canonical+off,sizeof(canonical)-off,"\"%s\"",sorted[i]);
+        if (i) *p++=',';
+        *p++='"';
+        size_t hlen=strlen(sorted[i]);
+        memcpy(p,sorted[i],hlen); p+=hlen;
+        *p++='"';
     }
-    off+=snprintf(canonical+off,sizeof(canonical)-off,
-        "],\"op\":\"%s\",\"params\":%s,\"version\":\"%s\"}",
-        op, (params&&*params)?params:"{}", version?version:"");
-    canonical[off]='\0';
+    CPLIT("],\"op\":\"");
+    { size_t ol=strlen(op); memcpy(p,op,ol); p+=ol; }
+    CPLIT("\",\"params\":");
+    { const char *pp=(params&&*params)?params:"{}"; size_t pl=strlen(pp); memcpy(p,pp,pl); p+=pl; }
+    CPLIT(",\"version\":\"");
+    { const char *vv=version?version:""; size_t vl=strlen(vv); memcpy(p,vv,vl); p+=vl; }
+    CPLIT("\"}");
+    #undef CPLIT
+    *p='\0';
 
-    sha256_hex((const unsigned char *)canonical,(size_t)off,out);
+    sha256_hex((const unsigned char *)canonical,(size_t)(p-canonical),out);
 }
 
 /* ── Commands ─────────────────────────────────────────────────────────── */

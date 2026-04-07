@@ -32,11 +32,11 @@ extern "C" {
  * ================================================================ */
 
 typedef struct {
-    char artifact_id[512];     /* content-addressed ID                   */
+    char artifact_id[128];     /* content-addressed ID (SHA-256 hex=64)  */
     char artifact_type[128];   /* "transcript", "brief", "proof", etc.   */
     char source_system[128];   /* "BonfyreTranscribe", etc.              */
-    char created_at[128];      /* ISO-8601 UTC timestamp                 */
-    char root_hash[128];       /* SHA-256 of canonical content           */
+    char created_at[32];       /* ISO-8601 UTC "YYYY-MM-DDTHH:MM:SSZ"   */
+    char root_hash[68];        /* SHA-256 hex = 64 chars + NUL           */
     char family_key[17];       /* FNV-1a-64 hex: type + system           */
     char canonical_key[17];    /* FNV-1a-64 hex: type + system + counts  */
     int  atoms_count;          /* number of atom sub-objects              */
@@ -75,6 +75,7 @@ int bf_artifact_to_json(const BfArtifact *a, char *buf, size_t buf_sz);
 
 #define BF_CACHE_MAGIC  "BFSM01"
 #define BF_BINARY_MAGIC "BFAR01"
+#define BF_MAGIC_LEN    6       /* strlen of both magic strings */
 
 typedef struct {
     char magic[8];

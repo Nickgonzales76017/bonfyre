@@ -15,6 +15,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -48,11 +49,11 @@ static long current_max_rss_kb(void) {
 }
 
 typedef struct {
-    char artifact_id[512];
+    char artifact_id[128];
     char artifact_type[128];
     char source_system[128];
-    char created_at[128];
-    char root_hash[128];
+    char created_at[32];
+    char root_hash[68];
     char family_key[17];
     char canonical_key[17];
     int atoms_count;
@@ -324,9 +325,9 @@ static void manifest_binary_path(const char *json_path, char *out, size_t out_sz
     const char *slash = strrchr(json_path, '/');
     if (slash && strcmp(slash + 1, "artifact.json") == 0) {
         size_t prefix_len = (size_t)(slash - json_path + 1);
-        if (prefix_len + strlen("artifact.bfrec") + 1 <= out_sz) {
+        if (prefix_len + sizeof("artifact.bfrec") <= out_sz) {
             memcpy(out, json_path, prefix_len);
-            memcpy(out + prefix_len, "artifact.bfrec", strlen("artifact.bfrec") + 1);
+            memcpy(out + prefix_len, "artifact.bfrec", sizeof("artifact.bfrec"));
             return;
         }
     }
@@ -343,7 +344,7 @@ static int load_manifest_binary_if_fresh(const char *json_path, const struct sta
     size_t n = fread(&record, 1, sizeof(record), f);
     fclose(f);
     if (n != sizeof(record)) return 0;
-    if (strncmp(record.magic, MANIFEST_BINARY_MAGIC, strlen(MANIFEST_BINARY_MAGIC)) != 0) return 0;
+    if (memcmp(record.magic, MANIFEST_BINARY_MAGIC, 6) != 0) return 0;
     if (record.json_size != (long long)json_st->st_size) return 0;
     if (record.json_mtime != (long long)json_st->st_mtime) return 0;
     *summary = record.summary;
@@ -357,8 +358,8 @@ static void save_manifest_binary(const char *json_path, const struct stat *json_
     FILE *rf = fopen(record_path, "wb");
     if (!rf) return;
     ManifestBinaryRecord binary;
-    memset(&binary, 0, sizeof(binary));
-    memcpy(binary.magic, MANIFEST_BINARY_MAGIC, strlen(MANIFEST_BINARY_MAGIC));
+    memset(&binary, 0, offsetof(ManifestBinaryRecord, summary));
+    memcpy(binary.magic, MANIFEST_BINARY_MAGIC, 6);
     binary.json_size = (long long)json_st->st_size;
     binary.json_mtime = (long long)json_st->st_mtime;
     binary.summary = *summary;
@@ -382,7 +383,7 @@ static int load_manifest_cache_if_fresh(const char *json_path, ManifestSummary *
     size_t n = fread(&record, 1, sizeof(record), f);
     fclose(f);
     if (n != sizeof(record)) return 0;
-    if (strncmp(record.magic, MANIFEST_CACHE_MAGIC, strlen(MANIFEST_CACHE_MAGIC)) != 0) return 0;
+    if (memcmp(record.magic, MANIFEST_CACHE_MAGIC, 6) != 0) return 0;
     *summary = record.summary;
     if (summary->canonical_key[0] == '\0') compute_canonical_key(summary);
     save_manifest_binary(json_path, &json_st, summary);
@@ -401,8 +402,8 @@ static void save_manifest_cache(const char *json_path, const ManifestSummary *su
     FILE *f = fopen(cache_path, "wb");
     if (!f) return;
     ManifestCacheRecord record;
-    memset(&record, 0, sizeof(record));
-    memcpy(record.magic, MANIFEST_CACHE_MAGIC, strlen(MANIFEST_CACHE_MAGIC));
+    memset(&record, 0, offsetof(ManifestCacheRecord, summary));
+    memcpy(record.magic, MANIFEST_CACHE_MAGIC, 6);
     record.summary = *summary;
     fwrite(&record, 1, sizeof(record), f);
     fclose(f);
@@ -1575,7 +1576,7 @@ static int cmd_bundle_layout(const char *merge_manifest_path, const char *out_pa
                             char canonical_key[64] = {0};
                             char family_key[64] = {0};
                             char confidence[64] = {0};
-                            char keep_artifact_id[512] = {0};
+                            char keep_artifact_id[128] = {0};
                             char keep_path[PATH_MAX] = {0};
                             long long families = 0;
                             long long item_planned_folds = 0;

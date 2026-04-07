@@ -6,12 +6,14 @@
 #include "bonfyre.h"
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
 /* ----------------------------------------------------------------
  * Filesystem
@@ -44,16 +46,20 @@ long bf_file_size(const char *path) {
 }
 
 char *bf_read_file(const char *path, size_t *out_len) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    long len = ftell(f);
-    if (len < 0) { fclose(f); return NULL; }
-    fseek(f, 0, SEEK_SET);
-    char *buf = malloc((size_t)len + 1);
-    if (!buf) { fclose(f); return NULL; }
-    size_t rd = fread(buf, 1, (size_t)len, f);
-    fclose(f);
+    int fd = open(path, O_RDONLY);
+    if (fd < 0) return NULL;
+    struct stat st;
+    if (fstat(fd, &st) != 0 || st.st_size < 0) { close(fd); return NULL; }
+    size_t len = (size_t)st.st_size;
+    char *buf = malloc(len + 1);
+    if (!buf) { close(fd); return NULL; }
+    size_t rd = 0;
+    while (rd < len) {
+        ssize_t n = read(fd, buf + rd, len - rd);
+        if (n <= 0) break;
+        rd += (size_t)n;
+    }
+    close(fd);
     buf[rd] = '\0';
     if (out_len) *out_len = rd;
     return buf;

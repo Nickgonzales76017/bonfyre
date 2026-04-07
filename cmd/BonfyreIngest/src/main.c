@@ -387,6 +387,8 @@ static void sha256_final(SHA256_CTX *c, unsigned char out[32]) {
     }
 }
 
+static const char g_hex_lut[16] = "0123456789abcdef";
+
 static int compute_sha256(const char *path, char *hash_out, size_t hash_sz) {
     FILE *fp = fopen(path, "rb");
     if (!fp) return 1;
@@ -396,7 +398,10 @@ static int compute_sha256(const char *path, char *hash_out, size_t hash_sz) {
     fclose(fp);
     unsigned char h[32]; sha256_final(&ctx, h);
     if (hash_sz < 65) return 1;
-    for (int i = 0; i < 32; i++) sprintf(hash_out + i*2, "%02x", h[i]);
+    for (int i = 0; i < 32; i++) {
+        hash_out[i*2]   = g_hex_lut[h[i] >> 4];
+        hash_out[i*2+1] = g_hex_lut[h[i] & 0x0f];
+    }
     hash_out[64] = '\0';
     return 0;
 }
