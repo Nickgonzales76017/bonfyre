@@ -18,45 +18,46 @@
  *
  * Flat binary format (.bfvocab) — zero external dependencies.
  * In-process FNV-1a hash map for O(1) term lookup during ingestion.
- * TF-IDF weighting aligned with lambda-tensors frequency cost models.
- * Shannon entropy convergence metric.
+ * BM25 weighting with document-length normalization.
+ * Shannon entropy + KL-divergence convergence metrics.
  *
  * File layout (little-endian):
- *   [6]  magic "BFVD01"
- *   [2]  version     (uint16_t)
- *   [4]  total_files (uint32_t)
- *   [4]  total_words (uint32_t)
- *   [4]  entry_count (uint32_t)
+ *   [6]  magic "BFVD02"
+ *   [2]  version        (uint16_t)
+ *   [4]  total_files    (uint32_t)
+ *   [4]  total_words    (uint32_t)
+ *   [4]  vocab_freq_sum (uint32_t)   — sum of all freq (valid PMF base)
+ *   [4]  entry_count    (uint32_t)
  *   Per entry:
  *     [4]  freq      (uint32_t)  — total occurrences across all files
  *     [2]  doc_freq  (uint16_t)  — distinct files containing this term
  *     [2]  term_len  (uint16_t)
  *     [N]  term      (UTF-8, no NUL)
  *
- * Term weighting:
- *   w(t) = log(1 + freq) * log(1 + N/df)
- *   Sublinear TF suppresses common words. IDF lifts domain terms.
- *   Matches lambda-tensors' Huffman code-length relationship:
- *     code_len ~ ceil(-log2(p)) <-> w(t) ~ -log(p_background)
+ * Term weighting (BM25 with k1=1.2, b=0.75):
+ *   score(t,d) = IDF(t) * (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * dl/avgdl))
+ *   IDF(t) = log((N - df + 0.5) / (df + 0.5) + 1)
  *
- * Convergence:
- *   knowledge = 1 - H/H_max
- *   where H = Shannon entropy of observed term distribution,
- *   H_max = log2(unique_terms). Measures distribution peakedness —
- *   a peaked distribution means strong domain signal.
+ * Convergence metrics:
+ *   H     = Shannon entropy of vocab frequency distribution (bits)
+ *   D_KL  = KL-divergence from uniform: measures distribution peakedness
+ *   knowledge = D_KL / log2(|V|)  — normalized divergence [0,1]
  *
  * Zero friction: single read on load, single write on save.
  * No process spawns, no external binaries, no SQL.
  * ================================================================ */
 
-#define BFVOCAB_MAGIC       "BFVD01"
+#define BFVOCAB_MAGIC       "BFVD02"
 #define BFVOCAB_MAGIC_LEN   6
-#define BFVOCAB_VERSION     1
+#define BFVOCAB_VERSION     2
 #define BFVOCAB_NAME        "bonfyre_vocab.bfvocab"
 #define VOCAB_PROMPT_MAX    200
 #define VOCAB_PROMPT_CHARS  1024
 #define VOCAB_MIN_LEN       3
 #define VOCAB_HASH_INIT     4096  /* power of 2 */
+#define BM25_K1             1.2
+#define BM25_B              0.75
+#define IO_BUF_SIZE         65536  /* 64KB I/O buffer — fits L1 on M-series */
 
 typedef struct {
     char     term[128];
@@ -69,13 +70,21 @@ typedef struct {
     int         count;
     int         cap;
     uint32_t    total_files;
-    uint32_t    total_words;
-    int        *hash_slots;  /* FNV-1a open-addressing -> entry index */
-    int         hash_cap;    /* always power of 2 */
+    uint32_t    total_words;    /* all words (including stopwords) */
+    uint32_t    vocab_freq_sum; /* sum of all entry freq (valid PMF denominator) */
+    int        *hash_slots;    /* FNV-1a open-addressing -> entry index */
+    int         hash_cap;      /* always power of 2 */
+    int         sorted;        /* 1 if entries are in BM25 descending order */
 } VocabStore;
 
-/* Stopwords — common English words we never want in the prompt. */
-static const char *STOPWORDS[] = {
+/* ── Stopword hash set — O(1) lookup via FNV-1a ──────────── */
+/*
+ * Round 1 fix: linear scan of 100+ stopwords per token is O(n*m).
+ * For 5000 tokens * 100 stopwords = 500K strcmp calls per file.
+ * FNV-1a hash set reduces to O(1) amortized per lookup.
+ * Uses same hash function as the vocab store for consistency.
+ */
+static const char *STOPWORD_LIST[] = {
     "the","be","to","of","and","a","in","that","have","i","it","for","not",
     "on","with","he","as","you","do","at","this","but","his","by","from",
     "they","we","her","she","or","an","will","my","one","all","would",
@@ -86,30 +95,59 @@ static const char *STOPWORDS[] = {
     "also","back","after","use","two","how","our","work","first","well",
     "way","even","new","want","because","any","these","give","day","most",
     "us","was","were","been","has","had","are","is","am","did","does",
-    "been","being","having","doing","um","uh","yeah","okay","right","yes",
-    "no","oh","ah","like","well","just","really","very","much","more",
-    "going","gonna","wanna","gotta","thing","things","know","think","mean",
+    "being","having","doing","um","uh","yeah","okay","right","yes",
+    "oh","ah","really","very","much","more",
+    "going","gonna","wanna","gotta","thing","things","mean",
     NULL
 };
 
+#define SW_HASH_SIZE 512  /* power of 2, ~5x load factor for 100 words */
+static uint64_t sw_hashes[SW_HASH_SIZE];
+static int      sw_init_done;
+
+static void stopword_init(void) {
+    if (sw_init_done) return;
+    memset(sw_hashes, 0, sizeof(sw_hashes));
+    for (int i = 0; STOPWORD_LIST[i]; i++) {
+        uint64_t h = bf_fnv1a64(BF_FNV1A_INIT, STOPWORD_LIST[i],
+                                 strlen(STOPWORD_LIST[i]));
+        int slot = (int)(h & (SW_HASH_SIZE - 1));
+        while (sw_hashes[slot]) slot = (slot + 1) & (SW_HASH_SIZE - 1);
+        sw_hashes[slot] = h;
+    }
+    sw_init_done = 1;
+}
+
 static int is_stopword(const char *word) {
-    for (int i = 0; STOPWORDS[i]; i++) {
-        if (strcmp(word, STOPWORDS[i]) == 0) return 1;
+    uint64_t h = bf_fnv1a64(BF_FNV1A_INIT, word, strlen(word));
+    int slot = (int)(h & (SW_HASH_SIZE - 1));
+    while (sw_hashes[slot]) {
+        if (sw_hashes[slot] == h) return 1;  /* FNV-1a collision rate ~0 for short words */
+        slot = (slot + 1) & (SW_HASH_SIZE - 1);
     }
     return 0;
 }
 
-/* Lowercase a word in-place and strip non-alphanumeric edges. */
-static void normalize_word(char *w) {
-    /* lowercase */
-    for (char *p = w; *p; p++) *p = (char)tolower((unsigned char)*p);
-    /* strip trailing punctuation */
-    size_t len = strlen(w);
-    while (len > 0 && !isalnum((unsigned char)w[len - 1])) w[--len] = '\0';
-    /* strip leading punctuation */
-    char *start = w;
-    while (*start && !isalnum((unsigned char)*start)) start++;
-    if (start != w) memmove(w, start, strlen(start) + 1);
+/* ── Single-pass word normalization ───────────────────────── */
+/*
+ * Round 3 fix: old code called strlen 3 times, did memmove.
+ * Touched every byte 4+ times. This does one pass: lowercase,
+ * skip leading non-alnum, stop at trailing non-alnum.
+ * Returns new length (0 if word is empty after normalization).
+ */
+static size_t normalize_word(char *w) {
+    /* Find first alnum */
+    char *src = w;
+    while (*src && !isalnum((unsigned char)*src)) src++;
+    /* Find last alnum */
+    char *end = src + strlen(src);
+    while (end > src && !isalnum((unsigned char)end[-1])) end--;
+    /* Copy + lowercase in one pass */
+    size_t len = 0;
+    for (char *p = src; p < end; p++)
+        w[len++] = (char)tolower((unsigned char)*p);
+    w[len] = '\0';
+    return len;
 }
 
 /* ── Vocab path resolution ────────────────────────────────── */
@@ -124,27 +162,32 @@ static void resolve_vocab_path(char *out, size_t size) {
         snprintf(out, size, "/tmp/%s", BFVOCAB_NAME);
 }
 
-/* ── TF-IDF term weight ──────────────────────────────────── */
+/* ── BM25 term weight ─────────────────────────────────────── */
 /*
- * w(t) = log(1 + freq) * log(1 + total_files / doc_freq)
+ * Round 8 fix: old TF-IDF had no document-length normalization.
+ * BM25 (Robertson et al. 1994) is the gold standard for ranked
+ * information retrieval. The k1/b parameters control term saturation
+ * and document-length bias.
  *
- * Sublinear TF: log(1+f) prevents high-frequency words from
- * dominating. Identical to BM25's logarithmic TF component.
+ * IDF(t) = log((N - df + 0.5) / (df + 0.5) + 1)
+ * score(t) = IDF(t) * (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * dl/avgdl))
  *
- * Smoothed IDF: log(1+N/df) measures term specificity.
- * Domain jargon appearing in few files -> high IDF.
- * Ubiquitous words -> IDF near 0.
+ * For prompt ranking, we use the global corpus stats as the "document":
+ *   dl    = total per-file occurrences (approximated by freq/doc_freq)
+ *   avgdl = total_words / total_files
  *
- * This mirrors lambda-tensors' frequency cost model:
- *   Huffman code_len = ceil(-log2(p_symbol))
- *   String table dedup: inline_cost vs reference_cost
- *   Both reduce to: weight ~ -log(p)
+ * This matches lambda-tensors' Huffman code-length ~-log2(p) relationship:
+ *   terms with high IDF get short codes / high BM25 → appear first in prompt.
  */
-static double vocab_tfidf(const VocabEntry *e, uint32_t total_files) {
-    double tf  = log(1.0 + (double)e->freq);
-    double idf = log(1.0 + (double)total_files /
-                     (double)(e->doc_freq ? e->doc_freq : 1));
-    return tf * idf;
+static double vocab_bm25(const VocabEntry *e, uint32_t total_files,
+                         double avgdl) {
+    double df = (double)e->doc_freq;
+    double N  = (double)total_files;
+    double idf = log((N - df + 0.5) / (df + 0.5) + 1.0);
+    double tf  = (double)e->freq;
+    double dl  = e->doc_freq > 0 ? tf / (double)e->doc_freq : tf;
+    double denom = tf + BM25_K1 * (1.0 - BM25_B + BM25_B * dl / (avgdl > 0 ? avgdl : 1.0));
+    return idf * (tf * (BM25_K1 + 1.0)) / denom;
 }
 
 /* ── FNV-1a hash map (open-addressing, matching bf_fnv1a64) ── */
@@ -206,7 +249,6 @@ static void vocab_store_init(VocabStore *v) { memset(v, 0, sizeof(*v)); }
 
 static int vocab_store_load(VocabStore *v, const char *path) {
     vocab_store_init(v);
-    /* Ensure parent directory exists */
     char dir[PATH_MAX];
     snprintf(dir, sizeof(dir), "%s", path);
     char *sl = strrchr(dir, '/');
@@ -214,20 +256,24 @@ static int vocab_store_load(VocabStore *v, const char *path) {
 
     size_t flen = 0;
     char *data = bf_read_file(path, &flen);
-    if (!data || flen < BFVOCAB_MAGIC_LEN + 14) {
+    if (!data || flen < BFVOCAB_MAGIC_LEN + 18) {
         free(data);
-        vocab_hash_rebuild(v);  /* empty table */
+        /* Also try loading v1 format (BFVD01) for backward compat */
+        vocab_hash_rebuild(v);
         return 0;
     }
     const uint8_t *p = (const uint8_t *)data;
-    if (memcmp(p, BFVOCAB_MAGIC, BFVOCAB_MAGIC_LEN) != 0) {
+    int is_v1 = (memcmp(p, "BFVD01", 6) == 0);
+    int is_v2 = (memcmp(p, BFVOCAB_MAGIC, BFVOCAB_MAGIC_LEN) == 0);
+    if (!is_v1 && !is_v2) {
         fprintf(stderr, "[vocab] bad magic in %s\n", path);
         free(data); vocab_hash_rebuild(v); return -1;
     }
     p += BFVOCAB_MAGIC_LEN;
-    /* uint16_t version */ p += 2;
+    p += 2; /* version */
     memcpy(&v->total_files, p, 4); p += 4;
     memcpy(&v->total_words, p, 4); p += 4;
+    if (is_v2) { memcpy(&v->vocab_freq_sum, p, 4); p += 4; }
     uint32_t cnt; memcpy(&cnt, p, 4); p += 4;
 
     v->cap = (int)(cnt ? cnt * 2 : 256);
@@ -242,6 +288,7 @@ static int vocab_store_load(VocabStore *v, const char *path) {
         size_t copy = tlen < sizeof(e->term) - 1 ? tlen : sizeof(e->term) - 1;
         memcpy(e->term, p, copy); e->term[copy] = '\0';
         p += tlen;
+        if (is_v1) v->vocab_freq_sum += e->freq; /* reconstruct for v1 */
         v->count++;
     }
     free(data);
@@ -249,21 +296,43 @@ static int vocab_store_load(VocabStore *v, const char *path) {
     return 0;
 }
 
-/* Sort comparator — TF-IDF descending */
-static uint32_t g_sort_total_files;
+/* ── Sort comparator — BM25 descending ──────────────────── */
+/*
+ * Round 2 fix: old code used global mutable g_sort_total_files.
+ * qsort_r is POSIX-2024 / BSD. On macOS it's available.
+ * Fallback: since we only sort once before save/prompt, we compute
+ * scores into a parallel array and sort indices. But for simplicity
+ * on our target (macOS/Linux), we use a static context that's set
+ * once before qsort and never concurrently.
+ */
+static struct { uint32_t total_files; double avgdl; } sort_ctx;
+
 static int vocab_cmp_weight(const void *a, const void *b) {
-    double wa = vocab_tfidf((const VocabEntry *)a, g_sort_total_files);
-    double wb = vocab_tfidf((const VocabEntry *)b, g_sort_total_files);
+    double wa = vocab_bm25((const VocabEntry *)a, sort_ctx.total_files,
+                            sort_ctx.avgdl);
+    double wb = vocab_bm25((const VocabEntry *)b, sort_ctx.total_files,
+                            sort_ctx.avgdl);
     return (wa > wb) ? -1 : (wa < wb) ? 1 : 0;
 }
 
-static int vocab_store_save(VocabStore *v, const char *path) {
-    /* Sort by TF-IDF weight so top terms are at file head */
-    g_sort_total_files = v->total_files;
+static void vocab_sort(VocabStore *v) {
+    if (v->sorted || v->count == 0) return;
+    sort_ctx.total_files = v->total_files;
+    sort_ctx.avgdl = v->total_files > 0
+        ? (double)v->vocab_freq_sum / (double)v->total_files : 1.0;
     qsort(v->entries, (size_t)v->count, sizeof(VocabEntry), vocab_cmp_weight);
     vocab_hash_rebuild(v);
+    v->sorted = 1;
+}
 
-    size_t sz = BFVOCAB_MAGIC_LEN + 2 + 4 + 4 + 4;
+static int vocab_store_save(VocabStore *v, const char *path) {
+    vocab_sort(v);
+
+    /* Recompute vocab_freq_sum to ensure consistency */
+    v->vocab_freq_sum = 0;
+    for (int i = 0; i < v->count; i++) v->vocab_freq_sum += v->entries[i].freq;
+
+    size_t sz = BFVOCAB_MAGIC_LEN + 2 + 4 + 4 + 4 + 4; /* +4 for vocab_freq_sum */
     for (int i = 0; i < v->count; i++)
         sz += 4 + 2 + 2 + strlen(v->entries[i].term);
 
@@ -273,6 +342,7 @@ static int vocab_store_save(VocabStore *v, const char *path) {
     uint16_t ver = BFVOCAB_VERSION; memcpy(p, &ver, 2); p += 2;
     memcpy(p, &v->total_files, 4); p += 4;
     memcpy(p, &v->total_words, 4); p += 4;
+    memcpy(p, &v->vocab_freq_sum, 4); p += 4;
     uint32_t cnt = (uint32_t)v->count; memcpy(p, &cnt, 4); p += 4;
 
     for (int i = 0; i < v->count; i++) {
@@ -305,7 +375,8 @@ static int vocab_ingest(VocabStore *v, const char *transcript_path) {
     char *text = bf_read_file(transcript_path, &txt_len);
     if (!text || txt_len == 0) { free(text); return 0; }
 
-    /* Track which entries are seen in THIS file (for doc_freq) */
+    stopword_init();
+
     int seen_cap = v->count + 4096;
     uint8_t *seen = calloc((size_t)seen_cap, 1);
     int word_count = 0;
@@ -315,8 +386,7 @@ static int vocab_ingest(VocabStore *v, const char *transcript_path) {
     while (tok) {
         char word[128];
         snprintf(word, sizeof(word), "%s", tok);
-        normalize_word(word);
-        size_t wlen = strlen(word);
+        size_t wlen = normalize_word(word);
         if (wlen >= VOCAB_MIN_LEN && !is_stopword(word)) {
             int idx = vocab_hash_find(v, word);
             if (idx < 0) {
@@ -329,6 +399,7 @@ static int vocab_ingest(VocabStore *v, const char *transcript_path) {
                 }
             }
             v->entries[idx].freq++;
+            v->vocab_freq_sum++;
             if (idx < seen_cap && !seen[idx]) {
                 seen[idx] = 1;
                 v->entries[idx].doc_freq++;
@@ -340,80 +411,96 @@ static int vocab_ingest(VocabStore *v, const char *transcript_path) {
 
     v->total_files++;
     v->total_words += (uint32_t)word_count;
+    v->sorted = 0;  /* invalidate sort order */
     free(seen);
     free(text);
     return word_count;
 }
 
-/* ── Prompt builder (TF-IDF ranked) ──────────────────────── */
+/* ── Prompt builder (BM25 ranked) ────────────────────────── */
 
 static char *vocab_build_prompt(VocabStore *v) {
     if (v->count == 0 || v->total_files == 0) return NULL;
 
-    /* Sort by TF-IDF weight, rebuild hash for subsequent ingest */
-    g_sort_total_files = v->total_files;
-    qsort(v->entries, (size_t)v->count, sizeof(VocabEntry), vocab_cmp_weight);
-    vocab_hash_rebuild(v);
+    vocab_sort(v);
+
+    /* Hapax threshold: skip freq<2 only when we have enough files to judge */
+    uint32_t hapax_min = v->total_files >= 5 ? 2 : 1;
 
     char *prompt = malloc(VOCAB_PROMPT_CHARS + 64);
     if (!prompt) return NULL;
     size_t plen = 0;
     int n = 0;
 
-    plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen,
-                              "Context: ");
-
     for (int i = 0; i < v->count && n < VOCAB_PROMPT_MAX &&
              plen < VOCAB_PROMPT_CHARS - 64; i++) {
-        if (v->entries[i].freq < 2) continue;  /* skip hapax legomena */
-        if (n > 0)
-            plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen,
-                                      ", ");
-        plen += (size_t)snprintf(prompt + plen, VOCAB_PROMPT_CHARS - plen,
-                                  "%s", v->entries[i].term);
+        if (v->entries[i].freq < hapax_min) continue;
+        if (n > 0) prompt[plen++] = ' ';
+        size_t tlen = strlen(v->entries[i].term);
+        if (plen + tlen >= VOCAB_PROMPT_CHARS - 64) break;
+        memcpy(prompt + plen, v->entries[i].term, tlen);
+        plen += tlen;
         n++;
     }
+    prompt[plen] = '\0';
 
     if (n == 0) { free(prompt); return NULL; }
 
-    /* Convergence: fraction of total TF-IDF mass captured in prompt */
+    /* Convergence: fraction of total BM25 mass captured in prompt */
+    double avgdl = v->total_files > 0 ? (double)v->vocab_freq_sum / (double)v->total_files : 1.0;
     double total_w = 0, prompt_w = 0;
     for (int i = 0; i < v->count; i++) {
-        double w = vocab_tfidf(&v->entries[i], v->total_files);
+        double w = vocab_bm25(&v->entries[i], v->total_files, avgdl);
         total_w += w;
         if (i < n) prompt_w += w;
     }
     double conv = total_w > 0 ? prompt_w / total_w : 0;
 
     fprintf(stderr,
-            "[vocab] %d/%d terms (TF-IDF), %.1f%% information captured"
+            "[vocab] %d/%d terms (BM25), %.1f%% information captured"
             " (%u files)\n", n, v->count, conv * 100.0, v->total_files);
     return prompt;
 }
 
-/* ── Stats writer (Shannon entropy + TF-IDF convergence) ── */
+/* ── Stats writer (Shannon entropy + KL-divergence + BM25) ── */
 
 static void vocab_write_stats(const VocabStore *v, const char *output_dir,
                               const char *vocab_path) {
-    /* Shannon entropy of observed term distribution (bits) */
+    /* Shannon entropy over filtered-term PMF (bits).
+     * Denominator = vocab_freq_sum (only counted terms), NOT total_words
+     * which includes stopwords that were discarded.                       */
     double entropy = 0;
-    if (v->total_words > 0) {
-        double total = (double)v->total_words;
+    if (v->vocab_freq_sum > 0) {
+        double total = (double)v->vocab_freq_sum;
         for (int i = 0; i < v->count; i++) {
             double p = (double)v->entries[i].freq / total;
             if (p > 0) entropy -= p * log(p) / log(2.0);
         }
     }
     double h_max = v->count > 1 ? log((double)v->count) / log(2.0) : 1.0;
-    double knowledge = h_max > 0 ? 1.0 - entropy / h_max : 0;
 
-    /* TF-IDF convergence of prompt */
+    /* KL-divergence D_KL(P || U) where U is uniform over v->count terms.
+     * Measures how much the observed distribution deviates from uniform —
+     * higher = more concentrated vocabulary = better learning signal.     */
+    double kl_div = 0;
+    if (v->count > 1 && v->vocab_freq_sum > 0) {
+        double q = 1.0 / (double)v->count;  /* uniform */
+        double total = (double)v->vocab_freq_sum;
+        for (int i = 0; i < v->count; i++) {
+            double p = (double)v->entries[i].freq / total;
+            if (p > 0) kl_div += p * log(p / q) / log(2.0);
+        }
+    }
+
+    /* BM25 convergence of prompt */
+    double avgdl = v->total_files > 0 ? (double)v->vocab_freq_sum / (double)v->total_files : 1.0;
     double total_w = 0, prompt_w = 0;
     int prompt_n = 0;
+    int hapax_min = v->total_files >= 5 ? 2 : 1;
     for (int i = 0; i < v->count; i++) {
-        double w = vocab_tfidf(&v->entries[i], v->total_files);
+        double w = vocab_bm25(&v->entries[i], v->total_files, avgdl);
         total_w += w;
-        if (prompt_n < VOCAB_PROMPT_MAX && v->entries[i].freq >= 2) {
+        if (prompt_n < VOCAB_PROMPT_MAX && v->entries[i].freq >= (uint32_t)hapax_min) {
             prompt_w += w; prompt_n++;
         }
     }
@@ -430,16 +517,17 @@ static void vocab_write_stats(const VocabStore *v, const char *output_dir,
             "  \"format\": \"bfvocab\",\n"
             "  \"totalFilesProcessed\": %u,\n"
             "  \"totalWordsObserved\": %u,\n"
+            "  \"filteredTermFreqSum\": %u,\n"
             "  \"uniqueTerms\": %d,\n"
             "  \"shannonEntropy\": %.4f,\n"
             "  \"maxEntropy\": %.4f,\n"
-            "  \"knowledge\": %.4f,\n"
-            "  \"tfidfConvergence\": %.4f,\n"
+            "  \"klDivergenceFromUniform\": %.4f,\n"
+            "  \"bm25Convergence\": %.4f,\n"
             "  \"promptTerms\": %d,\n"
             "  \"promptTermsMax\": %d\n"
             "}\n",
-            vocab_path, v->total_files, v->total_words, v->count,
-            entropy, h_max, knowledge, convergence,
+            vocab_path, v->total_files, v->total_words, v->vocab_freq_sum,
+            v->count, entropy, h_max, kl_div, convergence,
             prompt_n, VOCAB_PROMPT_MAX);
         fclose(fp);
     }
@@ -477,7 +565,7 @@ static int copy_file_to_stream(const char *path, FILE *out) {
         perror("fopen");
         return 1;
     }
-    char buffer[4096];
+    char buffer[IO_BUF_SIZE];
     size_t bytes = 0;
     while ((bytes = fread(buffer, 1, sizeof(buffer), in)) > 0) {
         if (fwrite(buffer, 1, bytes, out) != bytes) {
@@ -603,7 +691,10 @@ static void resolve_executable_sibling(char *buffer, size_t size, const char *ar
         return;
     }
     *last_slash = '\0';
-    snprintf(buffer, size, "%s/%s/%s", buffer, sibling_dir, binary_name);
+    /* Avoid UB: snprintf with overlapping src/dest (C11 §7.21.6.5) */
+    char tmp[PATH_MAX];
+    snprintf(tmp, sizeof(tmp), "%s/%s/%s", buffer, sibling_dir, binary_name);
+    snprintf(buffer, size, "%s", tmp);
 }
 
 static const char *default_media_prep_binary(const char *argv0, char *resolved_path, size_t resolved_size) {
@@ -649,13 +740,13 @@ static void print_usage(void) {
             "                      [--vocab-db PATH] [--no-vocab]\n"
             "\n"
             "Vocabulary learning:\n"
-            "  Flat binary .bfvocab format. Zero SQLite, zero process spawns.\n"
-            "  TF-IDF weighted terms injected as whisper --prompt.\n"
-            "  Shannon entropy tracks convergence toward domain mastery.\n"
+            "  Flat binary .bfvocab format (BFVD02). Zero SQLite, zero process spawns.\n"
+            "  BM25-weighted terms injected as whisper --prompt.\n"
+            "  Shannon entropy + KL-divergence track convergence.\n"
             "\n"
-            "  w(t) = log(1+freq) * log(1+N/df)   [TF-IDF]\n"
-            "  H    = -sum(p_i * log2(p_i))        [Shannon entropy]\n"
-            "  knowledge = 1 - H/H_max             [convergence]\n"
+            "  BM25(t,d) = IDF(t) * tf(t,d)*(k1+1) / (tf(t,d)+k1*(1-b+b*|d|/avgdl))\n"
+            "  H = -sum(p_i * log2(p_i))           [Shannon entropy]\n"
+            "  D_KL(P||U) = sum(p_i * log2(p_i/q)) [KL from uniform]\n"
             "\n"
             "  Disable with --no-vocab. Custom path with --vocab-db.\n");
 }
@@ -766,10 +857,29 @@ int main(int argc, char **argv) {
     snprintf(status_path, sizeof(status_path), "%s/transcribe-status.json", output_dir);
     snprintf(progress_path, sizeof(progress_path), "%s/chunk-progress.json", output_dir);
 
+    /* ── Pipeline order: denoise at NATIVE sample rate first ────────
+     * Denoising spectral subtraction works best on the original
+     * sample rate before downsampling destroys high-freq detail.
+     * Then normalize to 16kHz mono for whisper.                        */
+    char denoised_path[PATH_MAX];
+    snprintf(denoised_path, sizeof(denoised_path), "%s/input.denoised.wav", output_dir);
+    char *denoise_argv[] = {
+        (char *)media_prep_binary,
+        "denoise",
+        (char *)input_audio,
+        denoised_path,
+        NULL
+    };
+    const char *normalize_input = input_audio;
+    if (run_process(denoise_argv) == 0 && access(denoised_path, F_OK) == 0) {
+        normalize_input = denoised_path;
+        denoised = 1;
+    }
+
     char *normalize_argv[] = {
         (char *)media_prep_binary,
         "normalize",
-        (char *)input_audio,
+        (char *)normalize_input,
         normalized_path,
         "--sample-rate", "16000",
         "--channels", "1",
@@ -781,24 +891,10 @@ int main(int argc, char **argv) {
         return 1;
     }
 
-    char denoised_path[PATH_MAX];
-    snprintf(denoised_path, sizeof(denoised_path), "%s/normalized.denoised.wav", output_dir);
-    char *denoise_argv[] = {
-        (char *)media_prep_binary,
-        "denoise",
-        normalized_path,
-        denoised_path,
-        NULL
-    };
-    if (run_process(denoise_argv) == 0 && access(denoised_path, F_OK) == 0) {
-        snprintf(normalized_path, sizeof(normalized_path), "%s", denoised_path);
-        denoised = 1;
-    }
-
     /* ----------------------------------------------------------------
      * Load vocabulary store and build decoder prompt.
      * Flat binary format — single read, zero process spawns.
-     * TF-IDF weighted prompt biases decoder toward domain terms.
+     * BM25-weighted prompt biases decoder toward domain terms.
      * ---------------------------------------------------------------- */
     char vocab_path[PATH_MAX];
     VocabStore vocab_store;
@@ -870,27 +966,23 @@ int main(int argc, char **argv) {
             }
         }
 
-        for (int i = 0;; i++) {
-            char chunk_audio[PATH_MAX];
-            snprintf(chunk_audio, sizeof(chunk_audio), "%s/chunk-%03d.wav", chunk_dir, i);
-            if (access(chunk_audio, F_OK) != 0) break;
-            chunk_count++;
-        }
-        write_chunk_progress(progress_path, chunk_count, 0, "splitting-complete");
-
+        /* Single-pass: discover chunks + transcribe in one loop.
+         * Avoids double stat() — count comes from the loop index. */
         FILE *combined = fopen(transcript_path, "w");
         if (!combined) {
             perror("fopen transcript");
             return 1;
         }
 
-        for (int i = 0; i < chunk_count; i++) {
+        for (int i = 0;; i++) {
             char chunk_audio[PATH_MAX];
             char chunk_txt[PATH_MAX];
             snprintf(chunk_audio, sizeof(chunk_audio), "%s/chunk-%03d.wav", chunk_dir, i);
+            if (access(chunk_audio, F_OK) != 0) break;  /* no more chunks */
+            chunk_count++;
             snprintf(chunk_txt, sizeof(chunk_txt), "%s/chunk-%03d.txt", chunk_dir, i);
 
-            char *whisper_argv[32];
+            char *whisper_argv[48];
             int idx = 0;
             char model_path[PATH_MAX];
             char of_prefix[PATH_MAX];
@@ -918,6 +1010,15 @@ int main(int argc, char **argv) {
                 whisper_argv[idx++] = beam_str;
                 whisper_argv[idx++] = "-bo";
                 whisper_argv[idx++] = bestof_str;
+                /* Denoised audio is clean — disable temperature fallback */
+                if (denoised) whisper_argv[idx++] = "--no-fallback";
+                /* Suppress non-speech tokens (filler, music, etc.) */
+                whisper_argv[idx++] = "--suppress-nst";
+                /* Tighter entropy threshold for better rejection */
+                whisper_argv[idx++] = "--entropy-thold";
+                whisper_argv[idx++] = "2.0";
+                /* Carry prompt context across chunks for coherence */
+                if (i > 0) whisper_argv[idx++] = "--carry-initial-prompt";
                 if (language) {
                     whisper_argv[idx++] = "-l";
                     whisper_argv[idx++] = (char *)language;
@@ -967,7 +1068,7 @@ int main(int argc, char **argv) {
         fclose(combined);
         write_chunk_progress(progress_path, chunk_count, completed_chunks, "completed");
     } else {
-        char *whisper_argv[32];
+        char *whisper_argv[48];
         int idx = 0;
         char model_path[PATH_MAX];
         char of_prefix[PATH_MAX];
@@ -994,6 +1095,10 @@ int main(int argc, char **argv) {
             whisper_argv[idx++] = beam_str;
             whisper_argv[idx++] = "-bo";
             whisper_argv[idx++] = bestof_str;
+            if (denoised) whisper_argv[idx++] = "--no-fallback";
+            whisper_argv[idx++] = "--suppress-nst";
+            whisper_argv[idx++] = "--entropy-thold";
+            whisper_argv[idx++] = "2.0";
             if (language) {
                 whisper_argv[idx++] = "-l";
                 whisper_argv[idx++] = (char *)language;
@@ -1034,7 +1139,7 @@ int main(int argc, char **argv) {
 
     /* ----------------------------------------------------------------
      * Post-transcription: ingest transcript into vocabulary store.
-     * TF-IDF weights update, distribution sharpens, entropy drops.
+     * BM25 weights update, distribution sharpens, entropy drops.
      * ---------------------------------------------------------------- */
     int words_ingested = 0;
     if (!no_vocab && access(transcript_path, F_OK) == 0) {
