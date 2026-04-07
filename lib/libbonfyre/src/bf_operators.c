@@ -344,6 +344,48 @@ const BfOperator BF_OPERATORS[] = {
         .layer = "transform",
         .group = "transform"
     },
+    {
+        .name = "segment",
+        .binary = "bonfyre-segment",
+        .description = "Idea boundary detection + segment graph (temporal structure extraction)",
+        .input_types = {"whisper-json", NULL},
+        .output_types = {"segment-graph", "boundaries", "rhythm", NULL},
+        .input_count = 1,
+        .output_count = 3,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
+    {
+        .name = "clips",
+        .binary = "bonfyre-clips",
+        .description = "Clip discovery engine (auto-detect best clip candidates from timestamps)",
+        .input_types = {"whisper-json", NULL},
+        .output_types = {"clip-candidates", "clip-timestamps", NULL},
+        .input_count = 1,
+        .output_count = 2,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
+    {
+        .name = "speechloop",
+        .binary = "bonfyre-speechloop",
+        .description = "Whisper → transform → Piper speech transformation loop",
+        .input_types = {"audio", "brief", NULL},
+        .output_types = {"audio", "brief", NULL},
+        .input_count = 2,
+        .output_count = 2,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE,
+        .exactness = BF_EXACT_LOSSY,
+        .version = "1.0.0",
+        .layer = "transform",
+        .group = "transform"
+    },
 
     /* ================================================================
      * SURFACE — product-facing, stateful services
