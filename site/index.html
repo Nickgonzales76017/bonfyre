@@ -418,6 +418,179 @@ footer a:hover { color: var(--text); }
   font-weight: 600;
 }
 
+/* WordPress section */
+.wp-hero-line {
+  font-size: 1.1rem;
+  color: var(--text);
+  max-width: 720px;
+  margin-bottom: 32px;
+  line-height: 1.6;
+}
+.wp-hero-line strong { color: var(--accent); }
+.wp-uses {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+.wp-use {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+  transition: border-color 0.15s;
+}
+.wp-use:hover { border-color: var(--accent); }
+.wp-use h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+.wp-use .wp-bins {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--accent);
+  background: var(--bg);
+  padding: 3px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+.wp-use p {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.wp-fit-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.wp-fit-tag {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 4px 14px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.wp-diagram {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.9rem;
+  color: var(--text);
+  margin: 24px 0;
+}
+.wp-diagram .arrow { color: var(--accent); font-weight: 700; }
+.wp-map-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 24px 0;
+}
+.wp-map-table th, .wp-map-table td {
+  padding: 10px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.wp-map-table th {
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.wp-map-table td:first-child { font-weight: 600; }
+.wp-map-table code {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+.wp-sprawl {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  max-width: 700px;
+  margin: 24px auto;
+  align-items: start;
+}
+.wp-sprawl-col {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.wp-sprawl-col h4 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 10px;
+}
+.wp-sprawl-col.sprawl { border-color: var(--red); }
+.wp-sprawl-col.sprawl h4 { color: var(--red); }
+.wp-sprawl-col.clean { border-color: var(--green); }
+.wp-sprawl-col.clean h4 { color: var(--green); }
+.wp-sprawl-vs {
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+.wp-sprawl-col ul {
+  list-style: none;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+/* Recipe cards (non-technical) */
+.recipe-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+.recipe-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 24px;
+  transition: border-color 0.15s;
+}
+.recipe-card:hover { border-color: var(--accent); }
+.recipe-card h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+.recipe-card .recipe-step {
+  margin-bottom: 10px;
+}
+.recipe-card .recipe-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.recipe-card .recipe-label.have { color: var(--text-dim); }
+.recipe-card .recipe-label.does { color: var(--blue); }
+.recipe-card .recipe-label.get { color: var(--green); }
+.recipe-card .recipe-label.try { color: var(--accent); }
+.recipe-card .recipe-text {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
   .hero h1 { font-size: 2.2rem; }
@@ -427,6 +600,8 @@ footer a:hover { color: var(--text); }
   .layer { flex-direction: column; gap: 4px; }
   .killer-card .ratio { font-size: 1.8rem; }
   .apps-grid { grid-template-columns: 1fr; }
+  .wp-sprawl { grid-template-columns: 1fr; }
+  .wp-sprawl-vs { padding: 8px 0; justify-content: center; }
 }
 </style>
 </head>
@@ -475,6 +650,12 @@ footer a:hover { color: var(--text); }
       </a>
       <a href="#vs-competition" class="btn btn-outline">
         See what it replaces ↓
+      </a>
+      <a href="#wordpress" class="btn btn-outline">
+        WordPress ↓
+      </a>
+      <a href="#recipes" class="btn btn-outline">
+        Recipes ↓
       </a>
       <a href="#apps" class="btn btn-outline">
         20 live apps ↓
@@ -585,11 +766,512 @@ footer a:hover { color: var(--text); }
   </div>
 </section>
 
+<!-- WordPress -->
+<section id="wordpress">
+  <div class="container">
+    <h2>WordPress</h2>
+    <p class="subtitle">Bonfyre works as a high-performance companion backend for WordPress.</p>
+
+    <p class="wp-hero-line">
+      <strong>Use WordPress as the experience layer. Use Bonfyre as the tiny local-first engine behind search, media, AI workflows, packaging, auth, and monetization.</strong>
+    </p>
+
+    <p class="wp-hero-line" style="font-size:0.95rem; color:var(--text-dim);">
+      Use WordPress for themes, editors, plugins, and admin workflows.<br>
+      Use Bonfyre for the heavy lifting: transcription, vector search, structured compression, packaging, metering, auth, pricing, and output generation.
+    </p>
+
+    <div class="wp-diagram">
+      <span>WordPress UI</span>
+      <span class="arrow"> &#8594; </span>
+      <span>Bonfyre binaries</span>
+      <span class="arrow"> &#8594; </span>
+      <span>search / auth / packages / outputs</span>
+    </div>
+
+    <h3 style="font-size:1.1rem; margin-bottom:16px;">15 concrete uses</h3>
+    <div class="wp-uses">
+      <div class="wp-use">
+        <h3>1. Podcast-to-post pipeline</h3>
+        <span class="wp-bins">media-prep &#8594; transcribe &#8594; brief</span>
+        <p>Turn episode audio into draft blog posts, summaries, and quotes &mdash; automatically.</p>
+      </div>
+      <div class="wp-use">
+        <h3>2. Semantic site search</h3>
+        <span class="wp-bins">embed + vec</span>
+        <p>Index posts by meaning, not just keywords. Replace bloated search plugins.</p>
+      </div>
+      <div class="wp-use">
+        <h3>3. Auto-generated article briefs</h3>
+        <span class="wp-bins">brief</span>
+        <p>Create editorial summaries and action items from long transcripts or notes for editors.</p>
+      </div>
+      <div class="wp-use">
+        <h3>4. Premium member gateway</h3>
+        <span class="wp-bins">auth + gate + meter + pay</span>
+        <p>Back premium features or content tiers without plugin sprawl.</p>
+      </div>
+      <div class="wp-use">
+        <h3>5. Lead magnet generator</h3>
+        <span class="wp-bins">render + emit</span>
+        <p>Produce PDFs, EPUBs, and downloadable guides from WordPress content.</p>
+      </div>
+      <div class="wp-use">
+        <h3>6. Knowledge base search</h3>
+        <span class="wp-bins">embed + vec + query</span>
+        <p>Index docs, FAQs, uploads, and help content for fast semantic retrieval.</p>
+      </div>
+      <div class="wp-use">
+        <h3>7. Client portal backend</h3>
+        <span class="wp-bins">auth + meter + pack</span>
+        <p>WordPress handles presentation. Bonfyre handles auth, metering, file packaging, and deliverables.</p>
+      </div>
+      <div class="wp-use">
+        <h3>8. Call recording to CRM notes</h3>
+        <span class="wp-bins">ingest &#8594; transcribe &#8594; brief &#8594; proof &#8594; pack</span>
+        <p>For agencies and consultants: raw call audio into organized, quality-scored client packets.</p>
+      </div>
+      <div class="wp-use">
+        <h3>9. Auto-tagging archives</h3>
+        <span class="wp-bins">tag + embed</span>
+        <p>Enrich old WordPress content with topics, categories, and semantic clusters.</p>
+      </div>
+      <div class="wp-use">
+        <h3>10. Content repurposing engine</h3>
+        <span class="wp-bins">render + emit + distribute</span>
+        <p>Turn one long post or transcript into snippets, email copy, and social-ready assets.</p>
+      </div>
+      <div class="wp-use">
+        <h3>11. Research library companion</h3>
+        <span class="wp-bins">embed + pack + emit</span>
+        <p>WordPress as public frontend. Bonfyre as semantic index + artifact pipeline for PDFs and transcripts.</p>
+      </div>
+      <div class="wp-use">
+        <h3>12. Proposal &amp; invoice automation</h3>
+        <span class="wp-bins">offer + ledger + finance + pay</span>
+        <p>Quoting and billing workflows for agencies &mdash; from proof bundles to invoices.</p>
+      </div>
+      <div class="wp-use">
+        <h3>13. Voice memo publishing</h3>
+        <span class="wp-bins">transcribe &#8594; clean &#8594; brief &#8594; emit</span>
+        <p>Upload raw voice notes, publish cleaned, structured, summarized versions.</p>
+      </div>
+      <div class="wp-use">
+        <h3>14. Local AI features</h3>
+        <span class="wp-bins">transcribe + embed + vec</span>
+        <p>Local-first transcription and search without cloud APIs, billing, or vendor lock-in.</p>
+      </div>
+      <div class="wp-use">
+        <h3>15. Fast static publishing</h3>
+        <span class="wp-bins">emit + render + distribute</span>
+        <p>Use WordPress as editor/admin, then Bonfyre to emit alternate site outputs, packages, and feeds.</p>
+      </div>
+    </div>
+
+    <h3 style="font-size:1.1rem; margin:32px 0 16px;">Binary mapping for WordPress users</h3>
+    <table class="wp-map-table">
+      <thead>
+        <tr><th>WordPress need</th><th>Bonfyre binaries</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Smarter CMS / data layer</td><td><code>bonfyre-cms</code>, <code>bonfyre-api</code>, <code>bonfyre-index</code></td></tr>
+        <tr><td>Audio &#8594; article workflow</td><td><code>bonfyre-media-prep</code>, <code>bonfyre-transcribe</code>, <code>bonfyre-brief</code>, <code>bonfyre-pack</code></td></tr>
+        <tr><td>Semantic search</td><td><code>bonfyre-embed</code>, <code>bonfyre-vec</code>, <code>bonfyre-query</code></td></tr>
+        <tr><td>Premium content / subscriptions</td><td><code>bonfyre-auth</code>, <code>bonfyre-gate</code>, <code>bonfyre-meter</code>, <code>bonfyre-pay</code></td></tr>
+        <tr><td>Offers / quoting / deliverables</td><td><code>bonfyre-offer</code>, <code>bonfyre-render</code>, <code>bonfyre-emit</code>, <code>bonfyre-pack</code></td></tr>
+        <tr><td>Repurposing / multi-format output</td><td><code>bonfyre-render</code>, <code>bonfyre-emit</code>, <code>bonfyre-distribute</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3 style="font-size:1.1rem; margin:32px 0 16px;">Replace plugin sprawl</h3>
+    <div class="wp-sprawl">
+      <div class="wp-sprawl-col sprawl">
+        <h4>Typical WordPress</h4>
+        <ul>
+          <li>Yoast SEO &mdash; $99/yr</li>
+          <li>MemberPress &mdash; $179/yr</li>
+          <li>SearchWP &mdash; $99/yr</li>
+          <li>WP All Import &mdash; $99/yr</li>
+          <li>Gravity Forms &mdash; $59/yr</li>
+          <li>WooCommerce + 8 add-ons</li>
+          <li>Deepgram/Otter API &mdash; $/min</li>
+          <li>Zapier &mdash; $49/mo</li>
+        </ul>
+      </div>
+      <div class="wp-sprawl-vs">vs</div>
+      <div class="wp-sprawl-col clean">
+        <h4>Bonfyre</h4>
+        <ul>
+          <li>47 binaries &mdash; $0/month</li>
+          <li>~2.1 MB total on disk</li>
+          <li>Auth + billing + metering</li>
+          <li>Local transcription</li>
+          <li>Semantic search</li>
+          <li>Multi-format output</li>
+          <li>Dynamic pricing engine</li>
+          <li>Zero vendor lock-in</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 style="font-size:1.1rem; margin:32px 0 12px;">Good fit</h3>
+    <div class="wp-fit-list">
+      <span class="wp-fit-tag">Publishers</span>
+      <span class="wp-fit-tag">Agencies</span>
+      <span class="wp-fit-tag">Course creators</span>
+      <span class="wp-fit-tag">Membership sites</span>
+      <span class="wp-fit-tag">Podcast networks</span>
+      <span class="wp-fit-tag">Documentation portals</span>
+      <span class="wp-fit-tag">Niche research sites</span>
+      <span class="wp-fit-tag">Local businesses</span>
+    </div>
+  </div>
+</section>
+
+<!-- Recipes for non-technical teams -->
+<section id="recipes">
+  <div class="container">
+    <h2>Real-world recipes</h2>
+    <p class="subtitle">You don't need to understand the binaries. Bonfyre is a behind-the-scenes engine that takes messy business input &mdash; calls, files, notes, recordings &mdash; and turns it into something useful, organized, and ready to use.</p>
+
+    <div class="recipe-grid">
+
+      <div class="recipe-card">
+        <h3>&#x1F3E2; Property Managers</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Maintenance calls, voicemails, inspection notes, resident complaints, vendor quotes.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns recordings and notes into clean summaries, searchable records, follow-up items, and downloadable packets.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Fewer missed requests, faster vendor coordination, cleaner records.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Resident leaves a voicemail &#8594; upload it &#8594; get a transcript, summary, issue type, follow-up notes, and maintenance packet.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F37A; Bars &amp; Nightlife</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Staff updates, vendor calls, event ideas, shift notes, inventory issues, promo materials.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Organizes into shift summaries, event prep notes, staff instructions, vendor records, and promo content.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Less confusion between shifts, smoother event planning, less wasted time.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Manager records a voice memo after a busy night &#8594; shift recap, issue list, and event lessons-learned.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F355; Restaurants</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Staff training notes, supplier calls, customer comments, shift reports, menu updates.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns that into clean training docs, supplier summaries, manager reports, and feedback trends.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Better staff consistency, easier training, fewer details getting lost.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Weekly manager meeting recorded &#8594; clear summary, action list, staff notices, training updates.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x2702;&#xFE0F; Salons &amp; Barbershops</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Team updates, service notes, customer questions, training needs, promo ideas.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Organizes into service guides, training materials, marketing drafts, and a staff knowledge base.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Faster onboarding, more consistent service, less repeated instructions.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Owner records &ldquo;how we handle premium appointments&rdquo; &#8594; staff guide, checklist, and FAQ page.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F3CB;&#xFE0F; Gyms &amp; Fitness Studios</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Coach notes, member questions, program explanations, onboarding conversations.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Creates member onboarding materials, coach summaries, training guides, searchable internal knowledge.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Better member experience, less repeated explanation, cleaner team communication.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Coach records a new class explanation &#8594; member description, coaching notes, and onboarding content.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F527; Local Service Businesses</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Phone calls, job notes, technician updates, customer questions, estimates.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns that into clean summaries, estimate materials, follow-up drafts, and job documentation.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Faster quoting, better follow-up, fewer details through the cracks.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Technician leaves a job-site voice note &#8594; job summary, customer recap, and estimate-ready notes.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F3E0; Real Estate Teams</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Showing notes, listing ideas, client calls, buyer concerns, neighborhood research.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Organizes into client-ready summaries, listing support material, and searchable deal notes.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Better communication, faster follow-up, more polished client service.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Agent uploads buyer consultation recording &#8594; needs summary, budget priorities, follow-up recommendations.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F6E1;&#xFE0F; Insurance Agencies</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Client calls, policy explanations, onboarding materials, renewal questions.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns conversations into clear summaries, training materials, FAQ content, and intake records.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Clearer communication, easier staff training, less policy confusion.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Customer call uploaded &#8594; policy discussion summary, next-step notes, follow-up checklist.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x2696;&#xFE0F; Law Offices</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Client intake calls, meeting notes, matter updates, document reviews.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Structures into organized summaries, intake records, case prep notes, and packaged materials.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">More usable internal records, less time reorganizing conversations.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Client intake call &#8594; transcript, intake summary, issues list, organized review packet.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F3E5; Medical &amp; Dental Offices</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Staff procedures, patient education material, office training notes, admin processes.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns those into reusable office guides, staff SOPs, patient handouts, and searchable documentation.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Better consistency and easier staff training.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Office manager records a front-desk process &#8594; written SOP, checklist, new-staff training material.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F49A; Nonprofits</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Meeting recordings, community interviews, field notes, grant ideas, donor drafts.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns them into reports, grant support material, board packets, and outreach drafts.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Less admin overhead, more polished outputs from a small team.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Program debrief uploaded &#8594; summary, outcomes list, grant-language draft, board update.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F4DA; Schools &amp; Training Orgs</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Lectures, workshop recordings, training notes, teacher knowledge, learning content.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns that into study guides, training documents, searchable archives, and reusable course materials.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">More value from the same teaching time, easier content reuse.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Workshop recording uploaded &#8594; summary, lesson notes, handout draft, archive entry.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x26EA; Churches &amp; Faith Communities</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Sermons, teaching notes, ministry updates, volunteer instructions, archive material.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns them into summaries, newsletters, volunteer guides, and searchable ministry archives.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Better communication, easier reuse of important content.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Sermon audio uploaded &#8594; transcript, summary, devotional notes, newsletter-ready content.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F3DB;&#xFE0F; Museums &amp; Historical Groups</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Oral histories, archive notes, exhibit research, recordings, educational material.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Organizes into searchable archives, summaries, educational packets, and public-ready content.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Preservation work that is easier to access and reuse.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Oral history recording &#8594; transcript, topic summary, archive entry, exhibit-support content.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F4BC; Agencies &amp; Consultants</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">Client calls, workshop recordings, sales notes, proposals, reports.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns those into clean summaries, proposals, report drafts, pricing support, and client-ready deliverables.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Faster service delivery, more polished outputs from the same conversations.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Discovery call uploaded &#8594; transcript, executive summary, next steps, proposal starter packet.</div>
+        </div>
+      </div>
+
+      <div class="recipe-card">
+        <h3>&#x1F3A7; Clubs &amp; Event Venues</h3>
+        <div class="recipe-step">
+          <div class="recipe-label have">What you already have</div>
+          <div class="recipe-text">DJ notes, promoter messages, event recaps, guest lists, sponsor conversations.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label does">What Bonfyre does</div>
+          <div class="recipe-text">Turns scattered event info into organized summaries, promo assets, sponsor packets, and planning records.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label get">What you get</div>
+          <div class="recipe-text">Better run events, cleaner communication, faster promo cycles.</div>
+        </div>
+        <div class="recipe-step">
+          <div class="recipe-label try">Try this</div>
+          <div class="recipe-text">Post-event notes uploaded &#8594; event summary, top issues, social post ideas, sponsor recap.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <p style="margin-top:32px; color:var(--text-dim); font-size:0.95rem;">
+      <strong style="color:var(--text);">You keep using familiar tools on the front end. Bonfyre handles the hard part behind the scenes.</strong>
+    </p>
+    <p style="margin-top:12px; font-size:0.9rem;">
+      <a href="https://github.com/Nickgonzales76017/bonfyre-recipes">Browse all recipes &#8594;</a>
+    </p>
+  </div>
+</section>
+
 <!-- Benchmarks -->
 <section id="benchmarks">
   <div class="container">
     <h2>Benchmarks</h2>
-    <p class="subtitle">Apple M-series, measured after 5 optimization passes (P0–P5). All numbers are real.</p>
+    <p class="subtitle">Apple M-series, measured after 5 optimization passes (P0&ndash;P5). All numbers are real.</p>
     <div class="bench-grid">
       <div class="bench-card">
         <span class="value">5–8 ms</span>
