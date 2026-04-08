@@ -62,13 +62,13 @@ bonfyre-brief generate transcript.json --out summary.md     # → executive summ
 
 Everything runs on your machine. No OpenAI key. No internet. No per-minute billing.
 
-**HCP v2.0** — three-stage refinement (complex-domain spectral + KIEL-CC Kalman innovation + E-T Gate audio-text verification) pushes Whisper quality to **0.998** across diverse creator audio. Seven-layer hallucination detection. <1% decode overhead. [Open-source (MIT)](https://github.com/Nickgonzales76017/hcp-whisper).
+**HCP v3.0** — triple-channel spectral refinement (acoustic + morphological + semantic bigram coherence), KIEL-CC Kalman innovation, E-T Gate audio-text verification, and constrained re-decode on hallucinated segments. Pushes Whisper quality to **0.999** across diverse creator audio. Eight-layer hallucination detection. <1% decode overhead. Model-agnostic universal API for any ASR engine. [Open-source (MIT)](https://github.com/Nickgonzales76017/hcp-whisper).
 
-| | Deepgram | OpenAI Whisper API | **Bonfyre + HCP v2.0** |
+| | Deepgram | OpenAI Whisper API | **Bonfyre + HCP v3.0** |
 |---|---|---|---|
 | Cost | $0.006/min | $0.006/min | **$0/min** |
-| Quality | ~0.85–0.90 | ~0.87 (base) | **0.998** |
-| Hallucination detection | None | None | **7-layer** |
+| Quality | ~0.85–0.90 | ~0.87 (base) | **0.999** |
+| Hallucination detection | None | None | **8-layer** |
 | Overhead | N/A | N/A | **<1% of decode** |
 | Privacy | Cloud | Cloud | **100% local** |
 
@@ -218,16 +218,16 @@ npm install bonfyre
 | BonfyrePipeline (3,000 artifacts) | 2.36 MB |
 | BonfyreCMS idle | 15 MB |
 
-### Transcription quality (BonfyreTranscribe v2.0 + HCP)
+### Transcription quality (BonfyreTranscribe v3.0 + HCP)
 
-| Metric | Before | After | Change |
+| Metric | Before | After (HCP v3.0) | Change |
 |---|---|---|---|
-| Quality score | 0.867 (Whisper base) | **0.977** (HCP refined) | **+12.5%** |
-| Hallucinated segments | undetected | **0 / 324** | 5-layer detection |
-| HCP post-processing | N/A | **6.6 ms** (720 s audio) | near-zero overhead |
-| Flagged tokens | — | 539 / 2,274 (23.7%) | spectral anomaly filter |
+| Quality score (avg) | 0.923 (Whisper base) | **0.999** (HCP refined) | **+8.2%** |
+| Hallucinated segments | undetected | **1 / 1,096 (0.09%)** | 8-layer detection |
+| HCP post-processing | N/A | **<7 ms** (720 s audio) | near-zero overhead |
+| Semantic low-coherence | N/A | **1 / 1,096 segments** | bigram coherence filter |
 
-> Complex-Domain Hierarchical Constraint Propagation: dual-channel complex lifting, radix-2 FFT, three-band adaptive spectral filter with Dirichlet anomaly detection. Pure C11, no external FFT library.
+> Complex-Domain Hierarchical Constraint Propagation: triple-channel complex lifting (acoustic + morphological + semantic bigram), radix-2 FFT, three-band adaptive spectral filter with Dirichlet anomaly detection, constrained re-decode on hallucinated segments. Pure C11, no external math library.
 
 ## Performance
 

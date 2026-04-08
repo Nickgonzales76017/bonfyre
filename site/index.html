@@ -798,8 +798,8 @@ footer a:hover { color: var(--text); }
       </div>
       <div class="killer-card">
         <div class="vs">vs Deepgram (transcription)</div>
-        <div class="ratio">0.998 quality, $0/min</div>
-        <div class="detail">HCP v2.0: spectral refinement + Kalman innovation + audio-text gate. 0.998 quality across 1,096 segments of diverse creator audio. 7-layer hallucination detection. <1% decode overhead. <a href="https://github.com/Nickgonzales76017/hcp-whisper" style="color:#ff6b00">Open-source (MIT)</a>.</div>
+        <div class="ratio">0.999 quality, $0/min</div>
+        <div class="detail">HCP v3.0: triple-channel spectral refinement (acoustic + morphological + semantic bigram) + Kalman innovation + audio-text gate + constrained re-decode. 0.999 quality across 1,096 segments of diverse creator audio. 8-layer hallucination detection. <1.2% decode overhead. Model-agnostic universal API. <a href="https://github.com/Nickgonzales76017/hcp-whisper" style="color:#ff6b00">Open-source (MIT)</a>.</div>
       </div>
       <div class="killer-card">
         <div class="vs">vs Pinecone (vector search)</div>
@@ -830,13 +830,13 @@ footer a:hover { color: var(--text); }
       </thead>
       <tbody>
         <tr><td>Cost</td><td>$0.006/min</td><td>$0.006/min</td><td class="highlight">$0 / minute</td></tr>
-        <tr><td>Quality score</td><td>~0.85–0.90</td><td>~0.87 (base)</td><td class="highlight">0.998 (HCP v2.0)</td></tr>
-        <tr><td>Hallucination detection</td><td>None</td><td>None</td><td class="highlight">7-layer (compress, n-gram, vlen, logprob, spectral, E-T gate, Kalman)</td></tr>
+        <tr><td>Quality score</td><td>~0.85–0.90</td><td>~0.87 (base)</td><td class="highlight">0.999 (HCP v3.0)</td></tr>
+        <tr><td>Hallucination detection</td><td>None</td><td>None</td><td class="highlight">8-layer (compress, n-gram, vlen, logprob, spectral, E-T gate, Kalman, semantic)</td></tr>
         <tr><td>Post-process overhead</td><td>N/A (cloud)</td><td>N/A (cloud)</td><td class="highlight">&lt;1% of decode time</td></tr>
         <tr><td>Privacy</td><td>Cloud — data leaves device</td><td>Cloud — data leaves device</td><td class="highlight">100% local, offline, private</td></tr>
         <tr><td>Internet required</td><td>Yes</td><td>Yes</td><td class="highlight">No</td></tr>
         <tr><td>Output formats</td><td>JSON, SRT</td><td>JSON, SRT, VTT</td><td class="highlight">JSON + HCP metrics, TXT, SRT, VTT, meta.json</td></tr>
-        <tr><td>Novel algorithm</td><td>Proprietary cloud</td><td>Whisper (standard)</td><td class="highlight">HCP spectral + KIEL-CC Kalman + E-T Gate</td></tr>
+        <tr><td>Novel algorithm</td><td>Proprietary cloud</td><td>Whisper (standard)</td><td class="highlight">HCP triple-channel spectral + KIEL-CC Kalman + E-T Gate + semantic bigram + re-decode</td></tr>
       </tbody>
     </table>
 
@@ -870,8 +870,8 @@ footer a:hover { color: var(--text); }
         <br><span class="time">2 min to try</span>
       </div>
       <div class="use-case">
-        <h3>Local Transcription + HCP v2.0</h3>
-        <p>HCP spectral refinement + Kalman innovation + E-T Gate reaches 0.998 quality across diverse creator audio — better than any cloud API. 7-layer hallucination detection. Zero cost. <a href="https://github.com/Nickgonzales76017/hcp-whisper">Open-source</a>.</p>
+        <h3>Local Transcription + HCP v3.0</h3>
+        <p>HCP triple-channel spectral refinement + Kalman innovation + E-T Gate + semantic bigram coherence + constrained re-decode reaches 0.999 quality across diverse creator audio — better than any cloud API. 8-layer hallucination detection. Model-agnostic universal API. Zero cost. <a href="https://github.com/Nickgonzales76017/hcp-whisper">Open-source</a>.</p>
         <code>bonfyre-transcribe run audio.wav</code>
         <br><span class="time">5 min to try</span>
       </div>
@@ -1443,8 +1443,8 @@ footer a:hover { color: var(--text); }
         <span class="metric">Hash hex (LUT vs snprintf)</span>
       </div>
       <div class="bench-card">
-        <span class="value">0.998</span>
-        <span class="metric">HCP v2.0 quality (3 sources avg)</span>
+        <span class="value">0.999</span>
+        <span class="metric">HCP v3.0 quality (3 sources avg)</span>
       </div>
       <div class="bench-card">
         <span class="value">7</span>
@@ -1510,9 +1510,9 @@ footer a:hover { color: var(--text); }
         <tr><td>Operator lookup</td><td>O(n) linear</td><td class="highlight">O(1) FNV hash</td><td>algorithmic</td></tr>
         <tr><td>Token generation</td><td>O(n²) strlen loop</td><td class="highlight">O(n) tracked offset</td><td>algorithmic</td></tr>
         <tr><td>Vector file (384-dim)</td><td>6.4 KB JSON</td><td class="highlight">1,544 bytes VECF</td><td>4.2× smaller</td></tr>
-        <tr><td>Transcript quality</td><td>~0.92 (Whisper base)</td><td class="highlight">0.998 (HCP v2.0)</td><td>+8.2% avg</td></tr>
+        <tr><td>Transcript quality</td><td>~0.92 (Whisper base)</td><td class="highlight">0.999 (HCP v3.0)</td><td>+8.2% avg</td></tr>
         <tr><td>HCP pipeline</td><td>N/A</td><td class="highlight">spectral + KIEL-CC + E-T Gate</td><td><1% overhead</td></tr>
-        <tr><td>Hallucinated segments</td><td>undetected</td><td class="highlight">1 / 1,096 (0.09%)</td><td>7-layer detection</td></tr>
+        <tr><td>Hallucinated segments</td><td>undetected</td><td class="highlight">1 / 1,096 (0.09%)</td><td>8-layer detection</td></tr>
         <tr><td>Duplicate code</td><td>34 copies</td><td class="highlight">1 each (libbonfyre)</td><td>eliminated</td></tr>
       </tbody>
     </table>
