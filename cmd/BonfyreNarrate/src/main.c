@@ -1,12 +1,23 @@
 /*
- * BonfyreNarrate v3 — Verified Tone-Aware Text-to-Speech Synthesis
+ * BonfyreNarrate v3.2 — Verified Tone-Aware Text-to-Speech Synthesis
  *
  * The narration layer that synthesizes, verifies, and proves.
  *
- * v1: fork piper, hope for the best.
- * v2: tone-aware prosody + PSOLA + energy envelope.
- * v3: closed-loop verification + 6-layer fidelity scoring +
- *     iterative refinement. The HCP for TTS.
+ * v1:   fork piper, hope for the best.
+ * v2:   tone-aware prosody + PSOLA + energy envelope.
+ * v3:   closed-loop verification + 6-layer fidelity scoring +
+ *       iterative refinement. The HCP for TTS.
+ * v3.1: inline FFT + zero-dependency verification.
+ * v3.2: mathematical perfection pass —
+ *       • Parabolic interpolation on autocorrelation peak (sub-sample F0)
+ *       • Pitch-synchronous PSOLA with normalization buffer (preserves dynamics)
+ *       • Per-frame energy envelope with exponential smoothing
+ *       • Semitone-domain F0 statistics (correct log-frequency math)
+ *       • True 5th/95th percentile computation via sorted array
+ *       • Fixed voiced/unvoiced segment tracking (was dead code)
+ *       • Hz-domain spectral slope regression (cross-config comparable)
+ *       • Spectral flatness (Wiener entropy) feature
+ *       • Removed 200-frame cap on spectral analysis
  *
  * Pipeline:
  *   bonfyre-tone profile audio.wav tone_out/    → 6-dimension profile
@@ -20,10 +31,12 @@
  *
  * What it does:
  *   1. SSML prosody generation from 6-dimension tone profile
- *   2. PSOLA pitch correction (pure-C autocorrelation + OLA)
- *   3. Energy envelope transfer (per-frame RMS shaping)
+ *   2. PSOLA pitch correction (pitch-synchronous OLA with
+ *      parabolic-interpolated autocorrelation + normalization buffer)
+ *   3. Energy envelope transfer (per-frame RMS with exp smoothing)
  *   4. Inline acoustic feature extraction (FFT, autocorrelation,
- *      RMS, jitter, shimmer, HNR — 25 features, pure C, no deps)
+ *      RMS, jitter, shimmer, HNR, spectral flatness — 28 features,
+ *      pure C, no deps)
  *   5. 6-layer fidelity scoring (pitch/energy/temporal/spectral/
  *      stability/dynamics) — geometric mean composite
  *   6. Closed-loop verification: extracts fingerprint from its own
@@ -388,7 +401,12 @@ static char *generate_paced_text(const char *text, const ProsodyParams *pp) {
  *  proven in hcp-whisper's spectral pipeline.
  * ═══════════════════════════════════════════════════════════════ */
 
-/* Autocorrelation-based pitch detection for a frame of audio */
+/* Autocorrelation-based pitch detection with parabolic interpolation.
+ * Sub-sample precision: fits parabola through r[lag-1], r[lag], r[lag+1]
+ * to find the true fractional peak of the autocorrelation function.
+ * Without interpolation, F0 resolution is limited to integer sample
+ * periods (~1 Hz at typical rates). With interpolation, precision
+ * improves to ~0.01 Hz — critical for accurate fidelity scoring. */
 static double detect_pitch_frame(const float *frame, int len, int sr) {
     int min_lag = sr / 500;  /* 500 Hz max */
     int max_lag = sr / 60;   /* 60 Hz min */
@@ -416,7 +434,33 @@ static double detect_pitch_frame(const float *frame, int len, int sr) {
     }
 
     if (best_corr < 0.3) return 0.0; /* unvoiced */
-    return (double)sr / best_lag;
+
+    /* Parabolic interpolation for sub-sample precision.
+     * Recompute autocorrelation at best_lag ± 1, fit parabola,
+     * find fractional peak: δ = 0.5*(r[l-1]-r[l+1]) / (r[l-1]-2r[l]+r[l+1]) */
+    double refined_lag = (double)best_lag;
+    if (best_lag > min_lag && best_lag < max_lag) {
+        double r_vals[3];
+        for (int k = -1; k <= 1; k++) {
+            int lag = best_lag + k;
+            double sum = 0.0, na = 0.0, nb = 0.0;
+            int count = len - lag;
+            for (int i = 0; i < count; i++) {
+                sum += (double)frame[i] * frame[i + lag];
+                na  += (double)frame[i] * frame[i];
+                nb  += (double)frame[i + lag] * frame[i + lag];
+            }
+            double d = sqrt(na * nb);
+            r_vals[k + 1] = (d > 1e-10) ? sum / d : 0.0;
+        }
+        double denom2 = r_vals[0] - 2.0 * r_vals[1] + r_vals[2];
+        if (fabs(denom2) > 1e-12) {
+            double delta = 0.5 * (r_vals[0] - r_vals[2]) / denom2;
+            if (fabs(delta) < 1.0) refined_lag += delta;
+        }
+    }
+
+    return (double)sr / refined_lag;
 }
 
 /* Hanning window (matches hcp-whisper) */
@@ -425,12 +469,16 @@ static void hanning(float *w, int n) {
         w[i] = 0.5f * (1.0f - cosf(2.0f * (float)M_PI * i / (n - 1)));
 }
 
-/* PSOLA pitch shift: modify pitch by ratio while preserving duration */
+/* PSOLA pitch shift with amplitude-preserving normalization buffer.
+ * Uses pitch-synchronous analysis hops (hop_in = detected period)
+ * and a normalization buffer that tracks accumulated window weight
+ * at each output sample. Dividing by the normalization buffer
+ * guarantees unity gain under OLA — no global peak normalization
+ * needed, preserving the original signal's dynamic range. */
 static int16_t *psola_pitch_shift(const int16_t *in, int n_samples,
                                   int sample_rate, double shift_ratio,
                                   int *out_len) {
     if (fabs(shift_ratio - 1.0) < 0.01) {
-        /* No meaningful shift needed */
         *out_len = n_samples;
         int16_t *out = malloc((size_t)n_samples * sizeof(int16_t));
         if (out) memcpy(out, in, (size_t)n_samples * sizeof(int16_t));
@@ -443,23 +491,23 @@ static int16_t *psola_pitch_shift(const int16_t *in, int n_samples,
     for (int i = 0; i < n_samples; i++)
         sig[i] = (float)in[i] / 32768.0f;
 
-    /* Output buffer */
-    float *out_f = calloc((size_t)n_samples + 4096, sizeof(float));
-    if (!out_f) { free(sig); return NULL; }
+    /* Output + normalization buffers */
+    int out_alloc = n_samples + 8192;
+    float *out_f = calloc((size_t)out_alloc, sizeof(float));
+    float *norm  = calloc((size_t)out_alloc, sizeof(float));
+    if (!out_f || !norm) {
+        free(sig); free(out_f); free(norm); return NULL;
+    }
 
     int frame_size = sample_rate / 80; /* ~12.5ms frames */
-    float *win = malloc((size_t)(frame_size * 2) * sizeof(float));
-    if (!win) { free(sig); free(out_f); return NULL; }
-
-    int hop_in = frame_size;
-    int hop_out = (int)((double)frame_size / shift_ratio);
-    if (hop_out < 1) hop_out = 1;
+    int max_wlen = frame_size * 4;
+    float *win = malloc((size_t)max_wlen * sizeof(float));
+    if (!win) { free(sig); free(out_f); free(norm); return NULL; }
 
     int out_pos = 0;
     int in_pos = 0;
 
-    while (in_pos + frame_size * 2 < n_samples) {
-        /* Detect local pitch period */
+    while (in_pos + frame_size < n_samples) {
         int analysis_len = frame_size * 2;
         if (in_pos + analysis_len > n_samples)
             analysis_len = n_samples - in_pos;
@@ -467,45 +515,51 @@ static int16_t *psola_pitch_shift(const int16_t *in, int n_samples,
         double f0 = detect_pitch_frame(sig + in_pos, analysis_len, sample_rate);
         int period;
         if (f0 > 60.0) {
-            period = (int)((double)sample_rate / f0);
+            period = (int)((double)sample_rate / f0 + 0.5);
         } else {
             period = frame_size; /* unvoiced: use default */
         }
 
-        /* Window size = 2 * period (centered on pitch period) */
+        /* Window size = 2 * period */
         int wlen = period * 2;
-        if (wlen > frame_size * 2) wlen = frame_size * 2;
+        if (wlen > max_wlen) wlen = max_wlen;
         if (in_pos + wlen > n_samples) wlen = n_samples - in_pos;
 
         hanning(win, wlen);
 
-        /* Overlap-add at output position */
-        for (int i = 0; i < wlen && out_pos + i < n_samples + 4096; i++) {
+        /* Overlap-add with normalization tracking */
+        for (int i = 0; i < wlen && out_pos + i < out_alloc; i++) {
             out_f[out_pos + i] += sig[in_pos + i] * win[i];
+            norm[out_pos + i]  += win[i];
         }
 
-        in_pos += hop_in;
+        /* Pitch-synchronous analysis hop = detected period.
+         * Synthesis hop = period / shift_ratio.
+         * This produces the pitch change while preserving duration. */
+        int hop_in = (f0 > 60.0) ? period : frame_size;
+        int hop_out = (int)((double)hop_in / shift_ratio + 0.5);
+        if (hop_out < 1) hop_out = 1;
+
+        in_pos  += hop_in;
         out_pos += hop_out;
     }
 
-    /* Convert back to int16 */
-    int total = out_pos + frame_size * 2;
-    if (total > n_samples + 4096) total = n_samples + 4096;
+    /* Normalize by accumulated window weight — preserves original
+     * amplitude at every sample point. No global normalization needed. */
+    int total = out_pos + frame_size;
+    if (total > out_alloc) total = out_alloc;
     *out_len = total;
 
-    int16_t *out = malloc((size_t)total * sizeof(int16_t));
-    if (!out) { free(sig); free(out_f); free(win); return NULL; }
-
-    /* Find peak for normalization */
-    float peak = 0.0f;
     for (int i = 0; i < total; i++) {
-        float a = fabsf(out_f[i]);
-        if (a > peak) peak = a;
+        if (norm[i] > 1e-6f) out_f[i] /= norm[i];
     }
-    float scale = (peak > 0.001f) ? (0.95f / peak) : 1.0f;
+
+    /* Convert to int16 — amplitude already correct */
+    int16_t *out = malloc((size_t)total * sizeof(int16_t));
+    if (!out) { free(sig); free(out_f); free(norm); free(win); return NULL; }
 
     for (int i = 0; i < total; i++) {
-        float v = out_f[i] * scale * 32767.0f;
+        float v = out_f[i] * 32767.0f;
         if (v > 32767.0f) v = 32767.0f;
         if (v < -32768.0f) v = -32768.0f;
         out[i] = (int16_t)v;
@@ -513,6 +567,7 @@ static int16_t *psola_pitch_shift(const int16_t *in, int n_samples,
 
     free(sig);
     free(out_f);
+    free(norm);
     free(win);
     return out;
 }
@@ -520,48 +575,96 @@ static int16_t *psola_pitch_shift(const int16_t *in, int n_samples,
 /* ═══════════════════════════════════════════════════════════════
  *  §5  Energy Envelope Transfer
  *
- *  Shapes the synthesized audio's loudness contour to match the
- *  original speaker's dynamic range. Works on ~50ms frames:
- *    1. Compute RMS energy envelope of the target profile
- *    2. Compute RMS envelope of the synthesized audio
- *    3. Scale each frame so the synth envelope matches
+ *  Per-frame RMS gain shaping with exponential smoothing.
+ *  Computes the current RMS envelope, derives a target RMS from
+ *  the tone profile, then applies per-frame gain to match.
+ *  Exponential smoothing between frames prevents discontinuities.
+ *  Soft-clips via tanh near the int16 limit.
  * ═══════════════════════════════════════════════════════════════ */
 
 static void apply_energy_envelope(int16_t *samples, int n, int sr,
                                   double target_energy_norm) {
     /* target_energy_norm is 0-100 from tone profile */
     /* Map to gain: 30→0.6, 50→1.0, 80→1.4 */
-    double gain = 0.4 + (target_energy_norm / 100.0) * 1.2;
-    if (gain < 0.3) gain = 0.3;
-    if (gain > 2.0) gain = 2.0;
+    double target_gain = 0.4 + (target_energy_norm / 100.0) * 1.2;
+    if (target_gain < 0.3) target_gain = 0.3;
+    if (target_gain > 2.0) target_gain = 2.0;
 
     int frame_size = sr / 20; /* 50ms frames */
     if (frame_size < 1) frame_size = 1;
+    int n_frames = n / frame_size;
+    if (n_frames < 1) return;
 
-    for (int i = 0; i < n; i += frame_size) {
-        int end = i + frame_size;
+    /* Compute per-frame RMS */
+    double *frame_rms = malloc((size_t)n_frames * sizeof(double));
+    if (!frame_rms) return;
+
+    for (int f = 0; f < n_frames; f++) {
+        double rms = 0.0;
+        int start = f * frame_size;
+        int end = start + frame_size;
+        if (end > n) end = n;
+        for (int j = start; j < end; j++)
+            rms += (double)samples[j] * samples[j];
+        frame_rms[f] = sqrt(rms / (end - start));
+    }
+
+    /* Compute global RMS of active frames */
+    double global_rms_sq = 0.0;
+    int active = 0;
+    for (int f = 0; f < n_frames; f++) {
+        if (frame_rms[f] > 1.0) { /* above silence threshold */
+            global_rms_sq += frame_rms[f] * frame_rms[f];
+            active++;
+        }
+    }
+    double global_rms = active > 0 ? sqrt(global_rms_sq / active) : 1.0;
+    double target_rms = global_rms * target_gain;
+
+    /* Per-frame gain with exponential smoothing */
+    double prev_gain = target_gain;
+    double smooth = 0.3; /* smoothing factor */
+
+    for (int f = 0; f < n_frames; f++) {
+        int start = f * frame_size;
+        int end = start + frame_size;
         if (end > n) end = n;
 
-        /* Compute RMS of this frame */
-        double rms = 0.0;
-        for (int j = i; j < end; j++)
-            rms += (double)samples[j] * samples[j];
-        rms = sqrt(rms / (end - i));
+        double gain;
+        if (frame_rms[f] < 1.0) {
+            gain = 1.0; /* don't amplify silence */
+        } else {
+            gain = target_rms / frame_rms[f];
+            if (gain > 4.0) gain = 4.0;
+            if (gain < 0.1) gain = 0.1;
+        }
 
-        if (rms < 1.0) continue; /* silence */
+        /* Exponential smoothing to prevent discontinuities */
+        gain = smooth * prev_gain + (1.0 - smooth) * gain;
+        prev_gain = gain;
 
-        /* Apply gain with soft limiting */
-        for (int j = i; j < end; j++) {
+        for (int j = start; j < end; j++) {
             double v = (double)samples[j] * gain;
-            /* Soft clip (tanh) */
-            if (v > 20000.0 || v < -20000.0) {
+            if (v > 20000.0 || v < -20000.0)
                 v = 32767.0 * tanh(v / 32767.0);
-            }
             if (v > 32767.0) v = 32767.0;
             if (v < -32768.0) v = -32768.0;
             samples[j] = (int16_t)v;
         }
     }
+
+    /* Handle remainder samples after last full frame */
+    int remainder_start = n_frames * frame_size;
+    for (int j = remainder_start; j < n; j++) {
+        double v = (double)samples[j] * prev_gain;
+        if (v > 20000.0 || v < -20000.0)
+            v = 32767.0 * tanh(v / 32767.0);
+        if (v > 32767.0) v = 32767.0;
+        if (v < -32768.0) v = -32768.0;
+        samples[j] = (int16_t)v;
+    }
+
+    free(frame_rms);
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -677,7 +780,7 @@ static char *normalize_markdown(const char *text) {
  *    2. extract_fingerprint_wav()   — pure-C inline extraction from WAV
  *
  *  Path 2 is the zero-dependency path. No Python, no pip, no
- *  subprocess. Computes 25 acoustic features directly from PCM
+ *  subprocess. Computes 28 acoustic features directly from PCM
  *  samples using autocorrelation pitch detection, RMS energy,
  *  inline FFT, and standard prosodic measures.
  *
@@ -802,6 +905,12 @@ static int next_pow2(int n) {
  * so the same cosine/layer code works on both inline-extracted
  * and opensmile-extracted fingerprints. */
 
+/* Comparator for qsort on double arrays (used for percentile computation) */
+static int cmp_double(const void *a, const void *b) {
+    double da = *(const double *)a, db = *(const double *)b;
+    return (da > db) - (da < db);
+}
+
 static void fp_set(VoiceFingerprint *fp, const char *name, double val) {
     if (fp->count >= MAX_FP_FEATURES) return;
     strncpy(fp->features[fp->count].name, name, MAX_FP_NAME - 1);
@@ -859,40 +968,68 @@ static VoiceFingerprint extract_fingerprint_wav(const int16_t *samples,
     }
 
     /* ── F0 statistics (L1: pitch layer) ──────────────────── */
-    double f0_sum = 0.0, f0_min = 1e9, f0_max = 0.0;
+    /* Hz-domain stats (needed for derived features) */
+    double f0_sum = 0.0;
     int f0_n = 0;
     for (int f = 0; f < n_frames; f++) {
-        if (f0s[f] > 60.0) {
-            f0_sum += f0s[f]; f0_n++;
-            if (f0s[f] < f0_min) f0_min = f0s[f];
-            if (f0s[f] > f0_max) f0_max = f0s[f];
-        }
+        if (f0s[f] > 60.0) { f0_sum += f0s[f]; f0_n++; }
     }
     double f0_mean = f0_n > 0 ? f0_sum / f0_n : 150.0;
-    double f0_var = 0.0;
+    double f0_var_hz = 0.0;
     for (int f = 0; f < n_frames; f++) {
         if (f0s[f] > 60.0) {
             double d = f0s[f] - f0_mean;
-            f0_var += d * d;
+            f0_var_hz += d * d;
         }
     }
-    f0_var = f0_n > 1 ? f0_var / (f0_n - 1) : 0.0;
-    double f0_std = sqrt(f0_var);
+    f0_var_hz = f0_n > 1 ? f0_var_hz / (f0_n - 1) : 0.0;
+    double f0_std_hz = sqrt(f0_var_hz);
 
-    /* Convert Hz to semitones re 27.5 Hz (eGeMAPSv02 convention) */
-    double f0_st_mean = (f0_mean > 0) ? 12.0 * log2(f0_mean / 27.5) : 0.0;
-    double f0_st_std  = (f0_mean > 0) ? 12.0 * (f0_std / f0_mean) : 0.0;
-    double f0_st_p5   = (f0_min < 1e8) ? 12.0 * log2(f0_min / 27.5) : 0.0;
-    double f0_st_p95  = (f0_max > 0) ? 12.0 * log2(f0_max / 27.5) : 0.0;
+    /* Semitone-domain stats — mathematically correct log-frequency
+     * representation. Converting each F0 individually then computing
+     * mean/std avoids the linear approximation error of
+     * σ_st ≈ 12*σ_Hz/μ_Hz (which is off by factor 1/ln(2)). */
+    double *f0_st = calloc((size_t)(f0_n > 0 ? f0_n : 1), sizeof(double));
+    int f0_st_n = 0;
+    if (f0_st) {
+        for (int f = 0; f < n_frames; f++) {
+            if (f0s[f] > 60.0)
+                f0_st[f0_st_n++] = 12.0 * log2(f0s[f] / 27.5);
+        }
+    }
+
+    double f0_st_mean = 0.0;
+    if (f0_st_n > 0) {
+        for (int i = 0; i < f0_st_n; i++) f0_st_mean += f0_st[i];
+        f0_st_mean /= f0_st_n;
+    }
+    double f0_st_var = 0.0;
+    for (int i = 0; i < f0_st_n; i++) {
+        double d = f0_st[i] - f0_st_mean;
+        f0_st_var += d * d;
+    }
+    f0_st_var = f0_st_n > 1 ? f0_st_var / (f0_st_n - 1) : 0.0;
+    double f0_st_std = sqrt(f0_st_var);
+
+    /* True 5th/95th percentiles via sorted array */
+    double f0_st_p5 = 0.0, f0_st_p95 = 0.0;
+    if (f0_st_n > 1) {
+        qsort(f0_st, (size_t)f0_st_n, sizeof(double), cmp_double);
+        f0_st_p5  = f0_st[(int)(0.05 * (f0_st_n - 1))];
+        f0_st_p95 = f0_st[(int)(0.95 * (f0_st_n - 1))];
+    } else if (f0_st_n == 1) {
+        f0_st_p5 = f0_st_p95 = f0_st[0];
+    }
+    free(f0_st);
 
     fp_set(&fp, "F0semitoneFrom27.5Hz_sma3nz_amean", f0_st_mean);
     fp_set(&fp, "F0semitoneFrom27.5Hz_sma3nz_stddevNorm",
-           f0_st_mean > 0 ? f0_st_std / fabs(f0_st_mean) : 0.0);
+           fabs(f0_st_mean) > 0.01 ? f0_st_std / fabs(f0_st_mean) : 0.0);
     fp_set(&fp, "F0semitoneFrom27.5Hz_sma3nz_pctlrange0-2",
            f0_st_p95 - f0_st_p5);
     fp_set(&fp, "F0final_sma3nz_amean", f0_st_mean);
     fp_set(&fp, "F0final_sma3nz_stddevNorm",
-           f0_st_mean > 0 ? f0_st_std / fabs(f0_st_mean) : 0.0);
+           fabs(f0_st_mean) > 0.01 ? f0_st_std / fabs(f0_st_mean) : 0.0);
 
     /* ── Loudness statistics (L2: energy layer) ───────────── */
     double rms_sum = 0.0, rms_min = 1e9, rms_max = 0.0;
@@ -978,29 +1115,30 @@ static VoiceFingerprint extract_fingerprint_wav(const int16_t *samples,
     fp_set(&fp, "HNRdBACF_sma3nz_amean",
            hnr_n > 0 ? hnr_sum / hnr_n : 0.0);
     fp_set(&fp, "logRelF0-H1-H2_sma3nz_amean",
-           f0_mean > 0 ? log(f0_std / f0_mean + 1.0) : 0.0);
+           f0_mean > 0 ? log(f0_std_hz / f0_mean + 1.0) : 0.0);
 
     /* ── Temporal features (L3) ───────────────────────────── */
-    /* Voiced segment lengths */
+    /* Voiced/unvoiced segment duration tracking */
     double total_dur = (double)n / sr;
     int seg_count = 0;
     double seg_len_sum = 0.0;
-    int in_voiced = 0, seg_start = 0;
     int unseg_count = 0;
     double unseg_len_sum = 0.0;
-    int unseg_start = 0;
+    int in_voiced = 0, seg_start = 0, unseg_start = 0;
     int peaks = 0;
 
     for (int f = 0; f < n_frames; f++) {
         int voiced = f0s[f] > 60.0;
         if (voiced && !in_voiced) {
-            seg_start = f;
-            in_voiced = 1;
-            if (f > 0 && !in_voiced) {
+            /* Voiced segment starts — close unvoiced segment */
+            if (f > 0) {
                 unseg_len_sum += (double)(f - unseg_start) * frame_sz / sr;
                 unseg_count++;
             }
+            seg_start = f;
+            in_voiced = 1;
         } else if (!voiced && in_voiced) {
+            /* Unvoiced starts — close voiced segment */
             seg_len_sum += (double)(f - seg_start) * frame_sz / sr;
             seg_count++;
             unseg_start = f;
@@ -1012,9 +1150,13 @@ static VoiceFingerprint extract_fingerprint_wav(const int16_t *samples,
             rmss[f] > rms_mean * 1.3)
             peaks++;
     }
-    if (in_voiced && seg_count == 0) {
-        seg_len_sum = total_dur;
-        seg_count = 1;
+    /* Close final segment */
+    if (in_voiced) {
+        seg_len_sum += (double)(n_frames - seg_start) * frame_sz / sr;
+        seg_count++;
+    } else if (seg_count > 0) {
+        unseg_len_sum += (double)(n_frames - unseg_start) * frame_sz / sr;
+        unseg_count++;
     }
 
     fp_set(&fp, "MeanVoicedSegmentLengthSec",
@@ -1035,11 +1177,12 @@ static VoiceFingerprint extract_fingerprint_wav(const int16_t *samples,
     float *fft_im = calloc((size_t)fft_n, sizeof(float));
     double sc_sum = 0.0, flux_sum = 0.0;
     double alpha_sum = 0.0, slope_lo_sum = 0.0, slope_hi_sum = 0.0;
+    double flatness_sum = 0.0;
     int spec_n = 0;
     float *prev_mag = calloc((size_t)(fft_n / 2 + 1), sizeof(float));
 
     if (fft_re && fft_im && prev_mag) {
-        for (int fi = 0; fi < n_frames && fi < 200; fi++) {
+        for (int fi = 0; fi < n_frames; fi++) {
             /* Load frame with Hanning window */
             memset(fft_re, 0, (size_t)fft_n * sizeof(float));
             memset(fft_im, 0, (size_t)fft_n * sizeof(float));
@@ -1090,26 +1233,47 @@ static VoiceFingerprint extract_fingerprint_wav(const int16_t *samples,
             if (energy_lo > 1e-10)
                 alpha_sum += energy_hi / energy_lo;
 
-            /* Spectral slopes */
+            /* Spectral slopes — regression in Hz domain for
+             * comparability across sample rates and FFT sizes */
             int bin_500  = 500  * fft_n / sr;
             int bin_1500 = 1500 * fft_n / sr;
             if (bin_500 > 0 && bin_500 < half) {
                 double s = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
                 for (int b = 0; b < bin_500; b++) {
-                    s++; sx += b; sy += mag[b];
-                    sxx += (double)b * b; sxy += b * mag[b];
+                    double freq = (double)b * sr / fft_n;
+                    s++; sx += freq; sy += mag[b];
+                    sxx += freq * freq; sxy += freq * mag[b];
                 }
-                if (s > 1) slope_lo_sum += (s * sxy - sx * sy) /
-                                            (s * sxx - sx * sx);
+                double denom = s * sxx - sx * sx;
+                if (fabs(denom) > 1e-20)
+                    slope_lo_sum += (s * sxy - sx * sy) / denom;
             }
             if (bin_1500 > bin_500 && bin_1500 <= half) {
                 double s = 0, sx = 0, sy = 0, sxx = 0, sxy = 0;
                 for (int b = bin_500; b < bin_1500; b++) {
-                    s++; sx += b; sy += mag[b];
-                    sxx += (double)b * b; sxy += b * mag[b];
+                    double freq = (double)b * sr / fft_n;
+                    s++; sx += freq; sy += mag[b];
+                    sxx += freq * freq; sxy += freq * mag[b];
                 }
-                if (s > 1) slope_hi_sum += (s * sxy - sx * sy) /
-                                            (s * sxx - sx * sx);
+                double denom = s * sxx - sx * sx;
+                if (fabs(denom) > 1e-20)
+                    slope_hi_sum += (s * sxy - sx * sy) / denom;
+            }
+
+            /* Spectral flatness (Wiener entropy) — tonality measure.
+             * SF = geometric_mean(|X|²) / arithmetic_mean(|X|²)
+             * 1.0 = white noise, 0.0 = pure tone. */
+            if (half > 1) {
+                double log_pow_sum = 0.0, pow_sum = 0.0;
+                for (int b = 1; b <= half; b++) {
+                    double p = (double)mag[b] * mag[b];
+                    log_pow_sum += log(p + 1e-30);
+                    pow_sum += p;
+                }
+                double geo = exp(log_pow_sum / half);
+                double arith = pow_sum / half;
+                if (arith > 1e-30)
+                    flatness_sum += geo / arith;
             }
 
             memcpy(prev_mag, mag, (size_t)(half + 1) * sizeof(float));
@@ -1129,6 +1293,8 @@ static VoiceFingerprint extract_fingerprint_wav(const int16_t *samples,
            spec_n > 0 ? slope_lo_sum / spec_n : 0.0);
     fp_set(&fp, "slopeV500-1500_sma3nz_amean",
            spec_n > 0 ? slope_hi_sum / spec_n : 0.0);
+    fp_set(&fp, "spectralFlatness_sma3_amean",
+           spec_n > 0 ? flatness_sum / spec_n : 0.0);
 
     /* ── Dynamics features (L6) ───────────────────────────── */
     int rising = 0, falling = 0;
@@ -1194,12 +1360,17 @@ static double fingerprint_cosine(const VoiceFingerprint *a,
     return dot / denom;
 }
 
-/* Layer-specific cosine: only considers features whose names
- * contain one of the given prefixes */
-static double layer_cosine(const VoiceFingerprint *a,
-                           const VoiceFingerprint *b,
-                           const char *const *prefixes, int n_pfx) {
-    double dot = 0.0, ma = 0.0, mb = 0.0;
+/* Layer-specific similarity using symmetric relative difference.
+ * For each matched feature: score_i = 1 - |a-b|/(|a|+|b|+ε).
+ * This is scale-independent and properly discriminates features
+ * that are all-positive (unlike cosine similarity, which has poor
+ * discrimination when vectors never cross zero).
+ * Layer score = arithmetic mean of per-feature scores.
+ * Returns 1.0 for identical features, ~0 for maximally different. */
+static double layer_similarity(const VoiceFingerprint *a,
+                               const VoiceFingerprint *b,
+                               const char *const *prefixes, int n_pfx) {
+    double score_sum = 0.0;
     int matched = 0;
 
     for (int i = 0; i < a->count; i++) {
@@ -1213,18 +1384,22 @@ static double layer_cosine(const VoiceFingerprint *a,
 
         for (int j = 0; j < b->count; j++) {
             if (strcmp(a->features[i].name, b->features[j].name) == 0) {
-                dot += a->features[i].value * b->features[j].value;
-                ma  += a->features[i].value * a->features[i].value;
-                mb  += b->features[j].value * b->features[j].value;
+                double va = a->features[i].value;
+                double vb = b->features[j].value;
+                double denom = fabs(va) + fabs(vb);
+                if (denom > 1e-15) {
+                    score_sum += 1.0 - fabs(va - vb) / denom;
+                } else {
+                    score_sum += 1.0; /* both zero → identical */
+                }
                 matched++;
                 break;
             }
         }
     }
 
-    if (matched == 0) return 1.0; /* no features in this layer → pass */
-    double denom = sqrt(ma) * sqrt(mb);
-    return (denom > 1e-15) ? dot / denom : 0.0;
+    if (matched == 0) return 1.0;
+    return score_sum / matched;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1275,31 +1450,31 @@ static FidelityReport compute_fidelity(const VoiceFingerprint *source,
 
     /* L1: Pitch fidelity */
     const char *pitch_pfx[] = { "F0semitone", "F0final" };
-    r.layer[0] = layer_cosine(source, output, pitch_pfx, 2);
+    r.layer[0] = layer_similarity(source, output, pitch_pfx, 2);
 
     /* L2: Energy fidelity */
     const char *energy_pfx[] = { "loudness", "Loudness" };
-    r.layer[1] = layer_cosine(source, output, energy_pfx, 2);
+    r.layer[1] = layer_similarity(source, output, energy_pfx, 2);
 
     /* L3: Temporal fidelity */
     const char *temp_pfx[] = { "VoicedSeg", "UnvoicedSeg", "Pauses",
                                "loudnessPeaks" };
-    r.layer[2] = layer_cosine(source, output, temp_pfx, 4);
+    r.layer[2] = layer_similarity(source, output, temp_pfx, 4);
 
     /* L4: Spectral fidelity */
     const char *spec_pfx[] = { "spectral", "Formant", "Mfcc",
                                "alphaRatio", "hammarberg", "slope" };
-    r.layer[3] = layer_cosine(source, output, spec_pfx, 6);
+    r.layer[3] = layer_similarity(source, output, spec_pfx, 6);
 
     /* L5: Stability fidelity */
     const char *stab_pfx[] = { "jitter", "shimmer", "HNR",
                                "logRelF0" };
-    r.layer[4] = layer_cosine(source, output, stab_pfx, 4);
+    r.layer[4] = layer_similarity(source, output, stab_pfx, 4);
 
     /* L6: Dynamics fidelity */
     const char *dyn_pfx[] = { "stddev", "pctlrange", "percentile",
                               "rising", "falling" };
-    r.layer[5] = layer_cosine(source, output, dyn_pfx, 5);
+    r.layer[5] = layer_similarity(source, output, dyn_pfx, 5);
 
     /* Composite: geometric mean (penalizes weak layers) */
     double product = 1.0;
@@ -1552,7 +1727,7 @@ static ProsodyParams refine_prosody(const ProsodyParams *current,
 
 static void usage(void) {
     fprintf(stderr,
-        "bonfyre-narrate v3 — verified tone-aware text-to-speech synthesis\n\n"
+        "bonfyre-narrate v3.2 — verified tone-aware text-to-speech synthesis\n\n"
         "Usage:\n"
         "  bonfyre-narrate <text-file> <output-dir> [options]\n"
         "  bonfyre-narrate verify <output.wav> <source-features.json>\n\n"
@@ -1580,12 +1755,13 @@ static void usage(void) {
 
 int main(int argc, char **argv) {
     if (argc >= 2 && strcmp(argv[1], "status") == 0) {
-        printf("{\"binary\":\"bonfyre-narrate\",\"version\":\"3.0.0\","
+        printf("{\"binary\":\"bonfyre-narrate\",\"version\":\"3.2.0\","
                "\"features\":[\"ssml-prosody\",\"psola-pitch-shift\","
                "\"energy-envelope\",\"tone-profile-input\","
-               "\"88-feature-fingerprint\",\"6-layer-fidelity\","
+               "\"28-feature-fingerprint\",\"6-layer-fidelity\","
                "\"closed-loop-verification\",\"iterative-refinement\","
-               "\"wav-quality-analysis\"],"
+               "\"wav-quality-analysis\",\"parabolic-f0\","
+               "\"spectral-flatness\"],"
                "\"status\":\"available\"}\n");
         return 0;
     }
@@ -2049,7 +2225,7 @@ int main(int argc, char **argv) {
     fprintf(mf,
         "{\n"
         "  \"sourceSystem\": \"BonfyreNarrate\",\n"
-        "  \"version\": \"3.0.0\",\n"
+        "  \"version\": \"3.2.0\",\n"
         "  \"artifactType\": \"narrated-artifact\",\n"
         "  \"title\": \"%s\",\n"
         "  \"createdAt\": \"%s\",\n"
