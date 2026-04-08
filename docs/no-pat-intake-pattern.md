@@ -51,3 +51,14 @@ For fully seamless one-click intake, the next step is one of:
 
 - `pages-town-box`
 - `pages-explain-repo`
+
+## Shared helper
+
+Canonical helper source:
+
+- `site/runtime/github-intake.js`
+
+Current app-local copies:
+
+- `pages-town-box/site/js/github-intake.js`
+- `pages-explain-repo/site/js/github-intake.js`
