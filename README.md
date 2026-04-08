@@ -383,6 +383,8 @@ Standalone repos you can clone and run independently. Each builds only the binar
 | **[transcribe](https://github.com/Nickgonzales76017/bonfyre-example-transcribe)** | Audio → transcript → summary → tags → ZIP | 5 min | "Replace $0.006/min Deepgram — $0, offline, private" |
 | **[compress](https://github.com/Nickgonzales76017/bonfyre-example-compress)** | Compress 10K JSON records, random access | 2 min | "13.5% of JSON with O(1) field access" |
 | **[saas-stack](https://github.com/Nickgonzales76017/bonfyre-example-saas-stack)** | Auth + billing + API gateway + CMS | 5 min | "Replace $2,500/mo SaaS stack — 240 KB, zero vendors" |
+| **[creator-starter](https://github.com/Nickgonzales76017/bonfyre-creator-starter)** | Fork → drop audio → publish via Actions | 2 min | "Ship a transcript site without writing code" |
+| **[recipes](https://github.com/Nickgonzales76017/bonfyre-recipes)** | Ready-made pipeline recipes for common workflows | — | "Copy-paste pipelines for transcription, search, summarization" |
 
 ```bash
 # Pick one and go:
