@@ -57,8 +57,15 @@ For fully seamless one-click intake, the next step is one of:
 Canonical helper source:
 
 - `site/runtime/github-intake.js`
+- `site/runtime/github-jobs.js`
 
 Current app-local copies:
 
 - `pages-town-box/site/js/github-intake.js`
 - `pages-explain-repo/site/js/github-intake.js`
+- `pages-*/site/js/github-jobs.js`
+
+The split is intentional:
+
+- `github-intake.js` handles prepared filenames, GitHub folder URLs, and public raw-file fetches
+- `github-jobs.js` handles item persistence, intake preview wiring, status rendering, and polling scaffolding
