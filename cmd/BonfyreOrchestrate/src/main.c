@@ -20,6 +20,8 @@ typedef struct {
     char latency_class[MAX_TEXT];
     char surface[MAX_TEXT];
     char artifact_path[256];
+    char source_query[256];
+    char source_tags[256];
     double source_messy;
     double source_jargon;
     double source_social;
@@ -63,6 +65,10 @@ typedef struct {
     int source_jargon;
     int source_social;
     int source_high_fit;
+    int pattern_hearing;
+    int pattern_council;
+    int pattern_bedside;
+    int pattern_nursing;
 } OrchestrateStateVector;
 
 typedef struct {
@@ -265,18 +271,23 @@ static OrchestrateStateVector request_state_vector(const OrchestrateRequest *req
     v.source_jargon = req->source_jargon >= 4.0;
     v.source_social = req->source_social >= 4.0;
     v.source_high_fit = req->source_fit >= 4.0;
+    v.pattern_hearing = icontains(req->source_query, "hearing") || icontains(req->source_tags, "zoning") || icontains(req->source_tags, "planning");
+    v.pattern_council = icontains(req->source_query, "council") || icontains(req->source_tags, "city council") || icontains(req->source_tags, "public works");
+    v.pattern_bedside = icontains(req->source_query, "bedside") || icontains(req->source_tags, "bedside report");
+    v.pattern_nursing = icontains(req->source_query, "nursing") || icontains(req->source_tags, "nursing");
     return v;
 }
 
 static void build_state_key(const OrchestrateRequest *req, char *dst, size_t dst_sz) {
     OrchestrateStateVector v = request_state_vector(req);
-    snprintf(dst, dst_sz, "m%d%d%d-s%d%d%d-l%d%d-o%d%d%d%d-a%d%d-c%d%d%d%d",
+    snprintf(dst, dst_sz, "m%d%d%d-s%d%d%d-l%d%d-o%d%d%d%d-a%d%d-c%d%d%d%d-p%d%d%d%d",
              v.modality_audio, v.modality_artifact, v.modality_text,
              v.surface_pages, v.surface_api, v.surface_jobs,
              v.latency_interactive, v.latency_batch,
              v.objective_publish, v.objective_retrieval, v.objective_value, v.objective_cms,
              v.artifact_local, v.artifact_structured,
-             v.source_messy, v.source_jargon, v.source_social, v.source_high_fit);
+             v.source_messy, v.source_jargon, v.source_social, v.source_high_fit,
+             v.pattern_hearing, v.pattern_council, v.pattern_bedside, v.pattern_nursing);
 }
 
 static int json_string(const char *json, const char *key, char *dst, size_t dst_sz) {
@@ -348,6 +359,8 @@ static int load_request(const char *path, OrchestrateRequest *req) {
     json_string(json, "latency_class", req->latency_class, sizeof(req->latency_class));
     json_string(json, "surface", req->surface, sizeof(req->surface));
     json_string(json, "artifact_path", req->artifact_path, sizeof(req->artifact_path));
+    json_string(json, "source_query", req->source_query, sizeof(req->source_query));
+    json_string(json, "source_tags", req->source_tags, sizeof(req->source_tags));
     json_double(json, "source_messy", &req->source_messy);
     json_double(json, "source_jargon", &req->source_jargon);
     json_double(json, "source_social", &req->source_social);
@@ -1135,6 +1148,7 @@ static void init_plan(OrchestratePlan *plan, const char *model) {
 
 static void heuristic_plan(const OrchestrateRequest *req, OrchestratePlan *plan) {
     int fast = icontains(req->latency_class, "fast") || icontains(req->latency_class, "interactive") || icontains(req->latency_class, "realtime");
+    OrchestrateStateVector sv = request_state_vector(req);
     DistilledPriors priors;
     int have_priors = load_distilled_priors(req, &priors);
 
@@ -1192,6 +1206,13 @@ static void heuristic_plan(const OrchestrateRequest *req, OrchestratePlan *plan)
         if (req->source_jargon >= 4.0 || req->source_fit >= 4.0) {
             add_selected(plan, "embed");
         }
+        if (sv.pattern_hearing) {
+            add_selected(plan, "index");
+            add_selected(plan, "graph");
+        }
+        if (sv.pattern_council) {
+            add_selected(plan, "render");
+        }
         add_booster(plan, "embed");
         add_booster(plan, "index");
         add_booster(plan, "vec");
@@ -1210,6 +1231,8 @@ static void heuristic_plan(const OrchestrateRequest *req, OrchestratePlan *plan)
 
     if (icontains(req->objective, "shift") || icontains(req->objective, "handoff") ||
         icontains(req->objective, "live") || icontains(req->objective, "call")) {
+        if (sv.pattern_bedside) add_selected(plan, "speechloop");
+        if (sv.pattern_nursing) add_selected(plan, "proof");
         if (req->source_social >= 4.0) {
             add_selected(plan, "segment");
             add_selected(plan, "tone");
@@ -1278,7 +1301,8 @@ static void write_state_vector(FILE *fp, OrchestrateStateVector v) {
             "\"latency_interactive\":%s,\"latency_batch\":%s,"
             "\"objective_publish\":%s,\"objective_retrieval\":%s,\"objective_value\":%s,\"objective_cms\":%s,"
             "\"artifact_local\":%s,\"artifact_structured\":%s,"
-            "\"source_messy\":%s,\"source_jargon\":%s,\"source_social\":%s,\"source_high_fit\":%s}",
+            "\"source_messy\":%s,\"source_jargon\":%s,\"source_social\":%s,\"source_high_fit\":%s,"
+            "\"pattern_hearing\":%s,\"pattern_council\":%s,\"pattern_bedside\":%s,\"pattern_nursing\":%s}",
             v.modality_audio ? "true" : "false",
             v.modality_artifact ? "true" : "false",
             v.modality_text ? "true" : "false",
@@ -1296,7 +1320,11 @@ static void write_state_vector(FILE *fp, OrchestrateStateVector v) {
             v.source_messy ? "true" : "false",
             v.source_jargon ? "true" : "false",
             v.source_social ? "true" : "false",
-            v.source_high_fit ? "true" : "false");
+            v.source_high_fit ? "true" : "false",
+            v.pattern_hearing ? "true" : "false",
+            v.pattern_council ? "true" : "false",
+            v.pattern_bedside ? "true" : "false",
+            v.pattern_nursing ? "true" : "false");
 }
 
 static void write_baseline_frontier(FILE *fp, const OrchestratePlan *plan) {
@@ -1469,6 +1497,10 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
     printf("    \"social_complexity\": %.1f,\n", req->source_social);
     printf("    \"bonfyre_fit\": %.1f\n", req->source_fit);
     printf("  },\n");
+    printf("  \"source_patterns\": {\n");
+    printf("    \"query\": \"%s\",\n", req->source_query);
+    printf("    \"tags\": \"%s\"\n", req->source_tags);
+    printf("  },\n");
     printf("  \"selected_binaries\": [");
     for (int i = 0; i < plan->selected_count; ++i) {
         if (i) printf(", ");
@@ -1560,7 +1592,11 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
     printf("    \"source_messy\": %s,\n", sv.source_messy ? "true" : "false");
     printf("    \"source_jargon\": %s,\n", sv.source_jargon ? "true" : "false");
     printf("    \"source_social\": %s,\n", sv.source_social ? "true" : "false");
-    printf("    \"source_high_fit\": %s\n", sv.source_high_fit ? "true" : "false");
+    printf("    \"source_high_fit\": %s,\n", sv.source_high_fit ? "true" : "false");
+    printf("    \"pattern_hearing\": %s,\n", sv.pattern_hearing ? "true" : "false");
+    printf("    \"pattern_council\": %s,\n", sv.pattern_council ? "true" : "false");
+    printf("    \"pattern_bedside\": %s,\n", sv.pattern_bedside ? "true" : "false");
+    printf("    \"pattern_nursing\": %s\n", sv.pattern_nursing ? "true" : "false");
     printf("  },\n");
     printf("  \"stability_gate\": {\n");
     printf("    \"min_policy_gain\": %.3f,\n", 0.015);

@@ -87,13 +87,18 @@ function deriveFeedback(source, plan) {
 }
 
 function runJson(binary, args, label) {
-  const result = spawnSync(binary, args, { encoding: 'utf8' });
-  if (result.status !== 0) {
-    const stderr = (result.stderr || '').trim();
-    const stdout = (result.stdout || '').trim();
-    throw new Error(`${label} failed (${result.status}): ${stderr || stdout || 'no output'}`);
+  let lastResult = null;
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = spawnSync(binary, args, { encoding: 'utf8' });
+    lastResult = result;
+    if (result.status === 0 && result.stdout) {
+      return JSON.parse(result.stdout);
+    }
   }
-  return JSON.parse(result.stdout);
+  const stderr = (lastResult?.stderr || '').trim();
+  const stdout = (lastResult?.stdout || '').trim();
+  const signal = lastResult?.signal ? ` signal=${lastResult.signal}` : '';
+  throw new Error(`${label} failed (${lastResult?.status ?? 'null'}${signal}): ${stderr || stdout || 'no output'}`);
 }
 
 function runVoid(binary, args, label) {
@@ -249,6 +254,8 @@ function main() {
           reference_title: source.title,
           reference_url: source.public_url || '',
           reference_status: source.review_status || 'unknown',
+          source_query: source.query || '',
+          source_tags: Array.isArray(source.tags) ? source.tags.join(', ') : '',
           source_messy: getSignal(source, 'messy_audio'),
           source_jargon: getSignal(source, 'jargon_density'),
           source_social: getSignal(source, 'social_complexity'),
