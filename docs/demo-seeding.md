@@ -45,6 +45,35 @@ node scripts/generate_demo_seed_sets.mjs path/to/manifest.json
 
 The generator writes `demo-items.json` files for each app from a compact source manifest.
 
+It also passes through provenance fields when they exist:
+
+- `sourceUrl`
+- `sourceLinks`
+- `sourceTitle`
+- `sourceLabel`
+- `sourceCopy`
+- `publisher`
+- `license`
+
+Those fields should point to the public origin page or channel, not to mirrored source media hosted inside the app repo.
+
+## Validator
+
+Before publishing a corpus, run:
+
+```bash
+node scripts/validate_reference_corpora.mjs --strict-provenance --min-count 100
+```
+
+What it catches:
+
+- mirrored audio/video files inside `site/demos`
+- corpora below the target size
+- missing public provenance links
+- local-path provenance masquerading as origin
+- stale staged-demo copy like `seeded` or `demo dataset`
+- excessively repeated record templates that make the corpus feel fake
+
 ## Manifest Shape
 
 ```json
