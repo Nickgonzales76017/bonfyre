@@ -26,6 +26,7 @@ PROJECTS=(
     "BonfyreCMS|bonfyre-cms|infrastructure"
     "BonfyreCLI|bonfyre|orchestration"
     "BonfyrePipeline|bonfyre-pipeline|orchestration"
+    "BonfyreOrchestrate|bonfyre-orchestrate|orchestration"
     "BonfyreQueue|bonfyre-queue|orchestration"
     "BonfyreStitch|bonfyre-stitch|orchestration"
     "BonfyreSync|bonfyre-sync|orchestration"
@@ -97,7 +98,7 @@ done
 
 # ---- List mode ----
 if [[ $LIST_ONLY -eq 1 ]]; then
-    echo -e "${BOLD}Bonfyre Binary Family — 38 binaries${NC}"
+    echo -e "${BOLD}Bonfyre Binary Family — 39+ binaries${NC}"
     echo ""
     printf "  %-28s %-24s %s\n" "PROJECT" "BINARY" "LAYER"
     printf "  %-28s %-24s %s\n" "-------" "------" "-----"

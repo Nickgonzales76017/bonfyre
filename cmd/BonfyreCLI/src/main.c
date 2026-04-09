@@ -25,6 +25,7 @@
  *   bonfyre render ...     → bonfyre-render ...
  *   bonfyre runtime ...    → bonfyre-runtime ...
  *   bonfyre project ...    → bonfyre-project ...
+ *   bonfyre orchestrate ... → bonfyre-orchestrate ...
  *
  * Searches for binaries in: same dir as this binary → PATH
  */
@@ -64,6 +65,7 @@ static const Route routes[] = {
     {"stitch",     "bonfyre-stitch",     "BonfyreStitch", "DAG materializer"},
     {"queue",      "bonfyre-queue",      "BonfyreQueue", "Job queue management"},
     {"runtime",    "bonfyre-runtime",    "BonfyreRuntime", "Replayable pipeline runtime"},
+    {"orchestrate","bonfyre-orchestrate","BonfyreOrchestrate", "Machine-only orchestration planner"},
     {"project",    "bonfyre-project",    "BonfyreProject", "Content graph projection engine"},
     {"sync",       "bonfyre-sync",       "BonfyreSync", "Artifact synchronization"},
     /* ── Value capture ── */

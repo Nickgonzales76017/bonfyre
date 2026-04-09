@@ -30,6 +30,7 @@
     "bonfyre-cms": "bin/bonfyre-cms",
     "bonfyre-api": "bin/bonfyre-api",
     "bonfyre-pipeline": "bin/bonfyre-pipeline",
+    "bonfyre-orchestrate": "bin/bonfyre-orchestrate",
     "bonfyre-ingest": "bin/bonfyre-ingest",
     "bonfyre-transcribe": "bin/bonfyre-transcribe",
     "bonfyre-brief": "bin/bonfyre-brief",

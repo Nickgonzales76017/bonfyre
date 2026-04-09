@@ -1,5 +1,5 @@
 /*
- * bf_operators.c — typed operator registry for all 38 binaries.
+ * bf_operators.c — typed operator registry for all Bonfyre binaries.
  *
  * This is the single source of truth for:
  *   - what each binary accepts and produces
@@ -512,6 +512,20 @@ const BfOperator BF_OPERATORS[] = {
         .output_count = 1,
         .flags = BF_OP_CACHEABLE | BF_OP_STREAMING,
         .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "surface",
+        .group = "serve"
+    },
+    {
+        .name = "orchestrate",
+        .binary = "bonfyre-orchestrate",
+        .description = "Machine-only orchestration planner (Gemma 4 optional, zero end-user prompting)",
+        .input_types = {"job-request", "artifact-manifest", "intake-manifest", "transcript", "brief", NULL},
+        .output_types = {"orchestration-plan", "execution-graph", NULL},
+        .input_count = 5,
+        .output_count = 2,
+        .flags = BF_OP_STATEFUL | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_CANON,
         .version = "1.0.0",
         .layer = "surface",
         .group = "serve"

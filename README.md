@@ -393,7 +393,7 @@ cd bonfyre-example-semantic-search
 ./setup.sh && ./run.sh
 ```
 
-## All 48 binaries
+## All 49 binaries
 
 ### Infrastructure
 
@@ -414,6 +414,7 @@ cd bonfyre-example-semantic-search
 | Binary | Size | Purpose |
 |---|---|---|
 | `bonfyre-pipeline` | 51 KB | Unified in-process pipeline (5–8 ms end-to-end) |
+| `bonfyre-orchestrate` | 45 KB | Machine-only orchestration planner with optional Gemma 4 assist |
 | `bonfyre-cli` | 33 KB | Unified command dispatcher |
 | `bonfyre-queue` | 33 KB | Persistent job queue (SQLite) |
 | `bonfyre-sync` | 33 KB | Cross-instance replication |
@@ -493,6 +494,18 @@ Audio File
 
 Or skip all that and run `bonfyre-pipeline run` for the unified 5–8 ms fast path.
 
+## Gemma 4 orchestration
+
+`bonfyre-orchestrate` is a strict machine-only planner layer. End users never see prompts. Bonfyre keeps its deterministic baseline without a model, and when you configure a Gemma 4 endpoint the orchestrator can select extra Bonfyre blocks that improve quality and leverage without replacing the existing fast path.
+
+```bash
+bonfyre-orchestrate template audio > orchestrate-request.json
+bonfyre-orchestrate plan orchestrate-request.json
+BONFYRE_ORCHESTRATE_ENDPOINT=http://127.0.0.1:8000/v1/chat/completions \
+BONFYRE_ORCHESTRATE_MODEL=google/gemma-4-E4B \
+bonfyre-orchestrate plan orchestrate-request.json --out orchestrate-plan.json
+```
+
 ## Docs
 
 | Document | Description |
@@ -503,6 +516,7 @@ Or skip all that and run `bonfyre-pipeline run` for the unified 5–8 ms fast pa
 | [API Reference](docs/api.md) | HTTP endpoints (bonfyre-api) |
 | [CMS Guide](docs/cms.md) | Using bonfyre-cms |
 | [Pipeline Guide](docs/pipeline.md) | Audio processing pipeline |
+| [Orchestrate Guide](docs/orchestrate.md) | Gemma 4 machine-only planning layer |
 
 ## Contributing
 

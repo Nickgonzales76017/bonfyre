@@ -1,5 +1,5 @@
 # Bonfyre — top-level Makefile
-# Builds all 47 binaries + liblambda-tensors + libbonfyre runtime
+# Builds all Bonfyre binaries + liblambda-tensors + libbonfyre runtime
 
 PREFIX ?= $(HOME)/.local
 BINDIR  = $(PREFIX)/bin
@@ -116,7 +116,7 @@ pgo-clean:
 
 # ── Help ─────────────────────────────────────────────────────
 help:
-	@echo "Bonfyre — 47 static C binaries + 2 libraries, ~2.1 MB total"
+	@echo "Bonfyre — Bonfyre binary fleet + 2 libraries, ~2.1 MB total"
 	@echo ""
 	@echo "  make           Build everything"
 	@echo "  make lib       Build liblambda-tensors + libbonfyre"

@@ -140,7 +140,7 @@ typedef struct {
     const char  *group;                  /* "ingest", "transform", etc.     */
 } BfOperator;
 
-/* Built-in operator registry — all 38 binaries. */
+/* Built-in operator registry — all Bonfyre binaries. */
 extern const BfOperator BF_OPERATORS[];
 extern const int        BF_OPERATOR_COUNT;
 
