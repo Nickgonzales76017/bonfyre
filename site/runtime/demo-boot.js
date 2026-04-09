@@ -136,6 +136,54 @@
     return item[bucket][label] || item[bucket][normalizeToken(label)] || null;
   }
 
+  function itemHasToken(item, token) {
+    if (!item || !token) return false;
+    if (token === 'flagged' || token === 'urgent') return !!item.flagged;
+    var tags = Array.isArray(item.tags) ? item.tags : [];
+    for (var i = 0; i < tags.length; i++) {
+      if (normalizeToken(tags[i]) === token) return true;
+    }
+    var category = normalizeToken(item.category || item.area || item.kind || '');
+    return category === token;
+  }
+
+  function refreshCounts(options) {
+    var items = cloneItems(options.getItems());
+    var filterNodes = document.querySelectorAll('.filter-item');
+    for (var i = 0; i < filterNodes.length; i++) {
+      var filterNode = filterNodes[i];
+      var key = normalizeToken(filterNode.dataset.filter || filterNode.textContent);
+      var countNode = filterNode.querySelector('.filter-count');
+      if (!countNode) continue;
+      if (key === 'all') {
+        countNode.textContent = String(items.length);
+        continue;
+      }
+      var total = 0;
+      for (var j = 0; j < items.length; j++) {
+        if (itemHasToken(items[j], key)) total += 1;
+      }
+      countNode.textContent = String(total);
+    }
+
+    var areaNodes = document.querySelectorAll('.area-item');
+    for (var k = 0; k < areaNodes.length; k++) {
+      var areaNode = areaNodes[k];
+      var areaKey = normalizeToken(areaNode.dataset.area || areaNode.textContent);
+      var areaCountNode = areaNode.querySelector('.area-count');
+      if (!areaCountNode) continue;
+      if (areaKey === 'all') {
+        areaCountNode.textContent = String(items.length);
+        continue;
+      }
+      var areaTotal = 0;
+      for (var m = 0; m < items.length; m++) {
+        if (itemHasToken(items[m], areaKey)) areaTotal += 1;
+      }
+      areaCountNode.textContent = String(areaTotal);
+    }
+  }
+
   function bindInteractions(options) {
     if (document.body && document.body.dataset.bonfyreDemoBootBound === '1') return;
     if (document.body) document.body.dataset.bonfyreDemoBootBound = '1';
@@ -190,6 +238,13 @@
       if (tagChip) {
         event.preventDefault();
         activateMatchingFilter(tagChip.textContent);
+        setTimeout(function() { refreshCounts(options); }, 0);
+        return;
+      }
+
+      var filterNode = event.target.closest('.filter-item,.area-item');
+      if (filterNode) {
+        setTimeout(function() { refreshCounts(options); }, 0);
       }
     });
   }
@@ -206,6 +261,7 @@
     options.setItems(current);
     localStorage.setItem(options.storeKey, JSON.stringify(current));
     options.renderBoard();
+    refreshCounts(options);
   }
 
   function init(options) {
@@ -235,6 +291,7 @@
 
     updateButton();
     applyDemoState(options, hidden);
+    setTimeout(function() { refreshCounts(options); }, 0);
   }
 
   global.BonfyreDemoBoot = {
