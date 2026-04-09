@@ -1,6 +1,41 @@
 {
   "apps": [
     {
+      "repo": "pages-async-standup",
+      "slug": "async-standup",
+      "title": "Async Standup",
+      "out_path": "/ABS/PATH/TO/pages-async-standup/site/demos/async-standup/demo-items.json",
+      "default_outputs": ["standup summary", "team digest", "follow-up queue"],
+      "default_tags": ["standup", "team"],
+      "why_it_matters": "Async standups feel real only when the source sounds like an actual remote team update instead of polished demo copy.",
+      "search_intro": "Search across real standup-style sources to compare blockers, delivery signals, and follow-up patterns.",
+      "source_copy": "Open the original public source, then compare it to the team digest Bonfyre emits.",
+      "sources": [
+        {
+          "id": "daily-scrum-standup-remote-team-queue-1",
+          "title": "Daily scrum standup remote team",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Daily scrum standup remote team",
+          "brief": "Queued public source candidate for real standup cadence and blockers.",
+          "tags": ["standup", "scrum", "remote team"]
+        },
+        {
+          "id": "agile-standup-simulation-queue-1",
+          "title": "Agile standup simulation",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Agile standup simulation",
+          "brief": "Queued public source candidate for structured async-standup generation.",
+          "tags": ["standup", "agile", "simulation"]
+        }
+      ]
+    },
+    {
       "repo": "pages-shift-handoff",
       "slug": "shift-handoff",
       "title": "Shift Handoff",
@@ -33,6 +68,41 @@
           "query": "Hospital bedside report training",
           "brief": "Queued public source candidate for bedside-report style handoff stress testing.",
           "tags": ["handoff", "bedside report", "training"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-postmortem-atlas",
+      "slug": "postmortem-atlas",
+      "title": "Postmortem Atlas",
+      "out_path": "/ABS/PATH/TO/pages-postmortem-atlas/site/demos/postmortem-atlas/demo-items.json",
+      "default_outputs": ["incident summary", "failure chronology", "follow-up tracker"],
+      "default_tags": ["postmortem", "incident"],
+      "why_it_matters": "Postmortem Atlas should prove itself on real failure narratives with procedural structure and recurrence.",
+      "search_intro": "Search across real incident and postmortem sources to compare failure modes and remediation patterns.",
+      "source_copy": "Open the original public source, then compare it to the incident structures Bonfyre emits.",
+      "sources": [
+        {
+          "id": "it-incident-postmortem-review-queue-1",
+          "title": "IT incident postmortem review",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "IT incident postmortem review",
+          "brief": "Queued public source candidate for incident chronology and remediation tracking.",
+          "tags": ["postmortem", "incident", "it"]
+        },
+        {
+          "id": "engineering-war-room-recording-queue-1",
+          "title": "Engineering war room recording",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Engineering war room recording",
+          "brief": "Queued public source candidate for live failure coordination and decision capture.",
+          "tags": ["postmortem", "war room", "engineering"]
         }
       ]
     },
@@ -98,6 +168,41 @@
       ]
     },
     {
+      "repo": "pages-oss-cockpit",
+      "slug": "oss-cockpit",
+      "title": "OSS Cockpit",
+      "out_path": "/ABS/PATH/TO/pages-oss-cockpit/site/demos/oss-cockpit/demo-items.json",
+      "default_outputs": ["triage summary", "maintainer digest", "semantic issue memory"],
+      "default_tags": ["oss", "maintainer"],
+      "why_it_matters": "OSS Cockpit is more convincing when the source is a real maintainer session, not a synthetic issue pile.",
+      "search_intro": "Search across real maintainer sources to compare repeated issue families and triage pressure.",
+      "source_copy": "Open the original public source, then compare it to the digest and memory Bonfyre emits.",
+      "sources": [
+        {
+          "id": "oss-maintainer-office-hours-queue-1",
+          "title": "OSS maintainer office hours",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Maintainer office hours",
+          "brief": "Queued public source candidate for live maintainer triage and support load.",
+          "tags": ["oss", "maintainer", "office hours"]
+        },
+        {
+          "id": "github-issue-triage-live-stream-queue-1",
+          "title": "GitHub issue triage live stream",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "GitHub issue triage live stream",
+          "brief": "Queued public source candidate for issue clustering and semantic triage memory.",
+          "tags": ["oss", "triage", "github"]
+        }
+      ]
+    },
+    {
       "repo": "pages-family-history",
       "slug": "family-history",
       "title": "Family History Museum",
@@ -133,6 +238,41 @@
       ]
     },
     {
+      "repo": "pages-museum-exhibit",
+      "slug": "museum-exhibit",
+      "title": "Museum Exhibit Builder",
+      "out_path": "/ABS/PATH/TO/pages-museum-exhibit/site/demos/museum-exhibit/demo-items.json",
+      "default_outputs": ["exhibit summary", "curation thread", "audio guide notes"],
+      "default_tags": ["museum", "curation"],
+      "why_it_matters": "Museum Exhibit Builder should feel grounded in real curatorial language and exhibit narration.",
+      "search_intro": "Search across museum and curator sources to compare curation, interpretation, and guide patterns.",
+      "source_copy": "Open the original public source, then compare it to the exhibit structures Bonfyre emits.",
+      "sources": [
+        {
+          "id": "museum-curator-talk-queue-1",
+          "title": "Museum curator talk",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Museum curator talk",
+          "brief": "Queued public source candidate for curatorial framing and exhibit narratives.",
+          "tags": ["museum", "curator", "talk"]
+        },
+        {
+          "id": "museum-exhibit-audio-guide-queue-1",
+          "title": "Museum exhibit audio guide",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Museum exhibit audio guide",
+          "brief": "Queued public source candidate for audio-guide style structuring.",
+          "tags": ["museum", "audio guide", "exhibit"]
+        }
+      ]
+    },
+    {
       "repo": "pages-legal-prep",
       "slug": "legal-prep",
       "title": "Legal Prep",
@@ -153,6 +293,41 @@
           "query": "Courtroom deposition full",
           "brief": "Queued public source candidate for procedural language, chronology extraction, and evidence threading.",
           "tags": ["legal", "deposition", "evidence"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-customer-voice",
+      "slug": "customer-voice",
+      "title": "Customer Voice Board",
+      "out_path": "/ABS/PATH/TO/pages-customer-voice/site/demos/customer-voice/demo-items.json",
+      "default_outputs": ["customer brief", "theme cluster", "voice memory"],
+      "default_tags": ["customer", "voice"],
+      "why_it_matters": "Customer Voice should prove itself on messy customer language and recurring product themes.",
+      "search_intro": "Search across real customer and sales-style sources to spot recurring friction and product pull.",
+      "source_copy": "Open the original public source, then compare it to the cluster and voice memory Bonfyre emits.",
+      "sources": [
+        {
+          "id": "saas-sales-call-recording-queue-1",
+          "title": "SaaS sales call recording",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "SaaS sales call recording",
+          "brief": "Queued public source candidate for customer objection and pain-point clustering.",
+          "tags": ["customer", "sales", "saas"]
+        },
+        {
+          "id": "customer-interview-ux-research-queue-1",
+          "title": "Customer interview UX research",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Customer interview UX research",
+          "brief": "Queued public source candidate for theme clustering across customer interviews.",
+          "tags": ["customer", "ux research", "interview"]
         }
       ]
     },
@@ -188,6 +363,41 @@
           "query": "Raw podcast recording session",
           "brief": "Queued public source candidate for messy conversational podcast input.",
           "tags": ["podcast", "raw", "conversation"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-release-radio",
+      "slug": "release-radio",
+      "title": "Release-Note Radio",
+      "out_path": "/ABS/PATH/TO/pages-release-radio/site/demos/release-radio/demo-items.json",
+      "default_outputs": ["narrated bulletin", "release page", "feed item"],
+      "default_tags": ["release", "broadcast"],
+      "why_it_matters": "Release-Note Radio becomes convincing when the source is a real launch, changelog, or feature reveal.",
+      "search_intro": "Search across real launch and changelog sources to compare product rollout narratives.",
+      "source_copy": "Open the original public source, then compare it to the broadcast surfaces Bonfyre emits.",
+      "sources": [
+        {
+          "id": "software-product-launch-announcement-queue-1",
+          "title": "Software product launch announcement",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Software product launch announcement",
+          "brief": "Queued public source candidate for launch-summary narration and release fanout.",
+          "tags": ["release", "launch", "product"]
+        },
+        {
+          "id": "developer-changelog-video-queue-1",
+          "title": "Developer changelog video",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Developer changelog video",
+          "brief": "Queued public source candidate for changelog-to-broadcast transformation.",
+          "tags": ["release", "changelog", "developer"]
         }
       ]
     }

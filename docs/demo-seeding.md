@@ -106,6 +106,20 @@ Only sources with:
 
 are promoted.
 
+To see where the queue is still thin by app, run:
+
+```bash
+node scripts/report_public_source_queue.mjs scripts/public_source_queue.sample.json 10
+```
+
+That reports:
+
+- approved count
+- queued count
+- rejected count
+- gap to the target distinct-source floor
+- missing provenance fields on approved entries
+
 ## Validator
 
 Before publishing a corpus, run:
