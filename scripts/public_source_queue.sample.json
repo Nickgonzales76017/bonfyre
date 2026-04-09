@@ -1,0 +1,195 @@
+{
+  "apps": [
+    {
+      "repo": "pages-shift-handoff",
+      "slug": "shift-handoff",
+      "title": "Shift Handoff",
+      "out_path": "/ABS/PATH/TO/pages-shift-handoff/site/demos/shift-handoff/demo-items.json",
+      "default_outputs": ["shift summary", "handoff board", "critical tasks"],
+      "default_tags": ["handoff", "operations"],
+      "why_it_matters": "Handoff quality is only believable when the input sounds like a real rushed workplace exchange.",
+      "search_intro": "Search across real handoff recordings to see repeated risks and recurring task patterns.",
+      "source_copy": "Open the original public source, then compare it to the handoff board Bonfyre generates.",
+      "sources": [
+        {
+          "id": "practice-nursing-hand-off-report-1",
+          "title": "Practice Nursing Hand-Off Report #1",
+          "public_url": "https://www.youtube.com/watch?v=fIABkSYOiv4",
+          "publisher": "Public training channel",
+          "license": "Public platform origin",
+          "review_status": "approved",
+          "query": "Nursing SBAR handoff simulation",
+          "brief": "Nursing handoff recording processed into a concise board of patient status, follow-up tasks, and escalation points.",
+          "tags": ["handoff", "nursing", "training"],
+          "searchSummary": "nursing handoff, patient status, escalation"
+        },
+        {
+          "id": "hospital-bedside-report-training-queue-1",
+          "title": "Hospital bedside report training",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Hospital bedside report training",
+          "brief": "Queued public source candidate for bedside-report style handoff stress testing.",
+          "tags": ["handoff", "bedside report", "training"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-town-box",
+      "slug": "town-box",
+      "title": "Town in a Box",
+      "out_path": "/ABS/PATH/TO/pages-town-box/site/demos/town-box/demo-items.json",
+      "default_outputs": ["civic summary card", "searchable record", "vector memory", "public issue trail"],
+      "default_tags": ["meetings", "civic"],
+      "why_it_matters": "Town Box becomes convincing when every record can be traced to a real public meeting or civic video.",
+      "search_intro": "Search across real public meeting records to connect hearings, updates, and recurring issues.",
+      "source_copy": "Watch the original public source, then compare how Bonfyre turns it into a civic summary, search surface, and durable public trail.",
+      "sources": [
+        {
+          "id": "salt-lake-city-council-work-session",
+          "title": "Salt Lake City Council Work Session",
+          "public_url": "https://www.youtube.com/watch?v=_mroalG8RTc",
+          "publisher": "Salt Lake City Council",
+          "license": "Public platform origin",
+          "review_status": "approved",
+          "query": "City council meeting full",
+          "brief": "City council work session processed into a civic summary, searchable issue trail, and reusable public memory.",
+          "tags": ["meetings", "city council", "public works"],
+          "searchSummary": "city council, work session, public works",
+          "searchOutputs": ["searchable record", "vector memory"]
+        },
+        {
+          "id": "planning-commission-zoning-hearing-queue-1",
+          "title": "Planning commission zoning hearing",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Planning commission zoning hearing",
+          "brief": "Queued public source candidate for zoning-hearing style civic reasoning and timeline continuity.",
+          "tags": ["meetings", "zoning", "planning"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-explain-repo",
+      "slug": "explain-repo",
+      "title": "Explain Repo",
+      "out_path": "/ABS/PATH/TO/pages-explain-repo/site/demos/explain-repo/demo-items.json",
+      "default_outputs": ["repo walkthrough", "architecture summary", "relationship map"],
+      "default_tags": ["repo", "architecture"],
+      "why_it_matters": "Explain Repo is more convincing when the source material is a real talk or walkthrough, not only fabricated examples.",
+      "search_intro": "Search across real architecture talks and walkthroughs to compare recurring repo and systems patterns.",
+      "source_copy": "Watch the original public source, then compare it to the walkthrough Bonfyre emits.",
+      "sources": [
+        {
+          "id": "rustconf-2024-deep-dive-queue-1",
+          "title": "RustConf 2024 deep dive",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "RustConf 2024 deep dive",
+          "brief": "Queued public source candidate for repo and systems explanation.",
+          "tags": ["repo", "rust", "architecture"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-family-history",
+      "slug": "family-history",
+      "title": "Family History Museum",
+      "out_path": "/ABS/PATH/TO/pages-family-history/site/demos/family-history/demo-items.json",
+      "default_outputs": ["life summary", "memory trail", "oral history index"],
+      "default_tags": ["oral history", "archive"],
+      "why_it_matters": "Family history feels trustworthy when it starts from recognizable oral-history sources.",
+      "search_intro": "Search across oral histories to connect people, places, and events over time.",
+      "source_copy": "Open the original public source, then compare it to the family-history structures Bonfyre emits.",
+      "sources": [
+        {
+          "id": "storycorps-interview-queue-1",
+          "title": "StoryCorps interview",
+          "public_url": "",
+          "publisher": "StoryCorps",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "StoryCorps interviews",
+          "brief": "Queued public source candidate for oral-history style memory structuring.",
+          "tags": ["oral history", "storycorps", "memory"]
+        },
+        {
+          "id": "veterans-history-project-queue-1",
+          "title": "Veterans History Project full interview",
+          "public_url": "",
+          "publisher": "Veterans History Project",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Veterans History Project full interview",
+          "brief": "Queued public source candidate for long-form life-history structuring.",
+          "tags": ["oral history", "veterans", "archive"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-legal-prep",
+      "slug": "legal-prep",
+      "title": "Legal Prep",
+      "out_path": "/ABS/PATH/TO/pages-legal-prep/site/demos/legal-prep/demo-items.json",
+      "default_outputs": ["chronology", "fact sheet", "evidence trail"],
+      "default_tags": ["legal", "evidence"],
+      "why_it_matters": "Legal Prep should prove itself on real procedural language and messy testimony, not on overly clean examples.",
+      "search_intro": "Search across courtroom and deposition-style sources to compare recurring fact patterns and evidence threads.",
+      "source_copy": "Open the original public source, then compare it to the structured chronology and evidence trail.",
+      "sources": [
+        {
+          "id": "courtroom-deposition-queue-1",
+          "title": "Full courtroom deposition",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Courtroom deposition full",
+          "brief": "Queued public source candidate for procedural language, chronology extraction, and evidence threading.",
+          "tags": ["legal", "deposition", "evidence"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-podcast-plant",
+      "slug": "podcast-plant",
+      "title": "Podcast Plant",
+      "out_path": "/ABS/PATH/TO/pages-podcast-plant/site/demos/podcast-plant/demo-items.json",
+      "default_outputs": ["show notes", "clip list", "article draft", "RSS-ready bundle"],
+      "default_tags": ["podcast", "repurposing"],
+      "why_it_matters": "Podcast Plant only earns trust when every episode card traces back to the public episode page or video.",
+      "search_intro": "Search across real public episodes to compare topics, clips, and publish surfaces.",
+      "source_copy": "Open the original public source, then compare it to the notes, clips, and bundle Bonfyre emits.",
+      "sources": [
+        {
+          "id": "full-length-podcast-video-queue-1",
+          "title": "Full length podcast video",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Full length podcast video",
+          "brief": "Queued public source candidate for full podcast repurposing.",
+          "tags": ["podcast", "public source", "repurposing"]
+        },
+        {
+          "id": "raw-podcast-recording-session-queue-1",
+          "title": "Raw podcast recording session",
+          "public_url": "",
+          "publisher": "",
+          "license": "Pending review",
+          "review_status": "queued",
+          "query": "Raw podcast recording session",
+          "brief": "Queued public source candidate for messy conversational podcast input.",
+          "tags": ["podcast", "raw", "conversation"]
+        }
+      ]
+    }
+  ]
+}

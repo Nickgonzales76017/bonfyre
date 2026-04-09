@@ -80,6 +80,32 @@ That manifest is intentionally source-first:
 
 This is the path that should replace synthetic placeholder corpora for the flagship apps.
 
+## Public Source Queue
+
+Before a source becomes `approved`, keep it in a review queue:
+
+```bash
+scripts/public_source_queue.sample.json
+```
+
+That queue separates three steps that were previously getting blurred together:
+
+1. find candidate public sources
+2. review provenance, license posture, and fit
+3. promote only approved sources into a reviewed-source manifest
+
+Convert a reviewed queue into a reviewed-source manifest with:
+
+```bash
+node scripts/build_reviewed_manifest_from_queue.mjs path/to/public-source-queue.json path/to/reviewed-source-manifest.json
+```
+
+Only sources with:
+
+- `review_status: "approved"`
+
+are promoted.
+
 ## Validator
 
 Before publishing a corpus, run:
