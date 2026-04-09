@@ -15,6 +15,10 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+
 /* ----------------------------------------------------------------
  * Filesystem
  * ---------------------------------------------------------------- */
@@ -72,7 +76,12 @@ char *bf_read_file(const char *path, size_t *out_len) {
 void bf_iso_timestamp(char *buf, size_t sz) {
     time_t now = time(NULL);
     struct tm t;
-    gmtime_r(&now, &t);
+    struct tm *utc = gmtime(&now);
+    if (utc) {
+        t = *utc;
+    } else {
+        memset(&t, 0, sizeof(t));
+    }
     strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
 }
 
