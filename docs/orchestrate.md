@@ -133,3 +133,18 @@ The orchestrator stores:
 - sample count
 
 This is the first thin evaluation loop needed for policy distillation and long-run adaptive control.
+
+## Domain back-feed
+
+Bonfyre now also derives compact domain signals from each feedback event:
+
+- `exec`
+- `artifact`
+- `tensor`
+- `cms`
+- `retrieval`
+- `value`
+
+These are stored in the same policy table and folded into a composite `policy_score`.
+
+That means the planner can start treating Lambda Tensors, CMS relational fit, retrieval lift, and execution quality as different observability surfaces instead of flattening everything into one scalar too early.

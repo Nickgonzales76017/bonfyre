@@ -22,6 +22,15 @@ typedef struct {
 } OrchestrateRequest;
 
 typedef struct {
+    double exec;
+    double artifact;
+    double tensor;
+    double cms;
+    double retrieval;
+    double value;
+} BfFeedbackDomains;
+
+typedef struct {
     int selected[MAX_PLAN_STEPS];
     int selected_count;
     int boosters[MAX_PLAN_STEPS];
@@ -64,6 +73,33 @@ static void usage(void) {
 static void copy_text(char *dst, size_t dst_sz, const char *src) {
     if (!dst || dst_sz == 0) return;
     snprintf(dst, dst_sz, "%s", src ? src : "");
+}
+
+static double clamp01(double value) {
+    if (value < 0.0) return 0.0;
+    if (value > 1.0) return 1.0;
+    return value;
+}
+
+static BfFeedbackDomains default_domains(double quality_gain, double latency_delta) {
+    BfFeedbackDomains d;
+    d.exec = clamp01(quality_gain - latency_delta + 0.5);
+    d.artifact = clamp01(quality_gain);
+    d.tensor = clamp01(quality_gain * 0.8);
+    d.cms = clamp01(quality_gain * 0.75);
+    d.retrieval = clamp01(quality_gain * 0.85);
+    d.value = clamp01(quality_gain * 0.65);
+    return d;
+}
+
+static double domain_policy_score(BfFeedbackDomains d) {
+    return
+        d.exec * 0.22 +
+        d.artifact * 0.18 +
+        d.tensor * 0.12 +
+        d.cms * 0.16 +
+        d.retrieval * 0.18 +
+        d.value * 0.14;
 }
 
 static int icontains(const char *haystack, const char *needle) {
@@ -261,9 +297,24 @@ static int ensure_policy_db(sqlite3 **db) {
         "avg_quality_gain REAL NOT NULL DEFAULT 0,"
         "avg_latency_delta REAL NOT NULL DEFAULT 0,"
         "avg_regret REAL NOT NULL DEFAULT 0,"
+        "exec_score REAL NOT NULL DEFAULT 0,"
+        "artifact_score REAL NOT NULL DEFAULT 0,"
+        "tensor_score REAL NOT NULL DEFAULT 0,"
+        "cms_score REAL NOT NULL DEFAULT 0,"
+        "retrieval_score REAL NOT NULL DEFAULT 0,"
+        "value_score REAL NOT NULL DEFAULT 0,"
+        "policy_score REAL NOT NULL DEFAULT 0,"
         "samples INTEGER NOT NULL DEFAULT 0,"
         "updated_at TEXT NOT NULL"
         ");";
+
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN exec_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN artifact_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN tensor_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN cms_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN retrieval_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN value_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
+    sqlite3_exec(*db, "ALTER TABLE orchestration_policy ADD COLUMN policy_score REAL NOT NULL DEFAULT 0;", NULL, NULL, NULL);
     if (sqlite3_exec(*db, sql, NULL, NULL, NULL) != SQLITE_OK) {
         sqlite3_close(*db);
         *db = NULL;
@@ -292,7 +343,7 @@ static int load_policy_memory(const OrchestrateRequest *req, OrchestratePlan *pl
 
     sqlite3_stmt *stmt = NULL;
     const char *sql =
-        "SELECT booster_csv, predicted_confidence, predicted_information_gain, avg_regret, samples "
+        "SELECT booster_csv, predicted_confidence, predicted_information_gain, avg_regret, samples, policy_score "
         "FROM orchestration_policy WHERE signature = ?1;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
         sqlite3_close(db);
@@ -305,7 +356,9 @@ static int load_policy_memory(const OrchestrateRequest *req, OrchestratePlan *pl
         double cached_conf = sqlite3_column_double(stmt, 1);
         double cached_regret = sqlite3_column_double(stmt, 3);
         int samples = sqlite3_column_int(stmt, 4);
-        if (csv && cached_conf >= plan->predicted_confidence && (samples < 3 || cached_regret <= 0.15)) {
+        double policy_score = sqlite3_column_double(stmt, 5);
+        if (csv && cached_conf >= plan->predicted_confidence &&
+            (samples < 3 || (cached_regret <= 0.15 && policy_score >= 0.45))) {
             import_booster_csv(plan, (const char *)csv);
             copy_text(plan->mode, sizeof(plan->mode), "policy-memory");
             found = 1;
@@ -363,6 +416,8 @@ static int command_feedback(const char *path, const char *quality_gain_text, con
     double quality_gain = atof(quality_gain_text);
     double latency_delta = atof(latency_delta_text);
     double regret = latency_delta - quality_gain;
+    BfFeedbackDomains domains = default_domains(quality_gain, latency_delta);
+    double policy_score = domain_policy_score(domains);
 
     sqlite3 *db = NULL;
     if (ensure_policy_db(&db) != 0) {
@@ -377,12 +432,19 @@ static int command_feedback(const char *path, const char *quality_gain_text, con
 
     sqlite3_stmt *stmt = NULL;
     const char *sql =
-        "INSERT INTO orchestration_policy(signature, booster_csv, predicted_confidence, predicted_information_gain, avg_quality_gain, avg_latency_delta, avg_regret, samples, updated_at) "
-        "VALUES(?1, '', 0, 0, ?2, ?3, ?4, 1, ?5) "
+        "INSERT INTO orchestration_policy(signature, booster_csv, predicted_confidence, predicted_information_gain, avg_quality_gain, avg_latency_delta, avg_regret, exec_score, artifact_score, tensor_score, cms_score, retrieval_score, value_score, policy_score, samples, updated_at) "
+        "VALUES(?1, '', 0, 0, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 1, ?12) "
         "ON CONFLICT(signature) DO UPDATE SET "
         "avg_quality_gain=((avg_quality_gain*samples)+excluded.avg_quality_gain)/(samples+1), "
         "avg_latency_delta=((avg_latency_delta*samples)+excluded.avg_latency_delta)/(samples+1), "
         "avg_regret=((avg_regret*samples)+excluded.avg_regret)/(samples+1), "
+        "exec_score=((exec_score*samples)+excluded.exec_score)/(samples+1), "
+        "artifact_score=((artifact_score*samples)+excluded.artifact_score)/(samples+1), "
+        "tensor_score=((tensor_score*samples)+excluded.tensor_score)/(samples+1), "
+        "cms_score=((cms_score*samples)+excluded.cms_score)/(samples+1), "
+        "retrieval_score=((retrieval_score*samples)+excluded.retrieval_score)/(samples+1), "
+        "value_score=((value_score*samples)+excluded.value_score)/(samples+1), "
+        "policy_score=((policy_score*samples)+excluded.policy_score)/(samples+1), "
         "samples=samples+1, "
         "updated_at=excluded.updated_at;";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
@@ -394,13 +456,24 @@ static int command_feedback(const char *path, const char *quality_gain_text, con
     sqlite3_bind_double(stmt, 2, quality_gain);
     sqlite3_bind_double(stmt, 3, latency_delta);
     sqlite3_bind_double(stmt, 4, regret);
-    sqlite3_bind_text(stmt, 5, updated_at, -1, SQLITE_STATIC);
+    sqlite3_bind_double(stmt, 5, domains.exec);
+    sqlite3_bind_double(stmt, 6, domains.artifact);
+    sqlite3_bind_double(stmt, 7, domains.tensor);
+    sqlite3_bind_double(stmt, 8, domains.cms);
+    sqlite3_bind_double(stmt, 9, domains.retrieval);
+    sqlite3_bind_double(stmt, 10, domains.value);
+    sqlite3_bind_double(stmt, 11, policy_score);
+    sqlite3_bind_text(stmt, 12, updated_at, -1, SQLITE_STATIC);
     sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     sqlite3_close(db);
 
-    printf("{\"status\":\"ok\",\"signature\":\"%s\",\"quality_gain\":%.3f,\"latency_delta\":%.3f,\"regret\":%.3f}\n",
-           signature, quality_gain, latency_delta, regret);
+    printf("{\"status\":\"ok\",\"signature\":\"%s\",\"quality_gain\":%.3f,\"latency_delta\":%.3f,\"regret\":%.3f,"
+           "\"domains\":{\"exec\":%.3f,\"artifact\":%.3f,\"tensor\":%.3f,\"cms\":%.3f,\"retrieval\":%.3f,\"value\":%.3f},"
+           "\"policy_score\":%.3f}\n",
+           signature, quality_gain, latency_delta, regret,
+           domains.exec, domains.artifact, domains.tensor, domains.cms, domains.retrieval, domains.value,
+           policy_score);
     return 0;
 }
 
