@@ -140,6 +140,15 @@ typedef struct {
     const char  *group;                  /* "ingest", "transform", etc.     */
 } BfOperator;
 
+typedef struct {
+    double cost;             /* normalized execution/storage cost         */
+    double latency;          /* normalized latency burden                 */
+    double confidence;       /* normalized confidence / replay stability  */
+    double reversibility;    /* normalized reversibility / rollback ease  */
+    double utility;          /* normalized expected contribution          */
+    double information_gain; /* normalized expected branch-value gain     */
+} BfOperatorProfile;
+
 /* Built-in operator registry — all Bonfyre binaries. */
 extern const BfOperator BF_OPERATORS[];
 extern const int        BF_OPERATOR_COUNT;
@@ -149,6 +158,9 @@ const BfOperator *bf_operator_find(const char *binary_name);
 
 /* Look up an operator by logical name. Returns NULL if not found. */
 const BfOperator *bf_operator_find_by_name(const char *name);
+
+/* Derived control profile for orchestration, planning, and policy search. */
+BfOperatorProfile bf_operator_profile(const BfOperator *op);
 
 /* ================================================================
  * Binary Layer Model

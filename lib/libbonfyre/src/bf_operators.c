@@ -772,3 +772,119 @@ const BfOperator *bf_operator_find_by_name(const char *name) {
     int i = ht_find(&g_ht_name, name, get_name);
     return i >= 0 ? &BF_OPERATORS[i] : NULL;
 }
+
+static double clamp01(double value) {
+    if (value < 0.0) return 0.0;
+    if (value > 1.0) return 1.0;
+    return value;
+}
+
+BfOperatorProfile bf_operator_profile(const BfOperator *op) {
+    BfOperatorProfile profile = {0};
+    if (!op) return profile;
+
+    profile.cost = 0.35;
+    profile.latency = 0.30;
+    profile.confidence = 0.70;
+    profile.reversibility = (op->flags & BF_OP_REVERSIBLE) ? 0.95 : 0.45;
+    profile.utility = 0.60;
+    profile.information_gain = 0.40;
+
+    if (strcmp(op->layer, "substrate") == 0) {
+        profile.cost -= 0.08;
+        profile.latency -= 0.08;
+        profile.confidence += 0.18;
+        profile.reversibility += 0.10;
+        profile.utility += 0.08;
+        profile.information_gain += 0.04;
+    } else if (strcmp(op->layer, "transform") == 0) {
+        profile.cost += 0.04;
+        profile.latency += 0.02;
+        profile.confidence += 0.04;
+        profile.utility += 0.12;
+        profile.information_gain += 0.10;
+    } else if (strcmp(op->layer, "surface") == 0) {
+        profile.cost += 0.08;
+        profile.latency += 0.08;
+        profile.confidence -= 0.06;
+        profile.reversibility -= 0.04;
+        profile.utility += 0.15;
+        profile.information_gain += 0.14;
+    } else if (strcmp(op->layer, "value") == 0) {
+        profile.cost += 0.06;
+        profile.latency += 0.04;
+        profile.confidence += 0.02;
+        profile.utility += 0.16;
+        profile.information_gain += 0.08;
+    }
+
+    if (strcmp(op->group, "ingest") == 0) {
+        profile.utility += 0.08;
+        profile.information_gain += 0.12;
+    } else if (strcmp(op->group, "transform") == 0) {
+        profile.utility += 0.10;
+        profile.information_gain += 0.10;
+    } else if (strcmp(op->group, "index") == 0) {
+        profile.cost += 0.05;
+        profile.latency += 0.04;
+        profile.utility += 0.14;
+        profile.information_gain += 0.16;
+    } else if (strcmp(op->group, "package") == 0) {
+        profile.cost += 0.03;
+        profile.utility += 0.09;
+    } else if (strcmp(op->group, "serve") == 0) {
+        profile.latency += 0.06;
+        profile.utility += 0.12;
+        profile.information_gain += 0.12;
+    } else if (strcmp(op->group, "validate") == 0) {
+        profile.confidence += 0.16;
+        profile.utility += 0.10;
+        profile.information_gain += 0.08;
+    } else if (strcmp(op->group, "bill") == 0) {
+        profile.utility += 0.10;
+    }
+
+    if (op->flags & BF_OP_PURE) {
+        profile.confidence += 0.10;
+        profile.reversibility += 0.06;
+    }
+    if (op->flags & BF_OP_STATEFUL) {
+        profile.cost += 0.08;
+        profile.latency += 0.06;
+        profile.confidence -= 0.08;
+        profile.reversibility -= 0.06;
+    }
+    if (op->flags & BF_OP_CACHEABLE) {
+        profile.cost -= 0.05;
+        profile.latency -= 0.04;
+        profile.utility += 0.06;
+    }
+    if (op->flags & BF_OP_IDEMPOTENT) {
+        profile.confidence += 0.08;
+        profile.reversibility += 0.04;
+    }
+    if (op->flags & BF_OP_STREAMING) {
+        profile.latency -= 0.05;
+        profile.information_gain += 0.08;
+    }
+
+    if (op->exactness == BF_EXACT_BYTE) {
+        profile.confidence += 0.10;
+        profile.reversibility += 0.06;
+    } else if (op->exactness == BF_EXACT_CANON) {
+        profile.confidence += 0.06;
+        profile.reversibility += 0.03;
+    } else if (op->exactness == BF_EXACT_LOSSY) {
+        profile.confidence -= 0.06;
+        profile.reversibility -= 0.08;
+        profile.information_gain += 0.06;
+    }
+
+    profile.cost = clamp01(profile.cost);
+    profile.latency = clamp01(profile.latency);
+    profile.confidence = clamp01(profile.confidence);
+    profile.reversibility = clamp01(profile.reversibility);
+    profile.utility = clamp01(profile.utility);
+    profile.information_gain = clamp01(profile.information_gain);
+    return profile;
+}

@@ -31,6 +31,12 @@ typedef struct {
     int surface_count;
     char mode[24];
     char model[MODEL_TEXT];
+    double predicted_cost;
+    double predicted_latency;
+    double predicted_confidence;
+    double predicted_reversibility;
+    double predicted_utility;
+    double predicted_information_gain;
 } OrchestratePlan;
 
 static const char *DEFAULT_MODEL = "google/gemma-4-E4B";
@@ -177,6 +183,45 @@ static void collect_outputs(OrchestratePlan *plan) {
     }
 }
 
+static void compute_plan_metrics(OrchestratePlan *plan) {
+    double cost = 0.0;
+    double latency = 0.0;
+    double confidence = 0.0;
+    double reversibility = 0.0;
+    double utility = 0.0;
+    double information_gain = 0.0;
+    int count = 0;
+
+    for (int i = 0; i < plan->selected_count; ++i) {
+        BfOperatorProfile profile = bf_operator_profile(&BF_OPERATORS[plan->selected[i]]);
+        cost += profile.cost;
+        latency += profile.latency;
+        confidence += profile.confidence;
+        reversibility += profile.reversibility;
+        utility += profile.utility;
+        information_gain += profile.information_gain;
+        count++;
+    }
+    for (int i = 0; i < plan->booster_count; ++i) {
+        BfOperatorProfile profile = bf_operator_profile(&BF_OPERATORS[plan->boosters[i]]);
+        cost += profile.cost * 0.45;
+        latency += profile.latency * 0.45;
+        confidence += profile.confidence * 0.45;
+        reversibility += profile.reversibility * 0.45;
+        utility += profile.utility * 0.60;
+        information_gain += profile.information_gain * 0.75;
+        count++;
+    }
+
+    if (count <= 0) count = 1;
+    plan->predicted_cost = cost / (double)count;
+    plan->predicted_latency = latency / (double)count;
+    plan->predicted_confidence = confidence / (double)count;
+    plan->predicted_reversibility = reversibility / (double)count;
+    plan->predicted_utility = utility / (double)count;
+    plan->predicted_information_gain = information_gain / (double)count;
+}
+
 static void init_plan(OrchestratePlan *plan, const char *model) {
     memset(plan, 0, sizeof(*plan));
     copy_text(plan->mode, sizeof(plan->mode), "heuristic");
@@ -265,6 +310,7 @@ static void heuristic_plan(const OrchestrateRequest *req, OrchestratePlan *plan)
     if (!plan->surface_count) add_surface(plan, "bonfyre-runtime");
 
     collect_outputs(plan);
+    compute_plan_metrics(plan);
 }
 
 static void escape_json(FILE *fp, const char *text) {
@@ -334,6 +380,7 @@ static void adopt_model_boosters(OrchestratePlan *plan, const char *response) {
     }
     if (added) copy_text(plan->mode, sizeof(plan->mode), "gemma4-assisted");
     collect_outputs(plan);
+    compute_plan_metrics(plan);
 }
 
 static void maybe_call_model(const OrchestrateRequest *req, OrchestratePlan *plan) {
@@ -418,7 +465,14 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
         if (i) printf(", ");
         printf("\"%s\"", plan->outputs[i]);
     }
-    printf("]\n}\n");
+    printf("],\n");
+    printf("  \"predicted_cost\": %.3f,\n", plan->predicted_cost);
+    printf("  \"predicted_latency\": %.3f,\n", plan->predicted_latency);
+    printf("  \"predicted_confidence\": %.3f,\n", plan->predicted_confidence);
+    printf("  \"predicted_reversibility\": %.3f,\n", plan->predicted_reversibility);
+    printf("  \"predicted_utility\": %.3f,\n", plan->predicted_utility);
+    printf("  \"predicted_information_gain\": %.3f\n", plan->predicted_information_gain);
+    printf("}\n");
 }
 
 static int command_status(void) {

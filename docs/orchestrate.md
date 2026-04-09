@@ -77,3 +77,20 @@ export BONFYRE_ORCHESTRATE_API_KEY=...
 - Optional boost path only
 - Registry-bounded: only known Bonfyre operators can be selected
 - Low-latency aware: interactive flows get fewer always-on stages and more optional boosters
+
+## Control profile
+
+Bonfyre derives a control profile for each operator from the typed registry. The orchestrator now scores plans over:
+
+- `cost`
+- `latency`
+- `confidence`
+- `reversibility`
+- `utility`
+- `information_gain`
+
+This is the bridge from theory to runtime:
+
+- information theory: call the model only when expected information gain is meaningful
+- control theory: optimize a bounded plan under latency and stability constraints
+- rate-distortion: trade compute against realization quality instead of generating freeform output
