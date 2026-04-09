@@ -119,7 +119,9 @@ function parseArgs(argv) {
     includeQueued: false,
     orchestrateBin: '',
     queueBin: '',
-    policyDb: ''
+    policyDb: '',
+    assertReady: false,
+    minVerdict: 'technically-strong-but-provenance-thin'
   };
 
   for (let index = 0; index < argv.length; index += 1) {
@@ -156,6 +158,15 @@ function parseArgs(argv) {
     if (value === '--policy-db') {
       args.policyDb = argv[index + 1] || '';
       index += 1;
+      continue;
+    }
+    if (value === '--assert-ready') {
+      args.assertReady = true;
+      continue;
+    }
+    if (value === '--min-verdict') {
+      args.minVerdict = argv[index + 1] || args.minVerdict;
+      index += 1;
     }
   }
 
@@ -169,6 +180,20 @@ function average(values) {
 
 function uniqueCount(values) {
   return new Set(values).size;
+}
+
+function verdictRank(verdict) {
+  switch (String(verdict || '')) {
+    case 'ready':
+      return 4;
+    case 'technically-strong-but-provenance-thin':
+      return 3;
+    case 'promising-but-not-client-ready':
+      return 2;
+    case 'not-ready':
+    default:
+      return 1;
+  }
 }
 
 function classifyReadiness(appSummary) {
@@ -245,6 +270,8 @@ function renderMarkdown(report) {
   lines.push(`- Approved public sources: ${report.totals.approved_sources}`);
   lines.push(`- Queued public sources: ${report.totals.queued_sources}`);
   lines.push(`- Provenance-backed ratio: ${report.totals.provenance_ratio}`);
+  lines.push(`- Minimum accepted verdict: ${report.totals.min_accepted_verdict}`);
+  lines.push(`- Publish gate: ${report.totals.publish_gate}`);
   lines.push('');
 
   for (const app of report.apps) {
@@ -291,14 +318,16 @@ function renderSummaryJson(report) {
     approved_sources: report.totals.approved_sources,
     queued_sources: report.totals.queued_sources,
     provenance_ratio: report.totals.provenance_ratio,
-    readiness_counts: report.totals.readiness_counts
+    readiness_counts: report.totals.readiness_counts,
+    min_accepted_verdict: report.totals.min_accepted_verdict,
+    publish_gate: report.totals.publish_gate
   };
 }
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.queuePath) {
-    console.error('usage: stress_reference_corpora_with_bonfyre.mjs <queue.json> [--out-dir DIR] [--repo NAME] [--include-queued] [--orchestrate-bin PATH] [--queue-bin PATH] [--policy-db PATH]');
+    console.error('usage: stress_reference_corpora_with_bonfyre.mjs <queue.json> [--out-dir DIR] [--repo NAME] [--include-queued] [--orchestrate-bin PATH] [--queue-bin PATH] [--policy-db PATH] [--assert-ready] [--min-verdict VERDICT]');
     process.exit(1);
   }
 
@@ -329,7 +358,9 @@ function main() {
       avg_policy_score: 0,
       avg_information_gain: 0,
       avg_latency: 0,
-      readiness_counts: {}
+      readiness_counts: {},
+      min_accepted_verdict: args.minVerdict,
+      publish_gate: 'pass'
     },
     apps: []
   };
@@ -515,6 +546,13 @@ function main() {
     counts[app.readiness_verdict] = (counts[app.readiness_verdict] || 0) + 1;
     return counts;
   }, {});
+  const failingApps = report.apps.filter((app) => verdictRank(app.readiness_verdict) < verdictRank(args.minVerdict));
+  report.totals.publish_gate = failingApps.length ? 'fail' : 'pass';
+  report.failing_apps = failingApps.map((app) => ({
+    repo: app.repo,
+    verdict: app.readiness_verdict,
+    next_action: app.next_action
+  }));
 
   const queueStats = runJson(queueBin, ['stats', queueFile], 'queue stats');
   report.queue_stats = queueStats;
@@ -546,6 +584,14 @@ function main() {
       };
       writeJson(jsonReportPath, report);
     }
+  }
+  if (args.assertReady && failingApps.length) {
+    console.error(JSON.stringify({
+      error: 'reference-publish-gate-failed',
+      min_verdict: args.minVerdict,
+      failing_apps: report.failing_apps
+    }, null, 2));
+    process.exit(2);
   }
   console.log(JSON.stringify(report, null, 2));
 }

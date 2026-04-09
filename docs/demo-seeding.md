@@ -1,6 +1,6 @@
 # Demo Seeding
 
-Bonfyre demo apps should graduate from one-off showcase records to larger seeded datasets that make:
+Bonfyre demo apps should graduate from one-off showcase records to larger reference corpora that make:
 
 - search feel real
 - memory surfaces feel useful
@@ -14,7 +14,7 @@ Bonfyre demo apps should graduate from one-off showcase records to larger seeded
 - For YouTube or famous-podcast inspired demos, use:
   - public-domain or Creative Commons source where available
   - permissioned material
-  - or abstracted/derived seed records instead of reposting raw transcripts/audio
+  - or abstracted/derived reference records instead of reposting raw transcripts/audio
 
 YouTube’s official help says reuse depends on permission or the applicable license, and CC BY videos are a special case rather than a blanket rule:
 
@@ -23,11 +23,11 @@ YouTube’s official help says reuse depends on permission or the applicable lic
 
 ## Target
 
-Aim for `100` compact seeded records per flagship demo family.
+Aim for `100` compact reference records per flagship demo family.
 
 That does **not** mean hosting 100 raw podcast episodes or 100 full town-hall videos in the repo.
 
-It means hosting 100 normalized demo records that preserve the behavior we want to show:
+It means hosting 100 normalized reference records that preserve the behavior we want to show:
 
 - topic clustering
 - cross-record search
@@ -158,9 +158,27 @@ That pass is intentionally Bonfyre-native:
   - expected outputs
   - selected binaries and boosters
 
-This is the thinest way to start building client-facing corpus metrics from Bonfyre's real control plane instead of from side spreadsheets.
+This is the thinnest way to start building client-facing corpus metrics from Bonfyre's real control plane instead of from side spreadsheets.
 
 It also surfaces a key implementation smell early: if many very different sources collapse to the same state key, output set, and policy path, the stress report will flag low differentiation so we can tighten the planner before pretending the corpus proves much.
+
+The stress report now also emits:
+
+- app-level readiness verdicts
+- one next action per app
+- an explicit publish gate outcome
+
+To turn that into a hard Bonfyre-side release gate, run:
+
+```bash
+node scripts/stress_reference_corpora_with_bonfyre.mjs scripts/public_source_queue.sample.json --include-queued --assert-ready --min-verdict technically-strong-but-provenance-thin
+```
+
+For truly client-facing publication, raise the floor further:
+
+```bash
+node scripts/stress_reference_corpora_with_bonfyre.mjs scripts/public_source_queue.sample.json --include-queued --assert-ready --min-verdict ready
+```
 
 ## Validator
 
