@@ -186,6 +186,9 @@ function renderMarkdown(report) {
   lines.push(`- Average information gain: ${report.totals.avg_information_gain}`);
   lines.push(`- Average latency: ${report.totals.avg_latency}`);
   lines.push(`- Apps with warnings: ${report.totals.apps_with_warnings}`);
+  lines.push(`- Approved public sources: ${report.totals.approved_sources}`);
+  lines.push(`- Queued public sources: ${report.totals.queued_sources}`);
+  lines.push(`- Provenance-backed ratio: ${report.totals.provenance_ratio}`);
   lines.push('');
 
   for (const app of report.apps) {
@@ -199,14 +202,17 @@ function renderMarkdown(report) {
     lines.push(`- Average latency: ${app.avg_latency}`);
     lines.push(`- Unique state keys: ${app.unique_state_keys}`);
     lines.push(`- Unique output sets: ${app.unique_output_sets}`);
+    lines.push(`- Approved sources: ${app.approved_sources}`);
+    lines.push(`- Queued sources: ${app.queued_sources}`);
+    lines.push(`- Provenance-backed ratio: ${app.provenance_ratio}`);
     lines.push(`- Modes: ${Object.entries(app.mode_counts).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);
     lines.push(`- Warnings: ${app.warnings.length ? app.warnings.join(', ') : 'none'}`);
     lines.push('');
-    lines.push('| Source | Policy | State | Notable outputs |');
-    lines.push('|---|---|---|---|');
+    lines.push('| Source | Review | Policy | State | Public origin |');
+    lines.push('|---|---|---|---|---|');
     for (const source of app.sources) {
-      const outputs = (source.expected_outputs || []).slice(0, 4).join(', ');
-      lines.push(`| ${source.title} | ${source.policy_source} | \`${source.state_key}\` | ${outputs} |`);
+      const origin = source.public_url ? `[link](${source.public_url})` : 'pending review';
+      lines.push(`| ${source.title} | ${source.review_status} | ${source.policy_source} | \`${source.state_key}\` | ${origin} |`);
     }
     lines.push('');
   }
@@ -223,7 +229,10 @@ function renderSummaryJson(report) {
     avg_policy_score: report.totals.avg_policy_score,
     avg_information_gain: report.totals.avg_information_gain,
     avg_latency: report.totals.avg_latency,
-    apps_with_warnings: report.totals.apps_with_warnings
+    apps_with_warnings: report.totals.apps_with_warnings,
+    approved_sources: report.totals.approved_sources,
+    queued_sources: report.totals.queued_sources,
+    provenance_ratio: report.totals.provenance_ratio
   };
 }
 
@@ -284,6 +293,9 @@ function main() {
         title: app.title || app.repo,
         contract,
         source_count: sources.length,
+        approved_sources: 0,
+        queued_sources: 0,
+        provenance_ratio: 0,
         mode_counts: {},
         avg_policy_score: 0,
         avg_information_gain: 0,
@@ -383,6 +395,11 @@ function main() {
       appSummary.avg_information_gain = Number(average(appSummary.sources.map((source) => source.predicted_information_gain)).toFixed(3));
       appSummary.avg_latency = Number(average(appSummary.sources.map((source) => source.predicted_latency)).toFixed(3));
       appSummary.avg_cost = Number(average(appSummary.sources.map((source) => source.predicted_cost)).toFixed(3));
+      appSummary.approved_sources = appSummary.sources.filter((source) => source.review_status === 'approved').length;
+      appSummary.queued_sources = appSummary.sources.filter((source) => source.review_status === 'queued').length;
+      appSummary.provenance_ratio = appSummary.source_count
+        ? Number((appSummary.approved_sources / appSummary.source_count).toFixed(3))
+        : 0;
       appSummary.unique_state_keys = uniqueCount(appSummary.sources.map((source) => source.state_key));
       appSummary.unique_policy_sources = uniqueCount(appSummary.sources.map((source) => source.policy_source));
       appSummary.unique_output_sets = uniqueCount(appSummary.sources.map((source) => source.expected_outputs.join('|')));
@@ -417,6 +434,11 @@ function main() {
   report.totals.avg_information_gain = Number(average(report.apps.map((app) => app.avg_information_gain)).toFixed(3));
   report.totals.avg_latency = Number(average(report.apps.map((app) => app.avg_latency)).toFixed(3));
   report.totals.apps_with_warnings = report.apps.filter((app) => app.warnings.length > 0).length;
+  report.totals.approved_sources = report.apps.reduce((sum, app) => sum + app.approved_sources, 0);
+  report.totals.queued_sources = report.apps.reduce((sum, app) => sum + app.queued_sources, 0);
+  report.totals.provenance_ratio = report.totals.sources
+    ? Number((report.totals.approved_sources / report.totals.sources).toFixed(3))
+    : 0;
 
   const queueStats = runJson(queueBin, ['stats', queueFile], 'queue stats');
   report.queue_stats = queueStats;
