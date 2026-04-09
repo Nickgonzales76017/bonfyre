@@ -25,6 +25,11 @@ function averageSignal(sources, key) {
   return total / sources.length;
 }
 
+function getPatterns(source) {
+  const tags = Array.isArray(source.tags) ? source.tags : [];
+  return tags.slice(1);
+}
+
 function summarizeApp(app, targetDistinctSources) {
   const sources = Array.isArray(app.sources) ? app.sources : [];
   const approved = sources.filter((source) => String(source.review_status || '').toLowerCase() === 'approved');
@@ -34,6 +39,8 @@ function summarizeApp(app, targetDistinctSources) {
   const gap = Math.max(0, targetDistinctSources - approved.length);
   const queuedScore = queued.reduce((sum, source) => sum + scoreSource(source), 0);
   const readinessScore = Math.max(0, approved.length * 20 + Math.min(queuedScore, 40) - gap * 4);
+  const approvedPatterns = [...new Set(approved.flatMap((source) => getPatterns(source)))];
+  const queuedPatterns = [...new Set(queued.flatMap((source) => getPatterns(source)))];
   const stressFloor = {
     messy: averageSignal(approved, 'messy_audio'),
     jargon: averageSignal(approved, 'jargon_density'),
@@ -50,6 +57,8 @@ function summarizeApp(app, targetDistinctSources) {
     missingPublisher,
     gap,
     readinessScore,
+    approvedPatterns,
+    queuedPatterns,
     stressFloor,
     maxApprovedStress
   };
@@ -60,6 +69,7 @@ function parseArgs(argv) {
     queuePath: '',
     targetDistinctSources: 10,
     minReadiness: 30,
+    minPatternCoverage: 3,
     minMessy: 2.5,
     minJargon: 3.5,
     minSocial: 3.5,
@@ -83,6 +93,11 @@ function parseArgs(argv) {
     }
     if (value === '--min-readiness') {
       args.minReadiness = Number(argv[index + 1] || args.minReadiness);
+      index += 1;
+      continue;
+    }
+    if (value === '--min-pattern-coverage') {
+      args.minPatternCoverage = Number(argv[index + 1] || args.minPatternCoverage);
       index += 1;
       continue;
     }
@@ -158,6 +173,9 @@ function main() {
     }
     if (summary.readinessScore < args.minReadiness) {
       failures.push(`${summary.repo}: readiness=${summary.readinessScore.toFixed(1)} below min=${args.minReadiness}`);
+    }
+    if (summary.approvedPatterns.length < args.minPatternCoverage) {
+      failures.push(`${summary.repo}: approved_patterns=${summary.approvedPatterns.length} below min=${args.minPatternCoverage}`);
     }
     if (summary.missingUrl > 0) {
       failures.push(`${summary.repo}: approved_missing_public_url=${summary.missingUrl}`);

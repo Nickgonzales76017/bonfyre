@@ -6,6 +6,11 @@ function readJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, 'utf8'));
 }
 
+function getPatterns(source) {
+  const tags = Array.isArray(source.tags) ? source.tags : [];
+  return tags.slice(1);
+}
+
 function summarizeApp(app, targetDistinctSources) {
   const sources = Array.isArray(app.sources) ? app.sources : [];
   const approved = sources.filter((source) => String(source.review_status || '').toLowerCase() === 'approved');
@@ -28,8 +33,16 @@ function summarizeApp(app, targetDistinctSources) {
 
   const approvedScore = approved.reduce((sum, source) => sum + scoreSource(source), 0);
   const queuedScore = queued.reduce((sum, source) => sum + scoreSource(source), 0);
+  const approvedPatterns = [...new Set(approved.flatMap((source) => getPatterns(source)))];
+  const queuedPatterns = [...new Set(queued.flatMap((source) => getPatterns(source)))];
+  const missingPatterns = queuedPatterns.filter((pattern) => !approvedPatterns.includes(pattern)).slice(0, 4);
   const bestQueued = queued
-    .map((source) => ({ title: source.title, query: source.query || '', score: scoreSource(source) }))
+    .map((source) => ({
+      title: source.title,
+      query: source.query || '',
+      score: scoreSource(source),
+      patterns: getPatterns(source)
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 2);
 
@@ -46,7 +59,10 @@ function summarizeApp(app, targetDistinctSources) {
     approvedScore,
     queuedScore,
     readinessScore,
-    bestQueued
+    bestQueued,
+    approvedPatterns,
+    queuedPatterns,
+    missingPatterns
   };
 }
 
@@ -65,12 +81,16 @@ function main() {
 
   for (const summary of ranked) {
     console.log(
-      `${summary.repo}: readiness=${summary.readinessScore.toFixed(1)} approved=${summary.approved} queued=${summary.queued} rejected=${summary.rejected} gap_to_${targetDistinctSources}=${summary.gap}` +
+      `${summary.repo}: readiness=${summary.readinessScore.toFixed(1)} approved=${summary.approved} queued=${summary.queued} rejected=${summary.rejected} gap_to_${targetDistinctSources}=${summary.gap} approved_patterns=${summary.approvedPatterns.length}` +
       (summary.missingUrl ? ` missing_public_url=${summary.missingUrl}` : '') +
       (summary.missingPublisher ? ` missing_publisher=${summary.missingPublisher}` : '')
     );
+    if (summary.missingPatterns.length) {
+      console.log(`  missing-patterns: ${summary.missingPatterns.join(', ')}`);
+    }
     for (const candidate of summary.bestQueued) {
-      console.log(`  next: ${candidate.title} [score ${candidate.score.toFixed(1)}]${candidate.query ? ` query=\"${candidate.query}\"` : ''}`);
+      const patternSuffix = candidate.patterns.length ? ` patterns=${candidate.patterns.join('/')}` : '';
+      console.log(`  next: ${candidate.title} [score ${candidate.score.toFixed(1)}]${candidate.query ? ` query=\"${candidate.query}\"` : ''}${patternSuffix}`);
     }
   }
 }
