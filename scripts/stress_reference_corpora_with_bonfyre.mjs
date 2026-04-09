@@ -430,6 +430,55 @@ function renderSummaryJson(report) {
   };
 }
 
+function renderRemediationMarkdown(report) {
+  const lines = [];
+  lines.push('# Bonfyre Reference Corpus Remediation Packet');
+  lines.push('');
+  lines.push(`Generated: ${report.generated_at}`);
+  lines.push('');
+  for (const item of report.remediation_plan) {
+    lines.push(`## ${item.title}`);
+    lines.push('');
+    lines.push(`- Repo: \`${item.repo}\``);
+    lines.push(`- Verdict: ${item.verdict}`);
+    lines.push(`- Urgency: ${item.urgency_score}`);
+    lines.push(`- Source gap: ${item.source_gap}`);
+    lines.push(`- Missing patterns: ${item.missing_patterns.join(', ') || 'none'}`);
+    lines.push(`- Next action: ${item.next_action}`);
+    lines.push('');
+    if (item.next_sources.length) {
+      lines.push('| Next source | Score | Patterns |');
+      lines.push('|---|---|---|');
+      for (const source of item.next_sources) {
+        lines.push(`| ${source.title} | ${source.score} | ${source.patterns.join(', ') || 'none'} |`);
+      }
+      lines.push('');
+    }
+  }
+  return lines.join('\n') + '\n';
+}
+
+function renderRemediationTsv(report) {
+  const rows = [
+    ['repo', 'title', 'verdict', 'urgency_score', 'source_gap', 'missing_patterns', 'next_action', 'next_sources']
+  ];
+  for (const item of report.remediation_plan) {
+    rows.push([
+      item.repo,
+      item.title,
+      item.verdict,
+      String(item.urgency_score),
+      String(item.source_gap),
+      item.missing_patterns.join('; '),
+      item.next_action,
+      item.next_sources.map((source) => source.title).join('; ')
+    ]);
+  }
+  return rows
+    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join('\t'))
+    .join('\n') + '\n';
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   if (!args.queuePath) {
@@ -675,13 +724,21 @@ function main() {
   report.queue_stats = queueStats;
   const jsonReportPath = path.join(outDir, 'reference-stress-report.json');
   const markdownReportPath = path.join(outDir, 'reference-stress-report.md');
+  const remediationJsonPath = path.join(outDir, 'reference-remediation-plan.json');
+  const remediationMarkdownPath = path.join(outDir, 'reference-remediation-plan.md');
+  const remediationTsvPath = path.join(outDir, 'reference-remediation-plan.tsv');
   writeJson(jsonReportPath, report);
   fs.writeFileSync(markdownReportPath, renderMarkdown(report), 'utf8');
+  writeJson(remediationJsonPath, report.remediation_plan);
+  fs.writeFileSync(remediationMarkdownPath, renderRemediationMarkdown(report), 'utf8');
+  fs.writeFileSync(remediationTsvPath, renderRemediationTsv(report), 'utf8');
 
   const artifactBriefPath = path.join(artifactDir, 'brief.md');
   const artifactSummaryPath = path.join(artifactDir, 'summary.json');
+  const artifactRemediationPath = path.join(artifactDir, 'remediation.md');
   fs.writeFileSync(artifactBriefPath, renderMarkdown(report), 'utf8');
   writeJson(artifactSummaryPath, renderSummaryJson(report));
+  fs.writeFileSync(artifactRemediationPath, renderRemediationMarkdown(report), 'utf8');
 
   const emitBin = path.join(root, 'cmd/BonfyreEmit/bonfyre-emit');
   if (fs.existsSync(emitBin)) {
@@ -691,7 +748,8 @@ function main() {
         artifact_dir: artifactDir,
         bundle_dir: path.join(artifactDir, 'emit'),
         markdown: artifactBriefPath,
-        summary_json: artifactSummaryPath
+        summary_json: artifactSummaryPath,
+        remediation_markdown: artifactRemediationPath
       };
       writeJson(jsonReportPath, report);
     } catch (error) {
