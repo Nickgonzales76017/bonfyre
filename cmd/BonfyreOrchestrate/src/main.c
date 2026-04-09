@@ -63,6 +63,7 @@ typedef struct {
     int boosters[MAX_PLAN_STEPS];
     int booster_count;
     double booster_scores[MAX_PLAN_STEPS];
+    int pre_gate_booster_count;
     const char *outputs[MAX_PLAN_STEPS];
     int output_count;
     const char *surfaces[8];
@@ -90,6 +91,7 @@ typedef struct {
     double uplift_reversibility;
     double uplift_utility;
     double uplift_information_gain;
+    char frontier_decision[32];
 } OrchestratePlan;
 
 typedef struct {
@@ -637,11 +639,16 @@ static int frontier_uplift_is_worth_it(const OrchestratePlan *plan, UpliftGate g
 
 static void apply_frontier_uplift_gate(const OrchestrateRequest *req, OrchestratePlan *plan) {
     if (!plan || plan->booster_count <= 0) return;
+    plan->pre_gate_booster_count = plan->booster_count;
     UpliftGate gate = adaptive_uplift_gate(req);
-    if (frontier_uplift_is_worth_it(plan, gate)) return;
+    if (frontier_uplift_is_worth_it(plan, gate)) {
+        copy_text(plan->frontier_decision, sizeof(plan->frontier_decision), "retained");
+        return;
+    }
     plan->booster_count = 0;
     collect_outputs(plan);
     compute_plan_metrics(req, plan);
+    copy_text(plan->frontier_decision, sizeof(plan->frontier_decision), "collapsed-to-floor");
 }
 
 static void build_signature(const OrchestrateRequest *req, char *dst, size_t dst_sz) {
@@ -1088,6 +1095,7 @@ static void init_plan(OrchestratePlan *plan, const char *model) {
     memset(plan, 0, sizeof(*plan));
     copy_text(plan->mode, sizeof(plan->mode), "heuristic");
     copy_text(plan->model, sizeof(plan->model), model && model[0] ? model : DEFAULT_MODEL);
+    copy_text(plan->frontier_decision, sizeof(plan->frontier_decision), "floor-only");
 }
 
 static void heuristic_plan(const OrchestrateRequest *req, OrchestratePlan *plan) {
@@ -1451,6 +1459,11 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
     printf("    \"reversibility\": %.3f,\n", plan->uplift_reversibility);
     printf("    \"utility\": %.3f,\n", plan->uplift_utility);
     printf("    \"information_gain\": %.3f\n", plan->uplift_information_gain);
+    printf("  },\n");
+    printf("  \"frontier_decision\": {\n");
+    printf("    \"decision\": \"%s\",\n", plan->frontier_decision);
+    printf("    \"pre_gate_boosters\": %d,\n", plan->pre_gate_booster_count);
+    printf("    \"retained_boosters\": %d\n", plan->booster_count);
     printf("  },\n");
     printf("  \"active_domain_weights\": {\n");
     printf("    \"exec\": %.3f,\n", w.exec);

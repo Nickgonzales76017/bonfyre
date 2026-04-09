@@ -294,6 +294,7 @@ Each plan now also exposes:
 - `baseline_frontier_metrics`
 - `frontier_uplift`
 - `booster_contributions`
+- `frontier_decision`
 
 That gives Bonfyre an explicit counterfactual against the deterministic floor, so the system can measure what the retained frontier actually changed instead of treating the chosen path as an opaque result.
 
@@ -302,6 +303,8 @@ Bonfyre now also uses that counterfactual internally as an uplift gate. If the r
 That uplift gate is now adaptive by workload memory. When similar state or family histories show boosters paying off consistently, the gate relaxes slightly. When history shows regret or poor payoff, the gate tightens.
 
 When boosters do survive, `booster_contributions` shows their individual frontier-ranking scores. When the uplift gate collapses the frontier, that list is empty by design.
+
+`frontier_decision` makes that explicit by reporting whether the frontier was retained or collapsed, plus how many boosters existed before and after the gate.
 
 ## Booster frontier
 
