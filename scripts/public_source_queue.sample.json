@@ -20,7 +20,8 @@
           "review_status": "queued",
           "query": "Daily scrum standup remote team",
           "brief": "Queued public source candidate for real standup cadence and blockers.",
-          "tags": ["standup", "scrum", "remote team"]
+          "tags": ["standup", "scrum", "remote team"],
+          "signal": { "messy_audio": 2, "jargon_density": 3, "social_complexity": 3, "bonfyre_fit": 4, "provenance_confidence": 3, "public_safety": 4 }
         },
         {
           "id": "agile-standup-simulation-queue-1",
@@ -31,7 +32,8 @@
           "review_status": "queued",
           "query": "Agile standup simulation",
           "brief": "Queued public source candidate for structured async-standup generation.",
-          "tags": ["standup", "agile", "simulation"]
+          "tags": ["standup", "agile", "simulation"],
+          "signal": { "messy_audio": 1, "jargon_density": 3, "social_complexity": 2, "bonfyre_fit": 3, "provenance_confidence": 3, "public_safety": 5 }
         }
       ]
     },
@@ -56,7 +58,8 @@
           "query": "Nursing SBAR handoff simulation",
           "brief": "Nursing handoff recording processed into a concise board of patient status, follow-up tasks, and escalation points.",
           "tags": ["handoff", "nursing", "training"],
-          "searchSummary": "nursing handoff, patient status, escalation"
+          "searchSummary": "nursing handoff, patient status, escalation",
+          "signal": { "messy_audio": 3, "jargon_density": 5, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 4, "public_safety": 4 }
         },
         {
           "id": "hospital-bedside-report-training-queue-1",
@@ -67,7 +70,8 @@
           "review_status": "queued",
           "query": "Hospital bedside report training",
           "brief": "Queued public source candidate for bedside-report style handoff stress testing.",
-          "tags": ["handoff", "bedside report", "training"]
+          "tags": ["handoff", "bedside report", "training"],
+          "signal": { "messy_audio": 3, "jargon_density": 5, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 4 }
         }
       ]
     },
@@ -91,7 +95,8 @@
           "review_status": "queued",
           "query": "IT incident postmortem review",
           "brief": "Queued public source candidate for incident chronology and remediation tracking.",
-          "tags": ["postmortem", "incident", "it"]
+          "tags": ["postmortem", "incident", "it"],
+          "signal": { "messy_audio": 2, "jargon_density": 5, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 4 }
         },
         {
           "id": "engineering-war-room-recording-queue-1",
@@ -102,7 +107,8 @@
           "review_status": "queued",
           "query": "Engineering war room recording",
           "brief": "Queued public source candidate for live failure coordination and decision capture.",
-          "tags": ["postmortem", "war room", "engineering"]
+          "tags": ["postmortem", "war room", "engineering"],
+          "signal": { "messy_audio": 4, "jargon_density": 5, "social_complexity": 5, "bonfyre_fit": 5, "provenance_confidence": 2, "public_safety": 3 }
         }
       ]
     },
@@ -128,7 +134,8 @@
           "brief": "City council work session processed into a civic summary, searchable issue trail, and reusable public memory.",
           "tags": ["meetings", "city council", "public works"],
           "searchSummary": "city council, work session, public works",
-          "searchOutputs": ["searchable record", "vector memory"]
+          "searchOutputs": ["searchable record", "vector memory"],
+          "signal": { "messy_audio": 3, "jargon_density": 4, "social_complexity": 5, "bonfyre_fit": 5, "provenance_confidence": 5, "public_safety": 5 }
         },
         {
           "id": "planning-commission-zoning-hearing-queue-1",
@@ -139,7 +146,8 @@
           "review_status": "queued",
           "query": "Planning commission zoning hearing",
           "brief": "Queued public source candidate for zoning-hearing style civic reasoning and timeline continuity.",
-          "tags": ["meetings", "zoning", "planning"]
+          "tags": ["meetings", "zoning", "planning"],
+          "signal": { "messy_audio": 3, "jargon_density": 5, "social_complexity": 5, "bonfyre_fit": 5, "provenance_confidence": 4, "public_safety": 5 }
         }
       ]
     },
@@ -163,7 +171,8 @@
           "review_status": "queued",
           "query": "RustConf 2024 deep dive",
           "brief": "Queued public source candidate for repo and systems explanation.",
-          "tags": ["repo", "rust", "architecture"]
+          "tags": ["repo", "rust", "architecture"],
+          "signal": { "messy_audio": 1, "jargon_density": 5, "social_complexity": 3, "bonfyre_fit": 4, "provenance_confidence": 3, "public_safety": 4 }
         }
       ]
     },
@@ -187,7 +196,8 @@
           "review_status": "queued",
           "query": "Maintainer office hours",
           "brief": "Queued public source candidate for live maintainer triage and support load.",
-          "tags": ["oss", "maintainer", "office hours"]
+          "tags": ["oss", "maintainer", "office hours"],
+          "signal": { "messy_audio": 2, "jargon_density": 5, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 4 }
         },
         {
           "id": "github-issue-triage-live-stream-queue-1",
@@ -198,7 +208,8 @@
           "review_status": "queued",
           "query": "GitHub issue triage live stream",
           "brief": "Queued public source candidate for issue clustering and semantic triage memory.",
-          "tags": ["oss", "triage", "github"]
+          "tags": ["oss", "triage", "github"],
+          "signal": { "messy_audio": 2, "jargon_density": 5, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 4 }
         }
       ]
     },
@@ -222,7 +233,8 @@
           "review_status": "queued",
           "query": "StoryCorps interviews",
           "brief": "Queued public source candidate for oral-history style memory structuring.",
-          "tags": ["oral history", "storycorps", "memory"]
+          "tags": ["oral history", "storycorps", "memory"],
+          "signal": { "messy_audio": 2, "jargon_density": 2, "social_complexity": 5, "bonfyre_fit": 4, "provenance_confidence": 4, "public_safety": 5 }
         },
         {
           "id": "veterans-history-project-queue-1",
@@ -233,7 +245,8 @@
           "review_status": "queued",
           "query": "Veterans History Project full interview",
           "brief": "Queued public source candidate for long-form life-history structuring.",
-          "tags": ["oral history", "veterans", "archive"]
+          "tags": ["oral history", "veterans", "archive"],
+          "signal": { "messy_audio": 2, "jargon_density": 3, "social_complexity": 5, "bonfyre_fit": 5, "provenance_confidence": 4, "public_safety": 5 }
         }
       ]
     },
@@ -257,7 +270,8 @@
           "review_status": "queued",
           "query": "Museum curator talk",
           "brief": "Queued public source candidate for curatorial framing and exhibit narratives.",
-          "tags": ["museum", "curator", "talk"]
+          "tags": ["museum", "curator", "talk"],
+          "signal": { "messy_audio": 1, "jargon_density": 4, "social_complexity": 3, "bonfyre_fit": 4, "provenance_confidence": 3, "public_safety": 4 }
         },
         {
           "id": "museum-exhibit-audio-guide-queue-1",
@@ -268,7 +282,8 @@
           "review_status": "queued",
           "query": "Museum exhibit audio guide",
           "brief": "Queued public source candidate for audio-guide style structuring.",
-          "tags": ["museum", "audio guide", "exhibit"]
+          "tags": ["museum", "audio guide", "exhibit"],
+          "signal": { "messy_audio": 1, "jargon_density": 3, "social_complexity": 2, "bonfyre_fit": 4, "provenance_confidence": 3, "public_safety": 4 }
         }
       ]
     },
@@ -292,7 +307,8 @@
           "review_status": "queued",
           "query": "Courtroom deposition full",
           "brief": "Queued public source candidate for procedural language, chronology extraction, and evidence threading.",
-          "tags": ["legal", "deposition", "evidence"]
+          "tags": ["legal", "deposition", "evidence"],
+          "signal": { "messy_audio": 3, "jargon_density": 5, "social_complexity": 5, "bonfyre_fit": 5, "provenance_confidence": 2, "public_safety": 3 }
         }
       ]
     },
@@ -316,7 +332,8 @@
           "review_status": "queued",
           "query": "SaaS sales call recording",
           "brief": "Queued public source candidate for customer objection and pain-point clustering.",
-          "tags": ["customer", "sales", "saas"]
+          "tags": ["customer", "sales", "saas"],
+          "signal": { "messy_audio": 3, "jargon_density": 4, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 2, "public_safety": 2 }
         },
         {
           "id": "customer-interview-ux-research-queue-1",
@@ -327,7 +344,8 @@
           "review_status": "queued",
           "query": "Customer interview UX research",
           "brief": "Queued public source candidate for theme clustering across customer interviews.",
-          "tags": ["customer", "ux research", "interview"]
+          "tags": ["customer", "ux research", "interview"],
+          "signal": { "messy_audio": 2, "jargon_density": 3, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 3 }
         }
       ]
     },
@@ -351,7 +369,8 @@
           "review_status": "queued",
           "query": "Full length podcast video",
           "brief": "Queued public source candidate for full podcast repurposing.",
-          "tags": ["podcast", "public source", "repurposing"]
+          "tags": ["podcast", "public source", "repurposing"],
+          "signal": { "messy_audio": 2, "jargon_density": 3, "social_complexity": 4, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 4 }
         },
         {
           "id": "raw-podcast-recording-session-queue-1",
@@ -362,7 +381,8 @@
           "review_status": "queued",
           "query": "Raw podcast recording session",
           "brief": "Queued public source candidate for messy conversational podcast input.",
-          "tags": ["podcast", "raw", "conversation"]
+          "tags": ["podcast", "raw", "conversation"],
+          "signal": { "messy_audio": 4, "jargon_density": 3, "social_complexity": 5, "bonfyre_fit": 5, "provenance_confidence": 2, "public_safety": 3 }
         }
       ]
     },
@@ -386,7 +406,8 @@
           "review_status": "queued",
           "query": "Software product launch announcement",
           "brief": "Queued public source candidate for launch-summary narration and release fanout.",
-          "tags": ["release", "launch", "product"]
+          "tags": ["release", "launch", "product"],
+          "signal": { "messy_audio": 1, "jargon_density": 3, "social_complexity": 2, "bonfyre_fit": 4, "provenance_confidence": 3, "public_safety": 4 }
         },
         {
           "id": "developer-changelog-video-queue-1",
@@ -397,7 +418,8 @@
           "review_status": "queued",
           "query": "Developer changelog video",
           "brief": "Queued public source candidate for changelog-to-broadcast transformation.",
-          "tags": ["release", "changelog", "developer"]
+          "tags": ["release", "changelog", "developer"],
+          "signal": { "messy_audio": 1, "jargon_density": 4, "social_complexity": 2, "bonfyre_fit": 5, "provenance_confidence": 3, "public_safety": 4 }
         }
       ]
     }

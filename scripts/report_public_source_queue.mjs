@@ -15,6 +15,26 @@ function summarizeApp(app, targetDistinctSources) {
   const missingPublisher = approved.filter((source) => !source.publisher).length;
   const gap = Math.max(0, targetDistinctSources - approved.length);
 
+  const scoreSource = (source) => {
+    const signal = source.signal || {};
+    const messy = Number(signal.messy_audio || 0);
+    const jargon = Number(signal.jargon_density || 0);
+    const social = Number(signal.social_complexity || 0);
+    const fit = Number(signal.bonfyre_fit || 0);
+    const provenance = Number(signal.provenance_confidence || 0);
+    const safety = Number(signal.public_safety || 0);
+    return messy * 1.4 + jargon * 1.2 + social * 1.1 + fit * 1.8 + provenance * 1.3 + safety * 1.0;
+  };
+
+  const approvedScore = approved.reduce((sum, source) => sum + scoreSource(source), 0);
+  const queuedScore = queued.reduce((sum, source) => sum + scoreSource(source), 0);
+  const bestQueued = queued
+    .map((source) => ({ title: source.title, query: source.query || '', score: scoreSource(source) }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 2);
+
+  const readinessScore = Math.max(0, approved.length * 20 + Math.min(queuedScore, 40) - gap * 4);
+
   return {
     repo: app.repo,
     approved: approved.length,
@@ -22,7 +42,11 @@ function summarizeApp(app, targetDistinctSources) {
     rejected: rejected.length,
     missingUrl,
     missingPublisher,
-    gap
+    gap,
+    approvedScore,
+    queuedScore,
+    readinessScore,
+    bestQueued
   };
 }
 
@@ -37,12 +61,17 @@ function main() {
   const queue = readJson(queuePath);
   const summaries = (queue.apps || []).map((app) => summarizeApp(app, targetDistinctSources));
 
-  for (const summary of summaries) {
+  const ranked = summaries.slice().sort((a, b) => b.readinessScore - a.readinessScore);
+
+  for (const summary of ranked) {
     console.log(
-      `${summary.repo}: approved=${summary.approved} queued=${summary.queued} rejected=${summary.rejected} gap_to_${targetDistinctSources}=${summary.gap}` +
+      `${summary.repo}: readiness=${summary.readinessScore.toFixed(1)} approved=${summary.approved} queued=${summary.queued} rejected=${summary.rejected} gap_to_${targetDistinctSources}=${summary.gap}` +
       (summary.missingUrl ? ` missing_public_url=${summary.missingUrl}` : '') +
       (summary.missingPublisher ? ` missing_publisher=${summary.missingPublisher}` : '')
     );
+    for (const candidate of summary.bestQueued) {
+      console.log(`  next: ${candidate.title} [score ${candidate.score.toFixed(1)}]${candidate.query ? ` query=\"${candidate.query}\"` : ''}`);
+    }
   }
 }
 

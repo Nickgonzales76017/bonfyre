@@ -119,6 +119,20 @@ That reports:
 - rejected count
 - gap to the target distinct-source floor
 - missing provenance fields on approved entries
+- app readiness score
+- highest-value queued candidates to review next
+
+To fail a publish step when the reviewed public-source floor is still too weak, run:
+
+```bash
+node scripts/assert_reference_readiness.mjs scripts/public_source_queue.sample.json --target 10 --min-readiness 30
+```
+
+You can scope that gate to flagship apps only:
+
+```bash
+node scripts/assert_reference_readiness.mjs scripts/public_source_queue.sample.json --target 10 --min-readiness 30 --repo pages-town-box --repo pages-podcast-plant --repo pages-oss-cockpit
+```
 
 ## Validator
 
