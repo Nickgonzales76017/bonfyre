@@ -85,7 +85,7 @@ This is the path that should replace synthetic placeholder corpora for the flags
 Before publishing a corpus, run:
 
 ```bash
-node scripts/validate_reference_corpora.mjs --strict-provenance --min-count 100
+node scripts/validate_reference_corpora.mjs --strict-provenance --min-count 100 --min-distinct-sources 10
 ```
 
 What it catches:
@@ -94,6 +94,7 @@ What it catches:
 - corpora below the target size
 - missing public provenance links
 - local-path provenance masquerading as origin
+- corpora that rely on too few distinct public sources
 - stale staged-demo copy like `seeded` or `demo dataset`
 - excessively repeated record templates that make the corpus feel fake
 
@@ -101,6 +102,25 @@ Use the validator as the release gate:
 
 - synthetic exploration can fail locally
 - public demo publication should not pass until provenance is real
+
+## Sample Reviewed Manifest
+
+For local stress testing, there is a starter manifest at:
+
+```bash
+scripts/reviewed_source_manifest.sample.json
+```
+
+It uses real public-source examples for:
+
+- `pages-town-box`
+- `pages-shift-handoff`
+
+Generate into `/tmp` with:
+
+```bash
+node scripts/generate_reference_corpora_from_sources.mjs scripts/reviewed_source_manifest.sample.json
+```
 
 ## Manifest Shape
 

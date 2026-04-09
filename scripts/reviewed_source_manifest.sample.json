@@ -1,0 +1,56 @@
+{
+  "apps": [
+    {
+      "repo": "pages-town-box",
+      "slug": "town-box",
+      "title": "Town in a Box",
+      "out_path": "/tmp/bonfyre-reviewed/pages-town-box/site/demos/town-box/demo-items.json",
+      "default_outputs": ["civic summary card", "searchable record", "vector memory", "public issue trail"],
+      "why_it_matters": "Town Box becomes convincing when every record can be traced to a real public meeting or civic video.",
+      "search_intro": "Search across real public meeting records to connect hearings, updates, and recurring issues.",
+      "source_copy": "Watch the original public source, then compare how Bonfyre turns it into a civic summary, search surface, and durable public trail.",
+      "sources": [
+        {
+          "id": "salt-lake-city-council-work-session",
+          "title": "Salt Lake City Council Work Session",
+          "file": "Salt Lake City Council Work Session",
+          "published_at": "Public meeting recording",
+          "public_url": "https://www.youtube.com/watch?v=_mroalG8RTc",
+          "publisher": "Salt Lake City Council",
+          "license": "Public platform origin",
+          "sourceLabel": "Watch original public source",
+          "brief": "City council work session processed into a civic summary, searchable issue trail, and reusable public memory.",
+          "tags": ["meetings", "city council", "public works"],
+          "searchSummary": "city council, work session, public works",
+          "searchOutputs": ["searchable record", "vector memory"]
+        }
+      ]
+    },
+    {
+      "repo": "pages-shift-handoff",
+      "slug": "shift-handoff",
+      "title": "Shift Handoff",
+      "out_path": "/tmp/bonfyre-reviewed/pages-shift-handoff/site/demos/shift-handoff/demo-items.json",
+      "default_outputs": ["shift summary", "handoff board", "critical tasks"],
+      "why_it_matters": "Handoff quality is only believable when the input sounds like a real rushed workplace exchange.",
+      "search_intro": "Search across real handoff recordings to see repeated risks and recurring task patterns.",
+      "source_copy": "Open the original public source, then compare it to the handoff board Bonfyre generates.",
+      "sources": [
+        {
+          "id": "practice-nursing-hand-off-report-1",
+          "title": "Practice Nursing Hand-Off Report #1",
+          "file": "Practice Nursing Hand-Off Report #1",
+          "published_at": "Public training video",
+          "public_url": "https://www.youtube.com/watch?v=fIABkSYOiv4",
+          "publisher": "Public training channel",
+          "license": "Public platform origin",
+          "sourceLabel": "Watch original public source",
+          "brief": "Nursing handoff recording processed into a concise board of patient status, follow-up tasks, and escalation points.",
+          "tags": ["handoff", "nursing", "training"],
+          "searchSummary": "nursing handoff, patient status, escalation",
+          "searchOutputs": ["handoff board"]
+        }
+      ]
+    }
+  ]
+}

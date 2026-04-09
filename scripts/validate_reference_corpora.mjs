@@ -85,6 +85,7 @@ function validateCorpus(filePath, options) {
   }
 
   const ids = new Set();
+  const distinctSources = new Set();
   for (const [index, item] of items.entries()) {
     const prefix = `item ${index + 1}`;
     if (!item.id) issues.push(`${prefix} missing id`);
@@ -108,6 +109,8 @@ function validateCorpus(filePath, options) {
     for (const link of links) {
       if (!isPublicHttp(link.href)) {
         issues.push(`${prefix} has non-public provenance link: ${link.href}`);
+      } else {
+        distinctSources.add(link.href);
       }
     }
   }
@@ -120,8 +123,11 @@ function validateCorpus(filePath, options) {
   if (maxDuplicate > options.maxDuplicateTemplate) {
     warnings.push(`largest repeated record template count is ${maxDuplicate}`);
   }
+  if (options.minDistinctSources && distinctSources.size < options.minDistinctSources) {
+    issues.push(`corpus has ${distinctSources.size} distinct public source(s), below minimum ${options.minDistinctSources}`);
+  }
 
-  return { items, issues, warnings };
+  return { items, issues, warnings, distinctSources: distinctSources.size };
 }
 
 function validateRepo(repoPath, options) {
@@ -160,6 +166,7 @@ function parseArgs(argv) {
   const options = {
     root: '/Users/nickgonzales/Projects',
     repos: [],
+    explicitRepos: [],
     minCount: 25,
     maxDuplicateTemplate: 8,
     strictProvenance: false
@@ -168,9 +175,14 @@ function parseArgs(argv) {
   for (let i = 2; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--root') options.root = argv[++i];
-    else if (arg === '--repo') options.repos.push(argv[++i]);
+    else if (arg === '--repo') {
+      const value = argv[++i];
+      options.repos.push(value);
+      options.explicitRepos.push(value);
+    }
     else if (arg === '--min-count') options.minCount = Number(argv[++i] || options.minCount);
     else if (arg === '--max-duplicate-template') options.maxDuplicateTemplate = Number(argv[++i] || options.maxDuplicateTemplate);
+    else if (arg === '--min-distinct-sources') options.minDistinctSources = Number(argv[++i] || 0);
     else if (arg === '--strict-provenance') options.strictProvenance = true;
   }
 
@@ -194,7 +206,14 @@ function main() {
   for (const repoPath of options.repos) {
     const report = validateRepo(repoPath, options);
     const repoName = path.basename(repoPath);
-    if (!report.corpora.length && !report.mirroredMedia.length) continue;
+    if (!report.corpora.length && !report.mirroredMedia.length) {
+      if (options.explicitRepos.length) {
+        totalIssues += 1;
+        console.log(`\n== ${repoName} ==`);
+        console.log('ERROR no corpus files found under site/demos');
+      }
+      continue;
+    }
 
     console.log(`\n== ${repoName} ==`);
 
@@ -206,7 +225,7 @@ function main() {
 
     for (const corpus of report.corpora) {
       const rel = path.relative(repoPath, corpus.filePath);
-      console.log(`corpus ${rel}: ${corpus.items.length} records`);
+      console.log(`corpus ${rel}: ${corpus.items.length} records, ${corpus.distinctSources} distinct source(s)`);
       if (!corpus.issues.length && !corpus.warnings.length) {
         console.log('  ok');
         continue;
