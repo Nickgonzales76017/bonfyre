@@ -1,5 +1,6 @@
 (function(global) {
   var repoMap = {
+    'bonfyre': 'https://github.com/Nickgonzales76017/bonfyre',
     'bonfyre-core': 'https://github.com/Nickgonzales76017/bonfyre-core',
     'bonfyre-intake': 'https://github.com/Nickgonzales76017/bonfyre-intake',
     'bonfyre-pipeline': 'https://github.com/Nickgonzales76017/bonfyre-pipeline',
@@ -35,7 +36,9 @@
     style.id = 'bonfyre-demo-boot-styles';
     style.textContent = [
       '.tag,.operator-chip,.output-chip,.swap-chip{cursor:pointer;transition:transform .12s ease,border-color .12s ease,opacity .12s ease;}',
-      '.tag:hover,.operator-chip:hover,.output-chip:hover,.swap-chip:hover{transform:translateY(-1px);opacity:.92;border-color:#ff6600;}'
+      '.tag:hover,.operator-chip:hover,.output-chip:hover,.swap-chip:hover{transform:translateY(-1px);opacity:.92;border-color:#ff6600;}',
+      '.bonfyre-preview-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.75rem;}',
+      '.bonfyre-preview-link{display:inline-flex;align-items:center;gap:.35rem;padding:.45rem .75rem;border-radius:6px;border:1px solid #333;color:#ff6600;text-decoration:none;font-size:.8rem;font-weight:600;background:rgba(255,102,0,.06);}'
     ].join('');
     document.head.appendChild(style);
   }
@@ -54,12 +57,43 @@
     global.open(url, '_blank', 'noopener');
   }
 
-  function setPreviewText(text) {
+  function ensurePreviewNodes() {
     var panel = document.getElementById('wasmPreview') || document.getElementById('intakePreview');
     var content = document.getElementById('previewContent') || document.getElementById('intakeContent');
-    if (!panel || !content) return false;
-    panel.style.display = 'block';
-    content.textContent = String(text || '');
+    if (!panel || !content) return null;
+    var actions = panel.querySelector('.bonfyre-preview-actions');
+    if (!actions) {
+      actions = document.createElement('div');
+      actions.className = 'bonfyre-preview-actions';
+      content.insertAdjacentElement('afterend', actions);
+    }
+    return { panel: panel, content: content, actions: actions };
+  }
+
+  function setPreviewState(text, link) {
+    var nodes = ensurePreviewNodes();
+    if (!nodes) return false;
+    nodes.panel.style.display = 'block';
+    nodes.content.textContent = String(text || '');
+    nodes.actions.innerHTML = '';
+    if (link && link.href) {
+      var anchor = document.createElement('a');
+      anchor.className = 'bonfyre-preview-link';
+      anchor.href = String(link.href);
+      anchor.target = '_blank';
+      anchor.rel = 'noreferrer noopener';
+      anchor.textContent = link.label || 'Open artifact';
+      nodes.actions.appendChild(anchor);
+    }
+    return true;
+  }
+
+  function setPreviewText(text) {
+    var nodes = ensurePreviewNodes();
+    if (!nodes) return false;
+    nodes.actions.innerHTML = '';
+    nodes.panel.style.display = 'block';
+    nodes.content.textContent = String(text || '');
     return true;
   }
 
@@ -97,6 +131,11 @@
     return null;
   }
 
+  function getMappedAction(item, bucket, label) {
+    if (!item || !item[bucket]) return null;
+    return item[bucket][label] || item[bucket][normalizeToken(label)] || null;
+  }
+
   function bindInteractions(options) {
     if (document.body && document.body.dataset.bonfyreDemoBootBound === '1') return;
     if (document.body) document.body.dataset.bonfyreDemoBootBound = '1';
@@ -105,7 +144,25 @@
       var moduleChip = event.target.closest('.operator-chip,.swap-chip');
       if (moduleChip) {
         event.preventDefault();
-        openModuleReference(moduleChip.textContent);
+        var item = getItemByCard(options, moduleChip);
+        var moduleLabel = moduleChip.textContent.trim();
+        var moduleAction = getMappedAction(item, 'moduleActions', moduleLabel);
+        var moduleNote = item && item.moduleNotes && (item.moduleNotes[moduleLabel] || item.moduleNotes[normalizeToken(moduleLabel)]);
+        if (moduleAction && moduleAction.href) {
+          setPreviewState(moduleAction.note || moduleNote || (moduleLabel + ' is available for this demo item.'), {
+            href: moduleAction.href,
+            label: moduleAction.label || 'Open stage artifact'
+          });
+          return;
+        }
+        if (moduleNote) {
+          setPreviewState(moduleNote, {
+            href: repoMap[normalizeToken(moduleLabel)] || repoMap.bonfyre,
+            label: 'Open module repo'
+          });
+          return;
+        }
+        openModuleReference(moduleLabel);
         return;
       }
 
@@ -114,8 +171,18 @@
         event.preventDefault();
         var item = getItemByCard(options, outputChip);
         var label = outputChip.textContent.trim();
+        var outputLink = getMappedAction(item, 'outputLinks', label);
         if (item && item.outputNotes && item.outputNotes[label]) {
-          if (setPreviewText(item.outputNotes[label])) return;
+          if (setPreviewState(item.outputNotes[label], outputLink ? {
+            href: outputLink.href || outputLink,
+            label: outputLink.label || 'Open emitted artifact'
+          } : null)) return;
+        }
+        if (outputLink) {
+          if (setPreviewState(label + ' is available for this demo item.', {
+            href: outputLink.href || outputLink,
+            label: outputLink.label || 'Open emitted artifact'
+          })) return;
         }
       }
 
