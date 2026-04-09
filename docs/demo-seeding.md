@@ -136,6 +136,32 @@ node scripts/assert_reference_readiness.mjs scripts/public_source_queue.sample.j
 
 That gate now also fails when approved sources are too weak to really stress Bonfyre. In other words, a corpus can still fail even if it has some approved links, if those sources are too clean, too low-jargon, too socially simple, or too weakly provenance-backed to prove real-world performance.
 
+## Bonfyre-Native Stress Pass
+
+Before publishing, run the reviewed queue through Bonfyre itself so the corpus review starts exercising the same orchestration surfaces clients will care about later:
+
+```bash
+node scripts/stress_reference_corpora_with_bonfyre.mjs scripts/public_source_queue.sample.json --include-queued
+```
+
+That pass is intentionally Bonfyre-native:
+
+- creates a machine request per reviewed source
+- runs `bonfyre-orchestrate plan`
+- records feedback through `bonfyre-orchestrate feedback`
+- enqueues the workload through `bonfyre-queue`
+- emits a stress report with:
+  - policy source
+  - predicted policy score
+  - predicted information gain
+  - predicted latency and cost
+  - expected outputs
+  - selected binaries and boosters
+
+This is the thinest way to start building client-facing corpus metrics from Bonfyre's real control plane instead of from side spreadsheets.
+
+It also surfaces a key implementation smell early: if many very different sources collapse to the same state key, output set, and policy path, the stress report will flag low differentiation so we can tighten the planner before pretending the corpus proves much.
+
 ## Validator
 
 Before publishing a corpus, run:
