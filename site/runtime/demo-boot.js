@@ -259,7 +259,7 @@
     var sourceStrip = buildSourceStrip(item);
     return '<div class="bonfyre-detail-card">' +
       '<h4>' + escapeHtml(item.file || 'Demo record') + '</h4>' +
-      '<div class="bonfyre-detail-meta">' + escapeHtml(item.time || 'Reference corpus') + '</div>' +
+      '<div class="bonfyre-detail-meta">' + escapeHtml(item.time || 'Public-origin record') + '</div>' +
       sourceStrip +
       '<div class="bonfyre-detail-copy">' + escapeHtml(item.whyItMatters || item.brief || '') + '</div>' +
       '<div class="bonfyre-detail-tags">' + (item.tags || []).slice(0, 5).map(function(tag) {
