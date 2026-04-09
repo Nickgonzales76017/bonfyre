@@ -29,13 +29,16 @@ binaries: lib
 	for dir in $(BINARIES); do \
 		name=$$(basename $$dir); \
 		printf "  [%2d] %-28s" $$((total+1)) "$$name"; \
-		if $(MAKE) -C $$dir CC="$(CC)" CFLAGS="$(CFLAGS)" > /dev/null 2>&1; then \
+		logfile=$$(mktemp); \
+		if $(MAKE) -C $$dir CC="$(CC)" CFLAGS="$(CFLAGS)" > "$$logfile" 2>&1; then \
 			echo "✓"; \
 			ok=$$((ok+1)); \
 		else \
 			echo "✗"; \
+			sed 's/^/      /' "$$logfile"; \
 			fail=$$((fail+1)); \
 		fi; \
+		rm -f "$$logfile"; \
 		total=$$((total+1)); \
 	done; \
 	echo ""; \
