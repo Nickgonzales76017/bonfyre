@@ -755,7 +755,7 @@ footer a:hover { color: var(--text); }
       </div>
       <div class="hero-stat">
         <span class="num">29 MB</span>
-        <span class="label"><a href="https://github.com/Nickgonzales76017/hcp-whisper" style="color:inherit;text-decoration:none">HCP Model (0.997)</a></span>
+        <span class="label"><a href="https://github.com/Nickgonzales76017/hcp-whisper" style="color:inherit;text-decoration:none">Local Speech Model</a></span>
       </div>
       <div class="hero-stat">
         <span class="num">167</span>
@@ -766,12 +766,12 @@ footer a:hover { color: var(--text); }
         <span class="label"><a href="#apps" style="color:inherit;text-decoration:none">Live Apps</a></span>
       </div>
       <div class="hero-stat">
-        <span class="num">~0.1s</span>
-        <span class="label">500-Record Corpus Refresh</span>
+        <span class="num">3</span>
+        <span class="label">Public-Origin Proofs</span>
       </div>
     </div>
     <p style="color:var(--text-dim);font-size:0.9rem;max-width:760px;margin:0 auto 28px;">
-      Bonfyre can regenerate the full 500-record showcase corpus across five live app families in about a tenth of a second using the same internal corpus builder that powers the demos.
+      The first live proof corpus now traces public YouTube sources through Bonfyre's transient audio path into derived transcripts, handoff briefs, proof bundles, and in-app search without hosting the original media.
     </p>
     <div class="install-box">
       <code>git clone https://github.com/Nickgonzales76017/bonfyre.git && cd bonfyre && make</code>
@@ -796,50 +796,38 @@ footer a:hover { color: var(--text); }
   </div>
 </header>
 
-<!-- HCP Announcement Banner -->
+<!-- Public-source proof banner -->
 <section style="padding:40px 0;border-bottom:1px solid var(--border);background:linear-gradient(135deg, rgba(249,115,22,0.06) 0%, rgba(13,17,23,1) 60%)">
   <div class="container" style="text-align:center">
     <div style="display:inline-block;background:var(--surface);border:2px solid var(--accent);border-radius:12px;padding:32px 48px;max-width:800px">
-      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);font-weight:700;margin-bottom:8px">New — hcp-whisper v3.2</div>
-      <div style="font-size:2.4rem;font-weight:800;color:var(--text);letter-spacing:-0.02em;margin-bottom:8px">0.997 quality. 29 MB model. $0/min.</div>
-      <p style="font-size:1rem;color:var(--text-dim);max-width:600px;margin:0 auto 20px;line-height:1.6">Quad-channel spectral refinement with 9-layer hallucination detection + morphological logit bias. 6× smaller than fp16. Unified FFT pass cuts audio analysis overhead 86%. Runs entirely on your machine.</p>
-      <div style="text-align:left;max-width:600px;margin:0 auto 20px;font-size:0.8rem;color:var(--text-dim);line-height:1.8">
-        <strong style="color:var(--text);font-size:0.85rem">The 9 detection layers:</strong><br>
-        <span style="color:var(--green)">1.</span> Spectral continuity — power spectrum cross-correlation between frames<br>
-        <span style="color:var(--green)">2.</span> KIEL-CC Kalman — confidence-calibrated scoring with Kalman smoothing<br>
-        <span style="color:var(--green)">3.</span> E-T Gate — energy-to-transcript gating (silence ≠ speech)<br>
-        <span style="color:var(--green)">4.</span> Formant anchoring — formant frequency validation against expected ranges<br>
-        <span style="color:var(--green)">5.</span> Bigram coherence — token-level bigram log-probability check<br>
-        <span style="color:var(--green)">6.</span> Trigram coherence — token-level trigram log-probability check<br>
-        <span style="color:var(--green)">7.</span> Morphological logit bias — active decoder constraint on affix patterns<br>
-        <span style="color:var(--green)">8.</span> Repetition filter — n-gram repetition detection and suppression<br>
-        <span style="color:var(--green)">9.</span> Context-seeded re-decode — multi-pass decoding with prior context
-      </div>
+      <div style="font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--accent);font-weight:700;margin-bottom:8px">Now shown on public-origin audio</div>
+      <div style="font-size:2.4rem;font-weight:800;color:var(--text);letter-spacing:-0.02em;margin-bottom:8px">YouTube source in. Bonfyre proof out.</div>
+      <p style="font-size:1rem;color:var(--text-dim);max-width:640px;margin:0 auto 20px;line-height:1.6">The Shift Handoff app now starts from linked public videos, processes them transiently through Bonfyre, removes the downloaded media, and keeps only derived transcripts, briefs, and proof bundles. The rough edges are visible on purpose.</p>
       <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:16px">
         <div style="text-align:center">
-          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--accent)">29 MB</span>
-          <span style="font-size:0.75rem;color:var(--text-dim)">default model (tiny q5_0)</span>
+          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--accent)">3</span>
+          <span style="font-size:0.75rem;color:var(--text-dim)">public-origin handoff videos</span>
         </div>
         <div style="text-align:center">
-          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">0.997</span>
-          <span style="font-size:0.75rem;color:var(--text-dim)">quality (tiny q5_0)</span>
+          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">24-36x</span>
+          <span style="font-size:0.75rem;color:var(--text-dim)">realtime on current proofs</span>
         </div>
         <div style="text-align:center">
-          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--blue)">9</span>
-          <span style="font-size:0.75rem;color:var(--text-dim)">detection layers</span>
+          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--blue)">0</span>
+          <span style="font-size:0.75rem;color:var(--text-dim)">mirrored source media</span>
         </div>
         <div style="text-align:center">
-          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--text)">86%</span>
-          <span style="font-size:0.75rem;color:var(--text-dim)">less FFT overhead</span>
+          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--text)">4</span>
+          <span style="font-size:0.75rem;color:var(--text-dim)">derived surfaces per source</span>
         </div>
         <div style="text-align:center">
-          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--text)">$0</span>
-          <span style="font-size:0.75rem;color:var(--text-dim)">per minute</span>
+          <span style="display:block;font-size:1.8rem;font-weight:700;color:var(--text)">1 click</span>
+          <span style="font-size:0.75rem;color:var(--text-dim)">back to the original video</span>
         </div>
       </div>
       <div class="btn-row">
-        <a href="https://github.com/Nickgonzales76017/hcp-whisper" class="btn btn-primary">View hcp-whisper on GitHub →</a>
-        <a href="#vs-competition" class="btn btn-outline">See benchmarks ↓</a>
+        <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="btn btn-primary">Open the live proof app →</a>
+        <a href="https://github.com/Nickgonzales76017/hcp-whisper" class="btn btn-outline">View local speech engine →</a>
       </div>
     </div>
   </div>
@@ -859,8 +847,8 @@ footer a:hover { color: var(--text); }
       </div>
       <div class="killer-card">
         <div class="vs">vs Deepgram (transcription)</div>
-        <div class="ratio">0.997 quality, 29 MB, $0/min</div>
-        <div class="detail">HCP v3.2: quad-channel spectral refinement + morphological logit bias + unified FFT audio analysis. Default tiny q5_0 model (29 MB) hits 0.997 quality. Base q4_0 (44 MB) hits 0.999. Quantized models 6× smaller than fp16. 9-layer hallucination detection. -O3 + unified FFT = 86% less audio overhead. <a href="https://github.com/Nickgonzales76017/hcp-whisper" style="color:#ff6b00">Open-source (MIT)</a>.</div>
+        <div class="ratio">local speech + visible proof path</div>
+        <div class="detail">Current public handoff proofs run 24-36x realtime on linked YouTube sources, keep no mirrored media, and publish transcript, clean text, brief, and proof JSON artifacts. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" style="color:#ff6b00">Open live proof</a>. <a href="https://github.com/Nickgonzales76017/hcp-whisper" style="color:#ff6b00">Speech engine</a>.</div>
       </div>
       <div class="killer-card">
         <div class="vs">vs Pinecone (vector search)</div>
@@ -891,9 +879,9 @@ footer a:hover { color: var(--text); }
       </thead>
       <tbody>
         <tr><td>Cost</td><td>$0.006/min</td><td>$0.006/min</td><td class="highlight">$0 / minute</td></tr>
-        <tr><td>Quality score</td><td>~0.85–0.90</td><td>~0.87 (base)</td><td class="highlight">0.999 (base q4_0) / 0.997 (tiny q5_0) — HCP v3.2</td></tr>
+        <tr><td>Current public proof</td><td>Not run here</td><td>Not run here</td><td class="highlight">3 linked YouTube handoff sources, 0.5303-0.6887 confidence, 0.027-0.041 realtime factor</td></tr>
         <tr><td>Model size</td><td>Cloud (N/A)</td><td>Cloud (N/A)</td><td class="highlight">29 MB default (tiny q5_0) / 44 MB (base q4_0) / 24 MB (tiny q4_0)</td></tr>
-        <tr><td>Hallucination detection</td><td>None</td><td>None</td><td class="highlight">9-layer + morphological logit bias (active decoder constraint)</td></tr>
+        <tr><td>Quality visibility</td><td>Cloud summary</td><td>Cloud summary</td><td class="highlight">Segment counts, confidence, realtime factor, proof JSON, and source trace exposed in the app</td></tr>
         <tr><td>Post-process overhead</td><td>N/A (cloud)</td><td>N/A (cloud)</td><td class="highlight">&lt;1% of decode time (unified FFT, -O3)</td></tr>
         <tr><td>Privacy</td><td>Cloud — data leaves device</td><td>Cloud — data leaves device</td><td class="highlight">100% local, offline, private</td></tr>
         <tr><td>Internet required</td><td>Yes</td><td>Yes</td><td class="highlight">No</td></tr>
@@ -933,7 +921,7 @@ footer a:hover { color: var(--text); }
       </div>
       <div class="use-case">
         <h3>Local Transcription + HCP v3.2</h3>
-        <p>29 MB quantized model, 0.997 quality, 9-layer hallucination detection + morphological logit bias. Unified FFT pass (86% less overhead). 6 quantization options from 24 MB to 141 MB. $0/min, runs offline. <a href="https://github.com/Nickgonzales76017/hcp-whisper">Open-source (MIT)</a>.</p>
+        <p>Local speech path for public or private audio: media prep, transcription, cleaning, paragraphs, and proof artifacts. The live Shift Handoff app shows the current public-origin results, including where transcription still needs pressure. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">Live proof</a>. <a href="https://github.com/Nickgonzales76017/bonfyre-intake">Repo: bonfyre-intake</a>.</p>
         <code>bonfyre-transcribe run audio.wav</code>
         <br><span class="time">5 min to try</span>
       </div>
@@ -1511,27 +1499,27 @@ footer a:hover { color: var(--text); }
         <span class="metric">Hash hex (LUT vs snprintf)</span>
       </div>
       <div class="bench-card">
-        <span class="value">0.997</span>
-        <span class="metric">HCP v3.2 quality (tiny q5_0, 29 MB default)</span>
+        <span class="value">3</span>
+        <span class="metric">public-origin handoff proofs live now</span>
       </div>
       <div class="bench-card">
-        <span class="value">9</span>
-        <span class="metric">Hallucination detection layers</span>
+        <span class="value">0</span>
+        <span class="metric">mirrored source media retained</span>
       </div>
       <div class="bench-card">
-        <span class="value">1/1096</span>
-        <span class="metric">Hallucinated segments (0.09%)</span>
+        <span class="value">6/43</span>
+        <span class="metric">segments flagged in current public proof set</span>
       </div>
     </div>
 
     <h3 style="font-size:1.1rem;margin:32px 0 16px">Reproduce these numbers</h3>
     <div class="install-box" style="max-width:100%;margin-bottom:12px;">
       <code>
-        <span class="comment"># HCP transcription quality (tiny q5_0, 29 MB)</span><br>
+        <span class="comment"># Public-source proof path (transient media, retained artifacts)</span><br>
         git clone https://github.com/Nickgonzales76017/hcp-whisper.git<br>
         cd hcp-whisper && make<br>
         ./hcp-whisper -m models/ggml-tiny.en-q5_0.bin -f your-audio.wav --output-json<br>
-        <span class="comment"># Check quality field in output JSON — 0.997 avg across 3 sources</span>
+        <span class="comment"># Inspect confidence, realtime factor, and retained derived artifacts</span>
       </code>
     </div>
     <div class="install-box" style="max-width:100%;margin-bottom:12px;">
@@ -1548,7 +1536,7 @@ footer a:hover { color: var(--text); }
         time ./bin/bonfyre-pipeline run --input audio.wav
       </code>
     </div>
-    <p style="color:var(--text-dim);font-size:0.85rem;margin-top:12px">All benchmarks measured on Apple M-series. Source audio: Ali Abdaal, Shaan Puri, PickFu — publicly available creator content. Model files downloadable from Hugging Face (ggml quantized Whisper).</p>
+    <p style="color:var(--text-dim);font-size:0.85rem;margin-top:12px">Current public proof set: Nursing School Explained and AHRQ Patient Safety YouTube sources linked inside the Shift Handoff app. Bonfyre downloads source media transiently, processes it, deletes the local media copy, and publishes only derived artifacts.</p>
   </div>
 </section>
 
@@ -1604,9 +1592,9 @@ footer a:hover { color: var(--text); }
         <tr><td>Operator lookup</td><td>O(n) linear</td><td class="highlight">O(1) FNV hash</td><td>algorithmic</td></tr>
         <tr><td>Token generation</td><td>O(n²) strlen loop</td><td class="highlight">O(n) tracked offset</td><td>algorithmic</td></tr>
         <tr><td>Vector file (384-dim)</td><td>6.4 KB JSON</td><td class="highlight">1,544 bytes VECF</td><td>4.2× smaller</td></tr>
-        <tr><td>Transcript quality</td><td>~0.92 (Whisper base)</td><td class="highlight">0.997 (HCP v3.2, tiny q5_0)</td><td>+8.4% avg</td></tr>
+        <tr><td>Public proof confidence</td><td>not measured here</td><td class="highlight">0.5303-0.6887 across 3 linked handoff videos</td><td>visible, not hidden</td></tr>
         <tr><td>HCP pipeline</td><td>N/A</td><td class="highlight">spectral + KIEL-CC + E-T Gate + formant + logit bias</td><td>&lt;1% overhead (unified FFT)</td></tr>
-        <tr><td>Hallucinated segments</td><td>undetected</td><td class="highlight">1 / 1,096 (0.09%)</td><td>9-layer detection</td></tr>
+        <tr><td>Flagged segments</td><td>undetected</td><td class="highlight">6 / 43 in the current public-origin proof set</td><td>shown in proof JSON</td></tr>
         <tr><td>Duplicate code</td><td>34 copies</td><td class="highlight">1 each (libbonfyre)</td><td>eliminated</td></tr>
       </tbody>
     </table>
@@ -1820,8 +1808,8 @@ footer a:hover { color: var(--text); }
       <div class="apps-grid">
       <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="app-card">
         <div class="app-name">Shift Handoff Board</div>
-        <div class="app-desc">Voice memos become structured shift handoff cards with status tracking.</div>
-        <span class="app-pipeline">brief &rarr; proof &rarr; offer &rarr; pack</span>
+        <div class="app-desc">Public-origin handoff videos become traceable shift cards, clean transcripts, briefs, and proof bundles.</div>
+        <span class="app-pipeline">media-prep &rarr; transcribe &rarr; clean &rarr; brief &rarr; proof</span>
       </a>
       <a href="https://nickgonzales76017.github.io/pages-memory-atlas/" class="app-card">
         <div class="app-name">Memory Atlas</div>
