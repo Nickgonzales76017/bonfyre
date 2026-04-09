@@ -7,6 +7,7 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#include <sqlite3.h>
 
 #define MAX_PLAN_STEPS 32
 #define MAX_TEXT 128
@@ -40,6 +41,7 @@ typedef struct {
 } OrchestratePlan;
 
 static const char *DEFAULT_MODEL = "google/gemma-4-E4B";
+static const char *DEFAULT_POLICY_DB = ".bonfyre/orchestrate.db";
 static const char *SYSTEM_PROMPT =
     "Bonfyre Orchestrate. Machine-only. No user prompting. "
     "Choose the smallest Bonfyre boost set that improves quality without slowing the fast path. "
@@ -54,7 +56,8 @@ static void usage(void) {
             "Environment:\n"
             "  BONFYRE_ORCHESTRATE_ENDPOINT  OpenAI-compatible Gemma endpoint\n"
             "  BONFYRE_ORCHESTRATE_MODEL     Model name (default: google/gemma-4-E4B)\n"
-            "  BONFYRE_ORCHESTRATE_API_KEY   Optional bearer token\n");
+            "  BONFYRE_ORCHESTRATE_API_KEY   Optional bearer token\n"
+            "  BONFYRE_ORCHESTRATE_POLICY_DB Optional SQLite policy path\n");
 }
 
 static void copy_text(char *dst, size_t dst_sz, const char *src) {
@@ -222,6 +225,127 @@ static void compute_plan_metrics(OrchestratePlan *plan) {
     plan->predicted_information_gain = information_gain / (double)count;
 }
 
+static void build_signature(const OrchestrateRequest *req, char *dst, size_t dst_sz) {
+    snprintf(dst, dst_sz, "%s|%s|%s|%s",
+             req->input_type, req->objective, req->latency_class, req->surface);
+}
+
+static const char *policy_db_path(void) {
+    const char *path = getenv("BONFYRE_ORCHESTRATE_POLICY_DB");
+    if (path && path[0]) return path;
+    static char fallback[512];
+    const char *home = getenv("HOME");
+    snprintf(fallback, sizeof(fallback), "%s/%s", home && home[0] ? home : ".", DEFAULT_POLICY_DB);
+    return fallback;
+}
+
+static int ensure_policy_db(sqlite3 **db) {
+    if (!db) return 1;
+    *db = NULL;
+    const char *path = policy_db_path();
+    char parent[512];
+    snprintf(parent, sizeof(parent), "%s", path);
+    char *slash = strrchr(parent, '/');
+    if (slash) {
+        *slash = '\0';
+        if (parent[0]) bf_ensure_dir(parent);
+    }
+    if (sqlite3_open(path, db) != SQLITE_OK) return 1;
+    const char *sql =
+        "CREATE TABLE IF NOT EXISTS orchestration_policy ("
+        "signature TEXT PRIMARY KEY,"
+        "booster_csv TEXT NOT NULL,"
+        "predicted_confidence REAL NOT NULL,"
+        "predicted_information_gain REAL NOT NULL,"
+        "updated_at TEXT NOT NULL"
+        ");";
+    if (sqlite3_exec(*db, sql, NULL, NULL, NULL) != SQLITE_OK) {
+        sqlite3_close(*db);
+        *db = NULL;
+        return 1;
+    }
+    return 0;
+}
+
+static void import_booster_csv(OrchestratePlan *plan, const char *csv) {
+    if (!csv || !csv[0]) return;
+    char *copy = strdup(csv);
+    if (!copy) return;
+    for (char *save = NULL, *token = strtok_r(copy, ",", &save); token; token = strtok_r(NULL, ",", &save)) {
+        add_booster(plan, token);
+    }
+    free(copy);
+    collect_outputs(plan);
+    compute_plan_metrics(plan);
+}
+
+static int load_policy_memory(const OrchestrateRequest *req, OrchestratePlan *plan) {
+    sqlite3 *db = NULL;
+    if (ensure_policy_db(&db) != 0) return 0;
+    char signature[512];
+    build_signature(req, signature, sizeof(signature));
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql =
+        "SELECT booster_csv, predicted_confidence, predicted_information_gain "
+        "FROM orchestration_policy WHERE signature = ?1;";
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        sqlite3_close(db);
+        return 0;
+    }
+    sqlite3_bind_text(stmt, 1, signature, -1, SQLITE_STATIC);
+    int found = 0;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        const unsigned char *csv = sqlite3_column_text(stmt, 0);
+        double cached_conf = sqlite3_column_double(stmt, 1);
+        if (csv && cached_conf >= plan->predicted_confidence) {
+            import_booster_csv(plan, (const char *)csv);
+            copy_text(plan->mode, sizeof(plan->mode), "policy-memory");
+            found = 1;
+        }
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return found;
+}
+
+static void save_policy_memory(const OrchestrateRequest *req, const OrchestratePlan *plan) {
+    sqlite3 *db = NULL;
+    if (ensure_policy_db(&db) != 0) return;
+    char signature[512];
+    char updated_at[32];
+    build_signature(req, signature, sizeof(signature));
+    bf_iso_timestamp(updated_at, sizeof(updated_at));
+
+    char booster_csv[1024];
+    booster_csv[0] = '\0';
+    for (int i = 0; i < plan->booster_count; ++i) {
+        const char *binary = BF_OPERATORS[plan->boosters[i]].binary;
+        if (i) strncat(booster_csv, ",", sizeof(booster_csv) - strlen(booster_csv) - 1);
+        strncat(booster_csv, binary, sizeof(booster_csv) - strlen(booster_csv) - 1);
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql =
+        "INSERT INTO orchestration_policy(signature, booster_csv, predicted_confidence, predicted_information_gain, updated_at) "
+        "VALUES(?1, ?2, ?3, ?4, ?5) "
+        "ON CONFLICT(signature) DO UPDATE SET "
+        "booster_csv=excluded.booster_csv, "
+        "predicted_confidence=excluded.predicted_confidence, "
+        "predicted_information_gain=excluded.predicted_information_gain, "
+        "updated_at=excluded.updated_at;";
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, signature, -1, SQLITE_STATIC);
+        sqlite3_bind_text(stmt, 2, booster_csv, -1, SQLITE_STATIC);
+        sqlite3_bind_double(stmt, 3, plan->predicted_confidence);
+        sqlite3_bind_double(stmt, 4, plan->predicted_information_gain);
+        sqlite3_bind_text(stmt, 5, updated_at, -1, SQLITE_STATIC);
+        sqlite3_step(stmt);
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+}
+
 static void init_plan(OrchestratePlan *plan, const char *model) {
     memset(plan, 0, sizeof(*plan));
     copy_text(plan->mode, sizeof(plan->mode), "heuristic");
@@ -386,6 +510,7 @@ static void adopt_model_boosters(OrchestratePlan *plan, const char *response) {
 static void maybe_call_model(const OrchestrateRequest *req, OrchestratePlan *plan) {
     const char *endpoint = getenv("BONFYRE_ORCHESTRATE_ENDPOINT");
     const char *api_key = getenv("BONFYRE_ORCHESTRATE_API_KEY");
+    if (plan->predicted_information_gain < 0.45 || plan->predicted_confidence > 0.78) return;
     if (!endpoint || !endpoint[0] || !shell_safe(endpoint)) return;
 
     char request_path[] = "/tmp/bonfyre-orchestrate-XXXXXX";
@@ -495,7 +620,10 @@ static int command_plan(const char *path) {
     OrchestratePlan plan;
     init_plan(&plan, getenv("BONFYRE_ORCHESTRATE_MODEL"));
     heuristic_plan(&req, &plan);
-    maybe_call_model(&req, &plan);
+    if (!load_policy_memory(&req, &plan)) {
+        maybe_call_model(&req, &plan);
+    }
+    save_policy_memory(&req, &plan);
     print_plan(&req, &plan);
     return 0;
 }

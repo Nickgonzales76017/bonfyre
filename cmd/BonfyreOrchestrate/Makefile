@@ -1,7 +1,7 @@
 CC ?= cc
 CFLAGS ?= -Os -Wall -Wextra -std=c11 -ffunction-sections -fdata-sections
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
-LDFLAGS = -L../../lib/libbonfyre -lbonfyre
+LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lsqlite3
 
 all: bonfyre-orchestrate
 

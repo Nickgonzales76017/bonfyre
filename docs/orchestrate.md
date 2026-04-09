@@ -94,3 +94,20 @@ This is the bridge from theory to runtime:
 - information theory: call the model only when expected information gain is meaningful
 - control theory: optimize a bounded plan under latency and stability constraints
 - rate-distortion: trade compute against realization quality instead of generating freeform output
+
+## Policy memory
+
+The orchestrator keeps a compact SQLite policy store keyed by:
+
+- `input_type`
+- `objective`
+- `latency_class`
+- `surface`
+
+That means Bonfyre can reuse winning boost sets without calling the model again for the same orchestration signature.
+
+Gemma is gated by the current plan itself:
+
+- low expected information gain: skip the model
+- already-high confidence: skip the model
+- known policy signature: reuse cached booster set first
