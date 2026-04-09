@@ -22,6 +22,52 @@ function pickArray(value, fallback) {
   return Array.isArray(value) && value.length ? value : fallback;
 }
 
+function interpolate(template, context) {
+  return String(template || '').replace(/\{([a-zA-Z0-9_]+)\}/g, (_, key) => {
+    const value = context[key];
+    return value == null ? '' : String(value);
+  });
+}
+
+function cartesian(dimensions) {
+  const entries = Object.entries(dimensions || {});
+  if (!entries.length) return [{}];
+  let results = [{}];
+  for (const [key, values] of entries) {
+    const next = [];
+    for (const result of results) {
+      for (const value of values || []) {
+        next.push({ ...result, [key]: value });
+      }
+    }
+    results = next;
+  }
+  return results;
+}
+
+function expandTemplateSeeds(app) {
+  const template = app.template;
+  if (!template || !template.dimensions) return app.seeds || [];
+  const combos = cartesian(template.dimensions);
+  return combos.map((context, index) => {
+    const merged = { ...context, n: index + 1, app: app.slug || app.repo };
+    return {
+      id: interpolate(template.id || '{app}-{n}', merged),
+      file: interpolate(template.file || `${app.title} {n}`, merged),
+      brief: interpolate(template.brief || app.default_brief || `${app.title} seeded record {n}.`, merged),
+      tags: pickArray(template.tags, []).map(tag => interpolate(tag, merged)),
+      outputs: pickArray(template.outputs, app.default_outputs || []).map(out => interpolate(out, merged)),
+      searchSummary: interpolate(template.searchSummary || '', merged),
+      whyItMatters: interpolate(template.whyItMatters || app.why_it_matters || '', merged),
+      searchIntro: interpolate(template.searchIntro || app.search_intro || '', merged),
+      searchOutputs: pickArray(template.searchOutputs, []).map(out => interpolate(out, merged)),
+      flagged: Boolean(template.flagged_every && ((index + 1) % Number(template.flagged_every) === 0)),
+      status: template.status || 'complete',
+      time: template.time || 'Demo dataset'
+    };
+  });
+}
+
 function buildRecord(seed, app, index) {
   const idBase = slugify(seed.id || seed.file || `${app.slug}-${index + 1}`);
   const tags = pickArray(seed.tags, app.default_tags || []);
@@ -50,7 +96,7 @@ function generateFromManifest(manifest) {
   for (const app of manifest.apps || []) {
     const items = [];
     const seedCount = Number(app.count || manifest.default_count || 100);
-    const sourceSeeds = app.seeds || [];
+    const sourceSeeds = expandTemplateSeeds(app);
     if (!sourceSeeds.length) {
       throw new Error(`App ${app.repo} has no seeds in manifest`);
     }

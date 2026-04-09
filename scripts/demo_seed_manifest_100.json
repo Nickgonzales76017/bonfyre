@@ -1,0 +1,130 @@
+{
+  "default_count": 100,
+  "apps": [
+    {
+      "repo": "pages-podcast-plant",
+      "slug": "podcast-plant",
+      "title": "Podcast Plant",
+      "out_path": "/Users/nickgonzales/Projects/pages-podcast-plant/site/demos/podcast-plant/demo-items.json",
+      "default_outputs": ["show notes", "clip list", "article draft", "RSS-ready bundle"],
+      "why_it_matters": "A deep episode set makes repurposing, search, and orchestration obvious inside the app instead of sounding like a claim.",
+      "search_intro": "Search across many seeded episodes to compare topics, clips, and publish surfaces from one shared Bonfyre pipeline.",
+      "template": {
+        "dimensions": {
+          "series": ["Creator Systems", "City Makers", "Product Lines", "Local Operators", "Founder Ledger"],
+          "topic": ["community resilience", "municipal budgeting", "small-team shipping", "creator workflows", "artifact-native publishing"],
+          "angle": ["how the workflow scales", "where search becomes useful", "why smaller binaries win", "how one source branches cleanly", "how orchestration changes the result"],
+          "episode": ["001", "002", "003", "004"]
+        },
+        "id": "pod-{series}-{episode}-{topic}",
+        "file": "{series} Episode {episode} — {topic}",
+        "brief": "Episode explores {topic} with a focus on {angle}. The Bonfyre path turns the same source into notes, clips, drafts, and a publish-ready bundle.",
+        "tags": ["podcast", "{topic}", "{series}"],
+        "searchSummary": "{series}, {topic}, {angle}",
+        "whyItMatters": "With many seeded episodes, users can feel how Bonfyre clusters topics, reuses artifacts, and branches outputs without changing the core source object.",
+        "searchOutputs": ["clip list", "RSS-ready bundle"],
+        "flagged_every": 11
+      }
+    },
+    {
+      "repo": "pages-town-box",
+      "slug": "town-box",
+      "title": "Town in a Box",
+      "out_path": "/Users/nickgonzales/Projects/pages-town-box/site/demos/town-box/demo-items.json",
+      "default_outputs": ["civic summary card", "searchable record", "vector memory", "public issue trail"],
+      "why_it_matters": "A larger civic corpus is what makes search, memory, and long-running public issue tracking feel real.",
+      "search_intro": "Search across many town records to connect meetings, resident complaints, and public status objects without leaving the app.",
+      "template": {
+        "dimensions": {
+          "place": ["North River", "East Corridor", "Maple Ward", "Old Market", "South Ridge"],
+          "issue": ["drainage repairs", "crosswalk safety", "street lighting", "waste pickup delays", "park maintenance"],
+          "source": ["committee update", "resident hotline call", "public works briefing", "council town hall"],
+          "wave": ["spring", "summer", "fall", "winter"]
+        },
+        "id": "town-{place}-{issue}-{source}-{wave}",
+        "file": "{place} {issue} — {source}",
+        "brief": "This {source} covers {issue} in {place}. The seeded record highlights where residents need clearer updates, which department owns the response, and how the same civic artifact should stay searchable over time.",
+        "tags": ["meetings", "{issue}", "{place}"],
+        "searchSummary": "{place}, {issue}, {source}, {wave}",
+        "whyItMatters": "When the town demo has depth, users can see retrieval, memory, and issue continuity instead of one isolated summary.",
+        "searchOutputs": ["searchable record", "vector memory"],
+        "flagged_every": 7
+      }
+    },
+    {
+      "repo": "pages-customer-voice",
+      "slug": "customer-voice",
+      "title": "Customer Voice",
+      "out_path": "/Users/nickgonzales/Projects/pages-customer-voice/site/demos/customer-voice/demo-items.json",
+      "default_outputs": ["customer brief", "theme cluster", "voice memory"],
+      "why_it_matters": "A broad call set is what makes theme clustering and memory actually persuasive in a customer-voice product.",
+      "search_intro": "Search across many seeded customer calls to spot recurring friction, product pull, and renewal risk patterns.",
+      "template": {
+        "dimensions": {
+          "segment": ["enterprise", "mid-market", "agency", "education", "local government"],
+          "theme": ["onboarding friction", "pricing pressure", "reporting gaps", "workflow confusion", "integration demand"],
+          "stage": ["renewal review", "implementation call", "exec check-in", "support escalation"],
+          "batch": ["A", "B", "C", "D"]
+        },
+        "id": "cv-{segment}-{theme}-{stage}-{batch}",
+        "file": "{segment} {stage} — {theme}",
+        "brief": "Call captures {theme} during a {stage} with a {segment} customer. The useful demo behavior is seeing that one call becomes part of a broader voice pattern instead of staying isolated.",
+        "tags": ["{segment}", "{theme}", "{stage}"],
+        "searchSummary": "{segment}, {theme}, {stage}",
+        "whyItMatters": "Customer voice only shines when users can connect many calls into patterns, not just open one summary card.",
+        "searchOutputs": ["theme cluster", "voice memory"],
+        "flagged_every": 9
+      }
+    },
+    {
+      "repo": "pages-oss-cockpit",
+      "slug": "oss-cockpit",
+      "title": "OSS Cockpit",
+      "out_path": "/Users/nickgonzales/Projects/pages-oss-cockpit/site/demos/oss-cockpit/demo-items.json",
+      "default_outputs": ["triage summary", "priority tags", "semantic issue memory", "maintainer digest"],
+      "why_it_matters": "Maintainer memory becomes convincing when repeated issue clusters are visible across many triage records.",
+      "search_intro": "Search across many seeded maintainer records to see repeated docs, release, and support patterns emerge.",
+      "template": {
+        "dimensions": {
+          "cluster": ["docs confusion", "release regressions", "setup failures", "support spillover", "CI breakage"],
+          "repo_area": ["cli", "pages", "runtime", "embedding", "packaging"],
+          "priority": ["urgent", "important", "steady", "background"],
+          "cycle": ["week-1", "week-2", "week-3", "week-4"]
+        },
+        "id": "oss-{cluster}-{repo_area}-{cycle}",
+        "file": "{repo_area} {cluster} — {cycle}",
+        "brief": "Maintainer export clusters {cluster} in the {repo_area} area during {cycle}. The point of the demo is seeing how one triage artifact joins a durable maintainer memory instead of disappearing after review.",
+        "tags": ["{repo_area}", "{cluster}", "{priority}"],
+        "searchSummary": "{repo_area}, {cluster}, {priority}",
+        "whyItMatters": "A larger maintainer corpus makes semantic memory and digest handoff feel like real leverage, not a feature bullet.",
+        "searchOutputs": ["semantic issue memory"],
+        "flagged_every": 6
+      }
+    },
+    {
+      "repo": "pages-memory-atlas",
+      "slug": "memory-atlas",
+      "title": "Memory Atlas",
+      "out_path": "/Users/nickgonzales/Projects/pages-memory-atlas/site/demos/memory-atlas/demo-items.json",
+      "default_outputs": ["memory note", "linked memory", "atlas search"],
+      "why_it_matters": "This app only feels special when users can move through a larger web of related memories.",
+      "search_intro": "Search across many seeded memories to see recurring places, people, and events connect into an atlas.",
+      "template": {
+        "dimensions": {
+          "place": ["kitchen", "porch", "train station", "school gym", "county fair"],
+          "event": ["holiday dinner", "storm cleanup", "road trip", "graduation day", "market morning"],
+          "person": ["grandmother", "uncle ray", "older sister", "neighbor tom", "coach lewis"],
+          "era": ["1998", "2004", "2011", "2017"]
+        },
+        "id": "memory-{place}-{event}-{era}",
+        "file": "{event} at the {place} — {era}",
+        "brief": "This memory links {person}, the {place}, and {event} from {era}. The interesting part of the demo is how one memory becomes easier to retrieve once many related moments exist together.",
+        "tags": ["{place}", "{event}", "{era}"],
+        "searchSummary": "{place}, {event}, {person}, {era}",
+        "whyItMatters": "The atlas starts to feel real when a search can surface connected memories instead of returning a single note.",
+        "searchOutputs": ["linked memory", "atlas search"],
+        "flagged_every": 17
+      }
+    }
+  ]
+}
