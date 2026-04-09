@@ -28,6 +28,8 @@ Bonfyre uses three layers here:
 
 If no endpoint is configured, `bonfyre-orchestrate` still produces a valid boost plan from Bonfyre's operator registry and the request contract.
 
+When Gemma is configured, it operates as a bounded delta planner over the deterministic baseline, not as a freeform plan replacement.
+
 ## Commands
 
 ```bash
@@ -118,6 +120,16 @@ Gemma is gated by the current plan itself:
 - low expected information gain: skip the model
 - already-high confidence: skip the model
 - known policy signature: reuse cached booster set first
+
+When Gemma is called, its proposed boosters are only accepted if they pass a stability gate against the baseline plan:
+
+- policy score must improve
+- latency cannot widen beyond the bounded delta
+- cost cannot widen beyond the bounded delta
+- confidence cannot materially degrade
+- reversibility cannot materially degrade
+
+Accepted model deltas surface as `mode: "gemma4-delta"`.
 
 ## Feedback and regret
 

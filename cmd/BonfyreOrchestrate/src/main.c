@@ -64,8 +64,9 @@ static const char *DEFAULT_MODEL = "google/gemma-4-E4B";
 static const char *DEFAULT_POLICY_DB = ".bonfyre/orchestrate.db";
 static const char *SYSTEM_PROMPT =
     "Bonfyre Orchestrate. Machine-only. No user prompting. "
-    "Choose the smallest Bonfyre boost set that improves quality without slowing the fast path. "
-    "Only return JSON with keys selected_binaries and booster_binaries.";
+    "Choose only a small booster delta over the existing deterministic Bonfyre plan. "
+    "Do not restate baseline stages. "
+    "Only return JSON with key booster_binaries.";
 
 static void usage(void) {
     fprintf(stderr,
@@ -826,19 +827,35 @@ static int shell_safe(const char *text) {
     return 1;
 }
 
+static int plan_stable_improvement(const OrchestratePlan *baseline, const OrchestratePlan *candidate) {
+    if (!baseline || !candidate) return 0;
+    if (candidate->predicted_policy_score < baseline->predicted_policy_score + 0.015) return 0;
+    if (candidate->predicted_latency > baseline->predicted_latency + 0.08) return 0;
+    if (candidate->predicted_cost > baseline->predicted_cost + 0.08) return 0;
+    if (candidate->predicted_confidence + 0.02 < baseline->predicted_confidence) return 0;
+    if (candidate->predicted_reversibility + 0.03 < baseline->predicted_reversibility) return 0;
+    return 1;
+}
+
 static void adopt_model_boosters(const OrchestrateRequest *req, OrchestratePlan *plan, const char *response) {
     if (!response) return;
+    OrchestratePlan baseline = *plan;
+    OrchestratePlan candidate = *plan;
     int added = 0;
     for (int i = 0; i < BF_OPERATOR_COUNT; ++i) {
         if (icontains(response, BF_OPERATORS[i].binary) || icontains(response, BF_OPERATORS[i].name)) {
-            int before = plan->booster_count;
-            add_booster(plan, BF_OPERATORS[i].binary);
-            if (plan->booster_count != before) added = 1;
+            int before = candidate.booster_count;
+            add_booster(&candidate, BF_OPERATORS[i].binary);
+            if (candidate.booster_count != before) added = 1;
         }
     }
-    if (added) copy_text(plan->mode, sizeof(plan->mode), "gemma4-assisted");
-    collect_outputs(plan);
-    compute_plan_metrics(req, plan);
+    if (!added) return;
+    rebalance_boosters(req, &candidate);
+    collect_outputs(&candidate);
+    compute_plan_metrics(req, &candidate);
+    if (!plan_stable_improvement(&baseline, &candidate)) return;
+    *plan = candidate;
+    copy_text(plan->mode, sizeof(plan->mode), "gemma4-delta");
 }
 
 static void maybe_call_model(const OrchestrateRequest *req, OrchestratePlan *plan) {
