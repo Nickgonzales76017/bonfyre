@@ -62,6 +62,7 @@ typedef struct {
     int selected_count;
     int boosters[MAX_PLAN_STEPS];
     int booster_count;
+    double booster_scores[MAX_PLAN_STEPS];
     const char *outputs[MAX_PLAN_STEPS];
     int output_count;
     const char *surfaces[8];
@@ -416,7 +417,10 @@ static void rebalance_boosters(const OrchestrateRequest *req, OrchestratePlan *p
     }
 
     double scores[MAX_PLAN_STEPS];
-    for (int i = 0; i < plan->booster_count; ++i) scores[i] = booster_gain_score(req, plan->boosters[i], priors);
+    for (int i = 0; i < plan->booster_count; ++i) {
+        scores[i] = booster_gain_score(req, plan->boosters[i], priors);
+        plan->booster_scores[i] = scores[i];
+    }
 
     for (int i = 0; i < plan->booster_count - 1; ++i) {
         int best = i;
@@ -426,16 +430,23 @@ static void rebalance_boosters(const OrchestrateRequest *req, OrchestratePlan *p
         if (best != i) {
             double score_tmp = scores[i];
             int booster_tmp = plan->boosters[i];
+            double contrib_tmp = plan->booster_scores[i];
             scores[i] = scores[best];
             plan->boosters[i] = plan->boosters[best];
+            plan->booster_scores[i] = plan->booster_scores[best];
             scores[best] = score_tmp;
             plan->boosters[best] = booster_tmp;
+            plan->booster_scores[best] = contrib_tmp;
         }
     }
 
     int keep = 0;
     for (int i = 0; i < plan->booster_count && keep < max_boosters; ++i) {
-        if (scores[i] > 0.12 || keep == 0) plan->boosters[keep++] = plan->boosters[i];
+        if (scores[i] > 0.12 || keep == 0) {
+            plan->boosters[keep] = plan->boosters[i];
+            plan->booster_scores[keep] = plan->booster_scores[i];
+            keep++;
+        }
     }
     plan->booster_count = keep;
 }
@@ -1396,6 +1407,12 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
     for (int i = 0; i < plan->booster_count; ++i) {
         if (i) printf(", ");
         printf("\"%s\"", BF_OPERATORS[plan->boosters[i]].binary);
+    }
+    printf("],\n");
+    printf("  \"booster_contributions\": [");
+    for (int i = 0; i < plan->booster_count; ++i) {
+        if (i) printf(", ");
+        printf("{\"binary\":\"%s\",\"score\":%.3f}", BF_OPERATORS[plan->boosters[i]].binary, plan->booster_scores[i]);
     }
     printf("],\n");
     printf("  \"control_surfaces\": [");
