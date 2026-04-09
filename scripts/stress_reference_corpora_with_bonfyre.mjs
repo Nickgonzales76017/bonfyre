@@ -300,7 +300,16 @@ function summarizeCoverage(appSummary, app, target) {
     .map((source) => ({
       title: source.title,
       score: Number(scoreSource(source).toFixed(1)),
-      patterns: getPatterns(source)
+      patterns: getPatterns(source),
+      query: source.query || '',
+      brief: source.brief || '',
+      public_url: source.public_url || '',
+      approval_checklist: [
+        'confirm public origin URL',
+        'confirm publisher attribution',
+        'confirm license or platform posture',
+        'confirm Bonfyre-fit and pattern coverage'
+      ]
     }))
     .sort((left, right) => right.score - left.score)
     .slice(0, target.recommendedQueuedReview);
@@ -391,12 +400,23 @@ function renderMarkdown(report) {
     lines.push(`- Warnings: ${app.warnings.length ? app.warnings.join(', ') : 'none'}`);
     lines.push('');
     if (app.coverage.top_queued.length) {
-      lines.push('| Next queued source | Score | Patterns |');
-      lines.push('|---|---|---|');
+      lines.push('| Next queued source | Score | Query | Patterns |');
+      lines.push('|---|---|---|---|');
       for (const queued of app.coverage.top_queued) {
-        lines.push(`| ${queued.title} | ${queued.score} | ${queued.patterns.join(', ') || 'none'} |`);
+        lines.push(`| ${queued.title} | ${queued.score} | ${queued.query || 'n/a'} | ${queued.patterns.join(', ') || 'none'} |`);
       }
       lines.push('');
+      for (const queued of app.coverage.top_queued) {
+        lines.push(`### Review Checklist: ${queued.title}`);
+        lines.push('');
+        lines.push(`- Query: ${queued.query || 'n/a'}`);
+        lines.push(`- Why this source: ${queued.brief || 'No source note yet.'}`);
+        lines.push(`- Current public URL: ${queued.public_url || 'pending review'}`);
+        for (const item of queued.approval_checklist) {
+          lines.push(`- ${item}`);
+        }
+        lines.push('');
+      }
     }
     lines.push('| Source | Review | Policy | State | Public origin |');
     lines.push('|---|---|---|---|---|');
@@ -444,17 +464,28 @@ function renderRemediationMarkdown(report) {
     lines.push(`- Urgency: ${item.urgency_score}`);
     lines.push(`- Source gap: ${item.source_gap}`);
     lines.push(`- Missing patterns: ${item.missing_patterns.join(', ') || 'none'}`);
-    lines.push(`- Next action: ${item.next_action}`);
-    lines.push('');
-    if (item.next_sources.length) {
-      lines.push('| Next source | Score | Patterns |');
-      lines.push('|---|---|---|');
+      lines.push(`- Next action: ${item.next_action}`);
+      lines.push('');
+      if (item.next_sources.length) {
+      lines.push('| Next source | Score | Query | Patterns |');
+      lines.push('|---|---|---|---|');
       for (const source of item.next_sources) {
-        lines.push(`| ${source.title} | ${source.score} | ${source.patterns.join(', ') || 'none'} |`);
+        lines.push(`| ${source.title} | ${source.score} | ${source.query || 'n/a'} | ${source.patterns.join(', ') || 'none'} |`);
       }
       lines.push('');
+      for (const source of item.next_sources) {
+        lines.push(`### Review Checklist: ${source.title}`);
+        lines.push('');
+        lines.push(`- Query: ${source.query || 'n/a'}`);
+        lines.push(`- Why this source: ${source.brief || 'No source note yet.'}`);
+        lines.push(`- Current public URL: ${source.public_url || 'pending review'}`);
+        for (const item of source.approval_checklist || []) {
+          lines.push(`- ${item}`);
+        }
+        lines.push('');
+      }
+      }
     }
-  }
   return lines.join('\n') + '\n';
 }
 
