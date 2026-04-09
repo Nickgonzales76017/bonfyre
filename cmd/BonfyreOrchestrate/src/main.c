@@ -97,6 +97,13 @@ typedef struct {
     char source[24];
 } DistilledPriors;
 
+typedef struct {
+    double min_policy_gain;
+    double max_latency_delta;
+    double max_cost_delta;
+    double min_utility_gain;
+} UpliftGate;
+
 static const char *DEFAULT_MODEL = "google/gemma-4-E4B";
 static const char *DEFAULT_POLICY_DB = ".bonfyre/orchestrate.db";
 static const char *SYSTEM_PROMPT =
@@ -104,6 +111,9 @@ static const char *SYSTEM_PROMPT =
     "Choose only a small booster delta over the existing deterministic Bonfyre plan. "
     "Do not restate baseline stages. "
     "Only return JSON with key booster_binaries.";
+
+static const char *objective_family(const OrchestrateRequest *req);
+static int ensure_policy_db(sqlite3 **db);
 
 static void usage(void) {
     fprintf(stderr,
@@ -536,17 +546,88 @@ static void compute_plan_metrics(const OrchestrateRequest *req, OrchestratePlan 
     plan->uplift_information_gain = plan->predicted_information_gain - plan->baseline_information_gain;
 }
 
-static int frontier_uplift_is_worth_it(const OrchestratePlan *plan) {
+static UpliftGate default_uplift_gate(void) {
+    UpliftGate gate = {0.015, 0.050, 0.050, 0.060};
+    return gate;
+}
+
+static UpliftGate adaptive_uplift_gate(const OrchestrateRequest *req) {
+    UpliftGate gate = default_uplift_gate();
+    sqlite3 *db = NULL;
+    if (ensure_policy_db(&db) != 0) return gate;
+    char state_key[64];
+    build_state_key(req, state_key, sizeof(state_key));
+    const char *family = objective_family(req);
+    sqlite3_stmt *stmt = NULL;
+    double avg_regret = 0.0;
+    double policy_score = 0.0;
+    int samples = 0;
+
+    const char *state_sql =
+        "SELECT avg_regret, policy_score, samples FROM orchestration_policy "
+        "WHERE state_key = ?1 ORDER BY samples DESC, updated_at DESC LIMIT 1;";
+    if (sqlite3_prepare_v2(db, state_sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, state_key, -1, SQLITE_STATIC);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            avg_regret = sqlite3_column_double(stmt, 0);
+            policy_score = sqlite3_column_double(stmt, 1);
+            samples = sqlite3_column_int(stmt, 2);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    if (samples < 2) {
+        const char *family_sql =
+            "SELECT avg_regret, policy_score, max(samples) FROM orchestration_policy "
+            "WHERE family = ?1 AND input_type = ?2 AND latency_class = ?3 AND surface = ?4;";
+        if (sqlite3_prepare_v2(db, family_sql, -1, &stmt, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(stmt, 1, family, -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, 2, req->input_type, -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, 3, req->latency_class, -1, SQLITE_STATIC);
+            sqlite3_bind_text(stmt, 4, req->surface, -1, SQLITE_STATIC);
+            if (sqlite3_step(stmt) == SQLITE_ROW) {
+                avg_regret = sqlite3_column_double(stmt, 0);
+                policy_score = sqlite3_column_double(stmt, 1);
+                samples = sqlite3_column_int(stmt, 2);
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(db);
+    if (samples < 2) return gate;
+    if (avg_regret > 0.05) {
+        gate.min_policy_gain += 0.020;
+        gate.max_latency_delta -= 0.015;
+        gate.max_cost_delta -= 0.015;
+        gate.min_utility_gain += 0.030;
+    } else if (avg_regret < -0.10 && policy_score > 0.60) {
+        gate.min_policy_gain -= 0.007;
+        gate.max_latency_delta += 0.010;
+        gate.max_cost_delta += 0.010;
+        gate.min_utility_gain -= 0.015;
+    }
+    if (gate.min_policy_gain < 0.005) gate.min_policy_gain = 0.005;
+    if (gate.max_latency_delta < 0.020) gate.max_latency_delta = 0.020;
+    if (gate.max_cost_delta < 0.020) gate.max_cost_delta = 0.020;
+    if (gate.min_utility_gain < 0.020) gate.min_utility_gain = 0.020;
+    return gate;
+}
+
+static int frontier_uplift_is_worth_it(const OrchestratePlan *plan, UpliftGate gate) {
     if (!plan) return 0;
     if (plan->booster_count <= 0) return 1;
-    if (plan->uplift_policy_score >= 0.015) return 1;
-    if (plan->uplift_utility >= 0.060 && plan->uplift_latency <= 0.050 && plan->uplift_cost <= 0.050) return 1;
+    if (plan->uplift_policy_score >= gate.min_policy_gain) return 1;
+    if (plan->uplift_utility >= gate.min_utility_gain &&
+        plan->uplift_latency <= gate.max_latency_delta &&
+        plan->uplift_cost <= gate.max_cost_delta) return 1;
     return 0;
 }
 
 static void apply_frontier_uplift_gate(const OrchestrateRequest *req, OrchestratePlan *plan) {
     if (!plan || plan->booster_count <= 0) return;
-    if (frontier_uplift_is_worth_it(plan)) return;
+    UpliftGate gate = adaptive_uplift_gate(req);
+    if (frontier_uplift_is_worth_it(plan, gate)) return;
     plan->booster_count = 0;
     collect_outputs(plan);
     compute_plan_metrics(req, plan);
@@ -1290,6 +1371,7 @@ static void maybe_call_model(const OrchestrateRequest *req, OrchestratePlan *pla
 static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *plan) {
     BfDomainWeights w = objective_weights(req);
     OrchestrateStateVector sv = request_state_vector(req);
+    UpliftGate gate = adaptive_uplift_gate(req);
     const char *family = objective_family(req);
     const char *policy_source = policy_source_for_mode(plan->mode);
     char state_key[64];
@@ -1383,6 +1465,12 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
     printf("    \"max_cost_delta\": %.3f,\n", 0.080);
     printf("    \"max_confidence_drop\": %.3f,\n", 0.020);
     printf("    \"max_reversibility_drop\": %.3f\n", 0.030);
+    printf("  },\n");
+    printf("  \"uplift_gate\": {\n");
+    printf("    \"min_policy_gain\": %.3f,\n", gate.min_policy_gain);
+    printf("    \"max_latency_delta\": %.3f,\n", gate.max_latency_delta);
+    printf("    \"max_cost_delta\": %.3f,\n", gate.max_cost_delta);
+    printf("    \"min_utility_gain\": %.3f\n", gate.min_utility_gain);
     printf("  }\n");
     printf("}\n");
 }

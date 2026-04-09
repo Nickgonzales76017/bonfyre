@@ -298,6 +298,8 @@ That gives Bonfyre an explicit counterfactual against the deterministic floor, s
 
 Bonfyre now also uses that counterfactual internally as an uplift gate. If the retained frontier does not clear the minimum policy gain or a bounded utility tradeoff, the planner collapses back to the deterministic floor instead of keeping decorative or harmful boosters.
 
+That uplift gate is now adaptive by workload memory. When similar state or family histories show boosters paying off consistently, the gate relaxes slightly. When history shows regret or poor payoff, the gate tightens.
+
 ## Booster frontier
 
 The baseline planner no longer keeps every keyword-matched booster. It now scores candidate boosters against the request's objective-weighted control surface and keeps only the highest-value frontier under the current latency budget.
