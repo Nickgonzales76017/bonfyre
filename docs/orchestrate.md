@@ -32,9 +32,8 @@ If no endpoint is configured, `bonfyre-orchestrate` still produces a valid boost
 
 ```bash
 bonfyre-orchestrate status
-bonfyre-orchestrate surfaces --json
-bonfyre-orchestrate template audio
 bonfyre-orchestrate plan request.json
+bonfyre-orchestrate feedback request.json 0.22 0.08
 ```
 
 ## Environment
@@ -66,7 +65,14 @@ export BONFYRE_ORCHESTRATE_API_KEY=...
   "selected_binaries": ["bonfyre-ingest", "bonfyre-media-prep", "bonfyre-transcribe", "bonfyre-brief"],
   "booster_binaries": ["bonfyre-narrate", "bonfyre-render", "bonfyre-emit", "bonfyre-pack"],
   "control_surfaces": ["bonfyre-render", "bonfyre-emit", "bonfyre-queue"],
-  "expected_outputs": ["normalized-audio", "transcript", "brief", "rendered-output", "formatted-output"]
+  "expected_outputs": ["normalized-audio", "transcript", "brief", "rendered-output", "formatted-output"],
+  "predicted_cost": 0.452,
+  "predicted_latency": 0.387,
+  "predicted_confidence": 0.731,
+  "predicted_reversibility": 0.804,
+  "predicted_utility": 0.779,
+  "predicted_information_gain": 0.512,
+  "predicted_policy_score": 0.603
 }
 ```
 
@@ -148,3 +154,15 @@ Bonfyre now also derives compact domain signals from each feedback event:
 These are stored in the same policy table and folded into a composite `policy_score`.
 
 That means the planner can start treating Lambda Tensors, CMS relational fit, retrieval lift, and execution quality as different observability surfaces instead of flattening everything into one scalar too early.
+
+## Objective weighting
+
+The composite `policy_score` is not flat. Bonfyre now reweights domains by request intent before scoring:
+
+- CMS and publish-heavy requests bias toward `cms` and `artifact`
+- retrieval and semantic requests bias toward `retrieval` and `tensor`
+- tensor and compression requests bias toward `tensor`
+- value workflows bias toward `value`
+- fast and interactive surfaces bias toward `exec`
+
+That same objective-aware weighting is used for `predicted_policy_score`, so the planner compares paths against the right control surface for the current job instead of a universal reward curve.
