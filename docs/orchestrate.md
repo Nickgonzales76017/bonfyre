@@ -306,6 +306,8 @@ When boosters do survive, `booster_contributions` shows their individual frontie
 
 `frontier_decision` makes that explicit by reporting whether the frontier was retained or collapsed, plus how many boosters existed before and after the gate.
 
+It also reports the reason code and the measured gain/delta values that drove the decision, so Bonfyre can learn from specific gate failures such as `policy-gain-too-low`, `utility-gain-too-low`, `latency-delta-too-high`, or `cost-delta-too-high`.
+
 ## Booster frontier
 
 The baseline planner no longer keeps every keyword-matched booster. It now scores candidate boosters against the request's objective-weighted control surface and keeps only the highest-value frontier under the current latency budget.

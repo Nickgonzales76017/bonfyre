@@ -92,6 +92,7 @@ typedef struct {
     double uplift_utility;
     double uplift_information_gain;
     char frontier_decision[32];
+    char frontier_reason[48];
 } OrchestratePlan;
 
 typedef struct {
@@ -643,7 +644,23 @@ static void apply_frontier_uplift_gate(const OrchestrateRequest *req, Orchestrat
     UpliftGate gate = adaptive_uplift_gate(req);
     if (frontier_uplift_is_worth_it(plan, gate)) {
         copy_text(plan->frontier_decision, sizeof(plan->frontier_decision), "retained");
+        if (plan->uplift_policy_score >= gate.min_policy_gain) {
+            copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "policy-gain-cleared");
+        } else {
+            copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "utility-tradeoff-cleared");
+        }
         return;
+    }
+    if (plan->uplift_policy_score < gate.min_policy_gain) {
+        copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "policy-gain-too-low");
+    } else if (plan->uplift_utility < gate.min_utility_gain) {
+        copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "utility-gain-too-low");
+    } else if (plan->uplift_latency > gate.max_latency_delta) {
+        copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "latency-delta-too-high");
+    } else if (plan->uplift_cost > gate.max_cost_delta) {
+        copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "cost-delta-too-high");
+    } else {
+        copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "uplift-gate-failed");
     }
     plan->booster_count = 0;
     collect_outputs(plan);
@@ -1096,6 +1113,7 @@ static void init_plan(OrchestratePlan *plan, const char *model) {
     copy_text(plan->mode, sizeof(plan->mode), "heuristic");
     copy_text(plan->model, sizeof(plan->model), model && model[0] ? model : DEFAULT_MODEL);
     copy_text(plan->frontier_decision, sizeof(plan->frontier_decision), "floor-only");
+    copy_text(plan->frontier_reason, sizeof(plan->frontier_reason), "no-boosters-selected");
 }
 
 static void heuristic_plan(const OrchestrateRequest *req, OrchestratePlan *plan) {
@@ -1462,8 +1480,13 @@ static void print_plan(const OrchestrateRequest *req, const OrchestratePlan *pla
     printf("  },\n");
     printf("  \"frontier_decision\": {\n");
     printf("    \"decision\": \"%s\",\n", plan->frontier_decision);
+    printf("    \"reason\": \"%s\",\n", plan->frontier_reason);
     printf("    \"pre_gate_boosters\": %d,\n", plan->pre_gate_booster_count);
-    printf("    \"retained_boosters\": %d\n", plan->booster_count);
+    printf("    \"retained_boosters\": %d,\n", plan->booster_count);
+    printf("    \"measured_policy_gain\": %.3f,\n", plan->uplift_policy_score);
+    printf("    \"measured_utility_gain\": %.3f,\n", plan->uplift_utility);
+    printf("    \"measured_latency_delta\": %.3f,\n", plan->uplift_latency);
+    printf("    \"measured_cost_delta\": %.3f\n", plan->uplift_cost);
     printf("  },\n");
     printf("  \"active_domain_weights\": {\n");
     printf("    \"exec\": %.3f,\n", w.exec);
