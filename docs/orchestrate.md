@@ -246,6 +246,17 @@ Each request is also compressed into a small machine state:
 
 This is Bonfyre's sufficient-statistics layer for orchestration. It keeps the planner oriented around modality, surface, latency class, objective family, and artifact shape instead of letting orchestration drift into raw-string prompt logic.
 
+The Gemma path now uses that same compressed substrate too. When Bonfyre asks the model for a delta, it sends:
+
+- `state_key`
+- `state_vector`
+- `active_domain_weights`
+- the deterministic baseline frontier
+- the stability gate
+- the typed operator registry
+
+So the model sees Bonfyre's machine ontology and bounded control surface rather than a loose human-style request blob.
+
 ## Booster frontier
 
 The baseline planner no longer keeps every keyword-matched booster. It now scores candidate boosters against the request's objective-weighted control surface and keeps only the highest-value frontier under the current latency budget.

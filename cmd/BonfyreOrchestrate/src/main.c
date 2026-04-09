@@ -954,6 +954,59 @@ static void write_registry(FILE *fp) {
     fputc(']', fp);
 }
 
+static void write_domain_weights(FILE *fp, BfDomainWeights w) {
+    fprintf(fp,
+            "{\"exec\":%.3f,\"artifact\":%.3f,\"tensor\":%.3f,\"cms\":%.3f,\"retrieval\":%.3f,\"value\":%.3f}",
+            w.exec, w.artifact, w.tensor, w.cms, w.retrieval, w.value);
+}
+
+static void write_state_vector(FILE *fp, OrchestrateStateVector v) {
+    fprintf(fp,
+            "{\"modality_audio\":%s,\"modality_artifact\":%s,\"modality_text\":%s,"
+            "\"surface_pages\":%s,\"surface_api\":%s,\"surface_jobs\":%s,"
+            "\"latency_interactive\":%s,\"latency_batch\":%s,"
+            "\"objective_publish\":%s,\"objective_retrieval\":%s,\"objective_value\":%s,\"objective_cms\":%s,"
+            "\"artifact_local\":%s,\"artifact_structured\":%s}",
+            v.modality_audio ? "true" : "false",
+            v.modality_artifact ? "true" : "false",
+            v.modality_text ? "true" : "false",
+            v.surface_pages ? "true" : "false",
+            v.surface_api ? "true" : "false",
+            v.surface_jobs ? "true" : "false",
+            v.latency_interactive ? "true" : "false",
+            v.latency_batch ? "true" : "false",
+            v.objective_publish ? "true" : "false",
+            v.objective_retrieval ? "true" : "false",
+            v.objective_value ? "true" : "false",
+            v.objective_cms ? "true" : "false",
+            v.artifact_local ? "true" : "false",
+            v.artifact_structured ? "true" : "false");
+}
+
+static void write_baseline_frontier(FILE *fp, const OrchestratePlan *plan) {
+    fprintf(fp, "{\"selected_binaries\":[");
+    for (int i = 0; i < plan->selected_count; ++i) {
+        if (i) fputc(',', fp);
+        fprintf(fp, "\"");
+        escape_json(fp, BF_OPERATORS[plan->selected[i]].binary);
+        fprintf(fp, "\"");
+    }
+    fprintf(fp, "],\"booster_binaries\":[");
+    for (int i = 0; i < plan->booster_count; ++i) {
+        if (i) fputc(',', fp);
+        fprintf(fp, "\"");
+        escape_json(fp, BF_OPERATORS[plan->boosters[i]].binary);
+        fprintf(fp, "\"");
+    }
+    fprintf(fp,
+            "],\"predicted_cost\":%.3f,\"predicted_latency\":%.3f,\"predicted_confidence\":%.3f,"
+            "\"predicted_reversibility\":%.3f,\"predicted_utility\":%.3f,\"predicted_information_gain\":%.3f,"
+            "\"predicted_policy_score\":%.3f}",
+            plan->predicted_cost, plan->predicted_latency, plan->predicted_confidence,
+            plan->predicted_reversibility, plan->predicted_utility, plan->predicted_information_gain,
+            plan->predicted_policy_score);
+}
+
 static char *slurp(FILE *fp) {
     size_t cap = 4096, len = 0;
     char *buf = malloc(cap);
@@ -1020,6 +1073,10 @@ static void maybe_call_model(const OrchestrateRequest *req, OrchestratePlan *pla
     const char *api_key = getenv("BONFYRE_ORCHESTRATE_API_KEY");
     if (plan->predicted_information_gain < 0.45 || plan->predicted_confidence > 0.78) return;
     if (!endpoint || !endpoint[0] || !shell_safe(endpoint)) return;
+    OrchestrateStateVector sv = request_state_vector(req);
+    BfDomainWeights w = objective_weights(req);
+    char state_key[64];
+    build_state_key(req, state_key, sizeof(state_key));
 
     char request_path[] = "/tmp/bonfyre-orchestrate-XXXXXX";
     int fd = mkstemp(request_path);
@@ -1032,15 +1089,17 @@ static void maybe_call_model(const OrchestrateRequest *req, OrchestratePlan *pla
     fprintf(fp, "\",\"temperature\":0.1,\"response_format\":{\"type\":\"json_object\"},\"messages\":[");
     fprintf(fp, "{\"role\":\"system\",\"content\":\"");
     escape_json(fp, SYSTEM_PROMPT);
-    fprintf(fp, "\"},{\"role\":\"user\",\"content\":\"request={\\\"input_type\\\":\\\"");
-    escape_json(fp, req->input_type);
-    fprintf(fp, "\\\",\\\"objective\\\":\\\"");
-    escape_json(fp, req->objective);
-    fprintf(fp, "\\\",\\\"latency_class\\\":\\\"");
-    escape_json(fp, req->latency_class);
-    fprintf(fp, "\\\",\\\"surface\\\":\\\"");
-    escape_json(fp, req->surface);
-    fprintf(fp, "\\\"},operators=");
+    fprintf(fp, "\"},{\"role\":\"user\",\"content\":\"state_key=");
+    escape_json(fp, state_key);
+    fprintf(fp, ";objective_family=");
+    escape_json(fp, objective_family(req));
+    fprintf(fp, ";state_vector=");
+    write_state_vector(fp, sv);
+    fprintf(fp, ";active_domain_weights=");
+    write_domain_weights(fp, w);
+    fprintf(fp, ";baseline_frontier=");
+    write_baseline_frontier(fp, plan);
+    fprintf(fp, ";stability_gate={\\\"min_policy_gain\\\":0.015,\\\"max_latency_delta\\\":0.080,\\\"max_cost_delta\\\":0.080,\\\"max_confidence_drop\\\":0.020,\\\"max_reversibility_drop\\\":0.030};operators=");
     write_registry(fp);
     fprintf(fp, "\"}]}");
     fclose(fp);
