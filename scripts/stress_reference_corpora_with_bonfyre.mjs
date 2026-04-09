@@ -25,6 +25,22 @@ function getSignal(source, key) {
   return Number((source.signal || {})[key] || 0);
 }
 
+function scoreSource(source) {
+  const signal = source.signal || {};
+  const messy = Number(signal.messy_audio || 0);
+  const jargon = Number(signal.jargon_density || 0);
+  const social = Number(signal.social_complexity || 0);
+  const fit = Number(signal.bonfyre_fit || 0);
+  const provenance = Number(signal.provenance_confidence || 0);
+  const safety = Number(signal.public_safety || 0);
+  return messy * 1.4 + jargon * 1.2 + social * 1.1 + fit * 1.8 + provenance * 1.3 + safety * 1.0;
+}
+
+function getPatterns(source) {
+  const tags = Array.isArray(source.tags) ? source.tags : [];
+  return tags.slice(1);
+}
+
 function inferContract(app) {
   const repo = String(app.repo || '');
   if (repo.includes('town-box')) {
@@ -272,6 +288,32 @@ function nextActionForApp(appSummary) {
   return 'Continue expanding reviewed public-source coverage while preserving the current plan quality floor.';
 }
 
+function summarizeCoverage(appSummary, app, target) {
+  const allSources = Array.isArray(app.sources) ? app.sources : [];
+  const approved = allSources.filter((source) => String(source.review_status || '').toLowerCase() === 'approved');
+  const queued = allSources.filter((source) => String(source.review_status || '').toLowerCase() === 'queued');
+  const approvedPatterns = [...new Set(approved.flatMap((source) => getPatterns(source)))];
+  const queuedPatterns = [...new Set(queued.flatMap((source) => getPatterns(source)))];
+  const missingPatterns = queuedPatterns.filter((pattern) => !approvedPatterns.includes(pattern)).slice(0, 6);
+  const sourceGap = Math.max(0, target.minApprovedSources - approved.length);
+  const topQueued = queued
+    .map((source) => ({
+      title: source.title,
+      score: Number(scoreSource(source).toFixed(1)),
+      patterns: getPatterns(source)
+    }))
+    .sort((left, right) => right.score - left.score)
+    .slice(0, target.recommendedQueuedReview);
+
+  appSummary.coverage = {
+    source_gap: sourceGap,
+    approved_patterns: approvedPatterns,
+    queued_patterns: queuedPatterns,
+    missing_patterns: missingPatterns,
+    top_queued: topQueued
+  };
+}
+
 function renderMarkdown(report) {
   const lines = [];
   lines.push('# Bonfyre Reference Corpus Stress Report');
@@ -311,9 +353,20 @@ function renderMarkdown(report) {
     lines.push(`- Readiness target: approved>=${app.readiness_target.minApprovedSources}, provenance>=${app.readiness_target.minProvenanceRatio}, differentiation>=${app.readiness_target.minDifferentiation}`);
     lines.push(`- Readiness verdict: ${app.readiness_verdict}`);
     lines.push(`- Next action: ${app.next_action}`);
+    lines.push(`- Source gap: ${app.coverage.source_gap}`);
+    lines.push(`- Approved patterns: ${app.coverage.approved_patterns.join(', ') || 'none'}`);
+    lines.push(`- Missing patterns: ${app.coverage.missing_patterns.join(', ') || 'none'}`);
     lines.push(`- Modes: ${Object.entries(app.mode_counts).map(([k, v]) => `${k}=${v}`).join(', ') || 'none'}`);
     lines.push(`- Warnings: ${app.warnings.length ? app.warnings.join(', ') : 'none'}`);
     lines.push('');
+    if (app.coverage.top_queued.length) {
+      lines.push('| Next queued source | Score | Patterns |');
+      lines.push('|---|---|---|');
+      for (const queued of app.coverage.top_queued) {
+        lines.push(`| ${queued.title} | ${queued.score} | ${queued.patterns.join(', ') || 'none'} |`);
+      }
+      lines.push('');
+    }
     lines.push('| Source | Review | Policy | State | Public origin |');
     lines.push('|---|---|---|---|---|');
     for (const source of app.sources) {
@@ -420,6 +473,13 @@ function main() {
         differentiation_score: 0,
         readiness_verdict: '',
         next_action: '',
+        coverage: {
+          source_gap: 0,
+          approved_patterns: [],
+          queued_patterns: [],
+          missing_patterns: [],
+          top_queued: []
+        },
         warnings: [],
         binaries: {},
         sources: []
@@ -540,6 +600,7 @@ function main() {
       if (appSummary.source_count > 1 && appSummary.differentiation_score < 0.55) {
         appSummary.warnings.push('low-plan-differentiation');
       }
+      summarizeCoverage(appSummary, app, appSummary.readiness_target);
       appSummary.readiness_verdict = classifyReadiness(appSummary);
       appSummary.next_action = nextActionForApp(appSummary);
       report.apps.push(appSummary);
