@@ -1,0 +1,59 @@
+# Bonfyre Backend Stack
+# Runs API gateway + queue worker sharing a single SQLite WAL database.
+#
+# Start:   docker compose up -d
+# Logs:    docker compose logs -f
+# Stop:    docker compose down
+# Rebuild: docker compose build --no-cache
+
+services:
+  # ── HTTP Gateway ─────────────────────────────────────────
+  api:
+    build: .
+    container_name: bonfyre-api
+    command:
+      - bonfyre-api
+      - serve
+      - --port
+      - "9999"
+      - --db
+      - /data/queue.db
+    ports:
+      - "${BONFYRE_PORT:-9999}:9999"
+    volumes:
+      - bonfyre-data:/data
+    environment:
+      BONFYRE_DB: /data/queue.db
+      BONFYRE_UPLOAD_DIR: /data/uploads
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9999/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  # ── Queue Worker Daemon ──────────────────────────────────
+  worker:
+    build: .
+    container_name: bonfyre-worker
+    command:
+      - bonfyre-queue
+      - work
+      - --workers
+      - "${BONFYRE_WORKERS:-4}"
+      - --db
+      - /data/queue.db
+    volumes:
+      - bonfyre-data:/data
+    environment:
+      BONFYRE_DB: /data/queue.db
+      BONFYRE_UPLOAD_DIR: /data/uploads
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  bonfyre-data:
+    driver: local

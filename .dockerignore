@@ -1,0 +1,7 @@
+.git
+*.md
+pgo-data/
+site/
+scripts/
+pages-*/
+.github/
