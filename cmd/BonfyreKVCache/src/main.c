@@ -110,12 +110,12 @@ static void e8_snap(const float *x, float *out) {
     float c0[8];
     vst1q_f32(c0, r_lo); vst1q_f32(c0 + 4, r_hi);
     if (sum0 & 1) {
-        float worst_margin = FLT_MAX; int worst_idx = 0;
+        float best_margin = -1.0f; int best_idx = 0;
         for (int d = 0; d < 8; d++) {
             float m = fabsf(x[d] - c0[d]);
-            if (m < worst_margin) { worst_margin = m; worst_idx = d; }
+            if (m > best_margin) { best_margin = m; best_idx = d; }
         }
-        c0[worst_idx] += (x[worst_idx] > c0[worst_idx]) ? 1.0f : -1.0f;
+        c0[best_idx] += (x[best_idx] > c0[best_idx]) ? 1.0f : -1.0f;
     }
 
     float32x4_t h_lo = vaddq_f32(vrndmq_f32(x_lo), half);
@@ -130,12 +130,12 @@ static void e8_snap(const float *x, float *out) {
     float c1[8];
     vst1q_f32(c1, h_lo); vst1q_f32(c1 + 4, h_hi);
     if (fsum1 & 1) {
-        float worst_margin = FLT_MAX; int worst_idx = 0;
+        float best_margin = -1.0f; int best_idx = 0;
         for (int d = 0; d < 8; d++) {
             float m = fabsf(x[d] - c1[d]);
-            if (m < worst_margin) { worst_margin = m; worst_idx = d; }
+            if (m > best_margin) { best_margin = m; best_idx = d; }
         }
-        c1[worst_idx] += (x[worst_idx] > c1[worst_idx]) ? 1.0f : -1.0f;
+        c1[best_idx] += (x[best_idx] > c1[best_idx]) ? 1.0f : -1.0f;
     }
 
     float d0 = 0, d1 = 0;
@@ -153,10 +153,10 @@ static void e8_snap(const float *x, float *out) {
     int sum0 = 0;
     for (int d = 0; d < 8; d++) { c0[d] = roundf(x[d]); sum0 += (int)c0[d]; }
     if (sum0 & 1) {
-        float worst = FLT_MAX; int wi = 0;
+        float best = -1.0f; int wi = 0;
         for (int d = 0; d < 8; d++) {
             float m = fabsf(x[d] - c0[d]);
-            if (m < worst) { worst = m; wi = d; }
+            if (m > best) { best = m; wi = d; }
         }
         c0[wi] += (x[wi] > c0[wi]) ? 1.0f : -1.0f;
     }
@@ -165,10 +165,10 @@ static void e8_snap(const float *x, float *out) {
         c1[d] = floorf(x[d]) + 0.5f; fsum += (int)floorf(c1[d]);
     }
     if (fsum & 1) {
-        float worst = FLT_MAX; int wi = 0;
+        float best = -1.0f; int wi = 0;
         for (int d = 0; d < 8; d++) {
             float m = fabsf(x[d] - c1[d]);
-            if (m < worst) { worst = m; wi = d; }
+            if (m > best) { best = m; wi = d; }
         }
         c1[wi] += (x[wi] > c1[wi]) ? 1.0f : -1.0f;
     }
