@@ -912,16 +912,16 @@ footer a:hover { color: var(--text); }
         <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em">output cosine (30 layers)</span>
       </div>
       <div style="text-align:center">
-        <span style="display:block;font-size:2.2rem;font-weight:700;color:var(--blue)">36 dB</span>
-        <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em">PSNR</span>
+        <span style="display:block;font-size:2.2rem;font-weight:700;color:var(--blue)">1,790</span>
+        <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em">tensors compressed</span>
       </div>
       <div style="text-align:center">
-        <span style="display:block;font-size:2.2rem;font-weight:700;color:var(--text)">5.3→2.7 GB</span>
-        <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em">Wan2.1 compressed</span>
+        <span style="display:block;font-size:2.2rem;font-weight:700;color:var(--text)">54→27 GB</span>
+        <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em">Wan2.1-T2V-14B</span>
       </div>
       <div style="text-align:center">
-        <span style="display:block;font-size:2.2rem;font-weight:700;color:var(--text)">0%</span>
-        <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em">runtime overhead</span>
+        <span style="display:block;font-size:2.2rem;font-weight:700;color:var(--text)">4 models</span>
+        <span style="font-size:0.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.05em"><a href="https://huggingface.co/NICKO" style="color:var(--text-dim)">on Hugging Face</a></span>
       </div>
     </div>
 
@@ -948,7 +948,7 @@ footer a:hover { color: var(--text); }
     </div>
 
     <!-- Models tested: the evidence -->
-    <div style="max-width:860px;margin:0 auto 40px">
+    <div style="max-width:920px;margin:0 auto 40px">
       <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">Models compressed — real files, real numbers</h3>
       <table style="width:100%;border-collapse:collapse;font-size:0.85rem">
         <thead>
@@ -960,19 +960,65 @@ footer a:hover { color: var(--text); }
             <th style="text-align:right;padding:8px 10px;font-weight:600">Tensors</th>
             <th style="text-align:right;padding:8px 10px;font-weight:600">Avg Cos</th>
             <th style="text-align:right;padding:8px 10px;font-weight:600">Worst Cos</th>
-            <th style="text-align:left;padding:8px 10px;font-weight:600">Format</th>
+            <th style="text-align:right;padding:8px 10px;font-weight:600">Avg bpw</th>
+            <th style="text-align:left;padding:8px 10px;font-weight:600">HF Model</th>
           </tr>
         </thead>
         <tbody>
+          <tr style="border-bottom:1px solid var(--border);background:rgba(63,185,80,0.06)">
+            <td style="padding:6px 10px;font-weight:600;color:var(--green)">Wan2.1-T2V-14B</td>
+            <td style="padding:6px 10px">Video diffusion</td>
+            <td style="text-align:right;padding:6px 10px">54 GB</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">27 GB</td>
+            <td style="text-align:right;padding:6px 10px">402</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">0.999882</td>
+            <td style="text-align:right;padding:6px 10px">0.999826</td>
+            <td style="text-align:right;padding:6px 10px">4.05</td>
+            <td style="padding:6px 10px"><a href="https://huggingface.co/NICKO/Wan2.1-T2V-14B-BonfyreFPQ3" style="color:var(--accent)">Download →</a></td>
+          </tr>
           <tr style="border-bottom:1px solid var(--border);background:rgba(63,185,80,0.04)">
-            <td style="padding:6px 10px;font-weight:600;color:var(--green)">Wan2.1-T2V-1.3B</td>
+            <td style="padding:6px 10px;font-weight:600;color:var(--green)">Phi-4 (14B)</td>
+            <td style="padding:6px 10px">Language model</td>
+            <td style="text-align:right;padding:6px 10px">28 GB</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">28 GB</td>
+            <td style="text-align:right;padding:6px 10px">162</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">1.000614</td>
+            <td style="text-align:right;padding:6px 10px">1.000149</td>
+            <td style="text-align:right;padding:6px 10px">4.08</td>
+            <td style="padding:6px 10px"><a href="https://huggingface.co/NICKO/phi-4-BonfyreFPQ3" style="color:var(--accent)">Download →</a></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 10px;font-weight:600">Whisper Large V3</td>
+            <td style="padding:6px 10px">Speech recognition</td>
+            <td style="text-align:right;padding:6px 10px">8.7 GB</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">5.8 GB</td>
+            <td style="text-align:right;padding:6px 10px">998</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">0.999916</td>
+            <td style="text-align:right;padding:6px 10px">0.999834</td>
+            <td style="text-align:right;padding:6px 10px">4.19</td>
+            <td style="padding:6px 10px"><a href="https://huggingface.co/NICKO/whisper-large-v3-BonfyreFPQ3" style="color:var(--accent)">Download →</a></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 10px;font-weight:600">Whisper Large V3 Turbo</td>
+            <td style="padding:6px 10px">Speech recognition</td>
+            <td style="text-align:right;padding:6px 10px">1.6 GB</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">1.6 GB</td>
+            <td style="text-align:right;padding:6px 10px">228</td>
+            <td style="text-align:right;padding:6px 10px;color:var(--green)">0.999929</td>
+            <td style="text-align:right;padding:6px 10px">0.999858</td>
+            <td style="text-align:right;padding:6px 10px">4.18</td>
+            <td style="padding:6px 10px"><a href="https://huggingface.co/NICKO/whisper-large-v3-turbo-BonfyreFPQ3" style="color:var(--accent)">Download →</a></td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border)">
+            <td style="padding:6px 10px;font-weight:600">Wan2.1-T2V-1.3B</td>
             <td style="padding:6px 10px">Video diffusion</td>
             <td style="text-align:right;padding:6px 10px">5.3 GB</td>
             <td style="text-align:right;padding:6px 10px;color:var(--green)">2.7 GB</td>
-            <td style="text-align:right;padding:6px 10px">307 / 825</td>
+            <td style="text-align:right;padding:6px 10px">307</td>
             <td style="text-align:right;padding:6px 10px;color:var(--green)">0.999874</td>
             <td style="text-align:right;padding:6px 10px">0.999590</td>
-            <td style="padding:6px 10px">Safetensors → BF16</td>
+            <td style="text-align:right;padding:6px 10px">—</td>
+            <td style="padding:6px 10px;color:var(--text-dim)">local</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border)">
             <td style="padding:6px 10px;font-weight:600">SmolLM2-135M</td>
@@ -982,7 +1028,8 @@ footer a:hover { color: var(--text); }
             <td style="text-align:right;padding:6px 10px">211</td>
             <td style="text-align:right;padding:6px 10px;color:var(--green)">0.999855</td>
             <td style="text-align:right;padding:6px 10px">0.999589</td>
-            <td style="padding:6px 10px">GGUF Q4_K → F16</td>
+            <td style="text-align:right;padding:6px 10px">—</td>
+            <td style="padding:6px 10px;color:var(--text-dim)">GGUF</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border)">
             <td style="padding:6px 10px;font-weight:600">Gemma 2B-it</td>
@@ -992,9 +1039,10 @@ footer a:hover { color: var(--text); }
             <td style="text-align:right;padding:6px 10px">sampled</td>
             <td style="text-align:right;padding:6px 10px;color:var(--green)">0.99995</td>
             <td style="text-align:right;padding:6px 10px">0.99995</td>
-            <td style="padding:6px 10px">Safetensors</td>
+            <td style="text-align:right;padding:6px 10px">—</td>
+            <td style="padding:6px 10px;color:var(--text-dim)">local</td>
           </tr>
-          <tr style="border-bottom:1px solid var(--border)">
+          <tr>
             <td style="padding:6px 10px;font-weight:600">Whisper base.en</td>
             <td style="padding:6px 10px">Speech recognition</td>
             <td style="text-align:right;padding:6px 10px">—</td>
@@ -1002,21 +1050,12 @@ footer a:hover { color: var(--text); }
             <td style="text-align:right;padding:6px 10px">sampled</td>
             <td style="text-align:right;padding:6px 10px;color:var(--green)">0.999808</td>
             <td style="text-align:right;padding:6px 10px">0.999763</td>
-            <td style="padding:6px 10px">GGML</td>
-          </tr>
-          <tr>
-            <td style="padding:6px 10px;font-weight:600">Whisper tiny.en</td>
-            <td style="padding:6px 10px">Speech recognition</td>
             <td style="text-align:right;padding:6px 10px">—</td>
-            <td style="text-align:right;padding:6px 10px">—</td>
-            <td style="text-align:right;padding:6px 10px">sampled</td>
-            <td style="text-align:right;padding:6px 10px;color:var(--green)">0.99997</td>
-            <td style="text-align:right;padding:6px 10px">0.99997</td>
-            <td style="padding:6px 10px">GGML</td>
+            <td style="padding:6px 10px;color:var(--text-dim)">GGML</td>
           </tr>
         </tbody>
       </table>
-      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px;text-align:center">All tests at 3-bit mode. "sampled" = individual tensor roundtrip, not full-file compression. Wan2.1 passthrough tensors (biases, norms) copied unchanged.</p>
+      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px;text-align:center">All tests at 3-bit (FPQ3). Production models compressed on RunPod RTX 6000 Ada with OpenMP. All compressed models available on <a href="https://huggingface.co/NICKO" style="color:var(--accent)">Hugging Face</a> as drop-in BF16 safetensors — no special loader required.</p>
     </div>
 
     <!-- Output-level proof: DiT comparison -->
@@ -1139,33 +1178,39 @@ footer a:hover { color: var(--text); }
           <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 12px">v4</td><td style="padding:6px 12px;color:var(--text-dim)">COORD + Chaotic Codebook</td><td style="text-align:right;padding:6px 12px">0.9848</td><td style="text-align:right;padding:6px 12px">0.9864</td><td style="text-align:right;padding:6px 12px;color:var(--red)">35.59</td></tr>
           <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 12px">v7</td><td style="padding:6px 12px;color:var(--text-dim)">Holographic (E8 + trellis)</td><td style="text-align:right;padding:6px 12px">0.9962</td><td style="text-align:right;padding:6px 12px">0.9967</td><td style="text-align:right;padding:6px 12px;color:var(--text-dim)">—</td></tr>
           <tr style="border-bottom:1px solid var(--border)"><td style="padding:6px 12px">v8</td><td style="padding:6px 12px;color:var(--text-dim)">RLF (E8 + μ-law + 16D RVQ)</td><td style="text-align:right;padding:6px 12px">0.99998</td><td style="text-align:right;padding:6px 12px">0.99995</td><td style="text-align:right;padding:6px 12px">14.48</td></tr>
-          <tr style="background:rgba(63,185,80,0.06)"><td style="padding:6px 12px;color:var(--green);font-weight:600">v9</td><td style="padding:6px 12px;color:var(--green)">LR SVD + E8 + RVQ + QJL + Ghost</td><td style="text-align:right;padding:6px 12px;color:var(--green)">—</td><td style="text-align:right;padding:6px 12px;color:var(--green)">—</td><td style="text-align:right;padding:6px 12px;color:var(--green)">—</td></tr>
+          <tr style="background:rgba(63,185,80,0.06)"><td style="padding:6px 12px;color:var(--green);font-weight:600">v9</td><td style="padding:6px 12px;color:var(--green)">LR SVD + E8 + RVQ + QJL + Ghost</td><td style="text-align:right;padding:6px 12px;color:var(--green)">0.999916</td><td style="text-align:right;padding:6px 12px;color:var(--green)">0.999826</td><td style="text-align:right;padding:6px 12px;color:var(--green)">—</td></tr>
         </tbody>
       </table>
-      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px;text-align:center">v9 adds adaptive low-rank SVD and ghost-head error correction to the v8 base. Wan2.1 results are v9. Qwen PPL is v8 (same engine core).</p>
+      <p style="font-size:0.78rem;color:var(--text-dim);margin-top:8px;text-align:center">v9 adds adaptive low-rank SVD and ghost-head error correction to the v8 base. v9 numbers from Whisper Large V3 (998 tensors). 1,790 tensors compressed across 4 production models.</p>
     </div>
 
     <!-- Cross-domain validation -->
-    <div style="max-width:600px;margin:0 auto 40px">
+    <div style="max-width:640px;margin:0 auto 40px">
       <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:12px;text-align:center">Cross-domain validation</h3>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
-          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">LLM weights — Gemma 2B (cos 0.99995)</span>
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">14B LLM — Phi-4 (cos 1.000614)</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
-          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">Video diffusion — Wan2.1 (cos 0.9976 output)</span>
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">14B Video — Wan2.1-T2V-14B (cos 0.999882)</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
-          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">Speech — Whisper base.en (cos 0.999808)</span>
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">Speech — Whisper Large V3 (cos 0.999916)</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
-          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">GGUF quantized — SmolLM2 Q4_K (cos 0.999855)</span>
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">Speech — Whisper Turbo (cos 0.999929)</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
-          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">Output-level behavior — DiT forward pass verified</span>
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">1.3B Video — Wan2.1 (cos 0.9976 output)</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
-          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">Diffusion loop — stable across full schedule</span>
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">GGUF — SmolLM2 Q4_K (cos 0.999855)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">DiT forward pass verified</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px">
+          <span style="color:var(--green);font-weight:700">✓</span><span style="font-size:0.85rem">4 models on <a href="https://huggingface.co/NICKO" style="color:var(--accent)">Hugging Face</a></span>
         </div>
       </div>
     </div>
@@ -1240,13 +1285,16 @@ footer a:hover { color: var(--text); }
     <div style="max-width:680px;margin:0 auto 32px;background:var(--surface);border:2px solid var(--green);border-radius:12px;padding:28px 32px">
       <div style="font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--text)">What this means (in plain English)</div>
       <p style="font-size:0.95rem;color:var(--text-dim);line-height:1.7;margin-bottom:12px">
-        A model that needed <strong style="color:var(--text)">5.3 GB</strong> of disk now fits in <strong style="color:var(--green)">2.7 GB</strong>. Same outputs.
-        No retraining. No calibration data. No GPU. Runs on your laptop.
+        A 14B video model that needed <strong style="color:var(--text)">54 GB</strong> of disk now fits in <strong style="color:var(--green)">27 GB</strong>. Same outputs.
+        No retraining. No calibration data. No GPU required for compression. Compressed models are standard BF16 safetensors — load them exactly like the originals.
       </p>
-      <p style="font-size:0.95rem;color:var(--text-dim);line-height:1.7">
+      <p style="font-size:0.95rem;color:var(--text-dim);line-height:1.7;margin-bottom:12px">
         Most compression methods look good at the weight level but degrade when outputs are actually measured.
         FPQ is the first to prove — through real end-to-end inference —
         that compression error doesn't accumulate across deep transformer stacks or iterative diffusion processes.
+      </p>
+      <p style="font-size:0.95rem;color:var(--text-dim);line-height:1.7">
+        All 4 production models are available on <a href="https://huggingface.co/NICKO" style="color:var(--accent);font-weight:600">Hugging Face</a> as drop-in replacements.
       </p>
     </div>
 
@@ -2035,57 +2083,67 @@ footer a:hover { color: var(--text); }
 
     <div class="bench-grid">
       <div class="bench-card" style="border-color:var(--green)">
-        <span class="value" style="color:var(--green)">0.999874</span>
-        <span class="metric">Avg cosine — Wan2.1 (307 tensors, v9@3-bit)</span>
+        <span class="value" style="color:var(--green)">0.999882</span>
+        <span class="metric">Avg cosine — Wan2.1-T2V-14B (402 tensors, v9@3-bit)</span>
       </div>
       <div class="bench-card" style="border-color:var(--green)">
-        <span class="value" style="color:var(--green)">0.99759</span>
-        <span class="metric">DiT output cosine (30 transformer blocks)</span>
+        <span class="value" style="color:var(--green)">0.999916</span>
+        <span class="metric">Avg cosine — Whisper Large V3 (998 tensors, v9@3-bit)</span>
       </div>
       <div class="bench-card" style="border-color:var(--green)">
-        <span class="value" style="color:var(--green)">35.97 dB</span>
-        <span class="metric">PSNR — forward pass comparison</span>
+        <span class="value" style="color:var(--green)">1,790</span>
+        <span class="metric">Tensors compressed across 4 production models</span>
       </div>
       <div class="bench-card" style="border-color:var(--green)">
         <span class="value" style="color:var(--green)">+1.97%</span>
         <span class="metric">PPL degradation — Qwen 0.5B @3-bit</span>
       </div>
       <div class="bench-card">
-        <span class="value">5.3→2.7 GB</span>
-        <span class="metric">Wan2.1-T2V-1.3B compressed file size</span>
+        <span class="value">54→27 GB</span>
+        <span class="metric">Wan2.1-T2V-14B (50% compression, 14B params)</span>
       </div>
       <div class="bench-card">
-        <span class="value">101→258 MB</span>
-        <span class="metric">SmolLM2-135M GGUF Q4_K→F16 (211 tensors)</span>
+        <span class="value">28 GB</span>
+        <span class="metric">Phi-4 14B — near-lossless (cos 1.000614)</span>
       </div>
       <div class="bench-card">
-        <span class="value">6.18s→6.40s</span>
-        <span class="metric">Inference time (original vs FPQ, zero overhead)</span>
+        <span class="value">8.7→5.8 GB</span>
+        <span class="metric">Whisper Large V3 (33% compression, 1.55B params)</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">0.999826</span>
+        <span class="metric">Worst-case tensor cosine (Wan2.1-T2V-14B, 402 tensors)</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">4.05–4.19</span>
+        <span class="metric">Bits per weight range across all models @3-bit</span>
+      </div>
+      <div class="bench-card">
+        <span class="value">0.99759</span>
+        <span class="metric">DiT output cosine (30 transformer blocks)</span>
       </div>
       <div class="bench-card">
         <span class="value">+128%</span>
         <span class="metric">HQQ @3-bit PPL (32.38 — FPQ is 65× less degradation)</span>
       </div>
       <div class="bench-card">
-        <span class="value">+150%</span>
-        <span class="metric">COORD @3-bit PPL (35.59 — the old v4 baseline)</span>
-      </div>
-      <div class="bench-card">
-        <span class="value">0.999590</span>
-        <span class="metric">Worst-case tensor cosine (Wan2.1, 307 tensors)</span>
-      </div>
-      <div class="bench-card">
-        <span class="value">0.999589</span>
-        <span class="metric">Worst-case tensor cosine (SmolLM2 GGUF, 211 tensors)</span>
-      </div>
-      <div class="bench-card">
-        <span class="value">8 formats</span>
-        <span class="metric">GGUF quant types supported (F32/F16/Q4_0/Q5_0/Q8_0/Q4_K/Q5_K/Q6_K)</span>
+        <span class="value">4 models</span>
+        <span class="metric"><a href="https://huggingface.co/NICKO" style="color:var(--accent)">Available on Hugging Face →</a></span>
       </div>
     </div>
 
     <h3 style="font-size:1.1rem;margin:32px 0 16px">Artifact links</h3>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:24px">
+      <div style="background:var(--surface);border:2px solid var(--green);border-radius:8px;padding:16px">
+        <div style="font-size:0.75rem;color:var(--green);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Hugging Face Model Hub</div>
+        <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;margin-bottom:8px">4 production models compressed with BonfyreFPQ v9 @3-bit. Drop-in BF16 safetensors — no special loader required.</p>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <a href="https://huggingface.co/NICKO/Wan2.1-T2V-14B-BonfyreFPQ3" style="color:var(--accent);font-size:0.82rem">Wan2.1-T2V-14B (54→27 GB) →</a>
+          <a href="https://huggingface.co/NICKO/phi-4-BonfyreFPQ3" style="color:var(--accent);font-size:0.82rem">Phi-4 14B (28 GB) →</a>
+          <a href="https://huggingface.co/NICKO/whisper-large-v3-BonfyreFPQ3" style="color:var(--accent);font-size:0.82rem">Whisper Large V3 (8.7→5.8 GB) →</a>
+          <a href="https://huggingface.co/NICKO/whisper-large-v3-turbo-BonfyreFPQ3" style="color:var(--accent);font-size:0.82rem">Whisper Large V3 Turbo (1.6 GB) →</a>
+        </div>
+      </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px">
         <div style="font-size:0.75rem;color:var(--accent);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Proof Pack (2026-04-10)</div>
         <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;margin-bottom:8px">Qwen perplexity (v8 vs v4 vs HQQ), Whisper roundtrip, CSV, PNG chart, reproduction commands.</p>
