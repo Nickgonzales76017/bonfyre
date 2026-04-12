@@ -25,7 +25,6 @@ SRCS := $(SRC_DIR)/fwht.c \
         $(SRC_DIR)/serialize.c \
         $(SRC_DIR)/v4_optimizations.c \
         $(SRC_DIR)/weight_algebra.c \
-        $(SRC_DIR)/fpq_native.c \
         $(SRC_DIR)/main.c
 
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(SRCS))

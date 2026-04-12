@@ -216,31 +216,4 @@ void bwa_edit(const float *W, const float *delta,
 bwa_analysis_t bwa_analyze_model(const char *model_path);
 
 
-/* ═══════════════════════════════════════════════════════════════════
- * Adaptive bit allocation (per-layer η_L routing)
- * ═══════════════════════════════════════════════════════════════════ */
-
-/*
- * Fast η_L computation for a single tensor.
- * Uses rank-16 SVD for quick energy ratio estimate.
- * Returns: fractional energy in low-rank component (0.0–1.0).
- */
-float bwa_get_eta_L(const float *W, size_t rows, size_t cols, float rank_ratio);
-
-/*
- * Per-layer adaptive routing based on η_L.
- * Returns recommended FPQ bit-depth (2, 3, or 4) for the residual.
- * High η_L → fewer residual bits needed (LR captures most energy).
- * Low η_L → more residual bits to preserve quality.
- */
-int bwa_adaptive_bits(float eta_L, int base_bits);
-
-/*
- * Per-layer adaptive keep ratio for pruning based on η_L.
- * High η_L → can prune more aggressively (LR is strong).
- * Low η_L → prune conservatively (residual carries critical info).
- */
-float bwa_adaptive_keep_ratio(float eta_L, float base_keep_ratio);
-
-
 #endif /* BONFYRE_WEIGHT_ALGEBRA_H */
