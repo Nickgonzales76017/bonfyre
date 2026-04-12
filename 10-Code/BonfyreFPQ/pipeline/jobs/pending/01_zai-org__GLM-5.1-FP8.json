@@ -1,0 +1,7 @@
+{
+  "model": "zai-org/GLM-5.1-FP8",
+  "bits": 3,
+  "format": "safetensors",
+  "priority": 1,
+  "notes": "753B params FP8 variant, 282 shards, ~750GB total. Half the download of BF16."
+}

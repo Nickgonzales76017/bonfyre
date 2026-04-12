@@ -42,6 +42,4 @@ dist/
 
 # Test outputs
 outputs-*/
-cmd/BonfyreCLI/bonfyre
-cmd/BonfyreEmbed/src/main.c.old
-site/index.html.bak
+pipeline/.env
