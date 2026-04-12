@@ -979,6 +979,27 @@ static int cmd_roundtrip_v8(const char *input,
 }
 
 /* ── write-v9: roundtrip + write reconstructed safetensors ── */
+/* ── Lightweight converter: existing safetensors → native .fpq ── */
+static int cmd_convert_fpq(const char *input, const char *output) {
+    fprintf(stderr,
+        "═══════════════════════════════════════════════════════\n"
+        " Convert to native .fpq (no recompression)\n"
+        " Input:  %s\n"
+        " Output: %s\n"
+        "═══════════════════════════════════════════════════════\n",
+        input, output);
+
+    size_t n_raw;
+    fpq_raw_tensor_t *raw = fpq_read_model(input, &n_raw);
+    if (!raw || n_raw == 0) return 1;
+
+    fprintf(stderr, "  Read %zu tensors, writing native .fpq...\n", n_raw);
+    int rc = fpq_native_write(output, raw, n_raw);
+
+    fpq_raw_tensor_free(raw, n_raw);
+    return rc;
+}
+
 static int cmd_write_v9(const char *input, const char *output,
                         int force_bits) {
     fprintf(stderr,
@@ -1265,6 +1286,17 @@ int main(int argc, char **argv) {
             return 1;
         }
         return cmd_write_v9(argv[2], argv[3], force_bits);
+    } else if (strcmp(cmd, "convert-fpq") == 0) {
+        if (argc < 4) {
+            fprintf(stderr,
+                "Usage: bonfyre-fpq convert-fpq <input.safetensors> <output.fpq>\n"
+                "\n"
+                "  Convert existing safetensors to compact native .fpq format.\n"
+                "  No full recompression — reads weights and encodes to .fpq directly.\n"
+                "  Use on already algebra-compressed models for maximum savings.\n");
+            return 1;
+        }
+        return cmd_convert_fpq(argv[2], argv[3]);
     } else if (strcmp(cmd, "quantize") == 0) {
         if (argc < 4) {
             fprintf(stderr,
@@ -1388,24 +1420,33 @@ int main(int argc, char **argv) {
         if (argc < 4) {
             fprintf(stderr,
                 "Usage: bonfyre-fpq algebra-compress <input> <output>\n"
-                "       [--bits N] [--keep-ratio F] [--rank-ratio F]\n"
+                "       [--bits N] [--keep-ratio F] [--rank-ratio F] [--format safetensors|fpq]\n"
                 "\n"
-                "  Combined pipeline: decompose W=L+R → hybrid prune R →\n"
-                "  curl+div correct → FPQ v9 encode → write safetensors\n"
+                "  Combined pipeline: decompose W=L+R → adaptive prune R →\n"
+                "  curl+div correct → η_L-routed FPQ v9 encode → write output\n"
                 "\n"
-                "  L stored as low-rank factors (~0.08 bpw)\n"
-                "  Pruned R encoded at FPQ@N (~1.5 bpw at 3-bit)\n"
-                "  Total ≈ 1.6 bpw = 20× from fp32\n");
+                "  Per-layer adaptive bit allocation (v10):\n"
+                "    η_L ≥ 0.50: residual@(N-1) bit — LR captures most energy\n"
+                "    η_L 0.20–0.50: residual@N bit    — standard allocation\n"
+                "    η_L < 0.20: residual@(N+1) bit  — protect residual quality\n"
+                "\n"
+                "  --format fpq: write native .fpq format (~1.6 bpw, 20× from fp32)\n"
+                "  --format safetensors: write BF16 safetensors (default)\n");
             return 1;
         }
         float keep_ratio = 0.50f;
         float rank_ratio = 0.25f;
         int cbits = force_bits > 0 ? force_bits : 3;
+        int use_fpq_format = 0;
         for (int i = 4; i < argc; i++) {
             if (strcmp(argv[i], "--keep-ratio") == 0 && i + 1 < argc)
                 keep_ratio = (float)atof(argv[++i]);
             else if (strcmp(argv[i], "--rank-ratio") == 0 && i + 1 < argc)
                 rank_ratio = (float)atof(argv[++i]);
+            else if (strcmp(argv[i], "--format") == 0 && i + 1 < argc) {
+                i++;
+                if (strcmp(argv[i], "fpq") == 0) use_fpq_format = 1;
+            }
         }
         size_t n_raw;
         fpq_raw_tensor_t *raw = fpq_read_model(argv[2], &n_raw);
@@ -1413,15 +1454,17 @@ int main(int argc, char **argv) {
 
         fprintf(stderr,
             "═══════════════════════════════════════════════════════\n"
-            " BWA Algebra-Compress (W=L+R → prune → FPQ v9)\n"
+            " BWA Algebra-Compress v10 (Adaptive η_L Routing)\n"
             " Input:      %s\n"
             " Output:     %s\n"
-            " Bits:       %d\n"
-            " Keep ratio: %.0f%%\n"
+            " Base bits:  %d (adaptive: 2–4 per layer)\n"
+            " Keep ratio: %.0f%% (adaptive per η_L)\n"
             " Rank ratio: %.0f%%\n"
+            " Format:     %s\n"
             " Tensors:    %zu\n"
             "═══════════════════════════════════════════════════════\n",
-            argv[2], argv[3], cbits, keep_ratio * 100, rank_ratio * 100, n_raw);
+            argv[2], argv[3], cbits, keep_ratio * 100, rank_ratio * 100,
+            use_fpq_format ? "native .fpq" : "BF16 safetensors", n_raw);
 
         /* Phase 1: Count eligible tensors */
         int n_eligible = 0;
@@ -1434,10 +1477,17 @@ int main(int argc, char **argv) {
         }
         fprintf(stderr, "  Phase 1: %d eligible 2D tensors\n", n_eligible);
 
-        /* Phase 2: Decompose + prune + FPQ encode */
+        /* Phase 2: η_L analysis + adaptive decompose + prune + FPQ encode */
         int n_algebra = 0, n_fpq_only = 0, n_pass = 0;
         double sum_cos_pre = 0.0, sum_cos_post = 0.0;
         float worst_cos = 1.0f;
+        int bits_hist[5] = {0};  /* count of tensors at each bit level */
+        double sum_eta_L = 0.0;
+        int n_eta = 0;
+
+        /* Collect η_L for all eligible tensors for native format */
+        float *eta_L_cache = (float *)calloc(n_raw, sizeof(float));
+        int *bits_cache = (int *)calloc(n_raw, sizeof(int));
 
         for (size_t i = 0; i < n_raw; i++) {
             size_t n = raw[i].rows * raw[i].cols;
@@ -1453,18 +1503,34 @@ int main(int argc, char **argv) {
             bwa_tensor_type_t tt = bwa_classify_tensor(raw[i].name);
 
             if (tt != BWA_TENSOR_NORM && n >= 512 && raw[i].rows > 1 && raw[i].cols > 1) {
+                /* Compute η_L for adaptive routing */
+                float eta_L = bwa_get_eta_L(raw[i].data, raw[i].rows,
+                                             raw[i].cols, rank_ratio);
+                eta_L_cache[i] = eta_L;
+                sum_eta_L += eta_L;
+                n_eta++;
+
+                /* Adaptive bit allocation */
+                int adaptive_cbits = bwa_adaptive_bits(eta_L, cbits);
+                bits_cache[i] = adaptive_cbits;
+                if (adaptive_cbits >= 2 && adaptive_cbits <= 4)
+                    bits_hist[adaptive_cbits]++;
+
+                /* Adaptive pruning aggressiveness */
+                float adaptive_keep = bwa_adaptive_keep_ratio(eta_L, keep_ratio);
+
                 /* Full algebra path: decompose → prune → correct → FPQ */
                 float *pruned = (float *)malloc(n * sizeof(float));
                 bwa_prune(raw[i].data, raw[i].rows, raw[i].cols,
-                          raw[i].name, keep_ratio, rank_ratio,
+                          raw[i].name, adaptive_keep, rank_ratio,
                           BWA_PRUNE_HYBRID, pruned);
 
                 float cos_prune = fpq_cosine_sim(raw[i].data, pruned, n);
 
-                /* FPQ v9 encode the algebra-compressed tensor */
+                /* FPQ v9 encode with adaptive bit depth */
                 fpq_tensor_t *t = fpq_encode_tensor_v9(
                     pruned, raw[i].rows, raw[i].cols,
-                    raw[i].name, cbits);
+                    raw[i].name, adaptive_cbits);
 
                 float *decoded = (float *)malloc(n * sizeof(float));
                 if (t->pid_alpha == -9.0f)
@@ -1482,8 +1548,9 @@ int main(int argc, char **argv) {
                 memcpy(raw[i].data, decoded, n * sizeof(float));
 
                 if (n_algebra < 20 || (n_algebra % 50 == 0))
-                    fprintf(stderr, "  [%zu] %-45s prune=%.6f final=%.6f  (%s)\n",
-                            i, raw[i].name, cos_prune, cos_final,
+                    fprintf(stderr, "  [%zu] %-40s η_L=%.3f @%db keep=%.0f%% prune=%.6f final=%.6f  (%s)\n",
+                            i, raw[i].name, eta_L, adaptive_cbits,
+                            adaptive_keep * 100, cos_prune, cos_final,
                             tt == BWA_TENSOR_FFN ? "FFN" :
                             tt == BWA_TENSOR_SELF_ATTN ? "attn" :
                             tt == BWA_TENSOR_CROSS_ATTN ? "xattn" : "embed");
@@ -1519,21 +1586,33 @@ int main(int argc, char **argv) {
         int n_total_enc = n_algebra + n_fpq_only;
         fprintf(stderr,
             "\n═══════════════════════════════════════════════════════\n"
-            " ALGEBRA-COMPRESS SUMMARY\n"
+            " ALGEBRA-COMPRESS v10 SUMMARY\n"
             "═══════════════════════════════════════════════════════\n"
-            "  Algebra path:  %d tensors (decompose+prune+FPQ)\n"
+            "  Algebra path:  %d tensors (adaptive η_L routing)\n"
             "  FPQ-only path: %d tensors\n"
             "  Passthrough:   %d tensors\n"
+            "  Mean η_L:      %.4f\n"
+            "  Bit allocation: @2b=%d  @3b=%d  @4b=%d\n"
             "  Avg prune cos: %.6f\n"
             "  Avg final cos: %.6f\n"
             "  Worst cos:     %.6f\n"
             "═══════════════════════════════════════════════════════\n",
             n_algebra, n_fpq_only, n_pass,
+            n_eta > 0 ? (float)(sum_eta_L / n_eta) : 0.0f,
+            bits_hist[2], bits_hist[3], bits_hist[4],
             n_algebra > 0 ? (float)(sum_cos_pre / n_algebra) : 0.0f,
             n_total_enc > 0 ? (float)(sum_cos_post / n_total_enc) : 0.0f,
             worst_cos);
 
-        int rc = fpq_safetensors_write(argv[3], raw, n_raw);
+        free(eta_L_cache);
+        free(bits_cache);
+
+        int rc;
+        if (use_fpq_format) {
+            rc = fpq_native_write(argv[3], raw, n_raw);
+        } else {
+            rc = fpq_safetensors_write(argv[3], raw, n_raw);
+        }
         fpq_raw_tensor_free(raw, n_raw);
         return rc;
     } else if (strcmp(cmd, "algebra-edit") == 0) {
