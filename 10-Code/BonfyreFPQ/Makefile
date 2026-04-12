@@ -25,28 +25,57 @@ SRCS := $(SRC_DIR)/fwht.c \
         $(SRC_DIR)/serialize.c \
         $(SRC_DIR)/v4_optimizations.c \
         $(SRC_DIR)/weight_algebra.c \
+        $(SRC_DIR)/fpq_native.c \
         $(SRC_DIR)/main.c
 
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(SRCS))
 BIN  := bonfyre-fpq
 
-.PHONY: all clean test
+# FPQ-X: Generalized Compression Algebra (A+M+Π+D+Λ+H)
+FPQX_LIB_SRCS := $(SRC_DIR)/fwht.c \
+                  $(SRC_DIR)/polar.c \
+                  $(SRC_DIR)/seed.c \
+                  $(SRC_DIR)/qjl.c \
+                  $(SRC_DIR)/debruijn.c \
+                  $(SRC_DIR)/fpq_codec.c \
+                  $(SRC_DIR)/ggml_reader.c \
+                  $(SRC_DIR)/safetensors_reader.c \
+                  $(SRC_DIR)/serialize.c \
+                  $(SRC_DIR)/v4_optimizations.c \
+                  $(SRC_DIR)/weight_algebra.c \
+                  $(SRC_DIR)/fpq_native.c \
+                  $(SRC_DIR)/fpqx_ops.c \
+                  $(SRC_DIR)/fpqx_main.c
 
-all: $(BIN)
+FPQX_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(FPQX_LIB_SRCS))
+FPQX_BIN  := bonfyre-fpqx
+
+.PHONY: all clean test fpqx
+
+all: $(BIN) $(FPQX_BIN)
 
 $(BIN): $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-$(BUILD)/%.o: $(SRC_DIR)/%.c $(INC_DIR)/fpq.h $(wildcard $(INC_DIR)/weight_algebra.h) | $(BUILD)
+$(FPQX_BIN): $(FPQX_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+
+fpqx: $(FPQX_BIN)
+
+$(BUILD)/%.o: $(SRC_DIR)/%.c $(INC_DIR)/fpq.h $(wildcard $(INC_DIR)/weight_algebra.h) $(wildcard $(INC_DIR)/fpqx.h) | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD):
 	mkdir -p $(BUILD)
 
 clean:
-	rm -rf $(BUILD) $(BIN)
+	rm -rf $(BUILD) $(BIN) $(FPQX_BIN)
 
 # Quick roundtrip test on a whisper model
 test: $(BIN)
 	@echo "=== FPQ Roundtrip Test ==="
 	./$(BIN) roundtrip models/ggml-base.en.bin --limit 5 --report --max-nodes 32 --tolerance 0.01
+
+test-fpqx: $(FPQX_BIN)
+	@echo "=== FPQ-X Roundtrip Test ==="
+	./$(FPQX_BIN) roundtrip models/ggml-base.en.bin --limit 5 --bits 3
