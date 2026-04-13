@@ -483,19 +483,37 @@ fpqx_distilled_cache_t *fpqx_distill(const float *cache,
         }
     }
 
-    free(assignments);
+    /* Store final assignments for use by fpqx_distill_reconstruct */
+    dc->assignments = assignments;
+    dc->n_seq = seq_len;
     free(min_dist);
     return dc;
 }
 
 void fpqx_distill_reconstruct(const fpqx_distilled_cache_t *dc,
                                 float *output, size_t seq_len) {
-    /* Nearest-atom reconstruction (simple; could add interpolation) */
-    /* This is called at inference time with a mapping from original
-       positions to atoms. For now we just fill with atoms in order
-       (real usage would use the assignment from distill). */
+    /* Nearest-centroid reconstruction using stored per-position assignments.
+       Falls back to round-robin only if assignments are unavailable
+       (e.g. struct populated without calling fpqx_distill). */
     for (size_t i = 0; i < seq_len; i++) {
-        int atom_idx = (int)(i % dc->n_atoms);  /* placeholder */
+        int atom_idx;
+        if (dc->assignments && i < dc->n_seq) {
+            atom_idx = dc->assignments[i];
+        } else {
+            /* fallback: find nearest atom by L2 distance */
+            const float *out_vec = output + i * dc->head_dim;
+            float best_d = FLT_MAX;
+            atom_idx = 0;
+            for (int c = 0; c < dc->n_atoms; c++) {
+                const float *atom = dc->atoms + c * dc->head_dim;
+                float d = 0.0f;
+                for (int d2 = 0; d2 < dc->head_dim; d2++) {
+                    float diff = out_vec[d2] - atom[d2];
+                    d += diff * diff;
+                }
+                if (d < best_d) { best_d = d; atom_idx = c; }
+            }
+        }
         memcpy(output + i * dc->head_dim,
                dc->atoms + atom_idx * dc->head_dim,
                dc->head_dim * sizeof(float));
@@ -506,6 +524,7 @@ void fpqx_distill_free(fpqx_distilled_cache_t *dc) {
     if (!dc) return;
     free(dc->atoms);
     free(dc->weights);
+    free(dc->assignments);
     free(dc);
 }
 

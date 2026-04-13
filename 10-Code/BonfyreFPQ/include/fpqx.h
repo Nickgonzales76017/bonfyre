@@ -174,6 +174,8 @@ typedef struct {
     int    n_atoms;      /* number of distilled entries (K ≪ N) */
     int    head_dim;     /* dimension per head */
     float *weights;      /* attention mass per atom [n_atoms] */
+    int   *assignments;  /* per-position atom index [n_seq] (set by distill) */
+    size_t n_seq;        /* original sequence length */
 } fpqx_distilled_cache_t;
 
 /*
