@@ -10,6 +10,7 @@ Usage:
     python deploy.py stop <pod_id>           # stop a pod
     python deploy.py stop-all                # stop everything
     python deploy.py ssh <pod_id>            # print SSH command
+    python deploy.py wan-sli                 # launch pod + run Wan SLI benchmark
 """
 
 import argparse
@@ -62,10 +63,10 @@ fi
 cd /workspace/bonfyre/10-Code/BonfyreFPQ
 git -C /workspace/bonfyre pull --ff-only 2>/dev/null || true
 
-# Build with OpenBLAS for Linux
+# Build libfpq.so (shared library for Python bridge) and bonfyre-fpq binary
 cat > Makefile.linux << 'MKEOF'
 CC      := gcc
-CFLAGS  := -D_GNU_SOURCE -O3 -march=native -Wall -Wextra -std=c11 -Iinclude -fopenmp -DHAVE_OPENBLAS
+CFLAGS  := -D_GNU_SOURCE -O3 -march=native -Wall -Wextra -std=c11 -Iinclude -fopenmp -DHAVE_OPENBLAS -fPIC
 LDFLAGS := -lm -lopenblas -llapack -lgomp
 SRC_DIR := src
 BUILD   := build
@@ -81,49 +82,96 @@ SRCS := $(SRC_DIR)/fwht.c \
         $(SRC_DIR)/serialize.c \
         $(SRC_DIR)/v4_optimizations.c \
         $(SRC_DIR)/weight_algebra.c \
-        $(SRC_DIR)/main.c
+        $(SRC_DIR)/fpq_native.c \
+        $(SRC_DIR)/fpqx_ops.c \
+        $(SRC_DIR)/fpq_neon.c \
+        $(SRC_DIR)/libfpq.c \
+        $(SRC_DIR)/fpq_cli.c
 
 OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(SRCS))
-BIN  := bonfyre-fpq
+BIN  := fpq
+LIBFPQ := libfpq.so
 
 .PHONY: all clean
-all: $(BIN)
-$(BIN): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
-$(BUILD)/%.o: $(SRC_DIR)/%.c include/fpq.h include/weight_algebra.h | $(BUILD)
+all: $(BIN) $(LIBFPQ)
+$(BIN): $(OBJS) $(SRC_DIR)/fpq_cli.c
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LDFLAGS)
+$(LIBFPQ): $(OBJS)
+	$(CC) $(CFLAGS) -shared -o $@ $(OBJS) $(LDFLAGS)
+$(BUILD)/%.o: $(SRC_DIR)/%.c include/fpq.h | $(BUILD)
 	$(CC) $(CFLAGS) -c -o $@ $<
 $(BUILD):
 	mkdir -p $(BUILD)
 clean:
-	rm -rf $(BUILD) $(BIN)
+	rm -rf $(BUILD) $(BIN) $(LIBFPQ)
 MKEOF
 
 make -f Makefile.linux clean
 make -f Makefile.linux -j$(nproc)
+echo "Built: $(ls -lh fpq libfpq.so)"
 
-# Install huggingface-cli for model downloads
-pip install -q huggingface_hub
+# Install Python deps
+pip install -q torch diffusers transformers safetensors numpy huggingface_hub
 
 # Set up workspace directories
 mkdir -p /workspace/jobs/pending /workspace/jobs/running /workspace/jobs/done
-mkdir -p /workspace/models/original /workspace/models/fpq /workspace/logs
+mkdir -p /workspace/models/wan-orig /workspace/models/wan-fpq /workspace/logs
 
-echo "=== Setup complete. bonfyre-fpq built at $(pwd)/bonfyre-fpq ==="
-echo "=== Run: bash /workspace/bonfyre/10-Code/BonfyreFPQ/pipeline/worker.sh ==="
+echo "=== Setup complete. fpq binary and libfpq.so ready at $(pwd) ==="
+echo "=== Run the Wan SLI benchmark: ==="
+echo "  python3 scripts/test_e2e_wan_sli.py --safetensors /workspace/models/wan-orig/diffusion_pytorch_model.safetensors --fpq /workspace/models/wan-fpq/*.fpq --sweep --out /workspace/results/wan_sli.json"
 '''
 
-def graphql(api_key, query, variables=None):
-    payload = {"query": query}
-    if variables:
-        payload["variables"] = variables
-    data = json.dumps(payload).encode()
-    req = urllib.request.Request(
-        "https://api.runpod.io/graphql?api_key=" + api_key,
-        data=data,
-        headers={
-            "Content-Type": "application/json",
-            "User-Agent": "BonfyreFPQ/1.0",
-        },
+WAN_SLI_SCRIPT = r'''#!/bin/bash
+# wan_sli_pod.sh — Full Wan SLI benchmark on RunPod
+# Run after SETUP_SCRIPT completes.
+set -e
+
+cd /workspace/bonfyre/10-Code/BonfyreFPQ
+export LIBFPQ_PATH="$(pwd)/libfpq.so"
+
+echo "=== Downloading Wan2.1-T2V-1.3B original weights ==="
+huggingface-cli download Wan-AI/Wan2.1-T2V-1.3B \
+    diffusion_pytorch_model.safetensors \
+    --local-dir /workspace/models/wan-orig \
+    --quiet
+
+echo "=== Downloading Wan2.1-T2V-1.3B v12 .fpq ==="
+huggingface-cli download NICKO/wan2.1-t2v-1.3b-v12-fpq \
+    --local-dir /workspace/models/wan-fpq \
+    --quiet
+
+FPQ_FILE=$(find /workspace/models/wan-fpq -name "*.fpq" | head -1)
+if [ -z "$FPQ_FILE" ]; then
+    echo "ERROR: No .fpq file found in /workspace/models/wan-fpq"
+    ls /workspace/models/wan-fpq/
+    exit 1
+fi
+
+echo "=== .fpq: $FPQ_FILE ==="
+mkdir -p /workspace/results
+
+echo "=== Running Wan SLI end-to-end benchmark ==="
+python3 scripts/test_e2e_wan_sli.py \
+    --safetensors /workspace/models/wan-orig/diffusion_pytorch_model.safetensors \
+    --fpq "$FPQ_FILE" \
+    --sweep \
+    --device cuda \
+    --out /workspace/results/wan_sli.json \
+    2>&1 | tee /workspace/logs/wan_sli.log
+
+echo "=== Done. Results at /workspace/results/wan_sli.json ==="
+cat /workspace/results/wan_sli.json | python3 -c "
+import json,sys
+r=json.load(sys.stdin)
+m=r['main_metrics']
+print(f\"  Cosine:  {m['cosine']:.8f}\")
+print(f\"  PSNR:    {m['psnr_db']:.2f} dB\")
+print(f\"  SLI layers: {r['patched_layers']}\")
+if r['sweep']:
+    cosines=[s['cosine'] for s in r['sweep']]
+    print(f\"  Sweep range: {min(cosines):.8f} – {max(cosines):.8f}\")
+"
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
@@ -329,6 +377,72 @@ def cmd_submit(args):
     print(f"\nTo deploy to pod:")
     print(f"  scp -P <port> {job_path} root@<ip>:/workspace/jobs/pending/")
 
+
+def cmd_wan_sli(args):
+    """Launch a pod and print commands to run the Wan SLI benchmark."""
+    api_key = get_api_key()
+
+    # Use A4000 or RTX6000 (enough VRAM, cheap, ~5.3 GB weights + overhead)
+    gpu_preset = getattr(args, "gpu", "RTX6000")
+    preset = gpu_preset.upper()
+    if preset not in GPU_PRESETS:
+        preset = "RTX6000"
+    gpu_id, cloud_type, desc = GPU_PRESETS[preset]
+
+    name = f"fpq-wan-sli"
+    print(f"Launching Wan SLI benchmark pod...")
+    print(f"  GPU: {gpu_id} ({desc})")
+
+    docker_image = "runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04"
+
+    combined_script = SETUP_SCRIPT.rstrip() + "\n\n" + WAN_SLI_SCRIPT
+
+    query = """
+    mutation CreatePod($input: PodFindAndDeployOnDemandInput!) {
+        podFindAndDeployOnDemand(input: $input) {
+            id
+            name
+            desiredStatus
+            imageName
+        }
+    }
+    """
+    variables = {
+        "input": {
+            "name": name,
+            "imageName": docker_image,
+            "gpuTypeId": gpu_id,
+            "cloudType": cloud_type,
+            "containerDiskInGb": 60,
+            "volumeInGb": 100,
+            "startSsh": True,
+            "dockerArgs": "",
+            "env": [],
+            "startupScript": combined_script,
+        }
+    }
+    result = graphql(api_key, query, variables)
+    pod = result.get("data", {}).get("podFindAndDeployOnDemand")
+    if not pod:
+        print(f"Launch failed: {result}")
+        sys.exit(1)
+
+    pod_id = pod["id"]
+    print(f"\n  Pod ID: {pod_id}")
+    print(f"  Status: {pod['desiredStatus']}")
+    print(f"\nThe pod will automatically:")
+    print(f"  1. Clone the bonfyre repo + build libfpq.so")
+    print(f"  2. Download Wan2.1-T2V-1.3B from Wan-AI/Wan2.1-T2V-1.3B (HuggingFace)")
+    print(f"  3. Download Wan v12 .fpq from NICKO/wan2.1-t2v-1.3b-v12-fpq (HuggingFace)")
+    print(f"  4. Run test_e2e_wan_sli.py --sweep --device cuda")
+    print(f"  5. Save results to /workspace/results/wan_sli.json")
+    print(f"\nTo monitor:")
+    print(f"  python3 pipeline/deploy.py ssh {pod_id}")
+    print(f"  ssh root@<ip> -p <port> 'tail -f /workspace/logs/wan_sli.log'")
+    print(f"\nTo fetch results when done:")
+    print(f"  scp -P <port> root@<ip>:/workspace/results/wan_sli.json results/")
+
+
 def main():
     parser = argparse.ArgumentParser(description="BonfyreFPQ RunPod Pipeline")
     sub = parser.add_subparsers(dest="command")
@@ -366,6 +480,10 @@ def main():
     p_sub.add_argument("--format", default="safetensors", help="Model format")
     p_sub.add_argument("--priority", type=int, default=5, help="Priority 1-10 (1=highest)")
 
+    # wan-sli
+    p_wan = sub.add_parser("wan-sli", help="Launch pod + run Wan2.1 SLI end-to-end benchmark")
+    p_wan.add_argument("--gpu", default="RTX6000", help="GPU preset (default: RTX6000, 48GB VRAM)")
+
     args = parser.parse_args()
     if not args.command:
         parser.print_help()
@@ -379,7 +497,9 @@ def main():
         "terminate": cmd_terminate,
         "ssh": cmd_ssh,
         "submit": cmd_submit,
+        "wan-sli": cmd_wan_sli,
     }[args.command](args)
 
 if __name__ == "__main__":
     main()
+

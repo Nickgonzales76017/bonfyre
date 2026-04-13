@@ -293,12 +293,18 @@ try:
                     f"fpq_tensor='{self.tensor_name}'")
 
 
-    def patch_model(hf_model, fpq_model, prefix="", verbose=True):
+    def patch_model(hf_model, fpq_model, prefix="", verbose=True, name_resolver=None):
         """
         Monkey-patch a HuggingFace model to use FPQ SLI matmul.
 
         Walks the module tree, finds nn.Linear layers, and replaces them
         with FPQLinear if the corresponding tensor exists in the .fpq file.
+
+        Args:
+            name_resolver: Optional callable(module_path) → fpq_tensor_name.
+                           Use when model key names differ from .fpq tensor names
+                           (e.g. diffusers WanTransformer3DModel vs original Wan).
+                           Return None to skip a layer.
 
         Returns dict of {module_path: tensor_name} for all patched layers.
         """
@@ -311,9 +317,13 @@ try:
                 full_path = f"{path}.{name}" if path else name
                 if isinstance(child, nn.Linear):
                     # Map HF module path to .fpq tensor name
-                    # HF: model.layers.0.self_attn.q_proj → .fpq: model.layers.0.self_attn.q_proj.weight
-                    tensor_name = f"{full_path}.weight"
-                    if tensor_name in fpq_names:
+                    if name_resolver is not None:
+                        tensor_name = name_resolver(full_path)
+                    else:
+                        # Default: HF path + .weight
+                        # e.g. model.layers.0.self_attn.q_proj → same name + .weight
+                        tensor_name = f"{full_path}.weight"
+                    if tensor_name and tensor_name in fpq_names:
                         ti = fpq_model.tensor_info(tensor_name)
                         if ti and ti["rows"] == child.out_features and ti["cols"] == child.in_features:
                             bias_data = child.bias.data.clone() if child.bias is not None else None
