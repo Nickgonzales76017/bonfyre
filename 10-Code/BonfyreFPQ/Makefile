@@ -2,12 +2,15 @@
 # Store seed programs, not weights.
 
 CC      := cc
-CFLAGS  := -O3 -march=native -Wall -Wextra -std=c11 -Iinclude
+CFLAGS  := -O3 -march=native -Wall -Wextra -std=c11 -Iinclude -D_GNU_SOURCE
 LDFLAGS := -lm
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
   CFLAGS  += -DACCELERATE_NEW_LAPACK
   LDFLAGS += -framework Accelerate
+else
+  CFLAGS  += -DHAVE_OPENBLAS
+  LDFLAGS += -lopenblas -llapack
 endif
 
 SRC_DIR := src

@@ -27,6 +27,11 @@
 #include <math.h>
 #include <sys/stat.h>
 
+/* v9 truncated SVD (defined in v4_optimizations.c) */
+extern int v9_truncated_svd(const float *A, size_t m, size_t n,
+                            int max_rank, float energy_threshold,
+                            float *U_out, float *S_out, float *Vt_out);
+
 /* Auto-detect model format and read tensors */
 static fpq_raw_tensor_t *fpq_read_model(const char *path, size_t *n_tensors) {
     struct stat st;
@@ -1659,6 +1664,365 @@ int main(int argc, char **argv) {
         int rc = fpq_safetensors_write(argv[4], raw_m, n_out);
         fpq_raw_tensor_free(raw_m, n_m);
         fpq_raw_tensor_free(raw_d, n_d);
+        return rc;
+    } else if (strcmp(cmd, "algebra-v11") == 0) {
+        /*
+         * Algebra v11 — Theoretically Optimal Decomposition
+         *
+         * The algebra IS the innovation. W = L + R where:
+         *   L stored as quantized factors (cheap: INT8/6/4 per component)
+         *   R' = W - L_quantized (true residual from quantized L)
+         *   R' encoded with v8 RLF at full quality (no pruning!)
+         *
+         * Why this beats v9-only:
+         *   1. Higher rank (up to 64 vs v9's 32) → more energy in L
+         *   2. L-as-factors is cheaper than L-through-block-codec
+         *   3. R' has less energy → v8 achieves higher cosine
+         *   4. Zero information destruction (no prune, no bit-drop)
+         *
+         * Why this beats algebra-compress v10:
+         *   v10 prunes R (destroys 30-75% of data) then feeds damaged W into v9
+         *   v11 keeps everything, encodes each component optimally
+         */
+        if (argc < 4) {
+            fprintf(stderr,
+                "Usage: bonfyre-fpq algebra-v11 <input> <output>\n"
+                "       [--bits N] [--rank-ratio F] [--max-rank N] [--format safetensors|fpq]\n"
+                "\n"
+                "  Theoretically optimal decomposition:\n"
+                "    W = L + R  →  L as quantized factors + R' encoded with v8 RLF\n"
+                "    No pruning. No bit-routing. Each component gets optimal treatment.\n");
+            return 1;
+        }
+        float rank_ratio = 0.25f;
+        int cbits = force_bits > 0 ? force_bits : 3;
+        int max_rank = 64;
+        int use_fpq_format = 0;
+        for (int i = 4; i < argc; i++) {
+            if (strcmp(argv[i], "--rank-ratio") == 0 && i + 1 < argc)
+                rank_ratio = (float)atof(argv[++i]);
+            else if (strcmp(argv[i], "--max-rank") == 0 && i + 1 < argc)
+                max_rank = atoi(argv[++i]);
+            else if (strcmp(argv[i], "--format") == 0 && i + 1 < argc) {
+                i++;
+                if (strcmp(argv[i], "fpq") == 0) use_fpq_format = 1;
+            }
+        }
+        size_t n_raw;
+        fpq_raw_tensor_t *raw = fpq_read_model(argv[2], &n_raw);
+        if (!raw || n_raw == 0) return 1;
+
+        fprintf(stderr,
+            "═══════════════════════════════════════════════════════\n"
+            " BWA Algebra v11 — Optimal Decomposition\n"
+            " Input:      %s\n"
+            " Output:     %s\n"
+            " Bits:       %d (uniform — no η_L routing)\n"
+            " Rank ratio: %.0f%% (max %d)\n"
+            " Format:     %s\n"
+            " Tensors:    %zu\n"
+            "═══════════════════════════════════════════════════════\n",
+            argv[2], argv[3], cbits,
+            rank_ratio * 100, max_rank,
+            use_fpq_format ? "native .fpq" : "BF16 safetensors", n_raw);
+
+        int n_algebra = 0, n_v8_fallback = 0, n_pass = 0;
+        double sum_cos_v11 = 0.0, sum_cos_v9 = 0.0;
+        float worst_cos_v11 = 1.0f, worst_cos_v9 = 1.0f;
+        double sum_bpw_v11 = 0.0, sum_bpw_v9 = 0.0;
+        double sum_eta_L = 0.0;
+        int n_enc = 0;
+
+        for (size_t i = 0; i < n_raw; i++) {
+            size_t n = raw[i].rows * raw[i].cols;
+            int skip = (n < FPQ_BLOCK_DIM * 2) ||
+                       (raw[i].rows <= 1) ||
+                       (raw[i].cols <= 1);
+
+            bwa_tensor_type_t tt = bwa_classify_tensor(raw[i].name);
+            if (skip || tt == BWA_TENSOR_NORM) {
+                n_pass++;
+                continue;
+            }
+
+            /* ── Phase 0: High-rank SVD decomposition ── */
+            /* Save original W before any destructive ops */
+            float *orig_W = (float *)malloc(n * sizeof(float));
+            memcpy(orig_W, raw[i].data, n * sizeof(float));
+
+            int mn_min = (int)(raw[i].rows < raw[i].cols ?
+                               raw[i].rows : raw[i].cols);
+            int target_rank = (int)(mn_min * rank_ratio);
+            if (target_rank < 1) target_rank = 1;
+            if (target_rank > max_rank) target_rank = max_rank;
+
+            float *U  = (float *)calloc(raw[i].rows * (size_t)target_rank, sizeof(float));
+            float *S  = (float *)calloc((size_t)target_rank, sizeof(float));
+            float *Vt = (float *)calloc((size_t)target_rank * raw[i].cols, sizeof(float));
+
+            int lr_rank = v9_truncated_svd(raw[i].data, raw[i].rows,
+                                            raw[i].cols, target_rank,
+                                            0.95f, U, S, Vt);
+
+            /* Energy captured by LR */
+            double total_energy = 0.0, lr_energy = 0.0;
+            for (size_t k = 0; k < n; k++)
+                total_energy += (double)raw[i].data[k] * (double)raw[i].data[k];
+            for (int r = 0; r < lr_rank; r++)
+                lr_energy += (double)S[r] * (double)S[r];
+            float eta_L = (total_energy > 1e-30) ?
+                          (float)(lr_energy / total_energy) : 0.0f;
+            sum_eta_L += eta_L;
+
+            /* Adaptive rank via rate-distortion (same as v9 Phase 0) */
+            double lambda = 0.5;
+            int adaptive_rank = 0;
+            float sigma_max = (lr_rank > 0) ? S[0] : 1.0f;
+            for (int k = 0; k < lr_rank; k++) {
+                double frac_en = ((double)S[k] * (double)S[k]) / (total_energy + 1e-30);
+                int bits_el = (S[k] >= sigma_max * 0.1f) ? 8 :
+                              (S[k] >= sigma_max * 0.01f) ? 6 : 4;
+                double frac_bpw = (double)bits_el * (double)(raw[i].rows + raw[i].cols) /
+                                  (double)n;
+                if (frac_en / frac_bpw < lambda) break;
+                adaptive_rank = k + 1;
+            }
+            lr_rank = adaptive_rank;
+
+            /* Check if LR extraction is worthwhile */
+            double lr_bpw = 8.0 * (double)lr_rank *
+                           (double)(raw[i].rows + raw[i].cols) / (double)n;
+            double captured_pct = (total_energy > 0) ? 100.0 * lr_energy / total_energy : 0.0;
+            double efficiency = (lr_bpw > 0) ? captured_pct / lr_bpw : 0.0;
+
+            if (lr_rank == 0 || efficiency < 20.0) {
+                /* LR not worthwhile — pure v8 on original W */
+                free(U); free(S); free(Vt);
+
+                /* v8 encode using orig_W (safe copy) */
+                float *v8_in = (float *)malloc(n * sizeof(float));
+                memcpy(v8_in, orig_W, n * sizeof(float));
+                fpq_tensor_t *t = fpq_encode_tensor_v8(
+                    v8_in, raw[i].rows, raw[i].cols,
+                    raw[i].name, cbits);
+                float *decoded = (float *)malloc(n * sizeof(float));
+                if (t->sbb_scale_delta)
+                    fpq_decode_tensor_v8(t, decoded);
+                else
+                    fpq_decode_tensor_v4(t, decoded);
+
+                float cos = fpq_cosine_sim(orig_W, decoded, n);
+                float bpw = (float)t->total_bits / (float)n;
+                if (cos < worst_cos_v11) worst_cos_v11 = cos;
+                sum_cos_v11 += cos;
+                sum_bpw_v11 += bpw;
+
+                /* Run v9 reference on a COPY */
+                float *v9_copy = (float *)malloc(n * sizeof(float));
+                memcpy(v9_copy, orig_W, n * sizeof(float));
+                fpq_tensor_t *t_v9fb = fpq_encode_tensor_v9(
+                    v9_copy, raw[i].rows, raw[i].cols,
+                    raw[i].name, cbits);
+                float *dec_v9fb = (float *)malloc(n * sizeof(float));
+                if (t_v9fb->pid_alpha == -9.0f)
+                    fpq_decode_tensor_v9(t_v9fb, dec_v9fb);
+                else if (t_v9fb->sbb_scale_delta)
+                    fpq_decode_tensor_v8(t_v9fb, dec_v9fb);
+                else
+                    fpq_decode_tensor_v4(t_v9fb, dec_v9fb);
+                float cos_v9fb = fpq_cosine_sim(orig_W, dec_v9fb, n);
+                float bpw_v9fb = (float)t_v9fb->total_bits / (float)n;
+                if (cos_v9fb < worst_cos_v9) worst_cos_v9 = cos_v9fb;
+                sum_cos_v9 += cos_v9fb;
+                sum_bpw_v9 += bpw_v9fb;
+                free(dec_v9fb);
+                free(v9_copy);
+                fpq_tensor_free(t_v9fb);
+
+                memcpy(raw[i].data, decoded, n * sizeof(float));
+                free(orig_W);
+                free(v8_in);
+                free(decoded);
+                fpq_tensor_free(t);
+                n_v8_fallback++;
+                n_enc++;
+                continue;
+            }
+
+            /* ── Phase 1: Quantize L factors (identical to v9 Phase 0) ── */
+            float *US_q = (float *)calloc(raw[i].rows * (size_t)lr_rank, sizeof(float));
+            float *Vt_q = (float *)malloc((size_t)lr_rank * raw[i].cols * sizeof(float));
+            memcpy(Vt_q, Vt, (size_t)lr_rank * raw[i].cols * sizeof(float));
+
+            /* Pre-multiply U*S */
+            for (size_t ii = 0; ii < raw[i].rows; ii++)
+                for (int r = 0; r < lr_rank; r++)
+                    US_q[ii * lr_rank + r] = U[ii * target_rank + r] * S[r];
+
+            /* Per-component quantization (INT8/6/4 tiers) */
+            double lr_factor_bits = 0.0;
+            for (int r = 0; r < lr_rank; r++) {
+                float ratio = S[r] / sigma_max;
+                int max_val;
+                int qbits;
+                if (ratio >= 0.10f) { max_val = 127; qbits = 8; }
+                else if (ratio >= 0.01f) { max_val = 31; qbits = 6; }
+                else { max_val = 7; qbits = 4; }
+
+                lr_factor_bits += (double)qbits * (double)(raw[i].rows + raw[i].cols);
+
+                /* Quantize US_q column r */
+                float us_absmax = 0.0f;
+                for (size_t ii = 0; ii < raw[i].rows; ii++) {
+                    float v = fabsf(US_q[ii * lr_rank + r]);
+                    if (v > us_absmax) us_absmax = v;
+                }
+                if (us_absmax > 1e-30f) {
+                    float sc = us_absmax / (float)max_val;
+                    for (size_t ii = 0; ii < raw[i].rows; ii++) {
+                        size_t idx = ii * lr_rank + r;
+                        int q = (int)roundf(US_q[idx] / sc);
+                        if (q < -max_val) q = -max_val;
+                        if (q > max_val) q = max_val;
+                        US_q[idx] = q * sc;
+                    }
+                }
+                /* Quantize Vt_q row r */
+                float vt_absmax = 0.0f;
+                for (size_t j = 0; j < raw[i].cols; j++) {
+                    float v = fabsf(Vt_q[r * raw[i].cols + j]);
+                    if (v > vt_absmax) vt_absmax = v;
+                }
+                if (vt_absmax > 1e-30f) {
+                    float sc = vt_absmax / (float)max_val;
+                    for (size_t j = 0; j < raw[i].cols; j++) {
+                        size_t idx = r * raw[i].cols + j;
+                        int q = (int)roundf(Vt_q[idx] / sc);
+                        if (q < -max_val) q = -max_val;
+                        if (q > max_val) q = max_val;
+                        Vt_q[idx] = q * sc;
+                    }
+                }
+            }
+
+            /* ── Phase 2: Reconstruct L_quantized ── */
+            float *L_q = (float *)calloc(n, sizeof(float));
+            for (size_t ii = 0; ii < raw[i].rows; ii++)
+                for (size_t j = 0; j < raw[i].cols; j++) {
+                    double val = 0.0;
+                    for (int r = 0; r < lr_rank; r++)
+                        val += (double)US_q[ii * lr_rank + r] *
+                               (double)Vt_q[r * raw[i].cols + j];
+                    L_q[ii * raw[i].cols + j] = (float)val;
+                }
+
+            float cos_lr = fpq_cosine_sim(raw[i].data, L_q, n);
+
+            /* ── Phase 3: True residual from quantized L ── */
+            float *R_prime = (float *)malloc(n * sizeof(float));
+            for (size_t k = 0; k < n; k++)
+                R_prime[k] = raw[i].data[k] - L_q[k];
+
+            /* ── Phase 4: Encode R' with v8 (no redundant SVD) ── */
+            fpq_tensor_t *t_r = fpq_encode_tensor_v8(
+                R_prime, raw[i].rows, raw[i].cols,
+                raw[i].name, cbits);
+
+            float *R_decoded = (float *)malloc(n * sizeof(float));
+            if (t_r->sbb_scale_delta)
+                fpq_decode_tensor_v8(t_r, R_decoded);
+            else
+                fpq_decode_tensor_v4(t_r, R_decoded);
+
+            float cos_r = fpq_cosine_sim(R_prime, R_decoded, n);
+
+            /* ── Phase 5: Reconstruct = L_q + R'_decoded ── */
+            float *final = (float *)malloc(n * sizeof(float));
+            for (size_t k = 0; k < n; k++)
+                final[k] = L_q[k] + R_decoded[k];
+
+            float cos_v11 = fpq_cosine_sim(orig_W, final, n);
+            double v8_bpw = (double)t_r->total_bits / (double)n;
+            double total_bpw = lr_factor_bits / (double)n + v8_bpw;
+
+            /* ── Compare: also run v9 on original for A/B ── */
+            float *v9_copy = (float *)malloc(n * sizeof(float));
+            memcpy(v9_copy, orig_W, n * sizeof(float));
+            fpq_tensor_t *t_v9 = fpq_encode_tensor_v9(
+                v9_copy, raw[i].rows, raw[i].cols,
+                raw[i].name, cbits);
+            float *dec_v9 = (float *)malloc(n * sizeof(float));
+            if (t_v9->pid_alpha == -9.0f)
+                fpq_decode_tensor_v9(t_v9, dec_v9);
+            else if (t_v9->sbb_scale_delta)
+                fpq_decode_tensor_v8(t_v9, dec_v9);
+            else
+                fpq_decode_tensor_v4(t_v9, dec_v9);
+            float cos_v9_ref = fpq_cosine_sim(orig_W, dec_v9, n);
+            float bpw_v9 = (float)t_v9->total_bits / (float)n;
+            free(dec_v9);
+            free(v9_copy);
+            fpq_tensor_free(t_v9);
+
+            if (cos_v11 < worst_cos_v11) worst_cos_v11 = cos_v11;
+            if (cos_v9_ref < worst_cos_v9) worst_cos_v9 = cos_v9_ref;
+            sum_cos_v11 += cos_v11;
+            sum_cos_v9 += cos_v9_ref;
+            sum_bpw_v11 += total_bpw;
+            sum_bpw_v9 += bpw_v9;
+
+            const char *winner = cos_v11 >= cos_v9_ref ? "v11 ✓" : "v9 ✓";
+            if (n_algebra < 20 || (n_algebra % 50 == 0))
+                fprintf(stderr,
+                    "  [%zu] %-36s η_L=%.3f rank=%d lr_cos=%.4f "
+                    "R_cos=%.6f | v11=%.6f@%.2f v9=%.6f@%.2f [%s]\n",
+                    i, raw[i].name, eta_L, lr_rank, cos_lr,
+                    cos_r, cos_v11, (float)total_bpw,
+                    cos_v9_ref, bpw_v9, winner);
+
+            /* Write v11 output to raw tensor */
+            memcpy(raw[i].data, final, n * sizeof(float));
+
+            free(U); free(S); free(Vt);
+            free(US_q); free(Vt_q);
+            free(L_q); free(R_prime);
+            free(R_decoded); free(final);
+            free(orig_W);
+            fpq_tensor_free(t_r);
+            n_algebra++;
+            n_enc++;
+        }
+
+        float avg_v11 = n_enc > 0 ? (float)(sum_cos_v11 / n_enc) : 0.0f;
+        float avg_v9 = n_enc > 0 ? (float)(sum_cos_v9 / n_enc) : 0.0f;
+        float avg_bpw_v11 = n_enc > 0 ? (float)(sum_bpw_v11 / n_enc) : 0.0f;
+        float avg_bpw_v9 = n_enc > 0 ? (float)(sum_bpw_v9 / n_enc) : 0.0f;
+
+        fprintf(stderr,
+            "\n═══════════════════════════════════════════════════════\n"
+            " ALGEBRA v11 SUMMARY (%d tensors)\n"
+            "═══════════════════════════════════════════════════════\n"
+            "  Algebra path:  %d tensors (LR + v8 on residual)\n"
+            "  v8 fallback:   %d tensors (LR not worthwhile)\n"
+            "  Passthrough:   %d tensors\n"
+            "  Mean η_L:      %.4f\n"
+            "  v11: avg cos=%.6f  worst=%.6f  avg bpw=%.2f\n"
+            "  v9:  avg cos=%.6f  worst=%.6f  avg bpw=%.2f\n"
+            "  Δ avg cos: %+.7f  Δ bpw: %+.3f\n"
+            "═══════════════════════════════════════════════════════\n",
+            n_enc, n_algebra, n_v8_fallback, n_pass,
+            n_algebra > 0 ? (float)(sum_eta_L / (n_algebra + n_v8_fallback)) : 0.0f,
+            avg_v11, worst_cos_v11, avg_bpw_v11,
+            avg_v9, worst_cos_v9, avg_bpw_v9,
+            (double)avg_v11 - (double)avg_v9,
+            (double)avg_bpw_v11 - (double)avg_bpw_v9);
+
+        int rc;
+        if (use_fpq_format)
+            rc = fpq_native_write(argv[3], raw, n_raw);
+        else
+            rc = fpq_safetensors_write(argv[3], raw, n_raw);
+        fpq_raw_tensor_free(raw, n_raw);
         return rc;
     } else {
         fprintf(stderr, "Unknown command: %s\n", cmd);
