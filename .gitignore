@@ -42,4 +42,33 @@ dist/
 
 # Test outputs
 outputs-*/
+
+# Secrets / env files — never commit
+.env
+**/.env
 pipeline/.env
+**/pipeline/.env
+
+# Model files (large binaries — never commit)
+*.gguf
+*.fpq
+*.safetensors
+*.bin
+*.pth
+*.pt
+*.onnx
+*.tflite
+*.pb
+*.h5
+*.hdf5
+*.mlmodel
+*.mlpackage
+*.ckpt
+*.engine
+*.plan
+*.mar
+*.torchscript
+
+# Model directories
+models/
+*.cache/huggingface/

@@ -8,6 +8,7 @@
  */
 
 #include "fpqx.h"
+#include "fpq_neon.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -958,15 +959,273 @@ static void sli_generate_projection(float *proj, size_t n,
 }
 
 
+/* ── Fused spectral bypass scoring kernel ──
+ *
+ * Computes: z'^T · FWHT_raw(signs ⊙ x_block)
+ * where z' = z / √n (normalization folded into z at precompute time).
+ *
+ * Optimizations vs separate sign/FWHT/dot calls:
+ *  • XOR sign-bit flip (no float multiply)
+ *  • Fully vectorized FWHT including stride=1,2 (vld2q / lo-hi split)
+ *  • No normalization pass (folded into z)
+ *  • 4-accumulator dot product
+ *  • Single inline function (zero call overhead)
+ */
+#if defined(__ARM_NEON) || defined(__ARM_NEON__)
+#include <arm_neon.h>
+
+static inline float sli_fast_block_score(
+    const float *z_b,       /* precomputed z[256], already scaled by 1/√n */
+    const float *x_src,     /* input[col_offset..] */
+    size_t dim,             /* actual element count (may be < 256 for last block) */
+    uint64_t block_seed)
+{
+    float __attribute__((aligned(16))) x[256];
+
+    /* Copy input, zero-pad if needed */
+    if (dim >= 256) {
+        memcpy(x, x_src, 256 * sizeof(float));
+    } else {
+        memcpy(x, x_src, dim * sizeof(float));
+        memset(x + dim, 0, (256 - dim) * sizeof(float));
+    }
+
+    /* ── Apply random signs via XOR on sign bit ── */
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t k = i; k < i + 64; k += 4) {
+            size_t bit_off = k - i;
+            uint32_t m0 = ((uint32_t)((state >> (bit_off    )) & 1)) << 31;
+            uint32_t m1 = ((uint32_t)((state >> (bit_off + 1)) & 1)) << 31;
+            uint32_t m2 = ((uint32_t)((state >> (bit_off + 2)) & 1)) << 31;
+            uint32_t m3 = ((uint32_t)((state >> (bit_off + 3)) & 1)) << 31;
+            uint32_t mm[4] = {m0, m1, m2, m3};
+            uint32x4_t mask = vld1q_u32(mm);
+            uint32x4_t xv = vld1q_u32((const uint32_t *)(x + k));
+            vst1q_u32((uint32_t *)(x + k), veorq_u32(xv, mask));
+        }
+    }
+
+    /* ── Unnormalized FWHT (normalization folded into z) ── */
+
+    /* Pass 0: stride=1 — vectorized via deinterleave load/store */
+    for (size_t i = 0; i < 256; i += 8) {
+        float32x4x2_t ab = vld2q_f32(x + i);
+        float32x4_t s = vaddq_f32(ab.val[0], ab.val[1]);
+        float32x4_t d = vsubq_f32(ab.val[0], ab.val[1]);
+        ab.val[0] = s; ab.val[1] = d;
+        vst2q_f32(x + i, ab);
+    }
+
+    /* Pass 1: stride=2 — vectorized via lo/hi float32x2_t split */
+    for (size_t i = 0; i < 256; i += 4) {
+        float32x4_t v = vld1q_f32(x + i);
+        float32x2_t lo = vget_low_f32(v);
+        float32x2_t hi = vget_high_f32(v);
+        vst1q_f32(x + i, vcombine_f32(vadd_f32(lo, hi), vsub_f32(lo, hi)));
+    }
+
+    /* Passes 2–7: stride=4,8,16,32,64,128 (standard 4-wide butterfly) */
+    for (size_t stride = 4; stride < 256; stride <<= 1) {
+        for (size_t base = 0; base < 256; base += stride * 2) {
+            for (size_t k = 0; k < stride; k += 4) {
+                float32x4_t a = vld1q_f32(x + base + k);
+                float32x4_t b = vld1q_f32(x + base + k + stride);
+                vst1q_f32(x + base + k,          vaddq_f32(a, b));
+                vst1q_f32(x + base + k + stride, vsubq_f32(a, b));
+            }
+        }
+    }
+
+    /* ── Dot product: z'^T · FWHT_raw(signs ⊙ x) ── */
+    float32x4_t acc0 = vdupq_n_f32(0.0f);
+    float32x4_t acc1 = vdupq_n_f32(0.0f);
+    float32x4_t acc2 = vdupq_n_f32(0.0f);
+    float32x4_t acc3 = vdupq_n_f32(0.0f);
+    for (size_t i = 0; i < 256; i += 16) {
+        acc0 = vmlaq_f32(acc0, vld1q_f32(z_b + i),     vld1q_f32(x + i));
+        acc1 = vmlaq_f32(acc1, vld1q_f32(z_b + i + 4), vld1q_f32(x + i + 4));
+        acc2 = vmlaq_f32(acc2, vld1q_f32(z_b + i + 8), vld1q_f32(x + i + 8));
+        acc3 = vmlaq_f32(acc3, vld1q_f32(z_b + i +12), vld1q_f32(x + i +12));
+    }
+    acc0 = vaddq_f32(vaddq_f32(acc0, acc1), vaddq_f32(acc2, acc3));
+    return vaddvq_f32(acc0);
+}
+
+#elif defined(__SSE2__) || defined(_M_X64) || defined(_M_AMD64)
+#include <emmintrin.h>
+#if defined(__AVX2__)
+#include <immintrin.h>
+#endif
+
+/* x86 SSE2/AVX2 fused spectral bypass kernel */
+static inline float sli_fast_block_score(
+    const float *z_b, const float *x_src, size_t dim, uint64_t block_seed)
+{
+    float __attribute__((aligned(16))) x[256];
+    if (dim >= 256) {
+        memcpy(x, x_src, 256 * sizeof(float));
+    } else {
+        memcpy(x, x_src, dim * sizeof(float));
+        memset(x + dim, 0, (256 - dim) * sizeof(float));
+    }
+
+    /* ── XOR sign-bit flip (SSE2) ── */
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t k = i; k < i + 64; k += 4) {
+            size_t bit_off = k - i;
+            __m128i mask = _mm_setr_epi32(
+                (int)(((uint32_t)((state >> (bit_off    )) & 1)) << 31),
+                (int)(((uint32_t)((state >> (bit_off + 1)) & 1)) << 31),
+                (int)(((uint32_t)((state >> (bit_off + 2)) & 1)) << 31),
+                (int)(((uint32_t)((state >> (bit_off + 3)) & 1)) << 31)
+            );
+            __m128i xv = _mm_loadu_si128((const __m128i *)(x + k));
+            _mm_storeu_si128((__m128i *)(x + k), _mm_xor_si128(xv, mask));
+        }
+    }
+
+    /* ── Unnormalized FWHT (1/√n folded into z) ── */
+
+    /* Pass 0: stride=1 */
+    for (size_t i = 0; i < 256; i += 4) {
+        __m128 v = _mm_loadu_ps(x + i);
+        __m128 even = _mm_shuffle_ps(v, v, _MM_SHUFFLE(2, 2, 0, 0));
+        __m128 odd  = _mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 3, 1, 1));
+        __m128 s = _mm_add_ps(even, odd);
+        __m128 d = _mm_sub_ps(even, odd);
+        _mm_storeu_ps(x + i, _mm_unpacklo_ps(s, d));
+    }
+
+    /* Pass 1: stride=2 */
+    for (size_t i = 0; i < 256; i += 4) {
+        __m128 v = _mm_loadu_ps(x + i);
+        __m128 lo = _mm_movelh_ps(v, v);
+        __m128 hi = _mm_movehl_ps(v, v);
+        __m128 s = _mm_add_ps(lo, hi);
+        __m128 d = _mm_sub_ps(lo, hi);
+        _mm_storeu_ps(x + i, _mm_shuffle_ps(s, d, _MM_SHUFFLE(1, 0, 1, 0)));
+    }
+
+    /* Passes 2–7: stride=4..128 */
+    for (size_t stride = 4; stride < 256; stride <<= 1) {
+        for (size_t base = 0; base < 256; base += stride * 2) {
+            for (size_t k = 0; k < stride; k += 4) {
+                __m128 a = _mm_loadu_ps(x + base + k);
+                __m128 b = _mm_loadu_ps(x + base + k + stride);
+                _mm_storeu_ps(x + base + k,          _mm_add_ps(a, b));
+                _mm_storeu_ps(x + base + k + stride, _mm_sub_ps(a, b));
+            }
+        }
+    }
+
+    /* ── Dot product: z'^T · FWHT_raw(signs ⊙ x) ── */
+#if defined(__AVX2__)
+    __m256 acc0 = _mm256_setzero_ps();
+    __m256 acc1 = _mm256_setzero_ps();
+    __m256 acc2 = _mm256_setzero_ps();
+    __m256 acc3 = _mm256_setzero_ps();
+    for (int i = 0; i < 256; i += 32) {
+        acc0 = _mm256_fmadd_ps(_mm256_loadu_ps(z_b + i),      _mm256_loadu_ps(x + i),      acc0);
+        acc1 = _mm256_fmadd_ps(_mm256_loadu_ps(z_b + i + 8),  _mm256_loadu_ps(x + i + 8),  acc1);
+        acc2 = _mm256_fmadd_ps(_mm256_loadu_ps(z_b + i + 16), _mm256_loadu_ps(x + i + 16), acc2);
+        acc3 = _mm256_fmadd_ps(_mm256_loadu_ps(z_b + i + 24), _mm256_loadu_ps(x + i + 24), acc3);
+    }
+    acc0 = _mm256_add_ps(_mm256_add_ps(acc0, acc1), _mm256_add_ps(acc2, acc3));
+    __m128 lo128 = _mm256_castps256_ps128(acc0);
+    __m128 hi128 = _mm256_extractf128_ps(acc0, 1);
+    __m128 sf = _mm_add_ps(lo128, hi128);
+    __m128 sf2 = _mm_movehl_ps(sf, sf);
+    sf = _mm_add_ps(sf, sf2);
+    __m128 sf3 = _mm_shuffle_ps(sf, sf, _MM_SHUFFLE(1, 1, 1, 1));
+    sf = _mm_add_ss(sf, sf3);
+    return _mm_cvtss_f32(sf);
+#else
+    __m128 acc0 = _mm_setzero_ps();
+    __m128 acc1 = _mm_setzero_ps();
+    __m128 acc2 = _mm_setzero_ps();
+    __m128 acc3 = _mm_setzero_ps();
+    for (int i = 0; i < 256; i += 16) {
+        acc0 = _mm_add_ps(acc0, _mm_mul_ps(_mm_loadu_ps(z_b+i),    _mm_loadu_ps(x+i)));
+        acc1 = _mm_add_ps(acc1, _mm_mul_ps(_mm_loadu_ps(z_b+i+4),  _mm_loadu_ps(x+i+4)));
+        acc2 = _mm_add_ps(acc2, _mm_mul_ps(_mm_loadu_ps(z_b+i+8),  _mm_loadu_ps(x+i+8)));
+        acc3 = _mm_add_ps(acc3, _mm_mul_ps(_mm_loadu_ps(z_b+i+12), _mm_loadu_ps(x+i+12)));
+    }
+    acc0 = _mm_add_ps(_mm_add_ps(acc0, acc1), _mm_add_ps(acc2, acc3));
+    __m128 sf2 = _mm_movehl_ps(acc0, acc0);
+    acc0 = _mm_add_ps(acc0, sf2);
+    __m128 sf3 = _mm_shuffle_ps(acc0, acc0, _MM_SHUFFLE(1, 1, 1, 1));
+    acc0 = _mm_add_ss(acc0, sf3);
+    return _mm_cvtss_f32(acc0);
+#endif
+}
+
+#else
+/* Pure scalar fallback — works everywhere (RISC-V, WASM, etc.)
+ *
+ * IMPORTANT: The fpq_neon_fwht_256() scalar path includes 1/√n
+ * normalization, but z already has 1/√n folded in. So we do the
+ * FWHT manually here WITHOUT normalization to avoid double-scaling.
+ */
+static inline float sli_fast_block_score(
+    const float *z_b, const float *x_src, size_t dim, uint64_t block_seed)
+{
+    float x[256] = {0};
+    if (dim > 256) dim = 256;
+    memcpy(x, x_src, dim * sizeof(float));
+
+    /* Random signs */
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t j = i; j < i + 64 && j < 256; j++)
+            if ((state >> (j - i)) & 1) x[j] = -x[j];
+    }
+
+    /* Unnormalized FWHT (1/√n already in z) */
+    for (size_t stride = 1; stride < 256; stride <<= 1) {
+        for (size_t base = 0; base < 256; base += stride * 2) {
+            for (size_t k = 0; k < stride; k++) {
+                float a = x[base + k];
+                float b = x[base + k + stride];
+                x[base + k]          = a + b;
+                x[base + k + stride] = a - b;
+            }
+        }
+    }
+
+    /* Dot product */
+    float dot = 0.0f;
+    for (size_t i = 0; i < 256; i++) dot += z_b[i] * x[i];
+    return dot;
+}
+#endif
+
+
 fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t) {
     if (!t || !t->additive) return NULL;
 
+    fpq_tensor_t *enc = t->additive;
+    size_t rows = t->rows;
+    size_t cols = t->cols;
+    size_t n_blocks = enc->n_blocks;
+
     fpqx_sli_ctx_t *ctx = (fpqx_sli_ctx_t *)calloc(1, sizeof(*ctx));
-    ctx->rows = t->rows;
-    ctx->cols = t->cols;
-    ctx->blocks_per_row = (t->cols + SLI_BLOCK_DIM - 1) / SLI_BLOCK_DIM;
+    ctx->rows = rows;
+    ctx->cols = cols;
+    ctx->blocks_per_row = (cols + SLI_BLOCK_DIM - 1) / SLI_BLOCK_DIM;
     ctx->n_block_cols = ctx->blocks_per_row;
     ctx->tensor = t;
+    ctx->n_total_blocks = n_blocks;
 
     /* Allocate per-block-column score tables */
     ctx->tables = (fpqx_sli_table_t *)calloc(ctx->n_block_cols,
@@ -978,63 +1237,36 @@ fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t) {
         tab->proj_scores = (float *)calloc(SLI_QJL_PROJECTIONS, sizeof(float));
     }
 
-    ctx->output = (float *)calloc(t->rows, sizeof(float));
-    return ctx;
-}
+    ctx->output = (float *)calloc(rows, sizeof(float));
 
+    /* ── Parse sbb_scale_delta layout and cache offsets ── */
+    int is_v9 = (enc->pid_alpha == -9.0f);
+    ctx->lr_rank = is_v9 ? (int)enc->sbb_scale_delta[0] : 0;
+    ctx->us_off = is_v9 ? 2 : 0;
+    size_t lr_us_size = rows * (size_t)ctx->lr_rank;
+    ctx->vt_off = ctx->us_off + lr_us_size;
+    size_t lr_vt_size = (size_t)ctx->lr_rank * cols;
+    ctx->v8_base = is_v9 ? (2 + lr_us_size + lr_vt_size) : 0;
+    ctx->e8_off = ctx->v8_base + n_blocks;
 
-int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
-    if (!ctx || !ctx->tensor || !ctx->tensor->additive) return -1;
-
-    const fpqx_tensor_t *t = ctx->tensor;
-    const fpq_tensor_t *enc = t->additive;
-    size_t rows = ctx->rows;
-    size_t cols = ctx->cols;
-    size_t bpr = ctx->blocks_per_row;
-    size_t n_blocks = enc->n_blocks;
+    /* ── Precompute z vectors in-place over the E8 region ──
+     *
+     * z[b][k] = unwarp((e8[k] + tile[k]) / lattice_scale * wnorm) * rms
+     *         + QJL reconstruction
+     *
+     * After this, sbb_scale_delta[e8_off + b*256 + k] holds the final
+     * z value instead of the raw E8 coordinate.  E8/tile/QJL data are
+     * no longer needed for inference — only LR factors (Phase 0) and
+     * haar_seed (for spectral bypass signs) are still used.
+     */
     float beta = SLI_MU_BETA;
     int coord_bits = (int)enc->coord_bits;
     float lattice_scale = 8.0f * (float)coord_bits;
 
-    /* ── Unpack LR factors from sbb_scale_delta ──
-     *  v9 format (pid_alpha == -9.0f):
-     *    [0]: lr_rank, [1]: lr_rank, [2..]: UΣ, V^T, then v8 data
-     *  v8 format (pid_alpha == -8.0f):
-     *    [0..]: v8 data directly (warp_norms first, no LR header)
-     */
-    int is_v9 = (enc->pid_alpha == -9.0f);
-    int lr_rank = is_v9 ? (int)enc->sbb_scale_delta[0] : 0;
-    size_t us_off = is_v9 ? 2 : 0;
-    size_t lr_us_size = rows * (size_t)lr_rank;
-    size_t vt_off = us_off + lr_us_size;
-    size_t lr_vt_size = (size_t)lr_rank * cols;
-    size_t v8_base = is_v9 ? (2 + lr_us_size + lr_vt_size) : 0;
-
-    /* ── Phase 0: Low-rank contribution (standard dense matmul) ──
-     *  y_LR = UΣ · (V^T · x)
-     */
-    float *vt_x = (float *)calloc(lr_rank, sizeof(float));
-    for (int r = 0; r < lr_rank; r++) {
-        float dot = 0.0f;
-        for (size_t j = 0; j < cols; j++)
-            dot += enc->sbb_scale_delta[vt_off + r * cols + j] * x[j];
-        vt_x[r] = dot;
-    }
-
-    for (size_t i = 0; i < rows; i++) {
-        float lr_val = 0.0f;
-        for (int r = 0; r < lr_rank; r++)
-            lr_val += enc->sbb_scale_delta[us_off + i * lr_rank + r] * vt_x[r];
-        output[i] = lr_val;
-    }
-    free(vt_x);
-
-    /* ── Unpack v8 data offsets ── */
-    size_t e8_off = v8_base + n_blocks;
     size_t e8_flat_size = n_blocks * SLI_BLOCK_DIM;
-    size_t tile_cb_off = e8_off + e8_flat_size;
+    size_t tile_cb_off = ctx->e8_off + e8_flat_size;
 
-    /* Recover effective_k (same logic as v9/v8 decode) */
+    /* Recover effective_k */
     int effective_k = SLI_RVQ_TILES;
     {
         size_t test_cb = (size_t)effective_k * SLI_TILE_DIM;
@@ -1056,100 +1288,232 @@ int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
     size_t tile_idx_off = tile_cb_off + tile_cb_size;
     const float *tile_data = enc->sbb_scale_delta + tile_cb_off;
 
-    /* ── Phase 1 + 2: Per-row scoring via spectral domain ── */
-    float *signs_buf = (float *)malloc(SLI_BLOCK_DIM * sizeof(float));
-    float *x_block = (float *)malloc(SLI_BLOCK_DIM * sizeof(float));
-    float *x_spectral = (float *)malloc(SLI_BLOCK_DIM * sizeof(float));
-    float *proj_buf = (float *)malloc(SLI_BLOCK_DIM * sizeof(float));
+    /* Writable pointer to the E8 region (we overwrite in-place with z) */
+    float *z_region = enc->sbb_scale_delta + ctx->e8_off;
 
-    for (size_t i = 0; i < rows; i++) {
-        float row_sli_score = 0.0f;
+    for (size_t b = 0; b < n_blocks; b++) {
+        float rms = enc->coord_scales[b];
+        float wnorm = enc->sbb_scale_delta[ctx->v8_base + b];
+        float ls_inv = 1.0f / lattice_scale;
+        float *z_b = z_region + b * SLI_BLOCK_DIM;
 
-        for (size_t bj = 0; bj < bpr; bj++) {
-            size_t b = i * bpr + bj;
-            if (b >= n_blocks) break;
+        /* E8 + tile correction → unwarp → z_base
+         * z_b[k] currently holds the raw E8 coordinate.
+         * We read it, compute the full z value, and write it back.
+         * Processing in order k=0..255, each position read-before-write. */
+        for (int p = 0; p < SLI_E8_PAIRS; p++) {
+            int ti = (int)enc->sbb_scale_delta[tile_idx_off +
+                                                 b * SLI_E8_PAIRS + p];
+            if (ti < 0) ti = 0;
+            if (ti >= effective_k) ti = effective_k - 1;
+            size_t pair_base = (size_t)p * SLI_TILE_DIM;
 
-            size_t col_offset = bj * SLI_BLOCK_DIM;
-            size_t col_end = col_offset + SLI_BLOCK_DIM;
-            if (col_end > cols) col_end = cols;
-            size_t this_dim = col_end - col_offset;
-
-            float rms = enc->coord_scales[b];
-            float wnorm = enc->sbb_scale_delta[v8_base + b];
-            const float *e8_pts = enc->sbb_scale_delta + e8_off + b * SLI_BLOCK_DIM;
-
-            /* ── Spectral Bypass (Theorem 1) ──
-             * x̃ = FWHT(signs ⊙ x_block) / n
-             */
-            memset(x_block, 0, SLI_BLOCK_DIM * sizeof(float));
-            memcpy(x_block, x + col_offset, this_dim * sizeof(float));
-
-            uint64_t block_seed = enc->haar_seed ^ (uint64_t)b;
-            sli_random_signs(signs_buf, SLI_BLOCK_DIM, block_seed);
-            for (size_t k = 0; k < SLI_BLOCK_DIM; k++)
-                x_block[k] *= signs_buf[k];
-
-            /* In-place FWHT (includes 1/√n normalization) */
-            fpq_fwht(x_block, SLI_BLOCK_DIM);
-
-            /* x̃ = (1/√n) H(s ⊙ x) — no extra scaling needed */
-            memcpy(x_spectral, x_block, SLI_BLOCK_DIM * sizeof(float));
-
-            /* ── Score: z^T · x̃ where z = unwarp(corrected/ls*wn)*rms + qjl ── */
-
-            /* Build corrected E8+tile representation */
-            float base_tile_score = 0.0f;
-            for (int p = 0; p < SLI_E8_PAIRS; p++) {
-                int ti = (int)enc->sbb_scale_delta[tile_idx_off +
-                                                     b * SLI_E8_PAIRS + p];
-                if (ti < 0) ti = 0;
-                if (ti >= effective_k) ti = effective_k - 1;
-                size_t pair_base = (size_t)p * SLI_TILE_DIM;
-
-                /* Score this 16D pair directly: unwarp(e8+tile) * rms · x̃ */
-                for (int d = 0; d < SLI_TILE_DIM; d++) {
-                    float corrected = e8_pts[pair_base + d] +
-                                      tile_data[ti * SLI_TILE_DIM + d];
-                    float lat_val = corrected / lattice_scale * wnorm;
-                    float unwarped = sli_unwarp(lat_val, beta);
-                    float z_val = unwarped * rms;
-                    base_tile_score += z_val * x_spectral[pair_base + d];
-                }
+            for (int d = 0; d < SLI_TILE_DIM; d++) {
+                size_t k = pair_base + d;
+                float corrected = z_b[k] + tile_data[ti * SLI_TILE_DIM + d];
+                float lat_val = corrected * ls_inv * wnorm;
+                /* Use exact expf for maximum quality (no Schraudolph approx) */
+                float unwarped = sli_unwarp(lat_val, beta);
+                z_b[k] = unwarped * rms;
             }
-
-            /* ── QJL Projection Scoring (Theorem 4) ──
-             * z_QJL^T · x̃ = (||r|| / m) · Σ y_p · (φ_p^T · x̃)
-             */
-            float qjl_score = 0.0f;
-            if (enc->qjl && enc->qjl[b] &&
-                enc->coord_residual_norms &&
-                enc->coord_residual_norms[b] > 1e-10f) {
-
-                fpq_qjl_t *qjl = enc->qjl[b];
-                float rnorm = enc->coord_residual_norms[b];
-                size_t m = qjl->n_projections;
-                float qjl_scale = rnorm / (float)m;
-
-                for (size_t p = 0; p < m; p++) {
-                    /* Generate projection and compute π_p = φ_p^T · x̃ */
-                    sli_generate_projection(proj_buf, SLI_BLOCK_DIM,
-                                             qjl->proj_seed, p);
-                    float pi_p = 0.0f;
-                    for (size_t k = 0; k < SLI_BLOCK_DIM; k++)
-                        pi_p += proj_buf[k] * x_spectral[k];
-
-                    /* y_p = sign bit */
-                    float y_p = (qjl->bits[p / 64] & (1ULL << (p % 64))) ?
-                                1.0f : -1.0f;
-                    qjl_score += y_p * pi_p;
-                }
-                qjl_score *= qjl_scale;
-            }
-
-            row_sli_score += base_tile_score + qjl_score;
         }
 
-        output[i] += row_sli_score;
+        /* Add QJL reconstruction to z */
+        if (enc->qjl && enc->qjl[b] &&
+            enc->coord_residual_norms &&
+            enc->coord_residual_norms[b] > 1e-10f) {
+
+            fpq_qjl_t *qjl = enc->qjl[b];
+            float rnorm = enc->coord_residual_norms[b];
+            size_t m = qjl->n_projections;
+            float qjl_scale = rnorm / (float)m;
+            float proj_scale = 1.0f / sqrtf((float)SLI_BLOCK_DIM);
+
+            for (size_t proj = 0; proj < m; proj++) {
+                float y_p = (qjl->bits[proj / 64] & (1ULL << (proj % 64)))
+                            ? 1.0f : -1.0f;
+                float coeff = y_p * qjl_scale;
+
+                /* Generate Rademacher projection (matching sli_generate_projection) */
+                uint64_t state = qjl->proj_seed ^
+                                 (proj * 0x9E3779B97F4A7C15ULL);
+                for (size_t k = 0; k < SLI_BLOCK_DIM; k += 64) {
+                    state ^= state << 13;
+                    state ^= state >> 7;
+                    state ^= state << 17;
+                    uint64_t bits = state;
+                    size_t end = (k + 64 < SLI_BLOCK_DIM) ? k + 64 : SLI_BLOCK_DIM;
+                    for (size_t j = k; j < end; j++) {
+                        float phi = ((bits >> (j - k)) & 1) ? proj_scale : -proj_scale;
+                        z_b[j] += coeff * phi;
+                    }
+                }
+            }
+        }
+    }
+
+    ctx->z_data = z_region;
+    ctx->z_precomputed = 1;
+
+    /* Fold 1/√n normalization into z so FWHT can run unnormalized.
+     * score = z^T · (1/√n) · FWHT(s⊙x) = (z/√n)^T · FWHT_raw(s⊙x)
+     */
+    float inv_sqrt_n = 1.0f / sqrtf((float)SLI_BLOCK_DIM);  /* 1/16 */
+    for (size_t i = 0; i < n_blocks * SLI_BLOCK_DIM; i++)
+        z_region[i] *= inv_sqrt_n;
+
+    return ctx;
+}
+
+
+int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
+    if (!ctx || !ctx->tensor || !ctx->tensor->additive) return -1;
+
+    const fpqx_tensor_t *t = ctx->tensor;
+    const fpq_tensor_t *enc = t->additive;
+    size_t rows = ctx->rows;
+    size_t cols = ctx->cols;
+    size_t bpr = ctx->blocks_per_row;
+    size_t n_blocks = enc->n_blocks;
+
+    /* ── Phase 0: Low-rank contribution y_LR = UΣ · (V^T · x) ── */
+    int lr_rank = ctx->lr_rank;
+    size_t us_off = ctx->us_off;
+    size_t vt_off = ctx->vt_off;
+
+#if USE_ACCELERATE
+    if (lr_rank > 0) {
+        float *vt_x = (float *)calloc(lr_rank, sizeof(float));
+        /* V^T · x: [lr_rank × cols] → [lr_rank] */
+        cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                    lr_rank, (int)cols, 1.0f,
+                    enc->sbb_scale_delta + vt_off, (int)cols,
+                    x, 1, 0.0f, vt_x, 1);
+        /* UΣ · vt_x: [rows × lr_rank] → [rows] */
+        cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                    (int)rows, lr_rank, 1.0f,
+                    enc->sbb_scale_delta + us_off, lr_rank,
+                    vt_x, 1, 0.0f, output, 1);
+        free(vt_x);
+    } else {
+        memset(output, 0, rows * sizeof(float));
+    }
+#else
+    {
+        float *vt_x = (float *)calloc(lr_rank, sizeof(float));
+        for (int r = 0; r < lr_rank; r++) {
+            float dot = 0.0f;
+            for (size_t j = 0; j < cols; j++)
+                dot += enc->sbb_scale_delta[vt_off + r * cols + j] * x[j];
+            vt_x[r] = dot;
+        }
+        for (size_t i = 0; i < rows; i++) {
+            float lr_val = 0.0f;
+            for (int r = 0; r < lr_rank; r++)
+                lr_val += enc->sbb_scale_delta[us_off + i * lr_rank + r] * vt_x[r];
+            output[i] = lr_val;
+        }
+        free(vt_x);
+    }
+#endif
+
+    /* ── Phase 1+2: Precomputed z fast path ──
+     *
+     * z vectors were precomputed during prepare: z[b] = full decoded block.
+     * Inference is just: score_b = z[b]^T · FWHT(signs_b ⊙ x_block)
+     *
+     * Per block: random signs (256 muls) + FWHT (O(N log N)) + dot (256 FMAs)
+     * No E8 scoring, no tile lookup, no QJL projection, no unwarp.
+     */
+    if (ctx->z_precomputed && ctx->z_data) {
+        for (size_t i = 0; i < rows; i++) {
+            float row_score = 0.0f;
+
+            for (size_t bj = 0; bj < bpr; bj++) {
+                size_t b = i * bpr + bj;
+                if (b >= n_blocks) break;
+
+                size_t col_offset = bj * SLI_BLOCK_DIM;
+                size_t col_end = col_offset + SLI_BLOCK_DIM;
+                if (col_end > cols) col_end = cols;
+                size_t this_dim = col_end - col_offset;
+
+                uint64_t block_seed = enc->haar_seed ^ (uint64_t)b;
+                const float *z_b = ctx->z_data + b * SLI_BLOCK_DIM;
+                row_score += sli_fast_block_score(z_b, x + col_offset,
+                                                   this_dim, block_seed);
+            }
+
+            output[i] += row_score;
+        }
+
+    } else {
+        /* Fallback: full E8 + tile + QJL scoring (no precompute) */
+        int coord_bits = (int)enc->coord_bits;
+        float lattice_scale = 8.0f * (float)coord_bits;
+        size_t v8_base = ctx->v8_base;
+        size_t e8_off = ctx->e8_off;
+        size_t e8_flat_size = n_blocks * SLI_BLOCK_DIM;
+        size_t tile_cb_off = e8_off + e8_flat_size;
+
+        int effective_k = SLI_RVQ_TILES;
+        {
+            size_t test_cb = (size_t)effective_k * SLI_TILE_DIM;
+            size_t test_ek = tile_cb_off + test_cb + n_blocks * SLI_E8_PAIRS;
+            float stored = enc->sbb_scale_delta[test_ek];
+            if (stored >= 16.0f && stored <= 256.0f)
+                effective_k = (int)stored;
+        }
+        size_t tile_cb_size = (size_t)effective_k * SLI_TILE_DIM;
+        size_t tile_idx_off = tile_cb_off + tile_cb_size;
+        const float *tile_data = enc->sbb_scale_delta + tile_cb_off;
+
+        float *x_block = (float *)malloc(SLI_BLOCK_DIM * sizeof(float));
+        float *x_spectral = (float *)malloc(SLI_BLOCK_DIM * sizeof(float));
+
+        for (size_t i = 0; i < rows; i++) {
+            float row_sli_score = 0.0f;
+            for (size_t bj = 0; bj < bpr; bj++) {
+                size_t b = i * bpr + bj;
+                if (b >= n_blocks) break;
+                size_t col_offset = bj * SLI_BLOCK_DIM;
+                size_t col_end = col_offset + SLI_BLOCK_DIM;
+                if (col_end > cols) col_end = cols;
+                size_t this_dim = col_end - col_offset;
+                float rms = enc->coord_scales[b];
+                float wnorm = enc->sbb_scale_delta[v8_base + b];
+                const float *e8_pts = enc->sbb_scale_delta + e8_off + b * SLI_BLOCK_DIM;
+
+                memset(x_block, 0, SLI_BLOCK_DIM * sizeof(float));
+                memcpy(x_block, x + col_offset, this_dim * sizeof(float));
+                uint64_t block_seed = enc->haar_seed ^ (uint64_t)b;
+                fpq_neon_random_signs_256(x_block, block_seed);
+                fpq_neon_fwht_256(x_block);
+                memcpy(x_spectral, x_block, SLI_BLOCK_DIM * sizeof(float));
+
+                float tile_indices_f[SLI_E8_PAIRS];
+                for (int p = 0; p < SLI_E8_PAIRS; p++)
+                    tile_indices_f[p] = enc->sbb_scale_delta[tile_idx_off +
+                                                              b * SLI_E8_PAIRS + p];
+                float base_tile_score = fpq_neon_score_block(
+                    e8_pts, tile_data, tile_indices_f, x_spectral,
+                    rms, wnorm, lattice_scale, effective_k);
+                float qjl_score = 0.0f;
+                if (enc->qjl && enc->qjl[b] &&
+                    enc->coord_residual_norms &&
+                    enc->coord_residual_norms[b] > 1e-10f) {
+                    qjl_score = fpq_neon_qjl_score(
+                        x_spectral, enc->qjl[b]->bits[0],
+                        enc->qjl[b]->proj_seed,
+                        enc->coord_residual_norms[b],
+                        enc->qjl[b]->n_projections);
+                }
+                row_sli_score += base_tile_score + qjl_score;
+            }
+            output[i] += row_sli_score;
+        }
+        free(x_block);
+        free(x_spectral);
     }
 
     /* ── Phase 3: Ghost correction ──
@@ -1173,11 +1537,6 @@ int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
          * the scaled output is y[i] * (1 + A[i,:] · B^T · x / ||x||²).
          * For now, we skip M during SLI (it's a tiny correction). */
     }
-
-    free(signs_buf);
-    free(x_block);
-    free(x_spectral);
-    free(proj_buf);
 
     return 0;
 }

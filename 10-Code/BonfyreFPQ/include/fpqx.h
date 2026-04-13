@@ -434,6 +434,20 @@ typedef struct {
     /* Scratch space for per-token tables (allocated once, reused) */
     fpqx_sli_table_t *tables;   /* [n_block_cols] */
     float  *output;              /* [rows] scratch for row scores */
+
+    /* Precomputed z vectors: z = unwarp(E8+tile)*rms + QJL recon.
+     * Written in-place over the E8 region of sbb_scale_delta during
+     * prepare.  Points into enc->sbb_scale_delta (not owned). */
+    float  *z_data;              /* [n_total_blocks × 256] */
+    size_t  n_total_blocks;
+    int     z_precomputed;       /* 1 if z vectors are ready */
+
+    /* Cached offsets for fast-path inference */
+    size_t  v8_base;
+    size_t  e8_off;
+    int     lr_rank;
+    size_t  us_off;
+    size_t  vt_off;
 } fpqx_sli_ctx_t;
 
 /*

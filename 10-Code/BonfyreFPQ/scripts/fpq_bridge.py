@@ -293,18 +293,12 @@ try:
                     f"fpq_tensor='{self.tensor_name}'")
 
 
-    def patch_model(hf_model, fpq_model, prefix="", verbose=True, name_resolver=None):
+    def patch_model(hf_model, fpq_model, prefix="", verbose=True):
         """
         Monkey-patch a HuggingFace model to use FPQ SLI matmul.
 
         Walks the module tree, finds nn.Linear layers, and replaces them
         with FPQLinear if the corresponding tensor exists in the .fpq file.
-
-        Args:
-            name_resolver: Optional callable(module_path) → fpq_tensor_name.
-                           Use when model key names differ from .fpq tensor names
-                           (e.g. diffusers WanTransformer3DModel vs original Wan).
-                           Return None to skip a layer.
 
         Returns dict of {module_path: tensor_name} for all patched layers.
         """
@@ -317,13 +311,9 @@ try:
                 full_path = f"{path}.{name}" if path else name
                 if isinstance(child, nn.Linear):
                     # Map HF module path to .fpq tensor name
-                    if name_resolver is not None:
-                        tensor_name = name_resolver(full_path)
-                    else:
-                        # Default: HF path + .weight
-                        # e.g. model.layers.0.self_attn.q_proj → same name + .weight
-                        tensor_name = f"{full_path}.weight"
-                    if tensor_name and tensor_name in fpq_names:
+                    # HF: model.layers.0.self_attn.q_proj → .fpq: model.layers.0.self_attn.q_proj.weight
+                    tensor_name = f"{full_path}.weight"
+                    if tensor_name in fpq_names:
                         ti = fpq_model.tensor_info(tensor_name)
                         if ti and ti["rows"] == child.out_features and ti["cols"] == child.in_features:
                             bias_data = child.bias.data.clone() if child.bias is not None else None
@@ -371,226 +361,6 @@ try:
                 print(f"Loaded {loaded_passthrough} passthrough tensors (norms, biases)")
 
         return patched
-
-
-    # ─── KV cache compression (pure PyTorch) ──────────────────────────────────
-
-    import math
-
-    _KV_BLOCK  = 256
-    _KV_BETA   = 8.0
-    _KV_PAIRS  = 16   # E8_PAIRS (16 * 16 = 256 dims)
-    _KV_TDIM   = 16   # TILE_DIM
-    _KV_NTILES = 256  # max RVQ tiles
-
-    def _fwht(x: "torch.Tensor") -> "torch.Tensor":
-        """Fast Walsh-Hadamard Transform on last dim (must be power-of-2)."""
-        n = x.shape[-1]
-        x = x.clone()
-        h = 1
-        while h < n:
-            s = x.view(*x.shape[:-1], n // (h * 2), h * 2)
-            a = s[..., :h].clone()   # clone to avoid read-after-write aliasing
-            b = s[..., h:].clone()
-            s[..., :h] = a + b
-            s[..., h:] = a - b
-            h <<= 1
-        return x * (n ** -0.5)
-
-    def _rand_signs(x: "torch.Tensor", seed: int) -> "torch.Tensor":
-        """Apply deterministic ±1 sign pattern seeded per block."""
-        g = torch.Generator(device="cpu")
-        g.manual_seed(seed & 0xFFFFFFFF)
-        signs = torch.randint(0, 2, x.shape[-1:], generator=g).to(x.device)
-        signs = signs * 2 - 1  # 0/1 → -1/+1
-        return x * signs.float()
-
-    def _e8_snap(x: "torch.Tensor") -> "torch.Tensor":
-        """E8 lattice snap: x shape (..., 8) → nearest E8 point."""
-        # Candidate 0: round to nearest integer + fix parity
-        c0 = x.round()
-        s0 = c0.long().sum(-1, keepdim=True) % 2  # 0=even, 1=odd
-        err0 = (x - c0).abs()
-        wi0 = err0.argmax(-1, keepdim=True)
-        sign0 = (x.gather(-1, wi0) > c0.gather(-1, wi0)).float() * 2 - 1
-        adj0 = torch.zeros_like(c0).scatter_(-1, wi0, sign0)
-        c0 = c0 + adj0 * s0.float()
-
-        # Candidate 1: floor + 0.5 (half-integer coset) + fix parity
-        c1 = x.floor() + 0.5
-        s1 = c1.floor().long().sum(-1, keepdim=True) % 2
-        err1 = (x - c1).abs()
-        wi1 = err1.argmax(-1, keepdim=True)
-        sign1 = (x.gather(-1, wi1) > c1.gather(-1, wi1)).float() * 2 - 1
-        adj1 = torch.zeros_like(c1).scatter_(-1, wi1, sign1)
-        c1 = c1 + adj1 * s1.float()
-
-        d0 = ((x - c0) ** 2).sum(-1, keepdim=True)
-        d1 = ((x - c1) ** 2).sum(-1, keepdim=True)
-        return torch.where(d0 <= d1, c0, c1)
-
-    def _mu_warp(x: "torch.Tensor", beta: float = _KV_BETA) -> "torch.Tensor":
-        return x.sign() * torch.log1p(beta * x.abs()) / math.log(1.0 + beta)
-
-    def _mu_unwarp(y: "torch.Tensor", beta: float = _KV_BETA) -> "torch.Tensor":
-        return y.sign() * (torch.exp(y.abs() * math.log(1.0 + beta)) - 1.0) / beta
-
-    def kv_compress_roundtrip(
-        kv: "torch.Tensor",
-        bits: int = 4,
-        layer_seed: int = 0,
-    ) -> "torch.Tensor":
-        """
-        Simulate KV cache compression+decompression on a tensor.
-
-        Uses the same E8+μ-law+16D RVQ pipeline as bonfyre-kvcache.
-        Input: any shape — flattened to 1D then back.
-        Returns tensor of same shape with quantization noise applied.
-        """
-        orig_shape = kv.shape
-        orig_dtype = kv.dtype
-        kv_f = kv.detach().float().reshape(-1)
-        total = kv_f.numel()
-
-        lattice_scale = 8.0 * bits
-        B = _KV_BLOCK
-        n_blocks = (total + B - 1) // B
-
-        # Pad to multiple of BLOCK
-        pad = n_blocks * B - total
-        if pad:
-            kv_f = torch.cat([kv_f, torch.zeros(pad, device=kv_f.device)])
-
-        x_blocks = kv_f.view(n_blocks, B)  # [n_blocks, 256]
-
-        # ── Encode ──────────────────────────────────────────────────
-        # Step 1: random signs + FWHT
-        enc = torch.zeros_like(x_blocks)
-        for b in range(n_blocks):
-            enc[b] = _rand_signs(x_blocks[b].unsqueeze(0), seed=layer_seed ^ b).squeeze(0)
-        enc = _fwht(enc)  # [n_blocks, 256]
-
-        # Step 2: normalize (RMS per block)
-        rms = enc.pow(2).mean(dim=-1, keepdim=True).sqrt().clamp(min=1e-10)
-        enc_n = enc / rms  # normalized
-
-        # Step 3: μ-law warp
-        warped = _mu_warp(enc_n)
-        wnorm = warped.pow(2).mean(dim=-1, keepdim=True).sqrt().clamp(min=1e-10)
-        warped_n = warped / wnorm * lattice_scale  # [n_blocks, 256]
-
-        # Step 4: E8 snap on 32 groups of 8
-        warped_g = warped_n.view(n_blocks * 32, 8)  # [n_blocks*32, 8]
-        e8_pts = _e8_snap(warped_g).view(n_blocks, 256)  # [n_blocks, 256]
-
-        # ── RVQ tile correction ──────────────────────────────────────
-        # Residuals: warped - e8 for each 16-dim pair
-        residuals = warped_n - e8_pts  # [n_blocks, 256]
-        res_pairs = residuals.view(n_blocks * _KV_PAIRS, _KV_TDIM)  # [n_blocks*16, 16]
-        n_pairs = res_pairs.shape[0]
-
-        # Effective tile count (scale with data)
-        ek = min(_KV_NTILES, max(16, n_pairs // 4))
-
-        # K-means tile learning (CPU, lightweight)
-        res_cpu = res_pairs.cpu().float()
-        step = max(1, n_pairs // ek)
-        tiles = res_cpu[torch.arange(ek) * step % n_pairs]  # [ek, 16] init
-
-        assign = torch.zeros(n_pairs, dtype=torch.long)
-        for _ in range(10):  # 10 K-means iterations (matches C code)
-            # Assign: nearest tile
-            d = ((res_cpu.unsqueeze(1) - tiles.unsqueeze(0)) ** 2).sum(-1)  # [n_pairs, ek]
-            assign = d.argmin(-1)
-            # Update: centroids
-            for t in range(ek):
-                mask = (assign == t)
-                if mask.any():
-                    tiles[t] = res_cpu[mask].mean(0)
-
-        tile_correction = tiles[assign].to(kv_f.device)  # [n_pairs, 16]
-        tile_correction = tile_correction.view(n_blocks, 256)
-
-        # ── Decode ──────────────────────────────────────────────────
-        corrected = (e8_pts + tile_correction)  # [n_blocks, 256]
-        # Undo lattice scale + warp_norm → μ-unwarp → unnormalize
-        lat_vals = corrected / lattice_scale * wnorm  # undo lattice_scale and warp_norm
-        unwarped = _mu_unwarp(lat_vals) * rms  # undo μ-warp and normalize
-
-        # Undo FWHT + random signs
-        decoded = _fwht(unwarped)
-        for b in range(n_blocks):
-            decoded[b] = _rand_signs(decoded[b].unsqueeze(0), seed=layer_seed ^ b).squeeze(0)
-
-        # Trim padding and restore shape
-        out = decoded.reshape(-1)[:total]
-        return out.reshape(orig_shape).to(orig_dtype)
-
-
-    def patch_kv_cache(
-        model: "nn.Module",
-        bits: int = 4,
-        kv_suffixes: tuple = ("to_k", "to_v", "k_proj", "v_proj"),
-        verbose: bool = True,
-    ) -> dict:
-        """
-        Register forward hooks on K/V projection layers to simulate KV cache
-        compression. Works alongside patch_model() SLI weight compression.
-
-        Each K/V Linear layer's output is passed through kv_compress_roundtrip(),
-        injecting the same quantization noise as runtime KV cache compression.
-
-        Args:
-            model: HuggingFace or diffusers model (already SLI-patched or not).
-            bits: KV cache bits (3, 4, or 5). Default 4.
-            kv_suffixes: Module name suffixes to treat as K/V projections.
-            verbose: Print patched layer count.
-
-        Returns:
-            dict with:
-              "handles": list of hook handles (call h.remove() to undo)
-              "layers":  list of (module_path, module) for patched layers
-              "bits":    bits used
-        """
-        handles = []
-        layers = []
-        seed_counter = [0]
-
-        def _make_hook(layer_seed: int):
-            def hook(module, input, output):
-                return kv_compress_roundtrip(output, bits=bits, layer_seed=layer_seed)
-            return hook
-
-        def _walk(module, path):
-            for name, child in module.named_children():
-                full = f"{path}.{name}" if path else name
-                is_kv = any(full.endswith(s) or f".{s}." in full + "." for s in kv_suffixes)
-                is_linear = isinstance(child, (nn.Linear,)) or type(child).__name__ == "FPQLinear"
-                if is_kv and is_linear:
-                    seed = seed_counter[0]
-                    seed_counter[0] += 1
-                    h = child.register_forward_hook(_make_hook(seed))
-                    handles.append(h)
-                    layers.append((full, child))
-                else:
-                    _walk(child, full)
-
-        _walk(model, "")
-
-        if verbose:
-            print(f"\nKV cache compression hooks registered: {len(layers)} layers @ {bits}-bit")
-            for path, _ in layers[:8]:
-                print(f"  [KV] {path}")
-            if len(layers) > 8:
-                print(f"  ... and {len(layers) - 8} more")
-
-        return {"handles": handles, "layers": layers, "bits": bits}
-
-
-    def remove_kv_cache_hooks(hook_info: dict) -> None:
-        """Remove all KV cache hooks registered by patch_kv_cache()."""
-        for h in hook_info.get("handles", []):
-            h.remove()
 
 
     def load_fpq_model(fpq_paths, hf_model_id, device="cpu", dtype=torch.float32,

@@ -1270,50 +1270,6 @@ footer a:hover { color: var(--text); }
       </div>
     </div>
 
-    <!-- SLI Bridge — direct inference from compressed weights -->
-    <div id="sli" style="max-width:720px;margin:0 auto 40px;background:var(--surface);border:2px solid var(--green);border-radius:12px;padding:28px 32px">
-      <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--green);font-weight:700;margin-bottom:8px">SLI Bridge — Direct Inference From .fpq (No Decode Step)</div>
-      <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:16px">
-        Standard quantization formats (GGUF, AWQ, GPTQ) must decompress weights into fp16/bf16 before each matrix multiply.
-        FPQ's SLI (Spectral Lattice Inference) bridge computes <em>dot products directly on compressed weights</em> — the model runs entirely from the .fpq file with weights never decompressed into full precision.
-      </p>
-      <p style="font-size:0.9rem;color:var(--text-dim);line-height:1.6;margin-bottom:20px">
-        A Python ctypes bridge patches any HuggingFace model in-place: each <code style="color:var(--text);font-size:0.85rem">nn.Linear</code> layer's <code style="color:var(--text);font-size:0.85rem">forward()</code> is replaced by <code style="color:var(--text);font-size:0.85rem">fpqx_sli_matvec()</code>, which reads the lattice-coded block from disk and computes the output score in one pass.
-        Validated end-to-end on TinyLlama-1.1B:
-      </p>
-      <table style="width:100%;border-collapse:collapse;font-size:0.88rem;margin-bottom:16px">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border);color:var(--text-dim)">
-            <th style="text-align:left;padding:6px 12px;font-weight:600">Metric</th>
-            <th style="text-align:right;padding:6px 12px;font-weight:600">Result</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 12px;color:var(--text-dim)">SLI layers patched (nn.Linear)</td>
-            <td style="text-align:right;padding:6px 12px;color:var(--green);font-weight:600">155 / 155</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 12px;color:var(--text-dim)">Mean logit cosine vs uncompressed</td>
-            <td style="text-align:right;padding:6px 12px;color:var(--green);font-weight:600">0.997</td>
-          </tr>
-          <tr style="border-bottom:1px solid var(--border)">
-            <td style="padding:6px 12px;color:var(--text-dim)">Top-1 token agreement</td>
-            <td style="text-align:right;padding:6px 12px;color:var(--green);font-weight:600">97.3%</td>
-          </tr>
-          <tr>
-            <td style="padding:6px 12px;color:var(--text-dim)">Weight memory during inference</td>
-            <td style="text-align:right;padding:6px 12px;color:var(--green);font-weight:600">Compressed (never fp16)</td>
-          </tr>
-        </tbody>
-      </table>
-      <p style="font-size:0.8rem;color:var(--text-dim);line-height:1.6">
-        Model: TinyLlama-1.1B-Chat-v1.0 (HuggingFace). Bridge: <code style="color:var(--text);font-size:0.78rem">fpq_bridge.py</code> (Python ctypes + libfpq).
-        5 generation prompts tested. 2/5 exact text matches; remaining 3/5 differ in phrasing only.
-        The math for this has been proven for 3 years — this is the first implementation to validate it on a real model.
-      </p>
-    </div>
-
     <!-- What this means -->
     <div style="max-width:680px;margin:0 auto 32px;background:var(--surface);border:2px solid var(--green);border-radius:12px;padding:28px 32px">
       <div style="font-size:1rem;font-weight:700;margin-bottom:8px;color:var(--text)">What this means (in plain English)</div>
@@ -2407,7 +2363,7 @@ footer a:hover { color: var(--text); }
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:24px">
       <div style="background:var(--surface);border:2px solid var(--green);border-radius:8px;padding:16px">
         <div style="font-size:0.75rem;color:var(--green);font-weight:700;margin-bottom:6px;text-transform:uppercase;letter-spacing:0.05em">Hugging Face Model Hub</div>
-        <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;margin-bottom:8px">Inference-ready: BF16 safetensors (drop-in, no special loader) and native .fpq via the SLI Python bridge (weights never decompressed — runs from compressed form end-to-end).</p>
+        <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;margin-bottom:8px">Inference-ready track: BF16 safetensors (drop-in, no special loader). Native .fpq track is published separately as an unfinished storage path until direct inference works without that extra runtime gap.</p>
         <div style="display:flex;flex-direction:column;gap:4px">
           <a href="https://huggingface.co/NICKO/Wan2.1-T2V-14B-BonfyreFPQ3" style="color:var(--accent);font-size:0.82rem">Wan2.1-T2V-14B (54→27 GB) →</a>
           <a href="https://huggingface.co/NICKO/phi-4-BonfyreFPQ3" style="color:var(--accent);font-size:0.82rem">Phi-4 14B (28 GB) →</a>

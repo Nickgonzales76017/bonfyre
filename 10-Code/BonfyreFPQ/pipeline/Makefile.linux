@@ -1,0 +1,31 @@
+CC      := gcc
+CFLAGS  := -O3 -march=native -Wall -Wextra -std=c11 -D_GNU_SOURCE -Iinclude -fopenmp -DHAVE_OPENBLAS
+LDFLAGS := -lm -lopenblas -llapack -lgomp
+SRC_DIR := src
+BUILD   := build
+
+SRCS := $(SRC_DIR)/fwht.c \
+        $(SRC_DIR)/polar.c \
+        $(SRC_DIR)/seed.c \
+        $(SRC_DIR)/qjl.c \
+        $(SRC_DIR)/debruijn.c \
+        $(SRC_DIR)/fpq_codec.c \
+        $(SRC_DIR)/ggml_reader.c \
+        $(SRC_DIR)/safetensors_reader.c \
+        $(SRC_DIR)/serialize.c \
+        $(SRC_DIR)/v4_optimizations.c \
+        $(SRC_DIR)/main.c
+
+OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(SRCS))
+BIN  := bonfyre-fpq
+
+.PHONY: all clean
+all: $(BIN)
+$(BIN): $(OBJS)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
+$(BUILD)/%.o: $(SRC_DIR)/%.c include/fpq.h | $(BUILD)
+	$(CC) $(CFLAGS) -c -o $@ $<
+$(BUILD):
+	mkdir -p $(BUILD)
+clean:
+	rm -rf $(BUILD) $(BIN)
