@@ -71,14 +71,20 @@ Critical findings from Phase 1+2+3 PoC (empirically validated)
        The earlier 110,000× and 16,800× figures were based on biased N=3k r_h estimates.
 
   2. Validated gains (TinyLlama-1.1B, output-pca, WikiText-2 test, 5K tokens):
-       Seed modes N=3000:
-         6/22 layers, EV=0.99, r=843: PPL=8.15 (+0.29 vs baseline 7.85)  gain≈16,800×(N=3k)
-         6/22 layers, EV=0.95, r=459: PPL=8.70 (+0.84)                   gain≈30,855×(N=3k)
-         All 22/22,   EV=0.99, r=843: PPL=15.79 (+7.94) — NO guard (cascade)
-         20/22 layers (guard=50, Phase 3): PPL=9.67 (+1.82) — fixed, layers 2+7 skip
-         FPQ v8 comparison:             PPL=12.07 (+4.22)                1× gain
-       N=10k modes (stable r_h), EV=99%, r_h≈1700, 20/22 layers:
-         PPL pending validate_koopman.py run  (gain≈8,330× at r_h=1700)
+       All runs: 20/22 layers with guard=50 (layers 2+7 use exact W_down).
+       Seed modes N=3000, partial (6 layers):
+         6/22 layers EV=0.99, r=843: PPL=8.15 (+0.29 vs baseline 7.85)  gain=16,800×
+         6/22 layers EV=0.95, r=459: PPL=8.70 (+0.84)                   gain=30,855×
+       All 22 layers without guard (cascade failure):
+         22/22 EV=0.99, r=843:       PPL=15.79 (+7.94)                  gain=16,800×
+       All 22 layers WITH guard=50 (N=3k seed modes, validated full sweep):
+         EV=0.50, r=9   (18 layers): PPL=472.39 (+464.54)   AMB=0.14 kbits  gain=1,573,611×
+         EV=0.80, r=129 (19 layers): PPL=64.37  (+56.52)    AMB=2.06 kbits  gain=109,787×
+         EV=0.90, r=288 (20 layers): PPL=31.44  (+23.58)    AMB=4.61 kbits  gain=49,175×
+         EV=0.95, r=459 (20 layers): PPL=16.36  (+8.51)     AMB=7.34 kbits  gain=30,855×
+         EV=0.99, r=843 (20 layers): PPL=9.67   (+1.82) ← only viable pt  gain=16,800×
+       Baseline: 7.8542  |  FPQ v8: 12.07 (+4.22) — Koopman@EV=0.99 BEATS FPQ v8.
+       KEY: EV=0.99 with guard is the ONLY operating point below FPQ v8 quality.
 
   3. Architectural h-collapse at layers 2 and 7 (confirmed N=10k P_train):
        N=10k output-PCA on P_train shows layers 2 and 7 are inherently rank-1:
@@ -119,8 +125,18 @@ Critical findings from Phase 1+2+3 PoC (empirically validated)
   6. Spectral decay of h is power-law (slow), not spiked (fast):
        Confirmed by: Exp A gives PR ≈ 202-225 (participation ratio, 10% of d)
        and by: r_h grows nearly linearly with EV threshold from EV=50% to EV=99%.
-       This means: no "clean" rank gap — compression trades off smoothly against
-       quality. There is no free tier where r is tiny and quality is high.
+       PPL confirmed to worsen faster than linearly as EV drops: EV=0.95 → +8.5,
+       EV=0.90 → +23.6, EV=0.80 → +56.5. The EV=0.99 point is a cliff—there
+       is no quality plateau at lower EV. Only EV=0.99 is within FPQ-comparable range
+       (+1.82 vs FPQ v8 +4.22). No free tier where r is tiny and quality is high.
+
+  7. Compression–quality trade-off (validated, N=3k, guard=50):
+       r_h=9   (EV=50%): DELTA_PPL=+464.5  — catastrophically lossy
+       r_h=129 (EV=80%): DELTA_PPL=+56.5   — unusable
+       r_h=288 (EV=90%): DELTA_PPL=+23.6   — unusable
+       r_h=459 (EV=95%): DELTA_PPL=+8.5    — worse than FPQ v8 (+4.22)
+       r_h=843 (EV=99%): DELTA_PPL=+1.82   — BEATS FPQ v8, viable operating point
+       → Practical Koopman requires EV=0.99 (r_h=843–1700 depending on N).
 
 v2 → v3 improvements in code
 ------------------------------
@@ -1336,20 +1352,22 @@ def _write_report(data, path):
         f"| Current FPQ v12 | 3 × d × d_int × bpw = 226.6 Mbits | — | baseline |",
         "| T4 manifold (Exp A) | ≈ PR × bpw bits (PR≈202-225 = 10% of d_int) | k_intrinsic / d compression | PoC: r_h_90/d=16-17% at N=10k |",
         "| T3 distrib (Exp B) | ≈ rho × bpw bits | water-filling over Σ_x | Biased; N=300<<d_int=5632 |",
-        "| Koopman (output-PCA) | r_h × b_psi bits, r_h≈900 @90% / 1700 @99% (N=10k) | static modes (V+M); dynamic coeffs | 8,330× gain (EV=99%) VALIDATED |",
+        "| Koopman (output-PCA) | r_h × b_psi bits, r_h≈900 @90% / 1700 @99% (N=10k) | static modes (V+M); dynamic coeffs | EV=0.99+guard=50: ΔPPL=+1.82 VALIDATED |",
         "| Koopman (cascade, no guard) | degrades multiplicatively per layer | OOD distribution mismatch | 22-layer: PPL +7.94 |",
         "| Koopman (collapse guard) | layers 2+7 skip hook; 20/22 use Koopman | r_h collapse detection (guard=50) | ΔPPL=+1.82 VALIDATED Phase 3 |",
         "| ΔJ rank (Exp C JVP) | r_K=70-73 × b_psi (incorrect basis) | WRONG proxy for r_h | 12× UNDERESTIMATE |",
         "| T6 SGD channel | 0.0015 bpw floor | information in training | theoretical lower bound |",
         "",
-        "**Phase 1+2+3 PoC validated gains (TinyLlama-1.1B, output-PCA, WikiText-2, 5K tok):**",
-        "| Sample size | EV threshold | r_h (typical) | ΔPPL 6/22 | ΔPPL 20-22/22 | AMB gain |",
-        "|---|---|---|---|---|---|",
-        "| N=3000 | EV=0.95 | 459 | +0.84 | not measured | 30,855× |",
-        "| N=3000 | EV=0.99 | 843 | +0.29 | +7.94 (no guard) / +1.82 (guard=50) | 16,800× |",
-        "| N=10000 | EV=0.90 | ≈900 | pending | pending | ≈15,700× |",
-        "| N=10000 | EV=0.99 | ≈1700 | pending | pending | ≈8,330× |",
-        "| FPQ v8 | — | — | — | +4.22 | 1× |",
+        "**Phase 1+2+3 PoC validated gains (TinyLlama-1.1B, output-PCA, N=3k seed modes, WikiText-2, 5K tok, guard=50):**",
+        "| EV threshold | r_h (N=3k) | layers active | ΔPPL | AMB kbits | Gain vs baseline | vs FPQ v8 |",
+        "|---|---|---|---|---|---|---|",
+        "| EV=0.50 | 9   | 18/22 | +464.54 | 0.14  | 1,573,611× | catastrophic |",
+        "| EV=0.80 | 129 | 19/22 | +56.52  | 2.06  | 109,787×  | very bad |",
+        "| EV=0.90 | 288 | 20/22 | +23.58  | 4.61  | 49,175×   | bad |",
+        "| EV=0.95 | 459 | 20/22 | +8.51   | 7.34  | 30,855×   | worse than FPQ v8 |",
+        "| **EV=0.99** | **843** | **20/22** | **+1.82** | **13.49** | **16,800×** | **BEATS FPQ v8** |",
+        "| FPQ v8 (3-bit) | — | — | +4.22 | 226,600 | 1× | — |",
+        "| 22/22 EV=0.99 no guard | 843 | 22/22 | +7.94 | 13.49 | 16,800× | cascade failure |",
         "",
         "**Key corrected insights (from PoC, replacing v2 theory):**",
         "1. r_K from JVP oracle = rank(ΔJ) = circuit sensitivity dimension ≠ r_h (output reconstruction rank)",
@@ -1366,6 +1384,9 @@ def _write_report(data, path):
         "   and ~1700 (EV=99%) at N=10k, revising AMB gain from 16,800× to ≈8,330× (EV=99%).",
         "8. N=10k sample stability: r_h_90 ≈ 890-960 for healthy layers (stable vs 288-719 at N=3k).",
         "   N/d = 10000/5632 = 1.77 is sufficient for reliable r_h estimation.",
+        "9. Full EV sweep confirms: only EV=0.99 with guard=50 is practically viable.",
+        "   PPL cliff: EV=0.95→+8.5 (worse than FPQ v8), EV=0.90→+23.6, EV=0.80→+56.5.",
+        "   The compression-quality tradeoff is NOT smooth: there is a sharp threshold near EV=0.99.",
     ]
 
     with open(path, "w") as f:
