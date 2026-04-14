@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    "layers": [
+      4,
+      8,
+      16
+    ],
+    "n_samples": 300,
+    "d": 2048,
+    "n_layers": 22,
+    "device": "mps",
+    "timestamp": "20260414_010302",
+    "elapsed_s": 244.2
+  },
+  "experiment_A": {
+    "4": {
+      "d": 2048,
+      "N": 300,
+      "k_pca": 252,
+      "k_pca_fraction": 0.123,
+      "participation_ratio": 224.8,
+      "k_twonn": 0.7,
+      "T4_AMB_gain": 8.1
+    },
+    "8": {
+      "d": 2048,
+      "N": 300,
+      "k_pca": 259,
+      "k_pca_fraction": 0.1265,
+      "participation_ratio": 215.09,
+      "k_twonn": 0.8,
+      "T4_AMB_gain": 7.9
+    },
+    "16": {
+      "d": 2048,
+      "N": 300,
+      "k_pca": 261,
+      "k_pca_fraction": 0.1274,
+      "participation_ratio": 202.37,
+      "k_twonn": 0.7,
+      "T4_AMB_gain": 7.8
+    }
+  },
+  "experiment_B": {
+    "4": {
+      "rho": 25.62,
+      "rho_fraction": 0.01251,
+      "top5pct_variance": 0.7207,
+      "k_eff": 252,
+      "T3_AMB_gain": 79.9
+    },
+    "8": {
+      "rho": 21.2,
+      "rho_fraction": 0.010352,
+      "top5pct_variance": 0.7627,
+      "k_eff": 259,
+      "T3_AMB_gain": 96.6
+    },
+    "16": {
+      "rho": 17.14,
+      "rho_fraction": 0.008371,
+      "top5pct_variance": 0.7998,
+      "k_eff": 261,
+      "T3_AMB_gain": 119.5
+    }
+  },
+  "experiment_C": {
+    "4": {
+      "r_K": 70,
+      "kappa_G": 1.0,
+      "r_mode_mean": 1780.0,
+      "koopman_gain_ideal": 4.0,
+      "koopman_gain_realistic": 4.0
+    },
+    "8": {
+      "r_K": 71,
+      "kappa_G": 1.0,
+      "r_mode_mean": 1770.0,
+      "koopman_gain_ideal": 4.0,
+      "koopman_gain_realistic": 4.0
+    },
+    "16": {
+      "r_K": 73,
+      "kappa_G": 1.0,
+      "r_mode_mean": 1767.7,
+      "koopman_gain_ideal": 4.0,
+      "koopman_gain_realistic": 4.0
+    }
+  },
+  "experiment_D": {
+    "4": {
+      "k_active": 244,
+      "error_frac_active": 0.9841,
+      "error_frac_outside": 0.0159,
+      "circuit_preserving": false
+    },
+    "8": {
+      "k_active": 251,
+      "error_frac_active": 0.9823,
+      "error_frac_outside": 0.0177,
+      "circuit_preserving": false
+    },
+    "16": {
+      "k_active": 249,
+      "error_frac_active": 0.9842,
+      "error_frac_outside": 0.0158,
+      "circuit_preserving": false
+    }
+  },
+  "summary": [
+    {
+      "layer_idx": 4,
+      "T4_gain": 8.1,
+      "T3_gain": 79.9,
+      "koopman_gain": 4.0,
+      "circuit_preserving": false,
+      "AMB_now_Mbits": 3.434,
+      "AMB_koopman_Kbits": 858.5
+    },
+    {
+      "layer_idx": 8,
+      "T4_gain": 7.9,
+      "T3_gain": 96.6,
+      "koopman_gain": 4.0,
+      "circuit_preserving": false,
+      "AMB_now_Mbits": 3.434,
+      "AMB_koopman_Kbits": 858.5
+    },
+    {
+      "layer_idx": 16,
+      "T4_gain": 7.8,
+      "T3_gain": 119.5,
+      "koopman_gain": 4.0,
+      "circuit_preserving": false,
+      "AMB_now_Mbits": 3.434,
+      "AMB_koopman_Kbits": 858.5
+    }
+  ],
+  "theory_context": {
+    "T1_hessian_gain": "100x (p/k_H, k_H/p~0.01)",
+    "T2_circuit_gain": "20-50x (n/k_C, k_C~2048/32)",
+    "T3_dist_gain": "see experiment_B.T3_AMB_gain",
+    "T4_manifold_gain": "see experiment_A.T4_AMB_gain",
+    "T5_von_neumann_floor_bpw": {
+      "whisper_cross_attn": 1.7,
+      "qwen_attn_kq": 4.5,
+      "ffn_down": 10.5
+    },
+    "T6_sgd_channel_bpw": 0.0015,
+    "T7_compression_cliff_kv_factor": 78,
+    "T8_koopman_gain": "see experiment_C.koopman_gain_realistic"
+  }
+}
