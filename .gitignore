@@ -43,6 +43,10 @@ dist/
 # Test outputs
 outputs-*/
 
+# Koopman mode checkpoints (large tensors — regenerate with learn_modes.py)
+**/*.pt
+**/*.koopman
+
 # Secrets / env files — never commit
 .env
 **/.env

@@ -1,0 +1,1153 @@
+{
+  "model": "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+  "timestamp": "20260414_101419",
+  "elapsed_s": 93.7,
+  "n_samples": 3000,
+  "r_cutoff": 0.9,
+  "layers": {
+    "0": {
+      "r_h": 288,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        844
+      ],
+      "M_shape": [
+        2048,
+        844
+      ],
+      "max_rank_saved": 844,
+      "V_MB": 19.014,
+      "M_MB": 6.914,
+      "mu_offset_norm": 0.1223,
+      "0.50": {
+        "r_h": 9,
+        "r_h_fraction": 0.0016,
+        "cosine": 0.688462,
+        "rel_error": 0.706782,
+        "AMB_kbits": 0.144
+      },
+      "0.80": {
+        "r_h": 129,
+        "r_h_fraction": 0.0229,
+        "cosine": 0.886257,
+        "rel_error": 0.446911,
+        "AMB_kbits": 2.064
+      },
+      "0.90": {
+        "r_h": 288,
+        "r_h_fraction": 0.0511,
+        "cosine": 0.94049,
+        "rel_error": 0.315723,
+        "AMB_kbits": 4.608
+      },
+      "0.95": {
+        "r_h": 459,
+        "r_h_fraction": 0.0815,
+        "cosine": 0.968569,
+        "rel_error": 0.22363,
+        "AMB_kbits": 7.344
+      },
+      "0.99": {
+        "r_h": 843,
+        "r_h_fraction": 0.1497,
+        "cosine": 0.993072,
+        "rel_error": 0.099899,
+        "AMB_kbits": 13.488
+      }
+    },
+    "1": {
+      "r_h": 465,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1115
+      ],
+      "M_shape": [
+        2048,
+        1115
+      ],
+      "max_rank_saved": 1115,
+      "V_MB": 25.119,
+      "M_MB": 9.134,
+      "mu_offset_norm": 0.089,
+      "0.50": {
+        "r_h": 63,
+        "r_h_fraction": 0.0112,
+        "cosine": 0.628391,
+        "rel_error": 0.706358,
+        "AMB_kbits": 1.008
+      },
+      "0.80": {
+        "r_h": 273,
+        "r_h_fraction": 0.0485,
+        "cosine": 0.833548,
+        "rel_error": 0.447013,
+        "AMB_kbits": 4.368
+      },
+      "0.90": {
+        "r_h": 465,
+        "r_h_fraction": 0.0826,
+        "cosine": 0.909642,
+        "rel_error": 0.315699,
+        "AMB_kbits": 7.44
+      },
+      "0.95": {
+        "r_h": 668,
+        "r_h_fraction": 0.1186,
+        "cosine": 0.952566,
+        "rel_error": 0.223231,
+        "AMB_kbits": 10.688
+      },
+      "0.99": {
+        "r_h": 1114,
+        "r_h_fraction": 0.1978,
+        "cosine": 0.989744,
+        "rel_error": 0.09999,
+        "AMB_kbits": 17.824
+      }
+    },
+    "2": {
+      "r_h": 1,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        2
+      ],
+      "M_shape": [
+        2048,
+        2
+      ],
+      "max_rank_saved": 2,
+      "V_MB": 0.045,
+      "M_MB": 0.016,
+      "mu_offset_norm": 0.7288,
+      "0.50": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.854482,
+        "rel_error": 0.041287,
+        "AMB_kbits": 0.016
+      },
+      "0.80": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.854482,
+        "rel_error": 0.041287,
+        "AMB_kbits": 0.016
+      },
+      "0.90": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.854482,
+        "rel_error": 0.041287,
+        "AMB_kbits": 0.016
+      },
+      "0.95": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.854482,
+        "rel_error": 0.041287,
+        "AMB_kbits": 0.016
+      },
+      "0.99": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.854482,
+        "rel_error": 0.041287,
+        "AMB_kbits": 0.016
+      }
+    },
+    "3": {
+      "r_h": 646,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1333
+      ],
+      "M_shape": [
+        2048,
+        1333
+      ],
+      "max_rank_saved": 1333,
+      "V_MB": 30.03,
+      "M_MB": 10.92,
+      "mu_offset_norm": 0.2132,
+      "0.50": {
+        "r_h": 121,
+        "r_h_fraction": 0.0215,
+        "cosine": 0.671492,
+        "rel_error": 0.706435,
+        "AMB_kbits": 1.936
+      },
+      "0.80": {
+        "r_h": 411,
+        "r_h_fraction": 0.073,
+        "cosine": 0.877127,
+        "rel_error": 0.44676,
+        "AMB_kbits": 6.576
+      },
+      "0.90": {
+        "r_h": 646,
+        "r_h_fraction": 0.1147,
+        "cosine": 0.938028,
+        "rel_error": 0.315822,
+        "AMB_kbits": 10.336
+      },
+      "0.95": {
+        "r_h": 873,
+        "r_h_fraction": 0.155,
+        "cosine": 0.968344,
+        "rel_error": 0.22347,
+        "AMB_kbits": 13.968
+      },
+      "0.99": {
+        "r_h": 1332,
+        "r_h_fraction": 0.2365,
+        "cosine": 0.99341,
+        "rel_error": 0.099805,
+        "AMB_kbits": 21.312
+      }
+    },
+    "4": {
+      "r_h": 678,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1376
+      ],
+      "M_shape": [
+        2048,
+        1376
+      ],
+      "max_rank_saved": 1376,
+      "V_MB": 30.999,
+      "M_MB": 11.272,
+      "mu_offset_norm": 0.1726,
+      "0.50": {
+        "r_h": 124,
+        "r_h_fraction": 0.022,
+        "cosine": 0.677986,
+        "rel_error": 0.706704,
+        "AMB_kbits": 1.984
+      },
+      "0.80": {
+        "r_h": 432,
+        "r_h_fraction": 0.0767,
+        "cosine": 0.881853,
+        "rel_error": 0.446849,
+        "AMB_kbits": 6.912
+      },
+      "0.90": {
+        "r_h": 678,
+        "r_h_fraction": 0.1204,
+        "cosine": 0.941299,
+        "rel_error": 0.315907,
+        "AMB_kbits": 10.848
+      },
+      "0.95": {
+        "r_h": 912,
+        "r_h_fraction": 0.1619,
+        "cosine": 0.970333,
+        "rel_error": 0.223486,
+        "AMB_kbits": 14.592
+      },
+      "0.99": {
+        "r_h": 1375,
+        "r_h_fraction": 0.2441,
+        "cosine": 0.993877,
+        "rel_error": 0.099859,
+        "AMB_kbits": 22.0
+      }
+    },
+    "5": {
+      "r_h": 676,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1379
+      ],
+      "M_shape": [
+        2048,
+        1379
+      ],
+      "max_rank_saved": 1379,
+      "V_MB": 31.066,
+      "M_MB": 11.297,
+      "mu_offset_norm": 0.2947,
+      "0.50": {
+        "r_h": 125,
+        "r_h_fraction": 0.0222,
+        "cosine": 0.684006,
+        "rel_error": 0.70666,
+        "AMB_kbits": 2.0
+      },
+      "0.80": {
+        "r_h": 430,
+        "r_h_fraction": 0.0763,
+        "cosine": 0.883532,
+        "rel_error": 0.447113,
+        "AMB_kbits": 6.88
+      },
+      "0.90": {
+        "r_h": 676,
+        "r_h_fraction": 0.12,
+        "cosine": 0.942044,
+        "rel_error": 0.316035,
+        "AMB_kbits": 10.816
+      },
+      "0.95": {
+        "r_h": 912,
+        "r_h_fraction": 0.1619,
+        "cosine": 0.97074,
+        "rel_error": 0.223309,
+        "AMB_kbits": 14.592
+      },
+      "0.99": {
+        "r_h": 1378,
+        "r_h_fraction": 0.2447,
+        "cosine": 0.993947,
+        "rel_error": 0.099839,
+        "AMB_kbits": 22.048
+      }
+    },
+    "6": {
+      "r_h": 688,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1403
+      ],
+      "M_shape": [
+        2048,
+        1403
+      ],
+      "max_rank_saved": 1403,
+      "V_MB": 31.607,
+      "M_MB": 11.493,
+      "mu_offset_norm": 0.2591,
+      "0.50": {
+        "r_h": 127,
+        "r_h_fraction": 0.0225,
+        "cosine": 0.687447,
+        "rel_error": 0.706081,
+        "AMB_kbits": 2.032
+      },
+      "0.80": {
+        "r_h": 437,
+        "r_h_fraction": 0.0776,
+        "cosine": 0.885473,
+        "rel_error": 0.446963,
+        "AMB_kbits": 6.992
+      },
+      "0.90": {
+        "r_h": 688,
+        "r_h_fraction": 0.1222,
+        "cosine": 0.943025,
+        "rel_error": 0.316142,
+        "AMB_kbits": 11.008
+      },
+      "0.95": {
+        "r_h": 929,
+        "r_h_fraction": 0.165,
+        "cosine": 0.971253,
+        "rel_error": 0.223439,
+        "AMB_kbits": 14.864
+      },
+      "0.99": {
+        "r_h": 1402,
+        "r_h_fraction": 0.2489,
+        "cosine": 0.994066,
+        "rel_error": 0.099872,
+        "AMB_kbits": 22.432
+      }
+    },
+    "7": {
+      "r_h": 1,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        2
+      ],
+      "M_shape": [
+        2048,
+        2
+      ],
+      "max_rank_saved": 2,
+      "V_MB": 0.045,
+      "M_MB": 0.016,
+      "mu_offset_norm": 1.0773,
+      "0.50": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.552977,
+        "rel_error": 0.093668,
+        "AMB_kbits": 0.016
+      },
+      "0.80": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.552977,
+        "rel_error": 0.093668,
+        "AMB_kbits": 0.016
+      },
+      "0.90": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.552977,
+        "rel_error": 0.093668,
+        "AMB_kbits": 0.016
+      },
+      "0.95": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.552977,
+        "rel_error": 0.093668,
+        "AMB_kbits": 0.016
+      },
+      "0.99": {
+        "r_h": 1,
+        "r_h_fraction": 0.0002,
+        "cosine": 0.552977,
+        "rel_error": 0.093668,
+        "AMB_kbits": 0.016
+      }
+    },
+    "8": {
+      "r_h": 652,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1383
+      ],
+      "M_shape": [
+        2048,
+        1383
+      ],
+      "max_rank_saved": 1383,
+      "V_MB": 31.156,
+      "M_MB": 11.33,
+      "mu_offset_norm": 0.4488,
+      "0.50": {
+        "r_h": 103,
+        "r_h_fraction": 0.0183,
+        "cosine": 0.688341,
+        "rel_error": 0.706501,
+        "AMB_kbits": 1.648
+      },
+      "0.80": {
+        "r_h": 400,
+        "r_h_fraction": 0.071,
+        "cosine": 0.886952,
+        "rel_error": 0.446585,
+        "AMB_kbits": 6.4
+      },
+      "0.90": {
+        "r_h": 652,
+        "r_h_fraction": 0.1158,
+        "cosine": 0.944435,
+        "rel_error": 0.315834,
+        "AMB_kbits": 10.432
+      },
+      "0.95": {
+        "r_h": 897,
+        "r_h_fraction": 0.1593,
+        "cosine": 0.972281,
+        "rel_error": 0.223402,
+        "AMB_kbits": 14.352
+      },
+      "0.99": {
+        "r_h": 1382,
+        "r_h_fraction": 0.2454,
+        "cosine": 0.994412,
+        "rel_error": 0.099882,
+        "AMB_kbits": 22.112
+      }
+    },
+    "9": {
+      "r_h": 708,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1432
+      ],
+      "M_shape": [
+        2048,
+        1432
+      ],
+      "max_rank_saved": 1432,
+      "V_MB": 32.26,
+      "M_MB": 11.731,
+      "mu_offset_norm": 0.4347,
+      "0.50": {
+        "r_h": 135,
+        "r_h_fraction": 0.024,
+        "cosine": 0.693596,
+        "rel_error": 0.706259,
+        "AMB_kbits": 2.16
+      },
+      "0.80": {
+        "r_h": 451,
+        "r_h_fraction": 0.0801,
+        "cosine": 0.888849,
+        "rel_error": 0.446881,
+        "AMB_kbits": 7.216
+      },
+      "0.90": {
+        "r_h": 708,
+        "r_h_fraction": 0.1257,
+        "cosine": 0.945593,
+        "rel_error": 0.315805,
+        "AMB_kbits": 11.328
+      },
+      "0.95": {
+        "r_h": 953,
+        "r_h_fraction": 0.1692,
+        "cosine": 0.972864,
+        "rel_error": 0.223541,
+        "AMB_kbits": 15.248
+      },
+      "0.99": {
+        "r_h": 1431,
+        "r_h_fraction": 0.2541,
+        "cosine": 0.994552,
+        "rel_error": 0.099832,
+        "AMB_kbits": 22.896
+      }
+    },
+    "10": {
+      "r_h": 698,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1418
+      ],
+      "M_shape": [
+        2048,
+        1418
+      ],
+      "max_rank_saved": 1418,
+      "V_MB": 31.945,
+      "M_MB": 11.616,
+      "mu_offset_norm": 0.4844,
+      "0.50": {
+        "r_h": 134,
+        "r_h_fraction": 0.0238,
+        "cosine": 0.696147,
+        "rel_error": 0.706663,
+        "AMB_kbits": 2.144
+      },
+      "0.80": {
+        "r_h": 445,
+        "r_h_fraction": 0.079,
+        "cosine": 0.888545,
+        "rel_error": 0.44674,
+        "AMB_kbits": 7.12
+      },
+      "0.90": {
+        "r_h": 698,
+        "r_h_fraction": 0.1239,
+        "cosine": 0.945086,
+        "rel_error": 0.315833,
+        "AMB_kbits": 11.168
+      },
+      "0.95": {
+        "r_h": 941,
+        "r_h_fraction": 0.1671,
+        "cosine": 0.9725,
+        "rel_error": 0.223474,
+        "AMB_kbits": 15.056
+      },
+      "0.99": {
+        "r_h": 1417,
+        "r_h_fraction": 0.2516,
+        "cosine": 0.994423,
+        "rel_error": 0.099851,
+        "AMB_kbits": 22.672
+      }
+    },
+    "11": {
+      "r_h": 715,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1431
+      ],
+      "M_shape": [
+        2048,
+        1431
+      ],
+      "max_rank_saved": 1431,
+      "V_MB": 32.238,
+      "M_MB": 11.723,
+      "mu_offset_norm": 0.4093,
+      "0.50": {
+        "r_h": 148,
+        "r_h_fraction": 0.0263,
+        "cosine": 0.697468,
+        "rel_error": 0.706768,
+        "AMB_kbits": 2.368
+      },
+      "0.80": {
+        "r_h": 462,
+        "r_h_fraction": 0.082,
+        "cosine": 0.889188,
+        "rel_error": 0.446661,
+        "AMB_kbits": 7.392
+      },
+      "0.90": {
+        "r_h": 715,
+        "r_h_fraction": 0.127,
+        "cosine": 0.945388,
+        "rel_error": 0.316032,
+        "AMB_kbits": 11.44
+      },
+      "0.95": {
+        "r_h": 958,
+        "r_h_fraction": 0.1701,
+        "cosine": 0.972767,
+        "rel_error": 0.223346,
+        "AMB_kbits": 15.328
+      },
+      "0.99": {
+        "r_h": 1430,
+        "r_h_fraction": 0.2539,
+        "cosine": 0.99446,
+        "rel_error": 0.099974,
+        "AMB_kbits": 22.88
+      }
+    },
+    "12": {
+      "r_h": 719,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1446
+      ],
+      "M_shape": [
+        2048,
+        1446
+      ],
+      "max_rank_saved": 1446,
+      "V_MB": 32.575,
+      "M_MB": 11.846,
+      "mu_offset_norm": 0.5121,
+      "0.50": {
+        "r_h": 138,
+        "r_h_fraction": 0.0245,
+        "cosine": 0.698766,
+        "rel_error": 0.706296,
+        "AMB_kbits": 2.208
+      },
+      "0.80": {
+        "r_h": 460,
+        "r_h_fraction": 0.0817,
+        "cosine": 0.890597,
+        "rel_error": 0.446662,
+        "AMB_kbits": 7.36
+      },
+      "0.90": {
+        "r_h": 719,
+        "r_h_fraction": 0.1277,
+        "cosine": 0.946404,
+        "rel_error": 0.316008,
+        "AMB_kbits": 11.504
+      },
+      "0.95": {
+        "r_h": 967,
+        "r_h_fraction": 0.1717,
+        "cosine": 0.973378,
+        "rel_error": 0.223379,
+        "AMB_kbits": 15.472
+      },
+      "0.99": {
+        "r_h": 1445,
+        "r_h_fraction": 0.2566,
+        "cosine": 0.994644,
+        "rel_error": 0.099914,
+        "AMB_kbits": 23.12
+      }
+    },
+    "13": {
+      "r_h": 693,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1424
+      ],
+      "M_shape": [
+        2048,
+        1424
+      ],
+      "max_rank_saved": 1424,
+      "V_MB": 32.08,
+      "M_MB": 11.665,
+      "mu_offset_norm": 0.7472,
+      "0.50": {
+        "r_h": 124,
+        "r_h_fraction": 0.022,
+        "cosine": 0.698844,
+        "rel_error": 0.706668,
+        "AMB_kbits": 1.984
+      },
+      "0.80": {
+        "r_h": 436,
+        "r_h_fraction": 0.0774,
+        "cosine": 0.890891,
+        "rel_error": 0.44694,
+        "AMB_kbits": 6.976
+      },
+      "0.90": {
+        "r_h": 693,
+        "r_h_fraction": 0.123,
+        "cosine": 0.946665,
+        "rel_error": 0.316023,
+        "AMB_kbits": 11.088
+      },
+      "0.95": {
+        "r_h": 941,
+        "r_h_fraction": 0.1671,
+        "cosine": 0.973557,
+        "rel_error": 0.223335,
+        "AMB_kbits": 15.056
+      },
+      "0.99": {
+        "r_h": 1423,
+        "r_h_fraction": 0.2527,
+        "cosine": 0.994697,
+        "rel_error": 0.099876,
+        "AMB_kbits": 22.768
+      }
+    },
+    "14": {
+      "r_h": 704,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1426
+      ],
+      "M_shape": [
+        2048,
+        1426
+      ],
+      "max_rank_saved": 1426,
+      "V_MB": 32.125,
+      "M_MB": 11.682,
+      "mu_offset_norm": 0.7422,
+      "0.50": {
+        "r_h": 135,
+        "r_h_fraction": 0.024,
+        "cosine": 0.700982,
+        "rel_error": 0.706414,
+        "AMB_kbits": 2.16
+      },
+      "0.80": {
+        "r_h": 448,
+        "r_h_fraction": 0.0795,
+        "cosine": 0.890968,
+        "rel_error": 0.447072,
+        "AMB_kbits": 7.168
+      },
+      "0.90": {
+        "r_h": 704,
+        "r_h_fraction": 0.125,
+        "cosine": 0.946742,
+        "rel_error": 0.315904,
+        "AMB_kbits": 11.264
+      },
+      "0.95": {
+        "r_h": 948,
+        "r_h_fraction": 0.1683,
+        "cosine": 0.973499,
+        "rel_error": 0.223591,
+        "AMB_kbits": 15.168
+      },
+      "0.99": {
+        "r_h": 1425,
+        "r_h_fraction": 0.253,
+        "cosine": 0.994694,
+        "rel_error": 0.099937,
+        "AMB_kbits": 22.8
+      }
+    },
+    "15": {
+      "r_h": 683,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1412
+      ],
+      "M_shape": [
+        2048,
+        1412
+      ],
+      "max_rank_saved": 1412,
+      "V_MB": 31.81,
+      "M_MB": 11.567,
+      "mu_offset_norm": 0.8074,
+      "0.50": {
+        "r_h": 123,
+        "r_h_fraction": 0.0218,
+        "cosine": 0.696966,
+        "rel_error": 0.706992,
+        "AMB_kbits": 1.968
+      },
+      "0.80": {
+        "r_h": 430,
+        "r_h_fraction": 0.0763,
+        "cosine": 0.889268,
+        "rel_error": 0.447017,
+        "AMB_kbits": 6.88
+      },
+      "0.90": {
+        "r_h": 683,
+        "r_h_fraction": 0.1213,
+        "cosine": 0.945771,
+        "rel_error": 0.315872,
+        "AMB_kbits": 10.928
+      },
+      "0.95": {
+        "r_h": 928,
+        "r_h_fraction": 0.1648,
+        "cosine": 0.973045,
+        "rel_error": 0.223376,
+        "AMB_kbits": 14.848
+      },
+      "0.99": {
+        "r_h": 1411,
+        "r_h_fraction": 0.2505,
+        "cosine": 0.994577,
+        "rel_error": 0.099939,
+        "AMB_kbits": 22.576
+      }
+    },
+    "16": {
+      "r_h": 652,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1386
+      ],
+      "M_shape": [
+        2048,
+        1386
+      ],
+      "max_rank_saved": 1386,
+      "V_MB": 31.224,
+      "M_MB": 11.354,
+      "mu_offset_norm": 1.3733,
+      "0.50": {
+        "r_h": 105,
+        "r_h_fraction": 0.0186,
+        "cosine": 0.69076,
+        "rel_error": 0.707084,
+        "AMB_kbits": 1.68
+      },
+      "0.80": {
+        "r_h": 402,
+        "r_h_fraction": 0.0714,
+        "cosine": 0.886614,
+        "rel_error": 0.446899,
+        "AMB_kbits": 6.432
+      },
+      "0.90": {
+        "r_h": 652,
+        "r_h_fraction": 0.1158,
+        "cosine": 0.944434,
+        "rel_error": 0.315867,
+        "AMB_kbits": 10.432
+      },
+      "0.95": {
+        "r_h": 896,
+        "r_h_fraction": 0.1591,
+        "cosine": 0.972386,
+        "rel_error": 0.223612,
+        "AMB_kbits": 14.336
+      },
+      "0.99": {
+        "r_h": 1385,
+        "r_h_fraction": 0.2459,
+        "cosine": 0.994515,
+        "rel_error": 0.099846,
+        "AMB_kbits": 22.16
+      }
+    },
+    "17": {
+      "r_h": 683,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1404
+      ],
+      "M_shape": [
+        2048,
+        1404
+      ],
+      "max_rank_saved": 1404,
+      "V_MB": 31.629,
+      "M_MB": 11.502,
+      "mu_offset_norm": 1.3517,
+      "0.50": {
+        "r_h": 124,
+        "r_h_fraction": 0.022,
+        "cosine": 0.70178,
+        "rel_error": 0.706437,
+        "AMB_kbits": 1.984
+      },
+      "0.80": {
+        "r_h": 431,
+        "r_h_fraction": 0.0765,
+        "cosine": 0.890436,
+        "rel_error": 0.446993,
+        "AMB_kbits": 6.896
+      },
+      "0.90": {
+        "r_h": 683,
+        "r_h_fraction": 0.1213,
+        "cosine": 0.946016,
+        "rel_error": 0.315925,
+        "AMB_kbits": 10.928
+      },
+      "0.95": {
+        "r_h": 925,
+        "r_h_fraction": 0.1642,
+        "cosine": 0.972986,
+        "rel_error": 0.223627,
+        "AMB_kbits": 14.8
+      },
+      "0.99": {
+        "r_h": 1403,
+        "r_h_fraction": 0.2491,
+        "cosine": 0.994532,
+        "rel_error": 0.099979,
+        "AMB_kbits": 22.448
+      }
+    },
+    "18": {
+      "r_h": 641,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1375
+      ],
+      "M_shape": [
+        2048,
+        1375
+      ],
+      "max_rank_saved": 1375,
+      "V_MB": 30.976,
+      "M_MB": 11.264,
+      "mu_offset_norm": 2.1421,
+      "0.50": {
+        "r_h": 96,
+        "r_h_fraction": 0.017,
+        "cosine": 0.6895,
+        "rel_error": 0.706874,
+        "AMB_kbits": 1.536
+      },
+      "0.80": {
+        "r_h": 390,
+        "r_h_fraction": 0.0692,
+        "cosine": 0.886506,
+        "rel_error": 0.446876,
+        "AMB_kbits": 6.24
+      },
+      "0.90": {
+        "r_h": 641,
+        "r_h_fraction": 0.1138,
+        "cosine": 0.944077,
+        "rel_error": 0.315929,
+        "AMB_kbits": 10.256
+      },
+      "0.95": {
+        "r_h": 886,
+        "r_h_fraction": 0.1573,
+        "cosine": 0.972016,
+        "rel_error": 0.223437,
+        "AMB_kbits": 14.176
+      },
+      "0.99": {
+        "r_h": 1374,
+        "r_h_fraction": 0.244,
+        "cosine": 0.994326,
+        "rel_error": 0.099862,
+        "AMB_kbits": 21.984
+      }
+    },
+    "19": {
+      "r_h": 631,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1370
+      ],
+      "M_shape": [
+        2048,
+        1370
+      ],
+      "max_rank_saved": 1370,
+      "V_MB": 30.863,
+      "M_MB": 11.223,
+      "mu_offset_norm": 2.7156,
+      "0.50": {
+        "r_h": 91,
+        "r_h_fraction": 0.0162,
+        "cosine": 0.69299,
+        "rel_error": 0.705768,
+        "AMB_kbits": 1.456
+      },
+      "0.80": {
+        "r_h": 380,
+        "r_h_fraction": 0.0675,
+        "cosine": 0.887045,
+        "rel_error": 0.447078,
+        "AMB_kbits": 6.08
+      },
+      "0.90": {
+        "r_h": 631,
+        "r_h_fraction": 0.112,
+        "cosine": 0.944358,
+        "rel_error": 0.315893,
+        "AMB_kbits": 10.096
+      },
+      "0.95": {
+        "r_h": 877,
+        "r_h_fraction": 0.1557,
+        "cosine": 0.972118,
+        "rel_error": 0.223407,
+        "AMB_kbits": 14.032
+      },
+      "0.99": {
+        "r_h": 1369,
+        "r_h_fraction": 0.2431,
+        "cosine": 0.994309,
+        "rel_error": 0.099947,
+        "AMB_kbits": 21.904
+      }
+    },
+    "20": {
+      "r_h": 564,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        1311
+      ],
+      "M_shape": [
+        2048,
+        1311
+      ],
+      "max_rank_saved": 1311,
+      "V_MB": 29.534,
+      "M_MB": 10.74,
+      "mu_offset_norm": 6.2642,
+      "0.50": {
+        "r_h": 62,
+        "r_h_fraction": 0.011,
+        "cosine": 0.700014,
+        "rel_error": 0.706695,
+        "AMB_kbits": 0.992
+      },
+      "0.80": {
+        "r_h": 322,
+        "r_h_fraction": 0.0572,
+        "cosine": 0.888802,
+        "rel_error": 0.447145,
+        "AMB_kbits": 5.152
+      },
+      "0.90": {
+        "r_h": 564,
+        "r_h_fraction": 0.1001,
+        "cosine": 0.944713,
+        "rel_error": 0.316077,
+        "AMB_kbits": 9.024
+      },
+      "0.95": {
+        "r_h": 808,
+        "r_h_fraction": 0.1435,
+        "cosine": 0.972194,
+        "rel_error": 0.223317,
+        "AMB_kbits": 12.928
+      },
+      "0.99": {
+        "r_h": 1310,
+        "r_h_fraction": 0.2326,
+        "cosine": 0.994288,
+        "rel_error": 0.0999,
+        "AMB_kbits": 20.96
+      }
+    },
+    "21": {
+      "r_h": 142,
+      "d_int": 5632,
+      "d_out": 2048,
+      "V_shape": [
+        5632,
+        925
+      ],
+      "M_shape": [
+        2048,
+        925
+      ],
+      "max_rank_saved": 925,
+      "V_MB": 20.838,
+      "M_MB": 7.578,
+      "mu_offset_norm": 12.0976,
+      "0.50": {
+        "r_h": 2,
+        "r_h_fraction": 0.0004,
+        "cosine": 0.322599,
+        "rel_error": 0.656735,
+        "AMB_kbits": 0.032
+      },
+      "0.80": {
+        "r_h": 23,
+        "r_h_fraction": 0.0041,
+        "cosine": 0.75112,
+        "rel_error": 0.445504,
+        "AMB_kbits": 0.368
+      },
+      "0.90": {
+        "r_h": 142,
+        "r_h_fraction": 0.0252,
+        "cosine": 0.881639,
+        "rel_error": 0.316125,
+        "AMB_kbits": 2.272
+      },
+      "0.95": {
+        "r_h": 355,
+        "r_h_fraction": 0.063,
+        "cosine": 0.940691,
+        "rel_error": 0.223529,
+        "AMB_kbits": 5.68
+      },
+      "0.99": {
+        "r_h": 924,
+        "r_h_fraction": 0.1641,
+        "cosine": 0.987898,
+        "rel_error": 0.100027,
+        "AMB_kbits": 14.784
+      }
+    }
+  }
+}
