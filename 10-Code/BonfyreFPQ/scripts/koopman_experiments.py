@@ -66,16 +66,25 @@ Critical findings from Phase 1+2 PoC
   2. Validated gains (TinyLlama-1.1B, output-pca, N=3000, WikiText-2 test, 5K tok):
        6/22 layers, EV=0.99, r=843:  PPL=8.15 (+0.29 vs baseline 7.85)  16,800× gain
        6/22 layers, EV=0.95, r=459:  PPL=8.70 (+0.84)                   30,855× gain
-       All 22 layers, EV=0.99, r=843: PPL=15.79 (+7.94)                 16,800× gain
-       FPQ v8 comparison:             PPL=12.07 (+4.22)                      1× gain
+       All 22 layers, EV=0.99, r=843: PPL=15.79 (+7.94) — cascade,NO guard  16,800× gain
+       20/22 layers (guard, Phase 3): PPL=9.67 (+1.82) — collapse guard fix  16,800× gain
+       FPQ v8 comparison:             PPL=12.07 (+4.22)                           1× gain
 
-  3. Cascade degradation:
+  3. Cascade degradation + collapse guard (Phase 3 empirical result):
        Each layer's modes were fit on P_train(h_k) — activations when all layers
        use full W_down. When k-1 prior layers use Koopman approximations, h_k
        arrives from a perturbed distribution P_koop(h_k) ≠ P_train(h_k).
        OOD error at each layer compounds: total ΔPPL ~ O(L × ε_layer).
-       Fix: iterative re-calibration — collect h while Koopman hooks are active,
-       then re-fit modes on that distribution. One iteration is likely sufficient.
+       Phase 3 DISCOVERY: layers 2 and 7 (TinyLlama) collapse deterministically
+       under upstream Koopman hooks — r_h drops to 1-5 (vs ≥843 on P_train).
+       These degenerate modes then poison downstream layers, yielding iter-1 PPL
+       WORSE than iter-0 (+8.19 > +7.94). Root cause: residual stream interference
+       at specific positions in the layer stack creates a near-zero-rank distribution.
+       Fix: collapse guard — skip any layer with r_h < 50 after fitting on P_koop;
+       use exact W_down for that layer instead.  Result (Phase 3, guard=50, 1 iter):
+         20/22 layers active hooks  ΔPPL = +1.82  (vs +7.94 naïve, 22/22)
+         Layers 2 + 7 run exact W_down (guard), all other 20 use Koopman hooks.
+       Iterative re-calibration on the 20 non-collapsed layers: stable (+1.85 iter-1).
 
   4. Exp C (JVP) measures the wrong quantity:
        r_K from JVP oracle = rank of ΔJ(x) = nonlinear Jacobian variation.
@@ -103,6 +112,9 @@ v2 → v3 improvements in code
   Exp D: Redesigned circuit-damage test; DR=7-10× confirmed (FPQ harmful)
   Exp E: h-activation PCA via pre-down_proj hook (N=193 actual, bug; fixed in
          learn_modes.py with dedicated counter)
+  Phase 3 (recalibrate_modes.py): iterative forward re-calibration + collapse guard.
+         --collapse-guard 50: skip layers whose r_h collapses <50 under upstream hooks.
+         Result: ΔPPL dropped from +7.94 (22/22, no guard) → +1.82 (20/22, guard=50).
 
 Running
 -------
@@ -1307,7 +1319,8 @@ def _write_report(data, path):
         "| T4 manifold (Exp A) | ≈ PR × bpw bits (PR≈202-225 = 10% of d_int) | k_intrinsic / d compression | PoC: r_h_90/d=5-13% matches |",
         "| T3 distrib (Exp B) | ≈ rho × bpw bits | water-filling over Σ_x | Biased; N=300<<d_int=5632 |",
         "| Koopman (output-PCA) | r_h × b_psi bits, r_h=288-843 (EV=90-99%) | static modes (V+M); dynamic coeffs | 16,800× gain VALIDATED 6-layer |",
-        "| Koopman (cascade) | degrades multiplicatively per layer | OOD distribution mismatch | 22-layer: PPL +7.94; fix: re-calibrate |",
+        "| Koopman (cascade, no guard) | degrades multiplicatively per layer | OOD distribution mismatch | 22-layer: PPL +7.94 |",
+        "| Koopman (collapse guard) | layers 2+7 skip hook; 20/22 use Koopman | r_h collapse detection (guard=50) | ΔPPL=+1.82 VALIDATED Phase 3 |",
         "| ΔJ rank (Exp C JVP) | r_K=70-73 × b_psi (incorrect basis) | WRONG proxy for r_h | 12× UNDERESTIMATE |",
         "| T6 SGD channel | 0.0015 bpw floor | information in training | theoretical lower bound |",
         "",
@@ -1316,7 +1329,8 @@ def _write_report(data, path):
         "|---|---|---|---|---|",
         "| EV=0.90 | 288-719 | not yet measured | not yet measured | 30k-74k× |",
         "| EV=0.95 | 459 | +0.84 | not yet measured | 30,855× |",
-        "| EV=0.99 | 843 | +0.29 | +7.94 (cascade) | 16,800× |",
+        "| EV=0.99 | 843 | +0.29 | +7.94 (cascade, no guard) | 16,800× |",
+        "| EV=0.99 (guard=50) | 843 | — | +1.82 (20/22 layers, Phase 3) | 16,800× |",
         "| FPQ v8 | — | — | +4.22 | 1× |",
         "",
         "**Key corrected insights (from PoC, replacing v2 theory):**",
@@ -1328,6 +1342,10 @@ def _write_report(data, path):
         "5. μ_offset = W μh is mandatory — omitting it adds +7 PPL (verified experimentally)",
         "6. storage: V+M = 26 MB/layer (larger than W_down at 6.55 bpw = 9.4 MB). Gain is in activation",
         "   bandwidth (per-token interface bits), NOT in model storage size.",
+        "7. Collapse guard (Phase 3 empirical): layers 2+7 collapse to r_h=1-5 under upstream hooks.",
+        "   Cause: residual stream interference at specific positions. Fix: --collapse-guard 50 in",
+        "   recalibrate_modes.py/validate_koopman.py: skip those layers from hooks, use exact W_down.",
+        "   Effect: ΔPPL 22-layer drops from +7.94 (naïve) → +1.82 (20/22 with guard). Stable at iter-1.",
     ]
 
     with open(path, "w") as f:
