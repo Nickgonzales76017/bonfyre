@@ -1,38 +1,108 @@
 #!/usr/bin/env python3
 """
-Koopman Operator Field Experiments — v2 (theoretical optimum)
-==============================================================
+Koopman Operator Field Experiments — v3 (empirically corrected)
+================================================================
 Four experiments that bound the Active Memory Bandwidth (AMB) reduction
 achievable via Koopman decomposition of transformer MLP layers.
 
-Theory recap
-------------
-Current FPQ:  every output token read d_in × d_out × bpw bits of weights
-Koopman:      r_K eigenfunction evals  × b_psi bits — ONLY dynamic cost.
-              r_K Koopman modes are STATIC (stored once, like the model).
+Theory recap (revised after learn_modes.py / validate_koopman.py Phase 1+2 PoC)
+---------------------------------------------------------------------------------
+Current FPQ:  every output token reads ALL weight matrices (gate+up+down) × bpw bits
+              AMB_now = 3 × d_in × d_int × bpw = 3 × 2048 × 5632 × 6.55 = 226.6 Mbits
 
-  AMB_now   =  d_in × d_out × bpw
-  AMB_koop  =  r_K  × b_psi             (modes pre-loaded, amortized to zero)
-  Gain(raw) =  AMB_now / AMB_koop
-  Gain(net) =  Gain(raw) / κ(G)         (interference penalty)
+Koopman AMB:  r_h eigenfunction coefficients c_t = V.T (h_t − μh), r_h × b_psi bits
+              AMB_koop = r_h × b_psi  (V and M static, amortised to zero per-token)
 
-v2 improvements over v1
-------------------------
-  Exp A: removed broken Two-NN (unreliable N << exp(d)); added spectral decay
-         exponent and multi-threshold explained-variance profile.
-  Exp B: unchanged — effective-rank computation is correct; added Ledoit-Wolf
-         shrinkage estimate for eigenvalue bias correction.
-  Exp C: MAJOR — replaced full Jacobian PCA (r_K ≤ n_jac = 80) with the JVP
-         ORACLE (single backward pass per sketch direction). Now n_pts × k_sketch
-         = 300 × 32 = 9600 sketch vectors → reliable r_K up to d = 2048.
-         Fixed AMB formula: modes are STATIC, only eigenfunction evals are
-         dynamic per-token bandwidth.
-  Exp D: REDESIGN — previous test was circular (k_active / k_cov ≈ 93% trivially).
-         New test: SVD of W itself; actual structured quantization error; measure
-         "damage ratio" = (error fraction in circuit) / (uniform-noise baseline).
-         Damage ratio < 1 → circuit-preserving; = 1 → neutral; > 1 → harmful.
-         Koopman rank-k_c SVD is shown as the theoretical circuit-preserving
-         upper bound (damage ratio = 0 by Eckart-Young theorem).
+  Gain_raw = AMB_now / AMB_koop
+  Gain_net = AMB_now / (r_h × (b_psi + log₂ κ_signal))   (interference penalty)
+
+  IMPORTANT — two distinct metrics:
+  (A) Activation/code bandwidth (split-inference interface):
+        Gain = 226.6 Mbits / (r_h × b_psi)
+        At r_h=843, b_psi=16:  13.49 Kbits → Gain = 16,800×  [VALIDATED PoC]
+        At r_h=459, b_psi=16:   7.34 Kbits → Gain = 30,855×  [VALIDATED PoC]
+  (B) Weight-DRAM bandwidth (per-token cold reload of W_down):
+        FPQ W_down = 5632×2048×6.55/8 ≈ 9.4 MB/layer
+        Koopman V+M = (5632+2048)×r×4 bytes ≈ 26 MB/layer (cold)
+        → Gain ≈ 1.77× if cold; ∞ if V+M are cached in L3 (repeated tokens)
+  The 16,800× figure is metric (A) — compression at the activation interface.
+  The static V+M occupy 26 MB/layer hot, NOT smaller than W_down. Storage is NOT
+  reduced; per-token activation bandwidth IS reduced.
+
+Koopman formulation (corrected)
+---------------------------------
+For a transformer MLP down_proj y = W h (W ∈ R^{d_out × d_int}):
+  We want rank-r approximation of W restricted to the data manifold H ⊆ R^{d_int}.
+
+  Step 1: Center  H_c = H − μh  (μh = E[h] over training tokens)
+  Step 2: Output-PCA — SVD of Y_c = H_c @ W.T:
+          Y_c = U_Y S_Y V_Y.T
+          M = V_Y[:, :r]    (d_out × r output modes — right sing-vecs of Y_c)
+          V = W.T @ M        (d_int × r input projectors)
+  Step 3: Inference at token t:
+          c_t = (h_t − μh) @ V         (r coefficients)
+          ŷ_t = c_t @ M.T  +  W μh     <-- μh offset MUST be added back
+  Step 4: Bias correction: W μh is precomputed once (static, μ_offset).
+
+  Why output-PCA > input-PCA (both tested in PoC):
+    input-PCA:  V = top-r eigvecs of Cov(h); minimises ||h - VV.T h||_F
+    output-PCA: V,M as above; minimises ||Wh - MVT h||_F on TRAINING data
+    empirically: out-of-sample cosine 0.78 vs >0.91 at EV=0.99 (same r);
+    PPL all-22-layers: input-pca 55.9 vs output-pca 15.8 (+7.9) at r=843.
+
+  This is the "empirical Koopman" or DMD (Dynamic Mode Decomposition) framing
+  applied to the static MLP weights restricted to the observed data manifold.
+  It is NOT the Koopman operator of a dynamical system; it is the optimal
+  rank-r approximation of the map W|_supp(H).
+
+Critical findings from Phase 1+2 PoC
+--------------------------------------
+  1. r_h is NOT ultralow-rank:
+       N=300  → r_h_90 ≈ 120-187  (2-3% of d_int) — sample-poverty ARTIFACT
+       N=3000 → r_h_90 ≈ 288-719  (5-13%)         — better but still biased
+       True r_h_90 requires N >> d_int = 5632 for a stable estimate.
+       The earlier 110,000× gain prediction was based on a biased r_h estimate.
+
+  2. Validated gains (TinyLlama-1.1B, output-pca, N=3000, WikiText-2 test, 5K tok):
+       6/22 layers, EV=0.99, r=843:  PPL=8.15 (+0.29 vs baseline 7.85)  16,800× gain
+       6/22 layers, EV=0.95, r=459:  PPL=8.70 (+0.84)                   30,855× gain
+       All 22 layers, EV=0.99, r=843: PPL=15.79 (+7.94)                 16,800× gain
+       FPQ v8 comparison:             PPL=12.07 (+4.22)                      1× gain
+
+  3. Cascade degradation:
+       Each layer's modes were fit on P_train(h_k) — activations when all layers
+       use full W_down. When k-1 prior layers use Koopman approximations, h_k
+       arrives from a perturbed distribution P_koop(h_k) ≠ P_train(h_k).
+       OOD error at each layer compounds: total ΔPPL ~ O(L × ε_layer).
+       Fix: iterative re-calibration — collect h while Koopman hooks are active,
+       then re-fit modes on that distribution. One iteration is likely sufficient.
+
+  4. Exp C (JVP) measures the wrong quantity:
+       r_K from JVP oracle = rank of ΔJ(x) = nonlinear Jacobian variation.
+       For a static linear map y=Wx, ΔJ ≡ 0 → r_K = 0 (trivially 0 nonlinear).
+       r_K = 70-73 tells us the MLP's BEHAVIOUR changes in a 70-dim subspace
+       as x varies — it does NOT bound the rank needed for output approximation.
+       The output-approximation rank (output-PCA) is 4-10× larger than r_K.
+
+  5. The μ_offset term is mandatory:
+       The hook approx is M V.T (h − μh) + μ_offset where μ_offset = W μh.
+       Omitting μ_offset causes a large systematic bias: +7 PPL blowup at
+       6/22 layers (PPL 8.15 became 76 without it). Never skip centering.
+
+  6. Spectral decay of h is power-law (slow), not spiked (fast):
+       Confirmed by: Exp A gives PR ≈ 202-225 (participation ratio, 10% of d)
+       and by: r_h grows nearly linearly with EV threshold from EV=50% to EV=99%.
+       This means: no "clean" rank gap — compression trades off smoothly against
+       quality. There is no free tier where r is tiny and quality is high.
+
+v2 → v3 improvements in code
+------------------------------
+  Exp A: removed broken Two-NN; added spectral decay exponent + multi-threshold
+  Exp B: Ledoit-Wolf shrinkage + MP spike counting (N=300: severely biased)
+  Exp C: JVP oracle (9600 sketches); CORRECTED interpretation: r_K ≠ r_h
+  Exp D: Redesigned circuit-damage test; DR=7-10× confirmed (FPQ harmful)
+  Exp E: h-activation PCA via pre-down_proj hook (N=193 actual, bug; fixed in
+         learn_modes.py with dedicated counter)
 
 Running
 -------
@@ -315,13 +385,31 @@ def experiment_B(activations, r_cutoff=0.99):
     Measure effective rank rho(Σ_x) = tr(Σ_x) / ‖Σ_x‖_op and the water-filling
     bound on AMB reduction from distributional concentration.
 
-    Eigenvalue bias correction:
-      Raw sample covariance eigenvalues are biased (Marchenko-Pastur) when N/d is
-      small. Here N=300, d=2048 → N/d = 0.15 (severely under-sampled). We apply
-      the Oracle Approximating Shrinkage (OAS / Ledoit-Wolf analytical formula):
-          σ_i_shrunk = ((N-2)/N) σ_i + (1/N) tr(Σ̂)/d
-      This pulls small eigenvalues up and large eigenvalues down, reducing the
-      apparent concentration — making our T3 gain a LOWER bound (conservative).
+    SAMPLE COMPLEXITY WARNING (empirically validated):
+      This experiment was designed with N=300. For d_int=5632, N/d = 0.053.
+      Under Marchenko-Pastur, the bulk eigenvalue upper edge is:
+          λ+ = σ²(1+√γ)² where γ = d/N = 18.8
+          → λ+ ≈ 23.7² × σ² ≈ 562 σ²
+      Only eigenvalues MORE than 562× the bulk variance are reliable signal.
+      With N=300, this means at most n_spikes ≈ 35-36 eigenvalues are trusted.
+
+      The Ledoit-Wolf shrinkage cannot compensate at N/d = 0.053 — it reduces
+      bias but the resulting rho_LW is still drastically different from the
+      true distribution effective rank. rho_LW should be treated as a lower
+      bound confidence floor, NOT as an accurate estimate.
+
+      At N=3000 (N/d=0.53, as used in learn_modes.py Phase 1 PoC):
+        r_h_90 jumped from ~120-187 (N=300) to 288-719 (N=3000).
+        True r_h at N >> d_int may grow further — not yet measured.
+
+      RECOMMENDATION: Use MP spike count (n_spikes) as the most reliable T3
+      rank estimate when N << d. Use r_h from output-PCA (learn_modes.py) at
+      N=3000+ as the validated output-reconstruction rank.
+
+    Eigenvalue bias correction (LW shrinkage):
+      σ_i_shrunk = ((N-2)/N) σ_i + (1/N) tr(Σ̂)/d
+      This pulls small eigenvalues up and large down — conservative direction.
+      Making our T3 gain estimate a LOWER bound on the true T3 gain.
 
     T3 bound:
       Water-filling optimal bits allocation: b_k* = max(0, ν - log₂(σ_k))
@@ -421,9 +509,10 @@ def experiment_B(activations, r_cutoff=0.99):
 
     return results
 
-# ──────────────────────────────────────────────
-#  Experiment C: Koopman rank via JVP oracle
-# ──────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+#  Experiment C: Nonlinear Jacobian variation rank via JVP oracle (rank of ΔJ)
+#  NOTE: r_K ≠ r_h (output-PCA rank). See module docstring for full distinction.
+# ──────────────────────────────────────────────────────────────────────────────
 
 def _jvp_sketch(mlp, x, v, device):
     """
@@ -457,43 +546,58 @@ def _jvp_sketch(mlp, x, v, device):
 def experiment_C(model, activations, layer_indices, device,
                  k_sketch=32, r_cutoff=0.99, bpw=6.55, b_psi=16):
     """
-    Measure Koopman operator rank r_K via the JVP oracle (sketched Jacobian).
+    Measure the nonlinear Jacobian variation rank r_K via the JVP oracle.
 
-    v1 problem fixed:
-      Full Jacobians ∈ R^{d × d} with n_jac=80 → r_K ≤ 80 (sample-bound).
-      The measured r_K=70 was not the true rank; it was the number of Jacobians.
+    WHAT THIS EXPERIMENT MEASURES (and what it does NOT):
+    -------------------------------------------------------
+    This experiment computes r_K = rank of ΔJ(x) = J(x) − Ē_x[J(x)]:
+      • ΔJ is the *nonlinear Jacobian variation* of the MLP around its mean
+        Jacobian. For a PURELY linear map y=Wx, ΔJ ≡ 0 → r_K = 0.
+      • For SwiGLU/SiLU MLPs: ΔJ is driven by gate activations changing with x.
+        r_K = 70-73 (TinyLlama, EV=90-99%) tells us the MLP's behaviour changes
+        in a ~70-dimensional subspace as x varies over the token distribution.
+      • This is the "circuit sensitivity dimension" — not the output approximation rank.
 
-    v2 approach (JVP oracle):
-      For each activation x_i, sample k_sketch random vectors v_j ~ N(0, I_{d_out}).
-      Compute J(x_i)^T v_j via ONE backward pass per (i, j).
-      Stack B ∈ R^{n_pts × k_sketch, d_in}.  rank(B) = r_K (with high probability).
-      With n_pts=300, k_sketch=32 → B is (9600, d_in) → reliable r_K up to d_in.
+    THIS IS NOT r_h (the output-PCA rank). The two quantities are related but
+    fundamentally different:
+      r_K (this exp): dim of row_space(ΔJ) — how many directions cause J to change
+      r_h (learn_modes.py output-PCA): rank of W restricted to supp(H) ≈ SVD rank
+        of Y_c = H_c @ W.T — the rank needed for output reconstruction at threshold EV
 
-    Correct AMB formula (static vs dynamic cost separation):
+    Why r_K < r_h:
+      The full output includes both (a) the mean map W μ_h and (b) the distribution-
+      dependent residual. r_K only captures (b)'s nonlinear variation dimension.
+      output-PCA rank at EV=0.99 = 843 vs r_K = 70-73, a 12× discrepancy.
+
+    AMB formula (valid once r_h is known from output-PCA, not from this exp):
       CURRENT FPQ — per token:
-        AMB_now = d_in × d_out × bpw  bits  (read the whole weight matrix)
-      KOOPMAN — per token:
-        AMB_koop = r_K × b_psi_eff  bits  where b_psi_eff = b_psi + log₂(κ(G))
-        Modes M_k ∈ R^{d_out × d_in} are STATIC — loaded once, like the model weights.
-      GAIN:
-        Gain_raw = (d_in × d_out × bpw) / (r_K × b_psi)
-        Gain_net = (d_in × d_out × bpw) / (r_K × (b_psi + log₂(κ)))
+        AMB_now = n_params_mlp × bpw  bits  (all 3 weight matrices; TinyLlama: 226.6 Mbits)
+      KOOPMAN — per token (r_h from output-PCA, NOT r_K from this exp):
+        AMB_koop = r_h × b_psi_eff  bits   (V and M are static — loaded once)
+        b_psi_eff = b_psi + log₂(κ_signal)
+      GAIN (correct):
+        Gain_raw = AMB_now / (r_h × b_psi)
+        At r_h=843, b_psi=16: Gain = 226.6e6/(843×16) = 16,800×  [PoC validated]
+      GAIN reported by THIS EXP (using r_K=70-73) was 4.0× — that was WRONG.
 
     Gram matrix κ(G) — additive bits penalty:
       κ(G) = λ_max / λ_min of eigenfunction correlation matrix.
       κ = 1 → perfectly orthogonal, zero penalty.
       κ >> 1 → log₂(κ) extra bits per eigenfunction (numerical precision for inversion).
-      Dividing gain by κ directly (v1 mistake) is wrong — κ should add log₂(κ) bits.
 
-    CENTERING (critical fix vs v1):
-      We center B by subtracting the mean JVP direction:
-        B_c = B - B.mean(0)
-      This isolates ΔJ(x) = J(x) - J̄ (nonlinear Jacobian variation around the mean).
-      Without centering: rank of B = rank of J̄ ≈ d_in (always full rank).
-      With centering: rank of B_c = rank of NONLINEAR VARIATIONS (the Koopman kernel).
-      For SiLU MLPs: ΔJ is driven by gate node activations; expected rank << d.
+    CENTERING (mandatory):
+      B_c = B − B.mean(0)
+      This isolates ΔJ(x) = J(x) − J̄ (nonlinear variation around the mean Jacobian).
+      Without centering: rank of B ≈ d_in (full rank, measures J̄ which is trivially wide).
+      With centering: rank of B_c = r_K = nonlinear circuit-sensitivity dimension.
+
+    VALIDATED RESULT (TinyLlama-1.1B, N=300, k_sketch=32, 9600 sketch vectors):
+      r_K_90 = 70-73 (≈1.3% of d_int=5632)
+      Compare: r_h_90 = 288-719 (output-PCA, N=3000) — 4-10× higher
+               r_h_99 = 843 (output-PCA, N=3000, EV=0.99)
     """
-    print("\n[Experiment C] Koopman rank via JVP oracle (sketched Jacobians)")
+    print("\n[Experiment C] Nonlinear Jacobian variation rank via JVP oracle (r_K = rank(ΔJ))")
+    print("  NOTE: r_K measures circuit sensitivity, NOT output reconstruction rank r_h.")
     print(f"  k_sketch = {k_sketch}  b_psi = {b_psi}  bpw = {bpw}")
 
     results = {}
@@ -559,8 +663,8 @@ def experiment_C(model, activations, layer_indices, device,
         r_K    = min(r_K, n_pts * k_sketch)
         r_K_90 = int((cumvar_G < 0.90).sum().item()) + 1
 
-        print(f"    Koopman rank r_K @90%var = {r_K_90}  (nonlinear variations)")
-        print(f"    Koopman rank r_K @{r_cutoff*100:.0f}%var = {r_K}")
+        print(f"    ΔJ rank r_K @90%var = {r_K_90}  (nonlinear Jacobian variation space)")
+        print(f"    ΔJ rank r_K @{r_cutoff*100:.0f}%var = {r_K}  (NOT the output reconstruction rank r_h)")
 
         # ── Gram matrix of Koopman eigenfunctions ─────────────────
         # Use only the significant eigenvectors (top-r_K_90) to avoid noise blowup.
@@ -606,7 +710,7 @@ def experiment_C(model, activations, layer_indices, device,
         gain_net  = AMB_now / max(AMB_koop_eff, 1)
 
         print(f"    AMB now     = {AMB_now/1e6:.3f} Mbits/token")
-        print(f"    AMB koop    = {AMB_koop/1e3:.2f} Kbits/token  (r_K×b_psi, perfect ortho)")
+        print(f"    AMB koop@r_K = {AMB_koop/1e3:.2f} Kbits/token  (using r_K — UNDERESTIMATES true r_h)")
         print(f"    b_psi_eff   = {b_psi_eff:.1f} = {b_psi} + log₂({kappa_signal:.1f})")
         print(f"    Gain raw    = {gain_raw:.0f}x  (no interference)")
         print(f"    Gain net    = {gain_net:.0f}x  (with κ penalty)")
@@ -761,13 +865,26 @@ def experiment_E(activations, model, layer_indices, bpw=6.55, b_psi=16, r_cutoff
     Direct PCA of the intermediate representation h(x) = silu(gate(x)) ⊙ up(x) ∈ R^{d_int}.
     This is the input to W_down — the tightest Koopman bottleneck measurement.
 
-    Why this is better than Exp C:
-      Exp C (JVP oracle) measures rank of the Jacobian variations of the full MLP
-      mapping R^d → R^d. Near-full rank is expected: d=2048, r_K≈1900.
+    Relationship to Exp C (JVP oracle) — corrected after Phase 1+2 PoC:
+      Exp C (JVP oracle) measures rank of ΔJ(x) = J(x) − J̄, the nonlinear
+      Jacobian variation. Validated result: r_K = 70-73 for TinyLlama (EV=90-99%).
+      This is NOT the output reconstruction rank needed for Koopman approximation.
+
       Exp E measures rank of h directly — the INTERMEDIATE space. If rank(Cov(h)) = r_h
-      then by Eckart-Young, the full MLP output W_down h ≈ Σ_k c_k(x) (W_down φ_k)
-      with only r_h terms. Modes W_down φ_k are static; c_k = v_k^T h is the only
-      dynamic cost per token. Zero backward passes required.
+      then by Eckart-Young, the output W_down h ≈ Σ_k c_k(x) (W_down φ_k) with
+      r_h terms. Modes W_down φ_k are static; c_k = v_k^T h is the per-token cost.
+      Zero backward passes required. This is the input-PCA estimator.
+
+      input-PCA (this exp) vs output-PCA (learn_modes.py):
+        input-PCA minimises ||h - VV.T h||_F — ignores W_down's effect on the data
+        output-PCA minimises ||Wh - MVT h||_F over P_train(h) — the correct target
+        In PoC: output-PCA gives out-of-sample cosine 0.91-0.95 vs ~0.78 (input-PCA)
+                at same r and EV threshold. Output-PCA is ~2× better in PPL terms.
+
+    SAMPLE COMPLEXITY (same caveat as Exp B):
+      N=300, d_int=5632: N/d = 0.053. r_h estimates from this exp are BIASED DOWN.
+      At N=3000: r_h_90 = 288-719 (much larger than the ~120-187 from N=300).
+      Use learn_modes.py results as ground truth for r_h.
 
     Correct full-MLP AMB:
       AMB_now  = n_params(gate + up + down) × bpw  (ALL three matrices read per token)
@@ -776,6 +893,7 @@ def experiment_E(activations, model, layer_indices, bpw=6.55, b_psi=16, r_cutoff
       Gain     = AMB_now / (r_h × b_psi)
 
       r_h=100  → Gain ≈ 141,000x
+      r_h=843  → Gain ≈  16,800x  [PoC validated: ΔPPL=+0.29 at 6/22 layers]
       r_h=1000 → Gain ≈  14,100x
     """
     print("\n[Experiment E] Direct PCA of h = silu(gate(x)) ⊙ up(x) (pre-down_proj)")
@@ -897,7 +1015,8 @@ def build_summary(exp_a, exp_b, exp_c, exp_d, exp_e=None, bpw=6.55, b_psi=16):
         print(f"\n  Layer {layer_idx}:")
         print(f"    T4 manifold gain (PR-based)                  = {t4}x")
         print(f"    T3 distribution gain  raw / LW / MP          = {t3_raw}x / {t3_lw}x / {t3_mp}x")
-        print(f"    Exp C Koopman gain net (d² AMB)             = {gain_c}x  (r_K={c.get('r_K','?')})")
+        print(f"    Exp C ΔJ-rank (NOT r_h; see notes)          = r_K={c.get('r_K','?')}  gain={gain_c}x  [UNDERESTIMATE]")
+        print(f"    NOTE: r_K measures nonlinear Jacobian range, not output reconstruction rank.")
         print(f"    Exp E h-PCA gain @r90%  (full MLP AMB)       = {gain_e_r90}x  (r_h_90={e.get('r_h_90','?')}/{e.get('d_int','?')})")
         print(f"    Exp E h-PCA gain @MP    (tightest bound)      = {gain_e_mp}x  (spikes={e.get('n_spikes_mp','?')})")
         print(f"    κ(G_φ)                                        = {c.get('kappa_G_phi', '?')}")
@@ -1031,11 +1150,14 @@ def main():
             "timestamp": timestamp,
             "elapsed_s": round(elapsed, 1),
             "notes": (
-                "v2: Two-NN removed (unreliable at N=300, d=2048); "
-                "Exp C uses JVP oracle (single backward per sketch direction); "
-                "AMB formula separates dynamic token cost from static mode storage; "
-                "Exp D uses actual SVD-based circuit rank and damage ratio vs "
-                "uniform-noise baseline."
+                "v3 (empirically corrected): Two-NN removed (unreliable at N=300, d=2048); "
+                "Exp C uses JVP oracle — measures rank(ΔJ), the nonlinear Jacobian variation, "
+                "NOT the output reconstruction rank r_h. "
+                "Use learn_modes.py output-PCA for r_h (validated: r_h=843 at EV=99%, "
+                "AMB gain=16,800× per layer with ΔPPL=+0.29 at 6/22 layers). "
+                "Cascade effect (22/22 layers: PPL +7.94) requires iterative re-calibration. "
+                "AMB gain shown in Exp C using r_K underestimates true gain by ~12×. "
+                "Exp D damage ratio DR=7-10× confirmed (FPQ harmful to circuit structure)."
             ),
         },
         "experiment_A": results_A,
@@ -1121,19 +1243,22 @@ def _write_report(data, path):
         )
 
     lines += [
-        "\n## Experiment C: Koopman Rank (JVP Oracle)\n",
-        "**v2 fix**: r_K no longer sample-bounded. Used JVP oracle (n_sketch_vectors = n_pts × k_sketch).",
-        "**AMB formula**: AMB_now = d_in × d_out × bpw;  AMB_koop = r_K × b_psi (modes are static).\n",
-        "| Layer | d_in | d_out | n_sketch | r_K | r_K/d | κ(G) | AMB now | AMB koop | Gain raw | Gain net |",
-        "|---|---|---|---|---|---|---|---|---|---|---|",
+        "\n## Experiment C: Nonlinear Jacobian Variation Rank (JVP Oracle)\n",
+        "**What r_K measures**: rank of ΔJ(x) = J(x) − Ē[J(x)] — the nonlinear Jacobian",
+        "variation dimension. This is the 'circuit sensitivity dimension', NOT the output",
+        "reconstruction rank r_h. These are different: r_K=70-73 vs r_h=288-843 (output-PCA).",
+        "**AMB formula**: Use r_h from learn_modes.py output-PCA, NOT r_K from this exp.",
+        "  Gain reported below uses r_K — this understates the true gain by ~12× vs output-PCA.\n",
+        "| Layer | d_in | d_out | n_sketch | r_K (ΔJ rank) | r_K/d | κ(G) | AMB now | AMB koop@r_K | Gain@r_K |",
+        "|---|---|---|---|---|---|---|---|---|---|",
     ]
     for idx, r in data["experiment_C"].items():
         lines.append(
             f"| {idx} | {r['d_in']} | {r['d_out']} | {r['n_sketch_vectors']} "
-            f"| {r['r_K']} | {r['r_K_fraction']*100:.1f}% "
+            f"| {r['r_K']} (ΔJ rank) | {r['r_K_fraction']*100:.1f}% "
             f"| {r['kappa_G_phi']} | {r['AMB_now_Mbits']} Mb "
             f"| {r['AMB_koop_Kbits']} Kb "
-            f"| {r['AMB_gain_raw']}x | {r['AMB_gain_net']}x |"
+            f"| {r['AMB_gain_raw']}x (underestimate) |"
         )
 
     lines += [
@@ -1175,21 +1300,34 @@ def _write_report(data, path):
         )
 
     lines += [
-        "\n## Theory Hierarchy\n",
-        "| Method | per-token AMB | Gain mechanism |",
-        "|---|---|---|",
-        f"| Current FPQ v12 | d² × bpw = d² × {data['meta']['bpw']} bits | — |",
-        "| T4 manifold | ≈ PR × bpw bits | k_intrinsic / d compression |",
-        "| T3 distribution | ≈ rho × bpw bits | water-filling over Σ_x eigenvalues |",
-        "| Koopman (T8) | r_K × b_psi bits | static modes; dynamic evals only |",
-        "| Koopman net | r_K × b_psi × κ bits | interference penalty |",
-        "| T6 SGD channel | 0.0015 bpw floor | information in training |",
+        "\n## Theory Hierarchy (empirically corrected, April 2026)\n",
+        "| Method | per-token AMB | Gain mechanism | Status |",
+        "|---|---|---|---|",
+        f"| Current FPQ v12 | 3 × d × d_int × bpw = 226.6 Mbits | — | baseline |",
+        "| T4 manifold (Exp A) | ≈ PR × bpw bits (PR≈202-225 = 10% of d_int) | k_intrinsic / d compression | PoC: r_h_90/d=5-13% matches |",
+        "| T3 distrib (Exp B) | ≈ rho × bpw bits | water-filling over Σ_x | Biased; N=300<<d_int=5632 |",
+        "| Koopman (output-PCA) | r_h × b_psi bits, r_h=288-843 (EV=90-99%) | static modes (V+M); dynamic coeffs | 16,800× gain VALIDATED 6-layer |",
+        "| Koopman (cascade) | degrades multiplicatively per layer | OOD distribution mismatch | 22-layer: PPL +7.94; fix: re-calibrate |",
+        "| ΔJ rank (Exp C JVP) | r_K=70-73 × b_psi (incorrect basis) | WRONG proxy for r_h | 12× UNDERESTIMATE |",
+        "| T6 SGD channel | 0.0015 bpw floor | information in training | theoretical lower bound |",
         "",
-        "**Key v2 insight**: Previous 4x gain was wrong (sample-bounded r_K=70,",
-        "and the AMB formula included mode storage as per-token cost).",
-        "Correct formula: Gain = d_in × d_out × bpw / (r_K × b_psi).",
-        "With d=2048, b_psi=16: for r_K=100 → gain = 2048² × 6.55 / (100 × 16) = **17,200x**",
-        "For r_K=500 (if true rank is higher) → still **3,400x**.",
+        "**Phase 1+2 PoC validated gains (TinyLlama-1.1B, output-PCA, N=3000, WikiText-2):**",
+        "| EV threshold | r_h | ΔPPL (6/22 layers) | ΔPPL (22/22 layers) | AMB gain |",
+        "|---|---|---|---|---|",
+        "| EV=0.90 | 288-719 | not yet measured | not yet measured | 30k-74k× |",
+        "| EV=0.95 | 459 | +0.84 | not yet measured | 30,855× |",
+        "| EV=0.99 | 843 | +0.29 | +7.94 (cascade) | 16,800× |",
+        "| FPQ v8 | — | — | +4.22 | 1× |",
+        "",
+        "**Key corrected insights (from PoC, replacing v2 theory):**",
+        "1. r_K from JVP oracle = rank(ΔJ) = circuit sensitivity dimension ≠ r_h (output reconstruction rank)",
+        "2. output-PCA minimises ||Wh − MVTh||_F; input-PCA minimises ||h − VVTh||_F — different objectives",
+        "3. r_h is power-law, NOT spiked. No free low-r tier: every EV point costs proportional PPL",
+        "4. Cascade: per-layer modes fit on P_train(h); full chains use P_koop(h) ≠ P_train(h) (OOD)",
+        "   Fix: iterative re-calibration — collect h while Koopman active, refit on that distribution",
+        "5. μ_offset = W μh is mandatory — omitting it adds +7 PPL (verified experimentally)",
+        "6. storage: V+M = 26 MB/layer (larger than W_down at 6.55 bpw = 9.4 MB). Gain is in activation",
+        "   bandwidth (per-token interface bits), NOT in model storage size.",
     ]
 
     with open(path, "w") as f:
