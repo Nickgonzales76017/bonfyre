@@ -17,6 +17,7 @@
 #include "libfpq.h"
 #include "fpq.h"
 #include "fpqx.h"
+#include "fpq_run.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,18 +32,27 @@ static double now(void) {
 
 static void print_usage(void) {
     fprintf(stderr,
-        "fpq — BonfyreFPQ unified tool\n\n"
+        "fpq — Bonfyre Ember inference engine\n\n"
         "Usage:\n"
-        "  fpq info    <model.fpq>                   Show model metadata\n"
-        "  fpq bench   <model.fpq> [--limit N]       SLI quality + speed benchmark\n"
-        "  fpq decode  <model.fpq> <out.safetensors>  Decode to safetensors\n"
-        "  fpq convert <in.safetensors> <out.fpq>     Encode to .fpq\n"
+        "  fpq run     <model.fpq> \"prompt\" [options]  Generate text (LLaMA/TinyLlama)\n"
+        "  fpq info    <model.fpq>                      Show model metadata\n"
+        "  fpq bench   <model.fpq> [--limit N]          SLI quality + speed benchmark\n"
+        "  fpq decode  <model.fpq> <out.safetensors>    Decode to safetensors\n"
+        "  fpq convert <in.safetensors> <out.fpq>       Encode to .fpq\n"
+        "\n"
+        "Run options:\n"
+        "  --tokenizer <path>   tokenizer.json location (default: model dir)\n"
+        "  --sys \"text\"         System prompt\n"
+        "  --max-tokens N       Max tokens (default: 512)\n"
+        "  --temp F             Temperature (default: 0.6)\n"
+        "  --top-p F            Top-p (default: 0.9)\n"
+        "  --greedy             Greedy decoding\n"
+        "  --no-chat            Skip chat template\n"
         "\n"
         "Future:\n"
-        "  fpq run     <model.fpq> [input]            Infer (auto-detect modality)\n"
-        "  fpq serve   <model.fpq> [--port 8080]      OpenAI-compatible API\n"
-        "  fpq pull    <hf-repo>                       Download from HuggingFace\n"
-        "  fpq export-gguf <model.fpq> <out.gguf>      Convert for Ollama\n"
+        "  fpq serve   <model.fpq> [--port 8080]        OpenAI-compatible API\n"
+        "  fpq pull    <hf-repo>                        Download from HuggingFace\n"
+        "  fpq export-gguf <model.fpq> <out.gguf>       Convert for Ollama\n"
         "\n");
 }
 
@@ -296,14 +306,14 @@ int main(int argc, char **argv) {
 
     const char *cmd = argv[1];
 
+    if (strcmp(cmd, "run") == 0)     return cmd_run(argc, argv);
     if (strcmp(cmd, "info") == 0)    return cmd_info(argc, argv);
     if (strcmp(cmd, "bench") == 0)   return cmd_bench(argc, argv);
     if (strcmp(cmd, "decode") == 0)  return cmd_decode(argc, argv);
     if (strcmp(cmd, "convert") == 0) return cmd_convert(argc, argv);
 
-    /* Future commands — print "not yet" message */
-    if (strcmp(cmd, "run") == 0 ||
-        strcmp(cmd, "serve") == 0 ||
+    /* Future commands */
+    if (strcmp(cmd, "serve") == 0 ||
         strcmp(cmd, "pull") == 0 ||
         strcmp(cmd, "export-gguf") == 0) {
         fprintf(stderr, "fpq %s: not yet implemented\n", cmd);

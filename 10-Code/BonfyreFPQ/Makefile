@@ -47,6 +47,7 @@ FPQX_LIB_SRCS := $(SRC_DIR)/fwht.c \
                   $(SRC_DIR)/v4_optimizations.c \
                   $(SRC_DIR)/weight_algebra.c \
                   $(SRC_DIR)/fpq_native.c \
+                  $(SRC_DIR)/fpq_neon.c \
                   $(SRC_DIR)/fpqx_ops.c \
                   $(SRC_DIR)/fpqx_main.c
 
@@ -81,6 +82,8 @@ FPQ_CORE_SRCS := $(SRC_DIR)/fwht.c \
                  $(SRC_DIR)/fpqx_ops.c \
                  $(SRC_DIR)/fpq_neon.c \
                  $(SRC_DIR)/libfpq.c \
+                 $(SRC_DIR)/tokenizer.c \
+                 $(SRC_DIR)/fpq_run.c \
                  $(SRC_DIR)/fpq_cli.c
 
 FPQ_CORE_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD)/%.o,$(FPQ_CORE_SRCS))

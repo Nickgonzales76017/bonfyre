@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 /* ═══════════════════════════════════════════════════════════════════
  * Internal model structure
@@ -150,8 +151,9 @@ int fpq_matmul(fpq_model_t *m, const char *tensor_name,
 
     size_t rows = lt->info.rows, cols = lt->info.cols;
 
-    /* Fast path: SLI-capable tensor with dimensions large enough */
-    if (lt->sli && rows >= 256 && cols >= 256) {
+    /* Fast path: SLI-capable tensor with dimensions large enough.
+     * Set FPQ_DENSE_FALLBACK=1 to bypass SLI and use full decode (for testing). */
+    if (lt->sli && rows >= 256 && cols >= 256 && !getenv("FPQ_DENSE_FALLBACK")) {
         return fpqx_sli_matvec(lt->sli, x, y);
     }
 
@@ -170,7 +172,12 @@ int fpq_matmul(fpq_model_t *m, const char *tensor_name,
     if (lt->compressed) {
         float *w = (float *)malloc(rows * cols * sizeof(float));
         if (!w) return -1;
-        fpq_decode_tensor(lt->compressed, w);
+        if (lt->compressed->pid_alpha == -9.0f)
+            fpq_decode_tensor_v9(lt->compressed, w);
+        else if (lt->compressed->sbb_scale_delta)
+            fpq_decode_tensor_v8(lt->compressed, w);
+        else
+            fpq_decode_tensor_v4(lt->compressed, w);
         for (size_t r = 0; r < rows; r++) {
             float sum = 0.0f;
             for (size_t c = 0; c < cols; c++)
@@ -214,44 +221,95 @@ void fpq_close(fpq_model_t *m) {
  * fpq_decode_one — Decode single tensor to FP32
  * ═══════════════════════════════════════════════════════════════════ */
 
+/* Decode an SLI-prepped tensor back to spatial domain using z vectors.
+ * After fpqx_sli_prepare(), the E8 region stores z = H_raw(s⊙W)/N so
+ * fpq_decode_tensor_v9 would read corrupted data.  Recover via:
+ *   W_block ≈ s ⊙ IFWHT(z_stored × sqrt(N))
+ * and add the LR component. */
+static int fpq_decode_one_from_z(fpq_loaded_tensor_t *lt, float *out) {
+    fpq_tensor_t    *t   = lt->compressed;
+    fpqx_sli_ctx_t  *ctx = lt->sli;
+    size_t rows   = lt->info.rows;
+    size_t cols   = lt->info.cols;
+    size_t n_blk  = t->n_blocks;
+    size_t bpr    = ctx->blocks_per_row;  /* blocks per row = ceil(cols/256) */
+    int    lr_rank = ctx->lr_rank;
+    size_t us_off  = ctx->us_off;
+    size_t vt_off  = ctx->vt_off;
+
+    /* Step 1: Reconstruct LR base into output (LR region not corrupted) */
+    for (size_t i = 0; i < rows; i++) {
+        for (size_t j = 0; j < cols; j++) {
+            double val = 0.0;
+            for (int r = 0; r < lr_rank; r++)
+                val += (double)t->sbb_scale_delta[us_off + i * (size_t)lr_rank + r] *
+                       (double)t->sbb_scale_delta[vt_off + r * cols + j];
+            out[i * cols + j] = (float)val;
+        }
+    }
+
+    /* Step 2: Recover spatial residuals from z vectors.
+     * z_stored[b][k] = fpq_fwht(s_b⊙W_b)[k] / sqrt(N)
+     * Recovery: multiply by sqrt(N), apply fpq_fwht (self-inverse), undo signs. */
+    float sqrt_n = sqrtf((float)256);  /* sqrt(SLI_BLOCK_DIM) = 16 */
+
+    for (size_t b = 0; b < n_blk; b++) {
+        size_t row       = b / bpr;
+        size_t block_col = b % bpr;
+        size_t col_off   = block_col * 256;
+        size_t col_end   = col_off + 256;
+        if (col_end > cols) col_end = cols;
+        size_t this_dim  = col_end - col_off;
+
+        const float *z_stored = ctx->z_data + b * 256;
+
+        float block_data[256];
+        for (int i = 0; i < 256; i++)
+            block_data[i] = z_stored[i] * sqrt_n;  /* undo 1/sqrt(N) folding */
+
+        fpq_fwht_inverse(block_data, 256);  /* IFWHT → s⊙W_b */
+        fpq_random_signs_inverse(block_data, 256,
+                                 t->haar_seed ^ (uint64_t)b); /* undo signs → W_b */
+
+        for (size_t i = 0; i < this_dim; i++)
+            out[row * cols + col_off + i] += block_data[i];
+    }
+
+    return 0;
+}
+
 int fpq_decode_one(fpq_model_t *m, const char *tensor_name, float *out) {
     if (!m || !tensor_name || !out) return -1;
 
     fpq_loaded_tensor_t *lt = find_tensor(m, tensor_name);
     if (!lt) return -1;
 
-    size_t rows = lt->info.rows;
-    size_t cols = lt->info.cols;
-    size_t n = rows * cols;
+    size_t n = lt->info.rows * lt->info.cols;
 
+    /* Fast path: passthrough (1D norms, small tensors) */
     if (!lt->info.has_sli && lt->passthrough) {
-        /* Passthrough: just copy */
         memcpy(out, lt->passthrough, n * sizeof(float));
         return 0;
     }
 
-    /* For SLI tensors, we use the decode-via-matmul-with-identity approach
-     * or fall back to reading the .fpq with the standard decoder.
-     * For now, decode column by column using SLI (exact same quality). */
-    if (lt->sli) {
-        float *basis = (float *)calloc(cols, sizeof(float));
-        for (size_t j = 0; j < cols; j++) {
-            memset(basis, 0, cols * sizeof(float));
-            basis[j] = 1.0f;
-            fpqx_sli_matvec(lt->sli, basis, out + j * rows);
-            /* Note: this gives column-major output; transpose below */
-        }
-        /* Transpose from column-major to row-major */
-        float *tmp = (float *)malloc(n * sizeof(float));
-        memcpy(tmp, out, n * sizeof(float));
-        for (size_t i = 0; i < rows; i++)
-            for (size_t j = 0; j < cols; j++)
-                out[i * cols + j] = tmp[j * rows + i];
-        free(tmp);
-        free(basis);
+    /* SLI tensor: E8 region was overwritten by fpqx_sli_prepare.
+     * Recover spatial weights from the precomputed z vectors. */
+    if (lt->sli && lt->sli->z_precomputed) {
+        return fpq_decode_one_from_z(lt, out);
+    }
+
+    /* Full block-by-block decode via raw compressed tensor — dispatch by version */
+    if (lt->compressed) {
+        if (lt->compressed->pid_alpha == -9.0f)
+            fpq_decode_tensor_v9(lt->compressed, out);
+        else if (lt->compressed->sbb_scale_delta)
+            fpq_decode_tensor_v8(lt->compressed, out);
+        else
+            fpq_decode_tensor_v4(lt->compressed, out);
         return 0;
     }
 
+    fprintf(stderr, "fpq_decode_one: '%s' — no data available\n", tensor_name);
     return -1;
 }
 
