@@ -66,6 +66,9 @@ def parse_args():
                    help="Skip per-layer cosine measurement, just run PPL")
     p.add_argument("--skip-ppl", action="store_true",
                    help="Skip PPL, just run cosine scan")
+    p.add_argument("--min-r-h", type=int, default=50,
+                   help="Skip Koopman hook for any layer whose r_h < this (collapse guard). "
+                        "Default: 50. Set 0 to disable.")
     return p.parse_args()
 
 
@@ -334,6 +337,12 @@ def run_ppl_at_rank(model, tokenizer, modes_checkpoint, layer_indices,
         r = scan[thr_key]["r_h"]
         r = min(r, m["V"].shape[1])
 
+        # Collapse guard: skip layer if r_h is degenerate
+        min_r_h = modes_checkpoint.get("_min_r_h", 0)
+        if min_r_h > 0 and r < min_r_h:
+            print(f"    [collapse guard] Layer {idx} skipped: r_h={r} < min_r_h={min_r_h}")
+            continue
+
         V_r       = m["V"][:, :r].to(device).float()
         M_r       = m["M"][:, :r].to(device).float()
         mu_h      = m["mu_h"].to(device).float()
@@ -389,7 +398,11 @@ def main():
     sample_stats = ckpt["stats"].get(layer_indices[0], {})
     thr_keys     = list(sample_stats.get("rank_scan", {}).keys())
     print(f"  Layers     : {layer_indices}")
-    print(f"  EV thresholds in file : {thr_keys}\n")
+    print(f"  EV thresholds in file : {thr_keys}")
+    print(f"  Collapse guard (--min-r-h) : {args.min_r_h}  (layers with r_h < this skipped)\n")
+
+    # Embed min_r_h in checkpoint so run_ppl_at_rank sees it
+    ckpt["_min_r_h"] = args.min_r_h
 
     # ── Load model
     print("Loading model...")

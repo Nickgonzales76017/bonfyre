@@ -84,6 +84,10 @@ def parse_args():
                    help="Number of re-calibration iterations (default: 2)")
     p.add_argument("--ppl-tol", type=float, default=0.05,
                    help="Stop early if ΔPPL across iterations < this (default: 0.05)")
+    p.add_argument("--collapse-guard", type=int, default=50,
+                   help="If a layer's r_h@EV falls below this after fitting on P_koop, "
+                        "exclude it from Koopman hooks (use exact W_down). "
+                        "Default: 50. Set 0 to disable.")
     p.add_argument("--n-ppl-tokens", type=int, default=5000,
                    help="WikiText-2 tokens for PPL measurement per iteration (default: 5000)")
     p.add_argument("--ppl-stride", type=int, default=512)
@@ -178,14 +182,17 @@ class KoopmanHook:
         return approx.reshape(*shape[:-1], -1).to(inp[0].dtype)
 
 
-def attach_hooks(model, modes_checkpoint, layer_indices, ev_threshold, device):
+def attach_hooks(model, modes_checkpoint, layer_indices, ev_threshold, device,
+                 collapse_guard=50):
     """
     Attach KoopmanHook to each layer in layer_indices using the modes stored
     in modes_checkpoint at the rank corresponding to ev_threshold.
+    Layers whose r_h < collapse_guard are skipped (exact W_down used instead).
     Returns list of hook handles (call handle.remove() to detach).
     """
     handles = []
     ev_key = f"{ev_threshold:.2f}"
+    skipped = []
 
     for idx in layer_indices:
         str_idx = str(idx)
@@ -194,7 +201,6 @@ def attach_hooks(model, modes_checkpoint, layer_indices, ev_threshold, device):
         layer_stats = modes_checkpoint["stats"][str_idx]
         scan = layer_stats.get("rank_scan", {})
         if ev_key not in scan:
-            # Fall back to closest available threshold
             available = sorted(scan.keys())
             ev_key_used = available[-1] if available else None
             if ev_key_used is None:
@@ -203,8 +209,13 @@ def attach_hooks(model, modes_checkpoint, layer_indices, ev_threshold, device):
             ev_key_used = ev_key
 
         r = scan[ev_key_used]["r_h"]
-        m = modes_checkpoint["modes"][idx]
 
+        # Collapse guard: skip degenerate layers
+        if collapse_guard > 0 and r < collapse_guard:
+            skipped.append((idx, r))
+            continue
+
+        m = modes_checkpoint["modes"][idx]
         V = m["V"][:, :r].to(device).float()
         M = m["M"][:, :r].to(device).float()
         mu_h = m["mu_h"].to(device).float()
@@ -213,6 +224,10 @@ def attach_hooks(model, modes_checkpoint, layer_indices, ev_threshold, device):
         hook = KoopmanHook(V, M, mu_h, mu_offset)
         handle = model.model.layers[idx].mlp.down_proj.register_forward_hook(hook)
         handles.append(handle)
+
+    if skipped:
+        print(f"    [collapse guard] Skipping layers {[i for i,r in skipped]} "
+              f"(r_h={[r for i,r in skipped]} < guard={collapse_guard})")
 
     return handles
 
@@ -363,9 +378,11 @@ def compute_ppl(model, input_ids, max_length, stride, device):
 
 
 def measure_ppl_with_modes(model, modes_checkpoint, all_layer_indices,
-                            ev_threshold, input_ids, max_length, stride, device):
+                            ev_threshold, input_ids, max_length, stride, device,
+                            collapse_guard=50):
     """Attach all Koopman hooks, measure PPL, then detach."""
-    handles = attach_hooks(model, modes_checkpoint, all_layer_indices, ev_threshold, device)
+    handles = attach_hooks(model, modes_checkpoint, all_layer_indices, ev_threshold, device,
+                           collapse_guard=collapse_guard)
     try:
         ppl = compute_ppl(model, input_ids, max_length, stride, device)
     finally:
@@ -380,7 +397,7 @@ def measure_ppl_with_modes(model, modes_checkpoint, all_layer_indices,
 
 def run_calibration_iter(model, tokenizer, prev_checkpoint, layer_indices,
                           ev_threshold, n_samples, rank_thresholds,
-                          device, max_seq_len):
+                          device, max_seq_len, collapse_guard=50):
     """
     Fit new modes for all layers in layer_indices using the Koopman-perturbed
     h distribution. Layer k is fit with hooks on layers 0..k-1 active.
@@ -396,8 +413,10 @@ def run_calibration_iter(model, tokenizer, prev_checkpoint, layer_indices,
               f"(hooks active on {layer_indices[:ki]})...")
 
         # Attach Koopman hooks for all EARLIER layers using PREVIOUS iteration modes
+        # Skips any earlier layer whose r_h < collapse_guard (exact W_down used instead)
         earlier = [l for l in layer_indices if l < layer_idx]
-        handles = attach_hooks(model, prev_checkpoint, earlier, ev_threshold, device)
+        handles = attach_hooks(model, prev_checkpoint, earlier, ev_threshold, device,
+                               collapse_guard=collapse_guard)
 
         try:
             H = collect_h_for_layer(
@@ -487,11 +506,12 @@ def main():
     print(f"  Baseline PPL = {baseline_ppl:.4f}  ({time.time()-t0:.1f}s)")
 
     # Iter-0 PPL (seed modes, all layers)
-    print(f"\nMeasuring iter-0 PPL (seed modes, all {len(layer_indices)} layers at EV={args.ev})...")
+    print(f"\nMeasuring iter-0 PPL (seed modes, all {len(layer_indices)} layers at EV={args.ev}, guard={args.collapse_guard})...")
     t0 = time.time()
     iter0_ppl = measure_ppl_with_modes(
         model, seed_ckpt, layer_indices, args.ev,
-        ppl_ids, max_length, args.ppl_stride, args.device
+        ppl_ids, max_length, args.ppl_stride, args.device,
+        collapse_guard=args.collapse_guard
     )
     print(f"  Iter-0 PPL = {iter0_ppl:.4f}  (ΔPPL = {iter0_ppl - baseline_ppl:+.4f})  ({time.time()-t0:.1f}s)")
 
@@ -509,7 +529,8 @@ def main():
         new_modes, new_stats = run_calibration_iter(
             model, tokenizer, current_ckpt, layer_indices,
             args.ev, args.n_samples, rank_thresholds,
-            args.device, args.max_seq_len
+            args.device, args.max_seq_len,
+            collapse_guard=args.collapse_guard
         )
 
         # Build new checkpoint
@@ -527,6 +548,7 @@ def main():
             "stats": new_stats,
             "recalibration_iter": iteration,
             "seed_modes": args.seed_modes,
+            "collapse_guard": args.collapse_guard,
         }
 
         # Measure PPL
@@ -534,7 +556,8 @@ def main():
         t0 = time.time()
         iter_ppl = measure_ppl_with_modes(
             model, new_ckpt, layer_indices, args.ev,
-            ppl_ids, max_length, args.ppl_stride, args.device
+            ppl_ids, max_length, args.ppl_stride, args.device,
+            collapse_guard=args.collapse_guard
         )
         elapsed_iter = time.time() - t_iter
         delta = iter_ppl - baseline_ppl
