@@ -149,7 +149,7 @@ def collect_activations(model, tokenizer, layer_indices, n_samples, device, max_
     Returns dict: layer_idx -> {"pre": (N, d), "post": (N, d)}
     """
     model.eval()
-    records = {idx: {"pre": [], "post": []} for idx in layer_indices}
+    records = {idx: {"pre": [], "post": [], "h": []} for idx in layer_indices}
     hooks = []
     per_layer_total = {idx: 0 for idx in layer_indices}
 
@@ -169,16 +169,27 @@ def collect_activations(model, tokenizer, layer_indices, n_samples, device, max_
             flat = x.reshape(-1, x.shape[-1])
             records[layer_idx]["post"].append(flat.cpu())
 
-        return pre_hook, post_hook
+        def down_proj_hook(module, inp):
+            # Capture h = silu(gate(x)) ⊙ up(x) ∈ R^{d_intermediate}
+            # This is the input to W_down — the Koopman bottleneck.
+            if per_layer_total[layer_idx] < n_samples:
+                h = inp[0].detach().float()
+                flat = h.reshape(-1, h.shape[-1])
+                records[layer_idx]["h"].append(flat.cpu())
+
+        return pre_hook, post_hook, down_proj_hook
 
     # Attach hooks to the full MLP module (input/output at d=hidden_size)
     # This gives us the nonlinear map x -> mlp(x) in R^d, correct for Koopman.
+    # Also hook down_proj to capture h = silu(gate) ⊙ up (intermediate representation).
     for idx in layer_indices:
         layer = model.model.layers[idx]
         mlp = layer.mlp
-        ph, oh = make_hooks(idx)
+        ph, oh, dh = make_hooks(idx)
         hooks.append(mlp.register_forward_pre_hook(ph))
         hooks.append(mlp.register_forward_hook(oh))
+        if hasattr(mlp, 'down_proj'):
+            hooks.append(mlp.down_proj.register_forward_pre_hook(dh))
 
     print(f"  Collecting activations ({n_samples} target tokens)...")
     chunks = get_wikitext_tokens(tokenizer, n_sentences=300, max_len=max_seq_len)
@@ -200,8 +211,10 @@ def collect_activations(model, tokenizer, layer_indices, n_samples, device, max_
     for idx in layer_indices:
         pre  = torch.cat(records[idx]["pre"],  dim=0)[:n_samples]
         post = torch.cat(records[idx]["post"], dim=0)[:n_samples] if records[idx]["post"] else None
-        result[idx] = {"pre": pre, "post": post}
-        print(f"  Layer {idx}: collected {pre.shape[0]} activation vectors (d={pre.shape[1]})")
+        h    = torch.cat(records[idx]["h"],    dim=0)[:n_samples] if records[idx]["h"] else None
+        result[idx] = {"pre": pre, "post": post, "h": h}
+        d_h = h.shape[1] if h is not None else "n/a"
+        print(f"  Layer {idx}: collected {pre.shape[0]} activation vectors (d={pre.shape[1]}, d_int={d_h})")
 
     return result
 
@@ -372,9 +385,21 @@ def experiment_B(activations, r_cutoff=0.99):
         print(f"    rho LW  (shrunk)   = {rho_eff:.1f}  ({rho_frac*100:.2f}% of d)  ← consrv")
         print(f"    k@90%      = {k_eff_90}   k@95% = {k_eff_95}   k@99% = {k_eff_99}")
         print(f"    Top-5% dirs capture = {top5_var*100:.1f}% variance")
+        # Marchenko-Pastur spike counting — parameter-free unbiased T3 rank
+        # Eigenvalues above the MP upper edge λ+ = σ²(1+√γ)² are genuine signal.
+        # γ = d/N (aspect ratio); σ² estimated from bulk trace / d.
+        gamma_mp = d / N
+        sigma2_bulk = trace_raw / d
+        lambda_plus = sigma2_bulk * (1 + gamma_mp ** 0.5) ** 2
+        n_spikes = int((eigvals_raw > lambda_plus).sum().item())
+        T3_gain_mp = d / max(n_spikes, 1)
+
         print(f"    T3 gain raw     = {T3_gain_raw:.1f}x  (sample-biased upper bound)")
         print(f"    T3 gain LW      = {T3_gain_lw:.1f}x  (shrinkage lower bound)")
         print(f"    T3 flat-rate    = {flat_gain:.1f}x  (k_eff99)")
+        print(f"    MP upper edge λ+ = {lambda_plus:.2f}  (γ=d/N={gamma_mp:.1f})")
+        print(f"    Signal spikes   = {n_spikes}  ({n_spikes/d*100:.2f}% of d)  ← unbiased")
+        print(f"    T3 gain MP      = {T3_gain_mp:.1f}x  (MP spike count, no hyperparameters)")
 
         results[layer_idx] = {
             "rho_raw": round(rho_raw, 2),
@@ -386,8 +411,11 @@ def experiment_B(activations, r_cutoff=0.99):
             "k_eff_90": k_eff_90,
             "k_eff_95": k_eff_95,
             "k_eff_99": k_eff_99,
+            "n_spikes_mp": n_spikes,
+            "mp_lambda_plus": round(lambda_plus, 4),
             "T3_AMB_gain_raw": round(T3_gain_raw, 1),
             "T3_AMB_gain_lw": round(T3_gain_lw, 1),
+            "T3_AMB_gain_mp": round(T3_gain_mp, 1),
             "T3_AMB_gain_flatrate": round(flat_gain, 1),
         }
 
@@ -558,8 +586,10 @@ def experiment_C(model, activations, layer_indices, device,
         print(f"    Gram κ(G_φ) = {kappa:.2f}  (k={k_gram}, MP noise={kappa_mp:.1f}, adj={kappa_signal:.2f})")
 
         # ── Correct AMB formula ────────────────────────────────────
-        # CURRENT FPQ: read full weight matrix per token
-        AMB_now  = d_in * d_out * bpw               # bits per token per layer
+        # CURRENT FPQ: read ALL weight matrices per token (gate+up+down for SwiGLU)
+        # Previous bug: used d_in*d_out*bpw = only one matrix. Correct: all 3.
+        n_params_mlp = sum(p.numel() for p in mlp.parameters())
+        AMB_now  = n_params_mlp * bpw               # bits per token (full MLP)
 
         # KOOPMAN: read r_K eigenfunction evaluations per token (modes are static)
         # Effective bits per eval = b_psi + log₂(κ_signal) (inversion precision penalty)
@@ -723,10 +753,126 @@ def experiment_D(model, layer_indices, k_circuit_pct=0.05, bits=4):
 
 
 # ──────────────────────────────────────────────
+#  Experiment E: PCA of h = silu(gate) ⊙ up (pre-down_proj rank)
+# ──────────────────────────────────────────────
+
+def experiment_E(activations, model, layer_indices, bpw=6.55, b_psi=16, r_cutoff=0.99):
+    """
+    Direct PCA of the intermediate representation h(x) = silu(gate(x)) ⊙ up(x) ∈ R^{d_int}.
+    This is the input to W_down — the tightest Koopman bottleneck measurement.
+
+    Why this is better than Exp C:
+      Exp C (JVP oracle) measures rank of the Jacobian variations of the full MLP
+      mapping R^d → R^d. Near-full rank is expected: d=2048, r_K≈1900.
+      Exp E measures rank of h directly — the INTERMEDIATE space. If rank(Cov(h)) = r_h
+      then by Eckart-Young, the full MLP output W_down h ≈ Σ_k c_k(x) (W_down φ_k)
+      with only r_h terms. Modes W_down φ_k are static; c_k = v_k^T h is the only
+      dynamic cost per token. Zero backward passes required.
+
+    Correct full-MLP AMB:
+      AMB_now  = n_params(gate + up + down) × bpw  (ALL three matrices read per token)
+               = 3 × d × d_int × bpw ≈ 226 Mbits/token for TinyLlama
+      AMB_koop = r_h × b_psi   (dynamic evals only; static modes amortized)
+      Gain     = AMB_now / (r_h × b_psi)
+
+      r_h=100  → Gain ≈ 141,000x
+      r_h=1000 → Gain ≈  14,100x
+    """
+    print("\n[Experiment E] Direct PCA of h = silu(gate(x)) ⊙ up(x) (pre-down_proj)")
+
+    results = {}
+    for layer_idx in layer_indices:
+        H = activations[layer_idx].get("h")
+        if H is None:
+            print(f"  Layer {layer_idx}: no h activations captured (skipped)")
+            results[layer_idx] = {"skipped": True}
+            continue
+
+        N, d_int = H.shape
+        mlp = model.model.layers[layer_idx].mlp
+        n_params_mlp = sum(p.numel() for p in mlp.parameters())
+        AMB_now = n_params_mlp * bpw
+
+        print(f"  Layer {layer_idx}: d_int={d_int}, N={N}")
+        print(f"    AMB now (full MLP, 3 matrices) = {AMB_now/1e6:.1f} Mbits/token")
+
+        # PCA of h
+        mu_h  = H.mean(0)
+        H_c   = (H - mu_h).float()
+        _, S_h, _ = torch.linalg.svd(H_c, full_matrices=False)
+        S2_h  = S_h ** 2
+        var_h = S2_h / S2_h.sum()
+        cv_h  = var_h.cumsum(0)
+
+        r_h    = int((cv_h < r_cutoff).sum().item()) + 1
+        r_h_90 = int((cv_h < 0.90).sum().item()) + 1
+        r_h_95 = int((cv_h < 0.95).sum().item()) + 1
+        PR_h   = (S_h.sum() ** 2 / S2_h.sum()).item()
+
+        # Spectral decay exponent α for h
+        k_fit = min(r_h, 200)
+        if k_fit >= 10:
+            log_i = torch.log(torch.arange(1, k_fit + 1).float())
+            log_s = torch.log(S_h[:k_fit].clamp(min=1e-12))
+            li_c  = log_i - log_i.mean()
+            ls_c  = log_s - log_s.mean()
+            alpha_h = -(li_c * ls_c).sum() / (li_c ** 2).sum()
+            alpha_h = alpha_h.item()
+        else:
+            alpha_h = float("nan")
+
+        # MP spike counting for h (unbiased rank)
+        eigvals_h   = S2_h / max(N - 1, 1)
+        gamma_h     = d_int / N
+        sigma2_bulk = eigvals_h.mean().item()
+        lambda_plus = sigma2_bulk * (1 + gamma_h ** 0.5) ** 2
+        n_spikes_h  = int((eigvals_h > lambda_plus).sum().item())
+
+        # AMB gains
+        gain_PR  = AMB_now / max(PR_h * b_psi, 1)
+        gain_r90 = AMB_now / max(r_h_90 * b_psi, 1)
+        gain_r99 = AMB_now / max(r_h * b_psi, 1)
+        gain_mp  = AMB_now / max(n_spikes_h * b_psi, 1)
+
+        print(f"    PR(h)           = {PR_h:.1f}  ({PR_h/d_int*100:.2f}% of d_int)")
+        print(f"    r_h @90%var     = {r_h_90}  ({r_h_90/d_int*100:.1f}% of d_int)")
+        print(f"    r_h @95%var     = {r_h_95}  ({r_h_95/d_int*100:.1f}% of d_int)")
+        print(f"    r_h @{r_cutoff*100:.0f}%var     = {r_h}  ({r_h/d_int*100:.1f}% of d_int)")
+        print(f"    α(h)            = {alpha_h:.3f}  (spectral decay exponent)")
+        print(f"    MP λ+={lambda_plus:.4f}  signal spikes = {n_spikes_h}  ({n_spikes_h/d_int*100:.2f}% of d_int)")
+        print(f"    Gain @PR        = {gain_PR:.0f}x")
+        print(f"    Gain @r_h_90    = {gain_r90:.0f}x")
+        print(f"    Gain @r_h_99    = {gain_r99:.0f}x")
+        print(f"    Gain @MP spikes = {gain_mp:.0f}x  ← tightest unbiased bound")
+
+        results[layer_idx] = {
+            "d_int": d_int,
+            "N": N,
+            "n_params_mlp": n_params_mlp,
+            "AMB_now_Mbits": round(AMB_now / 1e6, 3),
+            "PR_h": round(PR_h, 2),
+            "PR_h_fraction": round(PR_h / d_int, 6),
+            "r_h_90": r_h_90,
+            "r_h_95": r_h_95,
+            "r_h_99": r_h,
+            "r_h_fraction_99": round(r_h / d_int, 4),
+            "alpha_h": round(alpha_h, 4),
+            "n_spikes_mp": n_spikes_h,
+            "n_spikes_fraction": round(n_spikes_h / d_int, 6),
+            "gain_PR": round(gain_PR, 0),
+            "gain_r90": round(gain_r90, 0),
+            "gain_r99": round(gain_r99, 0),
+            "gain_mp": round(gain_mp, 0),
+        }
+
+    return results
+
+
+# ──────────────────────────────────────────────
 #  Summary: AMB reduction table
 # ──────────────────────────────────────────────
 
-def build_summary(exp_a, exp_b, exp_c, exp_d, bpw=6.55, b_psi=16):
+def build_summary(exp_a, exp_b, exp_c, exp_d, exp_e=None, bpw=6.55, b_psi=16):
     print("\n" + "═"*70)
     print("  KOOPMAN AMB REDUCTION SUMMARY")
     print("═"*70)
@@ -737,23 +883,29 @@ def build_summary(exp_a, exp_b, exp_c, exp_d, bpw=6.55, b_psi=16):
         b  = exp_b.get(layer_idx, {})
         c  = exp_c.get(layer_idx, {})
         d  = exp_d.get(layer_idx, {})
+        e  = (exp_e or {}).get(layer_idx, {})
 
-        t4       = a.get("T4_AMB_gain", "?")
-        t3_raw   = b.get("T3_AMB_gain_raw", b.get("T3_AMB_gain_waterfill", "?"))
-        t3_lw    = b.get("T3_AMB_gain_lw", "?")
-        gain     = c.get("AMB_gain_net", "?")
-        dr   = d.get("damage_ratio", "?")
+        t4         = a.get("T4_AMB_gain", "?")
+        t3_raw     = b.get("T3_AMB_gain_raw", b.get("T3_AMB_gain_waterfill", "?"))
+        t3_lw      = b.get("T3_AMB_gain_lw", "?")
+        t3_mp      = b.get("T3_AMB_gain_mp", "?")
+        gain_c     = c.get("AMB_gain_net", "?")
+        gain_e_r90 = e.get("gain_r90", "?")
+        gain_e_mp  = e.get("gain_mp", "?")
+        dr         = d.get("damage_ratio", "?")
 
         print(f"\n  Layer {layer_idx}:")
         print(f"    T4 manifold gain (PR-based)                  = {t4}x")
-        print(f"    T3 distribution gain (raw, biased up)         = {t3_raw}x")
-        print(f"    T3 distribution gain (LW-shrunk, biased down) = {t3_lw}x")
-        print(f"    Koopman gain net (÷κ, correct AMB)           = {gain}x")
-        print(f"    r_K                                           = {c.get('r_K', '?')}")
+        print(f"    T3 distribution gain  raw / LW / MP          = {t3_raw}x / {t3_lw}x / {t3_mp}x")
+        print(f"    Exp C Koopman gain net (d² AMB)             = {gain_c}x  (r_K={c.get('r_K','?')})")
+        print(f"    Exp E h-PCA gain @r90%  (full MLP AMB)       = {gain_e_r90}x  (r_h_90={e.get('r_h_90','?')}/{e.get('d_int','?')})")
+        print(f"    Exp E h-PCA gain @MP    (tightest bound)      = {gain_e_mp}x  (spikes={e.get('n_spikes_mp','?')})")
         print(f"    κ(G_φ)                                        = {c.get('kappa_G_phi', '?')}")
         print(f"    Circuit damage ratio DR                       = {dr}  (1=neutral, <1=safe)")
-        if isinstance(c, dict) and "AMB_now_Mbits" in c:
-            print(f"    AMB: {c['AMB_now_Mbits']:.3f} Mbits → {c.get('AMB_koop_Kbits', '?'):.2f} Kbits/token")
+        if "AMB_now_Mbits" in e:
+            print(f"    Full MLP AMB_now = {e['AMB_now_Mbits']:.1f} Mbits/token  (gate+up+down)")
+        elif isinstance(c, dict) and "AMB_now_Mbits" in c:
+            print(f"    AMB: {c['AMB_now_Mbits']:.3f} Mbits → {c.get('AMB_koop_Kbits', '?'):.2f} Kbits/token")         
 
         rows.append({
             "layer_idx": layer_idx,
@@ -762,9 +914,15 @@ def build_summary(exp_a, exp_b, exp_c, exp_d, bpw=6.55, b_psi=16):
             "T4_gain": t4,
             "T3_gain_raw": t3_raw,
             "T3_gain_lw": t3_lw,
+            "T3_gain_mp": t3_mp,
             "r_K": c.get("r_K"),
             "kappa": c.get("kappa_G_phi"),
-            "koopman_gain_net": gain,
+            "koopman_gain_net": gain_c,
+            "r_h_90": e.get("r_h_90"),
+            "d_int": e.get("d_int"),
+            "gain_h_r90": gain_e_r90,
+            "gain_h_mp": gain_e_mp,
+            "AMB_now_full_Mbits": e.get("AMB_now_Mbits"),
             "AMB_now_Mbits": c.get("AMB_now_Mbits"),
             "AMB_koop_Kbits": c.get("AMB_koop_Kbits"),
             "damage_ratio": dr,
@@ -844,8 +1002,13 @@ def main():
         k_circuit_pct=args.k_circuit_pct,
         bits=4,
     )
+    results_E = experiment_E(
+        activations, model, layer_indices,
+        bpw=args.bpw, b_psi=args.b_psi,
+        r_cutoff=args.r_cutoff,
+    )
 
-    summary = build_summary(results_A, results_B, results_C, results_D,
+    summary = build_summary(results_A, results_B, results_C, results_D, results_E,
                              bpw=args.bpw, b_psi=args.b_psi)
 
     elapsed = time.time() - t_start
@@ -989,6 +1152,26 @@ def _write_report(data, path):
             f"| {r['energy_in_kc']*100:.1f}% "
             f"| {r['f_circuit']*100:.1f}% | {r['baseline']*100:.2f}% "
             f"| {r['damage_ratio']} | {r['koopman_ideal_DR']} | {r['verdict']} |"
+        )
+
+    lines += [
+        "\n## Experiment E: Pre-down_proj Representation h (Tightest Bound)\n",
+        "**Direct PCA of h = silu(gate(x)) ⊙ up(x)**. No Jacobians needed.",
+        "**Full MLP AMB**: gate_proj + up_proj + down_proj = n_params × bpw.\n",
+        "| Layer | d_int | PR_h | r_h@90% | r_h@99% | α(h) | MP spikes | Gain@r90 | Gain@99 | Gain@MP |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for idx, r in data.get("experiment_E", {}).items():
+        if r.get("skipped"):
+            lines.append(f"| {idx} | skipped | | | | | | | | |")
+            continue
+        lines.append(
+            f"| {idx} | {r['d_int']} | {r['PR_h']} ({r['PR_h_fraction']*100:.2f}%) "
+            f"| {r['r_h_90']} ({r['r_h_90']/r['d_int']*100:.1f}%) "
+            f"| {r['r_h_99']} ({r['r_h_fraction_99']*100:.1f}%) "
+            f"| {r['alpha_h']} "
+            f"| {r['n_spikes_mp']} ({r['n_spikes_fraction']*100:.2f}%) "
+            f"| {r['gain_r90']}x | {r['gain_r99']}x | **{r['gain_mp']}x** |"
         )
 
     lines += [
