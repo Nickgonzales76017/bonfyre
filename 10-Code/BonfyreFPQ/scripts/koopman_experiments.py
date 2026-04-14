@@ -55,33 +55,51 @@ For a transformer MLP down_proj y = W h (W ∈ R^{d_out × d_int}):
   It is NOT the Koopman operator of a dynamical system; it is the optimal
   rank-r approximation of the map W|_supp(H).
 
-Critical findings from Phase 1+2 PoC
---------------------------------------
-  1. r_h is NOT ultralow-rank:
-       N=300  → r_h_90 ≈ 120-187  (2-3% of d_int) — sample-poverty ARTIFACT
-       N=3000 → r_h_90 ≈ 288-719  (5-13%)         — better but still biased
-       True r_h_90 requires N >> d_int = 5632 for a stable estimate.
-       The earlier 110,000× gain prediction was based on a biased r_h estimate.
+Critical findings from Phase 1+2+3 PoC (empirically validated)
+----------------------------------------------------------------
+  1. r_h is NOT ultralow-rank — and N=10k reveals the floor:
+       N=300  → r_h_90 ≈ 120-187   (2-3% of d_int=5632) — severe sample-poverty ARTIFACT
+       N=3000 → r_h_90 ≈ 288-719   (5-13%)              — still biased downward
+       N=10000→ r_h_90 ≈ 890-960   (16-17%)             — stable estimate for most layers
+                r_h_99 ≈ 1688-1729 (30%)               — true high-EV rank (vs 843 at N=3k)
+       Architectural exceptions (collapse on P_train too — see finding #3 below):
+         Layer 2:  r_h=1 at ALL EV thresholds (cos@99%=0.914) — genuine rank-1 h-manifold
+         Layer 7:  r_h=1 at ALL EV thresholds (cos@99%=0.696) — even more degenerate
+         Layer 21: r_h@90%=140, r_h@99%=1191 — partially degenerate (last layer)
+       REVISED AMB gain (N=10k, EV=99%, r_h=1700): 226.6 Mbits / (1700×16) = 8,330×
+       REVISED AMB gain (N=10k, EV=90%, r_h=900):  226.6 Mbits / (900×16)  = 15,700×
+       The earlier 110,000× and 16,800× figures were based on biased N=3k r_h estimates.
 
-  2. Validated gains (TinyLlama-1.1B, output-pca, N=3000, WikiText-2 test, 5K tok):
-       6/22 layers, EV=0.99, r=843:  PPL=8.15 (+0.29 vs baseline 7.85)  16,800× gain
-       6/22 layers, EV=0.95, r=459:  PPL=8.70 (+0.84)                   30,855× gain
-       All 22 layers, EV=0.99, r=843: PPL=15.79 (+7.94) — cascade,NO guard  16,800× gain
-       20/22 layers (guard, Phase 3): PPL=9.67 (+1.82) — collapse guard fix  16,800× gain
-       FPQ v8 comparison:             PPL=12.07 (+4.22)                           1× gain
+  2. Validated gains (TinyLlama-1.1B, output-pca, WikiText-2 test, 5K tokens):
+       Seed modes N=3000:
+         6/22 layers, EV=0.99, r=843: PPL=8.15 (+0.29 vs baseline 7.85)  gain≈16,800×(N=3k)
+         6/22 layers, EV=0.95, r=459: PPL=8.70 (+0.84)                   gain≈30,855×(N=3k)
+         All 22/22,   EV=0.99, r=843: PPL=15.79 (+7.94) — NO guard (cascade)
+         20/22 layers (guard=50, Phase 3): PPL=9.67 (+1.82) — fixed, layers 2+7 skip
+         FPQ v8 comparison:             PPL=12.07 (+4.22)                1× gain
+       N=10k modes (stable r_h), EV=99%, r_h≈1700, 20/22 layers:
+         PPL pending validate_koopman.py run  (gain≈8,330× at r_h=1700)
 
-  3. Cascade degradation + collapse guard (Phase 3 empirical result):
+  3. Architectural h-collapse at layers 2 and 7 (confirmed N=10k P_train):
+       N=10k output-PCA on P_train shows layers 2 and 7 are inherently rank-1:
+         Layer 2: r_h=1 at ALL EV thresholds on P_train. Not caused by Koopman hooks.
+         Layer 7: r_h=1 at ALL EV thresholds on P_train. Even lower cosine=0.696.
+       These layers' SwiGLU output h lies along a single dominant direction —
+       all token activations are nearly co-linear. Hypothesis: gating is always
+       near saturation (≈1) at these positions, making h ≈ scalar × up(x) (rank-1).
+       Consequence: any Koopman approximation at these layers captures ≈100% variance
+       with r=1 but cosine similarity is still poor (0.914 / 0.696) — the manifold
+       is degenerate, not rich. These layers should ALWAYS be guarded.
+
+       Cascade degradation + collapse guard (Phase 3 empirical result):
        Each layer's modes were fit on P_train(h_k) — activations when all layers
        use full W_down. When k-1 prior layers use Koopman approximations, h_k
        arrives from a perturbed distribution P_koop(h_k) ≠ P_train(h_k).
        OOD error at each layer compounds: total ΔPPL ~ O(L × ε_layer).
-       Phase 3 DISCOVERY: layers 2 and 7 (TinyLlama) collapse deterministically
-       under upstream Koopman hooks — r_h drops to 1-5 (vs ≥843 on P_train).
-       These degenerate modes then poison downstream layers, yielding iter-1 PPL
-       WORSE than iter-0 (+8.19 > +7.94). Root cause: residual stream interference
-       at specific positions in the layer stack creates a near-zero-rank distribution.
-       Fix: collapse guard — skip any layer with r_h < 50 after fitting on P_koop;
-       use exact W_down for that layer instead.  Result (Phase 3, guard=50, 1 iter):
+       The Phase 3 no-guard run CONFIRMED collapse at layers 2+7 (also degenerate
+       under hooks — consistent with P_train collapse being structural).
+       Fix: collapse guard — skip any layer with r_h < 50; use exact W_down instead.
+       Result (Phase 3, guard=50, N=3k seed modes, 1 iter):
          20/22 layers active hooks  ΔPPL = +1.82  (vs +7.94 naïve, 22/22)
          Layers 2 + 7 run exact W_down (guard), all other 20 use Koopman hooks.
        Iterative re-calibration on the 20 non-collapsed layers: stable (+1.85 iter-1).
