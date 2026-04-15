@@ -10,6 +10,9 @@
 #include "fpqx.h"
 #include "fpq_neon.h"
 #include <stdio.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>

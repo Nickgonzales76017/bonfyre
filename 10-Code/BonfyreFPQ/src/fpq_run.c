@@ -22,6 +22,10 @@
 #include <math.h>
 #include <time.h>
 #include <stdint.h>
+#include <pthread.h>
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 /* ═══════════════════════════════════════════════════════
  * Default config (TinyLlama-1.1B-Chat-v1.0)
@@ -229,6 +233,76 @@ static void tname(char *buf, fpq_run_arch_t arch, const char *suffix, int layer)
 }
 
 /* ═══════════════════════════════════════════════════════
+ * Parallel matmul helper — persistent worker thread
+ * Uses macOS dispatch_semaphore (no sem_init deprecation).
+ * ═══════════════════════════════════════════════════════ */
+#ifdef __APPLE__
+#include <dispatch/dispatch.h>
+typedef dispatch_semaphore_t fpq_sem_t;
+#define fpq_sem_init(s, v)  (*(s) = dispatch_semaphore_create(v))
+#define fpq_sem_post(s)     dispatch_semaphore_signal(*(s))
+#define fpq_sem_wait(s)     dispatch_semaphore_wait(*(s), DISPATCH_TIME_FOREVER)
+#define fpq_sem_destroy(s)  dispatch_release(*(s))
+#else
+#include <semaphore.h>
+typedef sem_t fpq_sem_t;
+#define fpq_sem_init(s, v)  sem_init(s, 0, v)
+#define fpq_sem_post(s)     sem_post(s)
+#define fpq_sem_wait(s)     sem_wait(s)
+#define fpq_sem_destroy(s)  sem_destroy(s)
+#endif
+
+typedef struct {
+    fpq_model_t  *model;
+    const char   *tensor_name;
+    const float  *x;
+    float        *y;
+    fpq_sem_t     work_sem;
+    fpq_sem_t     done_sem;
+    int           stop;
+} fpq_worker_t;
+
+static void *fpq_worker_fn(void *arg) {
+    fpq_worker_t *w = (fpq_worker_t *)arg;
+    for (;;) {
+        fpq_sem_wait(&w->work_sem);
+        if (w->stop) break;
+        fpq_matmul(w->model, w->tensor_name, w->x, w->y);
+        fpq_sem_post(&w->done_sem);
+    }
+    return NULL;
+}
+
+static fpq_worker_t *fpq_worker_start(void) {
+    fpq_worker_t *w = (fpq_worker_t *)calloc(1, sizeof(*w));
+    fpq_sem_init(&w->work_sem, 0);
+    fpq_sem_init(&w->done_sem, 0);
+    w->stop = 0;
+    pthread_t t;
+    pthread_create(&t, NULL, fpq_worker_fn, w);
+    pthread_detach(t);
+    return w;
+}
+
+static inline void fpq_worker_submit(fpq_worker_t *w,
+    fpq_model_t *m, const char *name, const float *x, float *y) {
+    w->model = m; w->tensor_name = name; w->x = x; w->y = y;
+    fpq_sem_post(&w->work_sem);
+}
+
+static inline void fpq_worker_wait(fpq_worker_t *w) {
+    fpq_sem_wait(&w->done_sem);
+}
+
+static void fpq_worker_stop(fpq_worker_t *w) {
+    w->stop = 1;
+    fpq_sem_post(&w->work_sem);
+    fpq_sem_destroy(&w->work_sem);
+    fpq_sem_destroy(&w->done_sem);
+    free(w);
+}
+
+/* ═══════════════════════════════════════════════════════
  * fpq_run_generate — main inference loop
  * ═══════════════════════════════════════════════════════ */
 
@@ -288,6 +362,9 @@ int fpq_run_generate(
         return -1;
     }
 
+    /* Start persistent background worker for gate/up parallelism */
+    fpq_worker_t *worker = fpq_worker_start();
+
     char name_buf[FPQ_RUN_NAME_BUF];
     uint64_t rng = (uint64_t)time(NULL) ^ 0xDEADBEEFCAFEBABEULL;
 
@@ -318,12 +395,14 @@ int fpq_run_generate(
             /* ── Self-attention ── */
             rms_norm(h_norm, h, inp_norm_w, d, eps);
 
-            /* Q, K, V projections via SLI */
+            /* Q, K projections in parallel (V on main after), then V  */
+            char k_name_buf[FPQ_RUN_NAME_BUF];
+            tname(k_name_buf, arch, "self_attn.k_proj.weight", lay);
+            fpq_worker_submit(worker, model, k_name_buf, h_norm, k_buf);
+
             tname(name_buf, arch, "self_attn.q_proj.weight", lay);
             fpq_matmul(model, name_buf, h_norm, q_buf);
-
-            tname(name_buf, arch, "self_attn.k_proj.weight", lay);
-            fpq_matmul(model, name_buf, h_norm, k_buf);
+            fpq_worker_wait(worker);
 
             tname(name_buf, arch, "self_attn.v_proj.weight", lay);
             fpq_matmul(model, name_buf, h_norm, v_buf);
@@ -352,14 +431,18 @@ int fpq_run_generate(
             /* Residual: h += o_buf */
             for (int i = 0; i < d; i++) h[i] += o_buf[i];
 
-            /* ── Feed-forward (SwiGLU MLP) ── */
+            /* ── Feed-forward (SwiGLU MLP) — run gate and up in parallel ──
+             * Both take h_norm as input and write to separate output buffers.
+             * Safe to run concurrently: independent reads + independent writes. */
             rms_norm(h_norm, h, post_norm_w, d, eps);
+
+            char up_name_buf[FPQ_RUN_NAME_BUF];
+            tname(up_name_buf, arch, "mlp.up_proj.weight", lay);
+            fpq_worker_submit(worker, model, up_name_buf, h_norm, up_buf);
 
             tname(name_buf, arch, "mlp.gate_proj.weight", lay);
             fpq_matmul(model, name_buf, h_norm, gate_buf);
-
-            tname(name_buf, arch, "mlp.up_proj.weight", lay);
-            fpq_matmul(model, name_buf, h_norm, up_buf);
+            fpq_worker_wait(worker);
 
             silu_hadamard(gate_buf, up_buf, d_ffn);  /* gate_buf = silu(gate)*up */
 
@@ -411,6 +494,7 @@ int fpq_run_generate(
     free(logits); free(att_scratch);
     for (int l = 0; l < n_lay; l++) { free(k_caches[l]); free(v_caches[l]); }
     free(k_caches); free(v_caches);
+    fpq_worker_stop(worker);
 
     return generated;
 }
@@ -480,6 +564,11 @@ static void stream_token(int token_id, void *data) {
 }
 
 int cmd_run(int argc, char **argv) {
+#ifdef _OPENMP
+    /* Use 4 performance cores; avoid over-subscribing with Accelerate threads */
+    omp_set_num_threads(4);
+    omp_set_dynamic(0);
+#endif
     /* Parse args:
      *   fpq run <model.fpq> "prompt"
      *            [--tokenizer <path>]

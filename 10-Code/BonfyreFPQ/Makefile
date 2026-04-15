@@ -8,9 +8,18 @@ UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
   CFLAGS  += -DACCELERATE_NEW_LAPACK
   LDFLAGS += -framework Accelerate
+  # OpenMP via Homebrew libomp — present = enable parallelism
+  LIBOMP  := /opt/homebrew/opt/libomp
+  ifneq ($(wildcard $(LIBOMP)/lib/libomp.dylib),)
+    CFLAGS  += -Xclang -fopenmp -I$(LIBOMP)/include
+    LDFLAGS += -L$(LIBOMP)/lib -lomp
+  endif
 else
   CFLAGS  += -DHAVE_OPENBLAS
   LDFLAGS += -lopenblas -llapack
+  # OpenMP available natively on Linux GCC/Clang
+  CFLAGS  += -fopenmp
+  LDFLAGS += -fopenmp
 endif
 
 SRC_DIR := src
