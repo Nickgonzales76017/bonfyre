@@ -510,7 +510,7 @@ int cmd_run(int argc, char **argv) {
 
     const char *model_path = argv[2];
     const char *prompt     = NULL;
-    const char *sys_prompt = "You are a helpful assistant.";
+    const char *sys_prompt = "";  /* empty = user/assistant only (avoids EOS from system </s>) */
     const char *tok_path   = NULL;
     int max_new_tokens     = 512;
     float temperature      = 0.6f;
@@ -594,15 +594,26 @@ int cmd_run(int argc, char **argv) {
         return 1;
     }
 
-    /* Build prompt with chat template (TinyLlama ChatML / im_start format) */
+    /* Build prompt with chat template (TinyLlama-Chat-v1.0 Zephyr format)
+     * Full template: <|system|>\n{sys}</s>\n<|user|>\n{user}</s>\n<|assistant|>\n
+     * Without system: <|user|>\n{user}</s>\n<|assistant|>\n
+     * Verified: tok.apply_chat_template(messages, add_generation_prompt=True)
+     * Note: skip system turn when sys_prompt is empty to avoid spurious EOS. */
     char *full_prompt = NULL;
     if (!no_chat) {
-        /* <|im_start|>system\n{sys}<|im_end|>\n<|im_start|>user\n{user}<|im_end|>\n<|im_start|>assistant\n */
-        size_t len = strlen(sys_prompt) + strlen(prompt) + 128;
+        size_t len = strlen(sys_prompt) + strlen(prompt) + 64;
         full_prompt = (char *)malloc(len);
-        snprintf(full_prompt, len,
-            "<|im_start|>system\n%s<|im_end|>\n<|im_start|>user\n%s<|im_end|>\n<|im_start|>assistant\n",
-            sys_prompt, prompt);
+        if (sys_prompt[0]) {
+            /* Full format with system message */
+            snprintf(full_prompt, len,
+                "<|system|>\n%s</s>\n<|user|>\n%s</s>\n<|assistant|>\n",
+                sys_prompt, prompt);
+        } else {
+            /* No system message — user/assistant only */
+            snprintf(full_prompt, len,
+                "<|user|>\n%s</s>\n<|assistant|>\n",
+                prompt);
+        }
     } else {
         full_prompt = strdup(prompt);
     }
