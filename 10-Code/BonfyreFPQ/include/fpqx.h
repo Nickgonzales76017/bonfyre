@@ -443,6 +443,7 @@ typedef struct {
     float  *z_data;              /* [n_total_blocks × 256] */
     size_t  n_total_blocks;
     int     z_precomputed;       /* 1 if z vectors are ready */
+    int     z_fwht_preapplied;   /* 1 if z_data stores FWHT(z) instead of z */
 
     /* Cached offsets for fast-path inference */
     size_t  v8_base;

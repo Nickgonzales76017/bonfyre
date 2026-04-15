@@ -996,8 +996,40 @@ static void sli_generate_projection(float *proj, size_t n,
 #if defined(__ARM_NEON) || defined(__ARM_NEON__)
 #include <arm_neon.h>
 
+/* Unnormalized WHT on 256 floats (no 1/√n — normalization is already in z).
+ * Called once per block at prepare time to move FWHT cost out of inference. */
+static void fwht_256_raw_neon(float * __restrict__ x) {
+    /* Pass 0: stride=1 */
+    for (size_t i = 0; i < 256; i += 8) {
+        float32x4x2_t ab = vld2q_f32(x + i);
+        float32x4_t s = vaddq_f32(ab.val[0], ab.val[1]);
+        float32x4_t d = vsubq_f32(ab.val[0], ab.val[1]);
+        ab.val[0] = s; ab.val[1] = d;
+        vst2q_f32(x + i, ab);
+    }
+    /* Pass 1: stride=2 */
+    for (size_t i = 0; i < 256; i += 4) {
+        float32x4_t v = vld1q_f32(x + i);
+        float32x2_t lo = vget_low_f32(v);
+        float32x2_t hi = vget_high_f32(v);
+        vst1q_f32(x + i, vcombine_f32(vadd_f32(lo, hi), vsub_f32(lo, hi)));
+    }
+    /* Passes 2–7: stride=4..128 */
+    for (size_t stride = 4; stride < 256; stride <<= 1) {
+        for (size_t base = 0; base < 256; base += stride * 2) {
+            for (size_t k = 0; k < stride; k += 4) {
+                float32x4_t a = vld1q_f32(x + base + k);
+                float32x4_t b = vld1q_f32(x + base + k + stride);
+                vst1q_f32(x + base + k,          vaddq_f32(a, b));
+                vst1q_f32(x + base + k + stride, vsubq_f32(a, b));
+            }
+        }
+    }
+}
+#define FWHT_Z_BLOCK_INPLACE fwht_256_raw_neon
+
 static inline float sli_fast_block_score(
-    const float *z_b,       /* precomputed z[256], already scaled by 1/√n */
+    const float *z_b,       /* precomputed FWHT(z)[256], already scaled by 1/√n */
     const float *x_src,     /* input[col_offset..] */
     size_t dim,             /* actual element count (may be < 256 for last block) */
     uint64_t block_seed)
@@ -1031,38 +1063,10 @@ static inline float sli_fast_block_score(
         }
     }
 
-    /* ── Unnormalized FWHT (normalization folded into z) ── */
+    /* FWHT removed: z_b now stores FWHT(z'), computed once at prepare time.
+     * score = FWHT(z')^T · (signs ⊙ x)  ==  z'^T · FWHT(signs ⊙ x)  ✓ */
 
-    /* Pass 0: stride=1 — vectorized via deinterleave load/store */
-    for (size_t i = 0; i < 256; i += 8) {
-        float32x4x2_t ab = vld2q_f32(x + i);
-        float32x4_t s = vaddq_f32(ab.val[0], ab.val[1]);
-        float32x4_t d = vsubq_f32(ab.val[0], ab.val[1]);
-        ab.val[0] = s; ab.val[1] = d;
-        vst2q_f32(x + i, ab);
-    }
-
-    /* Pass 1: stride=2 — vectorized via lo/hi float32x2_t split */
-    for (size_t i = 0; i < 256; i += 4) {
-        float32x4_t v = vld1q_f32(x + i);
-        float32x2_t lo = vget_low_f32(v);
-        float32x2_t hi = vget_high_f32(v);
-        vst1q_f32(x + i, vcombine_f32(vadd_f32(lo, hi), vsub_f32(lo, hi)));
-    }
-
-    /* Passes 2–7: stride=4,8,16,32,64,128 (standard 4-wide butterfly) */
-    for (size_t stride = 4; stride < 256; stride <<= 1) {
-        for (size_t base = 0; base < 256; base += stride * 2) {
-            for (size_t k = 0; k < stride; k += 4) {
-                float32x4_t a = vld1q_f32(x + base + k);
-                float32x4_t b = vld1q_f32(x + base + k + stride);
-                vst1q_f32(x + base + k,          vaddq_f32(a, b));
-                vst1q_f32(x + base + k + stride, vsubq_f32(a, b));
-            }
-        }
-    }
-
-    /* ── Dot product: z'^T · FWHT_raw(signs ⊙ x) ── */
+    /* ── Dot product: FWHT(z')^T · (signs ⊙ x) ── */
     float32x4_t acc0 = vdupq_n_f32(0.0f);
     float32x4_t acc1 = vdupq_n_f32(0.0f);
     float32x4_t acc2 = vdupq_n_f32(0.0f);
@@ -1084,6 +1088,37 @@ static inline float sli_fast_block_score(
 #endif
 
 /* x86 SSE2/AVX2 fused spectral bypass kernel */
+
+/* Unnormalized WHT on 256 floats for SSE2 — called once per block at prepare time. */
+static void fwht_256_raw_sse2(float * __restrict__ x) {
+    /* Pass 0: stride=1 */
+    for (size_t i = 0; i < 256; i += 4) {
+        __m128 v = _mm_loadu_ps(x + i);
+        __m128 even = _mm_shuffle_ps(v, v, _MM_SHUFFLE(2, 2, 0, 0));
+        __m128 odd  = _mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 3, 1, 1));
+        _mm_storeu_ps(x + i, _mm_unpacklo_ps(_mm_add_ps(even, odd), _mm_sub_ps(even, odd)));
+    }
+    /* Pass 1: stride=2 */
+    for (size_t i = 0; i < 256; i += 4) {
+        __m128 v = _mm_loadu_ps(x + i);
+        __m128 lo = _mm_movelh_ps(v, v);
+        __m128 hi = _mm_movehl_ps(v, v);
+        _mm_storeu_ps(x + i, _mm_shuffle_ps(_mm_add_ps(lo, hi), _mm_sub_ps(lo, hi), _MM_SHUFFLE(1, 0, 1, 0)));
+    }
+    /* Passes 2–7: stride=4..128 */
+    for (size_t stride = 4; stride < 256; stride <<= 1) {
+        for (size_t base = 0; base < 256; base += stride * 2) {
+            for (size_t k = 0; k < stride; k += 4) {
+                __m128 a = _mm_loadu_ps(x + base + k);
+                __m128 b = _mm_loadu_ps(x + base + k + stride);
+                _mm_storeu_ps(x + base + k,          _mm_add_ps(a, b));
+                _mm_storeu_ps(x + base + k + stride, _mm_sub_ps(a, b));
+            }
+        }
+    }
+}
+#define FWHT_Z_BLOCK_INPLACE fwht_256_raw_sse2
+
 static inline float sli_fast_block_score(
     const float *z_b, const float *x_src, size_t dim, uint64_t block_seed)
 {
@@ -1114,41 +1149,10 @@ static inline float sli_fast_block_score(
         }
     }
 
-    /* ── Unnormalized FWHT (1/√n folded into z) ── */
+    /* FWHT removed: z_b now stores FWHT(z'), computed once at prepare time.
+     * score = FWHT(z')^T · (signs ⊙ x)  ==  z'^T · FWHT(signs ⊙ x)  ✓ */
 
-    /* Pass 0: stride=1 */
-    for (size_t i = 0; i < 256; i += 4) {
-        __m128 v = _mm_loadu_ps(x + i);
-        __m128 even = _mm_shuffle_ps(v, v, _MM_SHUFFLE(2, 2, 0, 0));
-        __m128 odd  = _mm_shuffle_ps(v, v, _MM_SHUFFLE(3, 3, 1, 1));
-        __m128 s = _mm_add_ps(even, odd);
-        __m128 d = _mm_sub_ps(even, odd);
-        _mm_storeu_ps(x + i, _mm_unpacklo_ps(s, d));
-    }
-
-    /* Pass 1: stride=2 */
-    for (size_t i = 0; i < 256; i += 4) {
-        __m128 v = _mm_loadu_ps(x + i);
-        __m128 lo = _mm_movelh_ps(v, v);
-        __m128 hi = _mm_movehl_ps(v, v);
-        __m128 s = _mm_add_ps(lo, hi);
-        __m128 d = _mm_sub_ps(lo, hi);
-        _mm_storeu_ps(x + i, _mm_shuffle_ps(s, d, _MM_SHUFFLE(1, 0, 1, 0)));
-    }
-
-    /* Passes 2–7: stride=4..128 */
-    for (size_t stride = 4; stride < 256; stride <<= 1) {
-        for (size_t base = 0; base < 256; base += stride * 2) {
-            for (size_t k = 0; k < stride; k += 4) {
-                __m128 a = _mm_loadu_ps(x + base + k);
-                __m128 b = _mm_loadu_ps(x + base + k + stride);
-                _mm_storeu_ps(x + base + k,          _mm_add_ps(a, b));
-                _mm_storeu_ps(x + base + k + stride, _mm_sub_ps(a, b));
-            }
-        }
-    }
-
-    /* ── Dot product: z'^T · FWHT_raw(signs ⊙ x) ── */
+    /* ── Dot product: FWHT(z')^T · (signs ⊙ x) ── */
 #if defined(__AVX2__)
     __m256 acc0 = _mm256_setzero_ps();
     __m256 acc1 = _mm256_setzero_ps();
@@ -1190,12 +1194,23 @@ static inline float sli_fast_block_score(
 }
 
 #else
-/* Pure scalar fallback — works everywhere (RISC-V, WASM, etc.)
- *
- * IMPORTANT: The fpq_neon_fwht_256() scalar path includes 1/√n
- * normalization, but z already has 1/√n folded in. So we do the
- * FWHT manually here WITHOUT normalization to avoid double-scaling.
- */
+/* Pure scalar fallback — works everywhere (RISC-V, WASM, etc.) */
+
+/* Unnormalized scalar WHT on 256 floats — called once per block at prepare time. */
+static void fwht_256_raw_scalar(float * __restrict__ x) {
+    for (size_t stride = 1; stride < 256; stride <<= 1) {
+        for (size_t base = 0; base < 256; base += stride * 2) {
+            for (size_t k = 0; k < stride; k++) {
+                float a = x[base + k];
+                float b = x[base + k + stride];
+                x[base + k]          = a + b;
+                x[base + k + stride] = a - b;
+            }
+        }
+    }
+}
+#define FWHT_Z_BLOCK_INPLACE fwht_256_raw_scalar
+
 static inline float sli_fast_block_score(
     const float *z_b, const float *x_src, size_t dim, uint64_t block_seed)
 {
@@ -1213,17 +1228,8 @@ static inline float sli_fast_block_score(
             if ((state >> (j - i)) & 1) x[j] = -x[j];
     }
 
-    /* Unnormalized FWHT (1/√n already in z) */
-    for (size_t stride = 1; stride < 256; stride <<= 1) {
-        for (size_t base = 0; base < 256; base += stride * 2) {
-            for (size_t k = 0; k < stride; k++) {
-                float a = x[base + k];
-                float b = x[base + k + stride];
-                x[base + k]          = a + b;
-                x[base + k + stride] = a - b;
-            }
-        }
-    }
+    /* FWHT removed: z_b now stores FWHT(z'), computed once at prepare time.
+     * score = FWHT(z')^T · (signs ⊙ x)  ==  z'^T · FWHT(signs ⊙ x)  ✓ */
 
     /* Dot product */
     float dot = 0.0f;
@@ -1383,6 +1389,16 @@ fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t) {
     float inv_sqrt_n = 1.0f / sqrtf((float)SLI_BLOCK_DIM);  /* 1/16 */
     for (size_t i = 0; i < n_blocks * SLI_BLOCK_DIM; i++)
         z_region[i] *= inv_sqrt_n;
+
+    /* Pre-apply FWHT to every z block so inference only needs sign-flip + dot.
+     * z_b := FWHT(z_b)   (unnormalized, normalization already folded in above)
+     * At inference: FWHT(z')^T · (σ⊙x) == z'^T · FWHT(σ⊙x)  (H self-adjoint)
+     * This moves 8 butterfly passes per block from O(tokens × blocks) → O(blocks).
+     */
+    for (size_t b = 0; b < n_blocks; b++)
+        FWHT_Z_BLOCK_INPLACE(z_region + b * SLI_BLOCK_DIM);
+
+    ctx->z_fwht_preapplied = 1;
 
     return ctx;
 }

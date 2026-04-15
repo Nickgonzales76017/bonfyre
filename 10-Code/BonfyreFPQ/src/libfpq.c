@@ -249,8 +249,12 @@ static int fpq_decode_one_from_z(fpq_loaded_tensor_t *lt, float *out) {
     }
 
     /* Step 2: Recover spatial residuals from z vectors.
-     * z_stored[b][k] = fpq_fwht(s_b⊙W_b)[k] / sqrt(N)
-     * Recovery: multiply by sqrt(N), apply fpq_fwht (self-inverse), undo signs. */
+     * Legacy layout: z_stored = z' where inference used z'^T·FWHT_raw(s⊙x)
+     *   Recovery: z' * sqrt(N) -> IFWHT -> undo signs.
+     *
+     * New layout (perf path): z_stored = FWHT_raw(z') pre-applied at prepare.
+     *   Recovery simplifies to: undo signs directly.
+     */
     float sqrt_n = sqrtf((float)256);  /* sqrt(SLI_BLOCK_DIM) = 16 */
 
     for (size_t b = 0; b < n_blk; b++) {
@@ -264,10 +268,14 @@ static int fpq_decode_one_from_z(fpq_loaded_tensor_t *lt, float *out) {
         const float *z_stored = ctx->z_data + b * 256;
 
         float block_data[256];
-        for (int i = 0; i < 256; i++)
-            block_data[i] = z_stored[i] * sqrt_n;  /* undo 1/sqrt(N) folding */
+        if (ctx->z_fwht_preapplied) {
+            memcpy(block_data, z_stored, 256 * sizeof(float));
+        } else {
+            for (int i = 0; i < 256; i++)
+                block_data[i] = z_stored[i] * sqrt_n;  /* undo 1/sqrt(N) folding */
+            fpq_fwht_inverse(block_data, 256);  /* IFWHT → s⊙W_b */
+        }
 
-        fpq_fwht_inverse(block_data, 256);  /* IFWHT → s⊙W_b */
         fpq_random_signs_inverse(block_data, 256,
                                  t->haar_seed ^ (uint64_t)b); /* undo signs → W_b */
 
