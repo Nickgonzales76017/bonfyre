@@ -445,6 +445,15 @@ typedef struct {
     int     z_precomputed;       /* 1 if z vectors are ready */
     int     z_fwht_preapplied;   /* 1 if z_data stores FWHT(z) instead of z */
 
+#ifdef FPQ_INT8_SDOT
+    /* INT8 SDOT optional path (compile with -DFPQ_INT8_SDOT).
+     * z_data_i8: quantized FWHT(z) blocks — [n_total_blocks × 256] INT8.
+     * z_data_scale: per-block abs-max scale factor — [n_total_blocks] FP32.
+     * dot(z_i8, x_i8) * z_scale * x_scale reconstructs the FP32 score. */
+    int8_t *z_data_i8;           /* owned; NULL when inactive */
+    float  *z_data_scale;        /* owned; NULL when inactive */
+#endif
+
     /* Cached offsets for fast-path inference */
     size_t  v8_base;
     size_t  e8_off;

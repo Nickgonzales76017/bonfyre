@@ -1081,6 +1081,95 @@ static inline float sli_fast_block_score(
     return vaddvq_f32(acc0);
 }
 
+#ifdef FPQ_INT8_SDOT
+/*
+ * INT8 SDOT block score for ARM with __ARM_FEATURE_DOTPROD.
+ *
+ * z_i8:   quantized FWHT(z')[256] stored as INT8 at prepare time.
+ * z_scale: per-block abs-max / 127.0 for z.
+ * x_src:  FP32 activations [dim].
+ * dim:    usable elements (≤256); zero-padded to 256.
+ * block_seed: xorshift seed for sign flip on x.
+ *
+ * After sign-flip we quantize x to INT8, compute vdotq_s32, then
+ * scale by z_scale * x_scale to recover the FP32 score.
+ */
+static inline float sli_fast_block_score_i8(
+    const int8_t *z_i8,
+    float z_scale,
+    const float *x_src,
+    size_t dim,
+    uint64_t block_seed)
+{
+    float __attribute__((aligned(16))) xf[256];
+
+    /* Copy/zero-pad input */
+    if (dim >= 256) {
+        memcpy(xf, x_src, 256 * sizeof(float));
+    } else {
+        memcpy(xf, x_src, dim * sizeof(float));
+        memset(xf + dim, 0, (256 - dim) * sizeof(float));
+    }
+
+    /* Apply random sign flips to xf (identical logic to FP32 path) */
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t k = i; k < i + 64; k += 4) {
+            size_t bit_off = k - i;
+            uint32_t m0 = ((uint32_t)((state >> (bit_off    )) & 1)) << 31;
+            uint32_t m1 = ((uint32_t)((state >> (bit_off + 1)) & 1)) << 31;
+            uint32_t m2 = ((uint32_t)((state >> (bit_off + 2)) & 1)) << 31;
+            uint32_t m3 = ((uint32_t)((state >> (bit_off + 3)) & 1)) << 31;
+            uint32_t mm[4] = {m0, m1, m2, m3};
+            uint32x4_t mask = vld1q_u32(mm);
+            uint32x4_t xv   = vld1q_u32((const uint32_t *)(xf + k));
+            vst1q_u32((uint32_t *)(xf + k), veorq_u32(xv, mask));
+        }
+    }
+
+    /* Quantize signed-xf to INT8: find abs-max then scale */
+    float32x4_t vmax = vdupq_n_f32(0.0f);
+    for (size_t i = 0; i < 256; i += 4)
+        vmax = vmaxq_f32(vmax, vabsq_f32(vld1q_f32(xf + i)));
+    float xmax = vmaxvq_f32(vmax);
+    if (xmax < 1e-20f) return 0.0f;
+    float x_scale = xmax / 127.0f;
+    float inv_x   = 1.0f / x_scale;
+
+    int8_t __attribute__((aligned(16))) xi[256];
+    float32x4_t vscale = vdupq_n_f32(inv_x);
+    for (size_t i = 0; i < 256; i += 16) {
+        /* Load 16 floats, scale, convert to int32, narrow to int8 */
+        int32x4_t a = vcvtnq_s32_f32(vmulq_f32(vld1q_f32(xf + i),      vscale));
+        int32x4_t b = vcvtnq_s32_f32(vmulq_f32(vld1q_f32(xf + i + 4),  vscale));
+        int32x4_t c = vcvtnq_s32_f32(vmulq_f32(vld1q_f32(xf + i + 8),  vscale));
+        int32x4_t d = vcvtnq_s32_f32(vmulq_f32(vld1q_f32(xf + i + 12), vscale));
+        int16x8_t ab16 = vcombine_s16(vmovn_s32(a), vmovn_s32(b));
+        int16x8_t cd16 = vcombine_s16(vmovn_s32(c), vmovn_s32(d));
+        vst1q_s8(xi + i, vcombine_s8(vmovn_s16(ab16), vmovn_s16(cd16)));
+    }
+
+    /* INT8 dot product via SDOT: accumulate 4 INT8 lanes per cycle */
+    int32x4_t acc0 = vdupq_n_s32(0);
+    int32x4_t acc1 = vdupq_n_s32(0);
+    int32x4_t acc2 = vdupq_n_s32(0);
+    int32x4_t acc3 = vdupq_n_s32(0);
+    for (size_t i = 0; i < 256; i += 64) {
+        acc0 = vdotq_s32(acc0, vld1q_s8(z_i8 + i),      vld1q_s8(xi + i));
+        acc1 = vdotq_s32(acc1, vld1q_s8(z_i8 + i + 16), vld1q_s8(xi + i + 16));
+        acc2 = vdotq_s32(acc2, vld1q_s8(z_i8 + i + 32), vld1q_s8(xi + i + 32));
+        acc3 = vdotq_s32(acc3, vld1q_s8(z_i8 + i + 48), vld1q_s8(xi + i + 48));
+    }
+    acc0 = vaddq_s32(vaddq_s32(acc0, acc1), vaddq_s32(acc2, acc3));
+    int32_t dot_i32 = vaddvq_s32(acc0);
+
+    return (float)dot_i32 * z_scale * x_scale;
+}
+#endif /* FPQ_INT8_SDOT */
+
 #elif defined(__SSE2__) || defined(_M_X64) || defined(_M_AMD64)
 #include <emmintrin.h>
 #if defined(__AVX2__)
@@ -1400,6 +1489,50 @@ fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t) {
 
     ctx->z_fwht_preapplied = 1;
 
+#ifdef FPQ_INT8_SDOT
+    /* Quantize each z block to INT8 once, now that FWHT is folded in.
+     * z_data_i8[b][i] = round(z_region[b×256+i] / scale_b) clamped to [-127,127]
+     * z_data_scale[b] = abs_max / 127.0  (per-block scale factor)
+     */
+    ctx->z_data_i8    = (int8_t *)malloc(n_blocks * SLI_BLOCK_DIM * sizeof(int8_t));
+    ctx->z_data_scale = (float  *)malloc(n_blocks * sizeof(float));
+    if (ctx->z_data_i8 && ctx->z_data_scale) {
+        for (size_t b = 0; b < n_blocks; b++) {
+            const float *zb = z_region + b * SLI_BLOCK_DIM;
+            int8_t      *qb = ctx->z_data_i8 + b * SLI_BLOCK_DIM;
+
+            /* Find abs-max of this block */
+            float abs_max = 0.0f;
+            for (size_t i = 0; i < SLI_BLOCK_DIM; i++) {
+                float v = zb[i] < 0.0f ? -zb[i] : zb[i];
+                if (v > abs_max) abs_max = v;
+            }
+            if (abs_max < 1e-20f) {
+                memset(qb, 0, SLI_BLOCK_DIM * sizeof(int8_t));
+                ctx->z_data_scale[b] = 1.0f;
+                continue;
+            }
+            float scale = abs_max / 127.0f;
+            ctx->z_data_scale[b] = scale;
+            float inv_scale = 1.0f / scale;
+            for (size_t i = 0; i < SLI_BLOCK_DIM; i++) {
+                float q = zb[i] * inv_scale;
+                /* round-to-nearest, clamp to [-127, 127] */
+                int32_t qi = (int32_t)(q >= 0.0f ? q + 0.5f : q - 0.5f);
+                if (qi >  127) qi =  127;
+                if (qi < -127) qi = -127;
+                qb[i] = (int8_t)qi;
+            }
+        }
+    } else {
+        /* Allocation failed — fall back silently to FP32 path */
+        free(ctx->z_data_i8);
+        free(ctx->z_data_scale);
+        ctx->z_data_i8    = NULL;
+        ctx->z_data_scale = NULL;
+    }
+#endif /* FPQ_INT8_SDOT */
+
     return ctx;
 }
 
@@ -1477,9 +1610,20 @@ int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
                 size_t this_dim = col_end - col_offset;
 
                 uint64_t block_seed = enc->haar_seed ^ (uint64_t)b;
+#ifdef FPQ_INT8_SDOT
+                if (ctx->z_data_i8 && ctx->z_data_scale) {
+                    row_score += sli_fast_block_score_i8(
+                        ctx->z_data_i8    + b * SLI_BLOCK_DIM,
+                        ctx->z_data_scale[b],
+                        x + col_offset, this_dim, block_seed);
+                } else {
+#endif
                 const float *z_b = ctx->z_data + b * SLI_BLOCK_DIM;
                 row_score += sli_fast_block_score(z_b, x + col_offset,
                                                    this_dim, block_seed);
+#ifdef FPQ_INT8_SDOT
+                }
+#endif
             }
 
             output[i] += row_score;
@@ -1600,6 +1744,10 @@ void fpqx_sli_free(fpqx_sli_ctx_t *ctx) {
         free(ctx->tables);
     }
     free(ctx->output);
+#ifdef FPQ_INT8_SDOT
+    free(ctx->z_data_i8);
+    free(ctx->z_data_scale);
+#endif
     free(ctx);
 }
 
