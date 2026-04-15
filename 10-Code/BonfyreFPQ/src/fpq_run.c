@@ -370,6 +370,12 @@ int fpq_run_generate(
             for (int i = 0; i < d; i++) h[i] += ffn_out[i];
         }
 
+        total_pos++;
+
+        /* Skip lm_head during prompt prefill — only need logits for the
+         * last prompt token and every generated token. */
+        if (step < prompt_len - 1) continue;
+
         /* Final norm + LM head → logits */
         rms_norm(h_norm, h, final_norm, d, eps);
 
@@ -377,7 +383,6 @@ int fpq_run_generate(
         fpq_matmul(model, name_buf, h_norm, logits);
 
         /* ── Sampling ── */
-        /* Apply temperature */
         if (cfg->temperature > 0.0f && !cfg->greedy) {
             for (int i = 0; i < cfg->n_vocab; i++)
                 logits[i] /= cfg->temperature;
@@ -385,14 +390,11 @@ int fpq_run_generate(
             next_token = sample_top_p(logits, cfg->n_vocab,
                                       cfg->top_p, cfg->temperature, &rng);
         } else {
-            /* Greedy: argmax */
             int best = 0;
             for (int i = 1; i < cfg->n_vocab; i++)
                 if (logits[i] > logits[best]) best = i;
             next_token = best;
         }
-
-        total_pos++;
 
         /* Emit generated tokens (not prompt tokens) */
         if (step >= prompt_len - 1) {
