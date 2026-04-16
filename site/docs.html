@@ -83,6 +83,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <a href="#hardware-fits" style="color:var(--blue)">Hardware &amp; Pricing</a>
     <a href="#fpq-benchmarks">FPQ Benchmarks</a>
     <a href="#benchmarks">System Benchmarks</a>
+    <a href="#relay" style="color:#b392f0">MoQ Relay</a>
     <a href="#architecture">Architecture</a>
     <a href="#binaries">Binaries</a>
     <a href="#use-cases">How-To</a>
@@ -906,7 +907,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 <section id="benchmarks">
   <div class="container">
     <h2>System Benchmarks</h2>
-    <p class="subtitle">Apple M-series, after 5 optimization passes (P0–P5). All real. <a href="#fpq-benchmarks" style="color:var(--green)">FPQ benchmarks ↑</a></p>
+    <p class="subtitle">Apple M-series, after 6 optimization passes (P0–P6). All real. <a href="#fpq-benchmarks" style="color:var(--green)">FPQ benchmarks ↑</a></p>
     <div class="bench-grid">
       <div class="bench-card"><span class="value">5–8 ms</span><span class="metric">Per-stage latency (was 76 ms)</span></div>
       <div class="bench-card"><span class="value">9.3%</span><span class="metric">Lambda Tensors compression (N=10K)</span></div>
@@ -926,6 +927,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="opt-card"><div class="tag">P3 — Native</div><div class="title">fastText in C</div><div class="desc">Pure C fastText, libbonfyre → 29 binaries, DB connection pooling</div></div>
       <div class="opt-card"><div class="tag">P4 — Architecture</div><div class="title">Hardening pass</div><div class="desc">FNV hash registry, SHA-256 dedup, PGO targets, TCP_NODELAY, SIGPIPE</div></div>
       <div class="opt-card"><div class="tag">P5 — Datatype</div><div class="title">10 syntax wins</div><div class="desc">Hex LUT ~10×, struct 1076→536, O(n²)→O(n), raw syscalls, switch dispatch</div></div>
+      <div class="opt-card" style="border-color:rgba(179,146,240,.4)"><div class="tag" style="color:#b392f0">P6 — Runtime RL</div><div class="title">Self-tuning relay</div><div class="desc">RL agent tunes buffer size and path policy live. Gossip mesh + consensus on top of bonfyre-moq.</div></div>
     </div>
 
     <table class="cmp-table" style="margin-top:24px">
@@ -940,6 +942,105 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <tr><td>Vector file (384-dim)</td><td>6.4 KB JSON</td><td class="highlight">1,544 bytes VECF</td><td>4.2× smaller</td></tr>
       </tbody>
     </table>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- BonfyreTel — MoQ Relay                     -->
+<!-- ═══════════════════════════════════════════ -->
+<section id="relay" style="padding:60px 0;background:linear-gradient(135deg,rgba(179,146,240,.07) 0%,rgba(13,17,23,1) 60%)">
+  <div class="container">
+    <div style="text-align:center;margin-bottom:40px">
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#b392f0;font-weight:700;margin-bottom:8px">BonfyreTel — MoQ/WebTransport Relay</div>
+      <h2 style="font-size:2.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:12px">Pure C relay. No Node. No JS runtime overhead.</h2>
+      <p style="font-size:1rem;color:var(--text-dim);max-width:760px;margin:0 auto 16px;line-height:1.7">
+        <code style="font-family:var(--mono)">bonfyre-moq</code> replaces the Node.js MoQ relay with a pure C11 implementation.
+        Built on ngtcp2 + nghttp3 + OpenSSL 3 + SQLite. Ships with four live extension modules:
+        inline inference, RL self-tuning, gossip mesh, and lightweight consensus — all in the same binary.
+      </p>
+      <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:28px">
+        <span style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--green)">✓ MoQ-Transport draft-14</span>
+        <span style="background:rgba(179,146,240,.12);border:1px solid rgba(179,146,240,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:#b392f0">✓ Inline AI Inference</span>
+        <span style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--accent)">✓ RL Self-Tuning</span>
+        <span style="background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--blue)">✓ Gossip Mesh</span>
+        <span style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--green)">✓ Consensus / Leader Election</span>
+        <span style="background:rgba(200,200,200,.1);border:1px solid rgba(200,200,200,.2);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--text-dim)">✓ Zero-Copy Object Forwarding</span>
+      </div>
+    </div>
+
+    <!-- Four extension modules -->
+    <div style="max-width:920px;margin:0 auto 40px">
+      <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">Four live extension modules</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
+
+        <div style="background:var(--surface);border:1px solid rgba(179,146,240,.35);border-radius:8px;padding:20px">
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#b392f0;font-weight:700;margin-bottom:6px">Inline AI Inference</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">inference.c + inference_onnx.c</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Entropy-based scoring (score 0–100) on every forwarded MoQ object. Weak-linked ONNX Runtime via dlopen — falls back to entropy estimator when ONNX Runtime is absent. Same hook as <code style="font-family:var(--mono);font-size:.78rem">bonfyre-embed</code>.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_score_object(path, data, len, &tag)</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid rgba(249,115,22,.35);border-radius:8px;padding:20px">
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:6px">RL Self-Tuning (P6)</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">optimizer.c</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Background RL agent tunes relay buffer size (16 KB–256 KB) and path policy (round-robin vs least-loaded) every 2 s. Reward signal driven by real relay metrics. Exposes current params for use by the forwarding loop.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_get_relay_buf_size() / ext_get_relay_path_policy()</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid rgba(88,166,255,.35);border-radius:8px;padding:20px">
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);font-weight:700;margin-bottom:6px">Gossip Mesh</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">mesh.c + bonfyre-mesh.h</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">UDP multicast gossip beacon on 239.0.0.57:7942. Background thread maintains a live peer table (<code style="font-family:var(--mono);font-size:.78rem">peer_info[]</code>). Enables distributed relay clusters without a central registry. Shared peer table feeds the consensus module.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_mesh_start() / ext_mesh_stop()</div>
+        </div>
+
+        <div style="background:var(--surface);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:20px">
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--green);font-weight:700;margin-bottom:6px">Lightweight Consensus</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">consensus.c</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Simulated Raft: returns the stable leader peer from the mesh table. Used to shard MoQ PUBLISH_NAMESPACE announcements and SUBSCRIBE routing across a relay cluster without split-brain.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_consensus_leader() → const char *</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Architecture diagram -->
+    <div style="max-width:840px;margin:0 auto 40px">
+      <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">Relay internals</h3>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 28px;font-family:var(--mono);font-size:.82rem;color:var(--text-dim);line-height:2;overflow-x:auto">
+        <span style="color:#b392f0">QUIC / WebTransport (ngtcp2+nghttp3)</span><br>
+        &nbsp;↳ <span style="color:var(--accent)">MoQ stream demux</span> → <span style="color:#b392f0">ext_score_object()</span> <span style="color:var(--text-dim)">(inline inference, every object)</span><br>
+        &nbsp;↳ <span style="color:var(--blue)">zero-copy forward</span> → subscriber fan-out <span style="color:var(--text-dim)">(buf size from RL optimizer)</span><br>
+        &nbsp;↳ <span style="color:var(--accent)">PUBLISH_NAMESPACE</span> → <span style="color:var(--green)">consensus leader routes</span> → mesh peer table<br>
+        <span style="color:var(--text-dim)">SQLite stream log · SIGTERM graceful drain · kqueue/epoll event loop</span>
+      </div>
+    </div>
+
+    <!-- Build / CLI -->
+    <div style="max-width:680px;margin:0 auto 32px">
+      <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:12px;text-align:center">Build &amp; run</h3>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 24px">
+        <code style="font-family:var(--mono);font-size:.82rem;color:var(--text-dim);line-height:1.8">
+          <span style="color:var(--green)"># Build relay + all extension modules</span><br>
+          make bonfyre-moq<br><br>
+          <span style="color:var(--green)"># Run relay (MoQ + mesh + optimizer + inference)</span><br>
+          ./bonfyre-moq --host 127.0.0.1 --port 4443 \<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--runtime-dir /tmp/bonfyre-moq \<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--db /tmp/bonfyre-moq/relay.db<br><br>
+          <span style="color:var(--green)"># Smoke-test all extension modules</span><br>
+          make test-bonfyre &nbsp;<span style="color:var(--text-dim)"># inference + optimizer + mesh + consensus</span>
+        </code>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div style="display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:28px">
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">C11</span><span style="font-size:.75rem;color:var(--text-dim)">No Node.js</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:#b392f0">4</span><span style="font-size:.75rem;color:var(--text-dim)">Extension modules</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--accent)">RL</span><span style="font-size:.75rem;color:var(--text-dim)">Self-tuning (P6)</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--blue)">Mesh</span><span style="font-size:.75rem;color:var(--text-dim)">Gossip peer discovery</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">Raft</span><span style="font-size:.75rem;color:var(--text-dim)">Consensus leader</span></div>
+    </div>
   </div>
 </section>
 
@@ -971,7 +1072,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <span style="color:var(--text-dim)">Audio in →</span> <span style="color:var(--green)">ingest</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">media-prep</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">transcribe</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">transcript-clean</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">paragraph</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">brief</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">proof</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">pack</span> <span style="color:var(--accent)">→</span> <span style="color:var(--green)">distribute</span><br>
       <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">embed</span> <span style="color:var(--accent)">→</span> <span style="color:var(--blue)">vec</span> <span style="color:var(--text-dim)">(semantic search)</span><br>
       <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">tag</span> + <span style="color:var(--blue)">tone</span> <span style="color:var(--text-dim)">(enrichment)</span><br>
-      <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">render</span> <span style="color:var(--accent)">→</span> <span style="color:var(--blue)">emit</span> <span style="color:var(--text-dim)">(HTML/PDF/EPUB/RSS)</span>
+      <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">render</span> <span style="color:var(--accent)">→</span> <span style="color:var(--blue)">emit</span> <span style="color:var(--text-dim)">(HTML/PDF/EPUB/RSS)</span><br>
+      <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:#b392f0">moq</span> <span style="color:var(--text-dim)">(WebTransport relay · RL optimizer · gossip mesh · consensus)</span>
     </div>
 
     <h3 style="font-size:1.1rem;margin:32px 0 16px">Five layers</h3>
@@ -1044,6 +1146,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <div class="binary-item"><span class="name">bonfyre</span> <span class="size">34 KB</span> <span class="desc">— unified CLI dispatcher</span></div>
         <div class="binary-item"><span class="name">bonfyre-project</span> <span class="size">34 KB</span> <span class="desc">— project scaffolding</span></div>
         <div class="binary-item"><span class="name">bonfyre-tel</span> <span class="size">68 KB</span> <span class="desc">— FreeSWITCH telephony</span></div>
+        <div class="binary-item" style="border-left:2px solid #b392f0;padding-left:8px"><span class="name" style="color:#b392f0">bonfyre-moq</span> <span class="size">~120 KB</span> <span class="desc">— MoQ/WebTransport relay + inference + RL + mesh + consensus</span></div>
         <div class="binary-item"><span class="name">bonfyre-canon</span> <span class="size">35 KB</span> <span class="desc">— canonical artifact format</span></div>
         <div class="binary-item"><span class="name">bonfyre-proxy</span> <span class="size">53 KB</span> <span class="desc">— OpenAI-compatible API shim</span></div>
       </div>
@@ -1121,6 +1224,12 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <p>Embed docs + NEON SIMD cosine search. Replace $250/mo Pinecone. <a href="https://github.com/Nickgonzales76017/bonfyre-embed">bonfyre-embed</a>.</p>
         <code>bonfyre-embed --insert-db my.db</code>
         <br><span class="time">5 min to try</span>
+      </div>
+      <div class="use-case" style="border-color:rgba(179,146,240,.4)">
+        <h3 style="color:#b392f0">MoQ Relay + Mesh</h3>
+        <p>Pure C WebTransport relay with inline AI scoring, RL self-tuning, gossip peer discovery, and consensus leader election. Replaces Node.js moq-edge.</p>
+        <code style="font-family:var(--mono);font-size:.8rem">./bonfyre-moq --port 4443 --db relay.db</code>
+        <br><span class="time">make bonfyre-moq to build</span>
       </div>
       <div class="use-case">
         <h3>OpenAI-Compatible API</h3>

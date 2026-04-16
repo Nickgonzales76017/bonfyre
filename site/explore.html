@@ -90,6 +90,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <a href="#wordpress">WordPress</a>
       <a href="#recipes">Recipes</a>
       <a href="#apps">Live Apps</a>
+      <a href="docs.html#relay" style="color:#b392f0">MoQ Relay →</a>
       <a href="docs.html" style="color:var(--green)">Technical Docs →</a>
     </div>
   </div>
@@ -118,6 +119,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:var(--green)">100% private</span><span style="font-size:.85rem;color:var(--text-dim)">Data never leaves</span></div>
       <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">20</span><span style="font-size:.85rem;color:var(--text-dim)">Live apps running now</span></div>
       <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">15</span><span style="font-size:.85rem;color:var(--text-dim)"><a href="https://huggingface.co/NICKO" style="color:inherit">AI models published</a></span></div>
+      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:#b392f0">Relay</span><span style="font-size:.85rem;color:var(--text-dim)">MoQ + mesh + RL</span></div>
     </div>
 
     <div class="btn-row">
@@ -181,10 +183,15 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <div class="ratio">$0 / month total</div>
         <div class="detail">Auth + billing + gateway + CMS + search: typically $2,500/mo → Bonfyre does it all for free.</div>
       </div>
-      <div class="killer-card">
+      <div class="killer-card" style="border-color:rgba(249,115,22,.4)">
         <div class="vs">vs cloud AI APIs</div>
         <div class="ratio">100% private</div>
         <div class="detail">Your data never leaves your device. No OpenAI API key needed. Works offline.</div>
+      </div>
+      <div class="killer-card" style="border-color:rgba(179,146,240,.5)">
+        <div class="vs">vs LiveKit / Twilio Media (real-time relay)</div>
+        <div class="ratio" style="color:#b392f0">$0 / stream</div>
+        <div class="detail">bonfyre-moq is a pure C MoQ/WebTransport relay. No SaaS fees, no Node.js runtime, no per-stream billing. Self-tunes via RL, meshes with peers via gossip, elects a consensus leader automatically. <a href="docs.html#relay" style="color:#b392f0">Details →</a></div>
       </div>
     </div>
   </div>
@@ -243,6 +250,13 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🛰️ Defense / Remote: Air-Gapped AI</div>
         <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Full AI inference on hardware with no internet connection. Bonfyre's compression means large AI models now fit on portable, field-deployable devices.</p>
         <div style="font-size:.78rem;color:var(--green)">Previously required: Specialized military hardware or satellite uplink</div>
+      </div>
+
+      <div style="background:var(--surface);border:2px solid rgba(179,146,240,.4);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='#b392f0'" onmouseout="this.style.borderColor='rgba(179,146,240,.4)'">
+        <div style="font-size:1rem;font-weight:700;color:#b392f0;margin-bottom:8px">📡 Real-Time AI Relay: Self-Tuning + Distributed</div>
+        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">bonfyre-moq is a pure C MoQ/WebTransport relay that runs inline AI inference on every media object, tunes its own buffer and routing policy via a live RL agent, discovers peers via gossip multicast, and elects a consensus leader for distributed announce/subscribe. No Node.js. No SaaS relay fees.</p>
+        <div style="font-size:.78rem;color:var(--green)">Previously required: LiveKit cloud + media SaaS at per-stream cost</div>
+        <div style="margin-top:10px"><a href="docs.html#relay" style="color:#b392f0;font-size:.82rem">Technical details →</a></div>
       </div>
 
     </div>
@@ -335,6 +349,14 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="use-case">
         <h3>Long-Context AI</h3>
         <p>Process entire 90-minute lectures or long documents in a single AI pass — 4× more context than before in the same hardware budget.</p>
+      </div>
+      <div class="use-case" style="border-color:rgba(179,146,240,.4)">
+        <h3 style="color:#b392f0">Self-Tuning Real-Time Relay</h3>
+        <p>Run a private WebTransport/MoQ relay that scores every media object with inline AI, auto-tunes routing via RL, and forms a gossip mesh with other nodes. No cloud. No per-stream fee. <a href="docs.html#relay">Docs →</a></p>
+      </div>
+      <div class="use-case" style="border-color:rgba(88,166,255,.4)">
+        <h3 style="color:var(--blue)">Distributed Consensus Routing</h3>
+        <p>Run multiple bonfyre-moq relays that automatically elect a leader via Raft-style consensus and distribute MoQ announce/subscribe traffic without a central broker.</p>
       </div>
     </div>
   </div>
