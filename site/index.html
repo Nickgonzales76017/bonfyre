@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bonfyre — Model compression + backend infrastructure</title>
-<meta name="description" content="Bonfyre is two things: BonfyreFPQ model compression with direct .fpq inference, and 50 composable C11 binaries replacing your entire backend. MIT licensed.">
+<meta name="description" content="Bonfyre is two things: BonfyreFPQ model compression with direct .fpq inference, and 51 composable C11 binaries with a 26-module shared runtime replacing your entire backend. MIT licensed.">
 <meta name="theme-color" content="#0d1117">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
@@ -40,12 +40,13 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
 <body>
 <div class="landing">
   <h1>🔥 <span>Bonfyre</span></h1>
-  <p class="tagline">Model compression that actually runs inference — and 50 C binaries that replace your entire backend. Two flagships. One stack. MIT licensed.</p>
+  <p class="tagline">Model compression that actually runs inference — and 51 C binaries with a 26-module shared runtime that replace your entire backend. Two flagships. One stack. MIT licensed.</p>
 
   <div class="stats-row">
     <div class="stat"><span class="num" style="color:var(--green)">4×</span><span class="label">Model compression</span></div>
     <div class="stat"><span class="num" style="color:var(--green)">0.997</span><span class="label">Inference cosine</span></div>
-    <div class="stat"><span class="num" style="color:var(--accent)">50</span><span class="label">Backend binaries</span></div>
+    <div class="stat"><span class="num" style="color:var(--accent)">51</span><span class="label">Backend binaries</span></div>
+    <div class="stat"><span class="num">26</span><span class="label">Library modules</span></div>
     <div class="stat"><span class="num">15</span><span class="label"><a href="https://huggingface.co/NICKO" style="color:inherit">Models on HF</a></span></div>
     <div class="stat"><span class="num">20</span><span class="label">Live apps</span></div>
     <div class="stat"><span class="num">~2.1 MB</span><span class="label">Total disk</span></div>
@@ -55,15 +56,15 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
     <a href="explore.html" class="path-card card-explore">
       <div class="emoji">🚀</div>
       <h2>What Can Bonfyre Do For Me?</h2>
-      <div class="desc">See what Bonfyre does, who it's for, and real-world uses for your business — restaurants, law offices, agencies, podcasters, and more. No technical jargon.</div>
-      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Hardware guide · Use cases</div>
+      <div class="desc">See what Bonfyre does, who it's for, and real-world uses for your business — restaurants, law offices, agencies, podcasters, and more. No technical jargon required.</div>
+      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Hardware guide · Under-the-hood overview</div>
       <span class="cta">Explore Bonfyre →</span>
     </a>
     <a href="docs.html" class="path-card card-docs">
       <div class="emoji">🔧</div>
       <h2>Technical Docs &amp; Benchmarks</h2>
-      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 50 binaries, install, and reproduction commands.</div>
-      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · Install · Binaries</div>
+      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 51 binaries, operator model, and reproduction commands.</div>
+      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · 51 operators · 26-module runtime · Lambda Tensors · Install</div>
       <span class="cta">Open Technical Docs →</span>
     </a>
   </div>
