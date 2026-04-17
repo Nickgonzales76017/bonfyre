@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bonfyre — Technical Documentation &amp; Benchmarks</title>
-<meta name="description" content="BonfyreFPQ technical docs: compression benchmarks, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 51 binaries, 26-module runtime, operator model, lambda tensors, install, and reproduction commands.">
+<meta name="description" content="BonfyreFPQ technical docs: compression benchmarks, FPQ-X operators, KV cache, hardware fits with pricing, architecture, runtime modules, proxy, orchestration, relay, install, and reproduction commands.">
 <meta name="theme-color" content="#0d1117">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
@@ -110,7 +110,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--green);display:block">4×</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Compression</span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--green);display:block">0.997</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">SLI Cosine</span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--green);display:block">15</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em"><a href="https://huggingface.co/NICKO" style="color:inherit">HF Models</a></span></div>
-      <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--accent);display:block">50</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Binaries</span></div>
+      <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--accent);display:block">53</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Stack binaries</span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;display:block">26</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Library Modules</span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;display:block">~2.1 MB</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Total Disk</span></div>
     </div>
@@ -398,6 +398,110 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     </div>
 
     <!-- What's inside -->
+    <section id="recent-additions">
+      <div class="container">
+        <h2>Recent additions — runtime and system surfaces</h2>
+        <p class="subtitle">The newer work is not just “more helper modules.” It broadened both the shared runtime and the system-facing binaries around proxy, orchestration, communications, realtime relay, and delivery.</p>
+
+        <div class="use-cases">
+          <div class="use-case">
+            <h3>bf_opts — CLI parsing</h3>
+            <p>Lightweight, getopt-style parser with subcommand support, typed options, and automatic `--help` generation for each binary.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_pool — Thread pool</h3>
+            <p>Per-process worker pool with task queues, priorities, and cooperative shutdown hooks used by servers and background jobs.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_utf8 — SIMD UTF‑8 validator</h3>
+            <p>High-speed UTF‑8 validator with SSE/NEON paths for safe, zero-copy text ingestion and pipeline sanitization.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_conf — Config parser</h3>
+            <p>Simple INI/TOML-style parser with typed readers and layered includes for runtime configuration and hardware profiles.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_lz4 — Compression adapter</h3>
+            <p>Thin LZ4 wrapper with streaming encode/decode helpers used by artifact transport and the local cache.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_hashmap — Robin‑Hood map</h3>
+            <p>Cache-friendly hash table with robin‑hood probing and predictable iteration used in in-memory indexes and caches.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_csv — CSV reader/writer</h3>
+            <p>Low-allocation CSV I/O with typed columns and dialect handling for bulk import/export tasks.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:20px" class="use-cases">
+          <div class="use-case">
+            <h3>bf_json / bf_msgpack</h3>
+            <p>Fast JSON helpers and a MessagePack event encoder/decoder for compact telemetry, ledgers, and manifest interchange.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_crypto</h3>
+            <p>Portable BLAKE2b + ChaCha20‑Poly1305 wrappers for authenticated encryption, with password‑hash and signature helpers.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_bloom</h3>
+            <p>Small Bloom filter utilities for single-pass dedup and membership checks in ingestion and pipeline stages.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_dns</h3>
+            <p>Asynchronous DNS resolver with a tiny LRU cache and reactor integration for network-facing binaries.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_log</h3>
+            <p>Structured, ring-buffer logging with per-thread buffers and file rotation for low-latency telemetry.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_mmap</h3>
+            <p>Zero-copy mmap helpers with sensible madvise hints and safe fallbacks for pipes and small files.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_lmdb</h3>
+            <p>LMDB-backed artifact cache with zero-copy reads and named sub-databases for manifests, blobs, and families.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:20px" class="use-cases">
+          <div class="use-case">
+            <h3>bf_pipeline_coro / bf_textfuse</h3>
+            <p>Coroutine-based pipeline primitives (libdill style) and an Hyperscan-powered single-pass text fusion engine for fast, composable pipeline stages.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_flatbuf</h3>
+            <p>FlatBuffers builders/readers for compact artifact manifests and zero-copy transport between components.</p>
+          </div>
+          <div class="use-case">
+            <h3>bf_picohttpparser + mimalloc integration</h3>
+            <p>SIMD-accelerated HTTP parsing in the reactor and optional per-reactor mimalloc arenas to reduce contention on high-concurrency servers.</p>
+          </div>
+        </div>
+
+        <div style="margin-top:20px" class="use-cases">
+          <div class="use-case">
+            <h3>bonfyre-proxy</h3>
+            <p>OpenAI-compatible local API shim for transcriptions, chat-style summarization, and model listing. Useful when existing clients need to keep working while Bonfyre takes over the backend path.</p>
+          </div>
+          <div class="use-case">
+            <h3>bonfyre-orchestrate</h3>
+            <p>Machine-only planner with policy memory, typed request state, and optional Gemma/OpenAI-compatible assist. Decides when extra Bonfyre blocks should be used instead of exposing a prompt UI.</p>
+          </div>
+          <div class="use-case">
+            <h3>bonfyre-tel / bonfyre-moq</h3>
+            <p>Communications edge plus browser-native realtime relay. SIP voice/SMS/MMS on one side, MoQ/WebTransport on the other, both kept in the same C-first operating model.</p>
+          </div>
+          <div class="use-case">
+            <h3>bonfyre-swarm / bonfyre-narrate</h3>
+            <p>Metered artifact distribution and verified audio output. One expands how artifacts move; the other expands how finished outputs are published and checked.</p>
+          </div>
+        </div>
+
+        <p style="margin-top:18px;font-size:.86rem;color:var(--text-dim)">If you want short usage examples for any module (headers, init, simple API), tell me which ones and I'll add code snippets and minimal examples in this section.</p>
+      </div>
+    </section>
     <div style="max-width:740px;margin:0 auto 40px">
       <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">What's inside</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px">
@@ -931,7 +1035,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="opt-card"><div class="tag">P4 — Architecture</div><div class="title">Hardening pass</div><div class="desc">FNV hash registry, SHA-256 dedup, PGO targets, TCP_NODELAY, SIGPIPE</div></div>
       <div class="opt-card"><div class="tag">P5 — Datatype</div><div class="title">10 syntax wins</div><div class="desc">Hex LUT ~10×, struct 1076→536, O(n²)→O(n), raw syscalls, switch dispatch</div></div>
       <div class="opt-card" style="border-color:rgba(179,146,240,.4)"><div class="tag" style="color:#b392f0">P6 — Realtime</div><div class="title">C media relay</div><div class="desc">Native WebTransport/MoQ relay in C. Optional experimental tuning and clustering hooks exist, but the core value is a small self-hosted realtime primitive.</div></div>
-      <div class="opt-card" style="border-color:rgba(63,185,80,.4)"><div class="tag" style="color:var(--green)">P7 — Runtime</div><div class="title">26-module shared lib</div><div class="desc">libbonfyre expanded to 26 modules across 10 domains: event loop, thread pool, LZ4, SIMD UTF-8, Robin-hood hashmap, CLI parser, CSV, config, coroutines, erasure coding. Eliminates hand-rolled duplicates across all 51 binaries.</div></div>
+      <div class="opt-card" style="border-color:rgba(63,185,80,.4)"><div class="tag" style="color:var(--green)">P7 — Runtime</div><div class="title">26-module shared lib</div><div class="desc">libbonfyre expanded into the reactor, hotload, coroutine, zero-copy, SIMD parse, and transport layer underneath the wider stack. Eliminates hand-rolled duplicates across the binaries that sit above it.</div></div>
     </div>
 
     <table class="cmp-table" style="margin-top:24px">
@@ -1054,7 +1158,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 <section id="architecture">
   <div class="container">
     <h2>Architecture</h2>
-    <p class="subtitle">48 separate binaries. Not a monolith. Not a framework. Each is a standalone Unix process.</p>
+    <p class="subtitle">A small stack of focused binaries and libraries. Not a monolith. Not a framework. Each piece stays legible enough to run on its own.</p>
 
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-bottom:36px">
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
@@ -1082,7 +1186,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
     <h3 style="font-size:1.1rem;margin:32px 0 16px">Five layers</h3>
     <div class="layers">
-      <div class="layer"><span class="layer-name">Surface</span><span class="layer-bins">cms · api · auth · pipeline · cli · transcript-family · project · tel · proxy</span></div>
+      <div class="layer"><span class="layer-name">Surface</span><span class="layer-bins">cms · api · auth · pipeline · cli · transcript-family · project · tel · proxy · orchestrate</span></div>
       <div class="layer"><span class="layer-name">Value</span><span class="layer-bins">offer · gate · meter · ledger · finance · outreach · pay · pack · distribute</span></div>
       <div class="layer"><span class="layer-name">Transform</span><span class="layer-bins">media-prep · transcribe · transcript-clean · paragraph · brief · proof · embed · narrate · render · emit · mfa-dict · weaviate-index · repurpose · segment · clips · speechloop · tone · tag · canon · query</span></div>
       <div class="layer"><span class="layer-name">Substrate</span><span class="layer-bins">ingest · hash · index · compress · stitch · graph · runtime · queue · sync</span></div>
@@ -1092,12 +1196,12 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- All 51 Binaries                            -->
+<!-- Stack Binaries And Libraries               -->
 <!-- ═══════════════════════════════════════════ -->
 <section id="binaries">
   <div class="container">
-    <h2>All 51 Binaries</h2>
-    <p class="subtitle">Every binary is standalone. Use one or all. ~2.1 MB total disk.</p>
+    <h2>Stack Binaries And Libraries</h2>
+    <p class="subtitle">The stack now spans 51 focused binaries shown here, plus shared libraries. Every piece is standalone enough to use alone. ~2.1 MB total disk.</p>
 
     <div class="binary-group">
       <h3>Substrate (9 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— cold, stable infrastructure. Never imports product concepts. Content-addressed output.</span></h3>
@@ -1141,7 +1245,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       </div>
     </div>
     <div class="binary-group">
-      <h3>Surface (10 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— product-facing, stateful services. Own mutable state. HTTP/CLI interfaces.</span></h3>
+      <h3>Surface (11 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— product-facing, stateful services. Own mutable state. HTTP/CLI interfaces.</span></h3>
       <div class="binary-list">
         <div class="binary-item"><span class="name">bonfyre-cms</span> <span class="size">287 KB</span> <span class="desc">— dynamic schemas + versioning. Every record is Lambda Tensors-compressed. REST API. 921 μs/create. Replaces Strapi (1,742× smaller).</span></div>
         <div class="binary-item"><span class="name">bonfyre-api</span> <span class="size">69 KB</span> <span class="desc">— async HTTP gateway: per-core kqueue/io_uring reactors, SSE real-time streams, token-bucket rate limiting (120 req/min), CORS, SPA fallback.</span></div>
@@ -1149,10 +1253,11 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <div class="binary-item"><span class="name">bonfyre-pipeline</span> <span class="size">52 KB</span> <span class="desc">— unified in-process pipeline via libdill coroutines (~50 ns context-switch). Gate → Ingest → Hash → Index → Compress → Meter → Stitch → Ledger. 5-8 ms/stage, &gt;93% faster than forking.</span></div>
         <div class="binary-item"><span class="name">bonfyre</span> <span class="size">34 KB</span> <span class="desc">— unified CLI dispatcher: pipes to any binary via subcommand.</span></div>
         <div class="binary-item"><span class="name">bonfyre-project</span> <span class="size">34 KB</span> <span class="desc">— project scaffolding with template-based directory generation.</span></div>
-        <div class="binary-item"><span class="name">bonfyre-tel</span> <span class="size">68 KB</span> <span class="desc">— FreeSWITCH ESL telephony: voice/SMS/MMS, call routing, IVR. No per-call billing.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-tel</span> <span class="size">68 KB</span> <span class="desc">— communications edge runtime: FreeSWITCH ESL voice/SMS/MMS today, with persistent topics, identities, intents, and transport-agnostic event state underneath.</span></div>
         <div class="binary-item" style="border-left:2px solid #b392f0;padding-left:8px"><span class="name" style="color:#b392f0">bonfyre-moq</span> <span class="size">~120 KB</span> <span class="desc">— pure C WebTransport/MoQ relay: ngtcp2 + nghttp3 + OpenSSL 3, SQLite stream log, subscriber fan-out, zero-copy object forwarding.</span></div>
         <div class="binary-item"><span class="name">bonfyre-canon</span> <span class="size">35 KB</span> <span class="desc">— structural canonicalization via Tree-sitter AST parsing. Produces structural hash + structural diff.</span></div>
         <div class="binary-item"><span class="name">bonfyre-proxy</span> <span class="size">53 KB</span> <span class="desc">— OpenAI-compatible API: set OPENAI_API_BASE=localhost:8787. Existing code works unchanged. Drop-in replacement.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-orchestrate</span> <span class="size">45 KB</span> <span class="desc">— machine-only planner with typed request state, policy memory, feedback scoring, and optional Gemma/OpenAI-compatible assist.</span></div>
       </div>
     </div>
     <div class="binary-group">
@@ -1428,7 +1533,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <span class="comment"># From source (recommended)</span><br>
         git clone https://github.com/Nickgonzales76017/bonfyre.git<br>
         cd bonfyre<br>
-        make <span class="comment"># builds 2 libraries + 51 binaries</span><br>
+        make <span class="comment"># builds the Bonfyre stack from source</span><br>
         make install <span class="comment"># copies to ~/.local/bin</span>
       </code>
     </div>

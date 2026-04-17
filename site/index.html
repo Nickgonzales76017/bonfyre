@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bonfyre — Model compression + backend infrastructure</title>
-<meta name="description" content="Bonfyre is two things: BonfyreFPQ model compression with direct .fpq inference, and 51 composable C11 binaries with a 26-module shared runtime replacing your entire backend. MIT licensed.">
+<meta name="description" content="Bonfyre is two things: BonfyreFPQ model compression with direct .fpq inference, and a growing C stack spanning proxy, orchestration, telephony, relay, swarm delivery, and a 26-module shared runtime. MIT licensed.">
 <meta name="theme-color" content="#0d1117">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
@@ -40,12 +40,12 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
 <body>
 <div class="landing">
   <h1>🔥 <span>Bonfyre</span></h1>
-  <p class="tagline">Model compression that actually runs inference — and 51 C binaries with a 26-module shared runtime that replace your entire backend. Two flagships. One stack. MIT licensed.</p>
+  <p class="tagline">Model compression that actually runs inference — and a C stack that now spans pages, proxy, orchestration, telephony, relay, swarm delivery, and a 26-module shared runtime. Two flagships. One stack. MIT licensed.</p>
 
   <div class="stats-row">
     <div class="stat"><span class="num" style="color:var(--green)">4×</span><span class="label">Model compression</span></div>
     <div class="stat"><span class="num" style="color:var(--green)">0.997</span><span class="label">Inference cosine</span></div>
-    <div class="stat"><span class="num" style="color:var(--accent)">51</span><span class="label">Backend binaries</span></div>
+    <div class="stat"><span class="num" style="color:var(--accent)">53</span><span class="label">Stack binaries</span></div>
     <div class="stat"><span class="num">26</span><span class="label">Library modules</span></div>
     <div class="stat"><span class="num">15</span><span class="label"><a href="https://huggingface.co/NICKO" style="color:inherit">Models on HF</a></span></div>
     <div class="stat"><span class="num">20</span><span class="label">Live apps</span></div>
@@ -56,15 +56,15 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
     <a href="explore.html" class="path-card card-explore">
       <div class="emoji">🚀</div>
       <h2>What Can Bonfyre Do For Me?</h2>
-      <div class="desc">See what Bonfyre does, who it's for, and real-world uses for your business — restaurants, law offices, agencies, podcasters, and more. No technical jargon required.</div>
-      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Hardware guide · Under-the-hood overview</div>
+      <div class="desc">See what Bonfyre does, who it's for, and how the newer stack pieces fit together in practice — local AI, search, pages, proxy, phone edge, relay, and proof surfaces. No technical jargon required.</div>
+      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Proxy + relay · Under-the-hood overview</div>
       <span class="cta">Explore Bonfyre →</span>
     </a>
     <a href="docs.html" class="path-card card-docs">
       <div class="emoji">🔧</div>
       <h2>Technical Docs &amp; Benchmarks</h2>
-      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 51 binaries, operator model, and reproduction commands.</div>
-      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · 51 operators · 26-module runtime · Lambda Tensors · Install</div>
+      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, runtime architecture, proxy/orchestration/relay surfaces, and reproduction commands.</div>
+      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · Runtime modules · Proxy · Orchestration · Install</div>
       <span class="cta">Open Technical Docs →</span>
     </a>
   </div>
@@ -76,6 +76,24 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
     <a href="https://github.com/Nickgonzales76017/hcp-whisper">🎤 HCP Speech</a>
     <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">📋 Live Proof</a>
   </div>
+
+  <!-- Recent additions (content-only) -->
+  <section id="recent-additions" style="padding:40px 0">
+    <div class="container">
+      <h2>Recent additions</h2>
+      <p class="subtitle">A compact look at the newer runtime pieces and product-facing surfaces now inside the stack.</p>
+      <div class="killer-grid" style="margin-top:16px">
+        <div class="killer-card">
+          <div class="vs">Runtime layer</div>
+          <div class="detail">Shared-nothing reactor, hot-load pipeline stages, coroutine pipeline flow, zero-copy LMDB + FlatBuffers, SIMD JSON + UTF-8, MessagePack events, DNS, logging, mmap, LZ4, Bloom dedup, and fountain-coded swarm delivery.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Newer surfaces</div>
+          <div class="detail">bonfyre-proxy for OpenAI-compatible local APIs, bonfyre-orchestrate for machine-only planning, bonfyre-tel for the communications edge, bonfyre-swarm for metered distribution, bonfyre-narrate for verified audio output, and bonfyre-moq for private realtime media.</div>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <footer>
     Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> ·
