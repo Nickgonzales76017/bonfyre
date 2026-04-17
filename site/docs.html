@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bonfyre — Technical Documentation &amp; Benchmarks</title>
-<meta name="description" content="BonfyreFPQ technical docs: compression benchmarks, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 50 binaries, install, and reproduction commands.">
+<meta name="description" content="BonfyreFPQ technical docs: compression benchmarks, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 51 binaries, 26-module runtime, operator model, lambda tensors, install, and reproduction commands.">
 <meta name="theme-color" content="#0d1117">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
@@ -83,9 +83,11 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <a href="#hardware-fits" style="color:var(--blue)">Hardware &amp; Pricing</a>
     <a href="#fpq-benchmarks">FPQ Benchmarks</a>
     <a href="#benchmarks">System Benchmarks</a>
-    <a href="#relay" style="color:#b392f0">MoQ Relay</a>
+    <a href="#relay" style="color:#b392f0">Realtime Relay</a>
     <a href="#architecture">Architecture</a>
     <a href="#binaries">Binaries</a>
+    <a href="#operators">Operators</a>
+    <a href="#architecture-deep">Cross-cutting</a>
     <a href="#use-cases">How-To</a>
     <a href="#install">Install</a>
   </div>
@@ -109,6 +111,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--green);display:block">0.997</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">SLI Cosine</span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--green);display:block">15</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em"><a href="https://huggingface.co/NICKO" style="color:inherit">HF Models</a></span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;color:var(--accent);display:block">50</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Binaries</span></div>
+      <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;display:block">26</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Library Modules</span></div>
       <div style="text-align:center"><span style="font-size:1.6rem;font-weight:700;display:block">~2.1 MB</span><span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em">Total Disk</span></div>
     </div>
   </div>
@@ -927,7 +930,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="opt-card"><div class="tag">P3 — Native</div><div class="title">fastText in C</div><div class="desc">Pure C fastText, libbonfyre → 29 binaries, DB connection pooling</div></div>
       <div class="opt-card"><div class="tag">P4 — Architecture</div><div class="title">Hardening pass</div><div class="desc">FNV hash registry, SHA-256 dedup, PGO targets, TCP_NODELAY, SIGPIPE</div></div>
       <div class="opt-card"><div class="tag">P5 — Datatype</div><div class="title">10 syntax wins</div><div class="desc">Hex LUT ~10×, struct 1076→536, O(n²)→O(n), raw syscalls, switch dispatch</div></div>
-      <div class="opt-card" style="border-color:rgba(179,146,240,.4)"><div class="tag" style="color:#b392f0">P6 — Runtime RL</div><div class="title">Self-tuning relay</div><div class="desc">RL agent tunes buffer size and path policy live. Gossip mesh + consensus on top of bonfyre-moq.</div></div>
+      <div class="opt-card" style="border-color:rgba(179,146,240,.4)"><div class="tag" style="color:#b392f0">P6 — Realtime</div><div class="title">C media relay</div><div class="desc">Native WebTransport/MoQ relay in C. Optional experimental tuning and clustering hooks exist, but the core value is a small self-hosted realtime primitive.</div></div>
+      <div class="opt-card" style="border-color:rgba(63,185,80,.4)"><div class="tag" style="color:var(--green)">P7 — Runtime</div><div class="title">26-module shared lib</div><div class="desc">libbonfyre expanded to 26 modules across 10 domains: event loop, thread pool, LZ4, SIMD UTF-8, Robin-hood hashmap, CLI parser, CSV, config, coroutines, erasure coding. Eliminates hand-rolled duplicates across all 51 binaries.</div></div>
     </div>
 
     <table class="cmp-table" style="margin-top:24px">
@@ -946,59 +950,59 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- BonfyreTel — MoQ Relay                     -->
+<!-- BonfyreTel — Realtime Relay                -->
 <!-- ═══════════════════════════════════════════ -->
 <section id="relay" style="padding:60px 0;background:linear-gradient(135deg,rgba(179,146,240,.07) 0%,rgba(13,17,23,1) 60%)">
   <div class="container">
     <div style="text-align:center;margin-bottom:40px">
-      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#b392f0;font-weight:700;margin-bottom:8px">BonfyreTel — MoQ/WebTransport Relay</div>
-      <h2 style="font-size:2.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:12px">Pure C relay. No Node. No JS runtime overhead.</h2>
+      <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:#b392f0;font-weight:700;margin-bottom:8px">BonfyreTel — Realtime Relay</div>
+      <h2 style="font-size:2.2rem;font-weight:800;letter-spacing:-.02em;margin-bottom:12px">Pure C realtime media relay. Same Bonfyre philosophy.</h2>
       <p style="font-size:1rem;color:var(--text-dim);max-width:760px;margin:0 auto 16px;line-height:1.7">
-        <code style="font-family:var(--mono)">bonfyre-moq</code> replaces the Node.js MoQ relay with a pure C11 implementation.
-        Built on ngtcp2 + nghttp3 + OpenSSL 3 + SQLite. Ships with four live extension modules:
-        inline inference, RL self-tuning, gossip mesh, and lightweight consensus — all in the same binary.
+        <code style="font-family:var(--mono)">bonfyre-moq</code> is the C-first realtime transport layer for BonfyreTel.
+        Built on ngtcp2 + nghttp3 + OpenSSL 3 + SQLite, it gives Bonfyre a browser-native relay primitive that matches the rest of the stack:
+        small binary, local control, SQLite observability, and no dependency on a hosted realtime vendor.
       </p>
       <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:28px">
         <span style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--green)">✓ MoQ-Transport draft-14</span>
-        <span style="background:rgba(179,146,240,.12);border:1px solid rgba(179,146,240,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:#b392f0">✓ Inline AI Inference</span>
-        <span style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--accent)">✓ RL Self-Tuning</span>
-        <span style="background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--blue)">✓ Gossip Mesh</span>
-        <span style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--green)">✓ Consensus / Leader Election</span>
+        <span style="background:rgba(179,146,240,.12);border:1px solid rgba(179,146,240,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:#b392f0">✓ Pure C11</span>
+        <span style="background:rgba(249,115,22,.12);border:1px solid rgba(249,115,22,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--accent)">✓ SQLite stream log</span>
+        <span style="background:rgba(88,166,255,.12);border:1px solid rgba(88,166,255,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--blue)">✓ WebTransport session termination</span>
+        <span style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.3);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--green)">✓ Subscriber fan-out</span>
         <span style="background:rgba(200,200,200,.1);border:1px solid rgba(200,200,200,.2);border-radius:16px;padding:4px 14px;font-size:.78rem;color:var(--text-dim)">✓ Zero-Copy Object Forwarding</span>
       </div>
     </div>
 
-    <!-- Four extension modules -->
+    <!-- Relay building blocks -->
     <div style="max-width:920px;margin:0 auto 40px">
-      <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">Four live extension modules</h3>
+      <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">Core pieces first, optional experiments second</h3>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
 
         <div style="background:var(--surface);border:1px solid rgba(179,146,240,.35);border-radius:8px;padding:20px">
-          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#b392f0;font-weight:700;margin-bottom:6px">Inline AI Inference</div>
-          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">inference.c + inference_onnx.c</code></div>
-          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Entropy-based scoring (score 0–100) on every forwarded MoQ object. Weak-linked ONNX Runtime via dlopen — falls back to entropy estimator when ONNX Runtime is absent. Same hook as <code style="font-family:var(--mono);font-size:.78rem">bonfyre-embed</code>.</p>
-          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_score_object(path, data, len, &tag)</div>
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:#b392f0;font-weight:700;margin-bottom:6px">Transport Core</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">bonfyre-moq.c</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Handles QUIC, HTTP/3, WebTransport session setup, MoQ control parsing, subscriber fan-out, and SQLite stream/session logging in one C binary.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ngtcp2 + nghttp3 + OpenSSL 3 + SQLite</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid rgba(249,115,22,.35);border-radius:8px;padding:20px">
-          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:6px">RL Self-Tuning (P6)</div>
-          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">optimizer.c</code></div>
-          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Background RL agent tunes relay buffer size (16 KB–256 KB) and path policy (round-robin vs least-loaded) every 2 s. Reward signal driven by real relay metrics. Exposes current params for use by the forwarding loop.</p>
-          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_get_relay_buf_size() / ext_get_relay_path_policy()</div>
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:6px">Observability</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">transport_sessions + stream_events</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Uses the same Bonfyre style as the rest of the stack: log the useful state to SQLite, keep the binary understandable, and make downstream processing compose cleanly with other tools.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">session.open · broadcast.announce · track.forward.stop</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid rgba(88,166,255,.35);border-radius:8px;padding:20px">
-          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);font-weight:700;margin-bottom:6px">Gossip Mesh</div>
-          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">mesh.c + bonfyre-mesh.h</code></div>
-          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">UDP multicast gossip beacon on 239.0.0.57:7942. Background thread maintains a live peer table (<code style="font-family:var(--mono);font-size:.78rem">peer_info[]</code>). Enables distributed relay clusters without a central registry. Shared peer table feeds the consensus module.</p>
-          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_mesh_start() / ext_mesh_stop()</div>
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);font-weight:700;margin-bottom:6px">C-First Direction</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">bonfyre-moq</code> is the product path</div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">The goal is not “a Node relay with a C rewrite later.” The goal is all C. The Node <code style="font-family:var(--mono);font-size:.78rem">moq-edge</code> subtree is useful as a spec/reference harness, but the main narrative and target runtime stay native.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">make bonfyre-moq</div>
         </div>
 
         <div style="background:var(--surface);border:1px solid rgba(63,185,80,.35);border-radius:8px;padding:20px">
-          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--green);font-weight:700;margin-bottom:6px">Lightweight Consensus</div>
-          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">consensus.c</code></div>
-          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Simulated Raft: returns the stable leader peer from the mesh table. Used to shard MoQ PUBLISH_NAMESPACE announcements and SUBSCRIBE routing across a relay cluster without split-brain.</p>
-          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">ext_consensus_leader() → const char *</div>
+          <div style="font-size:.75rem;text-transform:uppercase;letter-spacing:.06em;color:var(--green);font-weight:700;margin-bottom:6px">Experimental Hooks</div>
+          <div style="font-size:.82rem;color:var(--text);font-weight:600;margin-bottom:6px"><code style="font-family:var(--mono);font-size:.8rem">inference.c / optimizer.c / mesh.c / consensus.c</code></div>
+          <p style="font-size:.82rem;color:var(--text-dim);line-height:1.5">These modules exist, but they should be read as optional experiments around the relay, not the core promise. The core promise is simpler: private realtime media transport in a small native binary.</p>
+          <div style="margin-top:10px;font-family:var(--mono);font-size:.75rem;background:var(--bg);padding:6px 10px;border-radius:4px;color:var(--green)">keep the core path understandable first</div>
         </div>
 
       </div>
@@ -1009,10 +1013,10 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:16px;text-align:center">Relay internals</h3>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 28px;font-family:var(--mono);font-size:.82rem;color:var(--text-dim);line-height:2;overflow-x:auto">
         <span style="color:#b392f0">QUIC / WebTransport (ngtcp2+nghttp3)</span><br>
-        &nbsp;↳ <span style="color:var(--accent)">MoQ stream demux</span> → <span style="color:#b392f0">ext_score_object()</span> <span style="color:var(--text-dim)">(inline inference, every object)</span><br>
-        &nbsp;↳ <span style="color:var(--blue)">zero-copy forward</span> → subscriber fan-out <span style="color:var(--text-dim)">(buf size from RL optimizer)</span><br>
-        &nbsp;↳ <span style="color:var(--accent)">PUBLISH_NAMESPACE</span> → <span style="color:var(--green)">consensus leader routes</span> → mesh peer table<br>
-        <span style="color:var(--text-dim)">SQLite stream log · SIGTERM graceful drain · kqueue/epoll event loop</span>
+        &nbsp;↳ <span style="color:var(--accent)">MoQ control parsing</span> → publish / subscribe / namespace tracking<br>
+        &nbsp;↳ <span style="color:var(--blue)">zero-copy forward</span> → subscriber fan-out<br>
+        &nbsp;↳ <span style="color:var(--green)">SQLite stream log</span> → session + event visibility for the rest of Bonfyre<br>
+        <span style="color:var(--text-dim)">kqueue/epoll event loop · graceful drain · optional experimental extension hooks</span>
       </div>
     </div>
 
@@ -1021,14 +1025,14 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <h3 style="font-size:1.1rem;color:var(--text);margin-bottom:12px;text-align:center">Build &amp; run</h3>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px 24px">
         <code style="font-family:var(--mono);font-size:.82rem;color:var(--text-dim);line-height:1.8">
-          <span style="color:var(--green)"># Build relay + all extension modules</span><br>
+          <span style="color:var(--green)"># Build the native relay</span><br>
           make bonfyre-moq<br><br>
-          <span style="color:var(--green)"># Run relay (MoQ + mesh + optimizer + inference)</span><br>
+          <span style="color:var(--green)"># Run relay</span><br>
           ./bonfyre-moq --host 127.0.0.1 --port 4443 \<br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--runtime-dir /tmp/bonfyre-moq \<br>
           &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--db /tmp/bonfyre-moq/relay.db<br><br>
-          <span style="color:var(--green)"># Smoke-test all extension modules</span><br>
-          make test-bonfyre &nbsp;<span style="color:var(--text-dim)"># inference + optimizer + mesh + consensus</span>
+          <span style="color:var(--green)"># Optional extension-module check</span><br>
+          make test-bonfyre
         </code>
       </div>
     </div>
@@ -1036,10 +1040,10 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <!-- Stats row -->
     <div style="display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin-top:28px">
       <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">C11</span><span style="font-size:.75rem;color:var(--text-dim)">No Node.js</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:#b392f0">4</span><span style="font-size:.75rem;color:var(--text-dim)">Extension modules</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--accent)">RL</span><span style="font-size:.75rem;color:var(--text-dim)">Self-tuning (P6)</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--blue)">Mesh</span><span style="font-size:.75rem;color:var(--text-dim)">Gossip peer discovery</span></div>
-      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">Raft</span><span style="font-size:.75rem;color:var(--text-dim)">Consensus leader</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:#b392f0">MoQ</span><span style="font-size:.75rem;color:var(--text-dim)">Browser-native transport</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--accent)">SQLite</span><span style="font-size:.75rem;color:var(--text-dim)">Realtime event log</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--blue)">Small</span><span style="font-size:.75rem;color:var(--text-dim)">Fits Bonfyre narrative</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:1.8rem;font-weight:700;color:var(--green)">C-first</span><span style="font-size:.75rem;color:var(--text-dim)">Main product path</span></div>
     </div>
   </div>
 </section>
@@ -1073,7 +1077,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">embed</span> <span style="color:var(--accent)">→</span> <span style="color:var(--blue)">vec</span> <span style="color:var(--text-dim)">(semantic search)</span><br>
       <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">tag</span> + <span style="color:var(--blue)">tone</span> <span style="color:var(--text-dim)">(enrichment)</span><br>
       <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:var(--blue)">render</span> <span style="color:var(--accent)">→</span> <span style="color:var(--blue)">emit</span> <span style="color:var(--text-dim)">(HTML/PDF/EPUB/RSS)</span><br>
-      <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:#b392f0">moq</span> <span style="color:var(--text-dim)">(WebTransport relay · RL optimizer · gossip mesh · consensus)</span>
+      <span style="color:var(--text-dim)"> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↳</span> <span style="color:#b392f0">moq</span> <span style="color:var(--text-dim)">(WebTransport relay · SQLite stream log · C-first realtime primitive)</span>
     </div>
 
     <h3 style="font-size:1.1rem;margin:32px 0 16px">Five layers</h3>
@@ -1082,94 +1086,232 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="layer"><span class="layer-name">Value</span><span class="layer-bins">offer · gate · meter · ledger · finance · outreach · pay · pack · distribute</span></div>
       <div class="layer"><span class="layer-name">Transform</span><span class="layer-bins">media-prep · transcribe · transcript-clean · paragraph · brief · proof · embed · narrate · render · emit · mfa-dict · weaviate-index · repurpose · segment · clips · speechloop · tone · tag · canon · query</span></div>
       <div class="layer"><span class="layer-name">Substrate</span><span class="layer-bins">ingest · hash · index · compress · stitch · graph · runtime · queue · sync</span></div>
-      <div class="layer"><span class="layer-name">Libraries</span><span class="layer-bins">libbonfyre (runtime, FNV registry, SHA-256) · liblambda-tensors (Huffman, arithmetic coding)</span></div>
+      <div class="layer"><span class="layer-name">Libraries</span><span class="layer-bins">libbonfyre (26 modules: event loop, thread pool, crypto, JSON/FlatBuf/MsgPack, LZ4, UTF-8, hashmap, CSV, config, CLI, logging, DNS, mmap, bloom, coroutines, erasure coding, hot-reload) · liblambda-tensors (Huffman, arithmetic coding)</span></div>
     </div>
   </div>
 </section>
 
 <!-- ═══════════════════════════════════════════ -->
-<!-- All 50 Binaries                            -->
+<!-- All 51 Binaries                            -->
 <!-- ═══════════════════════════════════════════ -->
 <section id="binaries">
   <div class="container">
-    <h2>All 50 Binaries</h2>
+    <h2>All 51 Binaries</h2>
     <p class="subtitle">Every binary is standalone. Use one or all. ~2.1 MB total disk.</p>
 
     <div class="binary-group">
-      <h3>Substrate (9 binaries)</h3>
+      <h3>Substrate (9 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— cold, stable infrastructure. Never imports product concepts. Content-addressed output.</span></h3>
       <div class="binary-list">
-        <div class="binary-item"><span class="name">bonfyre-ingest</span> <span class="size">35 KB</span> <span class="desc">— intake + type detection</span></div>
-        <div class="binary-item"><span class="name">bonfyre-hash</span> <span class="size">34 KB</span> <span class="desc">— SHA-256 content addressing</span></div>
-        <div class="binary-item"><span class="name">bonfyre-index</span> <span class="size">68 KB</span> <span class="desc">— SQLite artifact index + FTS</span></div>
-        <div class="binary-item"><span class="name">bonfyre-compress</span> <span class="size">34 KB</span> <span class="desc">— zstd family-aware compression</span></div>
-        <div class="binary-item"><span class="name">bonfyre-stitch</span> <span class="size">34 KB</span> <span class="desc">— DAG materializer</span></div>
-        <div class="binary-item"><span class="name">bonfyre-graph</span> <span class="size">51 KB</span> <span class="desc">— Merkle-DAG artifact graph</span></div>
-        <div class="binary-item"><span class="name">bonfyre-runtime</span> <span class="size">34 KB</span> <span class="desc">— process lifecycle</span></div>
-        <div class="binary-item"><span class="name">bonfyre-queue</span> <span class="size">34 KB</span> <span class="desc">— persistent job queue</span></div>
-        <div class="binary-item"><span class="name">bonfyre-sync</span> <span class="size">34 KB</span> <span class="desc">— cross-instance replication</span></div>
+        <div class="binary-item"><span class="name">bonfyre-ingest</span> <span class="size">35 KB</span> <span class="desc">— universal intake: type detection, BOM stripping, CRLF→LF, inline SHA-256 (no double-read), manifest stamping. PURE|CACHEABLE|IDEMPOTENT.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-hash</span> <span class="size">34 KB</span> <span class="desc">— FIPS 180-4 SHA-256 content addressing. Streaming hash over arbitrary-size inputs. Dedup via Bloom filter (8 KB, k=7, 0.01% FPR).</span></div>
+        <div class="binary-item"><span class="name">bonfyre-index</span> <span class="size">68 KB</span> <span class="desc">— SQLite artifact index with FTS5 virtual table for full-text search. Family-key grouping for structural queries.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-compress</span> <span class="size">34 KB</span> <span class="desc">— family-aware zstd with dictionary training from sample corpus. Per-family ratio reporting. Level tuning (1-19). Dict library management.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-stitch</span> <span class="size">34 KB</span> <span class="desc">— DAG materializer: execution plan generation, dead-branch pruning, cache hit statistics.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-graph</span> <span class="size">51 KB</span> <span class="desc">— Merkle-DAG artifact graph with breadth-first materialization. SHA-256 interior nodes.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-runtime</span> <span class="size">34 KB</span> <span class="desc">— process lifecycle manager: dispatches queue/pipeline/ledger subprocesses.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-queue</span> <span class="size">34 KB</span> <span class="desc">— SQLite WAL job queue: concurrent writers, per-worker thread pool (default 4), FTS5 result search, webhook dispatch, exponential backoff retry.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-sync</span> <span class="size">34 KB</span> <span class="desc">— cross-instance artifact replication with sync manifests.</span></div>
       </div>
     </div>
     <div class="binary-group">
-      <h3>Transform (22 binaries)</h3>
+      <h3>Transform (22 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— pure, cacheable, stateless. Same input → same output. Cache key = (operator, params, input_hash).</span></h3>
       <div class="binary-list">
-        <div class="binary-item"><span class="name">bonfyre-media-prep</span> <span class="size">34 KB</span> <span class="desc">— audio normalization</span></div>
-        <div class="binary-item"><span class="name">bonfyre-transcribe</span> <span class="size">34 KB</span> <span class="desc">— speech-to-text (Whisper)</span></div>
-        <div class="binary-item"><span class="name">bonfyre-transcript-clean</span> <span class="size">34 KB</span> <span class="desc">— remove filler words</span></div>
-        <div class="binary-item"><span class="name">bonfyre-paragraph</span> <span class="size">35 KB</span> <span class="desc">— structure paragraphs</span></div>
-        <div class="binary-item"><span class="name">bonfyre-brief</span> <span class="size">34 KB</span> <span class="desc">— summary + action items</span></div>
-        <div class="binary-item"><span class="name">bonfyre-proof</span> <span class="size">34 KB</span> <span class="desc">— quality scoring</span></div>
-        <div class="binary-item"><span class="name">bonfyre-embed</span> <span class="size">52 KB</span> <span class="desc">— ONNX embeddings, trie tokenizer, batch</span></div>
-        <div class="binary-item"><span class="name">bonfyre-vec</span> <span class="size">35 KB</span> <span class="desc">— SIMD cosine vector search</span></div>
-        <div class="binary-item"><span class="name">bonfyre-narrate</span> <span class="size">68 KB</span> <span class="desc">— verified TTS: 6-layer fidelity</span></div>
-        <div class="binary-item"><span class="name">bonfyre-render</span> <span class="size">34 KB</span> <span class="desc">— template rendering</span></div>
-        <div class="binary-item"><span class="name">bonfyre-emit</span> <span class="size">34 KB</span> <span class="desc">— HTML/PDF/EPUB/RSS output</span></div>
-        <div class="binary-item"><span class="name">bonfyre-mfa-dict</span> <span class="size">34 KB</span> <span class="desc">— pronunciation dictionary</span></div>
-        <div class="binary-item"><span class="name">bonfyre-weaviate-index</span> <span class="size">34 KB</span> <span class="desc">— Weaviate vector search</span></div>
-        <div class="binary-item"><span class="name">bonfyre-transcript-family</span> <span class="size">34 KB</span> <span class="desc">— full transcription chain</span></div>
-        <div class="binary-item"><span class="name">bonfyre-repurpose</span> <span class="size">34 KB</span> <span class="desc">— content repurposing</span></div>
-        <div class="binary-item"><span class="name">bonfyre-segment</span> <span class="size">50 KB</span> <span class="desc">— speaker segmentation</span></div>
-        <div class="binary-item"><span class="name">bonfyre-clips</span> <span class="size">35 KB</span> <span class="desc">— audio clip extraction</span></div>
-        <div class="binary-item"><span class="name">bonfyre-speechloop</span> <span class="size">34 KB</span> <span class="desc">— live speech loop</span></div>
-        <div class="binary-item"><span class="name">bonfyre-tone</span> <span class="size">34 KB</span> <span class="desc">— tone/sentiment</span></div>
-        <div class="binary-item"><span class="name">bonfyre-tag</span> <span class="size">35 KB</span> <span class="desc">— topic tagging (native fastText)</span></div>
-        <div class="binary-item"><span class="name">bonfyre-quant</span> <span class="size">42 KB</span> <span class="desc">— v8 RLF weight quantization</span></div>
-        <div class="binary-item"><span class="name">bonfyre-kvcache</span> <span class="size">42 KB</span> <span class="desc">— KV cache compression</span></div>
+        <div class="binary-item"><span class="name">bonfyre-media-prep</span> <span class="size">34 KB</span> <span class="desc">— 16 kHz mono WAV normalization, noise gate, denoising via ffmpeg resampling.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-transcribe</span> <span class="size">34 KB</span> <span class="desc">— Whisper + HCP v3.2: quad-channel spectral (acoustic + morpho + bigram + trigram), KIEL-CC Kalman, E-T Gate, formant anchoring, 9-layer hallucination detection, morphological logit bias. 0.999 quality (base).</span></div>
+        <div class="binary-item"><span class="name">bonfyre-transcript-clean</span> <span class="size">34 KB</span> <span class="desc">— Hyperscan single-pass &gt;1 GB/s pattern fusion (6 classes: filler/halluc/keyword/quality/tag/chunk-hdr) or Aho-Corasick fallback 200 MB/s.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-paragraph</span> <span class="size">35 KB</span> <span class="desc">— sentence boundary detection with structural paragraph formatting.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-brief</span> <span class="size">34 KB</span> <span class="desc">— executive summary + action items via TF-IDF keyword extraction + BM25 ranking (Robertson '94, document-length normalization).</span></div>
+        <div class="binary-item"><span class="name">bonfyre-proof</span> <span class="size">34 KB</span> <span class="desc">— quality scoring: length, filler ratio, hallucination probability, BM25 confidence metrics. Machine-verifiable proof bundle.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-embed</span> <span class="size">52 KB</span> <span class="desc">— ONNX all-MiniLM-L6-v2 (384-dim), trie tokenizer, batch mode (6.5× faster), --insert-db zero-file-I/O path.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-vec</span> <span class="size">35 KB</span> <span class="desc">— sqlite-vec similarity search with NEON SIMD cosine. 5 ms exact search over 3K artifacts.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-narrate</span> <span class="size">68 KB</span> <span class="desc">— Piper neural TTS with 6-layer fidelity verification.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-render</span> <span class="size">34 KB</span> <span class="desc">— Handlebars/Jinja2 template rendering from artifact manifests.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-emit</span> <span class="size">34 KB</span> <span class="desc">— multi-format output via pandoc: HTML, PDF, EPUB, RSS.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-mfa-dict</span> <span class="size">34 KB</span> <span class="desc">— CMU dict + custom rules for MFA pronunciation dictionary generation.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-weaviate-index</span> <span class="size">34 KB</span> <span class="desc">— Weaviate vector database integration for semantic search.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-transcript-family</span> <span class="size">34 KB</span> <span class="desc">— composed chain: ingest → transcribe → clean → paragraph in one call.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-repurpose</span> <span class="size">34 KB</span> <span class="desc">— brief → social formats: tweets, LinkedIn, carousel, YouTube description, newsletter. Template-based.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-segment</span> <span class="size">50 KB</span> <span class="desc">— idea boundary detection via temporal clustering + energy peaks. Outputs segment graph + rhythm profile.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-clips</span> <span class="size">35 KB</span> <span class="desc">— auto clip discovery: silence detection + energy thresholding → candidate timestamps.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-speechloop</span> <span class="size">34 KB</span> <span class="desc">— Whisper → transform → Piper feedback loop for iterative speech refinement.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-tone</span> <span class="size">34 KB</span> <span class="desc">— OpenSMILE eGeMAPSv02: 88 acoustic features (MFCCs, pitch, jitter, shimmer, voiced energy). Tone profile + diff.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-tag</span> <span class="size">35 KB</span> <span class="desc">— native C fastText inference: topic + intent tagging + language detection. 2 ms, no GPU.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-quant</span> <span class="size">42 KB</span> <span class="desc">— v8 RLF weight quantization: E8 lattice snap + μ-law warp + 16D RVQ. 0.9999+ per-weight cosine.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-kvcache</span> <span class="size">42 KB</span> <span class="desc">— KV cache compression: 9 optimization passes, attention-weighted tiles, per-layer adaptive bits.</span></div>
       </div>
     </div>
     <div class="binary-group">
-      <h3>Surface (9 binaries)</h3>
+      <h3>Surface (10 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— product-facing, stateful services. Own mutable state. HTTP/CLI interfaces.</span></h3>
       <div class="binary-list">
-        <div class="binary-item"><span class="name">bonfyre-cms</span> <span class="size">287 KB</span> <span class="desc">— CMS + Lambda Tensors</span></div>
-        <div class="binary-item"><span class="name">bonfyre-api</span> <span class="size">69 KB</span> <span class="desc">— HTTP gateway + dashboard</span></div>
-        <div class="binary-item"><span class="name">bonfyre-auth</span> <span class="size">35 KB</span> <span class="desc">— user auth + sessions</span></div>
-        <div class="binary-item"><span class="name">bonfyre-pipeline</span> <span class="size">52 KB</span> <span class="desc">— unified pipeline (5-8 ms/stage)</span></div>
-        <div class="binary-item"><span class="name">bonfyre</span> <span class="size">34 KB</span> <span class="desc">— unified CLI dispatcher</span></div>
-        <div class="binary-item"><span class="name">bonfyre-project</span> <span class="size">34 KB</span> <span class="desc">— project scaffolding</span></div>
-        <div class="binary-item"><span class="name">bonfyre-tel</span> <span class="size">68 KB</span> <span class="desc">— FreeSWITCH telephony</span></div>
-        <div class="binary-item" style="border-left:2px solid #b392f0;padding-left:8px"><span class="name" style="color:#b392f0">bonfyre-moq</span> <span class="size">~120 KB</span> <span class="desc">— MoQ/WebTransport relay + inference + RL + mesh + consensus</span></div>
-        <div class="binary-item"><span class="name">bonfyre-canon</span> <span class="size">35 KB</span> <span class="desc">— canonical artifact format</span></div>
-        <div class="binary-item"><span class="name">bonfyre-proxy</span> <span class="size">53 KB</span> <span class="desc">— OpenAI-compatible API shim</span></div>
+        <div class="binary-item"><span class="name">bonfyre-cms</span> <span class="size">287 KB</span> <span class="desc">— dynamic schemas + versioning. Every record is Lambda Tensors-compressed. REST API. 921 μs/create. Replaces Strapi (1,742× smaller).</span></div>
+        <div class="binary-item"><span class="name">bonfyre-api</span> <span class="size">69 KB</span> <span class="desc">— async HTTP gateway: per-core kqueue/io_uring reactors, SSE real-time streams, token-bucket rate limiting (120 req/min), CORS, SPA fallback.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-auth</span> <span class="size">35 KB</span> <span class="desc">— user signup/login with SHA-256 passwords, session tokens, expiry management.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pipeline</span> <span class="size">52 KB</span> <span class="desc">— unified in-process pipeline via libdill coroutines (~50 ns context-switch). Gate → Ingest → Hash → Index → Compress → Meter → Stitch → Ledger. 5-8 ms/stage, &gt;93% faster than forking.</span></div>
+        <div class="binary-item"><span class="name">bonfyre</span> <span class="size">34 KB</span> <span class="desc">— unified CLI dispatcher: pipes to any binary via subcommand.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-project</span> <span class="size">34 KB</span> <span class="desc">— project scaffolding with template-based directory generation.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-tel</span> <span class="size">68 KB</span> <span class="desc">— FreeSWITCH ESL telephony: voice/SMS/MMS, call routing, IVR. No per-call billing.</span></div>
+        <div class="binary-item" style="border-left:2px solid #b392f0;padding-left:8px"><span class="name" style="color:#b392f0">bonfyre-moq</span> <span class="size">~120 KB</span> <span class="desc">— pure C WebTransport/MoQ relay: ngtcp2 + nghttp3 + OpenSSL 3, SQLite stream log, subscriber fan-out, zero-copy object forwarding.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-canon</span> <span class="size">35 KB</span> <span class="desc">— structural canonicalization via Tree-sitter AST parsing. Produces structural hash + structural diff.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-proxy</span> <span class="size">53 KB</span> <span class="desc">— OpenAI-compatible API: set OPENAI_API_BASE=localhost:8787. Existing code works unchanged. Drop-in replacement.</span></div>
       </div>
     </div>
     <div class="binary-group">
-      <h3>Value (9 binaries)</h3>
+      <h3>Value (9 binaries) <span style="font-size:.7rem;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0">— monetization, metering, delivery. Separate privilege boundary.</span></h3>
       <div class="binary-list">
-        <div class="binary-item"><span class="name">bonfyre-offer</span> <span class="size">34 KB</span> <span class="desc">— dynamic pricing</span></div>
-        <div class="binary-item"><span class="name">bonfyre-gate</span> <span class="size">34 KB</span> <span class="desc">— API key tiers</span></div>
-        <div class="binary-item"><span class="name">bonfyre-meter</span> <span class="size">34 KB</span> <span class="desc">— usage tracking</span></div>
-        <div class="binary-item"><span class="name">bonfyre-ledger</span> <span class="size">34 KB</span> <span class="desc">— financial records</span></div>
-        <div class="binary-item"><span class="name">bonfyre-finance</span> <span class="size">51 KB</span> <span class="desc">— bundle pricing</span></div>
-        <div class="binary-item"><span class="name">bonfyre-outreach</span> <span class="size">51 KB</span> <span class="desc">— outreach tracking</span></div>
-        <div class="binary-item"><span class="name">bonfyre-pay</span> <span class="size">35 KB</span> <span class="desc">— invoicing + payments</span></div>
-        <div class="binary-item"><span class="name">bonfyre-pack</span> <span class="size">34 KB</span> <span class="desc">— deliverable packaging</span></div>
-        <div class="binary-item"><span class="name">bonfyre-distribute</span> <span class="size">34 KB</span> <span class="desc">— email/Slack/webhooks</span></div>
+        <div class="binary-item"><span class="name">bonfyre-offer</span> <span class="size">34 KB</span> <span class="desc">— quality-based dynamic pricing: proof-score → tier options → proposal generation.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-gate</span> <span class="size">34 KB</span> <span class="desc">— API key tiers (Free/Pro/Enterprise): entitlement checking, key file validation (JSON + expiry + allowed_ops whitelist).</span></div>
+        <div class="binary-item"><span class="name">bonfyre-meter</span> <span class="size">34 KB</span> <span class="desc">— per-operation usage tracking: operation counters, billing aggregation.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-ledger</span> <span class="size">34 KB</span> <span class="desc">— append-only financial records: immutable log, audit trail.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-finance</span> <span class="size">51 KB</span> <span class="desc">— service arbitrage + bundle pricing: offer + meter → revenue model.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-outreach</span> <span class="size">51 KB</span> <span class="desc">— outreach event tracking + follow-up routing.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pay</span> <span class="size">35 KB</span> <span class="desc">— invoicing, payments, credits: entry point for Stripe/Cash integration.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-pack</span> <span class="size">34 KB</span> <span class="desc">— deliverable packaging: ZIP + JSON manifest for complete artifact families.</span></div>
+        <div class="binary-item"><span class="name">bonfyre-distribute</span> <span class="size">34 KB</span> <span class="desc">— async delivery to email, Slack, webhooks. Fire-and-forget with receipt tracking.</span></div>
       </div>
     </div>
     <div class="binary-group">
       <h3>Libraries</h3>
       <div class="binary-list">
-        <div class="binary-item"><span class="name">libbonfyre</span> <span class="size">64 KB</span> <span class="desc">— runtime contract, FNV hash, SHA-256</span></div>
+        <div class="binary-item"><span class="name">libbonfyre</span> <span class="size">~180 KB</span> <span class="desc">— shared runtime with 26 modules across 10 domains (see below)</span></div>
         <div class="binary-item"><span class="name">liblambda-tensors</span> <span class="size">72 KB</span> <span class="desc">— structural JSON compression</span></div>
+      </div>
+      <div style="margin-top:20px;padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.95rem;margin-bottom:14px;color:var(--accent)">libbonfyre — 26 modules, 10 domains</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:16px;line-height:1.5">Every binary links libbonfyre.a (~180 KB). Zero external dependencies beyond libc + SQLite. All modules are C11, portable across macOS/Linux/BSD, with SIMD fast paths on ARM NEON and x86 SSE4.2 where applicable.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px;font-size:.82rem;line-height:1.7">
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Core (4)</strong><br>
+            <span style="color:var(--text)">bf_artifact</span> — content-addressed manifest: FNV-1a-64 family/canonical keys, binary cache (.bfrec/.bfsum), parse/serialize<br>
+            <span style="color:var(--text)">bf_operators</span> — 51-operator registry with O(1) lookup, behavioral flags (PURE|STATEFUL|CACHEABLE|REVERSIBLE|IDEMPOTENT), exactness classes<br>
+            <span style="color:var(--text)">bf_sha256</span> — FIPS 180-4 streaming SHA-256<br>
+            <span style="color:var(--text)">bf_common</span> — dir creation, file I/O, timestamps, FNV-1a, JSON field extraction</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Networking (3)</strong><br>
+            <span style="color:var(--text)">bf_reactor</span> — per-core async I/O (kqueue on macOS, io_uring on Linux 5.1+). Zero-copy recv via registered buffers, SSE persistent read, token-bucket rate limiting<br>
+            <span style="color:var(--text)">bf_dns</span> — async DNS resolver<br>
+            <span style="color:var(--text)">bf_picohttpparser</span> — zero-copy HTTP/1.1 request parser</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Crypto (2)</strong><br>
+            <span style="color:var(--text)">bf_crypto</span> — BLAKE2b hash/HMAC/KDF, XSalsa20-Poly1305 AEAD secretbox, Ed25519 signing. Portable impl + libhydrogen/libsodium delegation<br>
+            <span style="color:var(--text)">bf_bloom</span> — split-block Bloom filter: 8 KB fixed, k=7 hashes, FNV-1a seeded, ~10K items @ 0.01% FPR</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Serialization (3)</strong><br>
+            <span style="color:var(--text)">bf_json</span> — SIMD JSON engine (yyjson-inspired): 16-byte aligned scanning, SSE4.2/NEON acceleration, lazy number parsing, zero-copy strings<br>
+            <span style="color:var(--text)">bf_flatbuf</span> — FlatBuffers zero-copy serialization: read directly from wire buffer without unpacking<br>
+            <span style="color:var(--text)">bf_msgpack</span> — MessagePack binary serialization</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Concurrency (2)</strong><br>
+            <span style="color:var(--text)">bf_pool</span> — Chase-Lev work-stealing thread pool: lock-free per-worker deques (C11 atomics), idle workers steal from random peers, auto core detection<br>
+            <span style="color:var(--text)">bf_pipeline_coro</span> — structured concurrency via libdill: lightweight coroutines, typed channels, deadline API. ~50 ns context-switch vs ~5 μs fork</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Data &amp; I/O (4)</strong><br>
+            <span style="color:var(--text)">bf_lmdb</span> — zero-copy LMDB cache: 512 MB default, 4 named DBs (artifacts/families/blobs/meta), pointer casts into mmap (no deserialization)<br>
+            <span style="color:var(--text)">bf_mmap</span> — portable mmap: MAP_PRIVATE + MADV_SEQUENTIAL hints, pipe/stdin fallback for non-seekable inputs<br>
+            <span style="color:var(--text)">bf_csv</span> — RFC 4180 streaming parser: zero-copy field access, quoted field handling, configurable delimiter, writer with auto-quoting<br>
+            <span style="color:var(--text)">bf_conf</span> — INI/TOML config: layered search (/etc/bonfyre/ → ~/.config/bonfyre/ → ./), env override (BONFYRE_SECTION_KEY), $VAR expansion</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Text &amp; Unicode (2)</strong><br>
+            <span style="color:var(--text)">bf_utf8</span> — SIMD UTF-8: SSE4.2 PCMPISTRI / NEON validation, Hoehrmann DFA, codepoint iteration, case folding (ASCII + Latin-1/Extended-A + Greek + Cyrillic), U+FFFD sanitization<br>
+            <span style="color:var(--text)">bf_textfuse</span> — Hyperscan/Aho-Corasick pattern fusion: 6 pattern classes (filler/halluc/keyword/quality/tag/chunk-hdr), single-pass &gt;1 GB/s or fallback 200 MB/s</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Compression (2)</strong><br>
+            <span style="color:var(--text)">bf_lz4</span> — self-contained LZ4 block compression: single-shot + streaming API, hash-table greedy match finder, 64-byte 8-wide match length. No external tool spawn<br>
+            <span style="color:var(--text)">bf_fountain</span> — Luby Transform fountain codes: O(N) rateless encoder/decoder, 5% overhead, robust soliton distribution, any K-of-N reconstruction</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">Containers (1)</strong><br>
+            <span style="color:var(--text)">bf_hashmap</span> — Robin-hood open-addressing: power-of-2 capacity, ~0.75 load factor, backshift deletion (no tombstones), FNV-1a default hash, configurable callbacks, string convenience API</div>
+          <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--green)">CLI &amp; Ops (3)</strong><br>
+            <span style="color:var(--text)">bf_opts</span> — declarative CLI parser: typed args (BOOL/STRING/INT/DOUBLE/PATH), subcommands, auto --help, combined short opts, ~ expansion<br>
+            <span style="color:var(--text)">bf_log</span> — structured logging with level filtering, color terminal output, file rotation<br>
+            <span style="color:var(--text)">bf_hotload</span> — live pipeline reload: dlopen plugins, file-watcher (kqueue/inotify), A/B test support, per-stage metadata/flags</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:20px 24px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.95rem;margin-bottom:14px;color:var(--accent)">liblambda-tensors — 5-tier structural compression</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);margin-bottom:12px;line-height:1.5">Family-based JSON compression: artifacts sharing structure (same schema, same field names) compress dramatically better together. Every tier preserves O(1) random field access — no full decompression needed.</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;font-size:.82rem;line-height:1.6">
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--accent)">V1</strong> — Varint + zigzag + type tags<br><span style="color:var(--text-dim)">88% of raw · 12 type codes · Headers only overhead</span></div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--accent)">V2</strong> — Small-int/float32/empty-str + LZ77<br><span style="color:var(--text-dim)">64.9% of raw · Position stride table</span></div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--accent)">Interned</strong> — Cross-member string dedup<br><span style="color:var(--text-dim)">29% of raw · Family string pool index</span></div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--accent)">Huffman</strong> — Per-position canonical codes<br><span style="color:var(--text-dim)">13.5% of raw · Cost-pruned codebooks</span></div>
+          <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--border)"><strong style="color:var(--accent)">Arithmetic</strong> — Range coding<br><span style="color:var(--text-dim)">~11% of raw · Shannon entropy measurement</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Operator Model                             -->
+<!-- ═══════════════════════════════════════════ -->
+<section id="operators">
+  <div class="container">
+    <h2>Operator Model</h2>
+    <p class="subtitle">Every pipeline stage is a typed operator with declared behavior — the scheduler uses these flags to parallelize, cache, and reorder safely.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-top:20px">
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--accent);margin-bottom:10px">51 Operators Across 4 Layers</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">Substrate (9 ops) — ingest, normalize, segment, chunk<br>
+        Transform (22 ops) — transcribe, summarize, score, semantics<br>
+        Surface (10 ops) — format, render, template, deliver<br>
+        Value (10 ops) — price, invoice, pay, distribute, prove</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--accent);margin-bottom:10px">Behavioral Flags</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">
+          <code style="color:var(--green)">PURE</code> — deterministic, no side effects → safe to cache &amp; parallelize<br>
+          <code style="color:var(--green)">STATEFUL</code> — mutates external state (DB, filesystem)<br>
+          <code style="color:var(--green)">CACHEABLE</code> — output cached by SHA-256(input) in LMDB<br>
+          <code style="color:var(--green)">REVERSIBLE</code> — undo supported (audit, rollback)<br>
+          <code style="color:var(--green)">IDEMPOTENT</code> — safe to retry without duplication</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--accent);margin-bottom:10px">Exactness Classes</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">
+          <code style="color:var(--green)">BF_EXACT_BYTE</code> — bit-identical output every run (hash, compress)<br>
+          <code style="color:var(--green)">BF_EXACT_CANON</code> — canonical but with format flexibility (JSON field reorder)<br>
+          <code style="color:var(--green)">BF_EXACT_LOSSY</code> — model-dependent (transcription, summarization)</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--accent);margin-bottom:10px">Content-Addressed Artifacts</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">Every operator input/output is a <code>BfArtifact</code>. SHA-256 content hash for identity. <code>family_key</code> (FNV-1a-64 of type+system) groups related artifacts. <code>canonical_key</code> distinguishes format variants. Binary cache files: <code>.bfrec</code> records + <code>.bfsum</code> summaries.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════ -->
+<!-- Cross-cutting Architecture                 -->
+<!-- ═══════════════════════════════════════════ -->
+<section id="architecture-deep">
+  <div class="container">
+    <h2>Cross-cutting Architecture</h2>
+    <p class="subtitle">Capabilities that span every binary, not just one stage.</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;margin-top:20px">
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Content-Addressed Dedup</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">Every artifact gets a SHA-256 identity. If the hash already exists in the local LMDB cache, the stage is skipped entirely. Re-running a pipeline on the same input costs near zero — only changed stages execute.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Zero-Copy LMDB Cache</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">512 MB memory-mapped store with 4 named databases (artifacts, families, blobs, meta). Reads are pointer casts into mmap — no malloc, no deserialization. Cache lookups take ~200 ns vs ~5 ms disk I/O.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Family-Aware Storage</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">Artifacts with the same schema (type+system) share a <code>family_key</code>. Lambda-tensors compress families 7× better than individual compression because field names, types, and structure are shared across the family.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Fountain Codes for Lossy Links</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">Luby Transform rateless encoding: sender emits coded packets forever, receiver reconstructs from any K-of-N. 5% overhead. Perfect for satellite, mobile, or lossy last-mile delivery where TCP retransmits are expensive.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Operator Hot-Loading</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6"><code>bf_hotload</code> watches operator .so plugins via kqueue/inotify. When a new version appears, the pipeline swaps it in without restart. Supports A/B testing across operator versions with per-stage metadata.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Work-Stealing Parallelism</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">Chase-Lev lock-free deques with C11 atomics: each core gets a private work queue, idle cores steal from random peers. Combined with libdill coroutines (~50 ns context switch), pipelines fully saturate all cores with minimal coordination.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">SIMD Throughout</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">SSE4.2 and ARM NEON fast paths in JSON parsing (16-byte aligned scan), UTF-8 validation (PCMPISTRI), text pattern fusion (Hyperscan >1 GB/s), and vector cosine similarity. Automatic runtime dispatch — falls back cleanly on older hardware.</p>
+      </div>
+      <div style="padding:16px 20px;background:var(--surface);border:1px solid var(--border);border-radius:8px">
+        <h4 style="font-size:.9rem;color:var(--green);margin-bottom:8px">Crypto Primitives</h4>
+        <p style="font-size:.82rem;color:var(--text-dim);line-height:1.6">BLAKE2b (hash/HMAC/KDF), XSalsa20-Poly1305 (AEAD encryption), Ed25519 (signing). No OpenSSL dependency. Portable C implementation with optional libsodium delegation if available.</p>
       </div>
     </div>
   </div>
@@ -1226,8 +1368,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <br><span class="time">5 min to try</span>
       </div>
       <div class="use-case" style="border-color:rgba(179,146,240,.4)">
-        <h3 style="color:#b392f0">MoQ Relay + Mesh</h3>
-        <p>Pure C WebTransport relay with inline AI scoring, RL self-tuning, gossip peer discovery, and consensus leader election. Replaces Node.js moq-edge.</p>
+        <h3 style="color:#b392f0">Realtime Relay</h3>
+        <p>Pure C WebTransport/MoQ relay for private live audio and browser-native media flows. Keeps the same Bonfyre style: small binary, local control, SQLite observability, no hosted relay vendor in the middle.</p>
         <code style="font-family:var(--mono);font-size:.8rem">./bonfyre-moq --port 4443 --db relay.db</code>
         <br><span class="time">make bonfyre-moq to build</span>
       </div>
@@ -1286,7 +1428,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <span class="comment"># From source (recommended)</span><br>
         git clone https://github.com/Nickgonzales76017/bonfyre.git<br>
         cd bonfyre<br>
-        make <span class="comment"># builds 2 libraries + 47 binaries</span><br>
+        make <span class="comment"># builds 2 libraries + 51 binaries</span><br>
         make install <span class="comment"># copies to ~/.local/bin</span>
       </code>
     </div>
