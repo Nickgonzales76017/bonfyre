@@ -109,8 +109,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       </div>
       <div style="background:var(--surface);border:2px solid var(--green);border-radius:10px;padding:18px 28px;flex:1;min-width:260px;text-align:left">
         <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--green);font-weight:700;margin-bottom:6px">A Complete Backend In 2 MB</div>
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">51 binaries + a 26-module shared runtime that replace your entire tech stack.</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Transcription · search · auth · payments · compression · threading · config · CLI parsing · Unicode · containers — all local, all $0/month.</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">53 binaries around a 26-module runtime that stretch from local AI to delivery.</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Transcription · search · auth · payments · proxy · orchestration · telephony · relay · swarm delivery · verified narration — all local, all $0/month.</div>
       </div>
     </div>
 
@@ -220,17 +220,17 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="killer-card">
         <div class="vs">vs Twilio (phone)</div>
         <div class="ratio">No per-call billing</div>
-        <div class="detail">SaaS vendor lock-in → local telephony adapter. Call routing, IVR, async I/O via kqueue/io_uring event loops. Fountain codes (Luby Transform) for lossy mobile links. No recurring fees, no per-minute markup.</div>
+        <div class="detail">SaaS vendor lock-in → local communications edge. bonfyre-tel handles calls, SMS, MMS, routing, and identity/event state; bonfyre-moq covers browser-native live media; fountain-coded swarm delivery helps move artifacts across unreliable links. No recurring fees, no per-minute markup.</div>
       </div>
       <div class="killer-card">
         <div class="vs">vs full SaaS stack</div>
         <div class="ratio">$0 / month total</div>
-        <div class="detail">Auth (BLAKE2b + Ed25519) + billing + API gateway + CMS + vector search + LZ4 compression + config + structured logging: typically $2,500/mo in SaaS — Bonfyre's 51 binaries and 26-module shared library do it all for free, in ~2.1 MB on disk.</div>
+        <div class="detail">Auth + billing + API gateway + CMS + vector search + OpenAI-compatible proxy + local orchestration + phone edge + relay: typically multiple vendors and glue services. Bonfyre keeps those surfaces in one stack, backed by the same shared runtime, for ~2.1 MB on disk.</div>
       </div>
       <div class="killer-card" style="border-color:rgba(249,115,22,.4)">
         <div class="vs">vs cloud AI APIs</div>
         <div class="ratio">100% private</div>
-        <div class="detail">Your data never leaves your device. No OpenAI API key needed. Works offline.</div>
+        <div class="detail">Your data never leaves your device. You can still point existing AI clients at a local OpenAI-compatible endpoint through bonfyre-proxy, but the work stays on your hardware and can run offline when the path allows it.</div>
       </div>
       <div class="killer-card" style="border-color:rgba(179,146,240,.5)">
         <div class="vs">vs LiveKit / Twilio Media (real-time relay)</div>
@@ -307,7 +307,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
     <div style="max-width:680px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 28px;text-align:center">
       <div style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:8px">The common pattern</div>
-      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7">Data comes in (audio, files, notes) → Bonfyre processes it locally → organized output comes out (summaries, briefs, archives, checkout pages). No cloud. No API keys. No monthly bills.</p>
+      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7">Calls, files, notes, recordings, repos, and live streams come in → Bonfyre processes them locally → organized output comes out as summaries, briefs, archives, pages, audio, search surfaces, and delivery flows. No cloud dependency. No recurring vendor chain.</p>
     </div>
   </div>
 </section>
@@ -380,7 +380,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       </div>
       <div class="use-case">
         <h3>Self-Hosted Backend</h3>
-        <p>Auth (BLAKE2b/Ed25519), payments, metering, API gateway, rate limiting, telephony, work-stealing thread pools, LZ4 compression, config management, CLI parsing — 51 binaries backed by a 26-module runtime. <a href="https://github.com/Nickgonzales76017/bonfyre">Repo →</a></p>
+        <p>Auth, metering, API gateway, rate limiting, telephony, proxy, orchestration, work-stealing thread pools, compression, config, and CLI surfaces — all backed by the same shared runtime instead of a pile of separate services. <a href="https://github.com/Nickgonzales76017/bonfyre">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>AI Model Compression</h3>
@@ -388,19 +388,27 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       </div>
       <div class="use-case">
         <h3>OpenAI Drop-In Replacement</h3>
-        <p>53 KB binary. Set OPENAI_API_BASE=http://localhost:8787. Same endpoints, local processing, $0 cost. Token-bucket rate limiting, async I/O, structured logging built in.</p>
+        <p>53 KB binary. Set OPENAI_API_BASE=http://localhost:8787. Same endpoints, local processing, $0 cost. Good when you want existing tools to keep working while Bonfyre handles transcription, briefing, and local model-facing flows underneath.</p>
+      </div>
+      <div class="use-case">
+        <h3>Machine-Only Orchestration</h3>
+        <p>bonfyre-orchestrate is not a chat wrapper. It is a planner layer that scores pathways, stores policy memory, and decides when extra Bonfyre blocks like narrate, render, emit, or pack should be used to improve the result.</p>
       </div>
       <div class="use-case">
         <h3>Long-Context AI</h3>
         <p>KV cache compression: 4× more context tokens in the same VRAM. 9 optimization passes. Works with both nn.Linear and FPQ layers. Process entire 90-minute lectures in a single pass.</p>
+      </div>
+      <div class="use-case">
+        <h3>Verified Narration</h3>
+        <p>bonfyre-narrate turns briefs, updates, and changelogs into audio with inline feature extraction, fidelity scoring, and refinement. It is not just “TTS added later” — it is a proof-minded output layer in the same stack.</p>
       </div>
       <div class="use-case" style="border-color:rgba(179,146,240,.4)">
         <h3 style="color:#b392f0">Private Realtime Relay</h3>
         <p>Run a private WebTransport/MoQ relay in C for browser-native audio, live agent sessions, and local media fan-out. Same Bonfyre values: local-first, low overhead, SQLite logs, no recurring relay vendor tax. <a href="docs.html#relay">Docs →</a></p>
       </div>
       <div class="use-case" style="border-color:rgba(88,166,255,.4)">
-        <h3 style="color:var(--blue)">Browser-Native Audio Infrastructure</h3>
-        <p>Use modern browser transport instead of forcing every live workflow through SIP or hosted WebRTC platforms. The relay is the primitive; call recording, streaming AI, and live workflows can be built on top of it.</p>
+        <h3 style="color:var(--blue)">Communications And Delivery</h3>
+        <p>Use SIP where it fits, MoQ where it fits, and swarm delivery where it fits. Bonfyre now has a broader transport story: telephony, browser-native relay, QUIC-aware artifact movement, and metered peer distribution in one family.</p>
       </div>
     </div>
   </div>
@@ -449,7 +457,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="wp-sprawl-col clean">
         <h4>Bonfyre</h4>
         <ul>
-          <li>51 binaries + 26-module runtime — $0/month</li>
+          <li>53 binaries in the stack + 26-module runtime — $0/month</li>
           <li>~2.1 MB total on disk</li>
           <li>Auth + billing + metering</li>
           <li>Local transcription</li>
@@ -646,10 +654,29 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 </section>
 
 <!-- CTA -->
+  
+  <!-- Recent additions (content-only) -->
+  <section id="recent-additions" style="padding:40px 0">
+    <div class="container">
+      <h2>Recent additions</h2>
+      <p class="subtitle">Newer runtime pieces and outward-facing surfaces, summarized without turning this page into release notes.</p>
+      <div class="killer-grid" style="margin-top:16px">
+        <div class="killer-card">
+          <div class="vs">Runtime additions</div>
+          <div class="detail">Reactor, hot-load stages, coroutine pipeline flow, zero-copy cache + manifests, SIMD JSON and UTF-8, DNS, logging, mmap, MessagePack, LZ4, Bloom dedup, and the newer fountain/swarm path.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Newer product surfaces</div>
+          <div class="detail">bonfyre-proxy, bonfyre-orchestrate, bonfyre-tel, bonfyre-moq, bonfyre-swarm, bonfyre-narrate, bonfyre-quant, and bonfyre-kvcache broadened the stack beyond “transcribe and summarize.”</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 <section style="text-align:center;padding:80px 0">
   <div class="container">
     <h2>Open source. MIT licensed. $0/month.</h2>
-    <p class="subtitle">51 binaries. 26 shared library modules. 10 capability domains. Your data stays yours.</p>
+    <p class="subtitle">53 binaries in the stack. 26 shared library modules. Pages, proxy, orchestration, relay, and delivery still keep the same local-first shape.</p>
     <div class="btn-row">
       <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">⭐ Star on GitHub</a>
       <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary" style="background:var(--green)">⭐ Star bonfyre-oss</a>
