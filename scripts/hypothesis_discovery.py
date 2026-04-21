@@ -1101,12 +1101,15 @@ if __name__ == "__main__":
             print(f"{i}. [{signal.signal_type:25s}] {signal.strength:.2f} | {signal.description}")
         print()
     
-    elif args.corpus:
+    else:
         # Full discovery pipeline
         engine = HypothesisDiscoveryEngine(args.memory_dir, args.models_dir)
         
+        # corpus is optional (just placeholder for now)
+        corpus = args.corpus if args.corpus else []
+        
         report = engine.discover_and_test(
-            corpus=args.corpus,
+            corpus=corpus,
             min_signal_strength=args.min_signal_strength,
             max_hypotheses=args.max_hypotheses,
             verbose=True
@@ -1117,6 +1120,3 @@ if __name__ == "__main__":
             with open(args.output, 'w') as f:
                 json.dump(report, f, indent=2)
             print(f"✓ Report saved to {args.output}")
-    
-    else:
-        parser.print_help()
