@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Simple claim extractor - the dumbest thing that works.
+Simple claim extractor - with structural filtering.
 
 GOAL: Get documents → claims → memory.db so Phase 17 can run.
 
-NOT trying to be perfect. Just trying to get SIGNAL FLOWING.
+Uses lightweight structural filtering (fragment-like) to suppress
+low-signal tokens (pronouns, articles) before claim extraction.
 """
 
 import glob
@@ -14,14 +15,91 @@ import sqlite3
 import time
 from pathlib import Path
 from typing import List, Dict, Any
+from collections import Counter
 
 
-def extract_claims_from_text(text: str, doc_id: str) -> List[Dict[str, Any]]:
+# Common function words that should be filtered even if capitalized
+COMMON_WORDS = {
+    "The", "He", "She", "It", "They", "There", "This", "That", "These", "Those",
+    "In", "On", "At", "To", "For", "Of", "With", "From", "By", "As",
+    "And", "Or", "But", "If", "When", "Where", "Why", "How", "What", "Which",
+    "One", "Two", "Three", "Some", "Many", "All", "Most", "Few", "Each", "Every",
+    "Was", "Were", "Been", "Being", "Have", "Has", "Had", "Do", "Does", "Did",
+    "Can", "Could", "Will", "Would", "Should", "May", "Might", "Must",
+    "Later", "Then", "Now", "Here", "Watch", "Look", "See", "Come", "Go"
+}
+
+
+def build_corpus_stats(files: List[str]) -> Counter:
     """
-    Extract claims from text.
+    Build frequency stats across corpus.
+    Used for structural token scoring.
+    """
+    token_counts = Counter()
     
-    INTENTIONALLY SIMPLE. Just needs to create claims that Phase 17 can analyze.
+    for filepath in files:
+        try:
+            with open(filepath) as f:
+                text = f.read()
+            
+            sentences = text.replace("!", ".").replace("?", ".").split(".")
+            for sentence in sentences:
+                words = sentence.strip().split()
+                # Count capitalized tokens only
+                for w in words:
+                    if w and len(w) > 1 and w[0].isupper():
+                        token_counts[w] += 1
+        except:
+            pass
+    
+    return token_counts
+
+
+def structural_score(word: str, corpus_stats: Counter) -> int:
     """
+    Score token by structural signal strength.
+    
+    This approximates fragment filtering at text level:
+    - Reject common function words
+    - Suppress filler words
+    - Boost repeated meaningful tokens
+    - Require minimum structure
+    """
+    # HARD FILTER: common function words
+    if word in COMMON_WORDS:
+        return 0
+    
+    score = 0
+    
+    # Capitalization (proper noun signal)
+    if word and word[0].isupper():
+        score += 1
+    
+    # Length filter (avoid "He", "It", "On")
+    if len(word) > 3:
+        score += 1
+    
+    # Corpus frequency (repeated = meaningful)
+    if corpus_stats.get(word, 0) > 2:
+        score += 1
+    
+    return score
+
+
+def extract_claims_from_text(
+    text: str, 
+    doc_id: str, 
+    corpus_stats: Counter = None
+) -> List[Dict[str, Any]]:
+    """
+    Extract claims from text with structural filtering.
+    
+    Uses fragment-like logic: only create claims when BOTH subject
+    and object have sufficient structural signal.
+    """
+    if corpus_stats is None:
+        corpus_stats = Counter()
+    
     claims = []
     
     # Split into sentences (dumb but works)
@@ -39,10 +117,16 @@ def extract_claims_from_text(text: str, doc_id: str) -> List[Dict[str, Any]]:
         # Extract entities (just grab capitalized words)
         entities = [w for w in words if w[0].isupper() and len(w) > 1]
         
-        if len(entities) >= 2:
+        # STRUCTURAL FILTER: Only keep entities with sufficient signal
+        filtered_entities = [
+            e for e in entities 
+            if structural_score(e, corpus_stats) >= 2
+        ]
+        
+        if len(filtered_entities) >= 2:
             # Entity-entity relationship
-            subject = entities[0]
-            obj = entities[-1]
+            subject = filtered_entities[0]
+            obj = filtered_entities[-1]
             
             # Try to find predicate (middle words)
             predicate_words = []
@@ -69,9 +153,9 @@ def extract_claims_from_text(text: str, doc_id: str) -> List[Dict[str, Any]]:
                 "temporal_pressure": None
             })
         
-        elif len(entities) == 1:
-            # Single entity claim
-            subject = entities[0]
+        elif len(filtered_entities) == 1:
+            # Single entity claim (only if high signal)
+            subject = filtered_entities[0]
             
             claims.append({
                 "doc_id": doc_id,
@@ -88,13 +172,20 @@ def extract_claims_from_text(text: str, doc_id: str) -> List[Dict[str, Any]]:
 
 
 def load_corpus(path_pattern: str) -> List[Dict[str, Any]]:
-    """Load corpus and extract claims."""
+    """Load corpus and extract claims with structural filtering."""
     all_claims = []
     
     files = glob.glob(path_pattern)
     
     print(f"Found {len(files)} files")
     
+    # PHASE 1: Build corpus stats (frequency counts)
+    print("Building corpus statistics...")
+    corpus_stats = build_corpus_stats(files)
+    print(f"  → {len(corpus_stats)} unique capitalized tokens")
+    
+    # PHASE 2: Extract claims with structural filtering
+    print("Extracting claims with structural filtering...")
     for filepath in files:
         doc_id = Path(filepath).stem
         
@@ -102,7 +193,7 @@ def load_corpus(path_pattern: str) -> List[Dict[str, Any]]:
             with open(filepath) as f:
                 text = f.read()
             
-            claims = extract_claims_from_text(text, doc_id)
+            claims = extract_claims_from_text(text, doc_id, corpus_stats)
             all_claims.extend(claims)
             
             print(f"  {doc_id}: {len(claims)} claims")
@@ -185,8 +276,13 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     print("=" * 70)
-    print("SIMPLE CLAIM EXTRACTION")
+    print("CLAIM EXTRACTION (with structural filtering)")
     print("=" * 70)
+    print()
+    print("Philosophy: Fragment-like text filtering")
+    print("  - Suppress low-signal tokens (pronouns, short words)")
+    print("  - Boost tokens appearing >2 times across corpus")
+    print("  - Require structural_score >= 2 for both subject and object")
     print()
     
     # Clear existing claims if requested
