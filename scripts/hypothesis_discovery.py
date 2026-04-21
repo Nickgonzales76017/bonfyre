@@ -624,6 +624,10 @@ class HypothesisDiscoveryEngine:
                 novelty_score   REAL,
                 pressure_reduction REAL,
                 overall_rank    REAL,
+                investigation_score REAL,
+                uncertainty_reduction REAL,
+                structural_leverage REAL,
+                cost            REAL,
                 ranked_at       TEXT NOT NULL
             )
         """)
@@ -685,15 +689,37 @@ class HypothesisDiscoveryEngine:
         
         if verbose:
             print(f"  → Generated {len(all_hypotheses)} candidate hypotheses")
-            for i, hyp in enumerate(all_hypotheses[:5], 1):
-                print(f"    {i}. {hyp['name'][:50]}")
         
-        # Store generated hypotheses
-        self._store_generated_hypotheses(all_hypotheses, signals)
+        # DEDUPLICATION: Remove similar hypotheses
+        all_hypotheses = self._deduplicate_hypotheses(all_hypotheses)
+        
+        if verbose:
+            print(f"  → After deduplication: {len(all_hypotheses)} unique hypotheses")
+        
+        # RANKING: Score hypotheses by investigation value
+        rankings = self._rank_hypotheses(all_hypotheses, signals)
+        
+        # FILTERING: Keep only top N by investigation_score
+        top_hypotheses = [
+            hyp for hyp in all_hypotheses 
+            if hyp["name"] in [r["hypothesis_name"] for r in rankings[:max_hypotheses]]
+        ]
+        top_rankings = rankings[:max_hypotheses]
+        
+        if verbose:
+            print(f"  → Top {len(top_hypotheses)} by investigation score:")
+            for i, ranking in enumerate(top_rankings[:5], 1):
+                print(f"    {i}. {ranking['hypothesis_name'][:45]:45s} | score: {ranking['investigation_score']:.3f}")
+        
+        # Store generated hypotheses (only top ones)
+        self._store_generated_hypotheses(top_hypotheses, signals)
+        
+        # Store rankings (only for stored hypotheses)
+        self._store_rankings(top_rankings)
         
         # ── STEP 3: Test hypotheses (via Phase 16.5) ──
         if verbose:
-            print(f"\n[3/4] Testing hypotheses...")
+            print(f"\n[3/4] Testing top hypotheses...")
         
         test_results = []
         
@@ -704,7 +730,7 @@ class HypothesisDiscoveryEngine:
             engine = HypothesisEngine(str(self.memory_dir), str(self.models_dir))
             
             # Group competing hypotheses
-            competing_groups = self._group_competing_hypotheses(all_hypotheses)
+            competing_groups = self._group_competing_hypotheses(top_hypotheses)
             
             for group_name, hyp_specs in competing_groups.items():
                 if len(hyp_specs) > 1:
@@ -748,26 +774,19 @@ class HypothesisDiscoveryEngine:
             if verbose:
                 print("    [warning] Phase 16.5 not available, skipping testing")
         
-        # ── STEP 4: Rank hypotheses ──
+        # ── STEP 4: Build report ──
         if verbose:
-            print(f"\n[4/4] Ranking hypotheses...")
-        
-        rankings = self._rank_hypotheses(all_hypotheses, signals)
-        
-        if verbose:
-            print(f"  → Ranked {len(rankings)} hypotheses")
-            print(f"\n  Top 5 by overall rank:")
-            for i, ranking in enumerate(rankings[:5], 1):
-                print(f"    {i}. {ranking['hypothesis_name'][:45]:45s} | score: {ranking['overall_rank']:.3f}")
+            print(f"\n[4/4] Building report...")
         
         # Build report
         report = {
             "n_signals_detected": len(signals),
             "n_hypotheses_generated": len(all_hypotheses),
+            "n_hypotheses_deduped": len(top_hypotheses),
             "n_hypotheses_tested": len(test_results),
             "signals": [s.to_dict() for s in signals[:10]],
-            "hypotheses": all_hypotheses[:10],
-            "rankings": rankings[:10],
+            "top_hypotheses": top_hypotheses[:10],
+            "rankings": top_rankings[:10],
             "test_results": test_results
         }
         
@@ -777,7 +796,13 @@ class HypothesisDiscoveryEngine:
             print(f"{'═'*70}")
             print(f"  Signals detected:      {report['n_signals_detected']}")
             print(f"  Hypotheses generated:  {report['n_hypotheses_generated']}")
+            print(f"  After deduplication:   {report['n_hypotheses_deduped']}")
             print(f"  Hypotheses tested:     {report['n_hypotheses_tested']}")
+            print(f"\n  Top 3 by investigation score:")
+            for i, ranking in enumerate(top_rankings[:3], 1):
+                print(f"    {i}. {ranking['hypothesis_name'][:45]:45s}")
+                print(f"       investigation_score: {ranking['investigation_score']:.3f}")
+                print(f"       (impact={ranking['impact_score']:.2f}, leverage={ranking['structural_leverage']:.2f}, cost={ranking['cost']:.1f})")
             print(f"{'═'*70}\n")
         
         return report
@@ -875,46 +900,99 @@ class HypothesisDiscoveryEngine:
         conn.commit()
         conn.close()
     
+    def _deduplicate_hypotheses(self, hypotheses: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """
+        Remove duplicate/similar hypotheses.
+        
+        Keeps highest-scored hypothesis from each cluster.
+        """
+        # Simple clustering by entity overlap
+        clusters = []
+        
+        for hyp in hypotheses:
+            # Extract entities from signal_source
+            signal_source = hyp.get("signal_source", {})
+            entities = set(signal_source.get("entities", []))
+            
+            # Find matching cluster
+            matched = False
+            for cluster in clusters:
+                cluster_entities = set(cluster[0].get("signal_source", {}).get("entities", []))
+                
+                # If >50% entity overlap, add to cluster
+                if entities and cluster_entities:
+                    overlap = len(entities & cluster_entities) / len(entities | cluster_entities)
+                    if overlap > 0.5:
+                        cluster.append(hyp)
+                        matched = True
+                        break
+            
+            if not matched:
+                clusters.append([hyp])
+        
+        # Keep best from each cluster
+        deduplicated = []
+        for cluster in clusters:
+            # Score by signal strength (already in signal_source)
+            best = max(cluster, key=lambda h: h.get("signal_source", {}).get("strength", 0.0))
+            deduplicated.append(best)
+        
+        return deduplicated
+    
     def _rank_hypotheses(
         self, 
         hypotheses: List[Dict[str, Any]], 
         signals: List[Signal]
     ) -> List[Dict[str, Any]]:
         """
-        Rank hypotheses by impact, stability, novelty, pressure reduction.
+        Rank hypotheses by investigation score.
+        
+        investigation_score = impact * novelty * uncertainty_reduction * structural_leverage / cost
         
         Returns ranked list.
         """
         rankings = []
         
-        # Build signal strength map
-        signal_strength_map = {s.description: s.strength for s in signals}
-        
         for hyp in hypotheses:
-            # IMPACT: How much would resolving this help?
-            # Heuristic: signal strength
             signal_source = hyp.get("signal_source", {})
+            
+            # IMPACT: How much would resolving this help?
             impact_score = signal_source.get("strength", 0.5)
             
-            # STABILITY: How robust is the signal?
-            # Heuristic: evidence count
-            evidence = signal_source.get("evidence", {})
-            n_evidence = len(evidence)
-            stability_score = min(n_evidence / 5.0, 1.0)
+            # NOVELTY: Have we tested this before? (check DB)
+            novelty_score = 1.0  # TODO: query DB for tested hypotheses
             
-            # NOVELTY: Have we tested this before?
-            # Heuristic: always novel in first implementation
-            novelty_score = 1.0
-            
-            # PRESSURE REDUCTION: Would this reduce unresolved pressure?
-            # Heuristic: conflict/unstable signals have high reduction potential
+            # UNCERTAINTY REDUCTION: Would this reduce unresolved pressure?
             signal_type = signal_source.get("signal_type", "")
             if signal_type in ["conflict_cluster", "unstable_region", "temporal_inconsistency"]:
-                pressure_reduction = 0.9
+                uncertainty_reduction = 0.9
             else:
-                pressure_reduction = 0.5
+                uncertainty_reduction = 0.5
             
-            # OVERALL RANK: Weighted average
+            # STRUCTURAL LEVERAGE: Does it affect many other claims?
+            evidence = signal_source.get("evidence", {})
+            n_evidence = sum(v for v in evidence.values() if isinstance(v, (int, float)))
+            structural_leverage = min(n_evidence / 10.0, 1.0)
+            
+            # COST: Estimated computational cost (competing hypotheses cost more)
+            name = hyp["name"]
+            cost = 1.0
+            if "alias_same" in name or "alias_different" in name:
+                cost = 2.0  # Competing set
+            elif "timeline_consistent" in name or "timeline_impossible" in name:
+                cost = 2.0  # Competing set
+            
+            # INVESTIGATION SCORE
+            investigation_score = (
+                impact_score * 
+                novelty_score * 
+                uncertainty_reduction * 
+                structural_leverage 
+            ) / (cost + 1e-6)
+            
+            # Also compute old overall_rank for compatibility
+            stability_score = structural_leverage
+            pressure_reduction = uncertainty_reduction
             overall_rank = (
                 impact_score * 0.3 +
                 stability_score * 0.2 +
@@ -925,17 +1003,18 @@ class HypothesisDiscoveryEngine:
             rankings.append({
                 "hypothesis_name": hyp["name"],
                 "impact_score": impact_score,
-                "stability_score": stability_score,
                 "novelty_score": novelty_score,
-                "pressure_reduction": pressure_reduction,
-                "overall_rank": overall_rank
+                "uncertainty_reduction": uncertainty_reduction,
+                "structural_leverage": structural_leverage,
+                "cost": cost,
+                "investigation_score": investigation_score,
+                "stability_score": stability_score,  # For backward compat
+                "pressure_reduction": pressure_reduction,  # For backward compat
+                "overall_rank": overall_rank  # For backward compat
             })
         
-        # Sort by overall rank
-        rankings.sort(key=lambda r: r["overall_rank"], reverse=True)
-        
-        # Store rankings
-        self._store_rankings(rankings)
+        # Sort by investigation_score (primary), then overall_rank
+        rankings.sort(key=lambda r: (r["investigation_score"], r["overall_rank"]), reverse=True)
         
         return rankings
     
@@ -964,8 +1043,9 @@ class HypothesisDiscoveryEngine:
                 cur.execute("""
                     INSERT INTO hypothesis_rankings
                     (hypothesis_id, impact_score, stability_score, novelty_score,
-                     pressure_reduction, overall_rank, ranked_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                     pressure_reduction, overall_rank, investigation_score,
+                     uncertainty_reduction, structural_leverage, cost, ranked_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     hyp_id,
                     ranking["impact_score"],
@@ -973,6 +1053,10 @@ class HypothesisDiscoveryEngine:
                     ranking["novelty_score"],
                     ranking["pressure_reduction"],
                     ranking["overall_rank"],
+                    ranking["investigation_score"],
+                    ranking["uncertainty_reduction"],
+                    ranking["structural_leverage"],
+                    ranking["cost"],
                     time.strftime("%Y-%m-%d %H:%M:%S")
                 ))
         
