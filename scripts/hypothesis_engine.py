@@ -2,86 +2,77 @@
 """
 hypothesis_engine.py
 
-PHASE 16: HYPOTHESIS-DRIVEN INVESTIGATION ENGINE
+PHASE 16.5: ADVERSARIAL HYPOTHESIS ENGINE
 
 PURPOSE:
 --------
-Phase 13-15 built selection + pressure + structural adaptation.
-Phase 16 adds PURPOSE: the system can now pursue and validate specific ideas.
+Phase 16 added PURPOSE: test specific ideas.
+Phase 16.5 adds INTELLECTUAL COMPETITION: run competing explanations through
+pressure and see which survives.
 
 CORE INSIGHT:
 -------------
-Before: Reactive document processing (analyze whatever corpus arrives)
-After:  Hypothesis-driven investigation (test specific theories about reality)
+Phase 16:   Test single hypothesis → confirmed/refuted
+Phase 16.5: Run competing hypotheses → compare relative strength
+
+NOT: "Is hypothesis X true?"
+BUT: "Which of these competing explanations best survives reality testing?"
 
 ARCHITECTURE:
 -------------
-Each hypothesis defines:
-  - target_pattern:         What pattern we're looking for
-  - activation_conditions:  When to activate this hypothesis
-  - evaluation_strategy:    How to test it (swarm → pressure → intervention)
-  - success_criteria:       What counts as validated
+1. COMPETING HYPOTHESES:
+   - Multiple variants of same question
+   - Example: "A == B" vs "A != B"
+
+2. CONDITIONAL EVALUATION:
+   - IF conditions → EXPECT outcome under pressure
+   - Track whether expectations hold
+
+3. RELATIVE STRENGTH SCORING:
+   - Not just pass/fail
+   - Compare survival rates between competing hypotheses
+
+4. HYPOTHESIS CHAINING:
+   - Output of one hypothesis feeds into next
+   - Example: alias → network → timeline
+
+5. FRAGILITY TRACKING:
+   - Does hypothesis collapse under:
+     • Perturbation pressure
+     • Temporal pressure
+     • Fragment-only view
+     • Representation pressure
 
 WORKFLOW:
 ---------
-For each hypothesis:
-  1. Run hypothesis swarm      (Phase 12: competing claims)
-  2. Apply convergence         (Phase 13: stable/fragile graph)
-  3. Apply orthogonal pressure (Phase 14: test against reality)
-  4. Try structural intervention (Phase 15: resolve hot zones)
-  5. Measure survival          (claims that survive all tests)
-  6. Store validation result   (hypothesis confirmed/refuted/inconclusive)
+For competing hypotheses:
+  1. Run each variant through full pipeline
+  2. Measure survival under each pressure type
+  3. Compare relative strength
+  4. Identify fragility points
+  5. Determine winner by robustness
 
-BUILT-IN HYPOTHESES:
---------------------
-1. alias_network          - Are these names the same person?
-2. timeline_reconstruction - Can we build consistent chronology?
-3. network_discovery      - Who are key actors and relationships?
-4. contradiction_detection - Where do sources conflict?
-5. gap_identification     - What's missing from the record?
+BUILT-IN COMPETING SETS:
+------------------------
+1. alias_identity_test:
+   - same_person (A == B)
+   - different_people (A != B)
 
-USAGE:
-------
-    engine = HypothesisEngine(memory_dir, models_dir)
-    
-    # Register hypothesis
-    hypothesis = Hypothesis(
-        name="alias_network",
-        target_pattern="entities that may refer to same person",
-        activation_conditions=["high name ambiguity"],
-        evaluation_strategy=["lens_swarm", "orthogonal_pressure", "fragment_intervention"],
-        success_criteria=["stable cluster under pressure"]
-    )
-    engine.register_hypothesis(hypothesis)
-    
-    # Evaluate hypothesis on corpus
-    result = engine.evaluate_hypothesis(hypothesis, corpus)
-    
-    # result = {
-    #   "hypothesis_name": "alias_network",
-    #   "validation_status": "confirmed",
-    #   "n_claims_initial": 150,
-    #   "n_claims_survived": 42,
-    #   "survival_rate": 0.28,
-    #   "orthogonal_pressure_avg": 0.65,
-    #   "stable_edges": 23,
-    #   "intervention_success": True,
-    #   "evidence": <ClaimGraph>,
-    # }
+2. timeline_consistency_test:
+   - consistent_sequence
+   - impossible_sequence
 
-INTEGRATION:
-------------
-- Phase 12 (hypothesis_swarm.py):    Generate competing claims
-- Phase 13 (convergence_engine.py):  Extract stable truth
-- Phase 14 (orthogonal_pressure.py): Test against reality
-- Phase 15 (structural_intervention.py): Resolve hot zones
+3. network_structure_test:
+   - connected_network
+   - isolated_actors
 
 NEW CAPABILITY:
 ---------------
-Before: "Process these documents"
-After:  "I think these 3 names are aliases — test that hypothesis"
+Phase 16:   "Test whether A == B"
+Phase 16.5: "Test A == B vs A != B and see which survives pressure"
 
-This is the PURPOSE layer that makes Bonfyre a scientific instrument.
+This is INTELLECTUAL COMPETITION — the system argues with itself
+and converges on the best explanation.
 """
 
 import json
@@ -93,8 +84,68 @@ from pathlib import Path
 from typing import List, Dict, Any, Optional
 
 # ═══════════════════════════════════════════════════════════════════════════
-# HYPOTHESIS DATA MODEL
+# HYPOTHESIS DATA MODEL (PHASE 16.5: ADVERSARIAL)
 # ═══════════════════════════════════════════════════════════════════════════
+
+@dataclass
+class ConditionalExpectation:
+    """
+    IF conditions → EXPECT outcome under pressure
+    
+    Example:
+        IF high_name_ambiguity:
+            EXPECT temporal_pressure > 0.6
+            EXPECT survival_rate > 0.3
+    """
+    conditions: List[str]           # Activation conditions
+    expected_outcomes: Dict[str, float]  # Expected metrics
+    
+    def check(self, result: Dict[str, Any]) -> bool:
+        """Check if expectations were met."""
+        for metric, expected_value in self.expected_outcomes.items():
+            actual_value = result.get(metric, 0.0)
+            if actual_value < expected_value:
+                return False
+        return True
+
+
+@dataclass
+class HypothesisFragility:
+    """
+    Track which pressure types cause hypothesis to collapse.
+    
+    Example:
+        graph_pressure: 0.8  (survives)
+        temporal_pressure: 0.2  (collapses!)
+        frequency_pressure: 0.7  (survives)
+    """
+    graph_pressure: Optional[float] = None
+    temporal_pressure: Optional[float] = None
+    frequency_pressure: Optional[float] = None
+    perturbation_pressure: Optional[float] = None
+    representation_pressure: Optional[float] = None
+    
+    def fragile_points(self, threshold: float = 0.5) -> List[str]:
+        """Return pressure types where hypothesis is fragile."""
+        fragile = []
+        for pressure_type in ['graph', 'temporal', 'frequency', 'perturbation', 'representation']:
+            value = getattr(self, f"{pressure_type}_pressure")
+            if value is not None and value < threshold:
+                fragile.append(pressure_type)
+        return fragile
+    
+    def robustness_score(self) -> float:
+        """Overall robustness across all pressure types."""
+        pressures = [
+            self.graph_pressure,
+            self.temporal_pressure,
+            self.frequency_pressure,
+            self.perturbation_pressure,
+            self.representation_pressure
+        ]
+        valid_pressures = [p for p in pressures if p is not None]
+        return sum(valid_pressures) / len(valid_pressures) if valid_pressures else 0.0
+
 
 @dataclass
 class Hypothesis:
@@ -103,6 +154,11 @@ class Hypothesis:
     
     Each hypothesis is a claim about reality that can be validated
     by running the full Bonfyre pipeline (swarm → pressure → intervention).
+    
+    PHASE 16.5 ADDITIONS:
+    - assumption:            Core assumption (e.g., "A == B")
+    - conditional_expectations: IF/THEN expectations
+    - chain_input_from:      Name of hypothesis whose output feeds into this one
     """
     name: str
     target_pattern: str
@@ -112,12 +168,54 @@ class Hypothesis:
     
     # Optional metadata
     description: Optional[str] = None
-    lens_priorities: Optional[Dict[str, float]] = None  # Which lenses to emphasize
+    lens_priorities: Optional[Dict[str, float]] = None
     expected_claim_types: Optional[List[str]] = None
+    
+    # PHASE 16.5: Adversarial features
+    assumption: Optional[str] = None  # Core assumption being tested
+    conditional_expectations: Optional[List[ConditionalExpectation]] = None
+    chain_input_from: Optional[str] = None  # Hypothesis to chain from
     
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dict for storage."""
         return asdict(self)
+    
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "Hypothesis":
+        """Deserialize from dict."""
+        # Handle nested objects
+        if "conditional_expectations" in data and data["conditional_expectations"]:
+            data["conditional_expectations"] = [
+                ConditionalExpectation(**exp) if isinstance(exp, dict) else exp
+                for exp in data["conditional_expectations"]
+            ]
+        return cls(**data)
+
+
+@dataclass
+class CompetingHypothesisSet:
+    """
+    A set of mutually exclusive hypotheses tested against each other.
+    
+    Example:
+        name: "alias_identity_test"
+        variants: [
+            Hypothesis(name="same_person", assumption="A == B", ...),
+            Hypothesis(name="different_people", assumption="A != B", ...)
+        ]
+    
+    The variants compete — only one can be the best explanation.
+    """
+    name: str
+    description: str
+    variants: List[Hypothesis]
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "variants": [v.to_dict() for v in self.variants]
+        }
     
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "Hypothesis":
@@ -188,7 +286,127 @@ BUILTIN_HYPOTHESES = {
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# HYPOTHESIS ENGINE
+# BUILT-IN COMPETING HYPOTHESIS SETS (PHASE 16.5)
+# ═══════════════════════════════════════════════════════════════════════════
+
+COMPETING_HYPOTHESIS_SETS = {
+    "alias_identity_test": CompetingHypothesisSet(
+        name="alias_identity_test",
+        description="Test whether two entities are the same person vs different people",
+        variants=[
+            Hypothesis(
+                name="same_person",
+                target_pattern="evidence that A and B are the same person",
+                activation_conditions=["name similarity", "overlapping contexts"],
+                evaluation_strategy=["lens_swarm", "orthogonal_pressure", "convergence"],
+                success_criteria=["stable cluster under pressure", "temporal consistency"],
+                assumption="A == B",
+                lens_priorities={"entity_linking": 2.0, "identity": 1.8},
+                expected_claim_types=["same_as", "alias_of", "also_known_as"],
+                conditional_expectations=[
+                    ConditionalExpectation(
+                        conditions=["high name similarity"],
+                        expected_outcomes={"temporal_pressure": 0.6, "survival_rate": 0.3}
+                    )
+                ]
+            ),
+            Hypothesis(
+                name="different_people",
+                target_pattern="evidence that A and B are distinct individuals",
+                activation_conditions=["temporal conflicts", "location conflicts"],
+                evaluation_strategy=["lens_swarm", "temporal_pressure", "convergence"],
+                success_criteria=["temporal violations", "location impossibilities"],
+                assumption="A != B",
+                lens_priorities={"temporal": 2.0, "location": 1.8},
+                expected_claim_types=["different_from", "conflicts_with"],
+                conditional_expectations=[
+                    ConditionalExpectation(
+                        conditions=["temporal conflicts"],
+                        expected_outcomes={"temporal_pressure": 0.0, "survival_rate": 0.7}
+                    )
+                ]
+            ),
+        ]
+    ),
+    
+    "timeline_consistency_test": CompetingHypothesisSet(
+        name="timeline_consistency_test",
+        description="Test whether events form consistent sequence vs impossible sequence",
+        variants=[
+            Hypothesis(
+                name="consistent_sequence",
+                target_pattern="events that form coherent chronology",
+                activation_conditions=["temporal references", "dated events"],
+                evaluation_strategy=["lens_swarm", "temporal_pressure", "convergence"],
+                success_criteria=["no temporal violations", "stable event sequence"],
+                assumption="timeline is internally consistent",
+                lens_priorities={"temporal": 2.0, "event_extraction": 1.5},
+                conditional_expectations=[
+                    ConditionalExpectation(
+                        conditions=["dated events"],
+                        expected_outcomes={"temporal_pressure": 0.8, "n_stable_edges": 10}
+                    )
+                ]
+            ),
+            Hypothesis(
+                name="impossible_sequence",
+                target_pattern="events that cannot coexist temporally",
+                activation_conditions=["simultaneity violations", "causality breaks"],
+                evaluation_strategy=["lens_swarm", "temporal_pressure"],
+                success_criteria=["detected violations", "low temporal pressure"],
+                assumption="timeline contains impossibilities",
+                lens_priorities={"temporal": 2.0},
+                conditional_expectations=[
+                    ConditionalExpectation(
+                        conditions=["simultaneity detected"],
+                        expected_outcomes={"temporal_pressure": 0.0}
+                    )
+                ]
+            ),
+        ]
+    ),
+    
+    "network_structure_test": CompetingHypothesisSet(
+        name="network_structure_test",
+        description="Test whether entities form connected network vs isolated actors",
+        variants=[
+            Hypothesis(
+                name="connected_network",
+                target_pattern="entities with established relationships",
+                activation_conditions=["relationship mentions", "multiple actors"],
+                evaluation_strategy=["lens_swarm", "graph_pressure", "convergence"],
+                success_criteria=["connected components", "stable relationship graph"],
+                assumption="actors form interconnected network",
+                lens_priorities={"relationship": 2.0, "entity_linking": 1.5},
+                conditional_expectations=[
+                    ConditionalExpectation(
+                        conditions=["multiple actors"],
+                        expected_outcomes={"n_stable_edges": 5, "graph_pressure": 0.7}
+                    )
+                ]
+            ),
+            Hypothesis(
+                name="isolated_actors",
+                target_pattern="entities with no clear relationships",
+                activation_conditions=["entity mentions", "no relationship indicators"],
+                evaluation_strategy=["lens_swarm", "graph_pressure"],
+                success_criteria=["isolated nodes", "low edge density"],
+                assumption="actors operate independently",
+                lens_priorities={"entity_linking": 1.5},
+                conditional_expectations=[
+                    ConditionalExpectation(
+                        conditions=["no relationships"],
+                        expected_outcomes={"n_stable_edges": 0, "graph_pressure": 0.3}
+                    )
+                ]
+            ),
+        ]
+    ),
+}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# HYPOTHESIS ENGINE (PHASE 16.5: ADVERSARIAL CAPABILITIES)
 # ═══════════════════════════════════════════════════════════════════════════
 
 class HypothesisEngine:
@@ -666,6 +884,217 @@ class HypothesisEngine:
         
         return results
     
+    # ═══════════════════════════════════════════════════════════════════════
+    # PHASE 16.5: ADVERSARIAL HYPOTHESIS METHODS
+    # ═══════════════════════════════════════════════════════════════════════
+    
+    def compare_competing_hypotheses(
+        self,
+        competing_set: CompetingHypothesisSet,
+        corpus: List[str],
+        verbose: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Run competing hypotheses against each other and compare relative strength.
+        
+        This is INTELLECTUAL COMPETITION — the hypotheses argue with themselves.
+        
+        Args:
+            competing_set: Set of mutually exclusive hypotheses
+            corpus: Document corpus to test against
+            verbose: Print progress
+        
+        Returns:
+            {
+              "winner": hypothesis_name,
+              "results": [result1, result2, ...],
+              "relative_strengths": {name: score, ...},
+              "fragility_comparison": {name: fragility_obj, ...}
+            }
+        """
+        if verbose:
+            print(f"\n{'═'*70}")
+            print(f"COMPETING HYPOTHESES: {competing_set.name}")
+            print(f"{'═'*70}")
+            print(f"Description: {competing_set.description}")
+            print(f"Variants: {len(competing_set.variants)}")
+            for v in competing_set.variants:
+                print(f"  - {v.name:20s} | {v.assumption}")
+            print(f"{'─'*70}\n")
+        
+        results = []
+        fragilities = {}
+        
+        # Evaluate each variant
+        for i, variant in enumerate(competing_set.variants, 1):
+            if verbose:
+                print(f"\n[{i}/{len(competing_set.variants)}] Testing: {variant.name} ({variant.assumption})")
+            
+            # Evaluate with fragility tracking
+            result = self.evaluate_with_fragility(variant, corpus, verbose=verbose)
+            results.append(result)
+            fragilities[variant.name] = result.get("fragility", None)
+        
+        # Compare relative strengths
+        relative_strengths = {}
+        for result in results:
+            # Composite score: survival_rate × orthogonal_pressure × robustness
+            survival = result.get("survival_rate", 0.0)
+            pressure = result.get("orthogonal_pressure_avg", 0.0)
+            
+            fragility = result.get("fragility")
+            robustness = fragility.robustness_score() if fragility else 0.5
+            
+            composite_score = survival * pressure * robustness
+            relative_strengths[result["hypothesis_name"]] = composite_score
+        
+        # Determine winner
+        winner = max(relative_strengths, key=relative_strengths.get)
+        
+        if verbose:
+            print(f"\n{'─'*70}")
+            print("RELATIVE STRENGTHS:")
+            for name, score in sorted(relative_strengths.items(), key=lambda x: x[1], reverse=True):
+                symbol = "→" if name == winner else " "
+                print(f"  {symbol} {name:20s} {score:.3f}")
+            print(f"\nWINNER: {winner}")
+            print(f"{'═'*70}\n")
+        
+        return {
+            "competing_set": competing_set.name,
+            "winner": winner,
+            "results": results,
+            "relative_strengths": relative_strengths,
+            "fragility_comparison": {k: asdict(v) if v else None for k, v in fragilities.items()}
+        }
+    
+    def evaluate_with_fragility(
+        self,
+        hypothesis: Hypothesis,
+        corpus: List[str],
+        verbose: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Evaluate hypothesis and track fragility across pressure types.
+        
+        Tracks:
+        - Does hypothesis collapse under perturbation?
+        - Does it fail temporal pressure?
+        - Does it survive fragment-only view?
+        - Which pressure types cause collapse?
+        
+        Returns evaluation result with added 'fragility' field.
+        """
+        # Run standard evaluation first
+        result = self.evaluate_hypothesis(hypothesis, corpus, verbose=verbose)
+        
+        # Extract fragility data from claim graph
+        fragility = HypothesisFragility()
+        
+        try:
+            conn = sqlite3.connect(str(self.db_path))
+            
+            # Get average of each pressure type for survived claims
+            pressure_types = ['graph', 'temporal', 'frequency', 'perturbation', 'representation']
+            
+            for p_type in pressure_types:
+                avg_pressure = conn.execute(f"""
+                    SELECT AVG({p_type}_pressure)
+                    FROM claims
+                    WHERE {p_type}_pressure IS NOT NULL
+                      AND claim_strength > 0.3
+                """).fetchone()[0]
+                
+                setattr(fragility, f"{p_type}_pressure", avg_pressure or 0.0)
+            
+            conn.close()
+            
+        except Exception as e:
+            if verbose:
+                print(f"[fragility] WARNING: Could not compute fragility: {e}")
+        
+        result["fragility"] = fragility
+        
+        # Check fragile points
+        fragile_points = fragility.fragile_points(threshold=0.5)
+        if fragile_points and verbose:
+            print(f"[fragility] FRAGILE under: {', '.join(fragile_points)}")
+        
+        # Check conditional expectations
+        if hypothesis.conditional_expectations:
+            expectations_met = []
+            for expectation in hypothesis.conditional_expectations:
+                met = expectation.check(result)
+                expectations_met.append(met)
+                if verbose:
+                    status = "✓" if met else "✗"
+                    print(f"[expectations] {status} {expectation.conditions} → {expectation.expected_outcomes}")
+            
+            result["expectations_met"] = all(expectations_met)
+        
+        return result
+    
+    def chain_hypotheses(
+        self,
+        hypothesis_chain: List[Hypothesis],
+        corpus: List[str],
+        verbose: bool = True
+    ) -> List[Dict[str, Any]]:
+        """
+        Chain hypotheses: output of one feeds into the next.
+        
+        Example:
+            alias_hypothesis → network_hypothesis → timeline_hypothesis
+        
+        Each hypothesis can use the results/evidence from previous step.
+        
+        Args:
+            hypothesis_chain: List of hypotheses in order
+            corpus: Document corpus
+            verbose: Print progress
+        
+        Returns:
+            List of results, one per hypothesis in chain
+        """
+        if verbose:
+            print(f"\n{'═'*70}")
+            print(f"HYPOTHESIS CHAIN: {len(hypothesis_chain)} steps")
+            print(f"{'═'*70}")
+            for i, h in enumerate(hypothesis_chain, 1):
+                print(f"  {i}. {h.name:30s} | {h.target_pattern[:40]}")
+            print(f"{'─'*70}\n")
+        
+        results = []
+        context = {}  # Track context from previous steps
+        
+        for i, hypothesis in enumerate(hypothesis_chain, 1):
+            if verbose:
+                print(f"\n[STEP {i}/{len(hypothesis_chain)}] Evaluating: {hypothesis.name}")
+            
+            # Evaluate hypothesis
+            result = self.evaluate_with_fragility(hypothesis, corpus, verbose=verbose)
+            results.append(result)
+            
+            # Store result for next hypothesis in chain
+            context[hypothesis.name] = result
+            
+            # Check if chain should continue (stop if hypothesis refuted)
+            if result.get("validation_status") == "refuted":
+                if verbose:
+                    print(f"\n[chain] STOPPED: {hypothesis.name} was refuted")
+                    print(f"[chain] Remaining {len(hypothesis_chain) - i} steps skipped")
+                break
+        
+        if verbose:
+            print(f"\n{'─'*70}")
+            print(f"CHAIN COMPLETED: {len(results)}/{len(hypothesis_chain)} steps")
+            for i, result in enumerate(results, 1):
+                status = result.get("validation_status", "unknown")
+                print(f"  {i}. {result['hypothesis_name']:30s} → {status}")
+            print(f"{'═'*70}\n")
+        
+        return results
+    
     def get_evaluation_history(self, hypothesis_name: str) -> List[Dict[str, Any]]:
         """Get all evaluations for a hypothesis."""
         conn = sqlite3.connect(str(self.db_path))
@@ -710,6 +1139,14 @@ if __name__ == "__main__":
                         help="Show evaluation history for hypothesis")
     parser.add_argument("--run-all", action="store_true",
                         help="Evaluate all registered hypotheses")
+    
+    # PHASE 16.5: Adversarial hypothesis options
+    parser.add_argument("--compare", choices=list(COMPETING_HYPOTHESIS_SETS.keys()),
+                        help="Compare competing hypotheses")
+    parser.add_argument("--chain", nargs="+",
+                        help="Chain hypotheses (space-separated names)")
+    parser.add_argument("--with-fragility", action="store_true",
+                        help="Evaluate with fragility tracking")
     
     args = parser.parse_args()
     
@@ -760,6 +1197,66 @@ if __name__ == "__main__":
         
         print(f"\nResults:")
         print(json.dumps(results, indent=2))
+    
+    # PHASE 16.5: Adversarial commands
+    elif args.compare:
+        if not args.corpus:
+            print("ERROR: --corpus required for comparison")
+            exit(1)
+        
+        competing_set = COMPETING_HYPOTHESIS_SETS[args.compare]
+        result = engine.compare_competing_hypotheses(competing_set, args.corpus, verbose=True)
+        
+        print(f"\nComparison Result:")
+        print(f"  Winner: {result['winner']}")
+        print(f"  Relative Strengths:")
+        for name, score in sorted(result['relative_strengths'].items(), key=lambda x: x[1], reverse=True):
+            print(f"    {name:20s} {score:.3f}")
+    
+    elif args.chain:
+        if not args.corpus:
+            print("ERROR: --corpus required for chaining")
+            exit(1)
+        
+        # Build hypothesis chain
+        hypothesis_chain = []
+        for name in args.chain:
+            if name not in engine.hypotheses:
+                print(f"ERROR: Hypothesis '{name}' not registered")
+                exit(1)
+            hypothesis_chain.append(engine.hypotheses[name])
+        
+        results = engine.chain_hypotheses(hypothesis_chain, args.corpus, verbose=True)
+        
+        print(f"\nChain Results:")
+        for i, result in enumerate(results, 1):
+            print(f"  {i}. {result['hypothesis_name']:30s} → {result['validation_status']}")
+    
+    elif args.with_fragility and args.evaluate:
+        if not args.corpus:
+            print("ERROR: --corpus required for evaluation")
+            exit(1)
+        
+        if args.evaluate not in engine.hypotheses:
+            print(f"ERROR: Hypothesis '{args.evaluate}' not registered")
+            exit(1)
+        
+        hypothesis = engine.hypotheses[args.evaluate]
+        result = engine.evaluate_with_fragility(hypothesis, args.corpus, verbose=True)
+        
+        print(f"\nFragility Analysis:")
+        fragility = result.get("fragility")
+        if fragility:
+            print(f"  Graph pressure:          {fragility.graph_pressure:.3f}")
+            print(f"  Temporal pressure:       {fragility.temporal_pressure:.3f}")
+            print(f"  Frequency pressure:      {fragility.frequency_pressure:.3f}")
+            print(f"  Perturbation pressure:   {fragility.perturbation_pressure:.3f}")
+            print(f"  Representation pressure: {fragility.representation_pressure:.3f}")
+            print(f"  Robustness score:        {fragility.robustness_score():.3f}")
+            
+            fragile_points = fragility.fragile_points()
+            if fragile_points:
+                print(f"  FRAGILE under: {', '.join(fragile_points)}")
     
     else:
         parser.print_help()
