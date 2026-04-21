@@ -1,0 +1,604 @@
+{
+  "n_signals_detected": 20,
+  "n_hypotheses_generated": 10,
+  "n_hypotheses_deduped": 10,
+  "n_hypotheses_tested": 10,
+  "signals": [
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon",
+        "Amazon Prime"
+      ],
+      "evidence": {
+        "n_cooccurrences": 2240
+      },
+      "description": "High co-occurrence: 'Amazon' and 'Amazon Prime' (2240 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon",
+        "Angry Orange"
+      ],
+      "evidence": {
+        "n_cooccurrences": 2174
+      },
+      "description": "High co-occurrence: 'Amazon' and 'Angry Orange' (2174 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon Prime",
+        "Angry Orange"
+      ],
+      "evidence": {
+        "n_cooccurrences": 2112
+      },
+      "description": "High co-occurrence: 'Amazon Prime' and 'Angry Orange' (2112 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon",
+        "B2B"
+      ],
+      "evidence": {
+        "n_cooccurrences": 2108
+      },
+      "description": "High co-occurrence: 'Amazon' and 'B2B' (2108 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon Prime",
+        "B2B"
+      ],
+      "evidence": {
+        "n_cooccurrences": 2048
+      },
+      "description": "High co-occurrence: 'Amazon Prime' and 'B2B' (2048 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon",
+        "B2C"
+      ],
+      "evidence": {
+        "n_cooccurrences": 2042
+      },
+      "description": "High co-occurrence: 'Amazon' and 'B2C' (2042 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Angry Orange",
+        "B2B"
+      ],
+      "evidence": {
+        "n_cooccurrences": 1988
+      },
+      "description": "High co-occurrence: 'Angry Orange' and 'B2B' (1988 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon Prime",
+        "B2C"
+      ],
+      "evidence": {
+        "n_cooccurrences": 1984
+      },
+      "description": "High co-occurrence: 'Amazon Prime' and 'B2C' (1984 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Amazon",
+        "Boot"
+      ],
+      "evidence": {
+        "n_cooccurrences": 1976
+      },
+      "description": "High co-occurrence: 'Amazon' and 'Boot' (1976 times)"
+    },
+    {
+      "signal_type": "cooccurrence_anomaly",
+      "strength": 1.0,
+      "entities": [
+        "Angry Orange",
+        "B2C"
+      ],
+      "evidence": {
+        "n_cooccurrences": 1926
+      },
+      "description": "High co-occurrence: 'Angry Orange' and 'B2C' (1926 times)"
+    }
+  ],
+  "top_hypotheses": [
+    {
+      "name": "alias_same_Amazon_Amazon_Prime",
+      "target_pattern": "evidence that 'Amazon' and 'Amazon Prime' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon == Amazon Prime",
+      "description": "Test whether 'Amazon' and 'Amazon Prime' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon",
+          "Amazon Prime"
+        ],
+        "evidence": {
+          "n_cooccurrences": 2240
+        },
+        "description": "High co-occurrence: 'Amazon' and 'Amazon Prime' (2240 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_Angry_Orange",
+      "target_pattern": "evidence that 'Amazon' and 'Angry Orange' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon == Angry Orange",
+      "description": "Test whether 'Amazon' and 'Angry Orange' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon",
+          "Angry Orange"
+        ],
+        "evidence": {
+          "n_cooccurrences": 2174
+        },
+        "description": "High co-occurrence: 'Amazon' and 'Angry Orange' (2174 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_Prime_Angry_Orange",
+      "target_pattern": "evidence that 'Amazon Prime' and 'Angry Orange' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon Prime == Angry Orange",
+      "description": "Test whether 'Amazon Prime' and 'Angry Orange' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon Prime",
+          "Angry Orange"
+        ],
+        "evidence": {
+          "n_cooccurrences": 2112
+        },
+        "description": "High co-occurrence: 'Amazon Prime' and 'Angry Orange' (2112 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_B2B",
+      "target_pattern": "evidence that 'Amazon' and 'B2B' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon == B2B",
+      "description": "Test whether 'Amazon' and 'B2B' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon",
+          "B2B"
+        ],
+        "evidence": {
+          "n_cooccurrences": 2108
+        },
+        "description": "High co-occurrence: 'Amazon' and 'B2B' (2108 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_Prime_B2B",
+      "target_pattern": "evidence that 'Amazon Prime' and 'B2B' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon Prime == B2B",
+      "description": "Test whether 'Amazon Prime' and 'B2B' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon Prime",
+          "B2B"
+        ],
+        "evidence": {
+          "n_cooccurrences": 2048
+        },
+        "description": "High co-occurrence: 'Amazon Prime' and 'B2B' (2048 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_B2C",
+      "target_pattern": "evidence that 'Amazon' and 'B2C' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon == B2C",
+      "description": "Test whether 'Amazon' and 'B2C' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon",
+          "B2C"
+        ],
+        "evidence": {
+          "n_cooccurrences": 2042
+        },
+        "description": "High co-occurrence: 'Amazon' and 'B2C' (2042 times)"
+      }
+    },
+    {
+      "name": "alias_same_Angry_Orange_B2B",
+      "target_pattern": "evidence that 'Angry Orange' and 'B2B' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Angry Orange == B2B",
+      "description": "Test whether 'Angry Orange' and 'B2B' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Angry Orange",
+          "B2B"
+        ],
+        "evidence": {
+          "n_cooccurrences": 1988
+        },
+        "description": "High co-occurrence: 'Angry Orange' and 'B2B' (1988 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_Prime_B2C",
+      "target_pattern": "evidence that 'Amazon Prime' and 'B2C' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon Prime == B2C",
+      "description": "Test whether 'Amazon Prime' and 'B2C' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon Prime",
+          "B2C"
+        ],
+        "evidence": {
+          "n_cooccurrences": 1984
+        },
+        "description": "High co-occurrence: 'Amazon Prime' and 'B2C' (1984 times)"
+      }
+    },
+    {
+      "name": "alias_same_Amazon_Boot",
+      "target_pattern": "evidence that 'Amazon' and 'Boot' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Amazon == Boot",
+      "description": "Test whether 'Amazon' and 'Boot' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Amazon",
+          "Boot"
+        ],
+        "evidence": {
+          "n_cooccurrences": 1976
+        },
+        "description": "High co-occurrence: 'Amazon' and 'Boot' (1976 times)"
+      }
+    },
+    {
+      "name": "alias_same_Angry_Orange_B2C",
+      "target_pattern": "evidence that 'Angry Orange' and 'B2C' are the same",
+      "activation_conditions": [
+        "high co-occurrence"
+      ],
+      "evaluation_strategy": [
+        "lens_swarm",
+        "orthogonal_pressure",
+        "convergence"
+      ],
+      "success_criteria": [
+        "stable cluster",
+        "temporal consistency"
+      ],
+      "assumption": "Angry Orange == B2C",
+      "description": "Test whether 'Angry Orange' and 'B2C' are the same entity",
+      "signal_source": {
+        "signal_type": "cooccurrence_anomaly",
+        "strength": 1.0,
+        "entities": [
+          "Angry Orange",
+          "B2C"
+        ],
+        "evidence": {
+          "n_cooccurrences": 1926
+        },
+        "description": "High co-occurrence: 'Angry Orange' and 'B2C' (1926 times)"
+      }
+    }
+  ],
+  "rankings": [
+    {
+      "hypothesis_name": "alias_same_Amazon_Amazon_Prime",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_Angry_Orange",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_Prime_Angry_Orange",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_B2B",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_Prime_B2B",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_B2C",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Angry_Orange_B2B",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_Prime_B2C",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Amazon_Boot",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    },
+    {
+      "hypothesis_name": "alias_same_Angry_Orange_B2C",
+      "impact_score": 1.0,
+      "novelty_score": 1.0,
+      "uncertainty_reduction": 0.5,
+      "structural_leverage": 1.0,
+      "cost": 2.0,
+      "investigation_score": 0.2499998750000625,
+      "stability_score": 1.0,
+      "pressure_reduction": 0.5,
+      "overall_rank": 0.85
+    }
+  ],
+  "test_results": [
+    {
+      "hypothesis": "alias_same_Amazon_Amazon_Prime",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_Angry_Orange",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_Prime_Angry_Orange",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_B2B",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_Prime_B2B",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_B2C",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Angry_Orange_B2B",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_Prime_B2C",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Amazon_Boot",
+      "type": "single",
+      "status": "simulated"
+    },
+    {
+      "hypothesis": "alias_same_Angry_Orange_B2C",
+      "type": "single",
+      "status": "simulated"
+    }
+  ]
+}

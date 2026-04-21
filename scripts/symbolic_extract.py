@@ -16,6 +16,7 @@ import argparse
 
 # Common function words that should be filtered even if capitalized
 COMMON_WORDS = {
+    # Articles, pronouns, basic function words
     "The", "He", "She", "It", "They", "There", "This", "That", "These", "Those",
     "In", "On", "At", "To", "For", "Of", "With", "From", "By", "As",
     "And", "Or", "But", "If", "When", "Where", "Why", "How", "What", "Which",
@@ -29,7 +30,29 @@ COMMON_WORDS = {
     "January", "February", "March", "April", "May", "June", "July", "August",
     "September", "October", "November", "December",
     "American", "British", "French", "German", "Russian", "Chinese", "Japanese",  # Generic demonyms
-    "According", "His", "Her", "Their", "Our", "Its", "My", "Your"
+    "According", "His", "Her", "Their", "Our", "Its", "My", "Your",
+    
+    # Speech-specific conversational markers
+    "Absolutely", "Exactly", "Actually", "Totally", "Literally", "Obviously",
+    "Basically", "Supposedly", "Apparently", "Definitely", "Certainly", "Probably",
+    "Yeah", "Yep", "Nope", "Okay", "Alright", "Well", "Umm", "Uhh", "Hmm",
+    "Like", "Feel", "Think", "Know", "Mean", "Guess", "Suppose", "Imagine",
+    "Along", "Around", "About", "Maybe", "Perhaps", "Kind", "Sort", "Type",
+    "Anyway", "Anyways", "Whatever", "Somehow", "Somewhat",
+    
+    # Contractions (common in speech)
+    "I'm", "It's", "He's", "She's", "They're", "We're", "You're",
+    "I've", "We've", "You've", "They've", "He've", "She've",
+    "Don't", "Doesn't", "Didn't", "Can't", "Won't", "Shouldn't",
+    "Couldn't", "Wouldn't", "Hasn't", "Haven't", "Hadn't",
+    "Isn't", "Aren't", "Wasn't", "Weren't",
+    "That's", "There's", "Here's", "Who's", "What's", "Where's",
+    
+    # Sentence starters common in speech
+    "So", "So,", "Well,", "Okay,", "Yeah,", "Alright,", "But,",
+    "Like,", "I,", "We,", "You,", "They,", "He,", "She,", "John,",
+    "Listen", "Listen,", "Right", "Right,", "Sure", "Sure,",
+    "Got", "Gets", "Getting", "Took", "Takes", "Taking", "Made", "Makes", "Making"
 }
 
 

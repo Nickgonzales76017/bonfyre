@@ -1,0 +1,436 @@
+{
+  "canonical_groups": {
+    "Lance Cottrell,": "Lance Cottrell,",
+    "Boot": "Boot",
+    "John Lee": "John Lee",
+    "Pickfu": "Pickfu",
+    "Thanks": "Thanks",
+    "Thank": "Thanks",
+    "You": "You",
+    "CPGs": "CPGs",
+    "Procter": "Procter",
+    "Gamble": "Gamble",
+    "Very": "Very",
+    "Microsoft": "Microsoft",
+    "Hewlett Packard": "Hewlett Packard",
+    "We": "We",
+    "Learned": "Learned",
+    "We'd": "We'd",
+    "Same": "Same",
+    "When,": "When,",
+    "Amazon": "Amazon",
+    "Thrasio": "Thrasio",
+    "Angry Orange": "Angry Orange",
+    "Facebook": "Facebook",
+    "Amazon Prime": "Amazon Prime",
+    "B2C": "B2C",
+    "B2B": "B2B",
+    "Airbnb": "Airbnb",
+    "Henry Ford": "Henry Ford",
+    "Lance,": "Lance,",
+    "PICFU": "PICFU",
+    "Actually,": "Actually,",
+    "Justin": "Justin",
+    "Slack": "Slack",
+    "No,": "No,",
+    "Skype": "Skype",
+    "COVID": "COVID",
+    "Mike": "Mike",
+    "Otherwise": "Otherwise",
+    "Giving": "Giving",
+    "Different": "Different",
+    "Excellent": "Excellent",
+    "It's,": "It's,",
+    "Lance": "Lance",
+    "Great": "Great",
+    "PickFoo": "PickFoo",
+    "Ciao": "Ciao",
+    "Review": "Review",
+    "Send": "Send",
+    "Pickfoo": "Pickfoo",
+    "Ulyr Packard": "Ulyr Packard",
+    "Pickfood": "Pickfood",
+    "Pickfood,": "Pickfood,",
+    "Assume": "Assume",
+    "Because": "Because",
+    "Finding": "Finding",
+    "Build": "Build",
+    "Let's": "Let's",
+    "AI": "AI",
+    "EPK,": "EPK,",
+    "I'll": "I'll",
+    "Hey,": "Hey,",
+    "Even": "Even",
+    "Next": "Next",
+    "Now,": "Now,",
+    "ICP": "ICP",
+    "Event": "Event",
+    "LinkedIn": "LinkedIn",
+    "ICP,": "ICP,",
+    "Answer": "Answer",
+    "Keep": "Keep",
+    "MVP": "MVP",
+    "This,": "This,",
+    "Bingo,": "Bingo,",
+    "California,": "California,",
+    "Pasadena": "Pasadena",
+    "People": "People",
+    "California": "California",
+    "Yes,": "Yes,",
+    "Nevada,": "Nevada,",
+    "Welcome": "Welcome",
+    "Justin Dixon": "Justin Dixon",
+    "Gupta": "Gupta",
+    "Squanto,": "Squanto,",
+    "Boulder, Colorado": "Boulder, Colorado",
+    "Interested": "Interested",
+    "CEOs": "CEOs",
+    "Awesome": "Awesome"
+  },
+  "canonical_to_variants": {
+    "Lance Cottrell,": [
+      "Lance Cottrell,"
+    ],
+    "Boot": [
+      "Boot"
+    ],
+    "John Lee": [
+      "John Lee"
+    ],
+    "Pickfu": [
+      "Pickfu"
+    ],
+    "Thanks": [
+      "Thank",
+      "Thanks"
+    ],
+    "You": [
+      "You"
+    ],
+    "CPGs": [
+      "CPGs"
+    ],
+    "Procter": [
+      "Procter"
+    ],
+    "Gamble": [
+      "Gamble"
+    ],
+    "Very": [
+      "Very"
+    ],
+    "Microsoft": [
+      "Microsoft"
+    ],
+    "Hewlett Packard": [
+      "Hewlett Packard"
+    ],
+    "We": [
+      "We"
+    ],
+    "Learned": [
+      "Learned"
+    ],
+    "We'd": [
+      "We'd"
+    ],
+    "Same": [
+      "Same"
+    ],
+    "When,": [
+      "When,"
+    ],
+    "Amazon": [
+      "Amazon"
+    ],
+    "Thrasio": [
+      "Thrasio"
+    ],
+    "Angry Orange": [
+      "Angry Orange"
+    ],
+    "Facebook": [
+      "Facebook"
+    ],
+    "Amazon Prime": [
+      "Amazon Prime"
+    ],
+    "B2C": [
+      "B2C"
+    ],
+    "B2B": [
+      "B2B"
+    ],
+    "Airbnb": [
+      "Airbnb"
+    ],
+    "Henry Ford": [
+      "Henry Ford"
+    ],
+    "Lance,": [
+      "Lance,"
+    ],
+    "PICFU": [
+      "PICFU"
+    ],
+    "Actually,": [
+      "Actually,"
+    ],
+    "Justin": [
+      "Justin"
+    ],
+    "Slack": [
+      "Slack"
+    ],
+    "No,": [
+      "No,"
+    ],
+    "Skype": [
+      "Skype"
+    ],
+    "COVID": [
+      "COVID"
+    ],
+    "Mike": [
+      "Mike"
+    ],
+    "Otherwise": [
+      "Otherwise"
+    ],
+    "Giving": [
+      "Giving"
+    ],
+    "Different": [
+      "Different"
+    ],
+    "Excellent": [
+      "Excellent"
+    ],
+    "It's,": [
+      "It's,"
+    ],
+    "Lance": [
+      "Lance"
+    ],
+    "Great": [
+      "Great"
+    ],
+    "PickFoo": [
+      "PickFoo"
+    ],
+    "Ciao": [
+      "Ciao"
+    ],
+    "Review": [
+      "Review"
+    ],
+    "Send": [
+      "Send"
+    ],
+    "Pickfoo": [
+      "Pickfoo"
+    ],
+    "Ulyr Packard": [
+      "Ulyr Packard"
+    ],
+    "Pickfood": [
+      "Pickfood"
+    ],
+    "Pickfood,": [
+      "Pickfood,"
+    ],
+    "Assume": [
+      "Assume"
+    ],
+    "Because": [
+      "Because"
+    ],
+    "Finding": [
+      "Finding"
+    ],
+    "Build": [
+      "Build"
+    ],
+    "Let's": [
+      "Let's"
+    ],
+    "AI": [
+      "AI"
+    ],
+    "EPK,": [
+      "EPK,"
+    ],
+    "I'll": [
+      "I'll"
+    ],
+    "Hey,": [
+      "Hey,"
+    ],
+    "Even": [
+      "Even"
+    ],
+    "Next": [
+      "Next"
+    ],
+    "Now,": [
+      "Now,"
+    ],
+    "ICP": [
+      "ICP"
+    ],
+    "Event": [
+      "Event"
+    ],
+    "LinkedIn": [
+      "LinkedIn"
+    ],
+    "ICP,": [
+      "ICP,"
+    ],
+    "Answer": [
+      "Answer"
+    ],
+    "Keep": [
+      "Keep"
+    ],
+    "MVP": [
+      "MVP"
+    ],
+    "This,": [
+      "This,"
+    ],
+    "Bingo,": [
+      "Bingo,"
+    ],
+    "California,": [
+      "California,"
+    ],
+    "Pasadena": [
+      "Pasadena"
+    ],
+    "People": [
+      "People"
+    ],
+    "California": [
+      "California"
+    ],
+    "Yes,": [
+      "Yes,"
+    ],
+    "Nevada,": [
+      "Nevada,"
+    ],
+    "Welcome": [
+      "Welcome"
+    ],
+    "Justin Dixon": [
+      "Justin Dixon"
+    ],
+    "Gupta": [
+      "Gupta"
+    ],
+    "Squanto,": [
+      "Squanto,"
+    ],
+    "Boulder, Colorado": [
+      "Boulder, Colorado"
+    ],
+    "Interested": [
+      "Interested"
+    ],
+    "CEOs": [
+      "CEOs"
+    ],
+    "Awesome": [
+      "Awesome"
+    ]
+  },
+  "entity_counts": {
+    "Lance Cottrell,": 2,
+    "Boot": 4,
+    "John Lee": 3,
+    "Pickfu": 5,
+    "Thanks": 5,
+    "You": 17,
+    "CPGs": 4,
+    "Procter": 2,
+    "Gamble": 2,
+    "Very": 2,
+    "Microsoft": 2,
+    "Hewlett Packard": 1,
+    "We": 24,
+    "Learned": 1,
+    "We'd": 2,
+    "Same": 2,
+    "When,": 2,
+    "Amazon": 6,
+    "Thrasio": 4,
+    "Angry Orange": 4,
+    "Facebook": 2,
+    "Amazon Prime": 2,
+    "B2C": 4,
+    "B2B": 4,
+    "Airbnb": 1,
+    "Henry Ford": 1,
+    "Lance,": 2,
+    "PICFU": 2,
+    "Actually,": 1,
+    "Justin": 3,
+    "Slack": 3,
+    "No,": 3,
+    "Skype": 1,
+    "COVID": 2,
+    "Mike": 1,
+    "Otherwise": 1,
+    "Giving": 2,
+    "Different": 2,
+    "Excellent": 1,
+    "It's,": 1,
+    "Thank": 2,
+    "Lance": 1,
+    "Great": 1,
+    "PickFoo": 2,
+    "Ciao": 1,
+    "Review": 1,
+    "Send": 1,
+    "Pickfoo": 6,
+    "Ulyr Packard": 1,
+    "Pickfood": 2,
+    "Pickfood,": 1,
+    "Assume": 1,
+    "Because": 1,
+    "Finding": 1,
+    "Build": 1,
+    "Let's": 1,
+    "AI": 3,
+    "EPK,": 1,
+    "I'll": 1,
+    "Hey,": 2,
+    "Even": 2,
+    "Next": 3,
+    "Now,": 1,
+    "ICP": 5,
+    "Event": 1,
+    "LinkedIn": 2,
+    "ICP,": 1,
+    "Answer": 1,
+    "Keep": 1,
+    "MVP": 3,
+    "This,": 1,
+    "Bingo,": 1,
+    "California,": 2,
+    "Pasadena": 2,
+    "People": 1,
+    "California": 1,
+    "Yes,": 1,
+    "Nevada,": 1,
+    "Welcome": 2,
+    "Justin Dixon": 2,
+    "Gupta": 1,
+    "Squanto,": 1,
+    "Boulder, Colorado": 1,
+    "Interested": 1,
+    "CEOs": 1,
+    "Awesome": 1
+  }
+}
