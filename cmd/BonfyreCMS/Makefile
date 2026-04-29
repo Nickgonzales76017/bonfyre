@@ -1,7 +1,7 @@
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
-LDFLAGS  = -L../../lib/libbonfyre -lbonfyre
+LDFLAGS  = ../../lib/libbonfyre/libbonfyre.a
 TARGET = bonfyre-cms
 COMPACT_PROBE = tests/compact-probe
 

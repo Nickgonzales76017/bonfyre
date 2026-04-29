@@ -28,6 +28,50 @@
 #include <unistd.h>
 #include <dirent.h>
 
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
+}
+
+static int run_execvp(char *const argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return 1;
+    }
+    if (pid == 0) {
+        execvp(argv[0], argv);
+        perror("execvp");
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid");
+        return 1;
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+}
+
+static int delegate_layeros_ledger(int argc, char *argv[]) {
+    char *exec_argv[16];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "ledger";
+    exec_argv[n++] = argv[2];
+    exec_argv[n] = NULL;
+    return run_execvp(exec_argv);
+}
+
 /* Per-operation cost-to-replace estimates (USD).
  * These are what it would cost to recreate from scratch. */
 #define COST_PER_ATOM_BYTE  0.000001   /* $1/MB raw content */
@@ -288,6 +332,10 @@ static int cmd_export(const char *root, const char *fmt) {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
+        return delegate_layeros_ledger(argc, argv);
+    }
+
     if (argc >= 3 && strcmp(argv[1], "assess") == 0) {
         FamilyValue fv = assess_family(argv[2]);
         print_family_report(&fv);
@@ -322,6 +370,7 @@ int main(int argc, char *argv[]) {
         "  bonfyre-ledger portfolio <root_dir>             full portfolio roll-up\n"
         "  bonfyre-ledger delta <artifact.json>            value changes\n"
         "  bonfyre-ledger export <root_dir> [--format json|csv]\n"
+        "  bonfyre-ledger layer <artifact_id> [--root DIR]\n"
     );
     return 1;
 }

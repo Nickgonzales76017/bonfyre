@@ -1941,6 +1941,8 @@ static void print_usage(void) {
         "  bonfyre-cms ann qbench <type> [queries] [k]\n"
         "  bonfyre-cms ann stats <type>\n"
         "  bonfyre-cms bench-real <type> [--query-field F --query-op OP --query-value V]\n"
+        "  bonfyre-cms publish-layer-report <artifact_id> [--root DIR]\n"
+        "  bonfyre-cms publish-layer-family <T_FAMILY> [--root DIR]\n"
         "\n"
         "Options:\n"
         "  --port PORT     HTTP port (default: 8800)\n"
@@ -1957,6 +1959,40 @@ static const char *arg_opt(int argc, char **argv, const char *flag, const char *
         if (strcmp(argv[i], flag) == 0) return argv[i + 1];
     }
     return def;
+}
+
+static int delegate_layer_cms(int argc, char **argv) {
+    const char *root = arg_opt(argc, argv, "--root", NULL);
+    char *json = NULL;
+    char *out = NULL;
+    if (strcmp(argv[1], "publish-layer-report") == 0 && argc >= 3) {
+        if (bf_layer_load_json(root, argv[2], &json) != 0) return 1;
+        if (bf_layer_report_md(json, &out) != 0) { free(json); return 1; }
+        puts(out);
+        free(out);
+        free(json);
+        return 0;
+    } else if (strcmp(argv[1], "publish-layer-family") == 0 && argc >= 3) {
+        /* Native family publishing will move into libbonfyre next. */
+        char *exec_argv[16];
+        int n = 0;
+        exec_argv[n++] = "layeros/bin/bonfyre-layeros";
+        if (root) { exec_argv[n++] = "--root"; exec_argv[n++] = (char *)root; }
+        exec_argv[n++] = "emit";
+        exec_argv[n++] = "layer-cookbook";
+        exec_argv[n++] = "--family";
+        exec_argv[n++] = argv[2];
+        exec_argv[n] = NULL;
+        {
+            pid_t pid = fork();
+            int st = 0;
+            if (pid < 0) return 1;
+            if (pid == 0) { execvp(exec_argv[0], exec_argv); _exit(127); }
+            if (waitpid(pid, &st, 0) < 0) return 1;
+            return WIFEXITED(st) ? WEXITSTATUS(st) : 1;
+        }
+    }
+    return 1;
 }
 
 static int arg_int(int argc, char **argv, const char *flag, int def) {
@@ -2397,6 +2433,10 @@ static int run_existing_content_bench(sqlite3 *db, const char *type_name,
 }
 
 int main(int argc, char **argv) {
+    if (argc >= 2 && (strcmp(argv[1], "publish-layer-report") == 0 || strcmp(argv[1], "publish-layer-family") == 0)) {
+        return delegate_layer_cms(argc, argv);
+    }
+
     const char *requested_db;
     const char *requested_schemas;
     const int is_bench = (argc >= 2 &&

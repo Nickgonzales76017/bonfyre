@@ -64,6 +64,44 @@ static int run_cmd_capture(const char *const argv[], char *out, size_t out_sz) {
     return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
 }
 
+static int cmd_layers_native(int argc, char **argv) {
+    const char *root = NULL, *family = NULL, *workflow = NULL, *source = NULL, *status = NULL, *kind = NULL;
+    int bridge_required = 0;
+    char *json = NULL;
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--root") == 0 && i + 1 < argc) root = argv[++i];
+        else if (strcmp(argv[i], "--family") == 0 && i + 1 < argc) family = argv[++i];
+        else if (strcmp(argv[i], "--workflow") == 0 && i + 1 < argc) workflow = argv[++i];
+        else if (strcmp(argv[i], "--source") == 0 && i + 1 < argc) source = argv[++i];
+        else if (strcmp(argv[i], "--status") == 0 && i + 1 < argc) status = argv[++i];
+        else if (strcmp(argv[i], "--kind") == 0 && i + 1 < argc) kind = argv[++i];
+        else if (strcmp(argv[i], "--bridge-required") == 0) bridge_required = 1;
+    }
+    if (bf_layer_query_json(root, family, workflow, source, status, kind, bridge_required, &json) != 0) {
+        fprintf(stderr, "bonfyre-query: layer query failed\n");
+        return 1;
+    }
+    puts(json);
+    free(json);
+    return 0;
+}
+
+static int cmd_bridges_native(int argc, char **argv) {
+    const char *root = NULL, *family = NULL;
+    char *json = NULL;
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--root") == 0 && i + 1 < argc) root = argv[++i];
+        else if (strcmp(argv[i], "--family") == 0 && i + 1 < argc) family = argv[++i];
+    }
+    if (bf_layer_bridge_query_json(root, family, &json) != 0) {
+        fprintf(stderr, "bonfyre-query: bridge query failed\n");
+        return 1;
+    }
+    puts(json);
+    free(json);
+    return 0;
+}
+
 /* ── JSON artifact file finder ────────────────────────────────── */
 
 #define MAX_FILES 4096
@@ -193,6 +231,8 @@ static void print_usage(void) {
     fprintf(stderr,
         "bonfyre-query — local artifact analytics (DuckDB)\n\n"
         "Usage:\n"
+        "  bonfyre-query layers [--family T_*] [--workflow A3.s03] [--source SRC] [--status STATUS] [--kind KIND] [--root DIR]\n"
+        "  bonfyre-query bridges [--family T_*] [--root DIR]\n"
         "  bonfyre-query scan <dir> [db-path]\n"
         "  bonfyre-query sql <db> \"<SQL>\"\n"
         "  bonfyre-query stats <db> [output-dir]\n"
@@ -206,9 +246,16 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    if (argc < 3) { print_usage(); return 1; }
-
     const char *cmd = argv[1];
+
+    if (strcmp(cmd, "layers") == 0) {
+        return cmd_layers_native(argc, argv);
+    }
+    if (strcmp(cmd, "bridges") == 0) {
+        return cmd_bridges_native(argc, argv);
+    }
+
+    if (argc < 3) { print_usage(); return 1; }
 
     if (strcmp(cmd, "scan") == 0) {
         const char *db = (argc > 3) ? argv[3] : "artifacts.duckdb";

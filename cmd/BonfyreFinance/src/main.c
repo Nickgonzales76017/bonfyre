@@ -30,8 +30,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define MAX_PATH   2048
 #define MAX_COMPS  32
@@ -789,7 +792,8 @@ static void usage(void) {
         "  bonfyre-finance [--db FILE] bundle compare --name N\n"
         "  bonfyre-finance [--db FILE] bundle export --name N\n"
         "  bonfyre-finance [--db FILE] components\n"
-        "  bonfyre-finance [--db FILE] status\n");
+        "  bonfyre-finance [--db FILE] status\n"
+        "  bonfyre-finance layer <artifact_id> [--root DIR]\n");
 }
 
 int main(int argc, char **argv) {
@@ -809,6 +813,15 @@ int main(int argc, char **argv) {
 
     if (cmd_argc<2){ usage(); return 1; }
     const char *cmd=cmd_argv[1];
+
+    if (strcmp(cmd,"layer")==0 && cmd_argc>=3) {
+        const char *root = arg_get(cmd_argc, cmd_argv, "--root");
+        char *out = NULL;
+        if (bf_layer_finance_json(root, cmd_argv[2], &out) != 0 || !out) return 1;
+        puts(out);
+        free(out);
+        return 0;
+    }
 
     sqlite3 *db=open_db(db_path);
     if (!db) return 1;

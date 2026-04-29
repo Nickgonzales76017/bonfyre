@@ -35,6 +35,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define VERSION        "2.0.0"
 #define MAX_WORKERS    16
@@ -47,6 +48,8 @@
 static volatile int g_running = 1;
 static atomic_int g_active_workers = 0;
 static pthread_mutex_t g_db_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static const char *arg_val(int argc, char **argv, const char *flag);
 
 /* ── Timestamps ───────────────────────────────────────────────────── */
 
@@ -302,6 +305,42 @@ static int run_binary(const char *type, const char *input, const char *outdir,
     int status;
     waitpid(pid, &status, 0);
     return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
+static int cmd_layer_queue_native(int argc, char **argv, const char *layer_cmd) {
+    const char *root = arg_val(argc, argv, "--root");
+    const char *target = NULL;
+    int priority = 100;
+    char *json = NULL;
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], layer_cmd) == 0 && i + 1 < argc) {
+            target = argv[i + 1];
+        } else if (strcmp(argv[i], "--priority") == 0 && i + 1 < argc) {
+            priority = atoi(argv[i + 1]);
+        }
+    }
+    if (!target) {
+        fprintf(stderr, "%s requires <%s>\n", layer_cmd,
+                (strcmp(layer_cmd, "layer-compose") == 0 || strcmp(layer_cmd, "layer-bridge") == 0) ? "plan.json" : "artifact_id");
+        return 1;
+    }
+    if (strcmp(layer_cmd, "layer-compose") == 0) {
+        if (bf_layer_queue_plan_json(root, layer_cmd, target, priority, &json) != 0) {
+            fprintf(stderr, "bonfyre-queue: failed to queue %s plan\n", layer_cmd);
+            return 1;
+        }
+    } else if (strcmp(layer_cmd, "layer-bridge") == 0) {
+        if (bf_layer_queue_bridge_plan_json(root, layer_cmd, target, priority, &json) != 0) {
+            fprintf(stderr, "bonfyre-queue: failed to queue %s plan\n", layer_cmd);
+            return 1;
+        }
+    } else if (bf_layer_queue_job_json(root, layer_cmd, target, priority, &json) != 0) {
+        fprintf(stderr, "bonfyre-queue: failed to queue %s\n", layer_cmd);
+        return 1;
+    }
+    puts(json);
+    free(json);
+    return 0;
 }
 
 /* ── Worker thread ────────────────────────────────────────────────── */
@@ -858,6 +897,11 @@ static void usage(void) {
     fprintf(stderr,
         "BonfyreQueue v%s — SQLite-backed job queue with worker daemon\n\n"
         "Usage:\n"
+        "  bonfyre-queue layer-verify <artifact_id> [--priority N] [--root DIR]\n"
+        "  bonfyre-queue layer-materialize <artifact_id> [--priority N] [--root DIR]\n"
+        "  bonfyre-queue layer-compose <plan.json> [--priority N] [--root DIR]\n"
+        "  bonfyre-queue layer-bridge <resolved-plan.json> [--priority N] [--root DIR]\n"
+        "  bonfyre-queue layer-sync <artifact_id> [--priority N] [--root DIR]\n"
         "  bonfyre-queue enqueue <type> <input> [--priority N] [--source S] [--output DIR]\n"
         "  bonfyre-queue work [--workers N]\n"
         "  bonfyre-queue list [--status S] [--limit N]\n"
@@ -909,6 +953,12 @@ int main(int argc, char **argv) {
     }
 
     if (!cmd) { usage(); return 1; }
+
+    if (strcmp(cmd, "layer-verify") == 0) return cmd_layer_queue_native(argc, argv, "layer-verify");
+    if (strcmp(cmd, "layer-materialize") == 0) return cmd_layer_queue_native(argc, argv, "layer-materialize");
+    if (strcmp(cmd, "layer-compose") == 0) return cmd_layer_queue_native(argc, argv, "layer-compose");
+    if (strcmp(cmd, "layer-bridge") == 0) return cmd_layer_queue_native(argc, argv, "layer-bridge");
+    if (strcmp(cmd, "layer-sync") == 0) return cmd_layer_queue_native(argc, argv, "layer-sync");
 
     sqlite3 *db = open_db(db_path);
     if (!db) return 1;

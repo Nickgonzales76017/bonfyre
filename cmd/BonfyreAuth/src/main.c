@@ -25,8 +25,11 @@
 #include <string.h>
 #include <stdint.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define MAX_PATH  2048
 #define MAX_TOKEN 128
@@ -527,7 +530,8 @@ static void usage(void) {
         "  bonfyre-auth [--db FILE] user --id ID\n"
         "  bonfyre-auth [--db FILE] update --id ID [--tier T] [--active 0|1]\n"
         "  bonfyre-auth [--db FILE] sessions --user-id ID\n"
-        "  bonfyre-auth [--db FILE] status\n");
+        "  bonfyre-auth [--db FILE] status\n"
+        "  bonfyre-auth layer-source <artifact_id> [--root DIR]\n");
 }
 
 int main(int argc, char **argv) {
@@ -545,6 +549,24 @@ int main(int argc, char **argv) {
     if (ca<2) { usage(); return 1; }
 
     const char *cmd=cv[1];
+
+    if (strcmp(cmd, "layer-source") == 0 && ca >= 3) {
+        const char *root = arg_get(ca, cv, "--root");
+        char *json = NULL;
+        if (bf_layer_load_json(root, cv[2], &json) != 0) {
+            fprintf(stderr, "unknown artifact: %s\n", cv[2]);
+            return 1;
+        }
+        {
+            char *out = NULL;
+            int rc = bf_layer_auth_source_json(json, &out);
+            free(json);
+            if (rc != 0 || !out) return 1;
+            puts(out);
+            free(out);
+            return 0;
+        }
+    }
 
     sqlite3 *db=open_db(db_path);
     if (!db) return 1;

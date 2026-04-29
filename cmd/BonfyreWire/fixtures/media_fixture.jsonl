@@ -1,0 +1,3 @@
+{"ts":"2026-04-28T12:00:00Z","src_ip":"10.0.0.10","dst_ip":"10.0.0.20","src_port":5060,"dst_port":5060,"proto":"UDP","size":420,"payload_ascii":"INVITE sip:user@example.com SIP/2.0\r\nVia: SIP/2.0/UDP pbx.local\r\n","domain":"pbx.local","hint":"sip"}
+{"ts":"2026-04-28T12:00:01Z","src_ip":"10.0.0.10","dst_ip":"10.0.0.20","src_port":40000,"dst_port":5004,"proto":"UDP","size":172,"hint":"rtp","payload_ascii":"\u0080`RTPAUDIOPAYLOAD"}
+{"ts":"2026-04-28T12:00:02Z","src_ip":"10.0.0.30","dst_ip":"10.0.0.40","src_port":51514,"dst_port":80,"proto":"TCP","size":390,"payload_ascii":"GET /live/index.m3u8 HTTP/1.1\r\nHost: media.example.com\r\nUser-Agent: BonfyreTest\r\n\r\n","domain":"media.example.com","hint":"hls"}

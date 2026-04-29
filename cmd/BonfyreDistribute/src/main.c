@@ -7,6 +7,11 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef BF_HAS_QUIC
+#include <bf_quic.h>
+#include <bonfyre.h>
+#endif
+
 extern char **environ;
 
 #define MAX_TEXT 65536
@@ -230,11 +235,132 @@ int main(int argc, char **argv) {
         }
         return command_send(payload, wh_count, webhooks);
     }
+#ifdef BF_HAS_QUIC
+    if (argc >= 3 && strcmp(argv[1], "quic-send") == 0) {
+        const char *dir = argv[2];
+        const char *host = "127.0.0.1";
+        uint16_t port = 4443;
+        for (int i = 3; i < argc - 1; i++) {
+            if (strcmp(argv[i], "--host") == 0) host = argv[++i];
+            else if (strcmp(argv[i], "--port") == 0) port = (uint16_t)atoi(argv[++i]);
+        }
+        return command_quic_send(dir, host, port);
+    }
+#endif
     fprintf(stderr,
             "Usage:\n"
             "  bonfyre-distribute offers <_generated-offers.json>\n"
             "  bonfyre-distribute snapshot <_distribution-pipeline-snapshot.json>\n"
             "  bonfyre-distribute message <_generated-offers.json> <offer-name> <channel>\n"
-            "  bonfyre-distribute send <payload.json> --webhook <URL> [--webhook <URL> ...]\n");
+            "  bonfyre-distribute send <payload.json> --webhook <URL> [--webhook <URL> ...]\n"
+#ifdef BF_HAS_QUIC
+            "  bonfyre-distribute quic-send <dir> --host <HOST> --port <PORT>\n"
+            "      Send all artifacts in <dir> over QUIC with family-multiplexed streams.\n"
+            "      Surface-layer artifacts are prioritized. 0-RTT on reconnect.\n"
+#endif
+            );
     return 1;
 }
+
+#ifdef BF_HAS_QUIC
+/* ── QUIC distribution: family-multiplexed artifact streams ── */
+
+static void quic_done_cb(const bf_quic_stream_result_t *r, void *user) {
+    (void)user;
+    fprintf(stderr, "  %s %s (%.1f ms, %llu bytes%s)\n",
+            r->status == BF_QUIC_OK ? "✓" : "✗",
+            r->family_key,
+            r->elapsed_ms,
+            (unsigned long long)r->bytes_sent,
+            r->zero_rtt ? ", 0-RTT" : "");
+}
+
+static int command_quic_send(const char *dir, const char *host, uint16_t port) {
+    /* Discover artifacts in directory */
+    bf_quic_artifact_t artifacts[256];
+    int count = 0;
+
+    DIR *dp = opendir(dir);
+    if (!dp) {
+        fprintf(stderr, "Cannot open directory: %s\n", dir);
+        return 1;
+    }
+    struct dirent *ent;
+    while ((ent = readdir(dp)) != NULL && count < 256) {
+        if (ent->d_name[0] == '.') continue;
+
+        /* Look for artifact.json in each subdirectory */
+        char path[PATH_MAX];
+        snprintf(path, sizeof(path), "%s/%s/artifact.json", dir, ent->d_name);
+        struct stat st;
+        if (stat(path, &st) != 0) {
+            /* Try direct files */
+            snprintf(path, sizeof(path), "%s/%s", dir, ent->d_name);
+            if (stat(path, &st) != 0 || !S_ISREG(st.st_mode)) continue;
+        }
+
+        /* Parse artifact to get family_key and type for layer mapping */
+        FILE *fp = fopen(path, "rb");
+        if (!fp) continue;
+        char json[8192];
+        size_t n = fread(json, 1, sizeof(json) - 1, fp);
+        fclose(fp);
+        json[n] = '\0';
+
+        BfArtifact art;
+        bf_artifact_init(&art);
+        bf_artifact_parse(&art, json);
+
+        artifacts[count].path = strdup(path);
+        artifacts[count].family_key = strdup(art.family_key);
+        artifacts[count].content_hash = strdup(art.root_hash);
+        artifacts[count].layer = (uint8_t)bf_quic_layer_from_type(art.artifact_type);
+        count++;
+    }
+    closedir(dp);
+
+    if (count == 0) {
+        fprintf(stderr, "No artifacts found in %s\n", dir);
+        return 1;
+    }
+
+    fprintf(stderr, "Distributing %d artifacts over QUIC to %s:%u\n", count, host, port);
+    fprintf(stderr, "  Priority: surface → value → transform → substrate\n");
+
+    /* Connect */
+    bf_quic_ctx_t *ctx = bf_quic_ctx_new(NULL, NULL, ".bonfyre-quic-ticket");
+    if (!ctx) {
+        fprintf(stderr, "Failed to create QUIC context\n");
+        return 1;
+    }
+
+    bf_quic_conn_t *conn = bf_quic_connect(ctx, host, port);
+    if (!conn) {
+        fprintf(stderr, "Failed to connect to %s:%u\n", host, port);
+        bf_quic_ctx_free(ctx);
+        return 1;
+    }
+
+    /* Send batch */
+    bf_quic_batch_result_t result = bf_quic_send_batch(conn, artifacts, count,
+                                                        quic_done_cb, NULL);
+    printf("{\"kind\":\"quic-distribution-result\","
+           "\"host\":\"%s\",\"port\":%u,"
+           "\"artifacts\":%d,\"delivered\":%d,\"failed\":%d,"
+           "\"total_bytes\":%llu,\"elapsed_ms\":%.1f}\n",
+           host, port,
+           result.count, result.succeeded, result.failed,
+           (unsigned long long)result.total_bytes, result.total_ms);
+
+    /* Cleanup */
+    free(result.streams);
+    for (int i = 0; i < count; i++) {
+        free((void *)artifacts[i].path);
+        free((void *)artifacts[i].family_key);
+        free((void *)artifacts[i].content_hash);
+    }
+    bf_quic_conn_close(conn);
+    bf_quic_ctx_free(ctx);
+    return result.failed > 0 ? 1 : 0;
+}
+#endif /* BF_HAS_QUIC */

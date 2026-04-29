@@ -24,12 +24,20 @@
 #include <time.h>
 #include <unistd.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define MAX_LINE 65536
 
 static void iso_timestamp(char *buf, size_t sz) {
     time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
     strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
+}
+
+static const char *arg_get(int argc, char **argv, const char *flag) {
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], flag) == 0) return argv[i + 1];
+    }
+    return NULL;
 }
 
 static long long monotonic_ns(void) {
@@ -2073,6 +2081,7 @@ static int cmd_stats(const char *db_path) {
 int main(int argc, char *argv[]) {
     const char *db = "bonfyre-index.db";
     int json_mode = 0;
+    const char *root = arg_get(argc, argv, "--root");
 
     /* parse --db */
     for (int i = 1; i < argc - 1; i++) {
@@ -2161,9 +2170,19 @@ int main(int argc, char *argv[]) {
     if (argc >= 2 && strcmp(argv[1], "stats") == 0)
         return cmd_stats(db);
 
+    if (argc >= 2 && strcmp(argv[1], "layers") == 0) {
+        if (bf_layer_rebuild_index(root) != 0) {
+            fprintf(stderr, "bonfyre-index: failed to rebuild layer index\n");
+            return 1;
+        }
+        printf("{\"indexed\":\"layers\",\"root\":\"%s\"}\n", root ? root : "");
+        return 0;
+    }
+
     fprintf(stderr,
         "BonfyreIndex — artifact family index & search\n\n"
         "Usage:\n"
+        "  bonfyre-index layers [--root DIR]       Rebuild LayerArtifact index projection\n"
         "  bonfyre-index build <dir> [--db F]      Crawl & index artifact.json files\n"
         "  bonfyre-index search <q> [--type T]      Search families\n"
         "  bonfyre-index reuse [--db F]             Find shared atoms/operators\n"
