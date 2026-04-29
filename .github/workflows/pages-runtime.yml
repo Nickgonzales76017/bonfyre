@@ -30,7 +30,7 @@ on:
       bonfyre_repo:
         description: Bonfyre runtime repository to clone on the runner.
         required: false
-        default: Nickgonzales76017/bonfyre
+        default: Nickgonzales76017/bonfyre-oss
         type: string
       bonfyre_ref:
         description: Git ref to use when building Bonfyre on the runner.
@@ -71,7 +71,7 @@ on:
       bonfyre_repo:
         description: Bonfyre runtime repository to clone on the runner.
         required: false
-        default: Nickgonzales76017/bonfyre
+        default: Nickgonzales76017/bonfyre-oss
         type: string
       bonfyre_ref:
         description: Git ref to use when building Bonfyre on the runner.

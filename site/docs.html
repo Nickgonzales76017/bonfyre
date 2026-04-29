@@ -117,6 +117,48 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
   </div>
 </header>
 
+<section id="latest-upgrades" style="padding:44px 0;background:linear-gradient(135deg,rgba(88,166,255,.06) 0%,rgba(13,17,23,1) 65%)">
+  <div class="container">
+    <h2>Latest upgrades in this repo</h2>
+    <p class="subtitle">A short technical changelog for what moved since the last public push.</p>
+    <div class="opt-timeline">
+      <div class="opt-card">
+        <div class="tag">Wire</div>
+        <div class="title">Capture -> artifact -> recipe flow</div>
+        <div class="desc">BonfyreWire now includes deep probe, artifact materialization, recipe generation, and shared-space export on top of flow analysis and reporting.</div>
+      </div>
+      <div class="opt-card">
+        <div class="tag">CLI</div>
+        <div class="title">Health-aware command surface</div>
+        <div class="desc">`bonfyre list --health`, repo/install drift checks, and subcommand sync helpers make the runtime surface more operationally inspectable after code updates.</div>
+      </div>
+      <div class="opt-card">
+        <div class="tag">Registry</div>
+        <div class="title">Catalog / workflow / layer sync</div>
+        <div class="desc">Workflow, recipe, family, and layer registry surfaces are now a more important part of the public operator story, and the docs now record the repopulation commands.</div>
+      </div>
+      <div class="opt-card">
+        <div class="tag">Speech</div>
+        <div class="title">Investigation stack docs</div>
+        <div class="desc">Architecture, integration, quickstart, adversarial competition, and discovery documents now sit beside the runtime instead of living as disconnected notes.</div>
+      </div>
+    </div>
+    <div style="max-width:760px;margin:24px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 24px">
+      <div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--blue);font-weight:700;margin-bottom:10px">Operator Refresh Commands</div>
+      <p style="font-size:.88rem;color:var(--text-dim);line-height:1.7;margin-bottom:12px">When runtime code, registries, or CLI surfaces change, this is the command block that repopulates the operator-facing views and keeps `bonfyre-oss` honest after a pull.</p>
+      <div style="font-family:var(--mono);font-size:.8rem;color:var(--green);line-height:1.9;overflow:auto">
+        make<br>
+        ./cmd/BonfyreCLI/bonfyre doctor sync-subcommands<br>
+        ./cmd/BonfyreIndex/bonfyre-index layers --root layeros/state<br>
+        ./cmd/BonfyreCLI/bonfyre list --health<br>
+        ./cmd/BonfyreWorkflow/bonfyre-workflow list<br>
+        ./cmd/BonfyreRecipe/bonfyre-recipe list<br>
+        ./cmd/BonfyreLayer/bonfyre-layer registry --root layeros/state
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ═══════════════════════════════════════════ -->
 <!-- FPQ — Full Technical Deep-Dive             -->
 <!-- ═══════════════════════════════════════════ -->
@@ -1511,7 +1553,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
         <span style="color:var(--green)"># SLI bridge inference test</span><br>
         python3 test_sli_plus_kvcache.py --device mps<br><br>
         <span style="color:var(--green)"># Full Bonfyre pipeline</span><br>
-        git clone https://github.com/Nickgonzales76017/bonfyre.git &amp;&amp; cd bonfyre &amp;&amp; make<br>
+        git clone https://github.com/Nickgonzales76017/bonfyre-oss.git &amp;&amp; cd bonfyre-oss &amp;&amp; make<br>
         time ./bin/bonfyre-pipeline run --input audio.wav<br><br>
         <span style="color:var(--green)"># Run tests</span><br>
         make test <span style="color:var(--text-dim)"># 167/167 tests</span>
@@ -1531,8 +1573,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <div class="install-box" style="max-width:100%;margin-bottom:16px">
       <code>
         <span class="comment"># From source (recommended)</span><br>
-        git clone https://github.com/Nickgonzales76017/bonfyre.git<br>
-        cd bonfyre<br>
+        git clone https://github.com/Nickgonzales76017/bonfyre-oss.git<br>
+        cd bonfyre-oss<br>
         make <span class="comment"># builds the Bonfyre stack from source</span><br>
         make install <span class="comment"># copies to ~/.local/bin</span>
       </code>
@@ -1540,7 +1582,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <div class="install-box" style="max-width:100%;margin-bottom:16px">
       <code>
         <span class="comment"># One command (macOS / Linux)</span><br>
-        curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre/main/install.sh | sh
+        curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre-oss/main/install.sh | sh
       </code>
     </div>
     <div class="install-box" style="max-width:100%;margin-bottom:16px">
@@ -1564,7 +1606,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <p class="subtitle">Full source. Real benchmarks. Reproduction scripts included.</p>
     <div class="btn-row">
       <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary" style="background:var(--green)">⭐ Star bonfyre-oss</a>
-      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">⭐ Star bonfyre</a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-outline">legacy / archive repo</a>
       <a href="https://huggingface.co/NICKO" class="btn btn-outline">HuggingFace models</a>
       <a href="explore.html" class="btn btn-outline" style="border-color:var(--accent);color:var(--accent)">Non-technical overview →</a>
     </div>
@@ -1575,9 +1617,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
   <div class="container">
     <p>
       Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> ·
-      <a href="https://github.com/Nickgonzales76017/bonfyre">GitHub (stack)</a> ·
-      <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub (FPQ)</a> ·
-      <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">MIT License</a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub</a> ·
+      <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/LICENSE">MIT License</a>
     </p>
     <p style="margin-top:8px"><a href="#" style="color:var(--text-dim);font-size:.85rem">↑ Back to top</a></p>
   </div>

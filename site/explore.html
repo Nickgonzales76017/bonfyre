@@ -84,6 +84,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <a href="index.html" class="nav-brand">🔥 Bonfyre</a>
     <div style="display:flex;gap:4px">
       <a href="#what-it-replaces">What It Replaces</a>
+      <a href="#upgrades">What's New</a>
       <a href="#solutions">Solutions</a>
       <a href="#hardware">Does My Hardware Work?</a>
       <a href="#use-cases">Use Cases</a>
@@ -124,7 +125,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     </div>
 
     <div class="btn-row">
-      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">View on GitHub</a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary">View on GitHub</a>
       <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="btn btn-outline">See a live proof →</a>
       <a href="#recipes" class="btn btn-outline">Find your industry ↓</a>
       <a href="#apps" class="btn btn-outline">20 live apps ↓</a>
@@ -171,6 +172,46 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     </div>
     <div style="max-width:740px;margin:0 auto;text-align:center">
       <p style="font-size:.88rem;color:var(--text-dim);line-height:1.7">Bonfyre's binaries are organized into four layers: <strong style="color:var(--text)">Substrate</strong> (ingest, normalize, segment), <strong style="color:var(--text)">Transform</strong> (transcribe, summarize, score, embed), <strong style="color:var(--text)">Surface</strong> (format, render, deliver), and <strong style="color:var(--text)">Value</strong> (price, invoice, pay, prove). Each operator declares whether it's cacheable, reversible, and idempotent — so the pipeline can parallelize, skip, and retry safely.</p>
+    </div>
+  </div>
+</section>
+
+<section id="upgrades">
+  <div class="container">
+    <h2>What changed since the last public push</h2>
+    <p class="subtitle">The stack is not just bigger. The shape of the product has changed in useful ways.</p>
+    <div class="killer-grid">
+      <div class="killer-card">
+        <div class="vs">Network observation became a product surface</div>
+        <div class="ratio">capture → recipe</div>
+        <div class="detail">BonfyreWire now fingerprints devices, emits canonical artifacts, and generates stitch-compatible recipes from owned or authorized captures. It is not just packet accounting anymore.</div>
+      </div>
+      <div class="killer-card">
+        <div class="vs">CLI became more operationally truthful</div>
+        <div class="ratio">health-aware</div>
+        <div class="detail">`bonfyre list --health`, `bonfyre doctor sync-subcommands`, workflow listing, recipe browsing, and layer registry inspection now make the runtime easier to inspect and trust after updates.</div>
+      </div>
+      <div class="killer-card">
+        <div class="vs">Speech moved from feature to system</div>
+        <div class="ratio">stacked</div>
+        <div class="detail">The repo now carries a deeper speech investigation story: architecture, production integration, quickstart, hypothesis engine, and discovery pipeline work, not just a standalone transcription binary.</div>
+      </div>
+      <div class="killer-card">
+        <div class="vs">Pages and runtime are converging</div>
+        <div class="ratio">repo-aligned</div>
+        <div class="detail">The public docs, Pages workflows, and runtime packaging are being pointed at `bonfyre-oss` so the repo, the site, and the automation describe the same product instead of different snapshots.</div>
+      </div>
+    </div>
+    <div style="max-width:780px;margin:24px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 24px">
+      <div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:10px">What That Means In Practice</div>
+      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7;margin-bottom:14px">A week ago the public story was still mostly compression, transcription, and backend footprint. The newer repo shape adds a more operational Bonfyre: captures become artifacts, artifacts become recipes, recipes become execution plans, and the CLI now exposes more of the health and registry state needed to work with that system confidently.</p>
+      <div style="font-family:var(--mono);font-size:.8rem;color:var(--text-dim);line-height:1.9;overflow:auto">
+        bonfyre wire ingest-pcap capture.pcap --dumb-device --root layeros/state<br>
+        bonfyre wire probe &lt;capture_id&gt; --root layeros/state<br>
+        bonfyre wire artifacts &lt;capture_id&gt; --root layeros/state<br>
+        bonfyre wire recipe &lt;capture_id&gt; --root layeros/state &gt; recipe.json<br>
+        bonfyre stitch plan recipe.json
+      </div>
     </div>
   </div>
 </section>
@@ -678,7 +719,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <h2>Open source. MIT licensed. $0/month.</h2>
     <p class="subtitle">53 binaries in the stack. 26 shared library modules. Pages, proxy, orchestration, relay, and delivery still keep the same local-first shape.</p>
     <div class="btn-row">
-      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">⭐ Star on GitHub</a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary">⭐ Star on GitHub</a>
       <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary" style="background:var(--green)">⭐ Star bonfyre-oss</a>
       <a href="https://huggingface.co/NICKO" class="btn btn-outline">HuggingFace models</a>
       <a href="docs.html" class="btn btn-outline" style="border-color:var(--green);color:var(--green)">Technical docs →</a>
@@ -688,7 +729,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
 <footer>
   <div class="container">
-    <p>Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> · <a href="https://github.com/Nickgonzales76017/bonfyre">GitHub (stack)</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub (FPQ)</a> · <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">MIT License</a> · <a href="docs.html">Technical Docs</a></p>
+    <p>Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/LICENSE">MIT License</a> · <a href="docs.html">Technical Docs</a></p>
     <p style="margin-top:8px"><a href="#" style="color:var(--text-dim);font-size:.85rem">↑ Back to top</a></p>
   </div>
 </footer>
