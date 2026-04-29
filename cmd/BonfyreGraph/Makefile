@@ -1,6 +1,6 @@
 CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
-LDFLAGS ?= -lsqlite3 -L../../lib/libbonfyre -lbonfyre
+LDFLAGS ?= ../../lib/libbonfyre/libbonfyre.a -lsqlite3
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
 TARGET = bonfyre-graph
 SRC = src/main.c

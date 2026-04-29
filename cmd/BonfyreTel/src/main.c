@@ -32,7 +32,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sqlite3.h>
-
+#include <bonfyre.h>
 #define VERSION         "1.0.0"
 #define DEFAULT_HOST    "127.0.0.1"
 #define DEFAULT_PORT    8021
@@ -43,6 +43,10 @@
 
 static volatile int g_running = 1;
 static int g_dry_run = 0;
+
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
+}
 
 /* ── SQLite schema ─────────────────────────────────────────────────── */
 
@@ -82,12 +86,7 @@ static const char *SCHEMA_SQL =
 
 /* ── Utility ───────────────────────────────────────────────────────── */
 
-static void iso_timestamp(char *buf, size_t len) {
-    time_t t = time(NULL);
-    struct tm tm;
-    gmtime_r(&t, &tm);
-    strftime(buf, len, "%Y-%m-%dT%H:%M:%SZ", &tm);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static const char *arg_get(int argc, char **argv, const char *flag) {
     for (int i = 1; i < argc - 1; i++)
@@ -113,7 +112,7 @@ static const char *default_db(void) {
 
 static sqlite3 *open_db(const char *path) {
     sqlite3 *db = NULL;
-    if (sqlite3_open(path, &db) != SQLITE_OK) {
+    if (bf_sqlite3_open(path, &db) != SQLITE_OK) {
         fprintf(stderr, "tel: cannot open %s: %s\n", path, sqlite3_errmsg(db));
         sqlite3_close(db);
         return NULL;
@@ -143,6 +142,27 @@ static int run_process(char *const argv[]) {
     if (waitpid(pid, &status, 0) < 0) { perror("waitpid"); return 1; }
     if (WIFEXITED(status)) return WEXITSTATUS(status);
     return 1;
+}
+
+static int delegate_layeros_tel(int argc, char **argv) {
+    char *exec_argv[16];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "tel";
+    exec_argv[n++] = argv[2];
+    exec_argv[n] = NULL;
+    return run_process(exec_argv);
 }
 
 /* Non-blocking fork — don't wait for child (pipeline may take minutes) */
@@ -497,9 +517,33 @@ static int esl_subscribe(EslConn *c) {
 
 /* ── Commands ──────────────────────────────────────────────────────── */
 
+/* Start bonfyre-transcribe serve in the background if the socket isn't already present.
+ * The daemon loads the Whisper model once; all pipeline calls reuse it instead of
+ * paying the ~800 ms model-load cost per recording. */
+static void start_transcribe_daemon_bg(const char *model) {
+    const char *sock_path = getenv("BONFYRE_TRANSCRIBE_SOCKET");
+    if (!sock_path) sock_path = "/tmp/bonfyre-transcribe.sock";
+
+    if (access(sock_path, F_OK) == 0) {
+        fprintf(stderr, "tel: transcribe daemon already running at %s\n", sock_path);
+        return;
+    }
+
+    fprintf(stderr, "tel: starting bonfyre-transcribe serve --model %s\n", model);
+    char *const argv[] = {
+        "bonfyre-transcribe", "serve", "--model", (char *)model, NULL
+    };
+    run_process_async(argv);
+    /* Daemon starts in background; the model loads asynchronously.
+     * First bonfyre-pipeline call will retry connect until the socket appears. */
+}
+
 static int cmd_listen(const char *host, int port, const char *password,
                       sqlite3 *db) {
     EslConn conn;
+
+    /* Start the transcribe daemon eagerly so the model is warm before first call */
+    start_transcribe_daemon_bg("base");
 
     fprintf(stderr, "tel: connecting to FreeSWITCH at %s:%d...\n", host, port);
 
@@ -1325,6 +1369,7 @@ static void usage(void) {
         "Verify (Twilio Verify replacement):\n"
         "  bonfyre-tel verify-send  --to NUM               Send 6-digit code via SMS\n"
         "  bonfyre-tel verify-check --phone NUM --code NUM  Validate code\n"
+        "  bonfyre-tel layer-trace <artifact_id> [--root DIR]\n"
         "\n"
         "  bonfyre-tel version\n"
         "\n"
@@ -1372,6 +1417,9 @@ int main(int argc, char **argv) {
     if (strcmp(cmd, "version") == 0) {
         printf("bonfyre-tel %s\n", VERSION);
         return 0;
+    }
+    if (strcmp(cmd, "layer-trace") == 0 && argc >= 3) {
+        return delegate_layeros_tel(argc, argv);
     }
 
     /* Commands that don't need a DB */

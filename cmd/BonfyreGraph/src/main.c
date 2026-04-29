@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 #include <sqlite3.h>
 #include <bonfyre.h>
 
@@ -123,18 +124,6 @@ static void sha256_hex(const unsigned char *data, size_t len, char out[65]) {
     out[64]='\0';
 }
 
-static void sha256_file_hex(const char *path, char out[65]) {
-    FILE *fp=fopen(path,"rb");
-    if (!fp){ out[0]='\0'; return; }
-    Sha256 ctx; sha256_init(&ctx);
-    unsigned char buf[FILE_CHUNK]; size_t n;
-    while ((n=fread(buf,1,sizeof(buf),fp))>0) sha256_update(&ctx,buf,n);
-    fclose(fp);
-    unsigned char hash[32]; sha256_final(&ctx,hash);
-    for (int i=0;i<32;i++) sprintf(out+i*2,"%02x",hash[i]);
-    out[64]='\0';
-}
-
 /* ── Canonical JSON (deterministic, sorted keys) ──────────────────────── */
 
 /* We only need to canonicalize simple structs for hashing.
@@ -153,12 +142,6 @@ static char *read_file_full(const char *path) {
     fclose(fp); return buf;
 }
 
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now=time(NULL); struct tm t; gmtime_r(&now,&t);
-    strftime(buf,sz,"%Y-%m-%dT%H:%M:%SZ",&t);
-}
-
-static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 /* ── Tiny JSON parser (read-only, no deps) ────────────────────────────── */
 
 static const char *skip_ws(const char *p) {
@@ -260,31 +243,6 @@ static int json_array_count(const char *arr) {
 
 /* Extract array of strings from JSON array "inputs":["a","b"] into id_buf.
  * Returns count. */
-static int json_get_str_array(const char *json, const char *key,
-                              char ids[][256], int max_ids) {
-    const char *arr=json_get_array(json,key);
-    if (!arr) return 0;
-    const char *p=skip_ws(arr+1);
-    int count=0;
-    while (*p && *p!=']' && count<max_ids) {
-        p=skip_ws(p);
-        if (*p=='"') {
-            p++;
-            size_t i=0;
-            while (*p && *p!='"' && i<255) {
-                if (*p=='\\' && *(p+1)) p++;
-                ids[count][i++]=*p++;
-            }
-            ids[count][i]='\0';
-            if (*p=='"') p++;
-            count++;
-        }
-        p=skip_ws(p);
-        if (*p==',') p++;
-    }
-    return count;
-}
-
 /* ── SQLite schema ────────────────────────────────────────────────────── */
 
 static const char *SCHEMA_SQL =
@@ -927,6 +885,11 @@ static void usage(void) {
     fprintf(stderr,
         "BonfyreGraph — Merkle-DAG artifact graph engine\n\n"
         "Usage:\n"
+        "  bonfyre-graph sync-layers [--root DIR]\n"
+        "  bonfyre-graph plan <plan.json> [--root DIR]\n"
+        "  bonfyre-graph layer <artifact_id> [--root DIR]\n"
+        "  bonfyre-graph lineage-layer <artifact_id> [--root DIR]\n"
+        "  bonfyre-graph layer-neighbors <artifact_id> [--root DIR]\n"
         "  bonfyre-graph init <db>\n"
         "  bonfyre-graph add-atom <db> --id ID --hash HASH --type TYPE [--path PATH]\n"
         "  bonfyre-graph add-op <db> --id ID --op OP --inputs A,B --output OUT [--params '{}'] [--version V]\n"
@@ -947,6 +910,60 @@ static const char *arg_get(int argc, char **argv, const char *flag) {
 int main(int argc, char **argv) {
     if (argc<2){ usage(); return 1; }
     const char *cmd=argv[1];
+    const char *root = arg_get(argc, argv, "--root");
+
+    if (strcmp(cmd,"sync-layers")==0) {
+        if (bf_layer_rebuild_graph(root) != 0) {
+            fprintf(stderr, "bonfyre-graph: failed to sync layer graph\n");
+            return 1;
+        }
+        printf("{\"graph\":\"synced\",\"root\":\"%s\"}\n", root ? root : "");
+        return 0;
+    }
+    if (strcmp(cmd,"plan")==0) {
+        char *json = NULL;
+        if (argc < 3) { usage(); return 1; }
+        if (bf_layer_graph_plan_json(root, argv[2], &json) != 0) {
+            fprintf(stderr, "bonfyre-graph: failed to graph stitch plan\n");
+            return 1;
+        }
+        puts(json);
+        free(json);
+        return 0;
+    }
+    if (strcmp(cmd,"layer")==0) {
+        char *json = NULL;
+        if (argc < 3) { usage(); return 1; }
+        if (bf_layer_graph_edges_json(root, argv[2], &json) != 0) {
+            fprintf(stderr, "bonfyre-graph: failed to load layer edges\n");
+            return 1;
+        }
+        puts(json);
+        free(json);
+        return 0;
+    }
+    if (strcmp(cmd,"lineage-layer")==0) {
+        char *json = NULL;
+        if (argc < 3) { usage(); return 1; }
+        if (bf_layer_graph_edges_json(root, argv[2], &json) != 0) {
+            fprintf(stderr, "bonfyre-graph: failed to load lineage\n");
+            return 1;
+        }
+        puts(json);
+        free(json);
+        return 0;
+    }
+    if (strcmp(cmd,"layer-neighbors")==0) {
+        char *json = NULL;
+        if (argc < 3) { usage(); return 1; }
+        if (bf_layer_graph_edges_json(root, argv[2], &json) != 0) {
+            fprintf(stderr, "bonfyre-graph: failed to load neighbors\n");
+            return 1;
+        }
+        puts(json);
+        free(json);
+        return 0;
+    }
 
     if (strcmp(cmd,"init")==0) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph init <db>\n"); return 1; }

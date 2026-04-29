@@ -10,6 +10,58 @@
 
 extern char **environ;
 
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
+}
+
+static int run_execvp(char *const argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return 1;
+    }
+    if (pid == 0) {
+        execvp(argv[0], argv);
+        perror("execvp");
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid");
+        return 1;
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+}
+
+static int delegate_layeros_sync(int argc, char **argv) {
+    char *exec_argv[16];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 2; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "sync";
+    exec_argv[n++] = "layer";
+    if (argc >= 3) exec_argv[n++] = argv[2];
+    for (int i = 3; i < argc; i++) {
+        if ((strcmp(argv[i], "--root") == 0 && i + 1 < argc)) {
+            i++;
+            continue;
+        }
+        exec_argv[n++] = argv[i];
+    }
+    exec_argv[n] = NULL;
+    return run_execvp(exec_argv);
+}
+
 static char *read_file(const char *path, long *size_out) {
     FILE *fp = fopen(path, "rb");
     if (!fp) {
@@ -228,6 +280,10 @@ static int command_pull(const char *remote_url, const char *local_path) {
 int main(int argc, char **argv) {
     if (argc < 2) goto usage;
 
+    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
+        return delegate_layeros_sync(argc, argv);
+    }
+
     if (argc == 3 && strcmp(argv[1], "inspect-intake") == 0) {
         return command_inspect_intake(argv[2]);
     }
@@ -247,6 +303,7 @@ usage:
             "  bonfyre-sync inspect-intake <path>\n"
             "  bonfyre-sync inspect-status <path>\n"
             "  bonfyre-sync push <local.json> <remote-url>\n"
-            "  bonfyre-sync pull <remote-url> <local.json>\n");
+            "  bonfyre-sync pull <remote-url> <local.json>\n"
+            "  bonfyre-sync layer <artifact_id> [--manifest-only|--include-payload] [--root DIR]\n");
     return 1;
 }

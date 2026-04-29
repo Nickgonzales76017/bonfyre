@@ -43,6 +43,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define VERSION       "2.0.0"
 #define MAX_BODY      (4*1024*1024)
@@ -63,6 +64,45 @@ static sqlite3 *g_db = NULL;
 static pthread_mutex_t g_db_mutex = PTHREAD_MUTEX_INITIALIZER;
 static char g_static_dir[MAX_PATH_LEN] = "";
 static char g_upload_dir[MAX_PATH_LEN] = "";
+
+static const char *arg_get(int argc, char **argv, const char *flag);
+
+static int delegate_layer_api(int argc, char **argv) {
+    if (argc < 4) return 1;
+    const char *root = arg_get(argc, argv, "--root");
+    if (strcmp(argv[2], "get") == 0) {
+        char *json = NULL;
+        if (bf_layer_load_json(root, argv[3], &json) != 0) return 1;
+        puts(json);
+        free(json);
+        return 0;
+    } else if (strcmp(argv[2], "lineage") == 0) {
+        char *json = NULL;
+        if (bf_layer_graph_edges_json(root, argv[3], &json) != 0) return 1;
+        puts(json);
+        free(json);
+        return 0;
+    } else if (strcmp(argv[2], "compat") == 0 && argc >= 5) {
+        char *json = NULL;
+        if (bf_layer_compat_json(root, argv[3], argv[4], &json) != 0) return 1;
+        puts(json);
+        free(json);
+        return 0;
+    } else if (strcmp(argv[2], "compose") == 0 && argc >= 5) {
+        char *json = NULL;
+        int dry_run = 0;
+        for (int i = 5; i < argc; i++) {
+            if (strcmp(argv[i], "--dry-run") == 0) dry_run = 1;
+        }
+        if (bf_layer_compose_json(root, argv[3], argv[4], dry_run, &json) != 0) return 1;
+        puts(json);
+        free(json);
+        return 0;
+    } else {
+        return 1;
+    }
+    return 1;
+}
 
 /* ── Rate limiter (in-memory token bucket per API key) ────────────── */
 
@@ -1240,7 +1280,11 @@ static void usage(void) {
         "BonfyreAPI v%s — Async HTTP gateway with SSE, search, webhooks\n\n"
         "Usage:\n"
         "  bonfyre-api serve [--port 8080] [--db FILE] [--static DIR] [--uploads DIR]\n"
-        "  bonfyre-api status\n\n"
+        "  bonfyre-api status\n"
+        "  bonfyre-api layer get <artifact_id> [--root DIR]\n"
+        "  bonfyre-api layer lineage <artifact_id> [--root DIR]\n"
+        "  bonfyre-api layer compat <artifact_a> <artifact_b> [--root DIR]\n"
+        "  bonfyre-api layer compose <artifact_a> <artifact_b> [--dry-run] [--root DIR]\n\n"
         "Shares SQLite WAL database with BonfyreQueue (default: ~/.local/share/bonfyre/queue.db).\n"
         "Jobs are enqueued asynchronously — run `bonfyre-queue work` to process them.\n",
         VERSION);
@@ -1259,6 +1303,10 @@ int main(int argc, char **argv) {
             strcmp(argv[i], "--static") == 0 || strcmp(argv[i], "--uploads") == 0) { i++; continue; }
     }
     if (!cmd) { usage(); return 1; }
+
+    if (strcmp(cmd, "layer") == 0) {
+        return delegate_layer_api(argc, argv);
+    }
 
     if (strcmp(cmd, "serve") == 0) {
         int port = 8080;

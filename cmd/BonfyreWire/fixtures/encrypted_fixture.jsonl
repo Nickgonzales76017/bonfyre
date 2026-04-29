@@ -1,0 +1,1 @@
+{"ts":"2026-04-28T12:05:00Z","src_ip":"10.0.1.10","dst_ip":"34.120.0.1","src_port":54000,"dst_port":443,"proto":"UDP","size":1200,"app_proto":"WebRTC","domain":"meet.vendor.example","encrypted":true,"hint":"webrtc"}
