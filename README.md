@@ -16,10 +16,85 @@
 ---
 
 ```bash
-git clone https://github.com/Nickgonzales76017/bonfyre.git && cd bonfyre && make
+git clone https://github.com/Nickgonzales76017/bonfyre-oss.git && cd bonfyre-oss && make
 ```
 
 That builds 48 binaries. No Node.js. No Python. No Docker. No npm. Just C11 and SQLite.
+
+---
+
+## New Since Last Push
+
+The public repo has moved forward a lot since last week's snapshot. The biggest upgrades now in-tree are:
+
+- `BonfyreWire` is no longer just flow analysis. It now supports:
+  - `probe` for device fingerprinting and chain suggestions
+  - `artifacts` for canonical `BfArtifact` materialization
+  - `recipe` for stitch-compatible pipeline generation
+  - `space-export` for exporting authorized capture state into Bonfyre's shared-space substrate
+- the CLI and registry surfaces are deeper:
+  - `bonfyre list --health`
+  - `bonfyre doctor sync-subcommands`
+  - `bonfyre workflow list`
+  - `bonfyre recipe list`
+  - `bonfyre layer registry`
+- the runtime story is broader:
+  - local AI
+  - proxy
+  - orchestration
+  - realtime relay / MoQ
+  - swarm delivery
+  - Pages runtime automation
+- the speech investigation stack is now documented end to end:
+  - architecture
+  - integration map
+  - production quickstart
+  - adversarial / discovery / investigation docs
+- the public Pages surface is being updated to reflect `bonfyre-oss` as the current source of truth for runtime, docs, and site packaging.
+
+If you only read one new flow, read this one:
+
+```bash
+bonfyre wire ingest-pcap capture.pcap --dumb-device --root layeros/state
+bonfyre wire probe <capture_id> --root layeros/state
+bonfyre wire artifacts <capture_id> --root layeros/state
+bonfyre wire recipe <capture_id> --root layeros/state > recipe.json
+bonfyre stitch plan recipe.json
+```
+
+That is the current front door for "observe -> classify -> materialize -> route into the Bonfyre pyramid."
+
+### Upgrade map
+
+If you have not looked at the repo since last week, these are the areas worth checking first:
+
+- `Wire and ingestion`
+  - capture analysis grew into a fuller pipeline surface
+  - device probing, artifact export, recipe generation, and shared-space export now sit near the front of the product story
+- `CLI and operator truth`
+  - `bonfyre list --health` and `bonfyre doctor sync-subcommands` make it easier to detect repo/install drift after updates
+  - workflow, recipe, family, and layer surfaces are now important enough to treat as part of the core operator contract
+- `Runtime breadth`
+  - the stack now spans local AI, proxying, orchestration, communications edge, realtime relay, and swarm-style delivery under the same C runtime
+- `Speech and investigation`
+  - speech is no longer presented as one binary
+  - the repo now carries architecture, production integration, investigation, discovery, and adversarial testing material around that stack
+- `Public surfaces`
+  - `README.md`, `QUICKSTART.md`, Pages, and workflow defaults are being aligned around `bonfyre-oss` as the public source of truth
+
+### What to try first
+
+If you want to feel the newer shape of the stack quickly, these are the highest-signal entry points:
+
+```bash
+bonfyre wire --help
+bonfyre list --health
+bonfyre workflow list
+bonfyre recipe list
+bonfyre layer registry --root layeros/state
+```
+
+Those five commands show the shift from "a pile of binaries" toward "an inspectable operator surface with registries, health, and replayable flows."
 
 ---
 
@@ -120,6 +195,24 @@ That runs: ingest → normalize → hash → transcribe → clean → paragraph 
 
 ---
 
+### → I want to turn network observations into Bonfyre artifacts and recipes
+
+**You need:** `bonfyre-wire` + `bonfyre-stitch`
+
+```bash
+bonfyre wire ingest-pcap capture.pcap --dumb-device --root layeros/state
+bonfyre wire probe <capture_id> --root layeros/state
+bonfyre wire artifacts <capture_id> --root layeros/state
+bonfyre wire recipe <capture_id> --root layeros/state > recipe.json
+bonfyre stitch plan recipe.json
+```
+
+This takes a capture, fingerprints devices and flows, emits canonical artifacts, and generates a recipe you can inspect and replay. It is the clearest example of Bonfyre's newer "observation -> artifact -> execution" model.
+
+**[Wire guide →](docs/bonfyre_wire.md)** · **[Architecture →](docs/architecture.md)**
+
+---
+
 ### → I want to self-host a complete SaaS backend
 
 **You need:** `bonfyre-api` + `bonfyre-auth` + `bonfyre-pay` + `bonfyre-gate`
@@ -161,8 +254,8 @@ MIT licensed. Embed it anywhere — your app, your library, your product. Like S
 ### From source (recommended)
 
 ```bash
-git clone https://github.com/Nickgonzales76017/bonfyre.git
-cd bonfyre
+git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
+cd bonfyre-oss
 make            # builds all 48 binaries + libbonfyre + liblambda-tensors
 make install    # copies to ~/.local/bin (or PREFIX=/usr/local make install)
 ```
@@ -170,8 +263,24 @@ make install    # copies to ~/.local/bin (or PREFIX=/usr/local make install)
 ### One command (macOS / Linux)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre-oss/main/install.sh | sh
 ```
+
+## After Pulling New Runtime Code
+
+When `cmd/`, `lib/`, or the CLI/catalog surfaces change, rebuild and repopulate the command and registry layers so `bonfyre list`, `bonfyre workflow list`, `bonfyre recipe list`, and `bonfyre layer registry` reflect the current tree.
+
+```bash
+make
+./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
+./cmd/BonfyreIndex/bonfyre-index layers --root layeros/state
+./cmd/BonfyreCLI/bonfyre list --health
+./cmd/BonfyreWorkflow/bonfyre-workflow list
+./cmd/BonfyreRecipe/bonfyre-recipe list
+./cmd/BonfyreLayer/bonfyre-layer registry --root layeros/state
+```
+
+If you want the deeper explanation of repo-built vs installed binaries and the registry split between `layeros/state` and `~/.local/share/bonfyre/catalog.db`, see [docs/bonfyre_status_and_drift.md](docs/bonfyre_status_and_drift.md).
 
 ### npm (bindings coming soon)
 
@@ -407,7 +516,7 @@ cd bonfyre-example-semantic-search
 | `bonfyre-graph` | 51 KB | Merkle-DAG artifact graph, SHA-256 content addressing |
 | `bonfyre-runtime` | 33 KB | Runtime environment, process lifecycle |
 | `bonfyre-hash` | 34 KB | Pure C SHA-256 (FIPS 180-4), content addressing |
-| `bonfyre-tel` | 68 KB | FreeSWITCH ESL telephony adapter (SIP/RTP, call routing) |
+| `bonfyre-tel` | 68 KB | Communications edge runtime (SIP control plane plus native WebTransport/MoQ relay) |
 
 ### Orchestration
 

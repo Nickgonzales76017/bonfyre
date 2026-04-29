@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bonfyre — Powered by Static Binaries</title>
+<title>Bonfyre — bonfyre-oss operator surface</title>
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -20,6 +20,7 @@
     <a href="#" data-page="pipeline">Pipeline</a>
     <a href="#" data-page="outreach">Outreach</a>
     <a href="#" data-page="finance">Finance</a>
+    <a href="#" data-page="pages">Pages</a>
     <a href="#" data-page="use-cases">Use Cases</a>
     <a href="#" data-page="settings">Settings</a>
   </div>
@@ -31,7 +32,10 @@
 <!-- Dashboard -->
 <section id="page-dashboard" class="page active">
   <div class="page-header">
-    <h1>System Dashboard</h1>
+    <div>
+      <h1>Bonfyre Overview</h1>
+      <p class="subtitle">Track the work moving through the bonfyre-oss runtime and jump into the next thing that matters.</p>
+    </div>
     <button class="btn btn-sm" onclick="refreshDashboard()">Refresh</button>
   </div>
 
@@ -56,23 +60,27 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Quick Actions</h2>
+      <h2>Start From Here</h2>
       <div class="action-grid">
         <button class="action-btn" onclick="showPage('pipeline')">
           <span class="action-icon">📥</span>
-          <span>Upload Audio</span>
+          <span>Start Intake</span>
         </button>
         <button class="action-btn" onclick="showPage('outreach')">
           <span class="action-icon">📤</span>
-          <span>Track Outreach</span>
+          <span>Review Outreach</span>
         </button>
         <button class="action-btn" onclick="showPage('finance')">
           <span class="action-icon">💰</span>
-          <span>View Margins</span>
+          <span>Check Revenue</span>
+        </button>
+        <button class="action-btn" onclick="showPage('pages')">
+          <span class="action-icon">🧱</span>
+          <span>Open Pages</span>
         </button>
         <button class="action-btn" onclick="showPage('use-cases')">
           <span class="action-icon">🎯</span>
-          <span>Browse Use Cases</span>
+          <span>See Use Cases</span>
         </button>
       </div>
     </div>
@@ -80,14 +88,14 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Recent Jobs</h2>
+      <h2>Recent Work</h2>
       <table class="data-table" id="recent-jobs-table">
         <thead>
           <tr><th>ID</th><th>Type</th><th>Status</th><th>Created</th></tr>
         </thead>
         <tbody id="recent-jobs"></tbody>
       </table>
-      <p class="empty-state" id="no-jobs">No jobs yet. Upload an audio file to get started.</p>
+      <p class="empty-state" id="no-jobs">No work has run yet. Start with an upload to see Bonfyre move.</p>
     </div>
   </div>
 </section>
@@ -95,18 +103,21 @@
 <!-- Pipeline -->
 <section id="page-pipeline" class="page">
   <div class="page-header">
-    <h1>Audio Pipeline</h1>
+    <div>
+      <h1>Pipeline</h1>
+      <p class="subtitle">Move raw audio through Bonfyre’s delivery flow and watch it turn into finished output.</p>
+    </div>
   </div>
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Upload & Process</h2>
+      <h2>Bring In Source Audio</h2>
       <div class="upload-zone" id="upload-zone">
         <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" hidden>
         <div class="upload-content" onclick="document.getElementById('file-input').click()">
           <span class="upload-icon">📁</span>
-          <p>Click to upload or drag & drop</p>
-          <p class="upload-hint">MP3, WAV, M4A, OGG, FLAC — up to 4MB</p>
+          <p>Click to upload or drag and drop</p>
+          <p class="upload-hint">MP3, WAV, M4A, OGG, or FLAC up to 4MB</p>
         </div>
       </div>
       <div id="upload-status" class="upload-status hidden"></div>
@@ -115,7 +126,7 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Pipeline Steps</h2>
+      <h2>What Bonfyre Runs</h2>
       <div class="pipeline-steps">
         <div class="step" id="step-ingest"><span class="step-num">1</span> Ingest</div>
         <div class="step-arrow">→</div>
@@ -142,7 +153,7 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>All Jobs</h2>
+      <h2>Job History</h2>
       <table class="data-table">
         <thead>
           <tr><th>ID</th><th>Type</th><th>Status</th><th>Input</th><th>Created</th><th>Completed</th></tr>
@@ -156,7 +167,10 @@
 <!-- Outreach -->
 <section id="page-outreach" class="page">
   <div class="page-header">
-    <h1>Outreach Tracker</h1>
+    <div>
+      <h1>Outreach</h1>
+      <p class="subtitle">Track who you are reaching, what you are sending, and where revenue follow-up needs attention.</p>
+    </div>
   </div>
 
   <div class="card-grid four-col">
@@ -180,7 +194,7 @@
 
   <div class="card-row">
     <div class="card">
-      <h2>Log New Send</h2>
+      <h2>Log a New Touchpoint</h2>
       <form id="send-form" onsubmit="logSend(event)">
         <div class="form-row">
           <label>Channel</label>
@@ -193,17 +207,17 @@
         </div>
         <div class="form-row">
           <label>Target</label>
-          <input type="text" id="send-target" placeholder="Who are you reaching out to?" required>
+          <input type="text" id="send-target" placeholder="Who is this for?" required>
         </div>
         <div class="form-row">
           <label>Offer (optional)</label>
-          <input type="text" id="send-offer" placeholder="e.g. AI Transcription">
+          <input type="text" id="send-offer" placeholder="e.g. podcast production package">
         </div>
         <button type="submit" class="btn">Log Send</button>
       </form>
     </div>
     <div class="card">
-      <h2>Channels</h2>
+      <h2>Where It Lands</h2>
       <div class="channel-list">
         <div class="channel-item">
           <span class="channel-icon">💬</span>
@@ -234,7 +248,7 @@
         </thead>
         <tbody id="followup-queue"></tbody>
       </table>
-      <p class="empty-state" id="no-followups">No follow-ups pending.</p>
+      <p class="empty-state" id="no-followups">No follow-ups are waiting right now.</p>
     </div>
   </div>
 </section>
@@ -242,7 +256,10 @@
 <!-- Finance -->
 <section id="page-finance" class="page">
   <div class="page-header">
-    <h1>Finance & Margins</h1>
+    <div>
+      <h1>Revenue</h1>
+      <p class="subtitle">See what Bonfyre costs to run, what clients pay for, and where margin stays healthy.</p>
+    </div>
   </div>
 
   <div class="card-grid four-col">
@@ -266,7 +283,7 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Service Components</h2>
+      <h2>What You Sell</h2>
       <table class="data-table">
         <thead>
           <tr><th>Component</th><th>Your Cost</th><th>Client Price</th><th>Margin</th></tr>
@@ -287,7 +304,7 @@
 
   <div class="card-row">
     <div class="card">
-      <h2>Bundle Builder</h2>
+      <h2>Package Builder</h2>
       <div class="bundle-builder">
         <label><input type="checkbox" checked data-cost="1.50" data-price="12.00"> Transcription</label>
         <label><input type="checkbox" checked data-cost="0.50" data-price="5.00"> Summary</label>
@@ -305,7 +322,7 @@
       </div>
     </div>
     <div class="card">
-      <h2>Pricing Tiers</h2>
+      <h2>Starter Pricing</h2>
       <div class="tier-list">
         <div class="tier">
           <h3>Standard</h3>
@@ -327,11 +344,79 @@
   </div>
 </section>
 
+<!-- Pages -->
+<section id="page-pages" class="page">
+  <div class="page-header">
+    <div>
+      <h1>Pages Studio</h1>
+      <p class="subtitle">Build Bonfyre service sites and Bonfyre OSS proof apps from one simple Pages workflow.</p>
+    </div>
+    <div class="page-actions">
+      <button class="btn btn-secondary" type="button">Import manifest</button>
+      <button class="btn" type="button">Create page app</button>
+    </div>
+  </div>
+
+  <div class="pages-hero card">
+    <div>
+      <span class="eyebrow">Unified publishing layer</span>
+      <h2>Turn Bonfyre output into pages people can actually use.</h2>
+      <p>Browse live page apps, inspect what each one ships, and show publish readiness without losing sight of the bigger Bonfyre system that powers it.</p>
+    </div>
+    <div class="pages-hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-value" id="pages-stat-total">0</span>
+        <span class="hero-stat-label">Tracked pages</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value" id="pages-stat-live">0</span>
+        <span class="hero-stat-label">Live now</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-value" id="pages-stat-surface">Bonfyre</span>
+        <span class="hero-stat-label">Current surface</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="pages-coverage" id="pages-coverage"></div>
+
+  <div class="pages-toolbar">
+    <div class="surface-switch" id="pages-surface-switch"></div>
+    <div class="status-switch" id="pages-status-switch"></div>
+    <label class="pages-search">
+      <span>Search</span>
+      <input id="pages-search" type="search" placeholder="Podcast, OSS, customer voice...">
+    </label>
+  </div>
+
+  <div class="pages-layout">
+    <aside class="card pages-list-panel">
+      <div class="panel-heading">
+        <h2>Page Apps</h2>
+        <span id="pages-results-count">0 results</span>
+      </div>
+      <div class="pages-list" id="pages-list"></div>
+    </aside>
+
+    <section class="card pages-detail-panel">
+      <div id="pages-detail"></div>
+    </section>
+
+    <aside class="card pages-meta-panel">
+      <div class="panel-heading">
+        <h2>Publishing Lens</h2>
+      </div>
+      <div id="pages-meta"></div>
+    </aside>
+  </div>
+</section>
+
 <!-- Use Cases -->
 <section id="page-use-cases" class="page">
   <div class="page-header">
-    <h1>30 Use Cases — Powered by Bonfyre</h1>
-    <p class="subtitle">Every use case runs on static C11 binaries. 38 binaries, 1.5MB total, zero cloud.</p>
+    <h1>30 Ways To Use Bonfyre</h1>
+    <p class="subtitle">Real workflows powered by Bonfyre’s static binary stack, shown without cloud fluff.</p>
   </div>
 
   <div class="use-case-filters">
@@ -350,7 +435,10 @@
 <!-- Settings -->
 <section id="page-settings" class="page">
   <div class="page-header">
-    <h1>Settings</h1>
+    <div>
+      <h1>Settings</h1>
+      <p class="subtitle">Manage access, check system health, and see the stack Bonfyre is running underneath the UI.</p>
+    </div>
   </div>
 
   <div class="card-row">
@@ -376,7 +464,7 @@
       </div>
     </div>
     <div class="card">
-      <h2>System</h2>
+      <h2>System Status</h2>
       <div id="system-info">
         <p>API: <span id="sys-version">—</span></p>
         <p>Status: <span id="sys-status">—</span></p>
@@ -389,7 +477,7 @@
 
   <div class="card-row">
     <div class="card wide">
-      <h2>Architecture</h2>
+      <h2>How Bonfyre Is Put Together</h2>
       <pre class="arch-diagram">
 Audio File
   ↓  bonfyre-ingest        Intake + validation
