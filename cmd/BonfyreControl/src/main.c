@@ -58,7 +58,7 @@ static void db_path(char *buf, size_t len) {
     snprintf(buf, len, "%s%s", home, DB_SUBPATH);
 }
 
-static void ensure_dir(const char *path) { bf_ensure_dir(path); }
+static void ensure_dir(const char *path) { bf_ensure_parent_dir(path); }
 
 /* ── schema + seed ───────────────────────────────────────────────────────── */
 
@@ -372,21 +372,23 @@ static void cmd_entropy_check(sqlite3 *db, const char *artifact, double threshol
     printf("  capped_at  : %ld bytes\n", bytes_read);
     printf("  result     : %s\n", pass ? "PASS" : "FAIL — escalate to P1 (Proof)");
 
-    if (!pass) {
-        /* Log low-entropy decision for routing layer */
+    /* Always log entropy result (pass or fail) for ops dashboard */
+    {
         time_t now = time(NULL);
         sqlite3_stmt *st = NULL;
         sqlite3_prepare_v2(db,
             "INSERT INTO decisions(recipe,stage,decision,reason,score,ts)"
             " VALUES(?,?,?,?,?,?)",
             -1, &st, NULL);
-        sqlite3_bind_text(st, 1, artifact,        -1, SQLITE_STATIC);
-        sqlite3_bind_text(st, 2, "probe/entropy", -1, SQLITE_STATIC);
-        sqlite3_bind_text(st, 3, "escalate-P1",  -1, SQLITE_STATIC);
-        sqlite3_bind_text(st, 4, "low-entropy",  -1, SQLITE_STATIC);
+        sqlite3_bind_text(st, 1, artifact,                    -1, SQLITE_STATIC);
+        sqlite3_bind_text(st, 2, "probe/entropy",             -1, SQLITE_STATIC);
+        sqlite3_bind_text(st, 3, pass ? "pass" : "escalate-P1", -1, SQLITE_STATIC);
+        sqlite3_bind_text(st, 4, pass ? "ok"   : "low-entropy", -1, SQLITE_STATIC);
         sqlite3_bind_double(st, 5, H);
         sqlite3_bind_int64(st, 6, (sqlite3_int64)now);
         sqlite3_step(st); sqlite3_finalize(st);
+    }
+    if (!pass) {
         exit(2);  /* non-zero: caller knows to trigger P1 proof */
     }
 }
@@ -940,8 +942,8 @@ static void cmd_ops(sqlite3 *db) {
     {
         sqlite3_stmt *est = NULL;
         const char *EQ =
-            "SELECT result FROM control_decisions "
-            "WHERE decision_type='entropy-check' ORDER BY id DESC LIMIT 100;";
+            "SELECT decision FROM decisions "
+            "WHERE stage='probe/entropy' ORDER BY id DESC LIMIT 100;";
         if (sqlite3_prepare_v2(db, EQ, -1, &est, NULL) == SQLITE_OK) {
             while (sqlite3_step(est) == SQLITE_ROW) {
                 const char *res = (const char *)sqlite3_column_text(est, 0);
@@ -970,8 +972,8 @@ static void cmd_ops(sqlite3 *db) {
     {
         sqlite3_stmt *sst = NULL;
         const char *SQ =
-            "SELECT composite_score FROM control_decisions "
-            "WHERE composite_score IS NOT NULL ORDER BY id DESC LIMIT 100;";
+            "SELECT composite FROM scores "
+            "WHERE composite IS NOT NULL ORDER BY id DESC LIMIT 100;";
         if (sqlite3_prepare_v2(db, SQ, -1, &sst, NULL) == SQLITE_OK) {
             while (sqlite3_step(sst) == SQLITE_ROW) {
                 double v = sqlite3_column_double(sst, 0);

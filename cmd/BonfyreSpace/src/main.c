@@ -39,7 +39,7 @@ static void db_path(char *buf,size_t len){
     const char *h=getenv("HOME");if(!h)h="/tmp";
     snprintf(buf,len,"%s%s",h,DB_SUBPATH);
 }
-static void ensure_dir(const char *p) { bf_ensure_dir(p); }
+static void ensure_dir(const char *p) { bf_ensure_parent_dir(p); }
 static void ensure_parent_dir(const char *path) {
     char tmp[4096];
     char *slash;
