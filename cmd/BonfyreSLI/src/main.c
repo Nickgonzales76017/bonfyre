@@ -314,9 +314,82 @@ static int cmd_run(const char *in_path, const char *model_path, const char *out_
     return rc;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+ * GDN chain step — inline Gated Delta Network for embedding sequences.
+ *
+ * Interprets the input vector batch [n_vecs, dim] as a temporal sequence
+ * (T = n_vecs, K = V = dim, B = 1, H = 1) and applies the GDN delta rule:
+ *
+ *   H_t = gate * H_{t-1} + beta * (x_t ⊗ (scale * x_t))   [self-attention]
+ *   o_t = H_t^T * x_t
+ *
+ * This contextualises each embedding with a weighted summary of all previous
+ * embeddings via an exponentially-decaying associative memory.
+ *
+ * gate (default 0.9): history retention per step (higher → longer memory)
+ * beta (default 0.1/sqrt(dim)): rank-1 update strength
+ *
+ * Invoked by chain steps named "gdn" in any chain spec, e.g. "T04:gdn:T16".
+ * NOTE: O(dim²) state — practical for dim ≤ 1024; refuse above that limit.
+ * ═══════════════════════════════════════════════════════════════════ */
+static int sli_gdn_step(const char *in_path, const char *out_path,
+                         float gdn_gate, float gdn_beta) {
+    float   *vecs  = NULL;
+    uint32_t n_vecs = 0, dim = 0;
+    if (load_vectors(in_path, &vecs, &n_vecs, &dim)) return 1;
+
+    if (dim > 1024) {
+        fprintf(stderr, "sli gdn: dim=%u > 1024, state matrix would be %.1f MB "
+                        "(use bonfyre-flashqla directly with explicit H/K/V)\n",
+                dim, (double)dim * dim * 4 / (1024.0 * 1024.0));
+        free(vecs); return 1;
+    }
+
+    float scale = 1.0f / sqrtf((float)dim);
+    if (gdn_beta < 0.0f) gdn_beta = 0.1f * scale;   /* auto */
+
+    /* State h: [dim, dim] = K × V with K=V=dim */
+    size_t   h_sz     = (size_t)dim * dim;
+    float   *h        = calloc(h_sz, sizeof(float));
+    float   *out_vecs = malloc((size_t)n_vecs * dim * sizeof(float));
+    if (!h || !out_vecs) {
+        free(h); free(out_vecs); free(vecs);
+        fprintf(stderr, "sli gdn: out of memory\n"); return 1;
+    }
+
+    for (uint32_t t = 0; t < n_vecs; t++) {
+        const float *xt = vecs + (size_t)t * dim;
+
+        /* H = gate * H + beta * xt ⊗ (scale * xt) */
+        for (uint32_t ki = 0; ki < dim; ki++) {
+            float gkval = gdn_beta * xt[ki] * scale;
+            float *hrow = h + (size_t)ki * dim;
+            for (uint32_t vi = 0; vi < dim; vi++)
+                hrow[vi] = gdn_gate * hrow[vi] + gkval * xt[vi];
+        }
+
+        /* o_t = H^T * x_t */
+        float *ot = out_vecs + (size_t)t * dim;
+        for (uint32_t vi = 0; vi < dim; vi++) {
+            float acc = 0.0f;
+            for (uint32_t ki = 0; ki < dim; ki++)
+                acc += h[(size_t)ki * dim + vi] * xt[ki];
+            ot[vi] = acc;
+        }
+    }
+
+    int rc = save_vectors(out_path, out_vecs, n_vecs, dim);
+    printf("  gdn: %u vecs × %u dim  gate=%.3f beta=%.5f scale=%.5f\n",
+           n_vecs, dim, (double)gdn_gate, (double)gdn_beta, (double)scale);
+
+    free(h); free(out_vecs); free(vecs);
+    return rc;
+}
+
 static int cmd_chain(const char *in_path, const char *chain_spec,
-                      const char *models_dir, const char *out_path) {
-    /* chain_spec: "T04:T16" → apply T04 then T16 */
+                      const char *models_dir, const char *out_path,
+                      float gdn_gate, float gdn_beta) {
+    /* chain_spec: "T04:T16" or "T04:gdn:T16" → apply steps in order */
     printf("sli chain: %s  [%s]  → %s\n", in_path, chain_spec, out_path);
 
     char spec[256]; strncpy(spec, chain_spec, sizeof(spec)-1);
@@ -334,15 +407,24 @@ static int cmd_chain(const char *in_path, const char *chain_spec,
     for (int fi = 0; fi < n_fam; fi++) {
         snprintf(cur_out, sizeof(cur_out), "%s.sli_step%d.bin", out_path, fi);
 
-        char model_path[MAX_PATH];
-        snprintf(model_path, sizeof(model_path), "%s/%s.bqfp", models_dir, families[fi]);
-
-        printf("  step %d/%d: family=%s  model=%s\n", fi+1, n_fam, families[fi], model_path);
-
         /* For last step, write to final output */
         const char *step_out = (fi == n_fam - 1) ? out_path : cur_out;
 
-        if (cmd_run(cur_in, model_path, step_out)) return 1;
+        if (strcmp(families[fi], "gdn") == 0) {
+            /* ── GDN linear-attention step ─────────────────────────────── */
+            printf("  step %d/%d: gdn  gate=%.3f beta=%s\n",
+                   fi + 1, n_fam,
+                   (double)gdn_gate,
+                   gdn_beta < 0.0f ? "auto" : "custom");
+            if (sli_gdn_step(cur_in, step_out, gdn_gate, gdn_beta)) return 1;
+        } else {
+            /* ── BQFP transform step ───────────────────────────────────── */
+            char model_path[MAX_PATH];
+            snprintf(model_path, sizeof(model_path), "%s/%s.bqfp", models_dir, families[fi]);
+            printf("  step %d/%d: family=%s  model=%s\n",
+                   fi + 1, n_fam, families[fi], model_path);
+            if (cmd_run(cur_in, model_path, step_out)) return 1;
+        }
 
         /* Cleanup intermediate */
         if (fi > 0 && strcmp(cur_in, in_path) != 0)
@@ -763,6 +845,7 @@ static void usage(void) {
         "Usage:\n"
         "  bonfyre-sli run      --in vecs.bin --model m.bqfp --out out.bin\n"
         "  bonfyre-sli chain    --in vecs.bin --chain T04:T16 --models-dir DIR --out out.bin\n"
+        "                       [--gdn-gate 0.9] [--gdn-beta auto]  (for 'gdn' chain steps)\n"
         "  bonfyre-sli route    --in vecs.bin --stats corpus_stats.json --models-dir DIR --out out.bin\n"
         "  bonfyre-sli auto-run --in vecs.bin --stats corpus_stats.json --out results/\n"
         "               [--loop 3] [--chain auto|T04:T16|none] [--fpqx auto|none]\n"
@@ -815,7 +898,11 @@ int main(int argc, char **argv) {
         if (!in_path || !chain_spec || !models_dir || !out_path) {
             fprintf(stderr,"sli chain: --in, --chain, --models-dir, --out required\n"); return 1;
         }
-        return cmd_chain(in_path, chain_spec, models_dir, out_path);
+        const char *gate_str = bf_arg_value(argc, argv, "--gdn-gate");
+        const char *beta_str = bf_arg_value(argc, argv, "--gdn-beta");
+        float gdn_gate = gate_str ? (float)atof(gate_str) : 0.9f;
+        float gdn_beta = beta_str ? (float)atof(beta_str) : -1.0f; /* -1 = auto */
+        return cmd_chain(in_path, chain_spec, models_dir, out_path, gdn_gate, gdn_beta);
     }
 
     if (strcmp(cmd, "route") == 0) {
