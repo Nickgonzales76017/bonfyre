@@ -648,7 +648,8 @@ static pid_t pipeline_compress_start(const char *input, const char *outdir) {
     snprintf(out_path, sizeof(out_path), "%s/compressed.zst", outdir);
     pid_t pid = 0;
     char *argv[] = {"zstd", "-q", "-f", (char *)input, "-o", out_path, NULL};
-    posix_spawn(&pid, "/opt/homebrew/bin/zstd", NULL, NULL, argv, environ);
+    /* posix_spawnp searches PATH — works on macOS and Linux without hard-coded paths */
+    posix_spawnp(&pid, "zstd", NULL, NULL, argv, environ);
     return pid; /* parent continues immediately */
 }
 

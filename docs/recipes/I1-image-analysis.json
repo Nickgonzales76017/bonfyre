@@ -1,0 +1,155 @@
+{
+  "recipe_id": "I1",
+  "name": "Image Analysis Pipeline",
+  "version": "1.0.0",
+  "description": "Deep image investigation: objects, text, faces, scene understanding → structured report",
+  "category": "image-analysis",
+  "inputs": [
+    {
+      "name": "image",
+      "type": "image/*",
+      "required": true,
+      "description": "Input image (jpg, png, webp)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "report",
+      "type": "application/json",
+      "path": "{out}/analysis.json"
+    }
+  ],
+  "stages": [
+    {
+      "id": "s01",
+      "name": "Image Normalization",
+      "operator": "BonfyreImageNormalize",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/normalized.jpg",
+        "--max-size", "2048"
+      ],
+      "outputs": ["{out}/normalized.jpg"],
+      "description": "Resize and standardize format"
+    },
+    {
+      "id": "s02",
+      "name": "Object Detection",
+      "operator": "BonfyreDetectObjects",
+      "args": [
+        "--input", "{out}/normalized.jpg",
+        "--out", "{out}/objects.json",
+        "--model", "yolo-v8",
+        "--confidence", "0.5"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/objects.json"]
+    },
+    {
+      "id": "s03",
+      "name": "OCR Extraction",
+      "operator": "BonfyreOCR",
+      "args": [
+        "--input", "{out}/normalized.jpg",
+        "--out", "{out}/text.json",
+        "--model", "tesseract"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/text.json"]
+    },
+    {
+      "id": "s04",
+      "name": "Face Detection",
+      "operator": "BonfyreFaceDetect",
+      "args": [
+        "--input", "{out}/normalized.jpg",
+        "--out", "{out}/faces.json",
+        "--model", "retinaface"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/faces.json"]
+    },
+    {
+      "id": "s05",
+      "name": "Scene Classification",
+      "operator": "BonfyreSceneClassify",
+      "args": [
+        "--input", "{out}/normalized.jpg",
+        "--out", "{out}/scene.json",
+        "--model", "clip-vit-b32"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/scene.json"],
+      "description": "Classify scene type (indoor, outdoor, nature, urban, etc)"
+    },
+    {
+      "id": "s06",
+      "name": "Caption Generation",
+      "operator": "BonfyreImageCaption",
+      "args": [
+        "--input", "{out}/normalized.jpg",
+        "--out", "{out}/caption.json",
+        "--model", "blip2"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/caption.json"],
+      "description": "Generate natural language description"
+    },
+    {
+      "id": "s07",
+      "name": "Metadata Extraction",
+      "operator": "BonfyreImageMeta",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/metadata.json"
+      ],
+      "outputs": ["{out}/metadata.json"],
+      "description": "Extract EXIF, GPS, camera info"
+    },
+    {
+      "id": "s08",
+      "name": "Analysis Fusion",
+      "operator": "BonfyreFuseAnalysis",
+      "args": [
+        "--objects", "{out}/objects.json",
+        "--text", "{out}/text.json",
+        "--faces", "{out}/faces.json",
+        "--scene", "{out}/scene.json",
+        "--caption", "{out}/caption.json",
+        "--metadata", "{out}/metadata.json",
+        "--out", "{out}/analysis.json"
+      ],
+      "depends_on": ["s02", "s03", "s04", "s05", "s06", "s07"],
+      "outputs": ["{out}/analysis.json"],
+      "description": "Merge all analyses into unified report"
+    }
+  ],
+  "models": [
+    {
+      "name": "yolo-v8",
+      "hash": "sha256:abc123...",
+      "size_mb": 45
+    },
+    {
+      "name": "retinaface",
+      "hash": "sha256:def456...",
+      "size_mb": 27
+    },
+    {
+      "name": "clip-vit-b32",
+      "hash": "sha256:789abc...",
+      "size_mb": 350
+    },
+    {
+      "name": "blip2",
+      "hash": "sha256:xyz999...",
+      "size_mb": 560
+    }
+  ],
+  "metadata": {
+    "estimated_time": "8 seconds",
+    "tags": ["image", "vision", "ocr", "detection"],
+    "author": "bonfyre-core",
+    "license": "MIT"
+  }
+}

@@ -1,11 +1,14 @@
 CC      := cc
+SQLITE_CFLAGS  := $(shell pkg-config --cflags sqlite3  2>/dev/null || echo "-I/opt/homebrew/opt/sqlite/include")
+SQLITE_LIBS    := $(shell pkg-config --libs   sqlite3  2>/dev/null || echo "-L/opt/homebrew/opt/sqlite/lib -lsqlite3")
+OPENSSL_CFLAGS := $(shell pkg-config --cflags openssl  2>/dev/null || echo "-I/opt/homebrew/opt/openssl@3/include")
+OPENSSL_LIBS   := $(shell pkg-config --libs   openssl  2>/dev/null || echo "-L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto")
 CFLAGS  := -O2 -Wall -Wextra -std=c11 \
            -I../../lib/libfragment/include \
-           -I/opt/homebrew/opt/openssl@3/include \
-           -I/opt/homebrew/opt/sqlite/include
+           $(SQLITE_CFLAGS) $(OPENSSL_CFLAGS)
 LDFLAGS := -L../../lib/libfragment -lfragment \
-           -L/opt/homebrew/opt/openssl@3/lib -lssl -lcrypto \
-           -L/opt/homebrew/opt/sqlite/lib -lsqlite3
+           $(OPENSSL_LIBS) \
+           $(SQLITE_LIBS)
 
 SRC   := src/main.c
 BUILD := build

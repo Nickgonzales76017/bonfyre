@@ -358,6 +358,136 @@ static int cmd_merkle(const char *artifact_path, int verify_only) {
     return 0;
 }
 
+static char *read_text_file(const char *path, long *sz_out) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (sz <= 0 || sz > (16 * 1024 * 1024)) {
+        fclose(f);
+        return NULL;
+    }
+    char *buf = malloc((size_t)sz + 1);
+    if (!buf) {
+        fclose(f);
+        return NULL;
+    }
+    size_t n = fread(buf, 1, (size_t)sz, f);
+    fclose(f);
+    if ((long)n != sz) {
+        free(buf);
+        return NULL;
+    }
+    buf[sz] = '\0';
+    if (sz_out) *sz_out = sz;
+    return buf;
+}
+
+static int json_extract_string_key(const char *json, const char *key, char *out, size_t out_sz) {
+    char needle[128];
+    snprintf(needle, sizeof(needle), "\"%s\"", key);
+    const char *p = strstr(json, needle);
+    if (!p) return 0;
+    p = strchr(p + (int)strlen(needle), ':');
+    if (!p) return 0;
+    p++;
+    while (*p && isspace((unsigned char)*p)) p++;
+    if (*p != '"') return 0;
+    p++;
+    size_t i = 0;
+    while (*p && *p != '"' && i + 1 < out_sz) out[i++] = *p++;
+    out[i] = '\0';
+    return i > 0;
+}
+
+static int json_extract_int_key(const char *json, const char *key, int *out) {
+    char needle[128];
+    snprintf(needle, sizeof(needle), "\"%s\"", key);
+    const char *p = strstr(json, needle);
+    if (!p) return 0;
+    p = strchr(p + (int)strlen(needle), ':');
+    if (!p) return 0;
+    p++;
+    while (*p && isspace((unsigned char)*p)) p++;
+    *out = atoi(p);
+    return 1;
+}
+
+static int cmp_int_asc(const void *a, const void *b) {
+    int ia = *(const int *)a;
+    int ib = *(const int *)b;
+    return (ia > ib) - (ia < ib);
+}
+
+static int extract_feature_ids(const char *json, int *ids, int max_ids) {
+    const char *needle = "\"feature_id\"";
+    int n = 0;
+    const char *p = json;
+    while ((p = strstr(p, needle)) && n < max_ids) {
+        p += strlen(needle);
+        p = strchr(p, ':');
+        if (!p) break;
+        p++;
+        while (*p && isspace((unsigned char)*p)) p++;
+        ids[n++] = atoi(p);
+    }
+    return n;
+}
+
+static int cmd_feature(const char *manifest_path) {
+    long sz = 0;
+    char *json = read_text_file(manifest_path, &sz);
+    if (!json) {
+        fprintf(stderr, "Cannot open feature manifest: %s\n", manifest_path);
+        return 1;
+    }
+
+    char model[128] = "unknown";
+    int layer = 0;
+    (void)json_extract_string_key(json, "model_family", model, sizeof(model));
+    (void)json_extract_int_key(json, "layer", &layer);
+
+    int ids[4096];
+    int n = extract_feature_ids(json, ids, 4096);
+    if (n <= 0) {
+        fprintf(stderr, "No feature_id entries found in: %s\n", manifest_path);
+        free(json);
+        return 1;
+    }
+
+    qsort(ids, (size_t)n, sizeof(int), cmp_int_asc);
+    int uniq = 0;
+    for (int i = 0; i < n; i++) {
+        if (i == 0 || ids[i] != ids[i - 1]) ids[uniq++] = ids[i];
+    }
+
+    SHA256_CTX ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, (const unsigned char *)model, strlen(model));
+    sha256_update(&ctx, (const unsigned char *)"|", 1);
+    char lbuf[32];
+    snprintf(lbuf, sizeof(lbuf), "%d", layer);
+    sha256_update(&ctx, (const unsigned char *)lbuf, strlen(lbuf));
+    sha256_update(&ctx, (const unsigned char *)"|", 1);
+    for (int i = 0; i < uniq; i++) {
+        char ibuf[32];
+        snprintf(ibuf, sizeof(ibuf), "%d", ids[i]);
+        sha256_update(&ctx, (const unsigned char *)ibuf, strlen(ibuf));
+        if (i + 1 < uniq)
+            sha256_update(&ctx, (const unsigned char *)",", 1);
+    }
+
+    unsigned char h[32];
+    char hex[65];
+    sha256_final(&ctx, h);
+    sha256_hex(h, hex);
+
+    printf("bfh:feature:%s:l%d:%.16s\n", model, layer, hex);
+    free(json);
+    return 0;
+}
+
 /* ---------- main ---------- */
 
 int main(int argc, char *argv[]) {
@@ -378,6 +508,9 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "dedup") == 0 && argc >= 3)
         return cmd_dedup(argv[2]);
 
+    if (strcmp(argv[1], "feature") == 0 && argc >= 3)
+        return cmd_feature(argv[2]);
+
 usage:
     fprintf(stderr,
         "BonfyreHash — content-addressing engine\n\n"
@@ -387,6 +520,7 @@ usage:
         "  bonfyre-hash merkle <artifact.json>                    compute/update root_hash\n"
         "  bonfyre-hash verify <artifact.json>                    verify all hashes\n"
         "  bonfyre-hash dedup <dir>                               find duplicate files\n"
+        "  bonfyre-hash feature <features.json>                   stable SAE feature hash URI\n"
     );
     return 1;
 }

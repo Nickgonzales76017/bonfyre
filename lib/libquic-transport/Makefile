@@ -1,9 +1,12 @@
 CC ?= cc
 CFLAGS ?= -O3 -march=native -flto=auto -Wall -Wextra -std=c11
-BREW := /opt/homebrew
 
-CFLAGS += -I$(BREW)/include -Iinclude
-LDFLAGS = -L$(BREW)/lib -lngtcp2 -lngtcp2_crypto_ossl -lssl -lcrypto
+NGTCP2_CFLAGS := $(shell pkg-config --cflags ngtcp2 ngtcp2_crypto_ossl 2>/dev/null || echo "-I/opt/homebrew/include")
+NGTCP2_LIBS   := $(shell pkg-config --libs   ngtcp2 ngtcp2_crypto_ossl 2>/dev/null || \
+                  echo "-L/opt/homebrew/lib -lngtcp2 -lngtcp2_crypto_ossl -lssl -lcrypto")
+
+CFLAGS += $(NGTCP2_CFLAGS) -Iinclude
+LDFLAGS = $(NGTCP2_LIBS)
 
 SRCS = bf_quic.c
 OBJS = $(SRCS:.c=.o)

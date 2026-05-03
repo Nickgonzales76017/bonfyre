@@ -1,8 +1,10 @@
 # BonfyreRun — Recipe Executor
 
-CC := cc
-CFLAGS := -O2 -Wall -Wextra -std=c11 -I/opt/homebrew/opt/sqlite/include -I../../lib/libbonfyre/include
-LDFLAGS := -L../../lib/libbonfyre -lbonfyre -L/opt/homebrew/opt/sqlite/lib -lsqlite3
+CC ?= cc
+SQLITE_CFLAGS := $(shell pkg-config --cflags sqlite3 2>/dev/null || echo "-I/opt/homebrew/opt/sqlite/include")
+SQLITE_LIBS   := $(shell pkg-config --libs   sqlite3 2>/dev/null || echo "-L/opt/homebrew/opt/sqlite/lib -lsqlite3")
+CFLAGS ?= -O2 -Wall -Wextra -std=c11 $(SQLITE_CFLAGS) -I../../lib/libbonfyre/include
+LDFLAGS := -L../../lib/libbonfyre -lbonfyre $(SQLITE_LIBS)
 
 SRC := src/main.c
 BUILD := build

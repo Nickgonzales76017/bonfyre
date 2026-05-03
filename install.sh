@@ -17,7 +17,33 @@ PREFIX="${HOME}/.local"
 CHECK_ONLY=0
 LIST_ONLY=0
 ONLY=""
+
+# ---- OS / architecture detection ----
+OS_TYPE="$(uname -s)"
+ARCH="$(uname -m)"
 JOBS=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 4)
+
+case "$OS_TYPE" in
+    Darwin)  OS_LABEL="macOS" ;;
+    Linux)   OS_LABEL="Linux" ;;
+    *)       OS_LABEL="$OS_TYPE" ;;
+esac
+
+# Warn Linux users that any pre-built zip contains arm64 Mach-O binaries only
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    echo ""
+    echo "  ┌─────────────────────────────────────────────────────────────┐"
+    echo "  │  Linux detected ($ARCH)"
+    echo "  │  Pre-built zip binaries are Mach-O arm64 (macOS only)."
+    echo "  │  Building from source with your local gcc instead.         "
+    echo "  │  Alternative: docker compose up -d  (see README)           "
+    echo "  └─────────────────────────────────────────────────────────────┘"
+    echo ""
+    # Linux: prefer gcc explicitly, fall back to cc
+    if command -v gcc &>/dev/null && [[ -z "${CC:-}" ]]; then
+        export CC=gcc
+    fi
+fi
 
 # ---- All Bonfyre binary projects (build order matters for deps) ----
 # Library first, then CMS (depends on library), then everything else
@@ -141,9 +167,32 @@ check_cmd make
 check_lib sqlite3 sqlite3.h "brew install sqlite3 / apt install libsqlite3-dev"
 check_lib zlib zlib.h "brew install zlib / apt install zlib1g-dev"
 
+# OpenBLAS — required for full BonfyreFPQ BLAS-accelerated paths on Linux
+# (macOS uses Apple Accelerate, so this check is Linux-only)
+if [[ "$OS_TYPE" == "Linux" ]]; then
+    if pkg-config --exists openblas 2>/dev/null || \
+       echo "#include <cblas.h>" | ${CC:-cc} -x c -fsyntax-only - 2>/dev/null; then
+        ok "openblas (found — BonfyreFPQ BLAS paths enabled)"
+    else
+        warn "openblas not found — BonfyreFPQ will build with scalar BLAS fallback"
+        warn "  For full performance: sudo apt-get install libopenblas-dev"
+        warn "  All other modules unaffected."
+    fi
+fi
+
 echo ""
 if [[ $MISSING -gt 0 ]]; then
     fail "$MISSING missing dependencies"
+    if [[ "$OS_TYPE" == "Linux" ]]; then
+        echo ""
+        warn "On Debian/Ubuntu, install missing deps with:"
+        echo "    sudo apt-get install -y gcc make libsqlite3-dev zlib1g-dev pkg-config libopenblas-dev"
+        echo ""
+        warn "Or skip source build and use Docker:"
+        echo "    docker compose up -d"
+    elif [[ "$OS_TYPE" == "Darwin" ]]; then
+        warn "Install missing deps with: brew install sqlite3 zlib"
+    fi
     exit 1
 fi
 ok "All dependencies satisfied"

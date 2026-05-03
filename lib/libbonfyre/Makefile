@@ -16,7 +16,8 @@ SRCS    = $(SRCDIR)/bf_artifact.c \
           $(SRCDIR)/bf_layer_artifact.c \
           $(SRCDIR)/bf_catalog.c \
           $(SRCDIR)/bf_sha256.c \
-          $(SRCDIR)/bf_operators.c
+          $(SRCDIR)/bf_operators.c \
+          $(SRCDIR)/bf_sae.c
 
 # Batch 1+2 modules (in project root, not src/)
 EXT_SRCS = bf_reactor.c \
@@ -41,14 +42,32 @@ EXT_SRCS = bf_reactor.c \
            bf_lz4.c \
            bf_hashmap.c \
            bf_csv.c \
-           bf_sqlite.c
+           bf_sqlite.c \
+           bf_embed_cache.c \
+           bf_embed_pack.c \
+           bf_embed_steer.c \
+           bf_embed_index.c \
+           bf_embed_refs.c \
+           bf_kvcache_pack.c \
+           bf_embed_bvh.c \
+           bf_physics.c \
+           bf_kvcache_mount.c \
+           bf_entropy_trace.c \
+           bf_trajectory_entropy.c \
+           bf_netlist.c \
+           bf_component.c \
+           bf_circuit.c \
+           bf_spice_eval.c \
+           bf_hesli.c \
+           bridge_orchestrator.c
 
 OBJS    = $(patsubst $(SRCDIR)/%.c,$(OBJDIR)/%.o,$(SRCS))
 EXT_OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(EXT_SRCS))
 TARGET  = libbonfyre.a
 SHARED  = libbonfyre.so
+DYLIB   = libbonfyre.dylib
 
-.PHONY: all clean install test
+.PHONY: all clean install test dylib
 
 all: $(TARGET)
 
@@ -68,8 +87,13 @@ $(TARGET): $(OBJS) $(EXT_OBJS)
 $(SHARED): $(OBJS) $(EXT_OBJS)
 	$(CC) -shared -o $@ $^ -lpthread
 
+$(DYLIB): $(OBJS) $(EXT_OBJS)
+	$(CC) -shared -o $@ $^ -lpthread -lsqlite3 -undefined dynamic_lookup
+
+dylib: $(DYLIB)
+
 clean:
-	rm -rf $(OBJDIR) $(TARGET) $(SHARED) test_bonfyre
+	rm -rf $(OBJDIR) $(TARGET) $(SHARED) $(DYLIB) test_bonfyre
 
 test: $(TARGET)
 	$(CC) $(CFLAGS) -I$(INCDIR) test/test_bonfyre.c -L. -lbonfyre -o test_bonfyre

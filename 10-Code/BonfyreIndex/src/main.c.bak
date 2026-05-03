@@ -1,0 +1,514 @@
+/*
+ * BonfyreIndex — artifact family indexer and search engine.
+ *
+ * Crawls directories of artifact.json manifests and builds a SQLite index.
+ * Query by hash, type, date, tag. Find shared operators across families.
+ * Discover reuse opportunities (same atom hash = same content).
+ *
+ * Usage:
+ *   bonfyre-index build <artifacts_dir> [--db index.db]
+ *   bonfyre-index search <query> [--db index.db] [--type TYPE] [--limit N]
+ *   bonfyre-index reuse [--db index.db]
+ *   bonfyre-index stats [--db index.db]
+ */
+#include <ctype.h>
+#include <dirent.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/resource.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <unistd.h>
+#include <sqlite3.h>
+
+#define MAX_LINE 65536
+
+static void iso_timestamp(char *buf, size_t sz) {
+    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
+    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
+}
+
+static long long monotonic_ns(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (long long)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+}
+
+static long current_max_rss_kb(void) {
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) != 0) return 0;
+#ifdef __APPLE__
+    return usage.ru_maxrss / 1024;
+#else
+    return usage.ru_maxrss;
+#endif
+}
+
+typedef struct {
+    char artifact_id[512];
+    char artifact_type[128];
+    char source_system[128];
+    char created_at[128];
+    char root_hash[128];
+    int atoms_count;
+    int operators_count;
+    int realizations_count;
+} ManifestSummary;
+
+static void copy_json_token(char *dst, size_t dst_sz, const char *start, size_t len) {
+    if (dst_sz == 0) return;
+    size_t n = len < dst_sz - 1 ? len : dst_sz - 1;
+    memcpy(dst, start, n);
+    dst[n] = '\0';
+}
+
+static void manifest_summary_init(ManifestSummary *summary) {
+    memset(summary, 0, sizeof(*summary));
+}
+
+static void scan_manifest_summary(const char *json, ManifestSummary *summary) {
+    manifest_summary_init(summary);
+    int object_depth = 0;
+    int array_depth = 0;
+    int in_string = 0;
+    int escape = 0;
+    int pending_top_level_key = 0;
+    const char *string_start = NULL;
+    size_t string_len = 0;
+    char current_key[64] = {0};
+    enum { ARRAY_NONE, ARRAY_ATOMS, ARRAY_OPERATORS, ARRAY_REALIZATIONS } active_array = ARRAY_NONE;
+
+    for (const char *p = json; *p; ++p) {
+        char ch = *p;
+        if (in_string) {
+            if (escape) {
+                escape = 0;
+                continue;
+            }
+            if (ch == '\\') {
+                escape = 1;
+                continue;
+            }
+            if (ch == '"') {
+                in_string = 0;
+                const char *look = p + 1;
+                while (*look == ' ' || *look == '\n' || *look == '\r' || *look == '\t') look++;
+                if (object_depth == 1 && array_depth == 0 && *look == ':') {
+                    copy_json_token(current_key, sizeof(current_key), string_start, string_len);
+                    pending_top_level_key = 1;
+                } else if (pending_top_level_key && object_depth == 1 && array_depth == 0) {
+                    if (strcmp(current_key, "artifact_id") == 0) {
+                        copy_json_token(summary->artifact_id, sizeof(summary->artifact_id), string_start, string_len);
+                    } else if (strcmp(current_key, "artifact_type") == 0) {
+                        copy_json_token(summary->artifact_type, sizeof(summary->artifact_type), string_start, string_len);
+                    } else if (strcmp(current_key, "source_system") == 0) {
+                        copy_json_token(summary->source_system, sizeof(summary->source_system), string_start, string_len);
+                    } else if (strcmp(current_key, "created_at") == 0) {
+                        copy_json_token(summary->created_at, sizeof(summary->created_at), string_start, string_len);
+                    } else if (strcmp(current_key, "root_hash") == 0) {
+                        copy_json_token(summary->root_hash, sizeof(summary->root_hash), string_start, string_len);
+                    }
+                    pending_top_level_key = 0;
+                    current_key[0] = '\0';
+                }
+                continue;
+            }
+            string_len++;
+            continue;
+        }
+
+        if (ch == '"') {
+            in_string = 1;
+            string_start = p + 1;
+            string_len = 0;
+            continue;
+        }
+
+        if (pending_top_level_key && object_depth == 1 && array_depth == 0 && ch == '[') {
+            if (strcmp(current_key, "atoms") == 0) active_array = ARRAY_ATOMS;
+            else if (strcmp(current_key, "operators") == 0) active_array = ARRAY_OPERATORS;
+            else if (strcmp(current_key, "realizations") == 0) active_array = ARRAY_REALIZATIONS;
+        }
+
+        if (ch == '{') {
+            if (active_array != ARRAY_NONE && array_depth == 1) {
+                if (active_array == ARRAY_ATOMS) summary->atoms_count++;
+                else if (active_array == ARRAY_OPERATORS) summary->operators_count++;
+                else if (active_array == ARRAY_REALIZATIONS) summary->realizations_count++;
+            }
+            object_depth++;
+        } else if (ch == '}') {
+            if (object_depth > 0) object_depth--;
+        } else if (ch == '[') {
+            array_depth++;
+        } else if (ch == ']') {
+            if (array_depth > 0) array_depth--;
+            if (array_depth == 0) {
+                active_array = ARRAY_NONE;
+                pending_top_level_key = 0;
+                current_key[0] = '\0';
+            }
+        } else if (pending_top_level_key && object_depth == 1 && array_depth == 0 && ch != ' ' && ch != '\n' && ch != '\r' && ch != '\t' && ch != ':') {
+            pending_top_level_key = 0;
+            current_key[0] = '\0';
+        }
+    }
+}
+
+typedef struct {
+    sqlite3_stmt *stmt;
+    const char *indexed_at;
+    int count;
+    long long bytes_scanned;
+    char *scratch;
+    size_t scratch_cap;
+} BuildCtx;
+
+static char *scratch_reserve(char **scratch, size_t *cap, size_t needed) {
+    if (*cap >= needed) return *scratch;
+    size_t next_cap = *cap ? *cap : 4096;
+    while (next_cap < needed) next_cap *= 2;
+    char *next = realloc(*scratch, next_cap);
+    if (!next) return NULL;
+    *scratch = next;
+    *cap = next_cap;
+    return next;
+}
+
+static void index_artifact_file(BuildCtx *ctx, const char *path) {
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return;
+    fseek(fp, 0, SEEK_END);
+    long sz = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    if (sz < 0) { fclose(fp); return; }
+    char *json = scratch_reserve(&ctx->scratch, &ctx->scratch_cap, (size_t)sz + 1);
+    if (!json) { fclose(fp); return; }
+    fread(json, 1, (size_t)sz, fp);
+    json[sz] = '\0';
+    fclose(fp);
+    ctx->bytes_scanned += sz;
+
+    ManifestSummary summary;
+    scan_manifest_summary(json, &summary);
+
+    sqlite3_bind_text(ctx->stmt, 1, summary.artifact_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(ctx->stmt, 2, summary.artifact_type, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(ctx->stmt, 3, summary.source_system, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(ctx->stmt, 4, summary.created_at, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(ctx->stmt, 5, summary.root_hash, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(ctx->stmt, 6, path, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_int(ctx->stmt, 7, summary.atoms_count);
+    sqlite3_bind_int(ctx->stmt, 8, summary.operators_count);
+    sqlite3_bind_int(ctx->stmt, 9, summary.realizations_count);
+    sqlite3_bind_text(ctx->stmt, 10, ctx->indexed_at, -1, SQLITE_TRANSIENT);
+    sqlite3_step(ctx->stmt);
+    sqlite3_reset(ctx->stmt);
+    sqlite3_clear_bindings(ctx->stmt);
+
+    fprintf(stderr, "  [index] %s (%s) a=%d o=%d r=%d\n",
+        summary.artifact_id,
+        summary.artifact_type,
+        summary.atoms_count,
+        summary.operators_count,
+        summary.realizations_count);
+    ctx->count++;
+}
+
+static void walk_artifacts_build(const char *root, BuildCtx *ctx) {
+    DIR *d = opendir(root);
+    if (!d) return;
+    struct dirent *ent;
+    while ((ent = readdir(d))) {
+        if (ent->d_name[0] == '.') continue;
+        char fp[PATH_MAX];
+        snprintf(fp, sizeof(fp), "%s/%s", root, ent->d_name);
+        struct stat st;
+        if (stat(fp, &st) != 0) continue;
+        if (S_ISDIR(st.st_mode)) {
+            walk_artifacts_build(fp, ctx);
+        } else if (strcmp(ent->d_name, "artifact.json") == 0) {
+            index_artifact_file(ctx, fp);
+        }
+    }
+    closedir(d);
+}
+
+/* ---------- SQLite print callback ---------- */
+
+static int print_row_cb(void *data, int ncols, char **vals, char **names) {
+    int *first = (int *)data;
+    if (*first) {
+        for (int i = 0; i < ncols; i++) printf("%-15s", names[i]);
+        printf("\n");
+        for (int i = 0; i < ncols; i++) printf("%-15s", "-------------");
+        printf("\n");
+        *first = 0;
+    }
+    for (int i = 0; i < ncols; i++) printf("%-15s", vals[i] ? vals[i] : "");
+    printf("\n");
+    return 0;
+}
+
+/* ---------- build index ---------- */
+
+static int cmd_build(const char *dir, const char *db_path) {
+    long long started = monotonic_ns();
+    sqlite3 *db;
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) {
+        fprintf(stderr, "Cannot open db: %s\n", sqlite3_errmsg(db));
+        return 1;
+    }
+
+    sqlite3_exec(db,
+        "PRAGMA temp_store=FILE;"
+        "PRAGMA cache_size=-256;"
+        "PRAGMA mmap_size=0;",
+        NULL, NULL, NULL);
+
+    char *err = NULL;
+    sqlite3_exec(db,
+        "CREATE TABLE IF NOT EXISTS families ("
+        "  id INTEGER PRIMARY KEY,"
+        "  artifact_id TEXT UNIQUE,"
+        "  artifact_type TEXT,"
+        "  source_system TEXT,"
+        "  created_at TEXT,"
+        "  root_hash TEXT,"
+        "  path TEXT,"
+        "  n_atoms INTEGER,"
+        "  n_operators INTEGER,"
+        "  n_realizations INTEGER,"
+        "  indexed_at TEXT"
+        ");"
+        "CREATE TABLE IF NOT EXISTS atoms ("
+        "  id INTEGER PRIMARY KEY,"
+        "  family_id INTEGER,"
+        "  atom_id TEXT,"
+        "  content_hash TEXT,"
+        "  media_type TEXT,"
+        "  byte_size INTEGER,"
+        "  FOREIGN KEY(family_id) REFERENCES families(id)"
+        ");"
+        "CREATE TABLE IF NOT EXISTS operators ("
+        "  id INTEGER PRIMARY KEY,"
+        "  family_id INTEGER,"
+        "  operator_id TEXT,"
+        "  op TEXT,"
+        "  node_hash TEXT,"
+        "  version TEXT,"
+        "  FOREIGN KEY(family_id) REFERENCES families(id)"
+        ");"
+        "CREATE INDEX IF NOT EXISTS idx_atoms_hash ON atoms(content_hash);"
+        "CREATE INDEX IF NOT EXISTS idx_ops_hash ON operators(node_hash);"
+        "CREATE INDEX IF NOT EXISTS idx_ops_type ON operators(op);"
+        "CREATE INDEX IF NOT EXISTS idx_families_type ON families(artifact_type);",
+        NULL, NULL, &err);
+    if (err) { fprintf(stderr, "Schema error: %s\n", err); sqlite3_free(err); }
+
+    char ts[64]; iso_timestamp(ts, sizeof(ts));
+
+    /* Batch all inserts in a single transaction */
+    sqlite3_exec(db, "BEGIN TRANSACTION;", NULL, NULL, NULL);
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db,
+        "INSERT OR REPLACE INTO families (artifact_id, artifact_type, source_system, "
+        "created_at, root_hash, path, n_atoms, n_operators, n_realizations, indexed_at) "
+        "VALUES (?,?,?,?,?,?,?,?,?,?);", -1, &stmt, NULL);
+
+    BuildCtx ctx = {
+        .stmt = stmt,
+        .indexed_at = ts,
+        .count = 0,
+        .bytes_scanned = 0,
+        .scratch = NULL,
+        .scratch_cap = 0,
+    };
+    walk_artifacts_build(dir, &ctx);
+
+    sqlite3_finalize(stmt);
+    sqlite3_exec(db, "COMMIT;", NULL, NULL, NULL);
+
+    if (ctx.count == 0) {
+        fprintf(stderr, "[index] No artifact.json files found in %s\n", dir);
+        sqlite3_close(db);
+        return 1;
+    }
+
+    fprintf(stderr, "[index] Indexed %d artifact families into %s\n", ctx.count, db_path);
+
+    char telemetry_path[PATH_MAX];
+    snprintf(telemetry_path, sizeof(telemetry_path), "%s.telemetry.json", db_path);
+    FILE *tf = fopen(telemetry_path, "w");
+    if (tf) {
+        char ts2[64];
+        iso_timestamp(ts2, sizeof(ts2));
+        fprintf(
+            tf,
+            "{\n"
+            "  \"recorded_at\": \"%s\",\n"
+            "  \"source_system\": \"BonfyreIndex\",\n"
+            "  \"artifact_count\": %d,\n"
+            "  \"bytes_scanned\": %lld,\n"
+            "  \"max_rss_kb\": %ld,\n"
+            "  \"build_ms\": %.3f\n"
+            "}\n",
+            ts2,
+            ctx.count,
+            ctx.bytes_scanned,
+            current_max_rss_kb(),
+            (monotonic_ns() - started) / 1000000.0
+        );
+        fclose(tf);
+    }
+
+    free(ctx.scratch);
+    sqlite3_close(db);
+    return 0;
+}
+
+static int cmd_search(const char *query, const char *db_path, const char *type, int limit) {
+    sqlite3 *db;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Cannot open db: %s\n", db_path);
+        return 1;
+    }
+
+    const char *sql;
+    if (type && type[0]) {
+        sql = "SELECT artifact_id, artifact_type, source_system, n_atoms, n_operators, n_realizations, path "
+              "FROM families WHERE artifact_type=?1 AND (artifact_id LIKE ?2 OR root_hash LIKE ?2) "
+              "ORDER BY created_at DESC LIMIT ?3;";
+    } else {
+        sql = "SELECT artifact_id, artifact_type, source_system, n_atoms, n_operators, n_realizations, path "
+              "FROM families WHERE artifact_id LIKE ?1 OR root_hash LIKE ?1 OR artifact_type LIKE ?1 "
+              "ORDER BY created_at DESC LIMIT ?2;";
+    }
+
+    sqlite3_stmt *stmt;
+    sqlite3_prepare_v2(db, sql, -1, &stmt, NULL);
+
+    char like[512];
+    snprintf(like, sizeof(like), "%%%s%%", query);
+    if (type && type[0]) {
+        sqlite3_bind_text(stmt, 1, type, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(stmt, 2, like, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 3, limit);
+    } else {
+        sqlite3_bind_text(stmt, 1, like, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_int(stmt, 2, limit);
+    }
+
+    int ncols = sqlite3_column_count(stmt);
+    int first = 1;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        if (first) {
+            for (int i = 0; i < ncols; i++) printf("%-15s", sqlite3_column_name(stmt, i));
+            printf("\n");
+            for (int i = 0; i < ncols; i++) printf("%-15s", "-------------");
+            printf("\n");
+            first = 0;
+        }
+        for (int i = 0; i < ncols; i++) {
+            const char *v = (const char *)sqlite3_column_text(stmt, i);
+            printf("%-15s", v ? v : "");
+        }
+        printf("\n");
+    }
+
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return 0;
+}
+
+static int cmd_reuse(const char *db_path) {
+    sqlite3 *db;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) return 1;
+
+    int first;
+    printf("=== Shared Atoms (same content, multiple families) ===\n");
+    first = 1;
+    sqlite3_exec(db,
+        "SELECT content_hash, COUNT(*) as n, GROUP_CONCAT(family_id) "
+        "FROM atoms GROUP BY content_hash HAVING n > 1 ORDER BY n DESC LIMIT 20;",
+        print_row_cb, &first, NULL);
+    printf("\n=== Shared Operators (same node_hash, multiple families) ===\n");
+    first = 1;
+    sqlite3_exec(db,
+        "SELECT op, node_hash, COUNT(*) as n "
+        "FROM operators GROUP BY node_hash HAVING n > 1 ORDER BY n DESC LIMIT 20;",
+        print_row_cb, &first, NULL);
+
+    sqlite3_close(db);
+    return 0;
+}
+
+static int cmd_stats(const char *db_path) {
+    sqlite3 *db;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        fprintf(stderr, "Cannot open db: %s\n", db_path);
+        return 1;
+    }
+
+    int first;
+    printf("=== BonfyreIndex Stats ===\n");
+    first = 1;
+    sqlite3_exec(db,
+        "SELECT artifact_type, COUNT(*) as families, SUM(n_atoms) as atoms, "
+        "SUM(n_operators) as ops, SUM(n_realizations) as realizations "
+        "FROM families GROUP BY artifact_type;",
+        print_row_cb, &first, NULL);
+    printf("\n");
+    first = 1;
+    sqlite3_exec(db,
+        "SELECT COUNT(*) as total_families, SUM(n_atoms) as total_atoms, "
+        "SUM(n_operators) as total_ops, SUM(n_realizations) as total_realizations FROM families;",
+        print_row_cb, &first, NULL);
+
+    sqlite3_close(db);
+    return 0;
+}
+
+/* ---------- main ---------- */
+
+int main(int argc, char *argv[]) {
+    const char *db = "bonfyre-index.db";
+
+    /* parse --db */
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--db") == 0) { db = argv[i+1]; break; }
+    }
+
+    if (argc >= 3 && strcmp(argv[1], "build") == 0)
+        return cmd_build(argv[2], db);
+
+    if (argc >= 3 && strcmp(argv[1], "search") == 0) {
+        const char *type = NULL;
+        int limit = 20;
+        for (int i = 3; i < argc - 1; i++) {
+            if (strcmp(argv[i], "--type") == 0) type = argv[i+1];
+            if (strcmp(argv[i], "--limit") == 0) limit = atoi(argv[i+1]);
+        }
+        return cmd_search(argv[2], db, type, limit);
+    }
+
+    if (argc >= 2 && strcmp(argv[1], "reuse") == 0)
+        return cmd_reuse(db);
+
+    if (argc >= 2 && strcmp(argv[1], "stats") == 0)
+        return cmd_stats(db);
+
+    fprintf(stderr,
+        "BonfyreIndex — artifact family index & search\n\n"
+        "Usage:\n"
+        "  bonfyre-index build <dir> [--db F]      Crawl & index artifact.json files\n"
+        "  bonfyre-index search <q> [--type T]      Search families\n"
+        "  bonfyre-index reuse [--db F]             Find shared atoms/operators\n"
+        "  bonfyre-index stats [--db F]             Summary statistics\n"
+    );
+    return 1;
+}

@@ -39,6 +39,20 @@ int bf_ensure_dir(const char *path) {
     return 0;
 }
 
+/* Create only the parent directory of a file path.
+ * e.g. "/a/b/c.db" -> creates "/a/b"
+ * Safe to call when the path has no directory component. */
+int bf_ensure_parent_dir(const char *filepath) {
+    char tmp[PATH_MAX];
+    size_t len = strlen(filepath);
+    if (len == 0 || len >= sizeof(tmp)) return 0;
+    memcpy(tmp, filepath, len + 1);
+    char *slash = strrchr(tmp, '/');
+    if (!slash || slash == tmp) return 0;  /* no parent to create */
+    *slash = '\0';
+    return bf_ensure_dir(tmp);
+}
+
 int bf_file_exists(const char *path) {
     struct stat st;
     return stat(path, &st) == 0;

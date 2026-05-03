@@ -1,0 +1,10 @@
+{
+  "sourceSystem": "TranscriptQACleaner",
+  "status": "completed",
+  "transcriptPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/TranscriptQACleaner/tmp-raw.txt",
+  "cleanedPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/TranscriptQACleaner/tmp-out/cleaned.txt",
+  "changed": true,
+  "fillerTokensRemoved": 1,
+  "hallucinationsRemoved": 2,
+  "repeatedPhrasesRemoved": 0
+}

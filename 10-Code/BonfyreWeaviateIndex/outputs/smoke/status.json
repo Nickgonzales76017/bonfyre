@@ -1,0 +1,7 @@
+{
+  "sourceSystem": "BonfyreWeaviateIndex",
+  "status": "completed",
+  "ingestPayloadPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreWeaviateIndex/outputs/smoke/weaviate-batch.json",
+  "documentId": "demo-job",
+  "weaviateUpserted": false
+}

@@ -177,15 +177,17 @@ static const char *resolve_ytdlp(void) {
     if (env && env[0]) return env;
     /* common fallback paths */
     static const char *paths[] = {
-        "/Users/nickgonzales/Library/Python/3.9/bin/yt-dlp",
+        /* macOS Homebrew */
         "/opt/homebrew/bin/yt-dlp",
+        /* Linux / universal */
+        "/usr/bin/yt-dlp",
         "/usr/local/bin/yt-dlp",
         NULL
     };
     for (int i = 0; paths[i]; i++) {
         if (access(paths[i], X_OK) == 0) return paths[i];
     }
-    return "yt-dlp"; /* hope it's in PATH */
+    return "yt-dlp"; /* fall back to PATH lookup via execvp */
 }
 
 static int run_cmd_capture(const char *const argv[], char *out, size_t out_sz) {

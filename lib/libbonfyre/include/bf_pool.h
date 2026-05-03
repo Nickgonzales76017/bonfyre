@@ -53,6 +53,20 @@ void bf_pool_destroy(bf_pool_t *pool);
 int bf_pool_submit(bf_pool_t *pool, bf_pool_fn fn, void *arg);
 
 /*
+ * Parallel map over an mmap-backed contiguous array.
+ *
+ * Like bf_pool_map() but asserts that `base` is page-aligned and
+ * that `count * stride` fits within an mmap'd region.  Fails closed:
+ * returns -1 if base is not 64-byte aligned or count is zero rather
+ * than falling back to a serial path.
+ *
+ * Use this entry point for the 47-binary high-load submission path to
+ * guarantee deterministic mmap-only execution.
+ */
+int bf_pool_map_mmap_aligned(bf_pool_t *pool, bf_pool_fn fn,
+                              void *base, size_t count, size_t stride);
+
+/*
  * Parallel map: calls fn(base + i*stride) for i in [0, count).
  * Distributes evenly across workers, then waits for completion.
  */

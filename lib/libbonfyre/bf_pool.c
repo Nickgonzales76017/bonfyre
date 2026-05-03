@@ -2,14 +2,35 @@
  * bf_pool.c — Work-stealing thread pool
  *
  * Architecture:
- *   - N worker pthreads, each with a lock-free Chase-Lev deque
+ *   - N worker pthreads, each with a Chase-Lev deque
  *   - Submitter pushes to a round-robin chosen deque
  *   - Workers pop from their own deque (LIFO, cache-friendly)
  *   - Idle workers steal from a random peer (FIFO, load-balance)
  *   - Global atomic pending counter for bf_pool_wait()
  *   - Condition variable for idle wake-up
+ *
+ * Cache discipline:
+ *   - deque_t uses __attribute__((aligned(64))) and explicit 64-byte
+ *     padding so each atomic (top, bottom, array, owner_lock) lives on
+ *     its own cache line, eliminating false-sharing under 47-binary load.
+ *   - worker_t is also 64-byte aligned so adjacent workers don't share
+ *     a cache line on the workers[] array.
+ *
+ * Producer serialization:
+ *   - deque_push() is owner-only in the Chase-Lev paper, but
+ *     bf_pool_submit() may be called from any thread.  We serialize
+ *     concurrent producers with an atomic_flag spin-lock (owner_lock)
+ *     while keeping the steal path (deque_steal) fully lock-free via
+ *     atomic_compare_exchange.
  */
 
+#if defined(__APPLE__)
+#  define _DARWIN_C_SOURCE
+#elif defined(__linux__)
+#  define _GNU_SOURCE
+#else
+#  define _POSIX_C_SOURCE 200809L
+#endif
 #include "bf_pool.h"
 
 #include <pthread.h>
@@ -17,10 +38,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 /* ── Chase-Lev work-stealing deque ────────── */
 
 #define DEQUE_INIT_CAP 1024
+#define CACHE_LINE     64
 
 typedef struct {
     bf_pool_fn  fn;
@@ -32,10 +55,33 @@ typedef struct {
     _Atomic size_t  cap;     /* always power of 2 */
 } deque_array_t;
 
-typedef struct {
-    _Atomic long    top;     /* steal end (FIFO) */
-    _Atomic long    bottom;  /* owner end (LIFO) */
+/*
+ * deque_t: each hot atomic on its own cache line.
+ *
+ *  [0..63]  : top        — written by stealers
+ *  [64..127]: bottom     — written by owner / producers
+ *  [128..191]: array ptr — updated on grow (rare)
+ *  [192..255]: owner_lock — serializes concurrent bf_pool_submit callers
+ *
+ * Total struct is 256 bytes; always 64-byte aligned.
+ */
+typedef struct __attribute__((aligned(CACHE_LINE))) {
+    /* stealer-side: top index */
+    _Atomic long    top;
+    char            _pad0[CACHE_LINE - sizeof(_Atomic long)];
+
+    /* owner-side: bottom index */
+    _Atomic long    bottom;
+    char            _pad1[CACHE_LINE - sizeof(_Atomic long)];
+
+    /* pointer to backing array (grown under owner_lock) */
     _Atomic(deque_array_t *) array;
+    char            _pad2[CACHE_LINE - sizeof(_Atomic(deque_array_t *))];
+
+    /* serializes concurrent producers (bf_pool_submit from any thread);
+     * stealers never touch this flag. */
+    atomic_flag     owner_lock;
+    char            _pad3[CACHE_LINE - sizeof(atomic_flag)];
 } deque_t;
 
 static deque_array_t *deque_array_new(size_t cap)
@@ -53,6 +99,7 @@ static void deque_init(deque_t *d)
     atomic_store(&d->top, 0);
     atomic_store(&d->bottom, 0);
     atomic_store(&d->array, deque_array_new(DEQUE_INIT_CAP));
+    atomic_flag_clear(&d->owner_lock);
 }
 
 static void deque_destroy(deque_t *d)
@@ -61,9 +108,26 @@ static void deque_destroy(deque_t *d)
     if (a) { free(a->buf); free(a); }
 }
 
-/* Owner push (bottom) */
+/* Producer push (bottom) — serialized by owner_lock.
+ *
+ * Chase-Lev deque_push is documented as single-owner, but
+ * bf_pool_submit() may be called from any thread.  We acquire
+ * owner_lock with an architecture-appropriate busy-wait before
+ * touching bottom/array, then release it after the store fence.
+ * The steal path (deque_steal) never touches owner_lock and
+ * remains fully lock-free. */
 static void deque_push(deque_t *d, bf_task_t task)
 {
+    /* acquire owner_lock — spin with arch-specific pause/yield */
+    while (atomic_flag_test_and_set_explicit(
+               &d->owner_lock, memory_order_acquire)) {
+#if defined(__x86_64__) || defined(__i386__)
+        __asm__ volatile("pause" ::: "memory");
+#elif defined(__aarch64__) || defined(__arm__)
+        __asm__ volatile("yield" ::: "memory");
+#endif
+    }
+
     long b = atomic_load_explicit(&d->bottom, memory_order_relaxed);
     long t = atomic_load_explicit(&d->top, memory_order_acquire);
     deque_array_t *a = atomic_load_explicit(&d->array, memory_order_relaxed);
@@ -83,6 +147,8 @@ static void deque_push(deque_t *d, bf_task_t task)
     a->buf[b & (cap - 1)] = task;
     atomic_thread_fence(memory_order_release);
     atomic_store_explicit(&d->bottom, b + 1, memory_order_relaxed);
+
+    atomic_flag_clear_explicit(&d->owner_lock, memory_order_release);
 }
 
 /* Owner pop (bottom, LIFO) — returns 1 on success */
@@ -139,7 +205,10 @@ static int deque_steal(deque_t *d, bf_task_t *out)
 
 /* ── Pool structure ──────────────────────── */
 
-typedef struct {
+/* worker_t: 64-byte aligned so adjacent workers in the workers[]
+ * array don't share a cache line (each worker's metadata + its
+ * deque are logically co-located on the same NUMA node). */
+typedef struct __attribute__((aligned(CACHE_LINE))) {
     pthread_t   thread;
     deque_t     deque;
     int         id;
@@ -376,6 +445,42 @@ void bf_pool_map(bf_pool_t *pool, bf_pool_fn fn,
 
     bf_pool_wait(pool);
     free(items);
+}
+
+/*
+ * bf_pool_map_mmap_aligned — deterministic mmap-only parallel map.
+ *
+ * Fails closed: requires base 64-byte aligned (page-aligned in practice).
+ * No read() fallback.  If the precondition fails, returns -1 immediately.
+ */
+int bf_pool_map_mmap_aligned(bf_pool_t *pool, bf_pool_fn fn,
+                              void *base, size_t count, size_t stride)
+{
+    if (!pool || !fn || count == 0)            return -1;
+    if (!base)                                  return -1;
+    /* enforce 64-byte alignment — catches non-mmap'd pointers early */
+    if ((uintptr_t)base % 64 != 0)             return -1;
+
+    /* madvise MADV_SEQUENTIAL on the whole range before submission */
+    size_t total = count * stride;
+    madvise(base, total, MADV_SEQUENTIAL);
+
+    map_item_t *items = malloc(count * sizeof(map_item_t));
+    if (!items) return -1;  /* fail closed — no serial fallback */
+
+    for (size_t i = 0; i < count; i++) {
+        items[i].fn   = fn;
+        items[i].item = (char *)base + i * stride;
+        if (bf_pool_submit(pool, map_trampoline, &items[i]) != 0) {
+            /* pool shutting down — fail closed */
+            free(items);
+            return -1;
+        }
+    }
+
+    bf_pool_wait(pool);
+    free(items);
+    return 0;
 }
 
 void bf_pool_wait(bf_pool_t *pool)

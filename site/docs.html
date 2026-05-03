@@ -1569,32 +1569,109 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 <section id="install">
   <div class="container">
     <h2>Install</h2>
-    <p class="subtitle">Build from source in under 60 seconds.</p>
+    <p class="subtitle">Build from source in under 60 seconds. All 83 modules, pure C11, no runtime dependencies.</p>
+
+    <!-- Platform matrix -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 24px;margin-bottom:24px;max-width:100%">
+      <p style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:12px">Platform support</p>
+      <table style="width:100%;border-collapse:collapse;font-size:.875rem">
+        <thead>
+          <tr style="color:var(--text-dim);font-size:.8rem">
+            <th style="text-align:left;padding:4px 12px 8px 0;border-bottom:1px solid var(--border)">Platform</th>
+            <th style="text-align:left;padding:4px 12px 8px;border-bottom:1px solid var(--border)">Status</th>
+            <th style="text-align:left;padding:4px 0 8px;border-bottom:1px solid var(--border)">Path</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding:8px 12px 4px 0;font-family:var(--mono);font-size:.8rem">macOS arm64 (Apple Silicon)</td>
+            <td style="padding:8px 12px 4px"><span style="color:var(--green);font-weight:700">✓ native</span></td>
+            <td style="padding:8px 0 4px;color:var(--text-dim);font-size:.8rem"><code>make &amp;&amp; make install</code> or <code>./install.sh</code></td>
+          </tr>
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-family:var(--mono);font-size:.8rem">macOS x86_64 (Intel)</td>
+            <td style="padding:4px 12px"><span style="color:var(--green);font-weight:700">✓ native</span></td>
+            <td style="padding:4px 0;color:var(--text-dim);font-size:.8rem"><code>make &amp;&amp; make install</code> or <code>./install.sh</code></td>
+          </tr>
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-family:var(--mono);font-size:.8rem">Linux x86_64</td>
+            <td style="padding:4px 12px"><span style="color:var(--blue);font-weight:700">✓ build from source</span></td>
+            <td style="padding:4px 0;color:var(--text-dim);font-size:.8rem"><code>make &amp;&amp; make install</code> or <code>docker build .</code></td>
+          </tr>
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-family:var(--mono);font-size:.8rem">Linux arm64</td>
+            <td style="padding:4px 12px"><span style="color:var(--blue);font-weight:700">✓ build from source</span></td>
+            <td style="padding:4px 0;color:var(--text-dim);font-size:.8rem"><code>make &amp;&amp; make install</code></td>
+          </tr>
+          <tr>
+            <td style="padding:4px 12px 4px 0;font-family:var(--mono);font-size:.8rem">Windows</td>
+            <td style="padding:4px 12px"><span style="color:var(--text-dim)">WSL2</span></td>
+            <td style="padding:4px 0;color:var(--text-dim);font-size:.8rem">use WSL2 + Ubuntu path above</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin-top:14px;font-size:.82rem;color:var(--red);background:rgba(248,81,73,.07);border:1px solid rgba(248,81,73,.2);border-radius:4px;padding:8px 12px;line-height:1.5">
+        <strong>⚠ If you downloaded a zip:</strong> bundled binaries are <strong>Mach-O arm64</strong> (macOS Apple Silicon only) and will not run on Linux. Linux users must <a href="#install-linux" style="color:var(--red)">build from source</a> or use <a href="#install-docker" style="color:var(--red)">Docker</a>.
+      </p>
+    </div>
+
+    <!-- macOS / source -->
+    <p style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-weight:700;margin-bottom:10px" id="install-macos">macOS — build from source</p>
     <div class="install-box" style="max-width:100%;margin-bottom:16px">
       <code>
-        <span class="comment"># From source (recommended)</span><br>
+        <span class="comment"># Clone and build (macOS — recommended)</span><br>
         git clone https://github.com/Nickgonzales76017/bonfyre-oss.git<br>
         cd bonfyre-oss<br>
-        make <span class="comment"># builds the Bonfyre stack from source</span><br>
-        make install <span class="comment"># copies to ~/.local/bin</span>
+        make <span class="comment"># builds all 83 modules from source</span><br>
+        make install <span class="comment"># copies binaries to ~/.local/bin</span>
       </code>
     </div>
-    <div class="install-box" style="max-width:100%;margin-bottom:16px">
+    <div class="install-box" style="max-width:100%;margin-bottom:24px">
       <code>
-        <span class="comment"># One command (macOS / Linux)</span><br>
+        <span class="comment"># One-liner (macOS)</span><br>
         curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre-oss/main/install.sh | sh
       </code>
     </div>
+
+    <!-- Linux source -->
+    <p style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-weight:700;margin-bottom:10px" id="install-linux">Linux — build from source</p>
     <div class="install-box" style="max-width:100%;margin-bottom:16px">
       <code>
-        <span class="comment"># BonfyreFPQ / bonfyre-oss</span><br>
+        <span class="comment"># Ubuntu / Debian — install deps then build</span><br>
+        sudo apt-get install -y gcc make libsqlite3-dev zlib1g-dev pkg-config<br>
         git clone https://github.com/Nickgonzales76017/bonfyre-oss.git<br>
-        cd bonfyre-oss &amp;&amp; make
+        cd bonfyre-oss<br>
+        make CC=gcc <span class="comment"># builds all modules</span><br>
+        make install <span class="comment"># copies to ~/.local/bin</span>
       </code>
     </div>
+    <div class="install-box" style="max-width:100%;margin-bottom:24px">
+      <code>
+        <span class="comment"># One-liner (Linux)</span><br>
+        curl -fsSL https://raw.githubusercontent.com/Nickgonzales76017/bonfyre-oss/main/install.sh | sh
+      </code>
+    </div>
+
+    <!-- Docker -->
+    <p style="font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);font-weight:700;margin-bottom:10px" id="install-docker">Docker — any platform</p>
+    <div class="install-box" style="max-width:100%;margin-bottom:16px">
+      <code>
+        <span class="comment"># Build + run the full Bonfyre stack in Docker (Linux x86_64 binaries)</span><br>
+        git clone https://github.com/Nickgonzales76017/bonfyre-oss.git<br>
+        cd bonfyre-oss<br>
+        docker compose up -d <span class="comment"># API on :9999, queue worker, SQLite WAL</span>
+      </code>
+    </div>
+    <div class="install-box" style="max-width:100%;margin-bottom:24px">
+      <code>
+        <span class="comment"># Extract Linux binaries from Docker image (macOS → Linux cross-build)</span><br>
+        make docker-build <span class="comment"># outputs Linux x86_64 binaries to out/linux-x86_64/</span>
+      </code>
+    </div>
+
     <p style="color:var(--text-dim);font-size:.9rem">
-      <strong>Requirements:</strong> C11 compiler (gcc or clang), SQLite3 dev headers, zlib.
-      <strong>Optional:</strong> ONNX Runtime (embed), FreeSWITCH (tel), PyTorch (SLI bridge).
+      <strong>Build requirements:</strong> C11 compiler (gcc ≥ 9 or clang ≥ 11), make, SQLite3 dev headers, zlib.
+      <strong>Optional:</strong> ONNX Runtime (<code>bonfyre embed</code>), FreeSWITCH (<code>bonfyre tel</code>), PyTorch SLI bridge.
     </p>
   </div>
 </section>

@@ -58,8 +58,13 @@ static const char *resolve_vec_ext(void) {
     const char *env = getenv("BONFYRE_VEC_EXT");
     if (env && env[0]) return env;
     static const char *paths[] = {
-        "/Users/nickgonzales/Library/Python/3.9/lib/python/site-packages/sqlite_vec/vec0",
+        /* macOS Homebrew */
         "/opt/homebrew/lib/sqlite_vec/vec0",
+        /* Linux system-wide */
+        "/usr/lib/x86_64-linux-gnu/sqlite_vec/vec0",
+        "/usr/lib/aarch64-linux-gnu/sqlite_vec/vec0",
+        "/usr/lib/sqlite_vec/vec0",
+        /* universal fallback */
         "/usr/local/lib/sqlite_vec/vec0",
         NULL
     };
@@ -71,7 +76,7 @@ static const char *resolve_vec_ext(void) {
         snprintf(buf, sizeof(buf), "%s.so", paths[i]);
         if (stat(buf, &st) == 0) return paths[i];
     }
-    return "vec0";
+    return "vec0";  /* last resort: let SQLite search LD_LIBRARY_PATH */
 }
 
 static int load_vec_ext(sqlite3 *db) {
@@ -610,6 +615,185 @@ static int cmd_search_exact(const char *db_path, const char *query_file, int top
     return 0;
 }
 
+typedef struct {
+    char id[256];
+    float base;
+    float sae_overlap;
+    float score;
+} RerankRow;
+
+static int cmp_rerank_desc(const void *a, const void *b) {
+    float sa = ((const RerankRow *)a)->score;
+    float sb = ((const RerankRow *)b)->score;
+    if (sb > sa) return 1;
+    if (sb < sa) return -1;
+    return 0;
+}
+
+static char *read_text_file(const char *path, long *size_out) {
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    if (size <= 0 || size > (16 * 1024 * 1024)) {
+        fclose(fp);
+        return NULL;
+    }
+    char *buffer = malloc((size_t)size + 1);
+    if (!buffer) {
+        fclose(fp);
+        return NULL;
+    }
+    size_t n = fread(buffer, 1, (size_t)size, fp);
+    fclose(fp);
+    if ((long)n != size) {
+        free(buffer);
+        return NULL;
+    }
+    buffer[size] = '\0';
+    if (size_out) *size_out = size;
+    return buffer;
+}
+
+static int extract_feature_ids_json(const char *json, int *ids, int max_ids) {
+    const char *needle = "\"feature_id\"";
+    int count = 0;
+    const char *p = json;
+    while ((p = strstr(p, needle)) && count < max_ids) {
+        p += strlen(needle);
+        p = strchr(p, ':');
+        if (!p) break;
+        p++;
+        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
+        ids[count++] = atoi(p);
+    }
+    return count;
+}
+
+static int id_exists(const int *ids, int n, int id) {
+    for (int i = 0; i < n; i++) if (ids[i] == id) return 1;
+    return 0;
+}
+
+static float feature_overlap_jaccard(const int *a, int na, const int *b, int nb) {
+    if (na <= 0 || nb <= 0) return 0.0f;
+    int inter = 0;
+    for (int i = 0; i < na; i++) {
+        if (id_exists(b, nb, a[i])) inter++;
+    }
+    int uni = na + nb - inter;
+    return uni > 0 ? (float)inter / (float)uni : 0.0f;
+}
+
+static int parse_vec_results(const char *json, RerankRow *rows, int max_rows) {
+    int count = 0;
+    const char *p = json;
+    const char *id_key = "\"id\":\"";
+    while ((p = strstr(p, id_key)) && count < max_rows) {
+        p += strlen(id_key);
+        const char *id_end = strchr(p, '"');
+        if (!id_end) break;
+
+        size_t id_len = (size_t)(id_end - p);
+        if (id_len >= sizeof(rows[count].id)) id_len = sizeof(rows[count].id) - 1;
+        memcpy(rows[count].id, p, id_len);
+        rows[count].id[id_len] = '\0';
+
+        const char *obj_end = strchr(id_end, '}');
+        if (!obj_end) break;
+        const char *score_key = strstr(id_end, "\"cosine_similarity\":");
+        float base = 0.0f;
+        if (score_key && score_key < obj_end) {
+            score_key += strlen("\"cosine_similarity\":");
+            base = strtof(score_key, NULL);
+        }
+        rows[count].base = base;
+        rows[count].sae_overlap = 0.0f;
+        rows[count].score = base;
+        count++;
+        p = obj_end + 1;
+    }
+    return count;
+}
+
+static int load_candidate_feature_ids(const char *dir, const char *id, int *ids, int max_ids) {
+    char path[PATH_MAX];
+    snprintf(path, sizeof(path), "%s/%s.features.json", dir, id);
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        snprintf(path, sizeof(path), "%s/%s.json", dir, id);
+        if (stat(path, &st) != 0) return 0;
+    }
+    long sz = 0;
+    char *json = read_text_file(path, &sz);
+    if (!json) return 0;
+    int n = extract_feature_ids_json(json, ids, max_ids);
+    free(json);
+    return n;
+}
+
+static int cmd_sae_rerank(const char *results_json_path,
+                          const char *query_features_path,
+                          const char *features_dir,
+                          int top_k,
+                          float sae_weight) {
+    long rsz = 0, qsz = 0;
+    char *results_json = read_text_file(results_json_path, &rsz);
+    char *query_json = read_text_file(query_features_path, &qsz);
+    if (!results_json || !query_json) {
+        fprintf(stderr, "rerank: cannot read input JSON files\n");
+        free(results_json);
+        free(query_json);
+        return 1;
+    }
+
+    int query_ids[4096];
+    int nq = extract_feature_ids_json(query_json, query_ids, 4096);
+    if (nq <= 0) {
+        fprintf(stderr, "rerank: no feature_id entries in query manifest\n");
+        free(results_json);
+        free(query_json);
+        return 1;
+    }
+
+    RerankRow rows[2048];
+    int count = parse_vec_results(results_json, rows, 2048);
+    if (count <= 0) {
+        fprintf(stderr, "rerank: no vec results parsed\n");
+        free(results_json);
+        free(query_json);
+        return 1;
+    }
+
+    if (sae_weight < 0.0f) sae_weight = 0.0f;
+    if (sae_weight > 1.0f) sae_weight = 1.0f;
+
+    for (int i = 0; i < count; i++) {
+        int cand_ids[4096];
+        int nc = load_candidate_feature_ids(features_dir, rows[i].id, cand_ids, 4096);
+        float overlap = feature_overlap_jaccard(query_ids, nq, cand_ids, nc);
+        rows[i].sae_overlap = overlap;
+        rows[i].score = (1.0f - sae_weight) * rows[i].base + sae_weight * overlap;
+    }
+
+    qsort(rows, (size_t)count, sizeof(RerankRow), cmp_rerank_desc);
+    int show = count < top_k ? count : top_k;
+
+    printf("{\n  \"results\": [\n");
+    for (int i = 0; i < show; i++) {
+        if (i > 0) printf(",\n");
+        printf("    {\"id\":\"%s\",\"cosine_similarity\":%.8f,\"sae_overlap\":%.8f,\"reranked_score\":%.8f}",
+               rows[i].id, rows[i].base, rows[i].sae_overlap, rows[i].score);
+    }
+    printf("\n  ],\n  \"mode\": \"sae-rerank\",\n  \"top_k\": %d,\n  \"sae_weight\": %.3f\n}\n",
+           show, sae_weight);
+
+    free(results_json);
+    free(query_json);
+    return 0;
+}
+
 /* ── main ───────────────────────────────────────────────────── */
 
 static void print_usage(void) {
@@ -622,6 +806,7 @@ static void print_usage(void) {
         "  bonfyre-vec search <db> <query.json> --exact [--top N]\n"
         "  bonfyre-vec compare <db> <id1> <id2>\n"
         "  bonfyre-vec count <db>\n"
+        "  bonfyre-vec sae-rerank <results.json> <query.features.json> <features-dir> [--top N] [--sae-weight W]\n"
         "  bonfyre-vec status\n");
 }
 
@@ -663,6 +848,17 @@ int main(int argc, char **argv) {
         return cmd_compare(argv[2], argv[3], argv[4]);
     } else if (strcmp(cmd, "count") == 0) {
         return cmd_count(argv[2]);
+    } else if (strcmp(cmd, "sae-rerank") == 0) {
+        if (argc < 5) { print_usage(); return 1; }
+        int top_k = 10;
+        float sae_weight = 0.25f;
+        for (int i = 5; i < argc; i++) {
+            if (strcmp(argv[i], "--top") == 0 && i + 1 < argc)
+                top_k = atoi(argv[++i]);
+            else if (strcmp(argv[i], "--sae-weight") == 0 && i + 1 < argc)
+                sae_weight = strtof(argv[++i], NULL);
+        }
+        return cmd_sae_rerank(argv[2], argv[3], argv[4], top_k, sae_weight);
     }
 
     print_usage();

@@ -1,0 +1,13 @@
+{
+  "normalized_audio": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/tmpcypd2ndy/outputs/normalized.wav",
+  "chunk_count": 1,
+  "denoised": false,
+  "cache_key": "363722e3edaeb8d9ceda89a53c7bdb1db42461f33b522f8ff9da1c4e8c57b122",
+  "source_hash": "69538b86470d5575fc0181cf3b0d0e79ecacb05b6bc6f58c17e759154848e35f",
+  "duration_seconds": 1.0,
+  "cache_hit": false,
+  "adaptive_split_speech": false,
+  "stage_timings": {
+    "total_seconds": 0.0021
+  }
+}
