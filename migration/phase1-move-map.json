@@ -1,0 +1,94 @@
+{
+  "generated_at": "2026-05-03T04:29:08Z",
+  "source_repo": "Nickgonzales76017/bonfyre-oss",
+  "strategy": "Promote Bonfyre runtime into Aurekai native engine; keep planning/log/private content out of public runtime",
+  "targets": {
+    "aurekai/native-runtime": {
+      "include_prefixes": [
+        "cmd/",
+        "lib/",
+        "scripts/",
+        "docs/",
+        "examples/",
+        "Makefile",
+        "install.sh",
+        "demo-pipeline.sh",
+        "runtime-inventory.json",
+        "PRESERVATION.md"
+      ],
+      "exclude_prefixes": [
+        ".obsidian/",
+        "01-Ideas/",
+        "02-Projects/",
+        "03-Research/",
+        "04-Systems/",
+        "05-Monetization/",
+        "06-Logs/",
+        "08-Transcriptions/",
+        "output/",
+        "tmp/",
+        "investigation_out/",
+        "real-data/",
+        "clients/",
+        "model-memory/",
+        "metadata/"
+      ],
+      "notes": [
+        "Preserve legacy Bonfyre command names and ABI compatibility",
+        "Add Aurekai wrappers (akai, aurekai-runtime, aurekai-control) without destructive renames"
+      ]
+    },
+    "aurekai/aurekai": {
+      "include_prefixes": [
+        "manifest and schema wrappers",
+        "release tooling",
+        "registry metadata",
+        "package wrappers",
+        "MCP interfaces",
+        "public platform docs"
+      ],
+      "notes": [
+        "This repo remains public ecosystem surface",
+        "Reference native-runtime by release artifact or submodule"
+      ]
+    },
+    "aurekai/docs": {
+      "include_prefixes": [
+        "site/",
+        "docs/",
+        "selected examples/",
+        "benchmark pages with provenance"
+      ]
+    },
+    "private_or_scrub": {
+      "keep_private": [
+        ".obsidian/",
+        "01-Ideas/",
+        "02-Projects/",
+        "03-Research/",
+        "04-Systems/",
+        "05-Monetization/",
+        "06-Logs/",
+        "08-Transcriptions/",
+        "output/",
+        "tmp/",
+        "investigation_out/",
+        "real-data/",
+        "clients/"
+      ],
+      "scrub_rules": [
+        "remove local absolute paths",
+        "remove secrets/tokens",
+        "remove machine-specific temp artifacts",
+        "validate license headers before relicensing"
+      ]
+    }
+  },
+  "execution_order": [
+    "Freeze: tag + preserve branch",
+    "Export clean subset to aurekai/native-runtime",
+    "Add compatibility wrappers and migration docs",
+    "Link native-runtime from aurekai/aurekai",
+    "Publish docs and migration notice"
+  ]
+}
