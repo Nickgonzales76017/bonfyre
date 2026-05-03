@@ -1,9 +1,13 @@
 /*
  * bf_mmap.h — Memory-mapped file I/O for zero-copy reads
  *
- * Maps files read-only with MAP_PRIVATE + MADV_SEQUENTIAL.
- * Falls back to fread for non-mappable inputs (pipes, stdin).
- * Provides a unified interface regardless of backing.
+ * Maps files read-only with MAP_SHARED + MADV_SEQUENTIAL.
+ * Fails closed for non-mappable inputs (pipes, devices, zero-size files).
+ * The fread/read fallback path has been removed; callers must provide
+ * regular, non-empty files.
+ *
+ * All view pointers are 64-byte aligned.  Use bf_mmap_view_acquire()
+ * to obtain a pointer with a memory_order_acquire fence.
  */
 
 #ifndef BF_MMAP_H
@@ -49,8 +53,23 @@ const char *bf_mmap_str(const bf_mmap_t *m);
 /* Size in bytes. */
 size_t bf_mmap_size(const bf_mmap_t *m);
 
-/* Whether the mapping is backed by mmap (vs fread fallback). */
+/* Whether the mapping is backed by mmap (always 1 post-MAP_SHARED refactor). */
 int bf_mmap_is_mapped(const bf_mmap_t *m);
+
+/* ── Zero-copy view acquisition ──────────────────────────────── */
+
+/* Return a direct pointer into the mmap region at [offset, offset+len).
+ *
+ * Requirements enforced (fail closed — returns NULL on ANY violation):
+ *   - m must be mmap-backed (bf_mmap_is_mapped(m) == 1)
+ *   - offset + len must be within [0, bf_mmap_size(m)]
+ *   - (data + offset) must be 64-byte aligned
+ *
+ * Issues a memory_order_acquire fence so the caller observes all
+ * writes committed to the file before this call.  The pointer is valid
+ * until bf_mmap_close(m). */
+const void *bf_mmap_view_acquire(const bf_mmap_t *m,
+                                  size_t offset, size_t len);
 
 /* ── Advisory ────────────────────────────────────────────────── */
 

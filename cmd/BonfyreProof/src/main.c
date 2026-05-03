@@ -442,13 +442,113 @@ static int command_score(const char *brief_dir, const char *output_dir) {
     return 0;
 }
 
+static int command_audit_features(const char *proof_dir, const char *features_json, const char *out_path_opt) {
+    long feat_size = 0;
+    char *features = read_file(features_json, &feat_size);
+    if (!features) {
+        fprintf(stderr, "Missing feature manifest: %s\n", features_json);
+        return 1;
+    }
+
+    char model_family[128] = "unknown";
+    int layer = 0;
+    extract_string_value(features, "model_family", model_family, sizeof(model_family));
+    extract_int_value(features, "layer", &layer);
+
+    char out_path[MAX_PATH];
+    if (out_path_opt && out_path_opt[0]) {
+        snprintf(out_path, sizeof(out_path), "%s", out_path_opt);
+    } else {
+        path_join(out_path, sizeof(out_path), proof_dir, "proof-feature-audit.json");
+    }
+
+    FILE *fp = fopen(out_path, "w");
+    if (!fp) {
+        free(features);
+        fprintf(stderr, "Failed to open output: %s\n", out_path);
+        return 1;
+    }
+
+    char timestamp[32];
+    iso_timestamp(timestamp, sizeof(timestamp));
+
+    fprintf(fp,
+            "{\n"
+            "  \"kind\": \"proof-feature-audit\",\n"
+            "  \"proof_dir\": \"%s\",\n"
+            "  \"source_manifest\": \"%s\",\n"
+            "  \"model_family\": \"%s\",\n"
+            "  \"layer\": %d,\n"
+            "  \"audited_at\": \"%s\",\n"
+            "  \"dominant_features\": [\n",
+            proof_dir, features_json, model_family, layer, timestamp);
+
+    const char *needle = "\"feature_id\"";
+    const char *p = features;
+    int emitted = 0;
+    while ((p = strstr(p, needle)) && emitted < 16) {
+        p += strlen(needle);
+        const char *colon = strchr(p, ':');
+        if (!colon) break;
+        int fid = atoi(colon + 1);
+
+        const char *obj_end = strchr(colon, '}');
+        if (!obj_end) break;
+
+        float activation = 0.0f;
+        int tags = 0;
+        char label[256] = "";
+
+        const char *a = strstr(colon, "\"activation\"");
+        if (a && a < obj_end) {
+            const char *ac = strchr(a, ':');
+            if (ac) activation = strtof(ac + 1, NULL);
+        }
+
+        const char *t = strstr(colon, "\"tags\"");
+        if (t && t < obj_end) {
+            const char *tc = strchr(t, ':');
+            if (tc) tags = atoi(tc + 1);
+        }
+
+        const char *l = strstr(colon, "\"label\"");
+        if (l && l < obj_end) {
+            const char *lc = strchr(l, ':');
+            if (lc) {
+                lc++;
+                while (*lc && isspace((unsigned char)*lc)) lc++;
+                if (*lc == '"') {
+                    lc++;
+                    size_t i = 0;
+                    while (*lc && *lc != '"' && i + 1 < sizeof(label)) label[i++] = *lc++;
+                    label[i] = '\0';
+                }
+            }
+        }
+
+        if (emitted > 0) fprintf(fp, ",\n");
+        fprintf(fp,
+                "    {\"rank\": %d, \"feature_id\": %d, \"activation\": %.6f, \"tags\": %d, \"label\": \"%s\"}",
+                emitted + 1, fid, activation, tags, label);
+        emitted++;
+        p = obj_end + 1;
+    }
+
+    fprintf(fp, "\n  ]\n}\n");
+    fclose(fp);
+    free(features);
+
+    printf("Feature audit: %s\n", out_path);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc < 3) {
         fprintf(stderr,
                 "Usage:\n"
                 "  bonfyre-proof score <brief-dir> <output-dir>\n"
-                "  bonfyre-proof inspect <proof-dir>\n"
-                "  bonfyre-proof bundle <proof-dir> <output-dir>\n");
+                "  bonfyre-proof bundle <proof-dir> <output-dir>\n"
+                "  bonfyre-proof audit-features <proof-dir> <features.json> [out.json]\n");
         return 1;
     }
     if (strcmp(argv[1], "score") == 0 && argc == 4) {
@@ -459,6 +559,9 @@ int main(int argc, char **argv) {
     }
     if (strcmp(argv[1], "bundle") == 0 && argc == 4) {
         return command_bundle(argv[2], argv[3]);
+    }
+    if (strcmp(argv[1], "audit-features") == 0 && (argc == 4 || argc == 5)) {
+        return command_audit_features(argv[2], argv[3], argc == 5 ? argv[4] : NULL);
     }
     fprintf(stderr, "Invalid command.\n");
     return 1;

@@ -271,6 +271,7 @@ static int detect_via_python(const char *image_path, FrameResult *out,
     /* Check Python availability */
     if (access("/usr/bin/python3", X_OK) != 0 &&
         access("/opt/homebrew/bin/python3", X_OK) != 0 &&
+        access("/usr/local/bin/python3", X_OK) != 0 &&
         system("python3 -c 'import ultralytics' 2>/dev/null") != 0) {
         return -1;
     }

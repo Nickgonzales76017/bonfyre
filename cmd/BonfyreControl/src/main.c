@@ -38,6 +38,7 @@
 #include <string.h>
 #include <math.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
 #include <sqlite3.h>
@@ -323,6 +324,117 @@ static void cmd_policy_add(sqlite3 *db, const char *file) {
 #define BF_ENTROPY_LOW_DEFAULT   3.5  /* bits; below this → P1 escalation */
 #define BF_ENTROPY_FAST_CAP      65536 /* bytes read for fast-path check    */
 #define WMAP_SIZE                2048u /* open-addressing hash slots for entropy word map */
+
+/*
+ * Gate status codes for sae-gate — distinct from raw exit codes.
+ * Enables downstream dashboards and proof bundles to differentiate
+ * "not checked" from "safe" from "danger".
+ */
+#define GATE_CLEAR_WITH_FEATURES  0
+#define GATE_CLEAR_NO_FEATURES    3
+#define GATE_BRANCH_DANGER        2
+#define GATE_ERROR                1
+
+#define SAE_ALPHA_DEFAULT 0.70
+
+/*
+ * cmd_sae_gate - SAE feature activation gate.
+ *
+ * Status codes emitted:
+ *   CLEAR_WITH_FEATURES — dict present, features checked, no danger
+ *   CLEAR_NO_FEATURES   — dict present but artifact has no feature manifest
+ *   BRANCH_DANGER       — danger feature threshold exceeded (exits 2)
+ *   ERROR               — execution failure
+ *
+ * Uses fork/execvp instead of system() to avoid shell-quote fragility.
+ */
+static void cmd_sae_gate(sqlite3 *db, const char *artifact,
+                          const char *dict_override, double alpha) {
+    if (alpha <= 0.0) alpha = SAE_ALPHA_DEFAULT;
+    char dict_path[512];
+    const char *env_dict = getenv("BONFYRE_SAE_DICT");
+    if (dict_override && dict_override[0])
+        snprintf(dict_path, sizeof(dict_path), "%s", dict_override);
+    else if (env_dict)
+        snprintf(dict_path, sizeof(dict_path), "%s", env_dict);
+    else {
+        const char *home = getenv("HOME"); if (!home) home = "/tmp";
+        snprintf(dict_path, sizeof(dict_path),
+                 "%s/.local/share/bonfyre/sae/default.bfsae", home);
+    }
+    if (access(dict_path, R_OK) != 0) {
+        printf("sae-gate: no dict at %s -- CLEAR_NO_FEATURES\n", dict_path);
+        /* log decision */
+        time_t now = time(NULL); sqlite3_stmt *st = NULL;
+        sqlite3_prepare_v2(db,
+            "INSERT INTO decisions(recipe,stage,decision,reason,score,ts)"
+            " VALUES(?,?,?,?,?,?)", -1, &st, NULL);
+        sqlite3_bind_text  (st,1, artifact, -1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,2, "probe/sae-gate", -1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,3, "CLEAR_NO_FEATURES", -1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,4, "no-dict", -1, SQLITE_STATIC);
+        sqlite3_bind_double(st,5, alpha);
+        sqlite3_bind_int64 (st,6, (sqlite3_int64)now);
+        sqlite3_step(st); sqlite3_finalize(st);
+        return;
+    }
+    char feat_path[612];
+    snprintf(feat_path, sizeof(feat_path), "%s.features.json", artifact);
+    int has_features = (access(feat_path, R_OK) == 0);
+    const char *target = has_features ? feat_path : NULL;
+
+    int ecode = GATE_ERROR;
+    if (!has_features) {
+        /* No feature manifest — log CLEAR_NO_FEATURES, skip subprocess */
+        ecode = GATE_CLEAR_NO_FEATURES;
+    } else {
+        /* Spawn bonfyre-sae gate via fork/execvp — no shell quoting issues */
+        char alpha_buf[32];
+        snprintf(alpha_buf, sizeof(alpha_buf), "%.4f", alpha);
+        char *child_argv[] = {
+            "bonfyre-sae", "gate",
+            (char *)dict_path, (char *)target,
+            "--alpha", alpha_buf,
+            NULL
+        };
+        pid_t pid = fork();
+        if (pid < 0) {
+            perror("sae-gate: fork");
+            ecode = GATE_ERROR;
+        } else if (pid == 0) {
+            execvp("bonfyre-sae", child_argv);
+            _exit(1); /* execvp failed */
+        } else {
+            int wstatus = 0;
+            waitpid(pid, &wstatus, 0);
+            int raw = WIFEXITED(wstatus) ? WEXITSTATUS(wstatus) : 1;
+            if      (raw == 0) ecode = GATE_CLEAR_WITH_FEATURES;
+            else if (raw == 2) ecode = GATE_BRANCH_DANGER;
+            else               ecode = GATE_ERROR;
+        }
+    }
+
+    const char *decision_str =
+        ecode == GATE_CLEAR_WITH_FEATURES ? "CLEAR_WITH_FEATURES" :
+        ecode == GATE_CLEAR_NO_FEATURES   ? "CLEAR_NO_FEATURES"   :
+        ecode == GATE_BRANCH_DANGER       ? "BRANCH_DANGER"       : "ERROR";
+
+    {
+        time_t now = time(NULL); sqlite3_stmt *st = NULL;
+        sqlite3_prepare_v2(db,
+            "INSERT INTO decisions(recipe,stage,decision,reason,score,ts)"
+            " VALUES(?,?,?,?,?,?)", -1, &st, NULL);
+        sqlite3_bind_text  (st,1, artifact,    -1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,2, "probe/sae-gate", -1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,3, decision_str,-1, SQLITE_STATIC);
+        sqlite3_bind_text  (st,4, dict_path,   -1, SQLITE_STATIC);
+        sqlite3_bind_double(st,5, alpha);
+        sqlite3_bind_int64 (st,6, (sqlite3_int64)now);
+        sqlite3_step(st); sqlite3_finalize(st);
+    }
+    printf("sae-gate: %s  alpha=%.2f  %s\n", artifact, alpha, decision_str);
+    if (ecode == GATE_BRANCH_DANGER) exit(2);
+}
 
 static void cmd_entropy_check(sqlite3 *db, const char *artifact, double threshold) {
     if (threshold <= 0.0) threshold = BF_ENTROPY_LOW_DEFAULT;
@@ -1038,6 +1150,9 @@ static void cmd_help(void) {
 "  compete <recipe> <input>    run A/B competition, score both, promote winner\n"
 "  evict <model-id>            FIFO-evict model from cache (calls bonfyre-model rm --purge)\n"
 "  entropy-check <artifact> [threshold]  fast entropy pre-flight (<10ms); exits 2 if low\n"
+"  sae-gate <artifact> [--dict D] [--alpha A]\n"
+"                              SAE feature gate: exits 2 on danger feature > alpha\n"
+"                              set BONFYRE_SAE_DICT to activate; degrades to CLEAR if absent\n"
 "  agp export <artifact> [out] export AGP-formatted signed decision log\n"
 "  inspect <run-id>            show full control trace for a pipeline run\n"
 "  history                     last 20 control decisions\n"
@@ -1097,6 +1212,17 @@ int main(int argc, char **argv) {
         else {
             double thr = argc >= 4 ? atof(argv[3]) : 0.0;
             cmd_entropy_check(db, argv[2], thr);
+        }
+    } else if (strcmp(cmd,"sae-gate")==0) {
+        if (argc < 3) {
+            fprintf(stderr,"usage: bonfyre-control sae-gate <artifact> [--dict D] [--alpha A]\n"); rc=1;
+        } else {
+            const char *dict = NULL; double alpha = 0.0;
+            for (int i = 3; i < argc; i++) {
+                if (strcmp(argv[i],"--dict") ==0 && i+1<argc) dict  = argv[++i];
+                if (strcmp(argv[i],"--alpha")==0 && i+1<argc) alpha = atof(argv[++i]);
+            }
+            cmd_sae_gate(db, argv[2], dict, alpha);
         }
     } else if (strcmp(cmd,"agp")==0) {
         if (argc < 3 || strcmp(argv[2],"export")!=0) {

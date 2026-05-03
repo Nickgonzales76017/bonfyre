@@ -14,6 +14,7 @@
  * subcommand token as the first argument so runtime can dispatch
  * internally.
  */
+#include <fcntl.h>
 #include <limits.h>
 #include <ctype.h>
 #include <dirent.h>
@@ -196,8 +197,15 @@ static const Route routes[] = {
     {"fpqx",              "bonfyre-fpqx",             "BonfyreFPQx",            SEC_AI, "FPQx extended quantisation"},
     {"layer",             "bonfyre-layer",            "BonfyreLayer",           SEC_AI, "Neural layer operations"},
     {"layer-c",           "bonfyre-layer-c",          "BonfyreLayer",           SEC_AI, "Native C layer inspector and ONNX extraction surface"},
+    {"sae",               "bonfyre-sae",             "BonfyreSAE",             SEC_AI, "Sparse autoencoder feature activation + gating"},
     {"learn",             "bonfyre-learn",            "BonfyreLearn",           SEC_AI, "On-device fine-tuning / adapters"},
     {"weaviate",          "bonfyre-weaviate-index",   "BonfyreWeaviateIndex",   SEC_AI, "Weaviate vector index bridge"},
+    {"leapfrog",          "bonfyre-leapfrog",         "BonfyreLeapfrog",        SEC_AI, "Hamiltonian leapfrog integrator (conservation + reversibility checks)"},
+    {"violence",          "bonfyre-violence",         "BonfyreViolence",        SEC_AI, "Real-coupling physics validation (E8 embedding + Hamiltonian coupling)"},
+    {"reason",            "bonfyre-reason",           "BonfyreReason",          SEC_AI, "Multi-trajectory reasoning sessions (HVCP + embed + kvcache)"},
+    {"net",               "bonfyre-net",              "BonfyreNet",             SEC_AI, "Mixed-signal netlist runtime (SPICE/HVCP component coupling)"},
+    {"flashqla",          "bonfyre-flashqla",         "BonfyreFlashQLA",        SEC_AI, "Chunked-prefill GDN attention (FlashQLA tiled kernel)"},
+    {"physics",           "bonfyre-physics",          "BonfyrePhysics",         SEC_AI, "Hamiltonian Version Control Protocol (HVCP) — trajectory store"},
     /* ── Recipes & Runtime ──────────────────────────────────────── */
     {"recipe",            "bonfyre-recipe",           "BonfyreRecipe",          SEC_RECIPES, "Recipe registry (list / show / run / add)"},
     {"run",               "bonfyre-run",              "BonfyreRun",             SEC_RECIPES, "Execute a recipe by name or path"},
@@ -558,12 +566,12 @@ static int run_probe_argv(char *const argv[]) {
     pid_t pid = fork();
     if (pid < 0) return 1;
     if (pid == 0) {
-        FILE *devnull = fopen("/dev/null", "w");
-        if (devnull) {
-            dup2(fileno(devnull), STDOUT_FILENO);
-            dup2(fileno(devnull), STDERR_FILENO);
-            fclose(devnull);
-        }
+        /* Redirect stdin/stdout/stderr to /dev/null so probes never block */
+        int null_r = open("/dev/null", O_RDONLY);
+        int null_w = open("/dev/null", O_WRONLY);
+        if (null_r >= 0) { dup2(null_r, STDIN_FILENO);  close(null_r); }
+        if (null_w >= 0) { dup2(null_w, STDOUT_FILENO); dup2(null_w, STDERR_FILENO); close(null_w); }
+        alarm(5); /* kill self if binary hangs beyond 5 s */
         if (strchr(argv[0], '/')) execv(argv[0], argv);
         else execvp(argv[0], argv);
         _exit(127);
@@ -2527,6 +2535,24 @@ int main(int argc, char *argv[]) {
             if (strcmp(sub, "commands") == 0) { if (json) cmd_status_commands_json(); else cmd_status_commands_human(); return 0; }
             if (strcmp(sub, "registries") == 0) { if (json) cmd_status_registries_json(root); else cmd_status_registries_human(root); return 0; }
             if (strcmp(sub, "snapshot") == 0) return cmd_status_snapshot(argv[0], root, out_dir ? out_dir : "/tmp/bonfyre_ops_deep");
+        }
+        if (strcmp(cmd, "status") == 0 && !sub) {
+            /* bare 'bonfyre status' — fast path: path-check only, no subprocess probing */
+            int total = 0, ready = 0, missing = 0;
+            for (const Route *r = routes; r->cmd; r++) {
+                char active[PATH_MAX];
+                total++;
+                if (resolve_binary_path(r->binary, r->sibling_dir, active, sizeof(active)))
+                    ready++;
+                else
+                    missing++;
+            }
+            printf("bonfyre status\n");
+            printf("  commands: %d/%d ready", ready, total);
+            if (missing) printf("  (%d missing)", missing);
+            printf("\n\n");
+            cmd_status_registries_human(root);
+            return 0;
         }
         if (strcmp(cmd, "doctor") == 0 && sub) {
             if (strcmp(sub, "commands") == 0) { if (json) cmd_status_commands_json(); else cmd_status_commands_human(); return 0; }

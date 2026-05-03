@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <bonfyre.h>
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -443,9 +445,20 @@ static void usage(void) {
         "bonfyre-kvcache — v8 RLF KV cache compression\n"
         "\n"
         "Usage:\n"
+        "  bonfyre-kvcache store      <model_hash_hex> <ctx_hash_hex> <input.bfkv>\n"
+        "  bonfyre-kvcache fetch      <model_hash_hex> <ctx_hash_hex> [--out file]\n"
         "  bonfyre-kvcache roundtrip  <input.bin> [--bits N]\n"
         "  bonfyre-kvcache benchmark  [--bits N]\n"
         "  bonfyre-kvcache --help\n"
+        "\n"
+        "Commit chain (Merkle DAG) subcommands:\n"
+        "  bonfyre-kvcache chain     <model_hex> <parent_hex|0> <data_file>\n"
+        "  bonfyre-kvcache ancestry  <model_hex> <ctx_hex> [--max N]\n"
+        "\n"
+        "Pack / store subcommands:\n"
+        "  bonfyre-kvcache kvpack    [--out <pack.bfkvpack>]\n"
+        "  bonfyre-kvcache kvgc      [--pack <pack.bfkvpack>]\n"
+        "  bonfyre-kvcache kvlog     <model_hex>\n"
         "\n"
         "KV cache compression using E8 lattice + μ-law + 16D RVQ.\n"
         "Error compounds across layers — use 4+ bits for production.\n"
@@ -459,6 +472,187 @@ static void usage(void) {
     );
 }
 
+static void hex_kv_(const uint8_t h[32], char out[65]) {
+    static const char hc[] = "0123456789abcdef";
+    for (int i=0;i<32;i++){out[i*2]=hc[h[i]>>4];out[i*2+1]=hc[h[i]&0xf];}
+    out[64]='\0';
+}
+
+/* Forward declaration needed by helpers below */
+static int parse_hex32(const char *hex, uint8_t out[32]);
+
+/* ── chain / ancestry / kvlog / kvpack static helpers ────────── */
+
+static int kvcache_cmd_chain_(int argc, char **argv) {
+    /* chain <model_hex> <parent_hex|0> <data_file> */
+    if (argc < 4) {
+        fprintf(stderr,
+            "Usage: bonfyre-kvcache chain <model_hex> <parent_hex|0> <data_file>\n"
+            "  parent_hex = 0 (or 64 zeros) for root of new sequence\n"); return 1;
+    }
+    uint8_t model_hash[32], parent_hash[32];
+    if (parse_hex32(argv[1], model_hash) != 0) {
+        /* try all-zeros for convenience */
+        fprintf(stderr, "chain: model_hex must be 64 hex chars\n"); return 1;
+    }
+    const char *phex = argv[2];
+    if (strcmp(phex, "0") == 0 || strlen(phex) < 64) {
+        memset(parent_hash, 0, 32);
+    } else {
+        if (parse_hex32(phex, parent_hash) != 0) {
+            fprintf(stderr, "chain: parent_hex must be 64 hex chars or '0'\n"); return 1;
+        }
+    }
+    size_t len = 0;
+    void *data = (void *)bf_read_file(argv[3], &len);
+    if (!data) { perror(argv[3]); return 1; }
+
+    uint8_t new_ctx[32];
+    int rc = bf_kvcache_chain(model_hash, parent_hash, data, len, new_ctx);
+    free(data);
+    if (rc != 0) { fprintf(stderr, "chain: write failed\n"); return 1; }
+
+    char hex[65]; hex_kv_(new_ctx, hex);
+    printf("chain: new_ctx_hash=%s\n", hex);
+    printf("  model=%.16s...\n  parent=%.16s%s\n",
+           argv[1], argv[2], strlen(argv[2]) >= 64 ? "..." : "");
+    return 0;
+}
+
+static int kvcache_cmd_ancestry_(int argc, char **argv) {
+    /* ancestry <model_hex> <ctx_hex> [--max N] */
+    if (argc < 3) {
+        fprintf(stderr, "Usage: bonfyre-kvcache ancestry <model_hex> <ctx_hex> [--max N]\n");
+        return 1;
+    }
+    uint8_t model_hash[32], ctx_hash[32];
+    if (parse_hex32(argv[1], model_hash) != 0 ||
+        parse_hex32(argv[2], ctx_hash)   != 0) {
+        fprintf(stderr, "ancestry: hashes must be 64 hex chars\n"); return 1;
+    }
+    int max_depth = 64;
+    for (int i = 3; i < argc; i++)
+        if (strcmp(argv[i], "--max") == 0 && i+1 < argc) max_depth = atoi(argv[++i]);
+
+    uint8_t (*hashes)[32] = malloc((size_t)max_depth * 32);
+    if (!hashes) return 1;
+    int depth = bf_kvcache_ancestry(model_hash, ctx_hash, hashes, max_depth);
+    printf("ancestry: %d ancestors\n", depth);
+    for (int i = 0; i < depth; i++) {
+        char hex[65]; hex_kv_(hashes[i], hex);
+        printf("  [%2d] %s%s\n", i, hex, i==0?" (newest)":i==depth-1?" (root)":"");
+    }
+    free(hashes);
+    return 0;
+}
+
+static int kvcache_cmd_kvlog_(int argc, char **argv) {
+    /* kvlog <model_hex> — list all .bfkv files for a model */
+    if (argc < 2) {
+        fprintf(stderr, "Usage: bonfyre-kvcache kvlog <model_hex>\n"); return 1;
+    }
+    const char *home = getenv("HOME");
+    char dir[4096];
+    snprintf(dir, sizeof(dir), "%s/.local/share/bonfyre/kvcache/%s",
+             home ? home : "/tmp", argv[1]);
+    DIR *d = opendir(dir);
+    if (!d) { printf("kvlog: no entries for model %.16s...\n", argv[1]); return 0; }
+    int count = 0;
+    struct dirent *de;
+    printf("KV objects for model %.16s...:\n", argv[1]);
+    while ((de = readdir(d))) {
+        const char *nm = de->d_name;
+        size_t nl = strlen(nm);
+        if (nl != 69 || strcmp(nm+64, ".bfkv") != 0) continue;
+        char path[4096];
+        snprintf(path, sizeof(path), "%s/%s", dir, nm);
+        struct stat st;
+        if (stat(path, &st) == 0) {
+            printf("  %.16s...  %lld B\n", nm, (long long)st.st_size);
+            count++;
+        }
+    }
+    closedir(d);
+    /* Also check chain dir */
+    snprintf(dir, sizeof(dir), "%s/.local/share/bonfyre/kvcache-chain/%s",
+             home ? home : "/tmp", argv[1]);
+    d = opendir(dir);
+    if (d) {
+        printf("KV chain commits for model %.16s...:\n", argv[1]);
+        while ((de = readdir(d))) {
+            const char *nm = de->d_name;
+            size_t nl = strlen(nm);
+            if (nl != 71 || strcmp(nm+64, ".bfkv2") != 0) continue;
+            char path[4096];
+            snprintf(path, sizeof(path), "%s/%s", dir, nm);
+            struct stat st;
+            if (stat(path, &st) == 0) {
+                printf("  %.16s...  %lld B\n", nm, (long long)st.st_size);
+                count++;
+            }
+        }
+        closedir(d);
+    }
+    if (count == 0) printf("  (none)\n");
+    return 0;
+}
+
+static int kvcache_cmd_kvpack_(int argc, char **argv) {
+    const char *home = getenv("HOME");
+    char pack_path[4096];
+    /* default path */
+    const char *out = NULL;
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "--out") == 0 && i+1 < argc) out = argv[++i];
+    if (out) snprintf(pack_path, sizeof(pack_path), "%s", out);
+    else snprintf(pack_path, sizeof(pack_path),
+                  "%s/.local/share/bonfyre/kvcache/pack.bfkvpack",
+                  home ? home : "/tmp");
+
+    uint32_t n = 0;
+    if (bf_kvcache_pack_build(pack_path, &n) != 0) {
+        fprintf(stderr, "kvpack: build failed\n"); return 1;
+    }
+    if (n == 0) { printf("kvpack: no loose .bfkv objects to pack\n"); return 0; }
+    printf("kvpack: packed %u KV blobs → %s\n", n, pack_path);
+    printf("  run 'bonfyre-kvcache kvgc' to remove loose files\n");
+    return 0;
+}
+
+static int kvcache_cmd_kvgc_(int argc, char **argv) {
+    const char *home = getenv("HOME");
+    char pack_path[4096];
+    const char *pp = NULL;
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "--pack") == 0 && i+1 < argc) pp = argv[++i];
+    if (pp) snprintf(pack_path, sizeof(pack_path), "%s", pp);
+    else snprintf(pack_path, sizeof(pack_path),
+                  "%s/.local/share/bonfyre/kvcache/pack.bfkvpack",
+                  home ? home : "/tmp");
+
+    BfKVCachePack pack = {0};
+    if (bf_kvcache_pack_open(&pack, pack_path) != 0) {
+        printf("kvgc: no pack found — run 'bonfyre-kvcache kvpack' first\n"); return 0;
+    }
+    int removed = bf_kvcache_pack_gc(&pack);
+    bf_kvcache_pack_close(&pack);
+    printf("kvgc: removed %d loose .bfkv files\n", removed);
+    return 0;
+}
+
+/* ─────────────────────────────────────────────────────────── */
+
+/* Parse a 64-char hex string into 32 bytes. Returns 0 on success. */
+static int parse_hex32(const char *hex, uint8_t out[32]) {
+    if (strlen(hex) != 64) return -1;
+    for (int i = 0; i < 32; i++) {
+        unsigned int byte;
+        if (sscanf(hex + i * 2, "%02x", &byte) != 1) return -1;
+        out[i] = (uint8_t)byte;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
 
@@ -470,6 +664,59 @@ int main(int argc, char **argv) {
     int bits = 4;  /* default 4-bit for KV (safer) */
     const char *v;
     if ((v = bf_arg_value(argc, argv, "--bits"))) bits = atoi(v);
+
+    /* ── store: persist a .bfkv blob by (model_hash, ctx_hash) ── */
+    if (strcmp(cmd, "store") == 0) {
+        if (argc < 5) {
+            fprintf(stderr, "Usage: bonfyre-kvcache store <model_hash_hex> <ctx_hash_hex> <file.bfkv>\n");
+            return 1;
+        }
+        uint8_t mhash[32], chash[32];
+        if (parse_hex32(argv[2], mhash) != 0 || parse_hex32(argv[3], chash) != 0) {
+            fprintf(stderr, "store: hashes must be 64 hex chars each\n"); return 1;
+        }
+        const char *inpath = argv[4];
+        size_t len = 0;
+        void *data = (void *)bf_read_file(inpath, &len);
+        if (!data) { perror(inpath); return 1; }
+        int rc = bf_kvcache_store(mhash, chash, data, len);
+        free(data);
+        if (rc != 0) { fprintf(stderr, "store: write failed\n"); return 1; }
+        fprintf(stdout, "stored: model=%.8s... ctx=%.8s... bytes=%zu\n",
+                argv[2], argv[3], len);
+        return 0;
+    }
+
+    /* ── fetch: retrieve a .bfkv blob by (model_hash, ctx_hash) ── */
+    if (strcmp(cmd, "fetch") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: bonfyre-kvcache fetch <model_hash_hex> <ctx_hash_hex> [--out file]\n");
+            return 1;
+        }
+        uint8_t mhash[32], chash[32];
+        if (parse_hex32(argv[2], mhash) != 0 || parse_hex32(argv[3], chash) != 0) {
+            fprintf(stderr, "fetch: hashes must be 64 hex chars each\n"); return 1;
+        }
+        const char *outpath = (v = bf_arg_value(argc, argv, "--out")) ? v : NULL;
+        void *data = NULL;
+        size_t len = 0;
+        if (bf_kvcache_fetch(mhash, chash, &data, &len) != 0) {
+            fprintf(stderr, "fetch: cache miss — model=%.8s... ctx=%.8s...\n",
+                    argv[2], argv[3]);
+            return 2;  /* 2 = miss (distinguishable from error) */
+        }
+        if (outpath) {
+            FILE *f = fopen(outpath, "wb");
+            if (!f) { perror(outpath); free(data); return 1; }
+            fwrite(data, 1, len, f);
+            fclose(f);
+            fprintf(stdout, "fetched: %zu bytes → %s\n", len, outpath);
+        } else {
+            fwrite(data, 1, len, stdout);
+        }
+        free(data);
+        return 0;
+    }
 
     if (strcmp(cmd, "roundtrip") == 0) {
         if (argc < 3) { usage(); return 1; }
@@ -558,7 +805,16 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
+    if (strcmp(cmd, "chain")    == 0) return kvcache_cmd_chain_   (argc-1, argv+1);
+    if (strcmp(cmd, "ancestry") == 0) return kvcache_cmd_ancestry_(argc-1, argv+1);
+    if (strcmp(cmd, "kvlog")    == 0) return kvcache_cmd_kvlog_   (argc-1, argv+1);
+    if (strcmp(cmd, "kvpack")   == 0) return kvcache_cmd_kvpack_  (argc-1, argv+1);
+    if (strcmp(cmd, "kvgc")     == 0) return kvcache_cmd_kvgc_    (argc-1, argv+1);
+
     fprintf(stderr, "Unknown command: %s\n", cmd);
     usage();
     return 1;
 }
+
+/* ─── stub comment (placeholder removed) ─── */

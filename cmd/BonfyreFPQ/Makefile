@@ -1,13 +1,36 @@
 # BonfyreFPQ — Functional Polar Quantization
 # Store seed programs, not weights.
+#
+# Platform BLAS strategy:
+#   macOS  → Apple Accelerate (always available, zero deps)
+#   Linux  → OpenBLAS when present (-DHAVE_OPENBLAS); graceful scalar
+#             fallback when not. Install: apt install libopenblas-dev
+#   Other  → scalar fallback, all functionality preserved
 
-CC      := cc
-CFLAGS  := -O3 -march=native -Wall -Wextra -std=c11 -Iinclude
-LDFLAGS := -lm
+CC      ?= cc
+CFLAGS  ?= -O3 -march=native -Wall -Wextra -std=c11
+CFLAGS  += -Iinclude
+LDFLAGS ?= -lm
 UNAME_S := $(shell uname -s)
+
 ifeq ($(UNAME_S),Darwin)
+  # Apple Silicon and Intel Mac: use bundled Accelerate framework
   CFLAGS  += -DACCELERATE_NEW_LAPACK
   LDFLAGS += -framework Accelerate
+else ifeq ($(UNAME_S),Linux)
+  # Linux: detect OpenBLAS via pkg-config, then header, then skip
+  HAVE_OPENBLAS := $(shell pkg-config --exists openblas 2>/dev/null && echo yes || \
+                           (echo "#include <cblas.h>" | $(CC) -x c -fsyntax-only - 2>/dev/null && echo yes) || \
+                           echo no)
+  ifeq ($(HAVE_OPENBLAS),yes)
+    CFLAGS  += -DHAVE_OPENBLAS $(shell pkg-config --cflags openblas 2>/dev/null || echo "")
+    LDFLAGS += $(shell pkg-config --libs openblas 2>/dev/null || echo "-lopenblas") -lgfortran -lpthread
+  else
+    # No OpenBLAS found — build compiles and runs, BLAS-accelerated
+    # paths (large SVD, weight algebra) fall back to scalar C.
+    # Install openblas for full speed: apt install libopenblas-dev
+    $(info BonfyreFPQ: OpenBLAS not found — building with scalar BLAS fallback)
+  endif
 endif
 
 SRC_DIR := src

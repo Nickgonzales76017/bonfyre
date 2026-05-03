@@ -1,0 +1,3 @@
+proof_dir=/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreProof/outputs/founder-sample-pickfu
+offer_dir=/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreOffer/outputs/founder-sample-pickfu
+files=deliverable.md,transcript.txt,proof-bundle.json,offer.json,offer.md,outreach.md

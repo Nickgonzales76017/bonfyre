@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "bonfyre/layer_artifact.v1",
+  "title": "LayerArtifact",
+  "description": "Canonical Bonfyre LayerArtifact schema. layers.db is canonical; graph/index/query/catalog are projections.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "artifact_id",
+    "artifact_kind",
+    "families",
+    "capabilities",
+    "workflow_steps",
+    "input_signature",
+    "output_signature",
+    "tensor_bindings",
+    "shape_constraints",
+    "dtype_constraints",
+    "runtime_requirements",
+    "materialization_status",
+    "verification_status",
+    "compatibility_tags"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "layer_artifact.v1"
+    },
+    "artifact_id": {
+      "type": "string"
+    },
+    "artifact_kind": {
+      "type": "string",
+      "enum": [
+        "onnx_slice",
+        "hf_tensor_surface",
+        "hf_tensor_pack",
+        "adapter_bridge",
+        "virtual_composite"
+      ]
+    },
+    "families": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "workflow_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "input_signature": {
+      "type": "object"
+    },
+    "output_signature": {
+      "type": "object"
+    },
+    "tensor_bindings": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "shape_constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "dtype_constraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "runtime_requirements": {
+      "type": "object"
+    },
+    "materialization_status": {
+      "type": "string",
+      "enum": [
+        "virtual",
+        "indexed",
+        "verified",
+        "materialized"
+      ]
+    },
+    "verification_status": {
+      "type": "string",
+      "enum": [
+        "unverified",
+        "partially_verified",
+        "verified"
+      ]
+    },
+    "compatibility_tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "source_recipe": {
+      "type": "string"
+    },
+    "source_model": {
+      "type": "string"
+    },
+    "source_collection": {
+      "type": "string"
+    },
+    "source_file": {
+      "type": "string"
+    },
+    "generated_by": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "verified_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "compatibility_result": {
+      "type": "object",
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "compatible",
+            "compatible_with_bridge",
+            "incompatible",
+            "unknown"
+          ]
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "matching_families": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mismatched_constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "required_bridges": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "onnx_slice": {
+      "type": "object"
+    },
+    "hf_tensor_surface": {
+      "type": "object"
+    },
+    "hf_tensor_pack": {
+      "type": "object"
+    },
+    "adapter_bridge": {
+      "type": "object"
+    },
+    "virtual_composite": {
+      "type": "object"
+    }
+  }
+}

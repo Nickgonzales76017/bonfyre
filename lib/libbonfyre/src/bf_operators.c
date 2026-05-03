@@ -702,6 +702,79 @@ const BfOperator BF_OPERATORS[] = {
         .layer = "surface",
         .group = "ingest"
     },
+    /* ── SAE / interpretability layer ─────────────────────────────── */
+    {
+        .name = "sae",
+        .binary = "bonfyre-sae",
+        .description = "SAE feature activation: load .bfsae dict, run top-k encoder, emit feature manifest",
+        .input_types = {"embedding-vector", "residual-stream", NULL},
+        .output_types = {"sae-feature-manifest", NULL},
+        .input_count = 2,
+        .output_count = 1,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE,
+        .exactness = BF_EXACT_LOSSY,
+        .version = "1.0.0",
+        .layer = "interpret",
+        .group = "interpret"
+    },
+    {
+        .name = "sae-gate",
+        .binary = "bonfyre-sae",
+        .description = "SAE danger-feature gate: exit 2 if any danger feature exceeds alpha threshold",
+        .input_types = {"sae-feature-manifest", NULL},
+        .output_types = {"gate-decision", NULL},
+        .input_count = 1,
+        .output_count = 1,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_BYTE,
+        .version = "1.0.0",
+        .layer = "interpret",
+        .group = "validate"
+    },
+    {
+        .name = "sae-hash",
+        .binary = "bonfyre-sae",
+        .description = "Feature-stable semantic hash: bfh:feature:<model>:l<N>:<fnv64>",
+        .input_types = {"residual-stream", "sae-feature-manifest", NULL},
+        .output_types = {"feature-hash", NULL},
+        .input_count = 2,
+        .output_count = 1,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_LOSSY,
+        .version = "1.0.0",
+        .layer = "interpret",
+        .group = "validate"
+    },
+    /* ── hash:feature subcommand operator ─────────────────────────── */
+    {
+        .name = "hash-feature",
+        .binary = "bonfyre-hash",
+        .description = "Feature-based content address: top-k SAE features produce paraphrase-stable hash",
+        .input_types = {"artifact", "sae-feature-manifest", NULL},
+        .output_types = {"feature-hash", "hash-manifest", NULL},
+        .input_count = 2,
+        .output_count = 2,
+        .flags = BF_OP_PURE | BF_OP_CACHEABLE | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_LOSSY,
+        .version = "1.0.0",
+        .layer = "substrate",
+        .group = "validate"
+    },
+    /* ── BonfyreSpace SAE feature store ───────────────────────────── */
+    {
+        .name = "space-sae",
+        .binary = "bonfyre-space",
+        .description = "Feature activation store: get/put sae-feature-manifest by artifact+layer key",
+        .input_types = {"sae-feature-manifest", "artifact-manifest", NULL},
+        .output_types = {"space-entry", NULL},
+        .input_count = 2,
+        .output_count = 1,
+        .flags = BF_OP_STATEFUL | BF_OP_IDEMPOTENT,
+        .exactness = BF_EXACT_CANON,
+        .version = "1.0.0",
+        .layer = "substrate",
+        .group = "index"
+    },
 };
 
 const int BF_OPERATOR_COUNT = sizeof(BF_OPERATORS) / sizeof(BF_OPERATORS[0]);

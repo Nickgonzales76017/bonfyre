@@ -1,7 +1,9 @@
 CC      ?= cc
 CFLAGS  ?= -O2 -Wall -Wextra -std=c11
-LOCAL_CFLAGS = -I/opt/homebrew/opt/sqlite/include
-LDFLAGS  = -L/opt/homebrew/opt/sqlite/lib -lsqlite3
+SQLITE_CFLAGS := $(shell pkg-config --cflags sqlite3 2>/dev/null || echo "-I/opt/homebrew/opt/sqlite/include")
+SQLITE_LIBS   := $(shell pkg-config --libs   sqlite3 2>/dev/null || echo "-L/opt/homebrew/opt/sqlite/lib -lsqlite3")
+LOCAL_CFLAGS = $(SQLITE_CFLAGS)
+LDFLAGS  = $(SQLITE_LIBS)
 TARGET   = bonfyre-vec
 SRC      = src/main.c
 

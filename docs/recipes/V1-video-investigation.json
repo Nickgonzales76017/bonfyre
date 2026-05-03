@@ -1,0 +1,203 @@
+{
+  "recipe_id": "V1",
+  "name": "Video Investigation Pipeline",
+  "version": "1.0.0",
+  "description": "Full video analysis: visual frames + audio + text extraction → cross-modal knowledge graph",
+  "category": "video-investigation",
+  "inputs": [
+    {
+      "name": "video",
+      "type": "video/*",
+      "required": true,
+      "description": "Input video file (mp4, mov, avi)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "knowledge-graph",
+      "type": "application/json",
+      "path": "{out}/graph.json"
+    },
+    {
+      "name": "brief",
+      "type": "text/markdown",
+      "path": "{out}/brief.md"
+    }
+  ],
+  "stages": [
+    {
+      "id": "s01",
+      "name": "Video Demux",
+      "operator": "BonfyreVideoDemux",
+      "args": ["--input", "{input}", "--out", "{out}/demux"],
+      "inputs": ["{input}"],
+      "outputs": ["{out}/demux/video.mp4", "{out}/demux/audio.wav"],
+      "description": "Separate video and audio streams"
+    },
+    {
+      "id": "s02",
+      "name": "Frame Extraction",
+      "operator": "BonfyreFrameExtract",
+      "args": [
+        "--input", "{out}/demux/video.mp4",
+        "--out", "{out}/frames",
+        "--fps", "1",
+        "--format", "jpg"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/frames/*.jpg"],
+      "description": "Extract 1 frame per second"
+    },
+    {
+      "id": "s03",
+      "name": "Audio VAD",
+      "operator": "BonfyreSpeechLoop",
+      "args": ["--input", "{out}/demux/audio.wav", "--out", "{out}/speech"],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/speech/segments.json"]
+    },
+    {
+      "id": "s04",
+      "name": "Speech Transcription",
+      "operator": "BonfyreTranscribe",
+      "args": [
+        "--input", "{out}/speech/segments.json",
+        "--out", "{out}/transcripts",
+        "--model", "whisper-base"
+      ],
+      "parallel": 8,
+      "depends_on": ["s03"],
+      "outputs": ["{out}/transcripts/*.json"]
+    },
+    {
+      "id": "s05",
+      "name": "Visual Scene Detection",
+      "operator": "BonfyreSceneDetect",
+      "args": [
+        "--input", "{out}/frames",
+        "--out", "{out}/scenes",
+        "--threshold", "0.3"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/scenes/boundaries.json"],
+      "description": "Detect scene changes via frame similarity"
+    },
+    {
+      "id": "s06",
+      "name": "Object Detection",
+      "operator": "BonfyreDetectObjects",
+      "args": [
+        "--input", "{out}/frames",
+        "--out", "{out}/objects",
+        "--model", "yolo-v8"
+      ],
+      "parallel": 4,
+      "depends_on": ["s02"],
+      "outputs": ["{out}/objects/*.json"],
+      "description": "Detect people, objects, text in frames"
+    },
+    {
+      "id": "s07",
+      "name": "OCR Text Extraction",
+      "operator": "BonfyreOCR",
+      "args": [
+        "--input", "{out}/frames",
+        "--out", "{out}/ocr",
+        "--model", "tesseract"
+      ],
+      "parallel": 4,
+      "depends_on": ["s02"],
+      "outputs": ["{out}/ocr/*.json"],
+      "description": "Extract on-screen text"
+    },
+    {
+      "id": "s08",
+      "name": "Face Detection & Tracking",
+      "operator": "BonfyreFaceTrack",
+      "args": [
+        "--input", "{out}/frames",
+        "--out", "{out}/faces",
+        "--model", "retinaface"
+      ],
+      "depends_on": ["s02"],
+      "outputs": ["{out}/faces/tracks.json"],
+      "description": "Track unique individuals across frames"
+    },
+    {
+      "id": "s09",
+      "name": "Cross-Modal Entity Fusion",
+      "operator": "BonfyreEntityFusion",
+      "args": [
+        "--speech", "{out}/transcripts",
+        "--objects", "{out}/objects",
+        "--faces", "{out}/faces",
+        "--ocr", "{out}/ocr",
+        "--out", "{out}/entities"
+      ],
+      "depends_on": ["s04", "s06", "s07", "s08"],
+      "outputs": ["{out}/entities/merged.json"],
+      "description": "Merge entities across modalities (speaker + face + object)"
+    },
+    {
+      "id": "s10",
+      "name": "Temporal Alignment",
+      "operator": "BonfyreTemporalAlign",
+      "args": [
+        "--scenes", "{out}/scenes/boundaries.json",
+        "--speech", "{out}/speech/segments.json",
+        "--entities", "{out}/entities/merged.json",
+        "--out", "{out}/timeline"
+      ],
+      "depends_on": ["s05", "s09"],
+      "outputs": ["{out}/timeline/events.json"],
+      "description": "Align visual scenes with speech timestamps"
+    },
+    {
+      "id": "s11",
+      "name": "Knowledge Graph Construction",
+      "operator": "BonfyreGraph",
+      "args": [
+        "--input", "{out}/timeline/events.json",
+        "--out", "{out}/graph.json"
+      ],
+      "depends_on": ["s10"],
+      "outputs": ["{out}/graph.json"],
+      "description": "Build temporal knowledge graph"
+    },
+    {
+      "id": "s12",
+      "name": "Investigation Brief",
+      "operator": "BonfyreBrief",
+      "args": [
+        "--graph", "{out}/graph.json",
+        "--out", "{out}/brief.md",
+        "--mode", "video-investigation"
+      ],
+      "depends_on": ["s11"],
+      "outputs": ["{out}/brief.md"]
+    }
+  ],
+  "models": [
+    {
+      "name": "whisper-base",
+      "hash": "sha256:ed3a0b7de55e3e3e4e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e",
+      "size_mb": 142
+    },
+    {
+      "name": "yolo-v8",
+      "hash": "sha256:abc123...",
+      "size_mb": 45
+    },
+    {
+      "name": "retinaface",
+      "hash": "sha256:def456...",
+      "size_mb": 27
+    }
+  ],
+  "metadata": {
+    "estimated_time_per_hour": "25 minutes",
+    "tags": ["video", "multi-modal", "investigation", "cross-modal"],
+    "author": "bonfyre-core",
+    "license": "MIT"
+  }
+}

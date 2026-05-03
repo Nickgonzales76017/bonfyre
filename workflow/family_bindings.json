@@ -1,0 +1,121 @@
+{
+  "schema_version": "1.0.0",
+  "steps": {
+    "A1.s01": {
+      "role": "ingress",
+      "families": [
+        "T_VISION_PATCH",
+        "T_PATCH_EMBED",
+        "T_VISION_MED",
+        "T_CLIP_IMAGE",
+        "T_INPUT_FILTER",
+        "T_MARKER_STREAM",
+        "T_STREAM_MEMORY",
+        "T_MODAL_BRIDGE"
+      ]
+    },
+    "A2.s02": {
+      "role": "transform_projection",
+      "families": [
+        "T_BYTE_REMAP",
+        "T_TOKEN_EMBED",
+        "T_TOKENIZER_ALIGN",
+        "T_VISION_POSITION",
+        "T_VISION_BLOCK",
+        "T_PROJECTOR_BRIDGE",
+        "T_MM_PROJECTOR",
+        "T_TOKEN_ALIGNMENT",
+        "T_ENCODER_BLOCK",
+        "T_SHARED_EMBED",
+        "T_EMBED_SPACE_PROJECTION",
+        "T_TRANSFORM_HEAD",
+        "T_FUNCTION_SCHEMA",
+        "T_MEAN_POOL",
+        "T_CLS_POOL",
+        "T_QUANT_ROUTE",
+        "T_LAYER_PACK",
+        "T_GGUF_TENSOR",
+        "T_TIMESTEP_EMBED",
+        "T_VAE_ENCODER",
+        "T_GENOME_ENCODER"
+      ]
+    },
+    "A3.s03": {
+      "role": "reasoning_routing",
+      "families": [
+        "T_SHARED_QK",
+        "T_ATTENTION_IO",
+        "T_PARALLEL_RESIDUAL",
+        "T_NORMALIZE",
+        "T_CROSS_ATTENTION",
+        "T_CROSS_MODAL",
+        "T_CROSS_MODAL_FUSION",
+        "T_FUNCTION_CALL_HEAD",
+        "T_STRUCTURED_OUTPUT_HEAD",
+        "T_DOMAIN_MED",
+        "T_DOMAIN_THERAPEUTIC",
+        "T_RECUR_BLOCK",
+        "T_MOE_ROUTER",
+        "T_MOE_EXPERT",
+        "T_HIER_ROUTER",
+        "T_ROUTED_EXPERT",
+        "T_SHARED_EXPERT",
+        "T_DIFFUSION_UNET",
+        "T_ATTENTION_UNET",
+        "T_RESBLOCK",
+        "T_LONG_RANGE_ATTENTION",
+        "T_CODEOPS",
+        "T_SYMBOL_STREAM",
+        "T_LATENCY_ROUTE"
+      ]
+    },
+    "A4.s04": {
+      "role": "memory_cache",
+      "families": [
+        "T_EMBED_POOL",
+        "T_DENSE_RETRIEVAL_PROJ",
+        "T_VECTOR_NORMALIZE",
+        "T_CACHE_LAYOUT",
+        "T_KV_MEMORY_SHARD",
+        "T_ATTENTION_LATENT_CACHE",
+        "T_SEGMENT_LAYOUT",
+        "T_EDGE_ROUTE",
+        "T_RUNTIME_LAYOUT",
+        "T_BLOCKWISE_LAYOUT",
+        "T_SCALE_OFFSET",
+        "T_CPU_TILE",
+        "T_STREAM_MEMORY",
+        "T_STATE_UPDATE",
+        "T_HASH_MEMORY",
+        "T_TRANSCODER",
+        "T_GENOME_UNET",
+        "T_VAE_DECODER"
+      ]
+    },
+    "A5.s05": {
+      "role": "safety_eval_output",
+      "families": [
+        "T_SAFETY_HEAD",
+        "T_POLICY_CLASSIFIER",
+        "T_REFUSAL_HEAD",
+        "T_RISK_HEAD",
+        "T_OUTPUT_FILTER",
+        "T_EVAL_HEAD",
+        "T_SCORE_ROUTE",
+        "T_PAIRWISE_SCORE",
+        "T_QUALITY_HEAD",
+        "T_RANKING_HEAD",
+        "T_PREDICT_HEAD",
+        "T_PROPERTY_HEAD",
+        "T_UNCERTAINTY_CALIB",
+        "T_EXPRESSION_HEAD",
+        "T_SPLICE_HEAD",
+        "T_CONTACT_MAP_HEAD",
+        "T_ASSAY_HEAD",
+        "T_TIED_LM_HEAD",
+        "T_LM_HEAD",
+        "T_LLaVA_PROJECTOR"
+      ]
+    }
+  }
+}

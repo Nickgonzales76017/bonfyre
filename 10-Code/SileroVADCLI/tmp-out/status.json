@@ -1,0 +1,9 @@
+{
+  "sourceSystem": "SileroVADCLI",
+  "status": "completed",
+  "backend": "ffmpeg-fallback",
+  "simulated": false,
+  "audioPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/SileroVADCLI/../LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+  "manifestPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/SileroVADCLI/tmp-out/speech-chunks.json",
+  "chunkCount": 1
+}

@@ -1,0 +1,13 @@
+{
+  "normalized_audio": "/var/folders/xn/01qdv38d6mx4jspqwjg95b000000gq/T/tmpywwi2p99/outputs/normalized.denoised.wav",
+  "chunk_count": 2,
+  "denoised": true,
+  "cache_key": "807b6f239827f984fd3c54d239d0f43b64daf9344cbb866876c04f61ff46f938",
+  "source_hash": "69538b86470d5575fc0181cf3b0d0e79ecacb05b6bc6f58c17e759154848e35f",
+  "duration_seconds": 1.0,
+  "cache_hit": false,
+  "adaptive_split_speech": false,
+  "stage_timings": {
+    "total_seconds": 0.0027
+  }
+}

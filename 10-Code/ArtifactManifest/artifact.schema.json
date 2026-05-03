@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bonfyre.local/artifact.schema.json",
+  "title": "Bonfyre Artifact Manifest",
+  "description": "Universal typed manifest for Bonfyre artifact families. Every artifact family writes one of these. Supports operator lineage, Merkle hashing, and realization targets.",
+  "type": "object",
+  "required": ["schema_version", "artifact_id", "artifact_type", "created_at", "atoms", "operators", "realizations"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for forward compatibility."
+    },
+    "artifact_id": {
+      "type": "string",
+      "description": "Unique identifier for this artifact family instance (slug or UUID)."
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": ["transcript", "brief", "proof", "offer", "pack", "distribution", "narration", "summary", "custom"],
+      "description": "Primary type of the artifact family."
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 creation timestamp."
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO-8601 last-updated timestamp."
+    },
+    "source_system": {
+      "type": "string",
+      "description": "The binary or system that produced this manifest (e.g. BonfyreBrief, BonfyreProof)."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free-form tags for indexing and retrieval."
+    },
+    "root_hash": {
+      "type": "string",
+      "description": "SHA-256 Merkle root over the operator DAG. Computed by hashing all operator nodes bottom-up."
+    },
+    "atoms": {
+      "type": "array",
+      "description": "Base atoms — the irreducible source inputs to this artifact family.",
+      "items": {
+        "$ref": "#/$defs/atom"
+      },
+      "minItems": 1
+    },
+    "operators": {
+      "type": "array",
+      "description": "Operator nodes in the derivation DAG. Each operator transforms inputs into outputs.",
+      "items": {
+        "$ref": "#/$defs/operator"
+      }
+    },
+    "realizations": {
+      "type": "array",
+      "description": "Concrete realized outputs (files or data). Each is either pinned (materialized) or reconstructable from operator + inputs.",
+      "items": {
+        "$ref": "#/$defs/realization"
+      }
+    },
+    "realization_targets": {
+      "type": "array",
+      "description": "Declarative list of what CAN be produced from this family (not necessarily materialized yet).",
+      "items": {
+        "$ref": "#/$defs/realization_target"
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Arbitrary additional metadata specific to the artifact type.",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "atom": {
+      "type": "object",
+      "required": ["atom_id", "content_hash", "media_type"],
+      "properties": {
+        "atom_id": {
+          "type": "string",
+          "description": "Unique identifier for this atom within the family."
+        },
+        "content_hash": {
+          "type": "string",
+          "description": "SHA-256 hash of the atom's canonical content."
+        },
+        "media_type": {
+          "type": "string",
+          "description": "MIME type or Bonfyre type (e.g. text/plain, application/json, audio/wav)."
+        },
+        "path": {
+          "type": "string",
+          "description": "Relative path to the atom file (if materialized)."
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Size in bytes."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label for this atom."
+        }
+      },
+      "additionalProperties": false
+    },
+    "operator": {
+      "type": "object",
+      "required": ["operator_id", "op", "inputs", "output"],
+      "properties": {
+        "operator_id": {
+          "type": "string",
+          "description": "Unique identifier for this operator node."
+        },
+        "op": {
+          "type": "string",
+          "description": "Operator name (e.g. Clean, Paragraphize, Summarize, Narrate, Trim, Pack)."
+        },
+        "inputs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of atom_ids or operator_ids that feed this operator."
+        },
+        "output": {
+          "type": "string",
+          "description": "The realization_id this operator produces."
+        },
+        "params": {
+          "type": "object",
+          "description": "Operator-specific parameters (e.g. profile, voice, t0, t1).",
+          "additionalProperties": true
+        },
+        "node_hash": {
+          "type": "string",
+          "description": "SHA-256 hash of: op + canonical params + sorted child hashes + version."
+        },
+        "version": {
+          "type": "string",
+          "description": "Operator version for reproducibility."
+        },
+        "deterministic": {
+          "type": "boolean",
+          "description": "Whether this operator guarantees identical output given identical inputs + params.",
+          "default": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "realization": {
+      "type": "object",
+      "required": ["realization_id", "media_type"],
+      "properties": {
+        "realization_id": {
+          "type": "string",
+          "description": "Unique identifier for this realized output."
+        },
+        "media_type": {
+          "type": "string",
+          "description": "MIME type of the realized output."
+        },
+        "path": {
+          "type": "string",
+          "description": "Relative path to the realized file (if pinned/materialized)."
+        },
+        "content_hash": {
+          "type": "string",
+          "description": "SHA-256 hash of the realized content."
+        },
+        "byte_size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "pinned": {
+          "type": "boolean",
+          "description": "Whether this realization is materialized on disk (true) or can be reconstructed from operator (false).",
+          "default": false
+        },
+        "produced_by": {
+          "type": "string",
+          "description": "operator_id that produced this realization (if derived)."
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label."
+        }
+      },
+      "additionalProperties": false
+    },
+    "realization_target": {
+      "type": "object",
+      "required": ["target_id", "media_type", "op"],
+      "properties": {
+        "target_id": {
+          "type": "string",
+          "description": "Identifier for the potential realization."
+        },
+        "media_type": {
+          "type": "string"
+        },
+        "op": {
+          "type": "string",
+          "description": "Operator that would produce this target."
+        },
+        "params": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

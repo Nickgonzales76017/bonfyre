@@ -1,0 +1,9 @@
+{
+  "sourceSystem": "BonfyreMFADict",
+  "status": "completed",
+  "transcriptPath": "/tmp/bonfyre-mfa-smoke.txt",
+  "dictionaryPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreMFADict/outputs/smoke/sample.dict",
+  "entryCount": 8,
+  "deterministic": true,
+  "backend": "naive-grapheme-native"
+}
