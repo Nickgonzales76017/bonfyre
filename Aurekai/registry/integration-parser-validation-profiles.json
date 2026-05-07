@@ -1,0 +1,121 @@
+{
+  "schema_version": "aurekai.integration_parser_validation.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "profiles": {
+    "ibc-packet": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["packet.sequence"],
+      "numeric_ranges": {
+        "risk_score": [0, 1],
+        "deformation_score": [0, 1],
+        "witness_skew": [0, 1]
+      }
+    },
+    "layerzero-packet": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["message.guid"],
+      "numeric_ranges": {
+        "risk_score": [0, 1],
+        "deformation_score": [0, 1],
+        "witness_skew": [0, 1]
+      }
+    },
+    "axelar-gmp": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["gmp.tx_hash"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "wormhole-vaa": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["vaa.digest"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "hyperlane-message": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["message.id"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "stargate-transfer": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["transfer.id"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "rollup-proof": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["proof.id", "proof.batch_id", "assertion.id", "output.id"],
+      "any_payload_paths": true,
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "defi-position": {
+      "required_normalized_fields": ["event_id", "action", "source"],
+      "required_payload_paths": ["position.id", "vault.id", "operator.id"],
+      "any_payload_paths": true,
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "uniswap-v4-hook": {
+      "required_normalized_fields": ["event_id", "action", "source"],
+      "required_payload_paths": ["hook.id"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "da-publication": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["blob.commitment"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "workflow-loop": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["execution.id", "event.id"],
+      "any_payload_paths": true,
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "agent-loop": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["run.id"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "ide-loop": {
+      "required_normalized_fields": ["event_id", "action", "source", "stage"],
+      "required_payload_paths": ["event.id"],
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "observer-event": {
+      "required_normalized_fields": ["event_id", "action", "source"],
+      "required_payload_paths": ["round.id", "trail.id", "snapshot.id"],
+      "any_payload_paths": true,
+      "numeric_ranges": {
+        "risk_score": [0, 1]
+      }
+    },
+    "generic": {
+      "required_normalized_fields": ["event_id", "action", "source"],
+      "numeric_ranges": {
+        "risk_score": [0, 1],
+        "deformation_score": [0, 1],
+        "witness_skew": [0, 1],
+        "continuity_gap": [0, 1]
+      }
+    }
+  }
+}

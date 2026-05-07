@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.sla.continuity.v1.json",
+  "title": "Aurekai SLA Continuity Contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "service_id",
+    "continuity_budget",
+    "deformation_thresholds",
+    "handoff_rules"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.sla.continuity.v1" },
+    "service_id": { "type": "string" },
+    "continuity_budget": { "type": "number", "minimum": 0 },
+    "deformation_thresholds": { "type": "object" },
+    "handoff_rules": { "type": "array", "items": { "type": "string" } },
+    "violation_proofs": { "type": "array", "items": { "type": "string" } }
+  }
+}

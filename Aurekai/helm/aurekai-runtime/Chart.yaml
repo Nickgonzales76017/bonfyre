@@ -1,0 +1,9 @@
+apiVersion: v2
+name: aurekai-runtime
+description: Aurekai Runtime Helm chart scaffold
+type: application
+version: 0.8.0
+appVersion: "0.8.0"
+home: https://aurekai.ai
+sources:
+  - https://github.com/aurekai/aurekai

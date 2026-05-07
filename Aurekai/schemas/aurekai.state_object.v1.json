@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.state_object.v1.json",
+  "title": "Aurekai State Object",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "state_object_id",
+    "state_kind",
+    "lifecycle_phase",
+    "commitment_ref"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.state_object.v1" },
+    "state_object_id": { "type": "string" },
+    "state_kind": {
+      "enum": [
+        "state_snapshot",
+        "state_transition",
+        "attachment_artifact",
+        "trajectory_projection"
+      ]
+    },
+    "lifecycle_phase": {
+      "enum": [
+        "create",
+        "mutate",
+        "transport",
+        "fork",
+        "merge",
+        "archive",
+        "reopen"
+      ]
+    },
+    "commitment_ref": { "type": "string" },
+    "chart_family": { "type": "string" },
+    "policy_family": { "type": "string" },
+    "payload": { "type": "object" }
+  }
+}

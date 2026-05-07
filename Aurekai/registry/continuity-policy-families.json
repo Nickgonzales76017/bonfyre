@@ -1,0 +1,114 @@
+{
+  "schema_version": "aurekai.continuity_policy_families.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "families": [
+    {
+      "id": "settlement",
+      "allowed_chart_transitions": ["bridge_packet->bridge_packet", "execution_batch->execution_batch"],
+      "residual_thresholds": { "gate": 0.7, "halt": 0.9 },
+      "witness_requirements": ["transition_witness", "ack_witness"],
+      "fail_conditions": ["missing_ack", "missing_settlement_ack", "retransmission_limit_exceeded", "residual_delta_exceeded"],
+      "projection_defaults": ["public_summary", "operator_detail"],
+      "replay_expectations": ["ordered_unfold", "settlement_ack_trace"]
+    },
+    {
+      "id": "finality",
+      "allowed_chart_transitions": ["execution_batch->execution_batch"],
+      "residual_thresholds": { "gate": 0.65, "halt": 0.9 },
+      "witness_requirements": ["transition_witness"],
+      "fail_conditions": ["non_final_state", "residual_delta_exceeded"],
+      "projection_defaults": ["public_summary"],
+      "replay_expectations": ["batch_unfold"]
+    },
+    {
+      "id": "oracle",
+      "allowed_chart_transitions": ["oracle_round->oracle_round"],
+      "residual_thresholds": { "gate": 0.55, "halt": 0.8 },
+      "witness_requirements": ["attestation_witness", "round_witness"],
+      "fail_conditions": ["stale_round", "attestation_gap"],
+      "projection_defaults": ["public_summary", "oracle_detail"],
+      "replay_expectations": ["round_sequence_unfold"]
+    },
+    {
+      "id": "availability",
+      "allowed_chart_transitions": ["availability_root->availability_root"],
+      "residual_thresholds": { "gate": 0.6, "halt": 0.85 },
+      "witness_requirements": ["publication_witness", "retrieval_witness"],
+      "fail_conditions": ["retrieval_failure", "root_mismatch"],
+      "projection_defaults": ["public_summary"],
+      "replay_expectations": ["publication_retrieval_trace"]
+    },
+    {
+      "id": "liquidity",
+      "allowed_chart_transitions": ["liquidity_topology->liquidity_topology", "yield_curve->yield_curve"],
+      "residual_thresholds": { "gate": 0.5, "halt": 0.8 },
+      "witness_requirements": ["position_witness", "settlement_witness"],
+      "fail_conditions": ["liquidity_gap", "unsafe_slippage"],
+      "projection_defaults": ["operator_detail", "risk_summary"],
+      "replay_expectations": ["position_lifecycle_trace"]
+    },
+    {
+      "id": "collateral",
+      "allowed_chart_transitions": ["collateral_graph->collateral_graph"],
+      "residual_thresholds": { "gate": 0.45, "halt": 0.7 },
+      "witness_requirements": ["collateral_witness", "debt_witness"],
+      "fail_conditions": ["collateral_ratio_breach", "liquidation_boundary_cross"],
+      "projection_defaults": ["risk_summary", "operator_detail"],
+      "replay_expectations": ["collateral_graph_unfold"]
+    },
+    {
+      "id": "restaking",
+      "allowed_chart_transitions": ["restaking_topology->restaking_topology"],
+      "residual_thresholds": { "gate": 0.5, "halt": 0.75 },
+      "witness_requirements": ["delegation_witness", "slash_witness"],
+      "fail_conditions": ["slash_event_unbound", "delegation_gap"],
+      "projection_defaults": ["operator_detail"],
+      "replay_expectations": ["delegation_unfold"]
+    },
+    {
+      "id": "governance",
+      "allowed_chart_transitions": ["governance_state->governance_state"],
+      "residual_thresholds": { "gate": 0.5, "halt": 0.8 },
+      "witness_requirements": ["vote_witness", "quorum_witness"],
+      "fail_conditions": ["quorum_loss", "invalid_vote_transition"],
+      "projection_defaults": ["public_summary"],
+      "replay_expectations": ["proposal_lifecycle_trace"]
+    },
+    {
+      "id": "privacy",
+      "allowed_chart_transitions": ["identity_claim->identity_claim"],
+      "residual_thresholds": { "gate": 0.5, "halt": 0.8 },
+      "witness_requirements": ["claim_witness", "privacy_proof"],
+      "fail_conditions": ["claim_invalid", "privacy_budget_exceeded"],
+      "projection_defaults": ["public_summary", "private_detail"],
+      "replay_expectations": ["claim_chain_unfold"]
+    },
+    {
+      "id": "fulfillment",
+      "allowed_chart_transitions": ["fulfillment_state->fulfillment_state"],
+      "residual_thresholds": { "gate": 0.55, "halt": 0.85 },
+      "witness_requirements": ["delivery_witness", "handoff_witness"],
+      "fail_conditions": ["delivery_gap", "handoff_break"],
+      "projection_defaults": ["invoice_summary", "operator_detail"],
+      "replay_expectations": ["fulfillment_trace"]
+    },
+    {
+      "id": "workflow",
+      "allowed_chart_transitions": ["workflow_state->workflow_state"],
+      "residual_thresholds": { "gate": 0.6, "halt": 0.9 },
+      "witness_requirements": ["step_witness"],
+      "fail_conditions": ["step_policy_break", "unhandled_branch"],
+      "projection_defaults": ["public_summary", "operator_detail"],
+      "replay_expectations": ["stepwise_unfold"]
+    },
+    {
+      "id": "identity",
+      "allowed_chart_transitions": ["identity_claim->identity_claim"],
+      "residual_thresholds": { "gate": 0.5, "halt": 0.8 },
+      "witness_requirements": ["claim_witness"],
+      "fail_conditions": ["identity_claim_break"],
+      "projection_defaults": ["public_summary"],
+      "replay_expectations": ["identity_chain_unfold"]
+    }
+  ]
+}

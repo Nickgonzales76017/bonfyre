@@ -1,0 +1,21 @@
+# Aurekai standalone repo .gitignore
+# (placed at Aurekai/.gitignore — copied to repo root during split)
+
+# Build output
+dist/
+node_modules/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/settings.json
+.idea/
+
+# Secrets / local config
+.env
+*.local
+
+# Bun lockfile (keep bun.lockb)
+yarn.lock
+package-lock.json
