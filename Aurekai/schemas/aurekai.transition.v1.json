@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.transition.v1.json",
+  "title": "Aurekai Transition",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "transition_id",
+    "transition_type",
+    "phase",
+    "witness_hash",
+    "predecessor_state_hash",
+    "successor_state_hash",
+    "emitted_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.transition.v1" },
+    "transition_id": { "type": "string" },
+    "transition_type": { "type": "string" },
+    "phase": { "type": "string" },
+    "witness_hash": { "type": "string" },
+    "predecessor_state_hash": { "type": "string" },
+    "successor_state_hash": { "type": "string" },
+    "emitted_at": { "type": "string", "format": "date-time" },
+    "metadata": { "type": "object" }
+  }
+}

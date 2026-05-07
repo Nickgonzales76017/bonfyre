@@ -1,0 +1,75 @@
+{
+  "name": "aurekai-workbench",
+  "displayName": "Aurekai Workbench",
+  "version": "0.1.0",
+  "publisher": "aurekai",
+  "description": "Inspect artifacts, manifests, proof bundles, and model-memory packs.",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:aurekai.doctor",
+    "onCommand:aurekai.run",
+    "onCommand:aurekai.install",
+    "onLanguage:json"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "aurekai.doctor",
+        "title": "Aurekai: Run Deep Doctor"
+      },
+      {
+        "command": "aurekai.run",
+        "title": "Aurekai: Run Recipe"
+      },
+      {
+        "command": "aurekai.install",
+        "title": "Aurekai: Install (--user)"
+      },
+      {
+        "command": "aurekai.dashboard",
+        "title": "Aurekai: Open Dashboard"
+      },
+      {
+        "command": "aurekai.inspectModel",
+        "title": "Aurekai: Inspect .akmodel"
+      },
+      {
+        "command": "aurekai.inspectManifest",
+        "title": "Aurekai: Inspect Manifest"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "aurekai.manifest.json",
+        "url": "../../schemas/aurekai.deploy.v1.json"
+      },
+      {
+        "fileMatch": "bonfyre.manifest.json",
+        "url": "../../schemas/aurekai.deploy.v1.json"
+      }
+    ],
+    "languages": [
+      {
+        "id": "akmodel",
+        "extensions": [".akmodel", ".bfmodel"],
+        "aliases": ["Aurekai Model Pack", "akmodel"]
+      },
+      {
+        "id": "aksae",
+        "extensions": [".aksae", ".bfsae"],
+        "aliases": ["Aurekai SAE Dictionary", "aksae"]
+      },
+      {
+        "id": "akfpqx",
+        "extensions": [".akfpqx", ".bffpqx"],
+        "aliases": ["Aurekai FPQx Alignment", "akfpqx"]
+      }
+    ]
+  }
+}
+

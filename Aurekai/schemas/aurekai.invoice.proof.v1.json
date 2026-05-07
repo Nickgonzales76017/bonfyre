@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.invoice.proof.v1.json",
+  "title": "Aurekai Invoice Proof",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "invoice_id",
+    "usage_commitments",
+    "fulfillment_refs",
+    "meter_refs",
+    "continuity_summary",
+    "proof_bundle_ref"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.invoice.proof.v1" },
+    "invoice_id": { "type": "string" },
+    "usage_commitments": { "type": "array", "items": { "type": "string" } },
+    "fulfillment_refs": { "type": "array", "items": { "type": "string" } },
+    "meter_refs": { "type": "array", "items": { "type": "string" } },
+    "continuity_summary": { "type": "object" },
+    "proof_bundle_ref": { "type": "string" }
+  }
+}

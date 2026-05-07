@@ -1,0 +1,81 @@
+{
+  "schema_version": "aurekai.integration_endpoint_templates.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "templates": [
+    {
+      "id": "layerzero-prod",
+      "target": "LayerZero",
+      "environment": "prod",
+      "url": "${LAYERZERO_INDEXER_URL}",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer ${LAYERZERO_API_KEY}",
+        "X-Client": "akai"
+      },
+      "query": {
+        "network": "${LAYERZERO_NETWORK}",
+        "limit": "1"
+      },
+      "timeout_ms": 12000,
+      "strict_env": true
+    },
+    {
+      "id": "layerzero-staging",
+      "target": "LayerZero",
+      "environment": "staging",
+      "url": "${LZ_STAGING_URL}",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer ${LZ_STAGING_API_KEY}"
+      },
+      "query": {
+        "network": "staging",
+        "limit": "1"
+      },
+      "timeout_ms": 12000,
+      "strict_env": true
+    },
+    {
+      "id": "wormhole-prod",
+      "target": "Wormhole",
+      "environment": "prod",
+      "url": "${WORMHOLE_INDEXER_URL}",
+      "method": "GET",
+      "headers": {
+        "Authorization": "Bearer ${WORMHOLE_API_KEY}"
+      },
+      "query": {
+        "chain": "${WORMHOLE_CHAIN}",
+        "limit": "1"
+      },
+      "timeout_ms": 12000,
+      "strict_env": true
+    },
+    {
+      "id": "autogen-dev",
+      "target": "AutoGen",
+      "environment": "dev",
+      "url": "${AUTOGEN_EVENTS_URL}",
+      "method": "POST",
+      "headers": {
+        "Authorization": "Bearer ${AUTOGEN_API_KEY}"
+      },
+      "body": {
+        "workspace": "${AUTOGEN_WORKSPACE}",
+        "latest": true,
+        "limit": 1
+      },
+      "signing": {
+        "mode": "hmac-sha256",
+        "secret_env": "AUTOGEN_SIGNING_SECRET",
+        "signature_header": "X-Akai-Signature",
+        "timestamp_header": "X-Akai-Timestamp",
+        "encoding": "hex",
+        "canonical_fields": ["method", "path", "body", "timestamp"],
+        "required": true
+      },
+      "timeout_ms": 8000,
+      "strict_env": false
+    }
+  ]
+}

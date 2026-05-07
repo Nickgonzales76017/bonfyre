@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.delivery_witness.v1.json",
+  "title": "Aurekai Delivery Witness",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "witness_id",
+    "service_step",
+    "artifact_refs",
+    "commitment_ref",
+    "issued_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.delivery_witness.v1" },
+    "witness_id": { "type": "string" },
+    "service_step": { "type": "string" },
+    "artifact_refs": { "type": "array", "items": { "type": "string" } },
+    "commitment_ref": { "type": "string" },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "signature_ref": { "type": "string" }
+  }
+}

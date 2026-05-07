@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.deploy.v1.json",
+  "title": "Aurekai Deployment Manifest",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "product",
+    "legacy_codename",
+    "release",
+    "target",
+    "hyper",
+    "runtime",
+    "compatibility"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.deploy.v1" },
+    "product": { "const": "Aurekai" },
+    "legacy_codename": { "type": "string" },
+    "release": { "type": "string" },
+    "target": { "type": "string" },
+    "hyper": {
+      "type": "object",
+      "required": ["binary", "legacy_binary"],
+      "properties": {
+        "binary": { "type": "string" },
+        "legacy_binary": { "type": "string" }
+      }
+    },
+    "runtime": {
+      "type": "object",
+      "required": ["operator_count", "legacy_operator_prefix"],
+      "properties": {
+        "operator_count": { "type": "integer", "minimum": 0 },
+        "legacy_operator_prefix": { "type": "string" }
+      }
+    },
+    "compatibility": {
+      "type": "object",
+      "properties": {
+        "bonfyre_aliases": { "type": "boolean" },
+        "bf_artifact": { "type": "boolean" },
+        "bfmodel": { "type": "boolean" },
+        "bfsae": { "type": "boolean" },
+        "bffpqx": { "type": "boolean" },
+        "bf_formats_supported": { "type": "boolean" }
+      }
+    },
+    "signature": {
+      "type": "object",
+      "properties": {
+        "alg": { "type": "string" },
+        "value": { "type": "string" }
+      }
+    }
+  }
+}

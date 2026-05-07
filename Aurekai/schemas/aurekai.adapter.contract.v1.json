@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.adapter.contract.v1.json",
+  "title": "Aurekai Adapter Contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "adapter",
+    "surface",
+    "maps_into"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.adapter.contract.v1" },
+    "adapter": { "type": "string" },
+    "surface": { "enum": ["hard-fork", "soft-fork", "adapter", "observer", "state-machine"] },
+    "category": { "type": "string" },
+    "maps_into": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "committed_state",
+          "transitions",
+          "policies",
+          "lineage_edges",
+          "export_projections"
+        ]
+      },
+      "minItems": 5,
+      "uniqueItems": true
+    }
+  }
+}

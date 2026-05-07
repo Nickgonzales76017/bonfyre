@@ -1,0 +1,47 @@
+replicaCount: 1
+
+image:
+  repository: ghcr.io/aurekai/runtime
+  pullPolicy: IfNotPresent
+  tag: "0.8.0"
+
+service:
+  type: ClusterIP
+  port: 7474
+
+ingress:
+  enabled: false
+  className: ""
+  hosts:
+    - host: aurekai.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources: {}
+
+env:
+  AUREKAI_RUNTIME: /opt/aurekai
+  AUREKAI_HOME: /var/lib/aurekai
+  AUREKAI_MODEL_MEMORY: /opt/aurekai/model-memory
+
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 20Gi
+  mountPath: /var/lib/aurekai
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 7474
+  initialDelaySeconds: 10
+  periodSeconds: 30
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: 7474
+  initialDelaySeconds: 5
+  periodSeconds: 10

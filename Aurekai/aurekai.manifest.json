@@ -1,0 +1,27 @@
+{
+  "schema_version": "aurekai.deploy.v1",
+  "product": "Aurekai",
+  "legacy_codename": "Bonfyre",
+  "release": "0.8.0",
+  "target": "bun-darwin-arm64",
+  "hyper": {
+    "binary": "akai",
+    "legacy_binary": "bonfyre-hyper"
+  },
+  "runtime": {
+    "operator_count": 53,
+    "legacy_operator_prefix": "Bonfyre"
+  },
+  "compatibility": {
+    "bonfyre_aliases": true,
+    "bf_artifact": true,
+    "bfmodel": true,
+    "bfsae": true,
+    "bffpqx": true,
+    "bf_formats_supported": true
+  },
+  "signature": {
+    "alg": "none",
+    "value": "TODO"
+  }
+}

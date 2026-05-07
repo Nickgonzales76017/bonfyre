@@ -1,0 +1,289 @@
+{
+  "schema_version": "aurekai.integrations.v1",
+  "generated_at": "2026-05-07T00:00:00.000Z",
+  "rule": {
+    "summary": "Adapters must project host semantics into Aurekai kernel semantics only.",
+    "must_map_into": [
+      "committed_state",
+      "transitions",
+      "policies",
+      "lineage_edges",
+      "export_projections",
+      "functional_claims"
+    ],
+    "ingress_depth_levels": [
+      "observer",
+      "adapter",
+      "shim",
+      "coprocessor",
+      "sovereign_fork"
+    ],
+    "trust_levels": [
+      "advisory",
+      "execution-critical",
+      "attestation-critical",
+      "protocol-critical"
+    ],
+    "required_kernel_layers": [
+      "representation",
+      "commitment",
+      "trajectory",
+      "policy",
+      "lineage",
+      "transport",
+      "claims",
+      "observer"
+    ]
+  },
+  "hard_fork_targets": {
+    "depth_definition": [
+      "protocol-native committed state objects",
+      "transition witnesses emitted inside mutation paths",
+      "continuity policy included in core execution semantics",
+      "lineage/replay native to protocol runtime",
+      "deformation-aware monitoring as a first-class protocol primitive"
+    ],
+    "categories": {
+      "transport": [
+        "IBC/Cosmos",
+        "Polkadot/XCM-adjacent",
+        "LayerZero",
+        "Axelar",
+        "Wormhole",
+        "Hyperlane",
+        "Stargate",
+        "Chainlink",
+        "Pyth"
+      ],
+      "execution": [
+        "Ethereum",
+        "Solana",
+        "Monad",
+        "Avalanche",
+        "Berachain",
+        "Aptos",
+        "Sui",
+        "Near",
+        "Sei",
+        "Injective",
+        "Stacks",
+        "Botanix",
+        "Babylon"
+      ],
+      "rollup_pipeline": [
+        "zkSync",
+        "Starknet",
+        "Arbitrum",
+        "Optimism",
+        "Base",
+        "Polygon",
+        "Blast",
+        "Mantle",
+        "Metis",
+        "Taiko",
+        "Scroll",
+        "Linea",
+        "Manta",
+        "AltLayer",
+        "Dymension",
+        "Fuel",
+        "Eclipse"
+      ],
+      "financial_topology": [
+        "Uniswap v4 hooks",
+        "Uniswap",
+        "Curve",
+        "Balancer",
+        "0x",
+        "1inch",
+        "Kyber",
+        "Aave",
+        "Compound",
+        "Morpho",
+        "Pendle",
+        "Ethena",
+        "EigenLayer",
+        "Maker/Sky",
+        "GMX",
+        "dYdX",
+        "Lido",
+        "Rocket Pool",
+        "Frax",
+        "Jito",
+        "Thorchain",
+        "Ondo",
+        "Instadapp"
+      ],
+      "availability": [
+        "Celestia",
+        "Avail",
+        "EigenDA",
+        "Filecoin",
+        "Arweave",
+        "Akash",
+        "Render",
+        "Livepeer",
+        "Pocket",
+        "The Graph",
+        "Safe",
+        "Gelato",
+        "Biconomy",
+        "Ankr",
+        "Flux"
+      ],
+      "privacy_succinctness": [
+        "Zcash",
+        "Secret",
+        "Aleo",
+        "Mina",
+        "Worldcoin-like identity systems"
+      ]
+    }
+  },
+  "soft_fork_targets": {
+    "depth_definition": [
+      "Akai sits inside the execution loop",
+      "host state translated into committed state transitions",
+      "continuity policy can classify or gate transitions",
+      "export and lineage are first-class outputs"
+    ],
+    "targets": [
+      "TradingAgents",
+      "n8n",
+      "LangGraph",
+      "AutoGPT",
+      "AutoGen",
+      "Ollama",
+      "Ollama routing/proxy path",
+      "Mem0",
+      "Continue.dev",
+      "Continue.dev via CI/editor path",
+      "Browser-Use",
+      "OpenHands",
+      "ComfyUI",
+      "GitHub Actions",
+      "VS Code",
+      "MCP surfaces"
+    ]
+  },
+  "ingress_adapters": {
+    "thin_kernel_projectors": [
+      "TradingAgents",
+      "LangGraph",
+      "OpenHands",
+      "Browser-Use",
+      "Continue.dev",
+      "Mem0",
+      "n8n",
+      "Ollama",
+      "AutoGPT",
+      "ComfyUI"
+    ],
+    "protocol_observer_layers": [
+      "Chainlink/Pyth oracle rounds",
+      "IBC packet flows",
+      "LayerZero packet state",
+      "Wormhole packet state",
+      "Hyperlane packet state",
+      "LayerZero/Wormhole/Hyperlane packet state",
+      "Safe/Gelato execution trails",
+      "The Graph indexing snapshots",
+      "DA/storage publication flows"
+    ]
+  },
+  "state_machine_integrations": {
+    "transport_continuity": [
+      "Cosmos/IBC",
+      "Polkadot/XCM-adjacent",
+      "LayerZero",
+      "Axelar",
+      "Wormhole",
+      "Hyperlane",
+      "Stargate",
+      "Chainlink",
+      "Pyth"
+    ],
+    "execution_continuity": [
+      "Ethereum",
+      "Solana",
+      "Monad",
+      "Avalanche",
+      "Berachain",
+      "Aptos",
+      "Sui",
+      "Near",
+      "Sei",
+      "Injective",
+      "Stacks",
+      "Botanix",
+      "Babylon"
+    ],
+    "execution_pipeline_continuity": [
+      "Arbitrum",
+      "Optimism",
+      "Base",
+      "Polygon",
+      "zkSync",
+      "Starknet",
+      "Linea",
+      "Scroll",
+      "Blast",
+      "Mantle",
+      "Metis",
+      "Taiko",
+      "Manta",
+      "AltLayer",
+      "Dymension",
+      "Fuel",
+      "Eclipse"
+    ],
+    "financial_topology_continuity": [
+      "Uniswap",
+      "Curve",
+      "Balancer",
+      "0x",
+      "1inch",
+      "Kyber",
+      "Aave",
+      "Compound",
+      "Morpho",
+      "Maker/Sky",
+      "Ethena",
+      "Pendle",
+      "GMX",
+      "dYdX",
+      "Lido",
+      "Rocket Pool",
+      "EigenLayer",
+      "Frax",
+      "Jito",
+      "Thorchain",
+      "Ondo",
+      "Instadapp"
+    ],
+    "availability_persistence_continuity": [
+      "Celestia",
+      "Avail",
+      "EigenDA",
+      "Filecoin",
+      "Arweave",
+      "Akash",
+      "Render",
+      "Livepeer",
+      "Pocket",
+      "The Graph",
+      "Safe",
+      "Gelato",
+      "Biconomy",
+      "Ankr",
+      "Flux"
+    ],
+    "privacy_succinctness_continuity": [
+      "Zcash",
+      "Secret",
+      "Aleo",
+      "Mina",
+      "Worldcoin-like identity systems"
+    ]
+  }
+}

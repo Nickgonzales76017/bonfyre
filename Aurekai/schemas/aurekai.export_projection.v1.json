@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.export_projection.v1.json",
+  "title": "Aurekai Export Projection",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "projection_id",
+    "format",
+    "intent",
+    "payload"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.export_projection.v1" },
+    "projection_id": { "type": "string" },
+    "format": { "type": "string" },
+    "intent": { "type": "string" },
+    "payload": { "type": "object" }
+  }
+}

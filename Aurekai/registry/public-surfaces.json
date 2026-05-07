@@ -1,0 +1,94 @@
+{
+  "github": {
+    "org": "aurekai",
+    "repos": [
+      "aurekai",
+      "aurekai-hyper",
+      "aurekai-runtime",
+      "aurekai-core",
+      "aurekai-intake",
+      "aurekai-intelligence",
+      "aurekai-memory",
+      "aurekai-proof",
+      "aurekai-wire",
+      "aurekai-commerce",
+      "aurekai-publish",
+      "aurekai-dashboard",
+      "aurekai-recipes",
+      "aurekai-sdk-js",
+      "aurekai-sdk-python",
+      "aurekai-vscode",
+      "aurekai-mcp",
+      "aurekai-docs"
+    ]
+  },
+  "npm": {
+    "scope": "@aurekai",
+    "packages": [
+      "@aurekai/runtime",
+      "@aurekai/hyper",
+      "@aurekai/sdk",
+      "@aurekai/cli",
+      "@aurekai/sae",
+      "@aurekai/model-memory",
+      "@aurekai/proof",
+      "@aurekai/dashboard"
+    ]
+  },
+  "containers": {
+    "ghcr": [
+      "ghcr.io/aurekai/runtime",
+      "ghcr.io/aurekai/appliance",
+      "ghcr.io/aurekai/dashboard",
+      "ghcr.io/aurekai/model-memory"
+    ],
+    "docker_hub": [
+      "aurekai/runtime",
+      "aurekai/appliance",
+      "aurekai/dashboard"
+    ]
+  },
+  "hugging_face": {
+    "org": "aurekai",
+    "repos": [
+      "aurekai/model-memory",
+      "aurekai/sae-dictionaries",
+      "aurekai/fpqx-alignments",
+      "aurekai/feature-explorer"
+    ]
+  },
+  "domains": [
+    "aurekai.ai",
+    "aurekai.dev",
+    "aurekai.com",
+    "akai.sh",
+    "docs.aurekai.ai",
+    "registry.aurekai.ai",
+    "recipes.aurekai.ai",
+    "features.aurekai.ai"
+  ],
+  "homebrew": {
+    "tap": "aurekai/tap",
+    "formula": "akai",
+    "install": "brew install aurekai/tap/akai"
+  },
+  "helm": {
+    "chart": "aurekai-runtime",
+    "repo": "https://charts.aurekai.ai",
+    "install": "helm install aurekai-runtime aurekai/aurekai-runtime"
+  },
+  "vscode": {
+    "extension_id": "aurekai.aurekai-workbench",
+    "display_name": "Aurekai Workbench",
+    "marketplace": "https://marketplace.visualstudio.com/items?itemName=aurekai.aurekai-workbench"
+  },
+  "pypi": {
+    "package": "aurekai",
+    "install": "pip install aurekai"
+  },
+  "cli": {
+    "name": "akai",
+    "package": "@aurekai/runtime",
+    "install": "bun add -g @aurekai/runtime"
+  }
+}

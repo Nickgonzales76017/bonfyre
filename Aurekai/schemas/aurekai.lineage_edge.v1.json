@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.lineage_edge.v1.json",
+  "title": "Aurekai Lineage Edge",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "edge_id",
+    "edge_type",
+    "from",
+    "to",
+    "witness_hash",
+    "surface",
+    "emitted_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.lineage_edge.v1" },
+    "edge_id": { "type": "string" },
+    "edge_type": { "type": "string" },
+    "from": { "type": "string" },
+    "to": { "type": "string" },
+    "witness_hash": { "type": "string" },
+    "surface": { "enum": ["hard-fork", "soft-fork", "adapter", "observer", "state-machine"] },
+    "category": { "type": "string" },
+    "edge_family": { "type": "string" },
+    "replay_granularity": { "type": "string" },
+    "emitted_at": { "type": "string", "format": "date-time" }
+  }
+}
