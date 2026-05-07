@@ -17,11 +17,15 @@
     "schema_version": { "const": "aurekai.functional_claim.v1" },
     "claim_id": { "type": "string" },
     "claim_type": { "type": "string" },
+    "claim_family": { "type": "string" },
+    "state_machine_type": { "type": ["string", "null"] },
     "predicate": { "type": "string" },
     "target_commitment": { "type": "string" },
     "proof_ref": { "type": "string" },
     "opening_policy": { "type": "string" },
     "evaluation_result": { "enum": ["pass", "fail", "unknown"] },
+    "evaluator": { "type": "string" },
+    "inputs": { "type": "object" },
     "context": { "type": "object" }
   }
 }

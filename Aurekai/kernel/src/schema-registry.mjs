@@ -21,7 +21,8 @@ const SCHEMA_FILES = [
   "aurekai.invoice.proof.v1.json",
   "aurekai.sla.continuity.v1.json",
   "aurekai.delivery_witness.v1.json",
-  "aurekai.chargeability_claim.v1.json"
+    "aurekai.chargeability_claim.v1.json",
+    "aurekai.treasury_continuity.v1.json"
 ];
 
 function parseJson(path) {

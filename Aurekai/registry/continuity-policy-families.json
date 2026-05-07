@@ -21,6 +21,15 @@
       "replay_expectations": ["batch_unfold"]
     },
     {
+      "id": "pipeline",
+      "allowed_chart_transitions": ["execution_pipeline->execution_pipeline"],
+      "residual_thresholds": { "gate": 0.6, "halt": 0.85 },
+      "witness_requirements": ["stage_witness", "handoff_witness"],
+      "fail_conditions": ["stage_mismatch", "handoff_break", "pipeline_gap"],
+      "projection_defaults": ["operator_detail", "pipeline_summary"],
+      "replay_expectations": ["stagewise_unfold", "handoff_trace"]
+    },
+    {
       "id": "oracle",
       "allowed_chart_transitions": ["oracle_round->oracle_round"],
       "residual_thresholds": { "gate": 0.55, "halt": 0.8 },
@@ -100,6 +109,24 @@
       "fail_conditions": ["step_policy_break", "unhandled_branch"],
       "projection_defaults": ["public_summary", "operator_detail"],
       "replay_expectations": ["stepwise_unfold"]
+    },
+    {
+      "id": "treasury",
+      "allowed_chart_transitions": ["treasury_state->treasury_state", "fulfillment_state->treasury_state"],
+      "residual_thresholds": { "gate": 0.5, "halt": 0.78 },
+      "witness_requirements": ["treasury_witness", "invoice_witness", "settlement_witness"],
+      "fail_conditions": ["invoice_gap", "settlement_gap", "treasury_mismatch"],
+      "projection_defaults": ["invoice_summary", "treasury_detail", "operator_detail"],
+      "replay_expectations": ["invoice_settlement_trace", "treasury_lineage_unfold"]
+    },
+    {
+      "id": "hook_safety",
+      "allowed_chart_transitions": ["liquidity_topology->liquidity_topology"],
+      "residual_thresholds": { "gate": 0.45, "halt": 0.72 },
+      "witness_requirements": ["hook_witness", "position_witness"],
+      "fail_conditions": ["hook_reentrancy_risk", "hook_policy_break", "unsafe_slippage"],
+      "projection_defaults": ["risk_summary", "operator_detail"],
+      "replay_expectations": ["hook_invocation_trace"]
     },
     {
       "id": "identity",

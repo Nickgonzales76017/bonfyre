@@ -1,0 +1,71 @@
+{
+  "schema_version": "aurekai.state_machine_mappings.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "groups": {
+    "transport_continuity": {
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_family": "transport-edge",
+      "claim_families": ["continuity_bound", "settlement_ack_bound"],
+      "commerce_profile": "none"
+    },
+    "execution_continuity": {
+      "chart_family": "execution_batch",
+      "policy_family": "finality",
+      "lineage_edge_family": "execution-edge",
+      "claim_families": ["continuity_bound", "execution_finality_bound"],
+      "commerce_profile": "none"
+    },
+    "execution_pipeline_continuity": {
+      "chart_family": "execution_pipeline",
+      "policy_family": "pipeline",
+      "lineage_edge_family": "pipeline-edge",
+      "claim_families": ["continuity_bound", "pipeline_stage_bound"],
+      "commerce_profile": "none"
+    },
+    "financial_topology_continuity": {
+      "chart_family": "liquidity_topology",
+      "policy_family": "liquidity",
+      "lineage_edge_family": "liquidity-edge",
+      "claim_families": ["continuity_bound", "liquidity_safety_bound"],
+      "commerce_profile": "treasury"
+    },
+    "availability_persistence_continuity": {
+      "chart_family": "availability_root",
+      "policy_family": "availability",
+      "lineage_edge_family": "availability-edge",
+      "claim_families": ["continuity_bound", "availability_root_bound"],
+      "commerce_profile": "none"
+    },
+    "privacy_succinctness_continuity": {
+      "chart_family": "identity_claim",
+      "policy_family": "privacy",
+      "lineage_edge_family": "identity-edge",
+      "claim_families": ["continuity_bound", "privacy_budget_bound"],
+      "commerce_profile": "none"
+    }
+  },
+  "targets": {
+    "maker-sky": {
+      "chart_family": "treasury_state",
+      "policy_family": "treasury",
+      "lineage_edge_family": "treasury-edge",
+      "claim_families": ["continuity_bound", "invoice_backed_by_usage_state", "treasury_settlement_bound"],
+      "commerce_profile": "treasury"
+    },
+    "ondo": {
+      "chart_family": "treasury_state",
+      "policy_family": "treasury",
+      "lineage_edge_family": "treasury-edge",
+      "claim_families": ["continuity_bound", "invoice_backed_by_usage_state", "treasury_settlement_bound"],
+      "commerce_profile": "treasury"
+    },
+    "uniswap-v4-hooks": {
+      "chart_family": "liquidity_topology",
+      "policy_family": "hook_safety",
+      "lineage_edge_family": "liquidity-hook-edge",
+      "claim_families": ["continuity_bound", "hook_policy_compliant"],
+      "commerce_profile": "none"
+    }
+  }
+}
