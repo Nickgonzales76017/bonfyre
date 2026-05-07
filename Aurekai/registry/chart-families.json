@@ -27,6 +27,12 @@
       "default_policy_family": "finality"
     },
     {
+      "id": "execution_pipeline",
+      "domain": "execution",
+      "residual_semantics": "cross-stage execution continuity drift",
+      "default_policy_family": "pipeline"
+    },
+    {
       "id": "availability_root",
       "domain": "availability",
       "residual_semantics": "publication and retrieval divergence",
@@ -84,7 +90,7 @@
       "id": "treasury_state",
       "domain": "commerce",
       "residual_semantics": "treasury allocation deformation",
-      "default_policy_family": "settlement"
+      "default_policy_family": "treasury"
     },
     {
       "id": "risk_surface",

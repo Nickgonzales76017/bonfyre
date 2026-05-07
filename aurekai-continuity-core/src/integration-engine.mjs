@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { evaluatePolicyFamily } from "./policy-family-evaluator.mjs";
 import { calibrateResidual } from "./residual-calibrator.mjs";
-import { buildTrajectoryCalculus } from "../kernel/src/trajectory-calculus.mjs";
+import { buildTrajectoryCalculus } from "./trajectory-calculus.mjs";
 
 function normalizeKey(value) {
   return String(value || "")

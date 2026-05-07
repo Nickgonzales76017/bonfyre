@@ -23,6 +23,12 @@
     "surface": { "enum": ["hard-fork", "soft-fork", "adapter", "observer", "state-machine"] },
     "category": { "type": "string" },
     "edge_family": { "type": "string" },
+    "edge_kind": {
+      "type": "string",
+      "enum": ["causal", "derivation", "attestation", "handoff", "settlement", "replay"]
+    },
+    "edge_role": { "type": "string" },
+    "state_machine_type": { "type": ["string", "null"] },
     "replay_granularity": { "type": "string" },
     "emitted_at": { "type": "string", "format": "date-time" }
   }
