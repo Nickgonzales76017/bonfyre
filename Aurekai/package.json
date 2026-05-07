@@ -1,0 +1,62 @@
+{
+  "name": "@aurekai/runtime",
+  "version": "0.8.0-alpha.1",
+  "description": "Aurekai is the public platform layer for the Bonfyre native runtime.",
+  "type": "module",
+  "homepage": "https://aurekai.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "aurekai",
+    "akai",
+    "runtime",
+    "appliance",
+    "semantic-memory",
+    "proof",
+    "sae",
+    "fpqx"
+  ],
+  "bin": {
+    "akai": "bin/akai.mjs",
+    "aurekai": "bin/akai.mjs"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "file:../aurekai-continuity-core"
+  },
+  "exports": {
+    ".": "./src/continuity-core.mjs",
+    "./kernel": "./src/continuity-core.mjs",
+    "./kernel/state": "./src/kernel-state-runtime.mjs",
+    "./kernel/transition": "./src/kernel-transition-runtime.mjs",
+    "./kernel/trajectory": "./src/kernel-trajectory-runtime.mjs",
+    "./kernel/state-runtime": "./src/kernel-state-runtime.mjs",
+    "./kernel/claim": "./src/kernel-claim-runtime.mjs",
+    "./kernel/policy": "./src/kernel-policy-registry.mjs",
+    "./kernel/chart": "./src/kernel-chart-registry.mjs",
+    "./kernel/schema-registry": "./src/kernel-schema-registry.mjs",
+    "./kernel/trajectory-calculus": "./src/kernel-trajectory-calculus.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "help": "node ./bin/akai.mjs --help",
+    "doctor": "node ./bin/akai.mjs doctor --deep",
+    "dashboard": "node ./bin/akai.mjs dashboard",
+    "manifest": "node ./bin/akai.mjs manifest:print",
+    "manifest:render": "node ./src/render-manifest.mjs",
+    "split:kernel:prepare": "bash ./scripts/prepare-kernel-repo-split.sh",
+    "split:kernel:prepare:force": "bash ./scripts/prepare-kernel-repo-split.sh --force",
+    "split:kernel:verify": "bash ./scripts/verify-kernel-repo-split.sh",
+    "split:kernel:use-local": "bash ./scripts/set-kernel-dependency.sh --local",
+    "split:kernel:lock-published": "bash ./scripts/set-kernel-dependency.sh --published",
+    "release": "make release",
+    "release-check": "make release-check"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
