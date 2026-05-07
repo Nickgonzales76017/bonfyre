@@ -1,0 +1,29 @@
+{
+  "name": "@aurekai/integration-morpho",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for Morpho.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-morpho.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "morpho",
+    "hard-fork",
+    "state-machine"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

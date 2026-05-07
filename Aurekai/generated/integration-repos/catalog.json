@@ -1,0 +1,1356 @@
+{
+  "schema_version": "aurekai.integration_repo_catalog.v1",
+  "generated_at": "2026-05-07T21:33:44.952Z",
+  "count": 108,
+  "out_dir": "./generated/integration-repos",
+  "repos": [
+    {
+      "target": "0x",
+      "slug": "0x",
+      "path": "generated/integration-repos/0x",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "1inch",
+      "slug": "1inch",
+      "path": "generated/integration-repos/1inch",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Aave",
+      "slug": "aave",
+      "path": "generated/integration-repos/aave",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Akash",
+      "slug": "akash",
+      "path": "generated/integration-repos/akash",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Aleo",
+      "slug": "aleo",
+      "path": "generated/integration-repos/aleo",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "privacy_succinctness",
+        "privacy_succinctness_continuity"
+      ]
+    },
+    {
+      "target": "AltLayer",
+      "slug": "altlayer",
+      "path": "generated/integration-repos/altlayer",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Ankr",
+      "slug": "ankr",
+      "path": "generated/integration-repos/ankr",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Aptos",
+      "slug": "aptos",
+      "path": "generated/integration-repos/aptos",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Arbitrum",
+      "slug": "arbitrum",
+      "path": "generated/integration-repos/arbitrum",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Arweave",
+      "slug": "arweave",
+      "path": "generated/integration-repos/arweave",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "AutoGen",
+      "slug": "autogen",
+      "path": "generated/integration-repos/autogen",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "AutoGPT",
+      "slug": "autogpt",
+      "path": "generated/integration-repos/autogpt",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Avail",
+      "slug": "avail",
+      "path": "generated/integration-repos/avail",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Avalanche",
+      "slug": "avalanche",
+      "path": "generated/integration-repos/avalanche",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Axelar",
+      "slug": "axelar",
+      "path": "generated/integration-repos/axelar",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Babylon",
+      "slug": "babylon",
+      "path": "generated/integration-repos/babylon",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Balancer",
+      "slug": "balancer",
+      "path": "generated/integration-repos/balancer",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Base",
+      "slug": "base",
+      "path": "generated/integration-repos/base",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Berachain",
+      "slug": "berachain",
+      "path": "generated/integration-repos/berachain",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Biconomy",
+      "slug": "biconomy",
+      "path": "generated/integration-repos/biconomy",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Blast",
+      "slug": "blast",
+      "path": "generated/integration-repos/blast",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Botanix",
+      "slug": "botanix",
+      "path": "generated/integration-repos/botanix",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Browser-Use",
+      "slug": "browser-use",
+      "path": "generated/integration-repos/browser-use",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Celestia",
+      "slug": "celestia",
+      "path": "generated/integration-repos/celestia",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Chainlink",
+      "slug": "chainlink",
+      "path": "generated/integration-repos/chainlink",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Chainlink/Pyth oracle rounds",
+      "slug": "chainlink-pyth-oracle-rounds",
+      "path": "generated/integration-repos/chainlink-pyth-oracle-rounds",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "ComfyUI",
+      "slug": "comfyui",
+      "path": "generated/integration-repos/comfyui",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Compound",
+      "slug": "compound",
+      "path": "generated/integration-repos/compound",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Continue.dev",
+      "slug": "continue-dev",
+      "path": "generated/integration-repos/continue-dev",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Continue.dev via CI/editor path",
+      "slug": "continue-dev-via-ci-editor-path",
+      "path": "generated/integration-repos/continue-dev-via-ci-editor-path",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Cosmos/IBC",
+      "slug": "cosmos-ibc",
+      "path": "generated/integration-repos/cosmos-ibc",
+      "surfaces": [
+        "state-machine"
+      ],
+      "categories": [
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Curve",
+      "slug": "curve",
+      "path": "generated/integration-repos/curve",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "DA/storage publication flows",
+      "slug": "da-storage-publication-flows",
+      "path": "generated/integration-repos/da-storage-publication-flows",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "dYdX",
+      "slug": "dydx",
+      "path": "generated/integration-repos/dydx",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Dymension",
+      "slug": "dymension",
+      "path": "generated/integration-repos/dymension",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Eclipse",
+      "slug": "eclipse",
+      "path": "generated/integration-repos/eclipse",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "EigenDA",
+      "slug": "eigenda",
+      "path": "generated/integration-repos/eigenda",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "EigenLayer",
+      "slug": "eigenlayer",
+      "path": "generated/integration-repos/eigenlayer",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Ethena",
+      "slug": "ethena",
+      "path": "generated/integration-repos/ethena",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Ethereum",
+      "slug": "ethereum",
+      "path": "generated/integration-repos/ethereum",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Filecoin",
+      "slug": "filecoin",
+      "path": "generated/integration-repos/filecoin",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Flux",
+      "slug": "flux",
+      "path": "generated/integration-repos/flux",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Frax",
+      "slug": "frax",
+      "path": "generated/integration-repos/frax",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Fuel",
+      "slug": "fuel",
+      "path": "generated/integration-repos/fuel",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Gelato",
+      "slug": "gelato",
+      "path": "generated/integration-repos/gelato",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "GitHub Actions",
+      "slug": "github-actions",
+      "path": "generated/integration-repos/github-actions",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "GMX",
+      "slug": "gmx",
+      "path": "generated/integration-repos/gmx",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Hyperlane",
+      "slug": "hyperlane",
+      "path": "generated/integration-repos/hyperlane",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Hyperlane packet state",
+      "slug": "hyperlane-packet-state",
+      "path": "generated/integration-repos/hyperlane-packet-state",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "IBC packet flows",
+      "slug": "ibc-packet-flows",
+      "path": "generated/integration-repos/ibc-packet-flows",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "IBC/Cosmos",
+      "slug": "ibc-cosmos",
+      "path": "generated/integration-repos/ibc-cosmos",
+      "surfaces": [
+        "hard-fork"
+      ],
+      "categories": [
+        "transport"
+      ]
+    },
+    {
+      "target": "Injective",
+      "slug": "injective",
+      "path": "generated/integration-repos/injective",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Instadapp",
+      "slug": "instadapp",
+      "path": "generated/integration-repos/instadapp",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Jito",
+      "slug": "jito",
+      "path": "generated/integration-repos/jito",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Kyber",
+      "slug": "kyber",
+      "path": "generated/integration-repos/kyber",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "LangGraph",
+      "slug": "langgraph",
+      "path": "generated/integration-repos/langgraph",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "LayerZero",
+      "slug": "layerzero",
+      "path": "generated/integration-repos/layerzero",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "LayerZero packet state",
+      "slug": "layerzero-packet-state",
+      "path": "generated/integration-repos/layerzero-packet-state",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "LayerZero/Wormhole/Hyperlane packet state",
+      "slug": "layerzero-wormhole-hyperlane-packet-state",
+      "path": "generated/integration-repos/layerzero-wormhole-hyperlane-packet-state",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "Lido",
+      "slug": "lido",
+      "path": "generated/integration-repos/lido",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Linea",
+      "slug": "linea",
+      "path": "generated/integration-repos/linea",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Livepeer",
+      "slug": "livepeer",
+      "path": "generated/integration-repos/livepeer",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Maker/Sky",
+      "slug": "maker-sky",
+      "path": "generated/integration-repos/maker-sky",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Manta",
+      "slug": "manta",
+      "path": "generated/integration-repos/manta",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Mantle",
+      "slug": "mantle",
+      "path": "generated/integration-repos/mantle",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "MCP surfaces",
+      "slug": "mcp-surfaces",
+      "path": "generated/integration-repos/mcp-surfaces",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Mem0",
+      "slug": "mem0",
+      "path": "generated/integration-repos/mem0",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Metis",
+      "slug": "metis",
+      "path": "generated/integration-repos/metis",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Mina",
+      "slug": "mina",
+      "path": "generated/integration-repos/mina",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "privacy_succinctness",
+        "privacy_succinctness_continuity"
+      ]
+    },
+    {
+      "target": "Monad",
+      "slug": "monad",
+      "path": "generated/integration-repos/monad",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Morpho",
+      "slug": "morpho",
+      "path": "generated/integration-repos/morpho",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "n8n",
+      "slug": "n8n",
+      "path": "generated/integration-repos/n8n",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Near",
+      "slug": "near",
+      "path": "generated/integration-repos/near",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Ollama",
+      "slug": "ollama",
+      "path": "generated/integration-repos/ollama",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Ollama routing/proxy path",
+      "slug": "ollama-routing-proxy-path",
+      "path": "generated/integration-repos/ollama-routing-proxy-path",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Ondo",
+      "slug": "ondo",
+      "path": "generated/integration-repos/ondo",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "OpenHands",
+      "slug": "openhands",
+      "path": "generated/integration-repos/openhands",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Optimism",
+      "slug": "optimism",
+      "path": "generated/integration-repos/optimism",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Pendle",
+      "slug": "pendle",
+      "path": "generated/integration-repos/pendle",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Pocket",
+      "slug": "pocket",
+      "path": "generated/integration-repos/pocket",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Polkadot/XCM-adjacent",
+      "slug": "polkadot-xcm-adjacent",
+      "path": "generated/integration-repos/polkadot-xcm-adjacent",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Polygon",
+      "slug": "polygon",
+      "path": "generated/integration-repos/polygon",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Pyth",
+      "slug": "pyth",
+      "path": "generated/integration-repos/pyth",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Render",
+      "slug": "render",
+      "path": "generated/integration-repos/render",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Rocket Pool",
+      "slug": "rocket-pool",
+      "path": "generated/integration-repos/rocket-pool",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Safe",
+      "slug": "safe",
+      "path": "generated/integration-repos/safe",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "Safe/Gelato execution trails",
+      "slug": "safe-gelato-execution-trails",
+      "path": "generated/integration-repos/safe-gelato-execution-trails",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "Scroll",
+      "slug": "scroll",
+      "path": "generated/integration-repos/scroll",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Secret",
+      "slug": "secret",
+      "path": "generated/integration-repos/secret",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "privacy_succinctness",
+        "privacy_succinctness_continuity"
+      ]
+    },
+    {
+      "target": "Sei",
+      "slug": "sei",
+      "path": "generated/integration-repos/sei",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Solana",
+      "slug": "solana",
+      "path": "generated/integration-repos/solana",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Stacks",
+      "slug": "stacks",
+      "path": "generated/integration-repos/stacks",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Stargate",
+      "slug": "stargate",
+      "path": "generated/integration-repos/stargate",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Starknet",
+      "slug": "starknet",
+      "path": "generated/integration-repos/starknet",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "Sui",
+      "slug": "sui",
+      "path": "generated/integration-repos/sui",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "execution",
+        "execution_continuity"
+      ]
+    },
+    {
+      "target": "Taiko",
+      "slug": "taiko",
+      "path": "generated/integration-repos/taiko",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    },
+    {
+      "target": "The Graph",
+      "slug": "the-graph",
+      "path": "generated/integration-repos/the-graph",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "availability",
+        "availability_persistence_continuity"
+      ]
+    },
+    {
+      "target": "The Graph indexing snapshots",
+      "slug": "the-graph-indexing-snapshots",
+      "path": "generated/integration-repos/the-graph-indexing-snapshots",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "Thorchain",
+      "slug": "thorchain",
+      "path": "generated/integration-repos/thorchain",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "TradingAgents",
+      "slug": "tradingagents",
+      "path": "generated/integration-repos/tradingagents",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Uniswap",
+      "slug": "uniswap",
+      "path": "generated/integration-repos/uniswap",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "financial_topology",
+        "financial_topology_continuity"
+      ]
+    },
+    {
+      "target": "Uniswap v4 hooks",
+      "slug": "uniswap-v4-hooks",
+      "path": "generated/integration-repos/uniswap-v4-hooks",
+      "surfaces": [
+        "hard-fork"
+      ],
+      "categories": [
+        "financial_topology"
+      ]
+    },
+    {
+      "target": "VS Code",
+      "slug": "vs-code",
+      "path": "generated/integration-repos/vs-code",
+      "surfaces": [
+        "soft-fork"
+      ],
+      "categories": [
+        "runtime-shim"
+      ]
+    },
+    {
+      "target": "Worldcoin-like identity systems",
+      "slug": "worldcoin-like-identity-systems",
+      "path": "generated/integration-repos/worldcoin-like-identity-systems",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "privacy_succinctness",
+        "privacy_succinctness_continuity"
+      ]
+    },
+    {
+      "target": "Wormhole",
+      "slug": "wormhole",
+      "path": "generated/integration-repos/wormhole",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "transport",
+        "transport_continuity"
+      ]
+    },
+    {
+      "target": "Wormhole packet state",
+      "slug": "wormhole-packet-state",
+      "path": "generated/integration-repos/wormhole-packet-state",
+      "surfaces": [
+        "observer"
+      ],
+      "categories": [
+        "protocol-observer-layer"
+      ]
+    },
+    {
+      "target": "Zcash",
+      "slug": "zcash",
+      "path": "generated/integration-repos/zcash",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "privacy_succinctness",
+        "privacy_succinctness_continuity"
+      ]
+    },
+    {
+      "target": "zkSync",
+      "slug": "zksync",
+      "path": "generated/integration-repos/zksync",
+      "surfaces": [
+        "hard-fork",
+        "state-machine"
+      ],
+      "categories": [
+        "rollup_pipeline",
+        "execution_pipeline_continuity"
+      ]
+    }
+  ]
+}

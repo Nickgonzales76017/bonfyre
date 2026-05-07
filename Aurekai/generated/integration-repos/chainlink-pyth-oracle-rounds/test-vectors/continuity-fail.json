@@ -1,0 +1,14 @@
+{
+  "schema_version": "aurekai.integration_test_vector.v1",
+  "target": "Chainlink/Pyth oracle rounds",
+  "case": "continuity-fail",
+  "input_event": {
+    "event_id": "chainlink-pyth-oracle-rounds-fail-1",
+    "action": "observe",
+    "risk_score": 0.95
+  },
+  "expected": {
+    "policy_decision": "halt",
+    "functional_claim_result": "fail"
+  }
+}

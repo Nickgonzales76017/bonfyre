@@ -1,0 +1,29 @@
+{
+  "name": "@aurekai/integration-polkadot-xcm-adjacent",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for Polkadot/XCM-adjacent.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-polkadot-xcm-adjacent.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "polkadot-xcm-adjacent",
+    "hard-fork",
+    "state-machine"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

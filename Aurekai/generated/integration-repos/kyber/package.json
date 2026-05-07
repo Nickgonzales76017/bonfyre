@@ -1,0 +1,29 @@
+{
+  "name": "@aurekai/integration-kyber",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for Kyber.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-kyber.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "kyber",
+    "hard-fork",
+    "state-machine"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": "aurekai.integration_test_vector.v1",
+  "target": "n8n",
+  "case": "continuity-pass",
+  "input_event": {
+    "event_id": "n8n-pass-1",
+    "action": "observe",
+    "risk_score": 0.2
+  },
+  "expected": {
+    "policy_decision": "allow",
+    "functional_claim_result": "pass"
+  }
+}
