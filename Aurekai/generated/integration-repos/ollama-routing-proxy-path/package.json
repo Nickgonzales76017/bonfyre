@@ -1,0 +1,28 @@
+{
+  "name": "@aurekai/integration-ollama-routing-proxy-path",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for Ollama routing/proxy path.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-ollama-routing-proxy-path.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "ollama-routing-proxy-path",
+    "soft-fork"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

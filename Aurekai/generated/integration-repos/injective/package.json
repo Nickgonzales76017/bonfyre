@@ -1,0 +1,29 @@
+{
+  "name": "@aurekai/integration-injective",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for Injective.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-injective.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "injective",
+    "hard-fork",
+    "state-machine"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

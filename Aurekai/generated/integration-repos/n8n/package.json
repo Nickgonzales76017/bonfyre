@@ -1,0 +1,28 @@
+{
+  "name": "@aurekai/integration-n8n",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for n8n.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-n8n.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "n8n",
+    "soft-fork"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
