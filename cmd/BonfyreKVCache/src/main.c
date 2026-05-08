@@ -454,6 +454,7 @@ static void usage(void) {
         "  bonfyre-kvcache context-selector-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--buried-fail 0|1] [--proof-hash 0|1] [--high-residual 0|1] [--low-risk 0|1]\n"
         "  bonfyre-kvcache context-kv-compare [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X]\n"
         "  bonfyre-kvcache context-kv-verify  [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--objective balanced|latency|continuity|fidelity] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X] [--residual-threshold X] [--kv-budget-mb X]\n"
+        "  bonfyre-kvcache context-compile    [--mode dense|compressed|membrane|state|hybrid] [--heads N] [--tokens N] [--block-tokens N] [--token-index N] [--kv-index N] [--state-index N] [--witness-index N] [--token-budget-blocks N] [--kv-budget-blocks N] [--state-atoms N] [--required-witnesses N] [--objective balanced|latency|continuity|fidelity] [--base-residual X] [--continuity-fail-rate 0..1] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
         "  bonfyre-kvcache --help\n"
         "\n"
         "Commit chain (Merkle DAG) subcommands:\n"
@@ -677,6 +678,47 @@ static int kvcache_cmd_context_kv_verify_(int argc, char **argv) {
     char *json = NULL;
     if (bf_context_kv_verify_json(&cfg, &json) != 0 || !json) {
         fprintf(stderr, "context-kv-verify: failed to build verify artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_compile_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextCompileConfig cfg;
+    bf_context_compile_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.token_index_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--token-index", (int)cfg.token_index_blocks);
+    cfg.kv_index_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--kv-index", (int)cfg.kv_index_blocks);
+    cfg.state_index_atoms = (uint32_t)parse_i32_flag_(argc, argv, "--state-index", (int)cfg.state_index_atoms);
+    cfg.witness_index_anchors = (uint32_t)parse_i32_flag_(argc, argv, "--witness-index", (int)cfg.witness_index_anchors);
+    cfg.token_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--token-budget-blocks", (int)cfg.token_budget_blocks);
+    cfg.kv_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--kv-budget-blocks", (int)cfg.kv_budget_blocks);
+    cfg.state_atom_budget = (uint32_t)parse_i32_flag_(argc, argv, "--state-atoms", (int)cfg.state_atom_budget);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.kv_budget_mb = parse_f64_flag_(argc, argv, "--kv-budget-mb", cfg.kv_budget_mb);
+    cfg.latency_budget_ms = parse_f64_flag_(argc, argv, "--latency-budget-ms", cfg.latency_budget_ms);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    const char *objective = bf_arg_value(argc, argv, "--objective");
+    if (objective && objective[0]) cfg.objective_profile = objective;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_compile_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-compile: failed to build compile artifact\n");
         return 1;
     }
 
@@ -1034,12 +1076,15 @@ int main(int argc, char **argv) {
         return kvcache_cmd_context_kv_compare_(argc - 1, argv + 1);
     }
 
-    /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
-        if (strcmp(cmd, "context-kv-verify") == 0) {
-            return kvcache_cmd_context_kv_verify_(argc - 1, argv + 1);
-        }
+    if (strcmp(cmd, "context-kv-verify") == 0) {
+        return kvcache_cmd_context_kv_verify_(argc - 1, argv + 1);
+    }
 
-        /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
+    if (strcmp(cmd, "context-compile") == 0) {
+        return kvcache_cmd_context_compile_(argc - 1, argv + 1);
+    }
+
+    /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
     if (strcmp(cmd, "chain")    == 0) return kvcache_cmd_chain_   (argc-1, argv+1);
     if (strcmp(cmd, "ancestry") == 0) return kvcache_cmd_ancestry_(argc-1, argv+1);
     if (strcmp(cmd, "kvlog")    == 0) return kvcache_cmd_kvlog_   (argc-1, argv+1);

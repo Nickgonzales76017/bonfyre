@@ -629,6 +629,38 @@ typedef struct {
 void bf_context_kv_verify_defaults(BfContextVerifyConfig *cfg);
 int  bf_context_kv_verify_json(const BfContextVerifyConfig *cfg, char **out_json);
 
+/* ── Context compiler (bf_context_compile.c) ───────────────────────────── *
+ *
+ * Planner Phase 7: builds four index views (token, kv, state, witness),
+ * compiles a budgeted context selection, and returns continuity + budget
+ * verdicts in one artifact.
+ */
+
+typedef struct {
+    const char *mode;              /* dense|compressed|membrane|state|hybrid */
+    uint32_t heads;
+    uint32_t seq_tokens;
+    uint32_t block_tokens;
+    uint32_t token_index_blocks;
+    uint32_t kv_index_blocks;
+    uint32_t state_index_atoms;
+    uint32_t witness_index_anchors;
+    uint32_t token_budget_blocks;
+    uint32_t kv_budget_blocks;
+    uint32_t state_atom_budget;
+    uint32_t required_witnesses;
+    double kv_budget_mb;
+    double latency_budget_ms;
+    double residual_drift_threshold;
+    double base_residual;
+    double continuity_fail_rate;
+    const char *objective_profile; /* balanced|latency|continuity|fidelity */
+    int fail_on_missing_witness;
+} BfContextCompileConfig;
+
+void bf_context_compile_defaults(BfContextCompileConfig *cfg);
+int  bf_context_compile_json(const BfContextCompileConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
