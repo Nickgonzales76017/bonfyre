@@ -449,6 +449,8 @@ static void usage(void) {
         "  bonfyre-kvcache fetch      <model_hash_hex> <ctx_hash_hex> [--out file]\n"
         "  bonfyre-kvcache roundtrip  <input.bin> [--bits N]\n"
         "  bonfyre-kvcache benchmark  [--bits N]\n"
+        "  bonfyre-kvcache context-plan [--mode dense|compressed|membrane|state|hybrid] [--dense-window N] [--sq-token-blocks N] [--sq-kv-mb N] [--compressed-kv-mb N] [--state-atoms N] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--continuity-fails N] [--continuity-drifts N]\n"
+        "  bonfyre-kvcache context-kv-registry [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1]\n"
         "  bonfyre-kvcache --help\n"
         "\n"
         "Commit chain (Merkle DAG) subcommands:\n"
@@ -470,6 +472,83 @@ static void usage(void) {
         "Options:\n"
         "  --bits N     Quantization bits (3, 4, 5; default: 4)\n"
     );
+}
+
+static int parse_i32_flag_(int argc, char **argv, const char *flag, int fallback) {
+    const char *v = bf_arg_value(argc, argv, flag);
+    if (!v || !v[0]) return fallback;
+    return atoi(v);
+}
+
+static double parse_f64_flag_(int argc, char **argv, const char *flag, double fallback) {
+    const char *v = bf_arg_value(argc, argv, flag);
+    if (!v || !v[0]) return fallback;
+    return atof(v);
+}
+
+static int kvcache_cmd_context_plan_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextPlanConfig cfg;
+    bf_context_plan_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.dense_window_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--dense-window", (int)cfg.dense_window_tokens);
+    cfg.sq_token_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--sq-token-blocks", (int)cfg.sq_token_budget_blocks);
+    cfg.sq_kv_budget_mb = (uint32_t)parse_i32_flag_(argc, argv, "--sq-kv-mb", (int)cfg.sq_kv_budget_mb);
+    cfg.compressed_kv_budget_mb = (uint32_t)parse_i32_flag_(argc, argv, "--compressed-kv-mb", (int)cfg.compressed_kv_budget_mb);
+    cfg.state_atom_budget = (uint32_t)parse_i32_flag_(argc, argv, "--state-atoms", (int)cfg.state_atom_budget);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_delta_estimate = parse_f64_flag_(argc, argv, "--residual-delta", cfg.residual_delta_estimate);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.continuity_fail_events = parse_i32_flag_(argc, argv, "--continuity-fails", cfg.continuity_fail_events);
+    cfg.continuity_drift_events = parse_i32_flag_(argc, argv, "--continuity-drifts", cfg.continuity_drift_events);
+
+    if (bf_arg_has(argc, argv, "--witness-required")) cfg.witness_required = 1;
+    if (bf_arg_has(argc, argv, "--no-witness-required")) cfg.witness_required = 0;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_plan_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-plan: failed to build plan\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_kv_registry_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextKVRegistryConfig cfg;
+    bf_context_kv_registry_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.layers = (uint32_t)parse_i32_flag_(argc, argv, "--layers", (int)cfg.layers);
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.top_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--top-blocks", (int)cfg.top_blocks);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+
+    char *json = NULL;
+    if (bf_context_kv_registry_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-kv-registry: failed to build registry\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
 }
 
 static void hex_kv_(const uint8_t h[32], char out[65]) {
@@ -803,6 +882,14 @@ int main(int argc, char **argv) {
         printf("\n═══════════════════════════════════════════════════════\n");
         free(kv_data);
         return 0;
+    }
+
+    if (strcmp(cmd, "context-plan") == 0) {
+        return kvcache_cmd_context_plan_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-kv-registry") == 0) {
+        return kvcache_cmd_context_kv_registry_(argc - 1, argv + 1);
     }
 
     /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */

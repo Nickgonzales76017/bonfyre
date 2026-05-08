@@ -462,6 +462,64 @@ int bf_kvcache_store(const uint8_t model_hash[32], const uint8_t ctx_hash[32],
 int bf_kvcache_fetch(const uint8_t model_hash[32], const uint8_t ctx_hash[32],
                      void **out_data, size_t *out_len);
 
+/* ── Context membrane planner (bf_context_plan.c) ───────────────────────── *
+ *
+ * Planner-only MVP for hybrid context selection.
+ * Produces a deterministic JSON plan artifact without requiring model kernels.
+ */
+
+typedef struct {
+    const char *mode;                    /* dense|compressed|membrane|state|hybrid */
+    uint32_t dense_window_tokens;
+    uint32_t sq_token_budget_blocks;
+    uint32_t sq_kv_budget_mb;
+    uint32_t compressed_kv_budget_mb;
+    uint32_t state_atom_budget;
+    uint32_t required_witnesses;
+    int witness_required;
+    int fail_on_missing_witness;
+    double residual_drift_threshold;
+    double residual_delta_estimate;
+    int continuity_fail_events;
+    int continuity_drift_events;
+} BfContextPlanConfig;
+
+typedef struct {
+    char mode[24];
+    uint32_t dense_window;
+    uint32_t selected_token_blocks;
+    uint32_t selected_state_atoms;
+    uint32_t compressed_memory_atoms;
+    uint32_t required_witnesses;
+    uint32_t estimated_kv_mb;
+    double residual_delta_estimate;
+    char continuity_verdict[24];
+} BfContextPlanSummary;
+
+void bf_context_plan_defaults(BfContextPlanConfig *cfg);
+int  bf_context_plan_summary(const BfContextPlanConfig *cfg, BfContextPlanSummary *out);
+int  bf_context_plan_json(const BfContextPlanConfig *cfg, char **out_json);
+
+/* ── Context KV registry (bf_context_registry.c) ────────────────────────── *
+ *
+ * Planner Phase 2: deterministic block-level KV registry artifact.
+ */
+
+typedef struct {
+    const char *mode;            /* dense|compressed|membrane|state|hybrid */
+    uint32_t layers;
+    uint32_t heads;
+    uint32_t seq_tokens;
+    uint32_t block_tokens;
+    uint32_t top_blocks;
+    uint32_t required_witnesses;
+    double base_residual;
+    double continuity_fail_rate; /* 0..1 expected fraction of fail blocks */
+} BfContextKVRegistryConfig;
+
+void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg);
+int  bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
