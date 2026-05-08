@@ -683,6 +683,28 @@ typedef struct {
 void bf_context_compile_smoke_defaults(BfContextCompileSmokeConfig *cfg);
 int  bf_context_compile_smoke_json(const BfContextCompileSmokeConfig *cfg, char **out_json);
 
+/* ── Context compile smoke compare (bf_context_compile_smoke_compare.c) ── *
+ *
+ * Planner Phase 9: run a deterministic adversarial smoke matrix and emit
+ * per-scenario deltas vs baseline.
+ */
+
+typedef struct {
+    const char *mode;               /* dense|compressed|membrane|state|hybrid */
+    uint32_t required_witnesses;
+    double residual_drift_threshold;
+    double kv_budget_mb;
+    double latency_budget_ms;
+    int buried_continuity_fail_present;
+    int proof_hash_present;
+    int oracle_shock_present;
+    int multi_turn_drift_present;
+    int fail_on_missing_witness;
+} BfContextCompileSmokeCompareConfig;
+
+void bf_context_compile_smoke_compare_defaults(BfContextCompileSmokeCompareConfig *cfg);
+int  bf_context_compile_smoke_compare_json(const BfContextCompileSmokeCompareConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
