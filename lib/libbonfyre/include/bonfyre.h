@@ -661,6 +661,28 @@ typedef struct {
 void bf_context_compile_defaults(BfContextCompileConfig *cfg);
 int  bf_context_compile_json(const BfContextCompileConfig *cfg, char **out_json);
 
+/* ── Context compile smoke tests (bf_context_compile_smoke.c) ──────────── *
+ *
+ * Planner Phase 8: deterministic smoke contract for context compiler under
+ * adversarial budgets.
+ */
+
+typedef struct {
+    const char *mode;               /* dense|compressed|membrane|state|hybrid */
+    uint32_t required_witnesses;
+    double residual_drift_threshold;
+    double kv_budget_mb;
+    double latency_budget_ms;
+    int buried_continuity_fail_present;
+    int proof_hash_present;
+    int oracle_shock_present;
+    int multi_turn_drift_present;
+    int fail_on_missing_witness;
+} BfContextCompileSmokeConfig;
+
+void bf_context_compile_smoke_defaults(BfContextCompileSmokeConfig *cfg);
+int  bf_context_compile_smoke_json(const BfContextCompileSmokeConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
