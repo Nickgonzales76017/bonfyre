@@ -553,6 +553,41 @@ typedef struct {
 void bf_context_selector_smoke_defaults(BfContextSelectorSmokeConfig *cfg);
 int  bf_context_selector_smoke_json(const BfContextSelectorSmokeConfig *cfg, char **out_json);
 
+/* ── Context KV compare (bf_context_compare.c) ───────────────────────────── *
+ *
+ * Planner Phase 5: multi-objective compare — runs all four objective profiles
+ * (balanced, latency, continuity, fidelity) against the same block set in one
+ * call and emits a delta report (policy shifts + top disagreement blocks).
+ */
+
+typedef struct {
+    const char *mode;            /* dense|compressed|membrane|state|hybrid */
+    uint32_t layers;
+    uint32_t heads;
+    uint32_t seq_tokens;
+    uint32_t block_tokens;
+    uint32_t top_blocks;
+    uint32_t hot_exact_budget_blocks;
+    uint32_t membrane_budget_blocks;
+    uint32_t compress_budget_blocks;
+    uint32_t evict_budget_blocks;
+    uint32_t required_witnesses;
+    double base_residual;
+    double continuity_fail_rate;
+    double w_attention_predictor;
+    double w_state_relevance;
+    double w_witness_relevance;
+    double w_continuity_risk;
+    double w_layer_need;
+    double w_recency;
+    double w_objective_match;
+    double w_memory_cost;
+    double w_residual_error;
+} BfContextKVCompareConfig;
+
+void bf_context_kv_compare_defaults(BfContextKVCompareConfig *cfg);
+int  bf_context_kv_compare_json(const BfContextKVCompareConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
