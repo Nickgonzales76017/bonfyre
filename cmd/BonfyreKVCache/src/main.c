@@ -452,6 +452,7 @@ static void usage(void) {
         "  bonfyre-kvcache context-plan [--mode dense|compressed|membrane|state|hybrid] [--dense-window N] [--sq-token-blocks N] [--sq-kv-mb N] [--compressed-kv-mb N] [--state-atoms N] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--continuity-fails N] [--continuity-drifts N]\n"
         "  bonfyre-kvcache context-kv-registry [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--objective balanced|latency|continuity|fidelity] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X]\n"
         "  bonfyre-kvcache context-selector-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--buried-fail 0|1] [--proof-hash 0|1] [--high-residual 0|1] [--low-risk 0|1]\n"
+        "  bonfyre-kvcache context-kv-compare [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X]\n"
         "  bonfyre-kvcache --help\n"
         "\n"
         "Commit chain (Merkle DAG) subcommands:\n"
@@ -587,6 +588,48 @@ static int kvcache_cmd_context_selector_smoke_(int argc, char **argv) {
     char *json = NULL;
     if (bf_context_selector_smoke_json(&cfg, &json) != 0 || !json) {
         fprintf(stderr, "context-selector-smoke: failed to build smoke artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_kv_compare_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextKVCompareConfig cfg;
+    bf_context_kv_compare_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.layers = (uint32_t)parse_i32_flag_(argc, argv, "--layers", (int)cfg.layers);
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.top_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--top-blocks", (int)cfg.top_blocks);
+    cfg.hot_exact_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--hot-budget-blocks", (int)cfg.hot_exact_budget_blocks);
+    cfg.membrane_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--membrane-budget-blocks", (int)cfg.membrane_budget_blocks);
+    cfg.compress_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--compress-budget-blocks", (int)cfg.compress_budget_blocks);
+    cfg.evict_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--evict-budget-blocks", (int)cfg.evict_budget_blocks);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    cfg.w_attention_predictor = parse_f64_flag_(argc, argv, "--w-attention", cfg.w_attention_predictor);
+    cfg.w_state_relevance = parse_f64_flag_(argc, argv, "--w-state", cfg.w_state_relevance);
+    cfg.w_witness_relevance = parse_f64_flag_(argc, argv, "--w-witness", cfg.w_witness_relevance);
+    cfg.w_continuity_risk = parse_f64_flag_(argc, argv, "--w-continuity", cfg.w_continuity_risk);
+    cfg.w_layer_need = parse_f64_flag_(argc, argv, "--w-layer", cfg.w_layer_need);
+    cfg.w_recency = parse_f64_flag_(argc, argv, "--w-recency", cfg.w_recency);
+    cfg.w_objective_match = parse_f64_flag_(argc, argv, "--w-objective", cfg.w_objective_match);
+    cfg.w_memory_cost = parse_f64_flag_(argc, argv, "--w-memory-cost", cfg.w_memory_cost);
+    cfg.w_residual_error = parse_f64_flag_(argc, argv, "--w-residual", cfg.w_residual_error);
+
+    char *json = NULL;
+    if (bf_context_kv_compare_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-kv-compare: failed to build compare artifact\n");
         return 1;
     }
 
@@ -938,6 +981,10 @@ int main(int argc, char **argv) {
 
     if (strcmp(cmd, "context-selector-smoke") == 0) {
         return kvcache_cmd_context_selector_smoke_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-kv-compare") == 0) {
+        return kvcache_cmd_context_kv_compare_(argc - 1, argv + 1);
     }
 
     /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
