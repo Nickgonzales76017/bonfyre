@@ -451,6 +451,7 @@ static void usage(void) {
         "  bonfyre-kvcache benchmark  [--bits N]\n"
         "  bonfyre-kvcache context-plan [--mode dense|compressed|membrane|state|hybrid] [--dense-window N] [--sq-token-blocks N] [--sq-kv-mb N] [--compressed-kv-mb N] [--state-atoms N] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--continuity-fails N] [--continuity-drifts N]\n"
         "  bonfyre-kvcache context-kv-registry [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1]\n"
+        "  bonfyre-kvcache context-selector-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--buried-fail 0|1] [--proof-hash 0|1] [--high-residual 0|1] [--low-risk 0|1]\n"
         "  bonfyre-kvcache --help\n"
         "\n"
         "Commit chain (Merkle DAG) subcommands:\n"
@@ -543,6 +544,34 @@ static int kvcache_cmd_context_kv_registry_(int argc, char **argv) {
     char *json = NULL;
     if (bf_context_kv_registry_json(&cfg, &json) != 0 || !json) {
         fprintf(stderr, "context-kv-registry: failed to build registry\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_selector_smoke_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextSelectorSmokeConfig cfg;
+    bf_context_selector_smoke_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_delta_estimate = parse_f64_flag_(argc, argv, "--residual-delta", cfg.residual_delta_estimate);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.buried_continuity_fail_present = parse_i32_flag_(argc, argv, "--buried-fail", cfg.buried_continuity_fail_present) ? 1 : 0;
+    cfg.proof_hash_present = parse_i32_flag_(argc, argv, "--proof-hash", cfg.proof_hash_present) ? 1 : 0;
+    cfg.high_residual_event_present = parse_i32_flag_(argc, argv, "--high-residual", cfg.high_residual_event_present) ? 1 : 0;
+    cfg.low_risk_irrelevant_tokens_present = parse_i32_flag_(argc, argv, "--low-risk", cfg.low_risk_irrelevant_tokens_present) ? 1 : 0;
+
+    char *json = NULL;
+    if (bf_context_selector_smoke_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-selector-smoke: failed to build smoke artifact\n");
         return 1;
     }
 
@@ -890,6 +919,10 @@ int main(int argc, char **argv) {
 
     if (strcmp(cmd, "context-kv-registry") == 0) {
         return kvcache_cmd_context_kv_registry_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-selector-smoke") == 0) {
+        return kvcache_cmd_context_selector_smoke_(argc - 1, argv + 1);
     }
 
     /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
