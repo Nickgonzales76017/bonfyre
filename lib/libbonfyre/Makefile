@@ -48,6 +48,8 @@ EXT_SRCS = bf_reactor.c \
            bf_embed_steer.c \
            bf_embed_index.c \
            bf_embed_refs.c \
+           bf_context_plan.c \
+           bf_context_registry.c \
            bf_kvcache_pack.c \
            bf_embed_bvh.c \
            bf_physics.c \
