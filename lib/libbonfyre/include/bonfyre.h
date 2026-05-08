@@ -519,10 +519,14 @@ typedef struct {
     uint32_t required_witnesses;
     double base_residual;
     double continuity_fail_rate; /* 0..1 expected fraction of fail blocks */
+    const char *objective_profile; /* balanced|latency|continuity|fidelity */
     double w_attention_predictor;
     double w_state_relevance;
     double w_witness_relevance;
     double w_continuity_risk;
+    double w_layer_need;
+    double w_recency;
+    double w_objective_match;
     double w_memory_cost;
     double w_residual_error;
 } BfContextKVRegistryConfig;
