@@ -519,6 +519,12 @@ typedef struct {
     uint32_t required_witnesses;
     double base_residual;
     double continuity_fail_rate; /* 0..1 expected fraction of fail blocks */
+    double w_attention_predictor;
+    double w_state_relevance;
+    double w_witness_relevance;
+    double w_continuity_risk;
+    double w_memory_cost;
+    double w_residual_error;
 } BfContextKVRegistryConfig;
 
 void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg);

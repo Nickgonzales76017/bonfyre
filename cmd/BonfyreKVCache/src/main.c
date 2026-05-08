@@ -450,7 +450,7 @@ static void usage(void) {
         "  bonfyre-kvcache roundtrip  <input.bin> [--bits N]\n"
         "  bonfyre-kvcache benchmark  [--bits N]\n"
         "  bonfyre-kvcache context-plan [--mode dense|compressed|membrane|state|hybrid] [--dense-window N] [--sq-token-blocks N] [--sq-kv-mb N] [--compressed-kv-mb N] [--state-atoms N] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--continuity-fails N] [--continuity-drifts N]\n"
-        "  bonfyre-kvcache context-kv-registry [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1]\n"
+        "  bonfyre-kvcache context-kv-registry [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-memory-cost X] [--w-residual X]\n"
         "  bonfyre-kvcache context-selector-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--buried-fail 0|1] [--proof-hash 0|1] [--high-residual 0|1] [--low-risk 0|1]\n"
         "  bonfyre-kvcache --help\n"
         "\n"
@@ -544,6 +544,12 @@ static int kvcache_cmd_context_kv_registry_(int argc, char **argv) {
     cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
     cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
     cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    cfg.w_attention_predictor = parse_f64_flag_(argc, argv, "--w-attention", cfg.w_attention_predictor);
+    cfg.w_state_relevance = parse_f64_flag_(argc, argv, "--w-state", cfg.w_state_relevance);
+    cfg.w_witness_relevance = parse_f64_flag_(argc, argv, "--w-witness", cfg.w_witness_relevance);
+    cfg.w_continuity_risk = parse_f64_flag_(argc, argv, "--w-continuity", cfg.w_continuity_risk);
+    cfg.w_memory_cost = parse_f64_flag_(argc, argv, "--w-memory-cost", cfg.w_memory_cost);
+    cfg.w_residual_error = parse_f64_flag_(argc, argv, "--w-residual", cfg.w_residual_error);
 
     char *json = NULL;
     if (bf_context_kv_registry_json(&cfg, &json) != 0 || !json) {

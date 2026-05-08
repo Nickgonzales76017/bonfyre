@@ -153,6 +153,12 @@ void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg) {
     cfg->required_witnesses = 12;
     cfg->base_residual = 0.18;
     cfg->continuity_fail_rate = 0.05;
+    cfg->w_attention_predictor = 1.0;
+    cfg->w_state_relevance = 0.8;
+    cfg->w_witness_relevance = 1.2;
+    cfg->w_continuity_risk = 1.0;
+    cfg->w_memory_cost = 0.6;
+    cfg->w_residual_error = 0.7;
 }
 
 int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out_json) {
@@ -167,6 +173,12 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
     const uint32_t required_witnesses = cfg->required_witnesses;
     const double base_residual = clamp_f64_(cfg->base_residual, 0.0, 10.0);
     const double fail_rate = clamp_f64_(cfg->continuity_fail_rate, 0.0, 1.0);
+    const double w_attention = clamp_f64_(cfg->w_attention_predictor, 0.0, 100.0);
+    const double w_state = clamp_f64_(cfg->w_state_relevance, 0.0, 100.0);
+    const double w_witness = clamp_f64_(cfg->w_witness_relevance, 0.0, 100.0);
+    const double w_continuity = clamp_f64_(cfg->w_continuity_risk, 0.0, 100.0);
+    const double w_mem_cost = clamp_f64_(cfg->w_memory_cost, 0.0, 100.0);
+    const double w_residual = clamp_f64_(cfg->w_residual_error, 0.0, 100.0);
 
     const uint32_t total_blocks = (seq_tokens + block_tokens - 1u) / block_tokens;
     uint32_t considered_blocks = top_blocks;
@@ -208,6 +220,14 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         "  \"block_tokens\": %u,\n"
         "  \"considered_blocks\": %u,\n"
         "  \"required_witnesses\": %u,\n"
+        "  \"selection_weights\": {\n"
+        "    \"attention_predictor\": %.6f,\n"
+        "    \"state_relevance\": %.6f,\n"
+        "    \"witness_relevance\": %.6f,\n"
+        "    \"continuity_risk\": %.6f,\n"
+        "    \"memory_cost\": %.6f,\n"
+        "    \"residual_error\": %.6f\n"
+        "  },\n"
         "  \"blocks\": [\n",
         mode,
         layers,
@@ -215,7 +235,13 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         seq_tokens,
         block_tokens,
         considered_blocks,
-        required_witnesses
+        required_witnesses,
+        w_attention,
+        w_state,
+        w_witness,
+        w_continuity,
+        w_mem_cost,
+        w_residual
     );
     if (n <= 0 || (size_t)n >= cap - off) { free(json); return -1; }
     off += (size_t)n;
@@ -267,6 +293,20 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         const int witness_critical = (required_witnesses > 0u && i < required_witnesses);
         const char *continuity = is_fail ? "CONTINUITY_FAIL" : ((residual_norm > base_residual + 0.06) ? "PASS_WITH_DRIFT" : "PASS");
 
+        const double attention_predictor = attention_mass;
+        const double state_relevance = clamp_f64_(1.0 - ((double)i / (double)(considered_blocks + 1u)), 0.0, 1.0);
+        const double witness_relevance = witness_critical ? 1.0 : 0.15;
+        const double continuity_risk = is_fail ? 1.0 : ((strcmp(continuity, "PASS_WITH_DRIFT") == 0) ? 0.5 : 0.1);
+        const double memory_cost = (double)block_tokens / 1024.0;
+        const double residual_error = clamp_f64_(residual_norm / (base_residual + 0.2), 0.0, 4.0);
+        const double selection_score =
+            (w_attention * attention_predictor) +
+            (w_state * state_relevance) +
+            (w_witness * witness_relevance) +
+            (w_continuity * continuity_risk) -
+            (w_mem_cost * memory_cost) -
+            (w_residual * residual_error);
+
         BfPolicy policy = policy_for_index_(i, budget_hot, budget_membrane, budget_compress);
         if ((is_fail || witness_critical) && policy == POLICY_EVICT) {
             policy = POLICY_MEMBRANE_SELECT;
@@ -292,6 +332,15 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             "      },\n"
             "      \"witness_hash\": \"sha256:%s\",\n"
             "      \"continuity\": \"%s\",\n"
+            "      \"score_components\": {\n"
+            "        \"attention_predictor\": %.6f,\n"
+            "        \"state_relevance\": %.6f,\n"
+            "        \"witness_relevance\": %.6f,\n"
+            "        \"continuity_risk\": %.6f,\n"
+            "        \"memory_cost\": %.6f,\n"
+            "        \"residual_error\": %.6f\n"
+            "      },\n"
+            "      \"selection_score\": %.6f,\n"
             "      \"policy\": \"%s\"\n"
             "    }%s\n",
             layer,
@@ -303,6 +352,13 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             residual_norm,
             witness_hex,
             continuity,
+            attention_predictor,
+            state_relevance,
+            witness_relevance,
+            continuity_risk,
+            memory_cost,
+            residual_error,
+            selection_score,
             policy_name_(policy),
             (i + 1u < considered_blocks) ? "," : ""
         );
