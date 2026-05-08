@@ -456,6 +456,7 @@ static void usage(void) {
         "  bonfyre-kvcache context-kv-verify  [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--objective balanced|latency|continuity|fidelity] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X] [--residual-threshold X] [--kv-budget-mb X]\n"
         "  bonfyre-kvcache context-compile    [--mode dense|compressed|membrane|state|hybrid] [--heads N] [--tokens N] [--block-tokens N] [--token-index N] [--kv-index N] [--state-index N] [--witness-index N] [--token-budget-blocks N] [--kv-budget-blocks N] [--state-atoms N] [--required-witnesses N] [--objective balanced|latency|continuity|fidelity] [--base-residual X] [--continuity-fail-rate 0..1] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
         "  bonfyre-kvcache context-compile-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--buried-fail 0|1] [--proof-hash 0|1] [--oracle-shock 0|1] [--multi-turn-drift 0|1] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
+        "  bonfyre-kvcache context-compile-smoke-compare [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--buried-fail 0|1] [--proof-hash 0|1] [--oracle-shock 0|1] [--multi-turn-drift 0|1] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
         "  bonfyre-kvcache --help\n"
         "\n"
         "Commit chain (Merkle DAG) subcommands:\n"
@@ -751,6 +752,37 @@ static int kvcache_cmd_context_compile_smoke_(int argc, char **argv) {
     char *json = NULL;
     if (bf_context_compile_smoke_json(&cfg, &json) != 0 || !json) {
         fprintf(stderr, "context-compile-smoke: failed to build smoke artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_compile_smoke_compare_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextCompileSmokeCompareConfig cfg;
+    bf_context_compile_smoke_compare_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.kv_budget_mb = parse_f64_flag_(argc, argv, "--kv-budget-mb", cfg.kv_budget_mb);
+    cfg.latency_budget_ms = parse_f64_flag_(argc, argv, "--latency-budget-ms", cfg.latency_budget_ms);
+    cfg.buried_continuity_fail_present = parse_i32_flag_(argc, argv, "--buried-fail", cfg.buried_continuity_fail_present) ? 1 : 0;
+    cfg.proof_hash_present = parse_i32_flag_(argc, argv, "--proof-hash", cfg.proof_hash_present) ? 1 : 0;
+    cfg.oracle_shock_present = parse_i32_flag_(argc, argv, "--oracle-shock", cfg.oracle_shock_present) ? 1 : 0;
+    cfg.multi_turn_drift_present = parse_i32_flag_(argc, argv, "--multi-turn-drift", cfg.multi_turn_drift_present) ? 1 : 0;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_compile_smoke_compare_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-compile-smoke-compare: failed to build compare artifact\n");
         return 1;
     }
 
@@ -1118,6 +1150,10 @@ int main(int argc, char **argv) {
 
     if (strcmp(cmd, "context-compile-smoke") == 0) {
         return kvcache_cmd_context_compile_smoke_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-compile-smoke-compare") == 0) {
+        return kvcache_cmd_context_compile_smoke_compare_(argc - 1, argv + 1);
     }
 
     /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
