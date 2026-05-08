@@ -588,6 +588,47 @@ typedef struct {
 void bf_context_kv_compare_defaults(BfContextKVCompareConfig *cfg);
 int  bf_context_kv_compare_json(const BfContextKVCompareConfig *cfg, char **out_json);
 
+/* ── Context KV verifier (bf_context_verify.c) ───────────────────────────── *
+ *
+ * Planner Phase 6: runs the same block allocation as kv_registry, then
+ * validates four correctness invariants and returns a single overall_verdict:
+ *   1. witness_coverage  — RequiredWitnesses ⊆ W(C_selected)
+ *   2. continuity_fail_evicted — no CONTINUITY_FAIL block in EVICT
+ *   3. residual_bound    — max selected residual_norm < drift threshold
+ *   4. budget_compliance — estimated KV MB < kv_budget_mb cap
+ */
+
+typedef struct {
+    const char *mode;            /* dense|compressed|membrane|state|hybrid */
+    uint32_t layers;
+    uint32_t heads;
+    uint32_t seq_tokens;
+    uint32_t block_tokens;
+    uint32_t top_blocks;
+    uint32_t hot_exact_budget_blocks;
+    uint32_t membrane_budget_blocks;
+    uint32_t compress_budget_blocks;
+    uint32_t evict_budget_blocks;
+    uint32_t required_witnesses;
+    double base_residual;
+    double continuity_fail_rate;
+    const char *objective_profile; /* balanced|latency|continuity|fidelity */
+    double w_attention_predictor;
+    double w_state_relevance;
+    double w_witness_relevance;
+    double w_continuity_risk;
+    double w_layer_need;
+    double w_recency;
+    double w_objective_match;
+    double w_memory_cost;
+    double w_residual_error;
+    double residual_drift_threshold; /* max allowed residual_norm for selected blocks */
+    double kv_budget_mb;             /* hard memory cap (0 = unlimited) */
+} BfContextVerifyConfig;
+
+void bf_context_kv_verify_defaults(BfContextVerifyConfig *cfg);
+int  bf_context_kv_verify_json(const BfContextVerifyConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
