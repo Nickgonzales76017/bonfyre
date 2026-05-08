@@ -512,6 +512,10 @@ typedef struct {
     uint32_t seq_tokens;
     uint32_t block_tokens;
     uint32_t top_blocks;
+    uint32_t hot_exact_budget_blocks;
+    uint32_t membrane_budget_blocks;
+    uint32_t compress_budget_blocks;
+    uint32_t evict_budget_blocks;
     uint32_t required_witnesses;
     double base_residual;
     double continuity_fail_rate; /* 0..1 expected fraction of fail blocks */

@@ -28,12 +28,113 @@ static const char *safe_mode_(const char *mode) {
     return "hybrid";
 }
 
-static const char *policy_for_(const char *mode, uint32_t idx, uint32_t top_blocks) {
-    if (strcmp(mode, "dense") == 0) return "HOT_EXACT";
-    if (strcmp(mode, "compressed") == 0) return "COMPRESS";
-    if (strcmp(mode, "state") == 0) return (idx % 3 == 0) ? "MEMBRANE_SELECT" : "COMPRESS";
-    if (strcmp(mode, "membrane") == 0) return (idx < top_blocks / 2) ? "MEMBRANE_SELECT" : "COMPRESS";
-    return (idx < (top_blocks * 2) / 3) ? "MEMBRANE_SELECT" : "COMPRESS";
+typedef enum {
+    POLICY_HOT_EXACT = 0,
+    POLICY_MEMBRANE_SELECT = 1,
+    POLICY_COMPRESS = 2,
+    POLICY_EVICT = 3,
+} BfPolicy;
+
+static const char *policy_name_(BfPolicy policy) {
+    switch (policy) {
+        case POLICY_HOT_EXACT: return "HOT_EXACT";
+        case POLICY_MEMBRANE_SELECT: return "MEMBRANE_SELECT";
+        case POLICY_COMPRESS: return "COMPRESS";
+        case POLICY_EVICT: return "EVICT";
+        default: return "COMPRESS";
+    }
+}
+
+static void default_budgets_for_mode_(
+    const char *mode,
+    uint32_t considered_blocks,
+    uint32_t *hot,
+    uint32_t *membrane,
+    uint32_t *compress,
+    uint32_t *evict
+) {
+    if (strcmp(mode, "dense") == 0) {
+        *hot = considered_blocks;
+        *membrane = 0;
+        *compress = 0;
+        *evict = 0;
+        return;
+    }
+
+    if (strcmp(mode, "compressed") == 0) {
+        *hot = 0;
+        *membrane = 0;
+        *compress = considered_blocks;
+        *evict = 0;
+        return;
+    }
+
+    if (strcmp(mode, "membrane") == 0) {
+        *hot = considered_blocks / 8u;
+        *membrane = (considered_blocks * 5u) / 8u;
+        *compress = considered_blocks / 8u;
+        *evict = considered_blocks - (*hot + *membrane + *compress);
+        return;
+    }
+
+    if (strcmp(mode, "state") == 0) {
+        *hot = considered_blocks / 10u;
+        *membrane = (considered_blocks * 4u) / 10u;
+        *compress = (considered_blocks * 4u) / 10u;
+        *evict = considered_blocks - (*hot + *membrane + *compress);
+        return;
+    }
+
+    *hot = considered_blocks / 5u;
+    *membrane = (considered_blocks * 9u) / 20u;
+    *compress = (considered_blocks * 3u) / 10u;
+    *evict = considered_blocks - (*hot + *membrane + *compress);
+}
+
+static void resolve_budgets_(
+    const char *mode,
+    uint32_t considered_blocks,
+    const BfContextKVRegistryConfig *cfg,
+    uint32_t *hot,
+    uint32_t *membrane,
+    uint32_t *compress,
+    uint32_t *evict
+) {
+    *hot = cfg->hot_exact_budget_blocks;
+    *membrane = cfg->membrane_budget_blocks;
+    *compress = cfg->compress_budget_blocks;
+    *evict = cfg->evict_budget_blocks;
+
+    if ((*hot + *membrane + *compress + *evict) == 0u) {
+        default_budgets_for_mode_(mode, considered_blocks, hot, membrane, compress, evict);
+    }
+
+    if (*hot > considered_blocks) *hot = considered_blocks;
+    if (*membrane > considered_blocks) *membrane = considered_blocks;
+    if (*compress > considered_blocks) *compress = considered_blocks;
+    if (*evict > considered_blocks) *evict = considered_blocks;
+
+    uint32_t remaining = considered_blocks;
+    if (*hot > remaining) *hot = remaining;
+    remaining -= *hot;
+
+    if (*membrane > remaining) *membrane = remaining;
+    remaining -= *membrane;
+
+    if (*compress > remaining) *compress = remaining;
+    remaining -= *compress;
+
+    if (*evict > remaining) *evict = remaining;
+    remaining -= *evict;
+
+    *compress += remaining;
+}
+
+static BfPolicy policy_for_index_(uint32_t idx, uint32_t hot, uint32_t membrane, uint32_t compress) {
+    if (idx < hot) return POLICY_HOT_EXACT;
+    if (idx < hot + membrane) return POLICY_MEMBRANE_SELECT;
+    if (idx < hot + membrane + compress) return POLICY_COMPRESS;
+    return POLICY_EVICT;
 }
 
 void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg) {
@@ -45,6 +146,10 @@ void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg) {
     cfg->seq_tokens = 131072;
     cfg->block_tokens = 128;
     cfg->top_blocks = 128;
+    cfg->hot_exact_budget_blocks = 24;
+    cfg->membrane_budget_blocks = 56;
+    cfg->compress_budget_blocks = 32;
+    cfg->evict_budget_blocks = 16;
     cfg->required_witnesses = 12;
     cfg->base_residual = 0.18;
     cfg->continuity_fail_rate = 0.05;
@@ -64,12 +169,31 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
     const double fail_rate = clamp_f64_(cfg->continuity_fail_rate, 0.0, 1.0);
 
     const uint32_t total_blocks = (seq_tokens + block_tokens - 1u) / block_tokens;
-    uint32_t selected_blocks = top_blocks;
-    if (selected_blocks > total_blocks) selected_blocks = total_blocks;
+    uint32_t considered_blocks = top_blocks;
+    if (considered_blocks > total_blocks) considered_blocks = total_blocks;
 
-    size_t cap = (size_t)selected_blocks * 620u + 4096u;
+    uint32_t budget_hot = 0;
+    uint32_t budget_membrane = 0;
+    uint32_t budget_compress = 0;
+    uint32_t budget_evict = 0;
+    resolve_budgets_(
+        mode,
+        considered_blocks,
+        cfg,
+        &budget_hot,
+        &budget_membrane,
+        &budget_compress,
+        &budget_evict
+    );
+
+    size_t cap = (size_t)considered_blocks * 640u + 6144u;
     char *json = (char *)malloc(cap);
     if (!json) return -1;
+
+    uint32_t count_hot = 0;
+    uint32_t count_membrane = 0;
+    uint32_t count_compress = 0;
+    uint32_t count_evict = 0;
 
     size_t off = 0;
     int n = snprintf(
@@ -82,7 +206,7 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         "  \"heads\": %u,\n"
         "  \"seq_tokens\": %u,\n"
         "  \"block_tokens\": %u,\n"
-        "  \"selected_blocks\": %u,\n"
+        "  \"considered_blocks\": %u,\n"
         "  \"required_witnesses\": %u,\n"
         "  \"blocks\": [\n",
         mode,
@@ -90,7 +214,7 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         heads,
         seq_tokens,
         block_tokens,
-        selected_blocks,
+        considered_blocks,
         required_witnesses
     );
     if (n <= 0 || (size_t)n >= cap - off) { free(json); return -1; }
@@ -102,7 +226,7 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         if (fail_stride == 0) fail_stride = 1;
     }
 
-    for (uint32_t i = 0; i < selected_blocks; i++) {
+    for (uint32_t i = 0; i < considered_blocks; i++) {
         const uint32_t layer = i % layers;
         const uint32_t head = (i / layers) % heads;
         const uint32_t token_start = i * block_tokens;
@@ -140,8 +264,18 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         bf_sha256_hex((const uint8_t *)witness_seed, strlen(witness_seed), witness_hex);
 
         const int is_fail = (fail_stride > 0u && (i % fail_stride) == 0u);
+        const int witness_critical = (required_witnesses > 0u && i < required_witnesses);
         const char *continuity = is_fail ? "CONTINUITY_FAIL" : ((residual_norm > base_residual + 0.06) ? "PASS_WITH_DRIFT" : "PASS");
-        const char *policy = policy_for_(mode, i, selected_blocks);
+
+        BfPolicy policy = policy_for_index_(i, budget_hot, budget_membrane, budget_compress);
+        if ((is_fail || witness_critical) && policy == POLICY_EVICT) {
+            policy = POLICY_MEMBRANE_SELECT;
+        }
+
+        if (policy == POLICY_HOT_EXACT) count_hot++;
+        else if (policy == POLICY_MEMBRANE_SELECT) count_membrane++;
+        else if (policy == POLICY_COMPRESS) count_compress++;
+        else count_evict++;
 
         n = snprintf(
             json + off,
@@ -169,8 +303,8 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             residual_norm,
             witness_hex,
             continuity,
-            policy,
-            (i + 1u < selected_blocks) ? "," : ""
+            policy_name_(policy),
+            (i + 1u < considered_blocks) ? "," : ""
         );
         if (n <= 0 || (size_t)n >= cap - off) {
             free(json);
@@ -179,7 +313,48 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         off += (size_t)n;
     }
 
-    n = snprintf(json + off, cap - off, "  ]\n}\n");
+    const uint32_t selected_blocks = count_hot + count_membrane + count_compress;
+    const double exact_kv_mb_per_block = ((double)block_tokens * (double)heads * 2.0 * 128.0) / (1024.0 * 1024.0);
+    const double compressed_kv_mb_per_block = exact_kv_mb_per_block * 0.28;
+    const double estimated_exact_kv_mb = (double)(count_hot + count_membrane) * exact_kv_mb_per_block;
+    const double estimated_compressed_kv_mb = (double)count_compress * compressed_kv_mb_per_block;
+
+    n = snprintf(
+        json + off,
+        cap - off,
+        "  ],\n"
+        "  \"selected_blocks\": %u,\n"
+        "  \"policy_budget\": {\n"
+        "    \"hot_exact_budget_blocks\": %u,\n"
+        "    \"membrane_budget_blocks\": %u,\n"
+        "    \"compress_budget_blocks\": %u,\n"
+        "    \"evict_budget_blocks\": %u\n"
+        "  },\n"
+        "  \"policy_counts\": {\n"
+        "    \"HOT_EXACT\": %u,\n"
+        "    \"MEMBRANE_SELECT\": %u,\n"
+        "    \"COMPRESS\": %u,\n"
+        "    \"EVICT\": %u\n"
+        "  },\n"
+        "  \"budget_accounting\": {\n"
+        "    \"estimated_exact_kv_mb\": %.6f,\n"
+        "    \"estimated_compressed_kv_mb\": %.6f,\n"
+        "    \"estimated_total_kv_mb\": %.6f\n"
+        "  }\n"
+        "}\n",
+        selected_blocks,
+        budget_hot,
+        budget_membrane,
+        budget_compress,
+        budget_evict,
+        count_hot,
+        count_membrane,
+        count_compress,
+        count_evict,
+        estimated_exact_kv_mb,
+        estimated_compressed_kv_mb,
+        estimated_exact_kv_mb + estimated_compressed_kv_mb
+    );
     if (n <= 0 || (size_t)n >= cap - off) { free(json); return -1; }
 
     *out_json = json;
