@@ -35,6 +35,34 @@ typedef enum {
     POLICY_EVICT = 3,
 } BfPolicy;
 
+typedef struct {
+    uint32_t layer;
+    uint32_t head;
+    uint32_t token_start;
+    uint32_t token_end;
+    double attention_mass;
+    double residual_norm;
+    int e8[8];
+    char witness_hex[65];
+    const char *continuity;
+    int is_fail;
+    int witness_critical;
+    double attention_predictor;
+    double state_relevance;
+    double witness_relevance;
+    double continuity_risk;
+    double memory_cost;
+    double residual_error;
+    double selection_score;
+    uint32_t selection_rank;
+    BfPolicy policy;
+} BfBlockEval;
+
+typedef struct {
+    uint32_t idx;
+    double score;
+} BfRankRow;
+
 static const char *policy_name_(BfPolicy policy) {
     switch (policy) {
         case POLICY_HOT_EXACT: return "HOT_EXACT";
@@ -43,6 +71,16 @@ static const char *policy_name_(BfPolicy policy) {
         case POLICY_EVICT: return "EVICT";
         default: return "COMPRESS";
     }
+}
+
+static int rank_row_cmp_desc_(const void *a, const void *b) {
+    const BfRankRow *ra = (const BfRankRow *)a;
+    const BfRankRow *rb = (const BfRankRow *)b;
+    if (ra->score < rb->score) return 1;
+    if (ra->score > rb->score) return -1;
+    if (ra->idx > rb->idx) return 1;
+    if (ra->idx < rb->idx) return -1;
+    return 0;
 }
 
 static void default_budgets_for_mode_(
@@ -130,13 +168,6 @@ static void resolve_budgets_(
     *compress += remaining;
 }
 
-static BfPolicy policy_for_index_(uint32_t idx, uint32_t hot, uint32_t membrane, uint32_t compress) {
-    if (idx < hot) return POLICY_HOT_EXACT;
-    if (idx < hot + membrane) return POLICY_MEMBRANE_SELECT;
-    if (idx < hot + membrane + compress) return POLICY_COMPRESS;
-    return POLICY_EVICT;
-}
-
 void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg) {
     if (!cfg) return;
     memset(cfg, 0, sizeof(*cfg));
@@ -198,14 +229,18 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         &budget_evict
     );
 
-    size_t cap = (size_t)considered_blocks * 640u + 6144u;
+    size_t cap = (size_t)considered_blocks * 760u + 8192u;
     char *json = (char *)malloc(cap);
     if (!json) return -1;
 
-    uint32_t count_hot = 0;
-    uint32_t count_membrane = 0;
-    uint32_t count_compress = 0;
-    uint32_t count_evict = 0;
+    BfBlockEval *blocks = (BfBlockEval *)calloc(considered_blocks, sizeof(BfBlockEval));
+    BfRankRow *ranked = (BfRankRow *)calloc(considered_blocks, sizeof(BfRankRow));
+    if (!blocks || !ranked) {
+        free(blocks);
+        free(ranked);
+        free(json);
+        return -1;
+    }
 
     size_t off = 0;
     int n = snprintf(
@@ -214,6 +249,7 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         "{\n"
         "  \"schema_version\": \"akai.context.kv_registry.v1\",\n"
         "  \"mode\": \"%s\",\n"
+        "  \"selection_basis\": \"score_ranked\",\n"
         "  \"layers\": %u,\n"
         "  \"heads\": %u,\n"
         "  \"seq_tokens\": %u,\n"
@@ -243,7 +279,12 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         w_mem_cost,
         w_residual
     );
-    if (n <= 0 || (size_t)n >= cap - off) { free(json); return -1; }
+    if (n <= 0 || (size_t)n >= cap - off) {
+        free(blocks);
+        free(ranked);
+        free(json);
+        return -1;
+    }
     off += (size_t)n;
 
     uint32_t fail_stride = 0;
@@ -253,25 +294,27 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
     }
 
     for (uint32_t i = 0; i < considered_blocks; i++) {
-        const uint32_t layer = i % layers;
-        const uint32_t head = (i / layers) % heads;
-        const uint32_t token_start = i * block_tokens;
-        uint32_t token_end = token_start + block_tokens - 1u;
-        if (token_end >= seq_tokens) token_end = seq_tokens - 1u;
+        BfBlockEval *b = &blocks[i];
 
-        double attention_mass = 1.0 / (double)(i + 2u);
-        if (attention_mass < 0.0005) attention_mass = 0.0005;
+        b->layer = i % layers;
+        b->head = (i / layers) % heads;
+        b->token_start = i * block_tokens;
+        b->token_end = b->token_start + block_tokens - 1u;
+        if (b->token_end >= seq_tokens) b->token_end = seq_tokens - 1u;
 
-        const double residual_norm = base_residual + ((double)(i % 17u) * 0.007);
+        b->attention_mass = 1.0 / (double)(i + 2u);
+        if (b->attention_mass < 0.0005) b->attention_mass = 0.0005;
 
-        int e8_0 = (int)((layer + head + i) % 9u) - 4;
-        int e8_1 = (int)((layer + 2u * i) % 9u) - 4;
-        int e8_2 = (int)((head + 3u * i) % 9u) - 4;
-        int e8_3 = (int)((layer + head + 5u * i) % 9u) - 4;
-        int e8_4 = (int)((2u * layer + i) % 9u) - 4;
-        int e8_5 = (int)((2u * head + i) % 9u) - 4;
-        int e8_6 = (int)((layer + 7u * i) % 9u) - 4;
-        int e8_7 = (int)((head + 11u * i) % 9u) - 4;
+        b->residual_norm = base_residual + ((double)(i % 17u) * 0.007);
+
+        b->e8[0] = (int)((b->layer + b->head + i) % 9u) - 4;
+        b->e8[1] = (int)((b->layer + 2u * i) % 9u) - 4;
+        b->e8[2] = (int)((b->head + 3u * i) % 9u) - 4;
+        b->e8[3] = (int)((b->layer + b->head + 5u * i) % 9u) - 4;
+        b->e8[4] = (int)((2u * b->layer + i) % 9u) - 4;
+        b->e8[5] = (int)((2u * b->head + i) % 9u) - 4;
+        b->e8[6] = (int)((b->layer + 7u * i) % 9u) - 4;
+        b->e8[7] = (int)((b->head + 11u * i) % 9u) - 4;
 
         char witness_seed[256];
         snprintf(
@@ -279,42 +322,87 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             sizeof(witness_seed),
             "%s|%u|%u|%u|%u|%u|%u",
             mode,
-            layer,
-            head,
-            token_start,
-            token_end,
+            b->layer,
+            b->head,
+            b->token_start,
+            b->token_end,
             required_witnesses,
             i
         );
-        char witness_hex[65];
-        bf_sha256_hex((const uint8_t *)witness_seed, strlen(witness_seed), witness_hex);
+        bf_sha256_hex((const uint8_t *)witness_seed, strlen(witness_seed), b->witness_hex);
 
-        const int is_fail = (fail_stride > 0u && (i % fail_stride) == 0u);
-        const int witness_critical = (required_witnesses > 0u && i < required_witnesses);
-        const char *continuity = is_fail ? "CONTINUITY_FAIL" : ((residual_norm > base_residual + 0.06) ? "PASS_WITH_DRIFT" : "PASS");
+        b->is_fail = (fail_stride > 0u && (i % fail_stride) == 0u) ? 1 : 0;
+        b->witness_critical = (required_witnesses > 0u && i < required_witnesses) ? 1 : 0;
+        b->continuity = b->is_fail ? "CONTINUITY_FAIL" : ((b->residual_norm > base_residual + 0.06) ? "PASS_WITH_DRIFT" : "PASS");
 
-        const double attention_predictor = attention_mass;
-        const double state_relevance = clamp_f64_(1.0 - ((double)i / (double)(considered_blocks + 1u)), 0.0, 1.0);
-        const double witness_relevance = witness_critical ? 1.0 : 0.15;
-        const double continuity_risk = is_fail ? 1.0 : ((strcmp(continuity, "PASS_WITH_DRIFT") == 0) ? 0.5 : 0.1);
-        const double memory_cost = (double)block_tokens / 1024.0;
-        const double residual_error = clamp_f64_(residual_norm / (base_residual + 0.2), 0.0, 4.0);
-        const double selection_score =
-            (w_attention * attention_predictor) +
-            (w_state * state_relevance) +
-            (w_witness * witness_relevance) +
-            (w_continuity * continuity_risk) -
-            (w_mem_cost * memory_cost) -
-            (w_residual * residual_error);
+        b->attention_predictor = b->attention_mass;
+        b->state_relevance = clamp_f64_(1.0 - ((double)i / (double)(considered_blocks + 1u)), 0.0, 1.0);
+        b->witness_relevance = b->witness_critical ? 1.0 : 0.15;
+        b->continuity_risk = b->is_fail ? 1.0 : ((strcmp(b->continuity, "PASS_WITH_DRIFT") == 0) ? 0.5 : 0.1);
+        b->memory_cost = (double)block_tokens / 1024.0;
+        b->residual_error = clamp_f64_(b->residual_norm / (base_residual + 0.2), 0.0, 4.0);
+        b->selection_score =
+            (w_attention * b->attention_predictor) +
+            (w_state * b->state_relevance) +
+            (w_witness * b->witness_relevance) +
+            (w_continuity * b->continuity_risk) -
+            (w_mem_cost * b->memory_cost) -
+            (w_residual * b->residual_error);
 
-        BfPolicy policy = policy_for_index_(i, budget_hot, budget_membrane, budget_compress);
-        if ((is_fail || witness_critical) && policy == POLICY_EVICT) {
-            policy = POLICY_MEMBRANE_SELECT;
+        b->policy = POLICY_EVICT;
+        b->selection_rank = considered_blocks;
+
+        ranked[i].idx = i;
+        ranked[i].score = b->selection_score;
+    }
+
+    qsort(ranked, considered_blocks, sizeof(BfRankRow), rank_row_cmp_desc_);
+
+    for (uint32_t r = 0; r < considered_blocks; r++) {
+        blocks[ranked[r].idx].selection_rank = r;
+    }
+
+    uint32_t remaining_hot = budget_hot;
+    uint32_t remaining_membrane = budget_membrane;
+    uint32_t remaining_compress = budget_compress;
+
+    for (uint32_t r = 0; r < considered_blocks; r++) {
+        BfBlockEval *b = &blocks[ranked[r].idx];
+        if (remaining_hot > 0u) {
+            b->policy = POLICY_HOT_EXACT;
+            remaining_hot--;
+            continue;
         }
+        if (remaining_membrane > 0u) {
+            b->policy = POLICY_MEMBRANE_SELECT;
+            remaining_membrane--;
+            continue;
+        }
+        if (remaining_compress > 0u) {
+            b->policy = POLICY_COMPRESS;
+            remaining_compress--;
+            continue;
+        }
+        b->policy = POLICY_EVICT;
+    }
 
-        if (policy == POLICY_HOT_EXACT) count_hot++;
-        else if (policy == POLICY_MEMBRANE_SELECT) count_membrane++;
-        else if (policy == POLICY_COMPRESS) count_compress++;
+    for (uint32_t i = 0; i < considered_blocks; i++) {
+        BfBlockEval *b = &blocks[i];
+        if ((b->is_fail || b->witness_critical) && b->policy == POLICY_EVICT) {
+            b->policy = POLICY_MEMBRANE_SELECT;
+        }
+    }
+
+    uint32_t count_hot = 0;
+    uint32_t count_membrane = 0;
+    uint32_t count_compress = 0;
+    uint32_t count_evict = 0;
+
+    for (uint32_t i = 0; i < considered_blocks; i++) {
+        const BfBlockEval *b = &blocks[i];
+        if (b->policy == POLICY_HOT_EXACT) count_hot++;
+        else if (b->policy == POLICY_MEMBRANE_SELECT) count_membrane++;
+        else if (b->policy == POLICY_COMPRESS) count_compress++;
         else count_evict++;
 
         n = snprintf(
@@ -332,6 +420,7 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             "      },\n"
             "      \"witness_hash\": \"sha256:%s\",\n"
             "      \"continuity\": \"%s\",\n"
+            "      \"selection_rank\": %u,\n"
             "      \"score_components\": {\n"
             "        \"attention_predictor\": %.6f,\n"
             "        \"state_relevance\": %.6f,\n"
@@ -343,26 +432,29 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             "      \"selection_score\": %.6f,\n"
             "      \"policy\": \"%s\"\n"
             "    }%s\n",
-            layer,
-            head,
-            token_start,
-            token_end,
-            attention_mass,
-            e8_0, e8_1, e8_2, e8_3, e8_4, e8_5, e8_6, e8_7,
-            residual_norm,
-            witness_hex,
-            continuity,
-            attention_predictor,
-            state_relevance,
-            witness_relevance,
-            continuity_risk,
-            memory_cost,
-            residual_error,
-            selection_score,
-            policy_name_(policy),
+            b->layer,
+            b->head,
+            b->token_start,
+            b->token_end,
+            b->attention_mass,
+            b->e8[0], b->e8[1], b->e8[2], b->e8[3], b->e8[4], b->e8[5], b->e8[6], b->e8[7],
+            b->residual_norm,
+            b->witness_hex,
+            b->continuity,
+            b->selection_rank,
+            b->attention_predictor,
+            b->state_relevance,
+            b->witness_relevance,
+            b->continuity_risk,
+            b->memory_cost,
+            b->residual_error,
+            b->selection_score,
+            policy_name_(b->policy),
             (i + 1u < considered_blocks) ? "," : ""
         );
         if (n <= 0 || (size_t)n >= cap - off) {
+            free(blocks);
+            free(ranked);
             free(json);
             return -1;
         }
@@ -411,7 +503,15 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         estimated_compressed_kv_mb,
         estimated_exact_kv_mb + estimated_compressed_kv_mb
     );
-    if (n <= 0 || (size_t)n >= cap - off) { free(json); return -1; }
+    if (n <= 0 || (size_t)n >= cap - off) {
+        free(blocks);
+        free(ranked);
+        free(json);
+        return -1;
+    }
+
+    free(blocks);
+    free(ranked);
 
     *out_json = json;
     return 0;
