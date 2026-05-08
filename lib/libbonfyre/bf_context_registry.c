@@ -51,6 +51,9 @@ typedef struct {
     double state_relevance;
     double witness_relevance;
     double continuity_risk;
+    double layer_need;
+    double recency;
+    double objective_match;
     double memory_cost;
     double residual_error;
     double selection_score;
@@ -184,10 +187,14 @@ void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg) {
     cfg->required_witnesses = 12;
     cfg->base_residual = 0.18;
     cfg->continuity_fail_rate = 0.05;
+    cfg->objective_profile = "balanced";
     cfg->w_attention_predictor = 1.0;
     cfg->w_state_relevance = 0.8;
     cfg->w_witness_relevance = 1.2;
     cfg->w_continuity_risk = 1.0;
+    cfg->w_layer_need = 0.5;
+    cfg->w_recency = 0.4;
+    cfg->w_objective_match = 0.7;
     cfg->w_memory_cost = 0.6;
     cfg->w_residual_error = 0.7;
 }
@@ -204,10 +211,14 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
     const uint32_t required_witnesses = cfg->required_witnesses;
     const double base_residual = clamp_f64_(cfg->base_residual, 0.0, 10.0);
     const double fail_rate = clamp_f64_(cfg->continuity_fail_rate, 0.0, 1.0);
+    const char *objective = cfg->objective_profile ? cfg->objective_profile : "balanced";
     const double w_attention = clamp_f64_(cfg->w_attention_predictor, 0.0, 100.0);
     const double w_state = clamp_f64_(cfg->w_state_relevance, 0.0, 100.0);
     const double w_witness = clamp_f64_(cfg->w_witness_relevance, 0.0, 100.0);
     const double w_continuity = clamp_f64_(cfg->w_continuity_risk, 0.0, 100.0);
+    const double w_layer = clamp_f64_(cfg->w_layer_need, 0.0, 100.0);
+    const double w_recency = clamp_f64_(cfg->w_recency, 0.0, 100.0);
+    const double w_objective = clamp_f64_(cfg->w_objective_match, 0.0, 100.0);
     const double w_mem_cost = clamp_f64_(cfg->w_memory_cost, 0.0, 100.0);
     const double w_residual = clamp_f64_(cfg->w_residual_error, 0.0, 100.0);
 
@@ -250,6 +261,7 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         "  \"schema_version\": \"akai.context.kv_registry.v1\",\n"
         "  \"mode\": \"%s\",\n"
         "  \"selection_basis\": \"score_ranked\",\n"
+        "  \"objective_profile\": \"%s\",\n"
         "  \"layers\": %u,\n"
         "  \"heads\": %u,\n"
         "  \"seq_tokens\": %u,\n"
@@ -261,11 +273,15 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         "    \"state_relevance\": %.6f,\n"
         "    \"witness_relevance\": %.6f,\n"
         "    \"continuity_risk\": %.6f,\n"
+        "    \"layer_need\": %.6f,\n"
+        "    \"recency\": %.6f,\n"
+        "    \"objective_match\": %.6f,\n"
         "    \"memory_cost\": %.6f,\n"
         "    \"residual_error\": %.6f\n"
         "  },\n"
         "  \"blocks\": [\n",
         mode,
+        objective,
         layers,
         heads,
         seq_tokens,
@@ -276,6 +292,9 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         w_state,
         w_witness,
         w_continuity,
+        w_layer,
+        w_recency,
+        w_objective,
         w_mem_cost,
         w_residual
     );
@@ -339,13 +358,27 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
         b->state_relevance = clamp_f64_(1.0 - ((double)i / (double)(considered_blocks + 1u)), 0.0, 1.0);
         b->witness_relevance = b->witness_critical ? 1.0 : 0.15;
         b->continuity_risk = b->is_fail ? 1.0 : ((strcmp(b->continuity, "PASS_WITH_DRIFT") == 0) ? 0.5 : 0.1);
+        b->layer_need = clamp_f64_(1.0 - ((double)b->layer / (double)layers), 0.0, 1.0);
+        b->recency = clamp_f64_(1.0 - ((double)b->token_start / (double)(seq_tokens + 1u)), 0.0, 1.0);
+        if (strcmp(objective, "latency") == 0) {
+            b->objective_match = clamp_f64_(0.7 * b->recency + 0.3 * (1.0 / (1.0 + b->memory_cost)), 0.0, 1.0);
+        } else if (strcmp(objective, "continuity") == 0) {
+            b->objective_match = clamp_f64_(0.7 * b->continuity_risk + 0.3 * b->witness_relevance, 0.0, 1.0);
+        } else if (strcmp(objective, "fidelity") == 0) {
+            b->objective_match = clamp_f64_(0.5 * b->attention_predictor + 0.5 * b->state_relevance, 0.0, 1.0);
+        } else {
+            b->objective_match = clamp_f64_(0.34 * b->state_relevance + 0.33 * b->continuity_risk + 0.33 * b->witness_relevance, 0.0, 1.0);
+        }
         b->memory_cost = (double)block_tokens / 1024.0;
         b->residual_error = clamp_f64_(b->residual_norm / (base_residual + 0.2), 0.0, 4.0);
         b->selection_score =
             (w_attention * b->attention_predictor) +
             (w_state * b->state_relevance) +
             (w_witness * b->witness_relevance) +
-            (w_continuity * b->continuity_risk) -
+            (w_continuity * b->continuity_risk) +
+            (w_layer * b->layer_need) +
+            (w_recency * b->recency) +
+            (w_objective * b->objective_match) -
             (w_mem_cost * b->memory_cost) -
             (w_residual * b->residual_error);
 
@@ -426,6 +459,9 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             "        \"state_relevance\": %.6f,\n"
             "        \"witness_relevance\": %.6f,\n"
             "        \"continuity_risk\": %.6f,\n"
+            "        \"layer_need\": %.6f,\n"
+            "        \"recency\": %.6f,\n"
+            "        \"objective_match\": %.6f,\n"
             "        \"memory_cost\": %.6f,\n"
             "        \"residual_error\": %.6f\n"
             "      },\n"
@@ -446,6 +482,9 @@ int bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out
             b->state_relevance,
             b->witness_relevance,
             b->continuity_risk,
+            b->layer_need,
+            b->recency,
+            b->objective_match,
             b->memory_cost,
             b->residual_error,
             b->selection_score,
