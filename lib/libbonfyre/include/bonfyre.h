@@ -520,6 +520,25 @@ typedef struct {
 void bf_context_kv_registry_defaults(BfContextKVRegistryConfig *cfg);
 int  bf_context_kv_registry_json(const BfContextKVRegistryConfig *cfg, char **out_json);
 
+/* ── Context selector smoke tests (bf_context_selector_smoke.c) ────────── *
+ *
+ * Planner Phase 3: deterministic selector smoke contract for continuity law.
+ */
+
+typedef struct {
+    const char *mode;            /* dense|compressed|membrane|state|hybrid */
+    uint32_t required_witnesses;
+    double residual_delta_estimate;
+    double residual_drift_threshold;
+    int buried_continuity_fail_present;
+    int proof_hash_present;
+    int high_residual_event_present;
+    int low_risk_irrelevant_tokens_present;
+} BfContextSelectorSmokeConfig;
+
+void bf_context_selector_smoke_defaults(BfContextSelectorSmokeConfig *cfg);
+int  bf_context_selector_smoke_json(const BfContextSelectorSmokeConfig *cfg, char **out_json);
+
 /* ── KV commit chain (bf_embed_cache.c) ─────────────────────────────────── *
  *
  * A Merkle DAG of KV states: each state's hash transitively depends on
