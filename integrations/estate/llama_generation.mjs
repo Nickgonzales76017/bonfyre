@@ -1,5 +1,7 @@
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { GENERATION_SCHEMA } from '../wordpress/native_generation.mjs';
 
@@ -85,6 +87,7 @@ export function createLlamaGenerationClient({
   backend = 'llama-cpp',
   maxOutputBytes = 1_000_000,
   spawnImpl = spawn,
+  tempRoot = '/tmp',
 } = {}) {
   const model = text(modelPath) || text(modelPack);
   if (!text(binary) || !model) throw new Error('binary and modelPath are required');
@@ -95,41 +98,48 @@ export function createLlamaGenerationClient({
     if (!sourcePrompt.trim()) throw new Error('prompt is required');
     const limit = positiveInteger(maxNewTokens, 64);
     const started = Date.now();
-    const args = [
-      '-m', model,
-      '-ngl', String(gpuLayers),
-      '-c', String(contextSize),
-      '-n', String(limit),
-      '--temp', greedy ? '0' : '0.7',
-      '--no-warmup',
-      '--single-turn',
-      '--simple-io',
-      '-p', qwenPrompt(sourcePrompt, systemPrompt),
-    ];
-    const execution = await run(binary, args, {
-      spawnImpl,
-      env: { ...process.env, ...env },
-      timeoutMs,
-      maxOutputBytes,
-    });
-    if (execution.timed_out) throw new Error(`llama.cpp generation timed out after ${timeoutMs}ms`);
-    if (execution.output_limited) throw new Error(`llama.cpp generation exceeded ${maxOutputBytes} output bytes`);
-    if (execution.code !== 0) throw new Error(`llama.cpp generation failed (${execution.code ?? execution.signal}): ${execution.stderr.trim()}`);
-    const output = extractLlamaResponse(execution.stdout);
-    if (!output.trim()) throw new Error('llama.cpp generation returned empty output');
-    return {
-      schema_version: GENERATION_SCHEMA,
-      generated_at: new Date().toISOString(),
-      model: { name: 'llama.cpp', binary, pack: model, runtime: 'llama-cpp' },
-      backend,
-      request: { prompt: sourcePrompt, max_new_tokens: limit, greedy },
-      prompt_sha256: createHash('sha256').update(sourcePrompt).digest('hex'),
-      output,
-      output_sha256: createHash('sha256').update(output).digest('hex'),
-      stderr: execution.stderr,
-      stdout: execution.stdout,
-      elapsed_ms: Date.now() - started,
-    };
+    const tempDir = await mkdtemp(join(tempRoot, 'bonfyre-llama-generation-'));
+    const promptPath = join(tempDir, 'prompt.txt');
+    try {
+      await writeFile(promptPath, qwenPrompt(sourcePrompt, systemPrompt), 'utf8');
+      const args = [
+        '-m', model,
+        '-ngl', String(gpuLayers),
+        '-c', String(contextSize),
+        '-n', String(limit),
+        '--temp', greedy ? '0' : '0.7',
+        '--no-warmup',
+        '--single-turn',
+        '--simple-io',
+        '-f', promptPath,
+      ];
+      const execution = await run(binary, args, {
+        spawnImpl,
+        env: { ...process.env, ...env },
+        timeoutMs,
+        maxOutputBytes,
+      });
+      if (execution.timed_out) throw new Error(`llama.cpp generation timed out after ${timeoutMs}ms`);
+      if (execution.output_limited) throw new Error(`llama.cpp generation exceeded ${maxOutputBytes} output bytes`);
+      if (execution.code !== 0) throw new Error(`llama.cpp generation failed (${execution.code ?? execution.signal}): ${execution.stderr.trim()}`);
+      const output = extractLlamaResponse(execution.stdout);
+      if (!output.trim()) throw new Error('llama.cpp generation returned empty output');
+      return {
+        schema_version: GENERATION_SCHEMA,
+        generated_at: new Date().toISOString(),
+        model: { name: 'llama.cpp', binary, pack: model, runtime: 'llama-cpp' },
+        backend,
+        request: { prompt: sourcePrompt, max_new_tokens: limit, greedy },
+        prompt_sha256: createHash('sha256').update(sourcePrompt).digest('hex'),
+        output,
+        output_sha256: createHash('sha256').update(output).digest('hex'),
+        stderr: execution.stderr,
+        stdout: execution.stdout,
+        elapsed_ms: Date.now() - started,
+      };
+    } finally {
+      await rm(tempDir, { recursive: true, force: true });
+    }
   }
 
   return { generate };
