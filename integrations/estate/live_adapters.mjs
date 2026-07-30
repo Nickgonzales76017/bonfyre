@@ -31,7 +31,8 @@ const ADAPTERS = [
 
 function stable(value) {
   if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
-  if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stable(value[key])}`).join(',')}}`;
+  if (value && typeof value === 'object') return `{${Object.keys(value).filter((key) => value[key] !== undefined).sort().map((key) => `${JSON.stringify(key)}:${stable(value[key])}`).join(',')}}`;
+  if (value === undefined) return 'null';
   return JSON.stringify(value);
 }
 
@@ -141,16 +142,26 @@ export function createLiveAdapterRuntime({ pathValue = process.env.PATH, spawnIm
     const requested = ids === undefined ? null : new Set(Array.isArray(ids) ? ids : [ids]);
     const adapters = (await discover()).filter((adapter) => !requested || requested.has(adapter.id));
     const probes = await probeLiveAdapters({ adapters, timeoutMs, maxConcurrency, spawnImpl });
-    const recorded = !receiptJournal?.append ? probes : await Promise.all(probes.map(async (probe) => ({ ...probe, journal: await receiptJournal.append(probe) })));
+    const recorded = await record(probes);
     lastProbes = recorded;
     return recorded;
+  }
+  async function record(probes) {
+    return !receiptJournal?.append ? probes : Promise.all(probes.map(async (probe) => ({ ...probe, journal: await receiptJournal.append(probe) })));
   }
   function providerHandlers({ providerIds } = {}) {
     const requested = providerIds ? new Set(providerIds) : null;
     return Object.fromEntries(ADAPTERS
       .filter((adapter) => !requested || requested.has(adapter.id))
-      .map((adapter) => [adapter.id, async (task = {}) => {
-        const [result] = await probe({ ids: [adapter.id], timeoutMs: task.timeoutMs });
+      .map((adapter) => [adapter.id, async (task = {}, provider = {}) => {
+        const command = provider.command || adapter.command;
+        const command_path = await findExecutable(command, pathValue);
+        const [result] = await record(await probeLiveAdapters({
+          adapters: [{ ...adapter, command, command_path, state: command_path ? 'installed' : 'unavailable' }],
+          timeoutMs: task.timeoutMs,
+          spawnImpl,
+        }));
+        lastProbes = [result];
         if (!result || result.status !== 'passed') {
           throw new Error(`adapter ${adapter.id} is not healthy: ${result?.status || 'not discovered'}`);
         }
@@ -163,20 +174,41 @@ export function createLiveAdapterRuntime({ pathValue = process.env.PATH, spawnIm
 
 export function createReceiptJournal({ file } = {}) {
   if (!file) throw new Error('receipt journal file is required');
-  async function append(receipt) {
-    const body = { schema_version: RECEIPT_JOURNAL_SCHEMA, journal_id: randomUUID(), receipt, written_at: new Date().toISOString() };
-    const record = { ...body, record_sha256: sha256(body) };
-    await mkdir(dirname(file), { recursive: true });
-    await appendFile(file, `${JSON.stringify(record)}\n`, 'utf8');
-    return record;
-  }
-  async function read() {
+  let tail = Promise.resolve();
+  async function records() {
     try {
       return (await readFile(file, 'utf8')).trim().split('\n').filter(Boolean).map(JSON.parse);
     } catch (error) {
       if (error.code === 'ENOENT') return [];
       throw error;
     }
+  }
+  async function append(receipt) {
+    const work = tail.then(async () => {
+      const prior = await records();
+      const previous_record_sha256 = prior.at(-1)?.record_sha256 || null;
+      const body = { schema_version: RECEIPT_JOURNAL_SCHEMA, journal_id: randomUUID(), receipt, written_at: new Date().toISOString(), previous_record_sha256 };
+      const record = { ...body, record_sha256: sha256(body) };
+      await mkdir(dirname(file), { recursive: true });
+      await appendFile(file, `${JSON.stringify(record)}\n`, 'utf8');
+      return record;
+    });
+    tail = work.catch(() => {});
+    return work;
+  }
+  async function read({ verify = true } = {}) {
+    const entries = await records();
+    if (verify) {
+      let previous = null;
+      for (const record of entries) {
+        const { record_sha256, ...body } = record;
+        if (record_sha256 !== sha256(body) || body.previous_record_sha256 !== previous) {
+          throw new Error('receipt journal integrity verification failed');
+        }
+        previous = record_sha256;
+      }
+    }
+    return entries;
   }
   return { append, read };
 }

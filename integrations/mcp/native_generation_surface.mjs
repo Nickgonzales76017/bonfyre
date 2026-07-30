@@ -22,7 +22,7 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet, ada
       { name: 'bonfyre_native_inventory', effect: 'read', handler: () => fabric.inventory() },
       { name: 'bonfyre_native_health', effect: 'bounded-read', handler: (args) => fabric.probeNativeTools?.(args) || { error: 'native health probe unavailable' } },
       { name: 'bonfyre_model_catalog', effect: 'read', handler: () => fabric.modelCatalog?.() || [] },
-      { name: 'bonfyre_model_recovery_verify', effect: 'bounded-read', handler: (args) => fabric.verifyModelPackRecovery?.(args) || { error: 'model recovery verifier unavailable' } },
+      { name: 'bonfyre_model_recovery_verify', effect: 'bounded-read', handler: (args) => fabric.verifyModelPackRecovery?.({ ...args, verifyHashes: true }) || { error: 'model recovery verifier unavailable' } },
       ...(adapterRuntime ? [
         { name: 'bonfyre_live_adapter_inventory', effect: 'read', handler: () => adapterRuntime.discover() },
         { name: 'bonfyre_live_adapter_probe', effect: 'bounded-read', handler: (args) => adapterRuntime.probe(args) },

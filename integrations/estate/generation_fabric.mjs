@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import { readdir, stat, readFile } from 'node:fs/promises';
-import { join, basename, dirname, isAbsolute } from 'node:path';
+import { join, basename, dirname, isAbsolute, resolve, relative } from 'node:path';
 import { createNativeGenerationClient } from '../wordpress/native_generation.mjs';
 
 export const TOOL_RECEIPT_SCHEMA = 'bonfyre.native.tool.receipt.v1';
@@ -149,19 +149,30 @@ function fileSha256(path) {
   });
 }
 
-export async function verifyModelPack({ modelPack, verifyHashes = true } = {}) {
+function within(root, path) {
+  const child = relative(root, path);
+  return child === '' || (!child.startsWith('..') && !isAbsolute(child));
+}
+
+export async function verifyModelPack({ modelPack, verifyHashes = true, allowedRoot = process.env.BONFYRE_MODEL_ROOT || '/Users/nickgonzales/BonfyreModels', maxParts = 128, maxPartBytes = 4 * 1024 * 1024 * 1024 } = {}) {
   if (!text(modelPack)) throw new Error('modelPack is required');
-  const manifest = JSON.parse(await readFile(modelPack, 'utf8'));
+  const root = resolve(allowedRoot);
+  const resolvedPack = resolve(modelPack);
+  if (!within(root, resolvedPack)) throw new Error('modelPack must be within the allowed model root');
+  const manifest = JSON.parse(await readFile(resolvedPack, 'utf8'));
   const declaredPartsDir = text(manifest.parts_dir);
-  const partsDir = declaredPartsDir ? (isAbsolute(declaredPartsDir) ? declaredPartsDir : join(dirname(modelPack), declaredPartsDir)) : dirname(modelPack);
+  const partsDir = resolve(declaredPartsDir ? (isAbsolute(declaredPartsDir) ? declaredPartsDir : join(dirname(resolvedPack), declaredPartsDir)) : dirname(resolvedPack));
   const parts = Array.isArray(manifest.parts) ? manifest.parts : [];
+  if (parts.length === 0 || parts.length > maxParts) throw new Error(`model pack must declare 1-${maxParts} parts`);
   const verifiedParts = await Promise.all(parts.map(async (part, index) => {
     const referenced = part.path || part.fpq_path || part.fpq_part || part.fpq2_part;
-    const path = referenced?.startsWith('/') ? referenced : join(partsDir, referenced || '');
+    const path = resolve(referenced?.startsWith('/') ? referenced : join(partsDir, referenced || ''));
     const expectedSha256 = text(part.sha256);
     try {
+      if (!within(root, path)) throw new Error('part is outside the allowed model root');
       const info = await stat(path);
       if (!info.isFile()) throw new Error('not a file');
+      if (info.size > maxPartBytes) throw new Error('part exceeds verification size limit');
       const actualSha256 = verifyHashes ? await fileSha256(path) : null;
       const hashRecorded = Boolean(expectedSha256);
       const verified = verifyHashes ? hashRecorded && actualSha256 === expectedSha256 : true;
@@ -184,14 +195,14 @@ export async function verifyModelPack({ modelPack, verifyHashes = true } = {}) {
   const unverified = verifiedParts.filter((part) => part.present && !part.verified).length;
   const body = {
     schema_version: 'bonfyre.model.recovery.verify.v1',
-    model_pack: modelPack,
+    model_pack: resolvedPack,
     model_repo: manifest.model_repo || null,
     part_count: verifiedParts.length,
     missing_parts: missing,
     hash_mismatches: hashMismatches,
     unverified_parts: unverified,
     verification_required: verifyHashes,
-    ready: missing === 0 && unverified === 0 && verifiedParts.length > 0,
+    ready: verifyHashes && missing === 0 && unverified === 0 && verifiedParts.length > 0,
     parts: verifiedParts,
   };
   return { ...body, receipt_sha256: createHash('sha256').update(JSON.stringify(body)).digest('hex') };
@@ -322,8 +333,8 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     });
   }
 
-  async function verifyModelPackRecovery(options) {
-    return verifyModelPack(options);
+  async function verifyModelPackRecovery(options = {}) {
+    return verifyModelPack({ ...options, verifyHashes: true, allowedRoot: modelRoot || process.env.BONFYRE_MODEL_ROOT || '/Users/nickgonzales/BonfyreModels' });
   }
 
   function profileInventory() {

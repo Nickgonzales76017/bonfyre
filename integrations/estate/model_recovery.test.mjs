@@ -12,19 +12,20 @@ try {
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   const pack = join(directory, 'model.fpq-pack.json');
   await writeFile(pack, JSON.stringify({ model_repo: 'bonfyre/test', parts_dir: '.', parts: [{ path: 'layer-000.fpq', sha256 }] }));
-  const verified = await verifyModelPack({ modelPack: pack });
+  const verified = await verifyModelPack({ modelPack: pack, allowedRoot: directory });
   assert.equal(verified.ready, true);
   assert.equal(verified.missing_parts, 0);
   assert.equal(verified.unverified_parts, 0);
   await writeFile(part, 'corrupted model bytes');
-  const corrupt = await verifyModelPack({ modelPack: pack });
+  const corrupt = await verifyModelPack({ modelPack: pack, allowedRoot: directory });
   assert.equal(corrupt.ready, false);
   assert.equal(corrupt.hash_mismatches, 1);
   await writeFile(pack, JSON.stringify({ model_repo: 'bonfyre/test', parts_dir: '.', parts: [{ path: 'layer-000.fpq' }] }));
-  const unsigned = await verifyModelPack({ modelPack: pack });
+  const unsigned = await verifyModelPack({ modelPack: pack, allowedRoot: directory });
   assert.equal(unsigned.ready, false);
   assert.equal(unsigned.unverified_parts, 1);
-  assert.equal((await verifyModelPack({ modelPack: pack, verifyHashes: false })).ready, true);
+  assert.equal((await verifyModelPack({ modelPack: pack, verifyHashes: false, allowedRoot: directory })).ready, false);
+  await assert.rejects(verifyModelPack({ modelPack: pack, allowedRoot: join(directory, 'other') }));
 } finally {
   await rm(directory, { recursive: true, force: true });
 }
