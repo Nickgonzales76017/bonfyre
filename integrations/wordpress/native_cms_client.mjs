@@ -42,6 +42,17 @@ export function createNativeCmsClient({ baseUrl, token = '', fetchImpl = globalT
     return syncEntry(toGenerationCmsEntry(result, { namespace }));
   }
 
+  async function syncGenerationBatch(batch, { namespace = 'bonfyre-generation' } = {}) {
+    if (!batch || batch.schema_version !== 'bonfyre.native.generation.batch.v1' || !Array.isArray(batch.results)) {
+      throw new Error('A native generation batch is required');
+    }
+    const entries = [];
+    for (const result of batch.results) {
+      if (result?.status === 'passed') entries.push(await syncGenerationResult(result, { namespace }));
+    }
+    return { batch_id: batch.batch_id, count: entries.length, entries };
+  }
+
   async function syncEntry(entry, contentType = entry?.content_type, namespace = entry?.namespace) {
     if (!text(contentType) || !text(namespace)) {
       throw new Error('Native CMS entry is missing content type or namespace');
@@ -84,5 +95,5 @@ export function createNativeCmsClient({ baseUrl, token = '', fetchImpl = globalT
     };
   }
 
-  return { syncWordPressEvent, syncGenerationResult, syncEntry };
+  return { syncWordPressEvent, syncGenerationResult, syncGenerationBatch, syncEntry };
 }
