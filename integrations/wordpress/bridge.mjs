@@ -39,8 +39,10 @@ export function toNativeCmsEntry(event, { contentType = 'cms_article', namespace
   }
   if (!text(contentType) || !text(namespace)) throw new Error('contentType and namespace are required');
   const source = event.source || {};
-  const externalId = `${text(source.site)}:${text(source.post_id)}`;
-  if (externalId === ':') throw new Error('Normalized event is missing source identity');
+  const site = text(source.site);
+  const postId = text(source.post_id);
+  if (!site || !postId) throw new Error('Normalized event is missing source identity');
+  const externalId = `${site}:${postId}`;
   const content = event.content || {};
   return {
     schema_version: NATIVE_CMS_SCHEMA,
@@ -52,8 +54,8 @@ export function toNativeCmsEntry(event, { contentType = 'cms_article', namespace
       title: text(content.title),
       status: text(content.status || 'publish'),
       url: text(content.url),
-      source_site: text(source.site),
-      source_post_id: text(source.post_id),
+      source_site: site,
+      source_post_id: postId,
       source_post_type: text(source.post_type || 'post'),
     },
     source_event: event.event,
