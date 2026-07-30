@@ -24,4 +24,6 @@ assert.equal(result.backend, 'llama-cpp');
 assert.equal(result.output, 'def add(a, b):\n    return a + b');
 assert.equal(observedArgs.includes('--single-turn'), true);
 assert.equal(observedArgs[observedArgs.indexOf('-n') + 1], '24');
+assert.equal(observedArgs.includes('-p'), false);
+assert.equal(observedArgs.includes('-f'), true);
 console.log('llama generation client tests passed');
