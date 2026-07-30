@@ -21,6 +21,17 @@ git clone https://github.com/Nickgonzales76017/bonfyre-oss.git && cd bonfyre-oss
 
 That builds 48 binaries. No Node.js. No Python. No Docker. No npm. Just C11 and SQLite.
 
+### Current native estate
+
+The core build count above is the historical C11 surface. The live Bonfyre
+estate currently exposes 87 discovered executable `bonfyre-*` tools through the
+native MCP plane. The estate generation fabric adds model-pack availability
+inspection, bounded native health probes, provider-aware fleet waves, and
+hashed receipts for CMS, WordPress, ledger, analytics, and replay consumers.
+See [`integrations/estate/README.md`](integrations/estate/README.md) for the
+model/provider contract. Discovery reports runnable models separately from
+manifests whose large model parts are not present.
+
 ---
 
 ## New Since Last Push
