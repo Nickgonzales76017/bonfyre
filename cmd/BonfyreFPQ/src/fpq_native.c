@@ -171,8 +171,11 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
 
         total_original += n * 4;  /* fp32 = 4 bytes/weight */
 
-        /* Small/1D tensors: store as fp16 directly */
-        if (t->rows <= 1 || t->cols <= 1 || n < FPQ_BLOCK_DIM * 2) {
+        /* Keep a lossless path for tiny tensors and an explicit diagnostic
+         * override, while using the v9 low-rank/RVQ path for model weights. */
+        const char *lossless = getenv("BONFYRE_FPQ_LOSSLESS");
+        if (t->rows <= 1 || t->cols <= 1 || n < FPQ_BLOCK_DIM * 2 ||
+            (lossless && lossless[0] == '1')) {
             headers[ti].lr_rank = 0;
             headers[ti].coord_bits = 0;
             headers[ti].has_ghost = 0;
