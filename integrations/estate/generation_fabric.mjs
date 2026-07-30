@@ -95,7 +95,6 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
   let entries = [];
   try { entries = await readdir(packRoot, { withFileTypes: true }); } catch { entries = []; }
   const profiles = [];
-  const seenIds = new Set();
   for (const entry of entries) {
     if (!entry.isFile() || !/\.fpq2?-pack\.json$/.test(entry.name)) continue;
     const modelPack = join(packRoot, entry.name);
@@ -124,28 +123,42 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     if (!binary || !checks[0]) missing.push('binary');
     if (!checks[1]) missing.push('tokenizer');
     if (!checks[2] || (partPaths.length && checks.slice(3).some((present) => !present))) missing.push('model-parts');
-    let id = model;
-    if (seenIds.has(id)) id = `${model}-${entry.name.replace(/\.fpq2?-pack\.json$/, '').replace(`${model}-`, '')}`;
-    seenIds.add(id);
+    const fpq2 = entry.name.endsWith('.fpq2-pack.json')
+      || String(manifest.schema || '').toLowerCase().includes('fpq2')
+      || parts.some((part) => text(part.fpq2_part));
     profiles.push({
-      id,
+      id: `${model}--${entry.name.replace(/\.fpq2?-pack\.json$/, '')}`,
       model,
       binary: binary || null,
       modelPack,
       tokenizer,
       backend: 'cpu_neon',
       runtime: 'fpq-native',
-      compression: String(manifest.schema || '').includes('fpq2') ? 'fpq2' : 'fpq',
-      runtimeEnv: String(manifest.schema || '').includes('fpq2')
+      compression: fpq2 ? 'fpq2' : 'fpq',
+      runtimeEnv: fpq2
         ? { BONFYRE_QWEN_KEEP_PREFILL_PREPARED: '1' }
         : {},
-      defaultTimeoutMs: String(manifest.schema || '').includes('fpq2') ? 900_000 : 120_000,
+      defaultTimeoutMs: fpq2 ? 900_000 : 120_000,
       available: missing.length === 0,
       missing,
       pack_schema: manifest.schema || null,
       parameter_count: manifest.parameter_count || manifest.total_parameters || null,
     });
   }
+  const nativeGroups = new Map();
+  for (const profile of profiles) {
+    const group = nativeGroups.get(profile.model) || [];
+    group.push(profile);
+    nativeGroups.set(profile.model, group);
+  }
+  for (const [model, group] of nativeGroups) {
+    group.sort((a, b) => Number(b.compression === 'fpq2') - Number(a.compression === 'fpq2')
+      || a.modelPack.localeCompare(b.modelPack));
+    group.forEach((profile, index) => {
+      profile.id = index === 0 ? model : `${model}-${basename(profile.modelPack).replace(/\.fpq2?-pack\.json$/, '')}`;
+    });
+  }
+  const seenIds = new Set(profiles.map((profile) => profile.id));
   const ggufRoot = join(modelRoot, 'gguf');
   const llamaAvailable = await executable(llamaBinary);
   let ggufGroups = [];
@@ -430,7 +443,7 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     return { ...receipt, ledger: toLedgerRecord(receipt), analytics: toAnalyticsEvent(receipt) };
   }
 
-  async function generate({ profileId, prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = 120_000 } = {}) {
+  async function generate({ profileId, prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs } = {}) {
     let selected = profileClients.get(profileId);
     if (!selected) {
       const discovered = (await modelCatalog()).find((profile) => profile.id === profileId);
