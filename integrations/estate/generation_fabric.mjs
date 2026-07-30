@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, stat, readFile } from 'node:fs/promises';
 import { join, basename } from 'node:path';
 import { createNativeGenerationClient } from '../wordpress/native_generation.mjs';
 
@@ -84,27 +84,119 @@ export async function discoverNativeTools({ root = process.cwd(), binDir = join(
   }));
 }
 
+export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonzales/BonfyreModels', binary, tokenizerRoot } = {}) {
+  const packRoot = join(modelRoot, 'fpq');
+  const tokenizerBase = tokenizerRoot || join(modelRoot, 'tokenizers');
+  let entries = [];
+  try { entries = await readdir(packRoot, { withFileTypes: true }); } catch { return []; }
+  const profiles = [];
+  const seenIds = new Set();
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.fpq-pack.json')) continue;
+    const modelPack = join(packRoot, entry.name);
+    let manifest;
+    try { manifest = JSON.parse(await readFile(modelPack, 'utf8')); } catch { continue; }
+    const model = String(manifest.model_repo || entry.name.replace(/\.fpq-pack\.json$/, ''))
+      .split('/').pop().toLowerCase();
+    const tokenizerCandidates = [
+      join(tokenizerBase, model, 'tokenizer.json'),
+      join(modelRoot, 'small', model, 'tokenizer.json'),
+      join(modelRoot, 'raw', model, 'tokenizer.json'),
+    ];
+    const partsDir = manifest.parts_dir || join(packRoot, entry.name.replace(/\.fpq-pack\.json$/, '.parts'));
+    const parts = Array.isArray(manifest.parts) ? manifest.parts : [];
+    const partPaths = parts.map((part) => part.path || part.fpq_path || part.fpq_part || part.fpq2_part)
+      .filter(Boolean).map((path) => path.startsWith('/') ? path : join(partsDir, path));
+    const tokenizerChecks = await Promise.all(tokenizerCandidates.map((path) => stat(path).then(() => path).catch(() => null)));
+    const tokenizer = tokenizerChecks.find(Boolean) || tokenizerCandidates[0];
+    const checks = await Promise.all([
+      executable(binary || ''),
+      stat(tokenizer).then(() => true).catch(() => false),
+      stat(partsDir).then(() => true).catch(() => false),
+      ...partPaths.map((path) => stat(path).then(() => true).catch(() => false)),
+    ]);
+    const missing = [];
+    if (binary && !checks[0]) missing.push('binary');
+    if (!checks[1]) missing.push('tokenizer');
+    if (!checks[2] || (partPaths.length && checks.slice(3).some((present) => !present))) missing.push('model-parts');
+    let id = model;
+    if (seenIds.has(id)) id = `${model}-${entry.name.replace(/\.fpq-pack\.json$/, '').replace(`${model}-`, '')}`;
+    seenIds.add(id);
+    profiles.push({
+      id,
+      model,
+      binary: binary || null,
+      modelPack,
+      tokenizer,
+      backend: 'cpu_neon',
+      available: missing.length === 0,
+      missing,
+      pack_schema: manifest.schema || null,
+      parameter_count: manifest.parameter_count || manifest.total_parameters || null,
+    });
+  }
+  return profiles.sort((a, b) => a.id.localeCompare(b.id));
+}
+
 function runTool(path, args, { spawnImpl, input = '', timeoutMs = 30_000, maxOutputBytes = 1_000_000 } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawnImpl(path, args, { stdio: ['pipe', 'pipe', 'pipe'] });
     let stdout = '';
     let stderr = '';
     let timedOut = false;
+    let settled = false;
     const append = (target, chunk) => target.length >= maxOutputBytes ? target : `${target}${chunk.toString()}`.slice(0, maxOutputBytes);
     child.stdout?.on('data', (chunk) => { stdout = append(stdout, chunk); });
     child.stderr?.on('data', (chunk) => { stderr = append(stderr, chunk); });
     const timer = setTimeout(() => {
       timedOut = true;
-      child.kill('SIGTERM');
+      child.kill('SIGKILL');
+      settled = true;
+      resolve({ code: null, signal: 'SIGKILL', stdout, stderr, timed_out: true });
     }, timeoutMs);
-    child.once('error', (error) => { clearTimeout(timer); reject(error); });
+    child.once('error', (error) => { if (settled) return; settled = true; clearTimeout(timer); reject(error); });
     child.once('close', (code, signal) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       resolve({ code, signal, stdout, stderr, timed_out: timedOut });
     });
     if (input && child.stdin) child.stdin.end(input);
     else child.stdin?.end();
   });
+}
+
+export async function probeNativeTools({ tools, root = process.cwd(), timeoutMs = 3_000, maxConcurrency = 4, spawnImpl = spawn } = {}) {
+  const catalog = tools || await discoverNativeTools({ root });
+  const results = [];
+  let cursor = 0;
+  async function worker() {
+    while (cursor < catalog.length) {
+      const index = cursor++;
+      const tool = catalog[index];
+      const started = Date.now();
+      try {
+        const execution = await runTool(tool.path, ['--help'], { spawnImpl, timeoutMs, maxOutputBytes: 12_000 });
+        results[index] = {
+          ...tool,
+          health: execution.timed_out ? 'timed_out' : execution.code === 0 ? 'passed' : 'failed',
+          exit_code: execution.code,
+          stderr: execution.stderr.slice(-2_000),
+          duration_ms: Date.now() - started,
+        };
+      } catch (error) {
+        results[index] = { ...tool, health: 'error', error: error.message, duration_ms: Date.now() - started };
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(maxConcurrency, Math.max(1, catalog.length)) }, worker));
+  return {
+    schema_version: 'bonfyre.native.tool.health.v1',
+    count: results.length,
+    passed: results.filter((tool) => tool.health === 'passed').length,
+    failed: results.filter((tool) => tool.health !== 'passed').length,
+    tools: results,
+  };
 }
 
 export function toLedgerRecord(receipt) {
@@ -154,7 +246,7 @@ function toBatchAnalyticsEvent(batch) {
   };
 }
 
-export function createEstateGenerationFabric({ root = process.cwd(), tools, profiles = discoverGenerationProfiles(), spawnImpl = spawn, maxConcurrency = 2 } = {}) {
+export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, modelBinary, tools, profiles = discoverGenerationProfiles(), spawnImpl = spawn, maxConcurrency = 2 } = {}) {
   const profileClients = new Map(profiles.map((profile) => [profile.id, {
     profile,
     client: createNativeGenerationClient({ ...profile, spawnImpl }),
@@ -162,6 +254,13 @@ export function createEstateGenerationFabric({ root = process.cwd(), tools, prof
 
   async function inventory() {
     return tools || discoverNativeTools({ root });
+  }
+
+  async function modelCatalog() {
+    return discoverLocalModelProfiles({
+      modelRoot: modelRoot || process.env.BONFYRE_MODEL_ROOT || '/Users/nickgonzales/BonfyreModels',
+      binary: modelBinary || profiles.find((profile) => profile.binary)?.binary,
+    });
   }
 
   function profileInventory() {
@@ -173,6 +272,8 @@ export function createEstateGenerationFabric({ root = process.cwd(), tools, prof
       model: profile.model || basename(profile.modelPack),
       model_pack: profile.modelPack,
       tokenizer: profile.tokenizer,
+      available: profile.available !== false,
+      missing: profile.missing || [],
     }));
   }
 
@@ -205,6 +306,7 @@ export function createEstateGenerationFabric({ root = process.cwd(), tools, prof
   async function generate({ profileId, prompt, maxNewTokens = 20, greedy = true, env = {} } = {}) {
     const selected = profileClients.get(profileId);
     if (!selected) throw new Error(`Unknown generation profile: ${profileId}`);
+    if (selected.profile.available === false) throw new Error(`Generation profile is unavailable: ${(selected.profile.missing || []).join(', ')}`);
     const started = Date.now();
     const result = await selected.client.generate({ prompt, maxNewTokens, greedy, env });
     const receipt = {
@@ -243,5 +345,5 @@ export function createEstateGenerationFabric({ root = process.cwd(), tools, prof
     return { ...batch, ledger: toBatchLedgerRecord(batch), analytics: toBatchAnalyticsEvent(batch) };
   }
 
-  return { inventory, profileInventory, invoke, generate, batchGenerate };
+  return { inventory, modelCatalog, probeNativeTools: async (options = {}) => probeNativeTools({ ...options, root, ...(tools ? { tools } : {}), spawnImpl }), profileInventory, invoke, generate, batchGenerate };
 }
