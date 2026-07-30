@@ -376,6 +376,34 @@ static int cmd_insert(const char *db_path, const char *json_path) {
             free(obj);
             p = obj_end;
         }
+    } else {
+        /* BonfyreEmbed emits one direct {"vector": [...]} JSON document.
+         * Accept it as a single artifact so Embed → Vec does not require a
+         * lossy or hand-built wrapper. */
+        char id[256] = "", source[512] = "", type[128] = "embedding", text[4096] = "";
+        float embedding[VEC_DIMS];
+        json_str_value(json, "id", id, sizeof(id));
+        json_str_value(json, "source", source, sizeof(source));
+        json_str_value(json, "type", type, sizeof(type));
+        json_str_value(json, "text", text, sizeof(text));
+        int dims = json_parse_float_array(json, "embedding", embedding, VEC_DIMS);
+        if (dims == 0) dims = json_parse_float_array(json, "vector", embedding, VEC_DIMS);
+        if (id[0] == '\0') {
+            const char *base = strrchr(json_path, '/');
+            snprintf(id, sizeof(id), "%s", base ? base + 1 : json_path);
+        }
+        if (dims > 0) {
+            sqlite3_bind_text(meta_stmt, 1, id, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 2, source, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 3, type, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 4, text, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 5, "{}", -1, SQLITE_STATIC);
+            sqlite3_step(meta_stmt);
+            sqlite3_bind_text(vec_stmt, 1, id, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_blob(vec_stmt, 2, embedding, dims * (int)sizeof(float), SQLITE_TRANSIENT);
+            sqlite3_step(vec_stmt);
+            count = 1;
+        }
     }
 
     sqlite3_exec(db, "COMMIT", NULL, NULL, NULL);

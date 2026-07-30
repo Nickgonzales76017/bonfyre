@@ -1338,14 +1338,24 @@ int main(int argc, char **argv) {
                  (out_dir[0]) ? out_dir : ".");
     }
 
-    /* ── Embed cache: hash input text before touching ONNX ─── *
-     * SHA-256 the raw input text. If the store has a hit we skip
-     * ONNX entirely — cost is one stat() call (~1 µs).            */
+    /* ── Embed cache: hash the complete embedding contract ─── *
+     * Text alone is not sufficient: a 256-d hash fallback cannot
+     * satisfy a 384-d vector-store request for the same document. */
     uint8_t embed_hash[32];
     {
         BfSha256 _sha;
+        static const char cache_schema[] = "bonfyre-embed-cache-v2";
+        char requested_dims[32];
+        snprintf(requested_dims, sizeof(requested_dims), "%d", dims);
         bf_sha256_init(&_sha);
+        bf_sha256_update(&_sha, (const uint8_t *)cache_schema, sizeof(cache_schema));
         bf_sha256_update(&_sha, (const uint8_t *)text, text_len);
+        bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
+        bf_sha256_update(&_sha, (const uint8_t *)backend, strlen(backend));
+        bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
+        bf_sha256_update(&_sha, (const uint8_t *)model, strlen(model));
+        bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
+        bf_sha256_update(&_sha, (const uint8_t *)requested_dims, strlen(requested_dims));
         bf_sha256_final(&_sha, embed_hash);
     }
 
