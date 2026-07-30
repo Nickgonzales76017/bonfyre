@@ -25,4 +25,16 @@ assert.equal(calls, 1);
 assert.equal(bridge.cacheStats().coalesced, 1);
 bridge.invalidate(42);
 assert.equal(bridge.cacheStats().entries, 0);
+
+let release;
+const pendingResponse = new Promise((resolve) => { release = resolve; });
+const raceBridge = createWordPressBridge({
+  baseUrl: 'https://example.test',
+  fetchImpl: async () => ({ ok: true, json: async () => pendingResponse }),
+});
+const staleRead = raceBridge.fetchPost(7);
+raceBridge.invalidate(7);
+release({ id: 7, title: 'Stale' });
+await staleRead;
+assert.equal(raceBridge.cacheStats().entries, 0);
 console.log('wordpress bridge tests passed');
