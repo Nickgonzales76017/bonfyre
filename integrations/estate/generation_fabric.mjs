@@ -97,18 +97,18 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
   const profiles = [];
   const seenIds = new Set();
   for (const entry of entries) {
-    if (!entry.isFile() || !entry.name.endsWith('.fpq-pack.json')) continue;
+    if (!entry.isFile() || !/\.fpq2?-pack\.json$/.test(entry.name)) continue;
     const modelPack = join(packRoot, entry.name);
     let manifest;
     try { manifest = JSON.parse(await readFile(modelPack, 'utf8')); } catch { continue; }
-    const model = String(manifest.model_repo || entry.name.replace(/\.fpq-pack\.json$/, ''))
+    const model = String(manifest.model_repo || entry.name.replace(/\.fpq2?-pack\.json$/, ''))
       .split('/').pop().toLowerCase();
     const tokenizerCandidates = [
       join(tokenizerBase, model, 'tokenizer.json'),
       join(modelRoot, 'small', model, 'tokenizer.json'),
       join(modelRoot, 'raw', model, 'tokenizer.json'),
     ];
-    const partsDir = manifest.parts_dir || join(packRoot, entry.name.replace(/\.fpq-pack\.json$/, '.parts'));
+    const partsDir = manifest.parts_dir || join(packRoot, entry.name.replace(/\.fpq2?-pack\.json$/, '.parts'));
     const parts = Array.isArray(manifest.parts) ? manifest.parts : [];
     const partPaths = parts.map((part) => part.path || part.fpq_path || part.fpq_part || part.fpq2_part)
       .filter(Boolean).map((path) => path.startsWith('/') ? path : join(partsDir, path));
@@ -125,7 +125,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     if (!checks[1]) missing.push('tokenizer');
     if (!checks[2] || (partPaths.length && checks.slice(3).some((present) => !present))) missing.push('model-parts');
     let id = model;
-    if (seenIds.has(id)) id = `${model}-${entry.name.replace(/\.fpq-pack\.json$/, '').replace(`${model}-`, '')}`;
+    if (seenIds.has(id)) id = `${model}-${entry.name.replace(/\.fpq2?-pack\.json$/, '').replace(`${model}-`, '')}`;
     seenIds.add(id);
     profiles.push({
       id,
@@ -134,6 +134,12 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
       modelPack,
       tokenizer,
       backend: 'cpu_neon',
+      runtime: 'fpq-native',
+      compression: String(manifest.schema || '').includes('fpq2') ? 'fpq2' : 'fpq',
+      runtimeEnv: String(manifest.schema || '').includes('fpq2')
+        ? { BONFYRE_QWEN_KEEP_PREFILL_PREPARED: '1' }
+        : {},
+      defaultTimeoutMs: String(manifest.schema || '').includes('fpq2') ? 900_000 : 120_000,
       available: missing.length === 0,
       missing,
       pack_schema: manifest.schema || null,
@@ -386,6 +392,10 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
       id: profile.id,
       tool_id: profile.tool_id || basename(profile.binary),
       backend: profile.backend || 'cpu_neon',
+      runtime: profile.runtime || 'fpq-native',
+      compression: profile.compression || null,
+      runtime_env: profile.runtimeEnv || {},
+      default_timeout_ms: profile.defaultTimeoutMs || 120_000,
       model: profile.model || basename(profile.modelPack),
       model_pack: profile.modelPack,
       tokenizer: profile.tokenizer,
