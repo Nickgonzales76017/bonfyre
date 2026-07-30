@@ -2,7 +2,7 @@ import { toGenerationCmsEntry } from '../wordpress/native_generation.mjs';
 
 export const MCP_GENERATION_SCHEMA = 'bonfyre.mcp.generation.surface.v1';
 
-export function createNativeGenerationMcpSurface(fabric, { cmsClient } = {}) {
+export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet } = {}) {
   if (!fabric || typeof fabric.inventory !== 'function' || typeof fabric.generate !== 'function') {
     throw new Error('A generation fabric is required');
   }
@@ -10,7 +10,14 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient } = {}) {
     schema_version: MCP_GENERATION_SCHEMA,
     tools: [
       { name: 'bonfyre_native_inventory', effect: 'read', handler: () => fabric.inventory() },
+      { name: 'bonfyre_native_health', effect: 'bounded-read', handler: (args) => fabric.probeNativeTools?.(args) || { error: 'native health probe unavailable' } },
+      { name: 'bonfyre_model_catalog', effect: 'read', handler: () => fabric.modelCatalog?.() || [] },
       { name: 'bonfyre_generation_profiles', effect: 'read', handler: () => fabric.profileInventory?.() || [] },
+      ...(fleet ? [
+        { name: 'bonfyre_fleet_inspect', effect: 'read', handler: () => fleet.inspect() },
+        { name: 'bonfyre_fleet_wave', effect: 'bounded-fleet-exec', handler: (args) => fleet.runWave(args.tasks) },
+        { name: 'bonfyre_fleet_generation_wave', effect: 'bounded-fleet-exec', handler: (args) => fleet.runGenerationWave(args) },
+      ] : []),
       { name: 'bonfyre_native_invoke', effect: 'bounded-exec', handler: (args) => fabric.invoke(args) },
       { name: 'bonfyre_generation_generate', effect: 'bounded-model-exec', handler: async (args) => {
         const result = await fabric.generate(args);

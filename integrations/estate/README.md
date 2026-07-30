@@ -25,3 +25,13 @@ The MCP surface exposes inventory, profile discovery, bounded native invocation,
 single generation, and bounded batch generation. A new MCP connection is
 required after changing server tool schemas because MCP tool lists are fixed at
 connection time.
+
+The local model catalog scans manifests and referenced parts instead of treating
+a manifest as a runnable model. On the current machine it finds the runnable
+0.5B pack and 14B manifests whose large model parts are absent; those 14B
+profiles remain visible but unavailable until the parts are restored.
+
+The fleet catalog includes Agent Deck, Cavemem, Automerge, Feldera, egglog,
+HVM4, Hydro, CubeCL, Tract, Burn, YaFF, Lance, Verus, Daft, Gigatoken, and
+Restate. Providers are explicitly `unconfigured`, `shadow`, or `promoted` and
+cannot silently become authoritative.
