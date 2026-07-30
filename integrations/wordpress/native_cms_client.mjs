@@ -55,17 +55,21 @@ export function createNativeCmsClient({ baseUrl, token = '', fetchImpl = globalT
       source_received_at: entry.received_at,
     });
     if (existing?.id != null) {
+      const updated = await request(`${collection}/${encodeURIComponent(String(existing.id))}`, {
+        method: 'PUT',
+        body: payload,
+      });
+      if (updated?.data?.id == null) throw new Error('Native CMS update response is malformed');
       return {
-        ...await request(`${collection}/${encodeURIComponent(String(existing.id))}`, {
-          method: 'PUT',
-          body: payload,
-        }),
+        ...updated,
         operation: 'updated',
         external_id: entry.external_id,
       };
     }
+    const created = await request(collection, { method: 'POST', body: payload });
+    if (created?.data?.id == null) throw new Error('Native CMS create response is malformed');
     return {
-      ...await request(collection, { method: 'POST', body: payload }),
+      ...created,
       operation: 'created',
       external_id: entry.external_id,
     };

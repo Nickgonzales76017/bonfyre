@@ -21,7 +21,8 @@ export function normalizeWebhook({ body, rawBody = body?.rawBody || '', signatur
   if (!verifyWebhookSignature(rawBody, signature, secret)) throw new Error('Invalid WordPress webhook signature');
   const postId = String(body.post_id ?? body.id ?? '').trim();
   if (!postId) throw new Error('WordPress webhook is missing post_id');
-  const site = text(body.site || body.home_url || 'wordpress');
+  const site = text(body.site || body.home_url);
+  if (!site) throw new Error('WordPress webhook is missing site identity');
   const version = text(body.modified_gmt || body.modified || body.updated_at || body.date_gmt || '0');
   return {
     schema_version: WORDPRESS_SCHEMA,
@@ -36,6 +37,9 @@ export function normalizeWebhook({ body, rawBody = body?.rawBody || '', signatur
 export function toNativeCmsEntry(event, { contentType = 'cms_article', namespace = 'wordpress' } = {}) {
   if (!event || event.schema_version !== WORDPRESS_SCHEMA) {
     throw new Error('A normalized WordPress event is required');
+  }
+  if (!text(event.idempotency_key) || !text(event.event) || !text(event.received_at)) {
+    throw new Error('Normalized WordPress event is missing replay metadata');
   }
   if (!text(contentType) || !text(namespace)) throw new Error('contentType and namespace are required');
   const source = event.source || {};
