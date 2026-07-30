@@ -30,10 +30,11 @@ export function createNativeCmsClient({ baseUrl, token = '', fetchImpl = globalT
 
   async function syncWordPressEvent(event, { contentType = 'cms_article', namespace = 'wordpress' } = {}) {
     const entry = toNativeCmsEntry(event, { contentType, namespace });
-    if (inflight.has(entry.external_id)) return inflight.get(entry.external_id);
+    const inflightKey = `${namespace}:${contentType}:${entry.external_id}`;
+    if (inflight.has(inflightKey)) return inflight.get(inflightKey);
     const pending = syncEntry(entry, contentType, namespace);
-    inflight.set(entry.external_id, pending);
-    try { return await pending; } finally { inflight.delete(entry.external_id); }
+    inflight.set(inflightKey, pending);
+    try { return await pending; } finally { inflight.delete(inflightKey); }
   }
 
   async function syncEntry(entry, contentType, namespace) {

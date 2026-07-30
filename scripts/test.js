@@ -1,16 +1,31 @@
 #!/usr/bin/env node
 // Bonfyre npm test — checks that key binaries built and respond to 'status'
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const path = require('path');
 
 const binDir = path.join(__dirname, '..', 'bin');
 const bins = ['bonfyre-cms', 'bonfyre-api', 'bonfyre-pipeline', 'bonfyre-ingest', 'bonfyre-brief'];
 
 let pass = 0, fail = 0;
+const integrationTests = [
+  'integrations/wordpress/bridge.test.mjs',
+  'integrations/wordpress/native_cms_client.test.mjs',
+];
+for (const test of integrationTests) {
+  try {
+    execFileSync(process.execPath, [path.join(__dirname, '..', test)], { timeout: 5000, stdio: 'inherit' });
+    console.log(`  ✓ ${test}`);
+    pass++;
+  } catch {
+    console.log(`  ✗ ${test}`);
+    fail++;
+  }
+}
+
 for (const bin of bins) {
   const p = path.join(binDir, bin);
   try {
-    execSync(`"${p}" status`, { timeout: 5000, stdio: 'pipe' });
+    execFileSync(p, ['status'], { timeout: 5000, stdio: 'pipe' });
     console.log(`  ✓ ${bin}`);
     pass++;
   } catch {

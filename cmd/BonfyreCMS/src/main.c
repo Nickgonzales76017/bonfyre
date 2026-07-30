@@ -865,6 +865,10 @@ static int entry_create(sqlite3 *db, const char *type_name, const char *ns,
             has_json = (json_value(body_json, fd->name, NULL) != NULL);
 
         (void)bval;
+        if (fd->required && !(has_str || has_int || has_dbl || has_bool || has_json)) {
+            fprintf(stderr, "[crud] required field missing: %s.%s\n", type_name, fd->name);
+            return -1;
+        }
         if (has_str || has_int || has_dbl || has_bool || has_json) {
             size_t cl = strlen(cols), vl = strlen(vals);
             snprintf(cols + cl, sizeof(cols) - cl, ", \"%s\"", fd->name);
