@@ -388,6 +388,7 @@ typedef struct {
     char name[MAX_FIELD_NAME];
     FieldType type;
     int required;
+    int unique_within_namespace;
     int repeatable;       /* for components */
     char relation_kind[32]; /* oneToOne, oneToMany, manyToOne, manyToMany */
     char target[128];       /* relation target content type or component name */
@@ -519,6 +520,7 @@ static int parse_schema(const char *json, ContentType *ct) {
         fd->type = parse_field_type(type_str);
 
         json_bool(fobj, "required", &fd->required);
+        json_bool(fobj, "uniqueWithinNamespace", &fd->unique_within_namespace);
         json_bool(fobj, "repeatable", &fd->repeatable);
         json_str(fobj, "relation", fd->relation_kind, sizeof(fd->relation_kind));
         json_str(fobj, "target", fd->target, sizeof(fd->target));
@@ -718,6 +720,23 @@ static int create_content_table(sqlite3 *db, const ContentType *ct) {
                 fprintf(stderr, "[migrate] added column %s.%s (%s)\n",
                     ct->name, fd->name, field_type_name(fd->type));
             }
+        }
+    }
+
+    /* Create namespace-scoped identity indexes after migrations add fields. */
+    for (int i = 0; i < ct->field_count; i++) {
+        const FieldDef *fd = &ct->fields[i];
+        if (!fd->unique_within_namespace) continue;
+        /* A field may have been globally unique in an older schema revision. */
+        snprintf(sql, sizeof(sql), "DROP INDEX IF EXISTS idx_%s_%s;", ct->name, fd->name);
+        if (db_exec(db, sql) != 0) return -1;
+        snprintf(sql, sizeof(sql),
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_%s_%s_ns ON \"%s\"(namespace, \"%s\");",
+            ct->name, fd->name, ct->name, fd->name);
+        if (db_exec(db, sql) != 0) {
+            fprintf(stderr, "[schema] unable to create namespace identity index for %s.%s\n",
+                ct->name, fd->name);
+            return -1;
         }
     }
 
@@ -1014,7 +1033,12 @@ static int entry_list(sqlite3 *db, const char *type_name, const char *ns,
         off += snprintf(sql + off, sizeof(sql) - (size_t)off, ", \"%s\"", ct->fields[i].name);
     }
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " FROM \"%s\" WHERE 1=1", type_name);
-    if (ns && ns[0]) off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace LIKE '%s%%'", ns);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
     if (status && status[0]) off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND status='%s'", status);
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " ORDER BY id DESC LIMIT %d", limit > 0 ? limit : 25);
 
@@ -1096,7 +1120,8 @@ static int entry_list(sqlite3 *db, const char *type_name, const char *ns,
 }
 
 /* Get a single entry by ID */
-static int entry_get(sqlite3 *db, const char *type_name, int entry_id, FILE *out) {
+static int entry_get(sqlite3 *db, const char *type_name, int entry_id,
+                     const char *ns, FILE *out) {
     ContentType *ct = find_type(type_name);
     int bench_on = bench_metrics_is_enabled();
     struct timespec bench_ts0, bench_ts1;
@@ -1113,6 +1138,12 @@ static int entry_get(sqlite3 *db, const char *type_name, int entry_id, FILE *out
         off += snprintf(sql + off, sizeof(sql) - (size_t)off, ", \"%s\"", ct->fields[i].name);
     }
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " FROM \"%s\" WHERE id=?1", type_name);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
@@ -1237,8 +1268,32 @@ static int entry_get(sqlite3 *db, const char *type_name, int entry_id, FILE *out
 }
 
 /* Update entry fields */
+static int required_fields_valid(sqlite3 *db, const ContentType *ct, int entry_id)
+{
+    char sql[4096];
+    int off = snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM \"%s\" WHERE id=?1 AND (", ct->name);
+    int required_count = 0;
+    for (int i = 0; i < ct->field_count; i++) {
+        const FieldDef *fd = &ct->fields[i];
+        if (!fd->required || fd->type == FT_RELATION || fd->type == FT_COMPONENT) continue;
+        if (required_count++ > 0) off += snprintf(sql + off, sizeof(sql) - (size_t)off, " OR ");
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off,
+            "\"%s\" IS NULL OR \"%s\"=''", fd->name, fd->name);
+    }
+    if (required_count == 0) return 0;
+    off += snprintf(sql + off, sizeof(sql) - (size_t)off, ")");
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) return -1;
+    sqlite3_bind_int(stmt, 1, entry_id);
+    int invalid = sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_int(stmt, 0) > 0;
+    sqlite3_finalize(stmt);
+    if (invalid) fprintf(stderr, "[crud] required field missing after update: %s:%d\n", ct->name, entry_id);
+    return invalid ? -1 : 0;
+}
+
 static int entry_update(sqlite3 *db, const char *type_name, int entry_id,
-                        const char *body_json)
+                        const char *ns, const char *body_json)
 {
     ContentType *ct = find_type(type_name);
     if (!ct) return -1;
@@ -1309,13 +1364,25 @@ static int entry_update(sqlite3 *db, const char *type_name, int entry_id,
     }
 
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " WHERE id=%d", entry_id);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
 
     sqlite3_exec(db, "SAVEPOINT entry_update_sp", NULL, NULL, NULL);
     int rc = db_exec(db, sql);
+    if (rc == 0 && sqlite3_changes(db) != 1) rc = -1;
+
+    if (rc == 0 && required_fields_valid(db, ct, entry_id) != 0) {
+        sqlite3_exec(db, "ROLLBACK TO entry_update_sp", NULL, NULL, NULL);
+        rc = -1;
+    }
 
     /* Log update op to BonfyreGraph op log */
     if (rc == 0) {
-        ops_append(db, OP_UPDATE, type_name, (long long)entry_id, "root", body_json, "system", NULL);
+        ops_append(db, OP_UPDATE, type_name, (long long)entry_id, ns ? ns : "root", body_json, "system", NULL);
         if (!g_defer_indexing) {
             /* Value-only update: rebind without re-hashing family (structure doesn't change) */
             if (family_rebind_entry(db, type_name, entry_id) != 0) {
@@ -1330,17 +1397,24 @@ static int entry_update(sqlite3 *db, const char *type_name, int entry_id,
 }
 
 /* Delete entry + its relations */
-static int entry_delete(sqlite3 *db, const char *type_name, int entry_id) {
+static int entry_delete(sqlite3 *db, const char *type_name, int entry_id, const char *ns) {
+    char sql[512];
+    int off = snprintf(sql, sizeof(sql), "DELETE FROM \"%s\" WHERE id=%d", type_name, entry_id);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
+    if (db_exec(db, sql) != 0) return -1;
+    if (sqlite3_changes(db) != 1) return -1;
+
     if (family_remove_entry(db, type_name, entry_id) != 0) {
-        fprintf(stderr, "[crud] family removal failed before delete for %s:%d\n", type_name, entry_id);
+        fprintf(stderr, "[crud] family removal failed after delete for %s:%d\n", type_name, entry_id);
     }
 
-    char sql[512];
-    snprintf(sql, sizeof(sql), "DELETE FROM \"%s\" WHERE id=%d", type_name, entry_id);
-    if (db_exec(db, sql) != 0) return -1;
-
     /* Log delete op to BonfyreGraph op log */
-    ops_append(db, OP_DELETE, type_name, (long long)entry_id, "root", "{}", "system", NULL);
+    ops_append(db, OP_DELETE, type_name, (long long)entry_id, ns ? ns : "root", "{}", "system", NULL);
 
     snprintf(sql, sizeof(sql),
         "DELETE FROM _relations WHERE (source_type='%s' AND source_id=%d) "
@@ -1726,7 +1800,7 @@ static void handle_api_request(sqlite3 *db, HttpRequest *req, HttpResponse *resp
             free(resp->buf); resp->buf = NULL; resp->buf_len = 0;
             FILE *mem = open_memstream(&resp->buf, &resp->buf_len);
             if (!mem) { http_resp_json(resp, 500, "{\"error\":\"memstream\"}"); return; }
-            int rc = entry_get(db, collection, entry_id, mem);
+            int rc = entry_get(db, collection, entry_id, ns, mem);
             fclose(mem);
             resp->status = rc == 0 ? 200 : 404;
         } else {
@@ -1769,7 +1843,7 @@ static void handle_api_request(sqlite3 *db, HttpRequest *req, HttpResponse *resp
             http_resp_json(resp, 400, "{\"error\":\"id required\"}");
             return;
         }
-        int rc = entry_update(db, collection, entry_id, req->body);
+        int rc = entry_update(db, collection, entry_id, ns, req->body);
         if (rc == 0) {
             http_resp_json(resp, 200, "{\"data\":{\"id\":%d},\"meta\":{\"updated\":true}}", entry_id);
         } else {
@@ -1780,7 +1854,7 @@ static void handle_api_request(sqlite3 *db, HttpRequest *req, HttpResponse *resp
             http_resp_json(resp, 400, "{\"error\":\"id required\"}");
             return;
         }
-        int rc = entry_delete(db, collection, entry_id);
+        int rc = entry_delete(db, collection, entry_id, ns);
         if (rc == 0) {
             http_resp_json(resp, 200, "{\"data\":{\"id\":%d},\"meta\":{\"deleted\":true}}", entry_id);
         } else {
@@ -2174,7 +2248,7 @@ static int run_existing_content_bench(sqlite3 *db, const char *type_name,
     bench_metrics_reset();
     clock_gettime(CLOCK_MONOTONIC, &ts0);
     for (int i = 0; i < id_count; i++) {
-        if (entry_get(db, type_name, ids[i], bench_sink) != 0) point_get_failures++;
+        if (entry_get(db, type_name, ids[i], NULL, bench_sink) != 0) point_get_failures++;
     }
     clock_gettime(CLOCK_MONOTONIC, &ts1);
     elapsed = elapsed_ms_between(&ts0, &ts1);
@@ -2660,7 +2734,7 @@ int main(int argc, char **argv) {
 
         if (strcmp(argv[2], "get") == 0) {
             if (argc < 5) { fprintf(stderr, "Usage: bonfyre-cms entry get <type> <id>\n"); sqlite3_close(g_db); return 1; }
-            entry_get(g_db, argv[3], atoi(argv[4]), stdout);
+            entry_get(g_db, argv[3], atoi(argv[4]), NULL, stdout);
             sqlite3_close(g_db);
             return 0;
         }
@@ -2673,7 +2747,7 @@ int main(int argc, char **argv) {
                 if (argv[i][0] == '-' && i + 1 < argc) i++;
             }
             if (!body) { fprintf(stderr, "Missing JSON body\n"); sqlite3_close(g_db); return 1; }
-            int rc = entry_update(g_db, argv[3], atoi(argv[4]), body);
+            int rc = entry_update(g_db, argv[3], atoi(argv[4]), NULL, body);
             if (rc == 0) printf("{\"id\":%d,\"updated\":true}\n", atoi(argv[4]));
             sqlite3_close(g_db);
             return rc;
@@ -2681,7 +2755,7 @@ int main(int argc, char **argv) {
 
         if (strcmp(argv[2], "delete") == 0) {
             if (argc < 5) { fprintf(stderr, "Usage: bonfyre-cms entry delete <type> <id>\n"); sqlite3_close(g_db); return 1; }
-            int rc = entry_delete(g_db, argv[3], atoi(argv[4]));
+            int rc = entry_delete(g_db, argv[3], atoi(argv[4]), NULL);
             if (rc == 0) printf("{\"id\":%d,\"deleted\":true}\n", atoi(argv[4]));
             sqlite3_close(g_db);
             return rc;
@@ -3065,7 +3139,7 @@ int main(int argc, char **argv) {
         for (int i = 1; i <= N; i++) {
             char upd[128];
             snprintf(upd, sizeof(upd), "{\"current_stake_count\":%d}", i % 20 + 1);
-            if (entry_update(g_db, "service_offer", i, upd) != 0) update_failures++;
+            if (entry_update(g_db, "service_offer", i, NULL, upd) != 0) update_failures++;
         }
         sqlite3_exec(g_db, "COMMIT", NULL, NULL, NULL);
         clock_gettime(CLOCK_MONOTONIC, &ts1);
@@ -3076,7 +3150,7 @@ int main(int argc, char **argv) {
         bench_metrics_reset();
         clock_gettime(CLOCK_MONOTONIC, &ts0);
         for (int i = 1; i <= N; i++) {
-            if (entry_get(g_db, "service_offer", i, bench_sink) != 0) point_get_failures++;
+            if (entry_get(g_db, "service_offer", i, NULL, bench_sink) != 0) point_get_failures++;
         }
         clock_gettime(CLOCK_MONOTONIC, &ts1);
         elapsed = elapsed_ms_between(&ts0, &ts1);
