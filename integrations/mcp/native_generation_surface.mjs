@@ -2,7 +2,7 @@ import { toGenerationCmsEntry } from '../wordpress/native_generation.mjs';
 
 export const MCP_GENERATION_SCHEMA = 'bonfyre.mcp.generation.surface.v1';
 
-export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet } = {}) {
+export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet, adapterRuntime } = {}) {
   if (!fabric || typeof fabric.inventory !== 'function' || typeof fabric.generate !== 'function') {
     throw new Error('A generation fabric is required');
   }
@@ -22,6 +22,11 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet } = 
       { name: 'bonfyre_native_inventory', effect: 'read', handler: () => fabric.inventory() },
       { name: 'bonfyre_native_health', effect: 'bounded-read', handler: (args) => fabric.probeNativeTools?.(args) || { error: 'native health probe unavailable' } },
       { name: 'bonfyre_model_catalog', effect: 'read', handler: () => fabric.modelCatalog?.() || [] },
+      { name: 'bonfyre_model_recovery_verify', effect: 'bounded-read', handler: (args) => fabric.verifyModelPackRecovery?.(args) || { error: 'model recovery verifier unavailable' } },
+      ...(adapterRuntime ? [
+        { name: 'bonfyre_live_adapter_inventory', effect: 'read', handler: () => adapterRuntime.discover() },
+        { name: 'bonfyre_live_adapter_probe', effect: 'bounded-read', handler: (args) => adapterRuntime.probe(args) },
+      ] : []),
       { name: 'bonfyre_generation_profiles', effect: 'read', handler: () => fabric.profileInventory?.() || [] },
       ...(fleet ? [
         { name: 'bonfyre_fleet_inspect', effect: 'read', handler: () => fleet.inspect() },
