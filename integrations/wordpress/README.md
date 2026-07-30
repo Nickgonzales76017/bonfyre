@@ -12,6 +12,11 @@ stable operations:
   contract without permitting a publish or other mutation.
 - `createNativeCmsClient(...)`: connects to the native CMS CRUD surface and
   performs an external-ID-based create/update sync for replay-safe delivery.
+- `createNativeGenerationClient(...)`: executes the verified native Qwen FPQ
+  binary and returns a hashed `bonfyre.native.generation.result.v1` receipt.
+- `syncGenerationResult(...)`: projects that receipt into the namespaced
+  `cms_generation` content type for CMS, WordPress, Ledger, and analytics
+  consumers.
 - `invalidate(id)`: removes a post after a webhook or explicit refresh.
 
 WordPress plugins can call this contract from REST, WP-Cron, Action Scheduler,
@@ -26,4 +31,7 @@ bridge.invalidate(event.source.post_id);
 const entry = toNativeCmsEntry(event);
 const cms = createNativeCmsClient({ baseUrl: 'http://127.0.0.1:8800', token });
 await cms.syncWordPressEvent(event);
+
+const result = await generation.generate({ prompt: 'def fibonacci(n):\n', maxNewTokens: 20, greedy: true });
+await cms.syncGenerationResult(result);
 ```
