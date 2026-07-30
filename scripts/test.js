@@ -23,6 +23,7 @@ const integrationTests = [
   'integrations/wordpress/native_cms_client.test.mjs',
   'integrations/wordpress/native_cms_e2e.test.mjs',
   'integrations/estate/generation_fabric.test.mjs',
+  'integrations/estate/llama_generation.test.mjs',
   'integrations/estate/model_recovery.test.mjs',
   'integrations/estate/live_adapters.test.mjs',
   'integrations/estate/provider_fleet.test.mjs',

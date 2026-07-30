@@ -4,6 +4,7 @@ import { createReadStream } from 'node:fs';
 import { readdir, stat, readFile } from 'node:fs/promises';
 import { join, basename, dirname, isAbsolute, resolve, relative } from 'node:path';
 import { createNativeGenerationClient } from '../wordpress/native_generation.mjs';
+import { createLlamaGenerationClient } from './llama_generation.mjs';
 
 export const TOOL_RECEIPT_SCHEMA = 'bonfyre.native.tool.receipt.v1';
 export const BATCH_RECEIPT_SCHEMA = 'bonfyre.native.generation.batch.v1';
@@ -35,8 +36,11 @@ export function discoverGenerationProfiles({ env = process.env } = {}) {
   }
   if (!Array.isArray(parsed)) throw new Error('BONFYRE_MODEL_PROFILES must be a JSON array');
   return parsed.map((profile, index) => {
-    if (!profile || !text(profile.id) || !text(profile.binary) || !text(profile.modelPack) || !text(profile.tokenizer)) {
-      throw new Error(`BONFYRE_MODEL_PROFILES[${index}] requires id, binary, modelPack, and tokenizer`);
+    if (!profile || !text(profile.id) || !text(profile.binary) || !text(profile.modelPack)) {
+      throw new Error(`BONFYRE_MODEL_PROFILES[${index}] requires id, binary, and modelPack`);
+    }
+    if (profile.runtime !== 'llama-cpp' && !text(profile.tokenizer)) {
+      throw new Error(`BONFYRE_MODEL_PROFILES[${index}] requires tokenizer unless runtime is llama-cpp`);
     }
     return { ...profile, id: text(profile.id), schema_version: PROFILE_SCHEMA };
   });
@@ -85,11 +89,11 @@ export async function discoverNativeTools({ root = process.cwd(), binDir = join(
   }));
 }
 
-export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonzales/BonfyreModels', binary, tokenizerRoot } = {}) {
+export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonzales/BonfyreModels', binary, llamaBinary = process.env.BONFYRE_LLAMA_CPP_BINARY || '/opt/homebrew/bin/llama-cli', tokenizerRoot } = {}) {
   const packRoot = join(modelRoot, 'fpq');
   const tokenizerBase = tokenizerRoot || join(modelRoot, 'tokenizers');
   let entries = [];
-  try { entries = await readdir(packRoot, { withFileTypes: true }); } catch { return []; }
+  try { entries = await readdir(packRoot, { withFileTypes: true }); } catch { entries = []; }
   const profiles = [];
   const seenIds = new Set();
   for (const entry of entries) {
@@ -136,7 +140,41 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
       parameter_count: manifest.parameter_count || manifest.total_parameters || null,
     });
   }
+  const ggufRoot = join(modelRoot, 'gguf');
+  const llamaAvailable = await executable(llamaBinary);
+  let ggufGroups = [];
+  try { ggufGroups = await readdir(ggufRoot, { withFileTypes: true }); } catch { ggufGroups = []; }
+  for (const group of ggufGroups) {
+    const groupPath = join(ggufRoot, group.name);
+    const candidates = group.isDirectory()
+      ? await readdir(groupPath, { withFileTypes: true }).catch(() => [])
+      : [group];
+    for (const candidate of candidates) {
+      if (!candidate.isFile() || !candidate.name.endsWith('.gguf')) continue;
+      const modelPath = group.isDirectory() ? join(groupPath, candidate.name) : groupPath;
+      const id = `llama-${candidate.name.replace(/\.gguf$/, '').toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+      if (seenIds.has(id)) continue;
+      seenIds.add(id);
+      profiles.push({
+        id,
+        model: candidate.name.replace(/\.gguf$/, ''),
+        binary: llamaBinary,
+        modelPack: modelPath,
+        modelPath,
+        runtime: 'llama-cpp',
+        backend: 'metal',
+        available: llamaAvailable,
+        missing: llamaAvailable ? [] : ['llama-cli'],
+      });
+    }
+  }
   return profiles.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function createGenerationClient(profile, spawnImpl) {
+  return profile.runtime === 'llama-cpp'
+    ? createLlamaGenerationClient({ ...profile, spawnImpl })
+    : createNativeGenerationClient({ ...profile, spawnImpl });
 }
 
 function fileSha256(path) {
@@ -316,10 +354,10 @@ function toBatchAnalyticsEvent(batch) {
   };
 }
 
-export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, modelBinary, tools, profiles = discoverGenerationProfiles(), spawnImpl = spawn, maxConcurrency = 2 } = {}) {
+export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, modelBinary, llamaBinary, tools, profiles = discoverGenerationProfiles(), spawnImpl = spawn, maxConcurrency = 2 } = {}) {
   const profileClients = new Map(profiles.map((profile) => [profile.id, {
     profile,
-    client: createNativeGenerationClient({ ...profile, spawnImpl }),
+    client: createGenerationClient(profile, spawnImpl),
   }]));
 
   async function inventory() {
@@ -327,9 +365,14 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
   }
 
   async function modelCatalog() {
+    const nativeTools = await inventory();
+    const nativeGenerator = modelBinary
+      || profiles.find((profile) => profile.binary)?.binary
+      || nativeTools.find((tool) => tool.id === 'bonfyre-qwen-fpq' || tool.name === 'bonfyre-qwen-fpq')?.path;
     return discoverLocalModelProfiles({
       modelRoot: modelRoot || process.env.BONFYRE_MODEL_ROOT || '/Users/nickgonzales/BonfyreModels',
-      binary: modelBinary || profiles.find((profile) => profile.binary)?.binary,
+      binary: nativeGenerator,
+      llamaBinary,
     });
   }
 
@@ -382,7 +425,7 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     if (!selected) {
       const discovered = (await modelCatalog()).find((profile) => profile.id === profileId);
       if (discovered) {
-        selected = { profile: discovered, client: createNativeGenerationClient({ ...discovered, spawnImpl }) };
+        selected = { profile: discovered, client: createGenerationClient(discovered, spawnImpl) };
         profileClients.set(profileId, selected);
       }
     }
