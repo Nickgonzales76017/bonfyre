@@ -18,6 +18,7 @@ const ADAPTERS = [
   { id: 'hydro', capability: 'distributed_placement', command: 'hydro', args: ['--version'], healthyExitCodes: [0] },
   { id: 'cubecl', capability: 'accelerated_kernels', command: 'cubecl', args: ['--version'], healthyExitCodes: [0] },
   { id: 'tract', capability: 'local_model_execution', command: 'tract', args: ['--version'], healthyExitCodes: [0] },
+  { id: 'llama-cpp', capability: 'local_model_execution', command: 'llama-cli', args: ['--version'], healthyExitCodes: [0] },
   { id: 'burn', capability: 'tensor_runtime', command: 'burn', args: ['--version'], healthyExitCodes: [0] },
   { id: 'yaff', capability: 'artifact_compilation', command: 'yaff', args: ['--version'], healthyExitCodes: [0] },
   { id: 'lance', capability: 'vector_multimodal_data', command: 'lance', args: ['--version'], healthyExitCodes: [0] },
