@@ -947,6 +947,22 @@ static int load_native_paths(const char *path, native_tensor_t **out, size_t *n_
         char **g = (char **)realloc(paths, (n_paths + 1) * sizeof(char *)); if (!g) { closedir(d); return -1; }
         paths = g; paths[n_paths++] = strdup(full);
     }
+    if (n_paths > 0) {
+        size_t legacy_count = 0;
+        rewinddir(d);
+        while ((ent = readdir(d)) != NULL) {
+            if (ends_with_local(ent->d_name, ".fpq")) legacy_count++;
+        }
+        /* A side-by-side conversion is eligible only when every legacy shard
+         * has an FPQ2 peer.  A partial conversion must preserve the known-good
+         * legacy set instead of producing an incomplete model. */
+        if (legacy_count > 0 && legacy_count != n_paths) {
+            for (size_t i = 0; i < n_paths; i++) free(paths[i]);
+            free(paths);
+            paths = NULL;
+            n_paths = 0;
+        }
+    }
     if (n_paths == 0) {
         rewinddir(d);
         while ((ent = readdir(d)) != NULL) {
