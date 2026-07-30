@@ -31,7 +31,7 @@ try {
   await run(binary, ['convert-fpq', source, compressed], { cwd: repo });
   await run(binary, ['convert-fpq', source, lossless], {
     cwd: repo,
-    env: { ...process.env, BONFYRE_FPQ_LOSSLESS: '1' },
+    env: { ...process.env, BONFYRE_FPQ_FP16_DIAGNOSTIC: '1' },
   });
   const compressedBytes = (await stat(compressed)).size;
   const losslessBytes = (await stat(lossless)).size;
