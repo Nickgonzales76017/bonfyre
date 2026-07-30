@@ -10,6 +10,8 @@ stable operations:
   stable Bonfyre event envelope with an idempotency key.
 - `toNativeCmsEntry(event)`: projects that envelope into the native CMS entry
   contract without permitting a publish or other mutation.
+- `createNativeCmsClient(...)`: connects to the native CMS CRUD surface and
+  performs an external-ID-based create/update sync for replay-safe delivery.
 - `invalidate(id)`: removes a post after a webhook or explicit refresh.
 
 WordPress plugins can call this contract from REST, WP-Cron, Action Scheduler,
@@ -22,4 +24,6 @@ Example webhook flow:
 const event = bridge.normalizeWebhook({ body, rawBody, signature, secret });
 bridge.invalidate(event.source.post_id);
 const entry = toNativeCmsEntry(event);
+const cms = createNativeCmsClient({ baseUrl: 'http://127.0.0.1:8800', token });
+await cms.syncWordPressEvent(event);
 ```
