@@ -9,6 +9,12 @@ assert.equal(verifyWebhookSignature(rawBody, signature, secret), true);
 assert.equal(verifyWebhookSignature(rawBody, 'sha256=00', secret), false);
 const event = normalizeWebhook({ body: JSON.parse(rawBody), rawBody, signature, secret });
 assert.equal(event.idempotency_key, 'https://example.test:42:2026-07-30T12:00:00Z');
+const missingSiteBody = JSON.stringify({ post_id: 42 });
+const missingSiteSignature = `sha256=${createHmac('sha256', secret).update(missingSiteBody).digest('hex')}`;
+assert.throws(
+  () => normalizeWebhook({ body: JSON.parse(missingSiteBody), rawBody: missingSiteBody, signature: missingSiteSignature, secret }),
+  /site identity/i,
+);
 const nativeEntry = toNativeCmsEntry(event);
 assert.deepEqual(nativeEntry, {
   schema_version: 'bonfyre.native.cms.entry.v1',
@@ -28,6 +34,7 @@ assert.deepEqual(nativeEntry, {
   received_at: event.received_at,
 });
 assert.throws(() => toNativeCmsEntry({}), /normalized WordPress event/i);
+assert.throws(() => toNativeCmsEntry({ ...event, idempotency_key: '' }), /replay metadata/i);
 
 let calls = 0;
 const bridge = createWordPressBridge({
