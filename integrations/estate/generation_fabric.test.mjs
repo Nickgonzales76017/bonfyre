@@ -12,10 +12,14 @@ function fakeSpawn(_path, args) {
   child.stdout = new EventEmitter();
   child.stderr = new EventEmitter();
   child.stdin = { end() {} };
-  const out = args[args.indexOf('--out') + 1];
   setImmediate(async () => {
-    await writeFile(out, '    if n <= 0:', 'utf8');
-    child.stdout.emit('data', 'native-tool-output');
+    if (args.includes('--out')) {
+      const out = args[args.indexOf('--out') + 1];
+      await writeFile(out, '    if n <= 0:', 'utf8');
+      child.stdout.emit('data', 'native-tool-output');
+    } else {
+      child.stdout.emit('data', '<|im_start|>assistant\\ndef add(a, b):\\n    return a + b\\n\\n[ Prompt: 1.0 t/s ]');
+    }
     child.emit('close', 0, null);
   });
   return child;
@@ -46,4 +50,13 @@ assert.equal(batch.results[0].analytics.event_name, 'native_generation.completed
 assert.equal(batch.ledger.event, 'native.generation.batch.completed');
 assert.equal(batch.analytics.measures.passed, 2);
 assert.equal(fabric.profileInventory()[0].id, 'qwen-coder-small');
+
+const llamaFabric = createEstateGenerationFabric({
+  tools,
+  spawnImpl: fakeSpawn,
+  profiles: [{ id: 'coder-llama', binary: '/bin/llama-cli', modelPack: '/models/coder.gguf', runtime: 'llama-cpp' }],
+});
+const llamaBatch = await llamaFabric.batchGenerate([{ profileId: 'coder-llama', prompt: 'Write add.', maxNewTokens: 8 }]);
+assert.equal(llamaBatch.passed, 1);
+assert.equal(llamaBatch.results[0].backend, 'llama-cpp');
 console.log('estate generation fabric tests passed');

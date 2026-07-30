@@ -7,6 +7,7 @@ export function createEstateControlPlane({
   root = process.cwd(),
   modelRoot,
   modelBinary,
+  llamaBinary,
   profiles,
   providers,
   providerConfig,
@@ -15,7 +16,7 @@ export function createEstateControlPlane({
   spawnImpl,
 } = {}) {
   const receiptJournal = receiptJournalFile ? createReceiptJournal({ file: receiptJournalFile }) : undefined;
-  const fabric = createEstateGenerationFabric({ root, modelRoot, modelBinary, profiles, spawnImpl });
+  const fabric = createEstateGenerationFabric({ root, modelRoot, modelBinary, llamaBinary, profiles, spawnImpl });
   const adapterRuntime = createLiveAdapterRuntime({ spawnImpl, receiptJournal });
   const fleet = createAgentFleet({
     fabric,
