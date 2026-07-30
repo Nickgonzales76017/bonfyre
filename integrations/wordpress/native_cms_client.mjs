@@ -1,4 +1,5 @@
 import { toNativeCmsEntry } from './bridge.mjs';
+import { toGenerationCmsEntry } from './native_generation.mjs';
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -37,7 +38,14 @@ export function createNativeCmsClient({ baseUrl, token = '', fetchImpl = globalT
     try { return await pending; } finally { inflight.delete(inflightKey); }
   }
 
-  async function syncEntry(entry, contentType, namespace) {
+  async function syncGenerationResult(result, { namespace = 'bonfyre-generation' } = {}) {
+    return syncEntry(toGenerationCmsEntry(result, { namespace }));
+  }
+
+  async function syncEntry(entry, contentType = entry?.content_type, namespace = entry?.namespace) {
+    if (!text(contentType) || !text(namespace)) {
+      throw new Error('Native CMS entry is missing content type or namespace');
+    }
     const collection = `${root}/v1/api/${encodeSegment(namespace)}/${encodeSegment(contentType)}`;
     const listing = await request(`${collection}?pageSize=100`);
     if (!Array.isArray(listing.data)) throw new Error('Native CMS listing is malformed');
@@ -76,5 +84,5 @@ export function createNativeCmsClient({ baseUrl, token = '', fetchImpl = globalT
     };
   }
 
-  return { syncWordPressEvent };
+  return { syncWordPressEvent, syncGenerationResult, syncEntry };
 }

@@ -74,6 +74,28 @@ try {
   await waitForHealth(`http://127.0.0.1:${port}/v1/health`, child);
   const client = createNativeCmsClient({ baseUrl: `http://127.0.0.1:${port}` });
 
+  const generation = {
+    schema_version: 'bonfyre.native.generation.result.v1',
+    generated_at: '2026-07-30T12:00:01.000Z',
+    model: { name: 'bonfyre-qwen-fpq' },
+    backend: 'cpu_neon',
+    request: { prompt: 'def fibonacci(n):\n', max_new_tokens: 8, greedy: true },
+    prompt_sha256: 'prompt-receipt',
+    output: '    if n <= 0:',
+    output_sha256: 'output-receipt',
+  };
+  const schemaProbe = await fetch(`http://127.0.0.1:${port}/v1/schemas`).then(async (response) => ({
+    status: response.status,
+    body: await response.json(),
+  }));
+  assert.equal(schemaProbe.status, 200);
+  assert.ok(schemaProbe.body.data.some((schema) => schema.name === 'cms_generation'));
+  const generationSync = await client.syncGenerationResult(generation);
+  assert.equal(generationSync.operation, 'created');
+  const generated = await fetch(`http://127.0.0.1:${port}/v1/api/bonfyre-generation/cms_generation?pageSize=100`).then((r) => r.json());
+  assert.equal(generated.data.length, 1);
+  assert.equal(generated.data[0].attributes.output, generation.output);
+
   const first = await client.syncWordPressEvent(event, { namespace: 'wordpress' });
   assert.equal(first.operation, 'created');
   const second = await client.syncWordPressEvent(event, { namespace: 'wordpress2' });
