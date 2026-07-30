@@ -23,7 +23,13 @@ const PROVIDERS = [
 ];
 
 const keyFor = (id) => id.toUpperCase().replace(/[^A-Z0-9]/g, '_');
-const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+function stable(value) {
+  if (Array.isArray(value)) return `[${value.map(stable).join(',')}]`;
+  if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${stable(value[key])}`).join(',')}}`;
+  return JSON.stringify(value);
+}
+
+const digest = (value) => createHash('sha256').update(stable(value)).digest('hex');
 
 export function toCanonicalReceipt({ task, result, status, startedAt, completedAt = new Date().toISOString() }) {
   const input = task || {};
@@ -79,7 +85,8 @@ function receipt({ task, status, result = null, error = null, startedAt }) {
     ...body,
     receipt_sha256: digest(body),
   };
-  return { ...fleetReceipt, canonical: toCanonicalReceipt({ task, result, status, startedAt, completedAt: body.completed_at }) };
+  const canonical = toCanonicalReceipt({ task, result, status, startedAt, completedAt: body.completed_at });
+  return { ...fleetReceipt, canonical, canonical_sha256: digest(canonical) };
 }
 
 export function createAgentFleet({ fabric, providers, maxConcurrency = 2, providerHandlers = {} } = {}) {
@@ -111,9 +118,14 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
       const provider = catalog.find((candidate) => candidate.id === task.provider_id);
       if (!provider) throw new Error(`unknown provider: ${task.provider_id}`);
       if (provider.state === 'unconfigured') return receipt({ task, status: 'skipped', error: 'provider is not configured', startedAt });
+      if (provider.state !== 'promoted') return receipt({ task, status: 'shadow', result: { provider, reason: 'provider is not promoted' }, startedAt });
       const handler = providerHandlers[provider.id];
       if (typeof handler !== 'function') return receipt({ task, status: 'shadow', result: { provider, reason: 'no promoted handler' }, startedAt });
-      const result = await handler(task, provider);
+      const timeoutMs = Math.max(100, Math.min(Number(task.timeoutMs) || 30_000, 120_000));
+      const result = await Promise.race([
+        handler(task, provider),
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`provider handler timed out after ${timeoutMs}ms`)), timeoutMs)),
+      ]);
       return receipt({ task, status: 'passed', result, startedAt });
     } catch (error) {
       return receipt({ task, status: 'failed', error: error.message, startedAt });

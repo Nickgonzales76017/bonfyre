@@ -35,4 +35,19 @@ assert.equal(entry.namespace, 'bonfyre-generation');
 assert.equal(entry.fields.output, result.output);
 assert.equal(entry.fields.output_sha256, result.output_sha256);
 assert.equal(entry.idempotency_key, `bonfyre.native.generation.result.v1:${result.output_sha256}`);
+
+const hangingSpawn = () => {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  child.kill = () => true;
+  return child;
+};
+const boundedClient = createNativeGenerationClient({
+  binary: '/opt/cmd/bonfyre-qwen-fpq',
+  modelPack: '/models/qwen.fpq-pack.json',
+  tokenizer: '/models/tokenizer.json',
+  spawnImpl: hangingSpawn,
+});
+await assert.rejects(() => boundedClient.generate({ prompt: 'timeout', timeoutMs: 10 }), /timed out after 10ms/);
 console.log('native generation estate contract passed');

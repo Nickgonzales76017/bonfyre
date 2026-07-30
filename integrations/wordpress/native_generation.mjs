@@ -14,15 +14,27 @@ function integer(value, fallback) {
   return Number.isInteger(value) && value > 0 ? value : fallback;
 }
 
-function run(binary, args, options, spawnImpl) {
+function run(binary, args, options, spawnImpl, timeoutMs = 120_000) {
   return new Promise((resolve, reject) => {
     const child = spawnImpl(binary, args, options);
     let stderr = '';
     let stdout = '';
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      child.kill('SIGKILL');
+      settled = true;
+      resolve({ code: null, signal: 'SIGKILL', stderr, stdout, timed_out: true });
+    }, timeoutMs);
     child.stdout?.on('data', (chunk) => { stdout += chunk.toString(); });
     child.stderr?.on('data', (chunk) => { stderr += chunk.toString(); });
-    child.once('error', reject);
-    child.once('close', (code, signal) => resolve({ code, signal, stderr, stdout }));
+    child.once('error', (error) => { if (!settled) { settled = true; clearTimeout(timer); reject(error); } });
+    child.once('close', (code, signal) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve({ code, signal, stderr, stdout, timed_out: false });
+    });
   });
 }
 
@@ -71,7 +83,7 @@ export function createNativeGenerationClient({
   }
   if (typeof spawnImpl !== 'function') throw new Error('spawnImpl is required');
 
-  async function generate({ prompt, maxNewTokens = 20, greedy = true, env = {} } = {}) {
+  async function generate({ prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = 120_000 } = {}) {
     const sourcePrompt = typeof prompt === 'string' ? prompt : '';
     if (!sourcePrompt) throw new Error('prompt is required');
     const limit = integer(maxNewTokens, 20);
@@ -89,7 +101,8 @@ export function createNativeGenerationClient({
       const execution = await run(binary, args, {
         env: { ...process.env, ...env },
         cwd: process.cwd(),
-      }, spawnImpl);
+      }, spawnImpl, timeoutMs);
+      if (execution.timed_out) throw new Error(`Native generation timed out after ${timeoutMs}ms`);
       if (execution.code !== 0) {
         throw new Error(`Native generation failed (${execution.code ?? execution.signal}): ${execution.stderr.trim()}`);
       }

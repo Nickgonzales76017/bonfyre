@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createAgentFleet, providerCatalog } from './provider_fleet.mjs';
+import { createAgentFleet, providerCatalog, toCanonicalReceipt } from './provider_fleet.mjs';
 
 const providers = providerCatalog({ env: { BONFYRE_PROVIDER_HVM4_COMMAND: 'hvm4' }, configured: { hvm4: { command: 'hvm4', state: 'promoted' } } });
 const fabric = {
@@ -24,4 +24,12 @@ assert.equal(wave.skipped, 1);
 assert.ok(wave.wave_sha256);
 assert.ok(wave.results.every((result) => result.receipt_sha256));
 assert.ok(wave.results.every((result) => result.canonical.schema_version === 'bonfyre.execution.receipt.v1'));
+assert.equal(toCanonicalReceipt({ task: { id: 'x', b: 2, a: 1 }, result: { z: 3, y: 2 }, status: 'passed', startedAt: 'now' }).input_sha256,
+  toCanonicalReceipt({ task: { a: 1, b: 2, id: 'x' }, result: { y: 2, z: 3 }, status: 'passed', startedAt: 'now' }).input_sha256);
+let shadowCalled = false;
+const shadowProviders = providers.map((provider) => provider.id === 'hvm4' ? { ...provider, state: 'shadow' } : provider);
+const shadowFleet = createAgentFleet({ fabric, providers: shadowProviders, providerHandlers: { hvm4: async () => { shadowCalled = true; } } });
+const shadowWave = await shadowFleet.runWave([{ id: 'shadow', kind: 'provider', provider_id: 'hvm4' }]);
+assert.equal(shadowWave.results[0].status, 'shadow');
+assert.equal(shadowCalled, false);
 console.log('provider fleet tests passed');
