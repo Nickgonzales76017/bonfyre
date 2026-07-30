@@ -34,7 +34,8 @@ profiles remain visible but unavailable until the parts are restored.
 
 The fleet catalog includes Agent Deck, Cavemem, Automerge, Feldera, egglog,
 HVM4, the separately identified HVM2 compatibility runtime, Hydro, CubeCL,
-Tract, Burn, YaFF, Lance, Verus, Daft, Gigatoken, Restate, Bernstein, and RTK.
+Tract, the separately surfaced llama.cpp GGUF runtime, Burn, YaFF, Lance,
+Verus, Daft, Gigatoken, Restate, Bernstein, and RTK.
 Providers are explicitly `unconfigured`, `shadow`, or `promoted` and cannot
 silently become authoritative. A promoted provider runs only through a bounded
 native adapter handler; every probe projects a hashed receipt, ledger event, and

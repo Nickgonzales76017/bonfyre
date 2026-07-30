@@ -15,7 +15,7 @@ const fleet = createAgentFleet({
 });
 
 const inspection = await fleet.inspect();
-assert.equal(inspection.providers.length, 19);
+assert.equal(inspection.providers.length, 20);
 assert.equal(inspection.providers.find((provider) => provider.id === 'hvm4').state, 'promoted');
 const wave = await fleet.runGenerationWave({ profileId: 'coder-large', prompt: 'write a parser', nativeToolId: 'bonfyre-qwen-fpq', providerIds: ['hvm4', 'cavemem'] });
 assert.equal(wave.count, 4);

@@ -14,6 +14,7 @@ const PROVIDERS = [
   ['hydro', 'distributed_placement', 'placement'],
   ['cubecl', 'accelerated_kernels', 'kernel'],
   ['tract', 'local_model_execution', 'model'],
+  ['llama-cpp', 'local_model_execution', 'gguf-model'],
   ['burn', 'tensor_runtime', 'tensor'],
   ['yaff', 'artifact_compilation', 'artifact'],
   ['lance', 'vector_multimodal_data', 'vector'],
