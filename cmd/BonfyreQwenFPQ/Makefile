@@ -80,4 +80,7 @@ install-bin: $(BIN)
 clean:
 	rm -f $(BIN)
 
-.PHONY: all clean install-bin
+test: $(BIN)
+	sh tests/attention_bias_contract.sh
+
+.PHONY: all clean install-bin test
