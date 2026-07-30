@@ -216,7 +216,19 @@ static int json_str(const char *json, const char *key, char *out, size_t sz) {
     p++;
     size_t i = 0;
     while (*p && *p != '"' && i < sz - 1) {
-        if (*p == '\\' && *(p+1)) { p++; }
+        if (*p == '\\' && *(p + 1)) {
+            p++;
+            switch (*p) {
+                case 'n': out[i++] = '\n'; break;
+                case 'r': out[i++] = '\r'; break;
+                case 't': out[i++] = '\t'; break;
+                case 'b': out[i++] = '\b'; break;
+                case 'f': out[i++] = '\f'; break;
+                default: out[i++] = *p; break;
+            }
+            p++;
+            continue;
+        }
         out[i++] = *p++;
     }
     out[i] = '\0';
@@ -2714,8 +2726,19 @@ int main(int argc, char **argv) {
                 if (argv[i][0] == '-' && i + 1 < argc) i++; /* skip flag value */
             }
             if (!body) { fprintf(stderr, "Missing JSON body\n"); sqlite3_close(g_db); return 1; }
+            char *body_from_file = NULL;
+            if (body[0] == '@') {
+                body_from_file = bf_read_file(body + 1, NULL);
+                if (!body_from_file) {
+                    fprintf(stderr, "Cannot read JSON body file: %s\n", body + 1);
+                    sqlite3_close(g_db);
+                    return 1;
+                }
+                body = body_from_file;
+            }
             long long new_id = 0;
             int rc = entry_create(g_db, type, ns, body, &new_id);
+            free(body_from_file);
             if (rc == 0) printf("{\"id\":%lld,\"created\":true}\n", new_id);
             sqlite3_close(g_db);
             return rc;
