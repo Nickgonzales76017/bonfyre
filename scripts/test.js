@@ -26,6 +26,7 @@ const integrationTests = [
   'integrations/estate/model_recovery.test.mjs',
   'integrations/estate/live_adapters.test.mjs',
   'integrations/estate/provider_fleet.test.mjs',
+  'integrations/estate/control_plane.test.mjs',
   'integrations/mcp/native_generation_surface.test.mjs',
 ];
 for (const test of integrationTests) {

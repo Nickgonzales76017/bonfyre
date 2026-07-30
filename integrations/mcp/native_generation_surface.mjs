@@ -1,8 +1,9 @@
 import { toGenerationCmsEntry } from '../wordpress/native_generation.mjs';
+import { createLiveAdapterRuntime } from '../estate/live_adapters.mjs';
 
 export const MCP_GENERATION_SCHEMA = 'bonfyre.mcp.generation.surface.v1';
 
-export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet, adapterRuntime } = {}) {
+export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet, adapterRuntime = createLiveAdapterRuntime() } = {}) {
   if (!fabric || typeof fabric.inventory !== 'function' || typeof fabric.generate !== 'function') {
     throw new Error('A generation fabric is required');
   }
