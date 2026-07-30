@@ -10,6 +10,7 @@ const PROVIDERS = [
   ['feldera', 'streaming_computation', 'stream'],
   ['egglog', 'symbolic_rewriting', 'rewrite'],
   ['hvm4', 'recursive_reduction', 'reduction'],
+  ['hvm2', 'recursive_reduction', 'compat-reduction'],
   ['hydro', 'distributed_placement', 'placement'],
   ['cubecl', 'accelerated_kernels', 'kernel'],
   ['tract', 'local_model_execution', 'model'],
@@ -20,6 +21,8 @@ const PROVIDERS = [
   ['daft', 'distributed_datasets', 'dataset'],
   ['gigatoken', 'context_compression', 'compression'],
   ['restate', 'durable_workflows', 'workflow'],
+  ['bernstein', 'durable_workflows', 'workflow-manifest'],
+  ['rtk', 'context_compression', 'token-optimization'],
 ];
 
 const keyFor = (id) => id.toUpperCase().replace(/[^A-Z0-9]/g, '_');
@@ -68,6 +71,25 @@ export function providerCatalog({ env = process.env, configured = {} } = {}) {
   });
 }
 
+export function reconcileProviderCatalog({ providers, adapters = [] } = {}) {
+  const observations = new Map(adapters.map((adapter) => [adapter.id || adapter.adapter_id, adapter]));
+  return (providers || providerCatalog()).map((provider) => {
+    const adapter = observations.get(provider.id);
+    const observed = adapter ? {
+      state: adapter.state || null,
+      status: adapter.status || null,
+      command_path: adapter.command_path || null,
+      receipt_sha256: adapter.receipt_sha256 || null,
+    } : { state: 'not_observed', status: null, command_path: null, receipt_sha256: null };
+    return {
+      ...provider,
+      observed,
+      promotion_ready: provider.state === 'shadow' && observed.state === 'installed' && observed.status === 'passed',
+      execution_ready: provider.state === 'promoted' && observed.status === 'passed',
+    };
+  });
+}
+
 function receipt({ task, status, result = null, error = null, startedAt }) {
   const body = {
     task_id: task.id,
@@ -89,15 +111,27 @@ function receipt({ task, status, result = null, error = null, startedAt }) {
   return { ...fleetReceipt, canonical, canonical_sha256: digest(canonical) };
 }
 
-export function createAgentFleet({ fabric, providers, maxConcurrency = 2, providerHandlers = {} } = {}) {
+function bounded(promise, timeoutMs, label) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+    Promise.resolve(promise).then(
+      (value) => { clearTimeout(timer); resolve(value); },
+      (error) => { clearTimeout(timer); reject(error); },
+    );
+  });
+}
+
+export function createAgentFleet({ fabric, providers, maxConcurrency = 2, providerHandlers = {}, receiptJournal, adapterRuntime } = {}) {
   if (!fabric || typeof fabric.inventory !== 'function') throw new Error('A native generation fabric is required');
   const catalog = providers || providerCatalog();
+  const liveHandlers = adapterRuntime?.providerHandlers?.() || {};
+  const handlers = { ...liveHandlers, ...providerHandlers };
 
   async function inspect() {
     return {
       schema_version: FLEET_SCHEMA,
       fleet_id: digest(catalog.map(({ id, state, command }) => ({ id, state, command }))),
-      providers: catalog,
+      providers: adapterRuntime ? reconcileProviderCatalog({ providers: catalog, adapters: adapterRuntime.observations?.() ?? await adapterRuntime.discover() }) : catalog,
       native_tools: await fabric.inventory(),
       profiles: fabric.profileInventory?.() || [],
     };
@@ -119,13 +153,10 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
       if (!provider) throw new Error(`unknown provider: ${task.provider_id}`);
       if (provider.state === 'unconfigured') return receipt({ task, status: 'skipped', error: 'provider is not configured', startedAt });
       if (provider.state !== 'promoted') return receipt({ task, status: 'shadow', result: { provider, reason: 'provider is not promoted' }, startedAt });
-      const handler = providerHandlers[provider.id];
+      const handler = handlers[provider.id];
       if (typeof handler !== 'function') return receipt({ task, status: 'shadow', result: { provider, reason: 'no promoted handler' }, startedAt });
       const timeoutMs = Math.max(100, Math.min(Number(task.timeoutMs) || 30_000, 120_000));
-      const result = await Promise.race([
-        handler(task, provider),
-        new Promise((_, reject) => setTimeout(() => reject(new Error(`provider handler timed out after ${timeoutMs}ms`)), timeoutMs)),
-      ]);
+      const result = await bounded(handler(task, provider), timeoutMs, 'provider handler');
       return receipt({ task, status: 'passed', result, startedAt });
     } catch (error) {
       return receipt({ task, status: 'failed', error: error.message, startedAt });
@@ -153,7 +184,8 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
       results,
       created_at: new Date().toISOString(),
     };
-    return { ...body, wave_sha256: digest(body) };
+    const wave = { ...body, wave_sha256: digest(body) };
+    return receiptJournal?.append ? { ...wave, journal: await receiptJournal.append(wave) } : wave;
   }
 
   async function runGenerationWave({ profileId, prompt, nativeToolId, nativeArgs = [], providerIds = [] } = {}) {

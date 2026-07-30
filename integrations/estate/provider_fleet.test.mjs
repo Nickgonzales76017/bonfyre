@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { createAgentFleet, providerCatalog, toCanonicalReceipt } from './provider_fleet.mjs';
+import { createAgentFleet, providerCatalog, reconcileProviderCatalog, toCanonicalReceipt } from './provider_fleet.mjs';
 
 const providers = providerCatalog({ env: { BONFYRE_PROVIDER_HVM4_COMMAND: 'hvm4' }, configured: { hvm4: { command: 'hvm4', state: 'promoted' } } });
 const fabric = {
@@ -15,7 +15,7 @@ const fleet = createAgentFleet({
 });
 
 const inspection = await fleet.inspect();
-assert.equal(inspection.providers.length, 16);
+assert.equal(inspection.providers.length, 19);
 assert.equal(inspection.providers.find((provider) => provider.id === 'hvm4').state, 'promoted');
 const wave = await fleet.runGenerationWave({ profileId: 'coder-large', prompt: 'write a parser', nativeToolId: 'bonfyre-qwen-fpq', providerIds: ['hvm4', 'cavemem'] });
 assert.equal(wave.count, 4);
@@ -32,4 +32,21 @@ const shadowFleet = createAgentFleet({ fabric, providers: shadowProviders, provi
 const shadowWave = await shadowFleet.runWave([{ id: 'shadow', kind: 'provider', provider_id: 'hvm4' }]);
 assert.equal(shadowWave.results[0].status, 'shadow');
 assert.equal(shadowCalled, false);
+const reconciled = reconcileProviderCatalog({ providers: shadowProviders, adapters: [{ id: 'hvm4', state: 'installed', status: 'passed', command_path: '/usr/local/bin/hvm4' }] });
+assert.equal(reconciled.find((provider) => provider.id === 'hvm4').promotion_ready, true);
+assert.equal(reconciled.find((provider) => provider.id === 'hvm4').execution_ready, false);
+let liveCalls = 0;
+const liveFleet = createAgentFleet({
+  fabric,
+  providers: providerCatalog({ configured: { cavemem: { command: 'cavemem', state: 'promoted' } } }),
+  adapterRuntime: {
+    discover: async () => [{ id: 'cavemem', state: 'installed', status: 'passed', command_path: '/mock/cavemem' }],
+    observations: () => [{ id: 'cavemem', state: 'installed', status: 'passed', command_path: '/mock/cavemem' }],
+    providerHandlers: () => ({ cavemem: async () => { liveCalls += 1; return { persisted_observation: 'receipt-1' }; } }),
+  },
+});
+const liveWave = await liveFleet.runWave([{ id: 'memory', kind: 'provider', provider_id: 'cavemem' }]);
+assert.equal(liveWave.passed, 1);
+assert.equal(liveCalls, 1);
+assert.equal((await liveFleet.inspect()).providers.find((provider) => provider.id === 'cavemem').execution_ready, true);
 console.log('provider fleet tests passed');

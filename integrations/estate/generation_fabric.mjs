@@ -1,7 +1,8 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { createReadStream } from 'node:fs';
 import { readdir, stat, readFile } from 'node:fs/promises';
-import { join, basename } from 'node:path';
+import { join, basename, dirname, isAbsolute } from 'node:path';
 import { createNativeGenerationClient } from '../wordpress/native_generation.mjs';
 
 export const TOOL_RECEIPT_SCHEMA = 'bonfyre.native.tool.receipt.v1';
@@ -138,6 +139,64 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
   return profiles.sort((a, b) => a.id.localeCompare(b.id));
 }
 
+function fileSha256(path) {
+  return new Promise((resolve, reject) => {
+    const hash = createHash('sha256');
+    const source = createReadStream(path);
+    source.on('data', (chunk) => hash.update(chunk));
+    source.once('error', reject);
+    source.once('end', () => resolve(hash.digest('hex')));
+  });
+}
+
+export async function verifyModelPack({ modelPack, verifyHashes = true } = {}) {
+  if (!text(modelPack)) throw new Error('modelPack is required');
+  const manifest = JSON.parse(await readFile(modelPack, 'utf8'));
+  const declaredPartsDir = text(manifest.parts_dir);
+  const partsDir = declaredPartsDir ? (isAbsolute(declaredPartsDir) ? declaredPartsDir : join(dirname(modelPack), declaredPartsDir)) : dirname(modelPack);
+  const parts = Array.isArray(manifest.parts) ? manifest.parts : [];
+  const verifiedParts = await Promise.all(parts.map(async (part, index) => {
+    const referenced = part.path || part.fpq_path || part.fpq_part || part.fpq2_part;
+    const path = referenced?.startsWith('/') ? referenced : join(partsDir, referenced || '');
+    const expectedSha256 = text(part.sha256);
+    try {
+      const info = await stat(path);
+      if (!info.isFile()) throw new Error('not a file');
+      const actualSha256 = verifyHashes ? await fileSha256(path) : null;
+      const hashRecorded = Boolean(expectedSha256);
+      const verified = verifyHashes ? hashRecorded && actualSha256 === expectedSha256 : true;
+      return {
+        index,
+        path,
+        present: true,
+        bytes: info.size,
+        expected_sha256: expectedSha256 || null,
+        actual_sha256: actualSha256,
+        hash_recorded: hashRecorded,
+        verified,
+      };
+    } catch {
+      return { index, path, present: false, bytes: 0, expected_sha256: expectedSha256 || null, actual_sha256: null, verified: false };
+    }
+  }));
+  const missing = verifiedParts.filter((part) => !part.present).length;
+  const hashMismatches = verifiedParts.filter((part) => part.present && part.hash_recorded && !part.verified).length;
+  const unverified = verifiedParts.filter((part) => part.present && !part.verified).length;
+  const body = {
+    schema_version: 'bonfyre.model.recovery.verify.v1',
+    model_pack: modelPack,
+    model_repo: manifest.model_repo || null,
+    part_count: verifiedParts.length,
+    missing_parts: missing,
+    hash_mismatches: hashMismatches,
+    unverified_parts: unverified,
+    verification_required: verifyHashes,
+    ready: missing === 0 && unverified === 0 && verifiedParts.length > 0,
+    parts: verifiedParts,
+  };
+  return { ...body, receipt_sha256: createHash('sha256').update(JSON.stringify(body)).digest('hex') };
+}
+
 function runTool(path, args, { spawnImpl, input = '', timeoutMs = 30_000, maxOutputBytes = 1_000_000 } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawnImpl(path, args, { stdio: ['pipe', 'pipe', 'pipe'] });
@@ -263,6 +322,10 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     });
   }
 
+  async function verifyModelPackRecovery(options) {
+    return verifyModelPack(options);
+  }
+
   function profileInventory() {
     return [...profileClients.values()].map(({ profile }) => ({
       schema_version: PROFILE_SCHEMA,
@@ -352,5 +415,5 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     return { ...batch, ledger: toBatchLedgerRecord(batch), analytics: toBatchAnalyticsEvent(batch) };
   }
 
-  return { inventory, modelCatalog, probeNativeTools: async (options = {}) => probeNativeTools({ ...options, root, ...(tools ? { tools } : {}), spawnImpl }), profileInventory, invoke, generate, batchGenerate };
+  return { inventory, modelCatalog, verifyModelPackRecovery, probeNativeTools: async (options = {}) => probeNativeTools({ ...options, root, ...(tools ? { tools } : {}), spawnImpl }), profileInventory, invoke, generate, batchGenerate };
 }
