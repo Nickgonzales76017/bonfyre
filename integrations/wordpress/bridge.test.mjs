@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { createHmac } from 'node:crypto';
-import { createWordPressBridge, normalizeWebhook, verifyWebhookSignature } from './bridge.mjs';
+import { createWordPressBridge, normalizeWebhook, toNativeCmsEntry, verifyWebhookSignature } from './bridge.mjs';
 
 const rawBody = JSON.stringify({ post_id: 42, site: 'https://example.test', modified_gmt: '2026-07-30T12:00:00Z' });
 const secret = 'test-secret';
@@ -9,6 +9,25 @@ assert.equal(verifyWebhookSignature(rawBody, signature, secret), true);
 assert.equal(verifyWebhookSignature(rawBody, 'sha256=00', secret), false);
 const event = normalizeWebhook({ body: JSON.parse(rawBody), rawBody, signature, secret });
 assert.equal(event.idempotency_key, 'https://example.test:42:2026-07-30T12:00:00Z');
+const nativeEntry = toNativeCmsEntry(event);
+assert.deepEqual(nativeEntry, {
+  schema_version: 'bonfyre.native.cms.entry.v1',
+  content_type: 'cms_article',
+  namespace: 'wordpress',
+  external_id: 'https://example.test:42',
+  idempotency_key: event.idempotency_key,
+  fields: {
+    title: '',
+    status: 'publish',
+    url: '',
+    source_site: 'https://example.test',
+    source_post_id: '42',
+    source_post_type: 'post',
+  },
+  source_event: 'post.updated',
+  received_at: event.received_at,
+});
+assert.throws(() => toNativeCmsEntry({}), /normalized WordPress event/i);
 
 let calls = 0;
 const bridge = createWordPressBridge({

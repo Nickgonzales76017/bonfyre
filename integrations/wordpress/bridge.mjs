@@ -2,6 +2,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 import { AsyncTTLCache } from '../../lib/async_cache.mjs';
 
 export const WORDPRESS_SCHEMA = 'bonfyre.wordpress.bridge.v1';
+export const NATIVE_CMS_SCHEMA = 'bonfyre.native.cms.entry.v1';
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -29,6 +30,34 @@ export function normalizeWebhook({ body, rawBody = body?.rawBody || '', signatur
     source: { site, post_id: postId, post_type: text(body.post_type || 'post') },
     content: { status: text(body.status || 'publish'), url: text(body.link || body.url), title: text(body.title) },
     received_at: new Date().toISOString(),
+  };
+}
+
+export function toNativeCmsEntry(event, { contentType = 'cms_article', namespace = 'wordpress' } = {}) {
+  if (!event || event.schema_version !== WORDPRESS_SCHEMA) {
+    throw new Error('A normalized WordPress event is required');
+  }
+  if (!text(contentType) || !text(namespace)) throw new Error('contentType and namespace are required');
+  const source = event.source || {};
+  const externalId = `${text(source.site)}:${text(source.post_id)}`;
+  if (externalId === ':') throw new Error('Normalized event is missing source identity');
+  const content = event.content || {};
+  return {
+    schema_version: NATIVE_CMS_SCHEMA,
+    content_type: contentType,
+    namespace,
+    external_id: externalId,
+    idempotency_key: event.idempotency_key,
+    fields: {
+      title: text(content.title),
+      status: text(content.status || 'publish'),
+      url: text(content.url),
+      source_site: text(source.site),
+      source_post_id: text(source.post_id),
+      source_post_type: text(source.post_type || 'post'),
+    },
+    source_event: event.event,
+    received_at: event.received_at,
   };
 }
 

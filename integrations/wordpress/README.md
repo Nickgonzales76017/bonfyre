@@ -8,6 +8,8 @@ stable operations:
   TTL/LRU caching and concurrent-request coalescing.
 - `normalizeWebhook(...)`: verifies an HMAC-SHA256 webhook and converts it to a
   stable Bonfyre event envelope with an idempotency key.
+- `toNativeCmsEntry(event)`: projects that envelope into the native CMS entry
+  contract without permitting a publish or other mutation.
 - `invalidate(id)`: removes a post after a webhook or explicit refresh.
 
 WordPress plugins can call this contract from REST, WP-Cron, Action Scheduler,
@@ -19,4 +21,5 @@ Example webhook flow:
 ```js
 const event = bridge.normalizeWebhook({ body, rawBody, signature, secret });
 bridge.invalidate(event.source.post_id);
+const entry = toNativeCmsEntry(event);
 ```
