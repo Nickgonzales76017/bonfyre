@@ -73,4 +73,9 @@ clean:
 # Quick roundtrip test on a whisper model
 test: $(BIN)
 	@echo "=== FPQ Roundtrip Test ==="
-	./$(BIN) roundtrip models/ggml-base.en.bin --limit 5 --report --max-nodes 32 --tolerance 0.01
+	@if [ -f models/ggml-base.en.bin ]; then \
+		./$(BIN) roundtrip models/ggml-base.en.bin --limit 5 --report --max-nodes 32 --tolerance 0.01; \
+	else \
+		echo "Skipping optional ggml roundtrip fixture (models/ggml-base.en.bin absent)"; \
+	fi
+	node tests/native_compression.test.mjs
