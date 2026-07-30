@@ -23,6 +23,7 @@ const responses = [
   { ok: true, json: async () => ({ data: { id: 9 } }) },
   { ok: true, json: async () => ({ data: [{ id: 9, attributes: { external_id: 'https://example.test:42' } }] }) },
   { ok: true, json: async () => ({ data: { id: 9 } }) },
+  { ok: true, json: async () => ({}) },
 ];
 const client = createNativeCmsClient({
   baseUrl: 'http://127.0.0.1:8800',
@@ -41,5 +42,9 @@ assert.equal(calls[2].options.method, undefined);
 assert.equal(calls[3].options.method, 'PUT');
 assert.match(calls[3].url, /\/cms_article\/9$/);
 assert.equal(calls[1].options.headers.Authorization, 'Bearer cms-token');
+assert.match(calls[1].options.body, /"idempotency_key":"https:\/\/example\.test:42:/);
+await assert.rejects(
+  client.syncWordPressEvent(event),
+  /listing is malformed/i,
+);
 console.log('native CMS client tests passed');
-

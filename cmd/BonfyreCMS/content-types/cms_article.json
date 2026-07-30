@@ -1,0 +1,18 @@
+{
+  "name": "cms_article",
+  "displayName": "CMS Article",
+  "description": "Replay-safe WordPress and native-estate article projection.",
+  "attributes": {
+    "title": {"type": "string", "required": true},
+    "status": {"type": "string", "required": true},
+    "url": {"type": "string", "required": false},
+    "external_id": {"type": "string", "required": true},
+    "idempotency_key": {"type": "string", "required": true},
+    "source_site": {"type": "string", "required": true},
+    "source_post_id": {"type": "string", "required": true},
+    "source_post_type": {"type": "string", "required": true},
+    "source_event": {"type": "string", "required": true},
+    "source_schema_version": {"type": "string", "required": true},
+    "source_received_at": {"type": "string", "required": true}
+  }
+}
