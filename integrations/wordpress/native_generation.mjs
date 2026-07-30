@@ -75,6 +75,11 @@ export function createNativeGenerationClient({
   binary,
   modelPack,
   tokenizer,
+  model,
+  modelName = model || 'bonfyre-qwen-fpq',
+  backend = 'cpu_neon',
+  runtimeEnv = {},
+  defaultTimeoutMs = 120_000,
   spawnImpl = spawn,
   tempRoot = '/tmp',
 } = {}) {
@@ -83,7 +88,7 @@ export function createNativeGenerationClient({
   }
   if (typeof spawnImpl !== 'function') throw new Error('spawnImpl is required');
 
-  async function generate({ prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = 120_000 } = {}) {
+  async function generate({ prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = defaultTimeoutMs } = {}) {
     const sourcePrompt = typeof prompt === 'string' ? prompt : '';
     if (!sourcePrompt) throw new Error('prompt is required');
     const limit = integer(maxNewTokens, 20);
@@ -99,7 +104,7 @@ export function createNativeGenerationClient({
         ...(greedy ? ['--greedy'] : []), '--max-new-tokens', String(limit),
       ];
       const execution = await run(binary, args, {
-        env: { ...process.env, ...env },
+        env: { ...process.env, ...runtimeEnv, ...env },
         cwd: process.cwd(),
       }, spawnImpl, timeoutMs);
       if (execution.timed_out) throw new Error(`Native generation timed out after ${timeoutMs}ms`);
@@ -113,8 +118,8 @@ export function createNativeGenerationClient({
       return {
         schema_version: GENERATION_SCHEMA,
         generated_at: new Date().toISOString(),
-        model: { name: 'bonfyre-qwen-fpq', binary, pack: modelPack, tokenizer },
-        backend: 'cpu_neon',
+        model: { name: modelName, binary, pack: modelPack, tokenizer },
+        backend,
         request: { prompt: sourcePrompt, max_new_tokens: limit, greedy },
         prompt_sha256: promptSha,
         output,
