@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createLiveAdapterRuntime, createReceiptJournal, probeLiveAdapters } from './live_adapters.mjs';
 
@@ -23,7 +23,8 @@ assert.equal(probes[0].ledger.event, 'adapter.probe.completed');
 assert.equal(probes[0].analytics.measures.success, 1);
 const temp = await mkdtemp('/tmp/bonfyre-journal-');
 try {
-  const journal = createReceiptJournal({ file: join(temp, 'receipts.jsonl') });
+  const journalFile = join(temp, 'receipts.jsonl');
+  const journal = createReceiptJournal({ file: journalFile });
   const record = await journal.append(probes[0]);
   assert.equal(record.schema_version, 'bonfyre.receipt.journal.v1');
   assert.equal((await journal.read()).length, 1);
@@ -33,5 +34,8 @@ try {
   assert.equal(runtime.observations().length, all.length);
   assert.equal((await runtime.probe({ ids: ['cavemem'] })).length, 1);
   assert.equal((await journal.read()).length, 1 + all.length + 1);
+  const tampered = (await readFile(journalFile, 'utf8')).replace('"adapter.probe.completed"', '"tampered"');
+  await writeFile(journalFile, tampered);
+  await assert.rejects(journal.read());
 } finally { await rm(temp, { recursive: true, force: true }); }
 console.log('live adapter tests passed');

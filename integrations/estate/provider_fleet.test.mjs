@@ -24,12 +24,13 @@ assert.equal(wave.skipped, 1);
 assert.ok(wave.wave_sha256);
 assert.ok(wave.results.every((result) => result.receipt_sha256));
 assert.ok(wave.results.every((result) => result.canonical.schema_version === 'bonfyre.execution.receipt.v1'));
+assert.equal(wave.results.find((result) => result.provider_id === 'hvm4').kind, 'provider_probe');
 assert.equal(toCanonicalReceipt({ task: { id: 'x', b: 2, a: 1 }, result: { z: 3, y: 2 }, status: 'passed', startedAt: 'now' }).input_sha256,
   toCanonicalReceipt({ task: { a: 1, b: 2, id: 'x' }, result: { y: 2, z: 3 }, status: 'passed', startedAt: 'now' }).input_sha256);
 let shadowCalled = false;
 const shadowProviders = providers.map((provider) => provider.id === 'hvm4' ? { ...provider, state: 'shadow' } : provider);
 const shadowFleet = createAgentFleet({ fabric, providers: shadowProviders, providerHandlers: { hvm4: async () => { shadowCalled = true; } } });
-const shadowWave = await shadowFleet.runWave([{ id: 'shadow', kind: 'provider', provider_id: 'hvm4' }]);
+const shadowWave = await shadowFleet.runWave([{ id: 'shadow', kind: 'provider_probe', provider_id: 'hvm4' }]);
 assert.equal(shadowWave.results[0].status, 'shadow');
 assert.equal(shadowCalled, false);
 const reconciled = reconcileProviderCatalog({ providers: shadowProviders, adapters: [{ id: 'hvm4', state: 'installed', status: 'passed', command_path: '/usr/local/bin/hvm4' }] });
@@ -45,7 +46,7 @@ const liveFleet = createAgentFleet({
     providerHandlers: () => ({ cavemem: async () => { liveCalls += 1; return { persisted_observation: 'receipt-1' }; } }),
   },
 });
-const liveWave = await liveFleet.runWave([{ id: 'memory', kind: 'provider', provider_id: 'cavemem' }]);
+const liveWave = await liveFleet.runWave([{ id: 'memory', kind: 'provider_probe', provider_id: 'cavemem' }]);
 assert.equal(liveWave.passed, 1);
 assert.equal(liveCalls, 1);
 assert.equal((await liveFleet.inspect()).providers.find((provider) => provider.id === 'cavemem').execution_ready, true);

@@ -47,7 +47,7 @@ export function toCanonicalReceipt({ task, result, status, startedAt, completedA
     status,
     input_sha256: digest(input),
     output_sha256: digest(output),
-    effects: input.kind === 'provider' ? ['adapter'] : ['read', 'compute'],
+    effects: input.kind === 'provider_probe' ? ['adapter-probe'] : ['read', 'compute'],
     proof_refs: [],
     started_at: startedAt,
     completed_at: completedAt,
@@ -149,6 +149,7 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
         const result = await fabric.invoke(task);
         return receipt({ task, status: result.status === 'passed' ? 'passed' : 'failed', result, startedAt });
       }
+      if (task.kind !== 'provider_probe') throw new Error(`unsupported fleet task kind: ${task.kind}`);
       const provider = catalog.find((candidate) => candidate.id === task.provider_id);
       if (!provider) throw new Error(`unknown provider: ${task.provider_id}`);
       if (provider.state === 'unconfigured') return receipt({ task, status: 'skipped', error: 'provider is not configured', startedAt });
@@ -192,7 +193,7 @@ export function createAgentFleet({ fabric, providers, maxConcurrency = 2, provid
     const tasks = [];
     if (profileId) tasks.push({ id: `generate:${profileId}`, kind: 'generate', profileId, prompt });
     if (nativeToolId) tasks.push({ id: `native:${nativeToolId}`, kind: 'native', toolId: nativeToolId, args: nativeArgs });
-    for (const providerId of providerIds) tasks.push({ id: `provider:${providerId}`, kind: 'provider', provider_id: providerId });
+    for (const providerId of providerIds) tasks.push({ id: `provider:${providerId}`, kind: 'provider_probe', provider_id: providerId });
     return runWave(tasks);
   }
 
