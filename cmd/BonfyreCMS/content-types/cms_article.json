@@ -6,7 +6,7 @@
     "title": {"type": "string", "required": true},
     "status": {"type": "string", "required": true},
     "url": {"type": "string", "required": false},
-    "external_id": {"type": "uid", "required": true},
+    "external_id": {"type": "string", "required": true, "uniqueWithinNamespace": true},
     "idempotency_key": {"type": "string", "required": true},
     "source_site": {"type": "string", "required": true},
     "source_post_id": {"type": "string", "required": true},
