@@ -6,6 +6,16 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet } = 
   if (!fabric || typeof fabric.inventory !== 'function' || typeof fabric.generate !== 'function') {
     throw new Error('A generation fabric is required');
   }
+  async function syncFleetGeneration(result) {
+    if (!cmsClient || !result?.results) return result;
+    for (const task of result.results) {
+      if (task.kind === 'generate' && task.status === 'passed' && task.result) {
+        await cmsClient.syncGenerationResult(task.result);
+      }
+    }
+    return result;
+  }
+
   return {
     schema_version: MCP_GENERATION_SCHEMA,
     tools: [
@@ -15,8 +25,8 @@ export function createNativeGenerationMcpSurface(fabric, { cmsClient, fleet } = 
       { name: 'bonfyre_generation_profiles', effect: 'read', handler: () => fabric.profileInventory?.() || [] },
       ...(fleet ? [
         { name: 'bonfyre_fleet_inspect', effect: 'read', handler: () => fleet.inspect() },
-        { name: 'bonfyre_fleet_wave', effect: 'bounded-fleet-exec', handler: (args) => fleet.runWave(args.tasks) },
-        { name: 'bonfyre_fleet_generation_wave', effect: 'bounded-fleet-exec', handler: (args) => fleet.runGenerationWave(args) },
+        { name: 'bonfyre_fleet_wave', effect: 'bounded-fleet-exec', handler: async (args) => syncFleetGeneration(await fleet.runWave(args.tasks)) },
+        { name: 'bonfyre_fleet_generation_wave', effect: 'bounded-fleet-exec', handler: async (args) => syncFleetGeneration(await fleet.runGenerationWave(args)) },
       ] : []),
       { name: 'bonfyre_native_invoke', effect: 'bounded-exec', handler: (args) => fabric.invoke(args) },
       { name: 'bonfyre_generation_generate', effect: 'bounded-model-exec', handler: async (args) => {

@@ -116,7 +116,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
       ...partPaths.map((path) => stat(path).then(() => true).catch(() => false)),
     ]);
     const missing = [];
-    if (binary && !checks[0]) missing.push('binary');
+    if (!binary || !checks[0]) missing.push('binary');
     if (!checks[1]) missing.push('tokenizer');
     if (!checks[2] || (partPaths.length && checks.slice(3).some((present) => !present))) missing.push('model-parts');
     let id = model;
@@ -303,12 +303,19 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
     return { ...receipt, ledger: toLedgerRecord(receipt), analytics: toAnalyticsEvent(receipt) };
   }
 
-  async function generate({ profileId, prompt, maxNewTokens = 20, greedy = true, env = {} } = {}) {
-    const selected = profileClients.get(profileId);
+  async function generate({ profileId, prompt, maxNewTokens = 20, greedy = true, env = {}, timeoutMs = 120_000 } = {}) {
+    let selected = profileClients.get(profileId);
+    if (!selected) {
+      const discovered = (await modelCatalog()).find((profile) => profile.id === profileId);
+      if (discovered) {
+        selected = { profile: discovered, client: createNativeGenerationClient({ ...discovered, spawnImpl }) };
+        profileClients.set(profileId, selected);
+      }
+    }
     if (!selected) throw new Error(`Unknown generation profile: ${profileId}`);
     if (selected.profile.available === false) throw new Error(`Generation profile is unavailable: ${(selected.profile.missing || []).join(', ')}`);
     const started = Date.now();
-    const result = await selected.client.generate({ prompt, maxNewTokens, greedy, env });
+    const result = await selected.client.generate({ prompt, maxNewTokens, greedy, env, timeoutMs });
     const receipt = {
       ...result,
       receipt_id: randomUUID(),
