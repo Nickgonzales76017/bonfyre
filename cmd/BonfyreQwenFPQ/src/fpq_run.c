@@ -742,8 +742,10 @@ static int fpq_run_use_bulk_prepare(void) {
 
 static int qwen_attention_bias_v2_enabled(void) {
     const char *v = getenv("BONFYRE_QWEN_ATTENTION_BIAS");
-    /* Opt-in until prompt/token/runtime parity is fixed. */
-    return v && v[0] && strcmp(v, "0") != 0;
+    /* Qwen2 attention projections carry Q/K/V bias. Keep the architectural
+     * default enabled; BONFYRE_QWEN_ATTENTION_BIAS=0 is an explicit
+     * diagnostic opt-out for comparing legacy behavior. */
+    return !v || strcmp(v, "0") != 0;
 }
 
 static int qwen_disable_sli_fast_score_enabled(void) {
