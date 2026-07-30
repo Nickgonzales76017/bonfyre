@@ -444,6 +444,7 @@ static void infer_parts_dir(const char *path, char *out, size_t n) {
     if (slash) { *slash = 0; snprintf(dir, sizeof(dir), "%s", out); snprintf(base, sizeof(base), "%s", slash + 1); }
     else snprintf(base, sizeof(base), "%s", path);
     char *p = strstr(base, ".fpq-pack.json"); if (p) *p = 0;
+    p = strstr(base, ".fpq2-pack.json"); if (p) *p = 0;
     snprintf(out, n, "%s/%s.parts", dir, base);
 }
 
@@ -934,11 +935,26 @@ static int load_native_paths(const char *path, native_tensor_t **out, size_t *n_
     DIR *d = opendir(parts_dir);
     if (!d) return index_one_native_file(path, out, n_out);
     char **paths = NULL; size_t n_paths = 0; struct dirent *ent;
+    /*
+     * An FPQ2 conversion is emitted next to its legacy .fpq compatibility
+     * shard.  Prefer the complete FPQ2 set: loading both duplicates every
+     * tensor, while selecting the legacy shard first silently routes all of
+     * those tensors through the FP16 passthrough path.
+     */
     while ((ent = readdir(d)) != NULL) {
-        if (!ends_with_local(ent->d_name, ".fpq")) continue;
+        if (!ends_with_local(ent->d_name, ".fpq2")) continue;
         char full[PATH_MAX]; snprintf(full, sizeof(full), "%s/%s", parts_dir, ent->d_name);
         char **g = (char **)realloc(paths, (n_paths + 1) * sizeof(char *)); if (!g) { closedir(d); return -1; }
         paths = g; paths[n_paths++] = strdup(full);
+    }
+    if (n_paths == 0) {
+        rewinddir(d);
+        while ((ent = readdir(d)) != NULL) {
+            if (!ends_with_local(ent->d_name, ".fpq")) continue;
+            char full[PATH_MAX]; snprintf(full, sizeof(full), "%s/%s", parts_dir, ent->d_name);
+            char **g = (char **)realloc(paths, (n_paths + 1) * sizeof(char *)); if (!g) { closedir(d); return -1; }
+            paths = g; paths[n_paths++] = strdup(full);
+        }
     }
     closedir(d); qsort(paths, n_paths, sizeof(char *), path_cmp);
     int rc = 0;
