@@ -109,6 +109,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     ];
     const partsDir = manifest.parts_dir || join(packRoot, entry.name.replace(/\.fpq2?-pack\.json$/, '.parts'));
     const parts = Array.isArray(manifest.parts) ? manifest.parts : [];
+    const qualityGate = text(manifest.quality_gate) || 'unverified';
     const partPaths = parts.map((part) => part.path || part.fpq_path || part.fpq_part || part.fpq2_part)
       .filter(Boolean).map((path) => path.startsWith('/') ? path : join(partsDir, path));
     const tokenizerChecks = await Promise.all(tokenizerCandidates.map((path) => stat(path).then(() => path).catch(() => null)));
@@ -123,6 +124,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     if (!binary || !checks[0]) missing.push('binary');
     if (!checks[1]) missing.push('tokenizer');
     if (!checks[2] || (partPaths.length && checks.slice(3).some((present) => !present))) missing.push('model-parts');
+    if (qualityGate !== 'passed') missing.push(`quality-gate:${qualityGate}`);
     const fpq2 = entry.name.endsWith('.fpq2-pack.json')
       || String(manifest.schema || '').toLowerCase().includes('fpq2')
       || parts.some((part) => text(part.fpq2_part));
@@ -139,10 +141,57 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
         ? { BONFYRE_QWEN_KEEP_PREFILL_PREPARED: '1' }
         : {},
       defaultTimeoutMs: fpq2 ? 900_000 : 120_000,
+      quality_gate: qualityGate,
+      generation_quality: text(manifest.generation_quality) || null,
       available: missing.length === 0,
       missing,
       pack_schema: manifest.schema || null,
       parameter_count: manifest.parameter_count || manifest.total_parameters || null,
+    });
+  }
+  for (const entry of entries) {
+    if (!entry.isFile() || !entry.name.endsWith('.fpq.config.json')) continue;
+    const sidecarPath = join(packRoot, entry.name);
+    const modelPack = join(packRoot, entry.name.slice(0, -'.config.json'.length));
+    let manifest;
+    try { manifest = JSON.parse(await readFile(sidecarPath, 'utf8')); } catch { continue; }
+    const model = String(manifest.model_repo || manifest.model_id || basename(modelPack, '.fpq'))
+      .split('/').pop().toLowerCase();
+    const tokenizerCandidates = [
+      text(manifest.tokenizer_path),
+      join(tokenizerBase, model, 'tokenizer.json'),
+      join(modelRoot, 'small', model, 'tokenizer.json'),
+      join(modelRoot, 'raw', model, 'tokenizer.json'),
+    ].filter(Boolean);
+    const tokenizerChecks = await Promise.all(tokenizerCandidates.map((path) => stat(path).then(() => path).catch(() => null)));
+    const tokenizer = tokenizerChecks.find(Boolean) || tokenizerCandidates[0] || null;
+    const qualityGate = text(manifest.quality_gate) || 'unverified';
+    const [binaryReady, modelReady] = await Promise.all([
+      executable(binary || ''),
+      stat(modelPack).then((info) => info.isFile()).catch(() => false),
+    ]);
+    const missing = [];
+    if (!binaryReady) missing.push('binary');
+    if (!tokenizer) missing.push('tokenizer');
+    if (!modelReady) missing.push('model-pack');
+    if (qualityGate !== 'passed') missing.push(`quality-gate:${qualityGate}`);
+    profiles.push({
+      id: `${model}--${basename(modelPack, '.fpq')}`,
+      model,
+      binary: binary || null,
+      modelPack,
+      tokenizer,
+      backend: 'cpu_neon',
+      runtime: 'fpq-native',
+      compression: text(manifest.compression) || 'fpq-native',
+      runtimeEnv: manifest.runtime_env && typeof manifest.runtime_env === 'object' ? manifest.runtime_env : {},
+      defaultTimeoutMs: Number(manifest.default_timeout_ms) || 900_000,
+      quality_gate: qualityGate,
+      generation_quality: text(manifest.generation_quality) || null,
+      available: missing.length === 0,
+      missing,
+      pack_schema: manifest.schema || 'bonfyre.native.fpq.single-file.v1',
+      parameter_count: manifest.parameter_count || null,
     });
   }
   const nativeGroups = new Map();
@@ -152,7 +201,8 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     nativeGroups.set(profile.model, group);
   }
   for (const [model, group] of nativeGroups) {
-    group.sort((a, b) => Number(b.compression === 'fpq2') - Number(a.compression === 'fpq2')
+    group.sort((a, b) => Number(b.available) - Number(a.available)
+      || Number(b.compression === 'fpq2') - Number(a.compression === 'fpq2')
       || a.modelPack.localeCompare(b.modelPack));
     group.forEach((profile, index) => {
       profile.id = index === 0 ? model : `${model}-${basename(profile.modelPack).replace(/\.fpq2?-pack\.json$/, '')}`;

@@ -84,6 +84,29 @@ static void dequant_int8(const int8_t *data, size_t n, float scale, float *out) 
         out[i] = (float)data[i] * scale;
 }
 
+/* Comma-separated exact-storage selector for quality-sensitive tensors.
+ * Entries are matched as full names or unambiguous substrings, allowing a
+ * profile such as `embed_tokens,lm_head` without baking a model family into
+ * the native codec. */
+static int native_tensor_matches_fp16_selector(const char *tensor_name) {
+    const char *selector = getenv("BONFYRE_FPQ_NATIVE_FP16_TENSORS");
+    const char *p;
+    if (!selector || !selector[0] || !tensor_name || !tensor_name[0]) return 0;
+    p = selector;
+    while (*p) {
+        char token[256];
+        size_t n = 0;
+        while (*p == ',' || *p == ' ' || *p == '\t') p++;
+        while (*p && *p != ',' && n + 1 < sizeof(token)) token[n++] = *p++;
+        while (*p && *p != ',') p++;
+        token[n] = '\0';
+        if (n > 0 && (strcmp(token, tensor_name) == 0 || strstr(tensor_name, token) != NULL)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Inlined from v4_optimizations.c — Newton inversion of mu-law warp */
 static float native_warp_inverse(float y, float beta) {
     float x = y;
@@ -157,6 +180,15 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
         fwrite(&headers[i], sizeof(fpq_native_tensor_header_t), 1, fp);
         fwrite(tensors[i].name, 1, headers[i].name_len, fp);
     }
+    /* Make a long-running native encode observable and recoverable.  The
+     * writer performs a second v9 pass, so a stdio-only header otherwise looks
+     * like a zero-byte stalled artifact for several minutes. */
+    if (fflush(fp) != 0) {
+        fprintf(stderr, "FPQ Native: cannot checkpoint header for %s\n", path);
+        free(headers);
+        fclose(fp);
+        return 1;
+    }
 
     size_t total_compressed = 0;
     size_t total_original = 0;
@@ -177,6 +209,7 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
         const char *diagnostic = getenv("BONFYRE_FPQ_FP16_DIAGNOSTIC");
         if (!diagnostic) diagnostic = getenv("BONFYRE_FPQ_LOSSLESS");
         if (t->rows <= 1 || t->cols <= 1 || n < FPQ_BLOCK_DIM * 2 ||
+            native_tensor_matches_fp16_selector(t->name) ||
             (diagnostic && diagnostic[0] == '1')) {
             headers[ti].lr_rank = 0;
             headers[ti].coord_bits = 0;
@@ -191,13 +224,30 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
             }
             headers[ti].data_size = (uint64_t)(n * 2);
             total_compressed += n * 2;
+            if (fflush(fp) != 0) {
+                fprintf(stderr, "FPQ Native: write failed at tensor %zu (%s)\n", ti, t->name);
+                free(headers);
+                fclose(fp);
+                return 1;
+            }
+            if (ti < 10 || ((ti + 1) % 10 == 0) || ti + 1 == n_tensors)
+                fprintf(stderr, "  [%zu/%zu] %-40s fp16 %zu → %llu bytes\n",
+                        ti + 1, n_tensors, t->name, n * 4,
+                        (unsigned long long)headers[ti].data_size);
             continue;
         }
 
         /* v9 encode */
         int cbits = 3;
+        const char *forced_bits = getenv("BONFYRE_FPQ_NATIVE_COORD_BITS");
+        if (forced_bits && forced_bits[0]) {
+            int parsed = atoi(forced_bits);
+            if (parsed >= 2 && parsed <= 4) cbits = parsed;
+        }
         float eta_L = bwa_get_eta_L(t->data, t->rows, t->cols, 0.25f);
         int adaptive_bits = bwa_adaptive_bits(eta_L, cbits);
+        /* An explicit native profile is a fidelity contract, not a hint. */
+        if (forced_bits && forced_bits[0]) adaptive_bits = cbits;
 
         fpq_tensor_t *enc = fpq_encode_tensor_v9(
             t->data, t->rows, t->cols, t->name, adaptive_bits);
@@ -211,6 +261,16 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
             headers[ti].data_size = (uint64_t)(n * 2);
             total_compressed += n * 2;
             if (enc) fpq_tensor_free(enc);
+            if (fflush(fp) != 0) {
+                fprintf(stderr, "FPQ Native: write failed at tensor %zu (%s)\n", ti, t->name);
+                free(headers);
+                fclose(fp);
+                return 1;
+            }
+            if (ti < 10 || ((ti + 1) % 10 == 0) || ti + 1 == n_tensors)
+                fprintf(stderr, "  [%zu/%zu] %-40s fallback-fp16 %zu → %llu bytes\n",
+                        ti + 1, n_tensors, t->name, n * 4,
+                        (unsigned long long)headers[ti].data_size);
             continue;
         }
 
@@ -394,9 +454,18 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
         headers[ti].data_size = (uint64_t)(ftell(fp) - data_start);
         total_compressed += (size_t)headers[ti].data_size;
 
-        if (ti < 10 || (ti % 50 == 0))
-            fprintf(stderr, "  [%zu] %-40s rank=%d @%db %zu → %llu bytes\n",
-                    ti, t->name, lr_rank, adaptive_bits,
+        if (fflush(fp) != 0) {
+            fprintf(stderr, "FPQ Native: write failed at tensor %zu (%s)\n", ti, t->name);
+            fpq_tensor_free(enc);
+            free(headers);
+            fclose(fp);
+            return 1;
+        }
+
+        if (ti < 10 || ((ti + 1) % 10 == 0) || ti + 1 == n_tensors)
+            fprintf(stderr, "  [%zu/%zu] %-40s rank=%d @%db %zu → %llu bytes\n",
+                    ti + 1, n_tensors,
+                    t->name, lr_rank, adaptive_bits,
                     n * 4, (unsigned long long)headers[ti].data_size);
 
         fpq_tensor_free(enc);
