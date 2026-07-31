@@ -418,6 +418,15 @@ static void qwen_copy_string_field(char *dst, size_t dst_sz, const char *src) {
     snprintf(dst, dst_sz, "%s", src);
 }
 
+static int qwen_is_native_binary_pack_path(const char *path) {
+    size_t len;
+    if (!path) return 0;
+    len = strlen(path);
+    return (len >= 4 && strcmp(path + len - 4, ".fpq") == 0) ||
+           (len >= 5 && strcmp(path + len - 5, ".fpq2") == 0) ||
+           (len >= 5 && strcmp(path + len - 5, ".0qpf") == 0);
+}
+
 static void qwen_parse_stop_token_csv(qwen_config_t *cfg, const char *text) {
     if (!cfg || !text || !text[0]) return;
     cfg->n_stop_token_ids = 0;
@@ -479,12 +488,30 @@ static void qwen_load_pack_metadata(const char *pack_path,
     if (!pack_path || !cfg) return;
     if (meta) qwen_pack_metadata_clear(meta);
     if (stat(pack_path, &st) == 0 && S_ISREG(st.st_mode)) {
-        qwen_try_apply_config_json(pack_path, cfg);
-        qwen_try_apply_manifest_json(pack_path, cfg);
+        /* A direct native .fpq is binary, not a model manifest.  Keep its
+         * architecture beside the artifact so converted single-file packs
+         * cannot silently fall back to the 48-layer default profile. */
+        if (qwen_is_native_binary_pack_path(pack_path)) {
+            snprintf(config_path, sizeof(config_path), "%s.config.json", pack_path);
+            if (stat(config_path, &st) == 0 && S_ISREG(st.st_mode)) {
+                qwen_try_apply_config_json(config_path, cfg);
+                qwen_try_apply_manifest_json(config_path, cfg);
+                if (meta) {
+                    meta->model_id = qwen_pack_json_string(config_path, "model_id");
+                    if (!meta->model_id) meta->model_id = qwen_pack_json_string(config_path, "id");
+                    meta->tokenizer_ref = qwen_pack_json_string(config_path, "tokenizer_id");
+                    if (!meta->tokenizer_ref) meta->tokenizer_ref = qwen_pack_json_string(config_path, "tokenizer_path");
+                    if (!meta->tokenizer_ref) meta->tokenizer_ref = qwen_pack_json_string(config_path, "tokenizer");
+                }
+            }
+        } else {
+            qwen_try_apply_config_json(pack_path, cfg);
+            qwen_try_apply_manifest_json(pack_path, cfg);
+        }
         if (meta) {
-            meta->model_id = qwen_pack_json_string(pack_path, "model_id");
+            if (!meta->model_id) meta->model_id = qwen_pack_json_string(pack_path, "model_id");
             if (!meta->model_id) meta->model_id = qwen_pack_json_string(pack_path, "id");
-            meta->tokenizer_ref = qwen_pack_json_string(pack_path, "tokenizer_id");
+            if (!meta->tokenizer_ref) meta->tokenizer_ref = qwen_pack_json_string(pack_path, "tokenizer_id");
             if (!meta->tokenizer_ref) meta->tokenizer_ref = qwen_pack_json_string(pack_path, "tokenizer_path");
             if (!meta->tokenizer_ref) meta->tokenizer_ref = qwen_pack_json_string(pack_path, "tokenizer");
         }
