@@ -222,6 +222,7 @@ static void bonfyre_v9_tensor_free(fpq_tensor_t *enc) {
 #define FPQ_NATIVE_BLOCK_DIM 256u
 
 #define FPQ_PASSTHROUGH_PRELOAD_LIMIT 1048576u
+#define FPQ_TIED_EMBEDDING_PRELOAD_HARD_MAX_BYTES (1024ULL * 1024ULL * 1024ULL)
 
 typedef struct __attribute__((packed)) {
     uint16_t name_len;
@@ -297,6 +298,31 @@ static int fpq_truthy_env_local(const char *name) {
     return v && v[0] && strcmp(v, "0") != 0 &&
            strcasecmp(v, "false") != 0 &&
            strcasecmp(v, "off") != 0;
+}
+
+/* The sidecar may request a tied-embedding preload, but this runtime never
+ * turns that into an unbounded allocation.  A lower per-profile ceiling is
+ * permitted; an attempted larger ceiling is clamped to the hard limit. */
+static uint64_t fpq_tied_embedding_preload_max_bytes(void) {
+    const char *text = getenv("BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS_MAX_BYTES");
+    char *end = NULL;
+    unsigned long long parsed;
+
+    if (!text || !text[0]) return FPQ_TIED_EMBEDDING_PRELOAD_HARD_MAX_BYTES;
+    errno = 0;
+    parsed = strtoull(text, &end, 10);
+    if (errno != 0 || end == text || *end != '\0' || parsed == 0) {
+        return FPQ_TIED_EMBEDDING_PRELOAD_HARD_MAX_BYTES;
+    }
+    if (parsed > FPQ_TIED_EMBEDDING_PRELOAD_HARD_MAX_BYTES) {
+        return FPQ_TIED_EMBEDDING_PRELOAD_HARD_MAX_BYTES;
+    }
+    return (uint64_t)parsed;
+}
+
+static const char *fpq_tied_embedding_tensor_name(void) {
+    const char *name = getenv("BONFYRE_QWEN_TIED_EMBEDDING_TENSOR");
+    return (name && name[0]) ? name : "model.embed_tokens.weight";
 }
 
 static int fpq_active_lr_path_enabled(void) {
@@ -497,8 +523,11 @@ static int append_tensor(native_tensor_t **arr, size_t *n, const native_tensor_t
     if (!g) return -1; *arr = g; (*arr)[*n] = *src; (*n)++; return 0;
 }
 
-static int load_passthrough(native_tensor_t *t) {
+static int load_passthrough(native_tensor_t *t,
+                            const char *tied_embedding_tensor,
+                            int preload_tied_embeddings) {
     uint64_t n = (uint64_t)t->rows * (uint64_t)t->cols;
+    uint64_t tied_preload_bytes = 0;
     int force_hot_fp16 =
         t &&
         t->name &&
@@ -510,9 +539,26 @@ static int load_passthrough(native_tensor_t *t) {
         strstr(t->name, "lm_head") != NULL &&
         (fpq_truthy_env_local("BONFYRE_QWEN_PRELOAD_LM_HEAD") ||
          n <= (uint64_t)192 * 1024 * 1024);
+    int force_tied_embeddings = 0;
 
-    if (n > FPQ_PASSTHROUGH_PRELOAD_LIMIT && !force_lm_head && !force_hot_fp16) return 0;
-    if (force_lm_head) {
+    if (t && t->name && tied_embedding_tensor &&
+        strcmp(t->name, tied_embedding_tensor) == 0 && preload_tied_embeddings &&
+        n <= UINT64_MAX / sizeof(float)) {
+        tied_preload_bytes = n * sizeof(float);
+        if (tied_preload_bytes <= fpq_tied_embedding_preload_max_bytes()) {
+            force_tied_embeddings = 1;
+        } else {
+            fprintf(stderr,
+                    "fpq_open native: tied embedding preload skipped tensor=%s bytes=%.3f GiB budget=%.3f GiB\n",
+                    t->name,
+                    (double)tied_preload_bytes / 1073741824.0,
+                    (double)fpq_tied_embedding_preload_max_bytes() / 1073741824.0);
+            fflush(stderr);
+        }
+    }
+
+    if (n > FPQ_PASSTHROUGH_PRELOAD_LIMIT && !force_lm_head && !force_tied_embeddings && !force_hot_fp16) return 0;
+    if (force_lm_head || force_tied_embeddings) {
         fprintf(stderr,
                 "fpq_open native: force-preload passthrough tensor=%s rows=%u cols=%u bytes=%.3f GiB\n",
                 t->name ? t->name : "(null)",
@@ -533,8 +579,24 @@ static int load_passthrough(native_tensor_t *t) {
     t->passthrough = (float *)calloc((size_t)n, sizeof(float));
     if (!t->passthrough) return -1;
     t->passthrough_len = (size_t)n;
-    FILE *fp = open_seek(t->path, t->data_offset); if (!fp) return -1;
-    for (uint64_t i = 0; i < n; i++) { uint16_t hv = 0; if (read_exact(fp, &hv, 2) != 0) { fclose(fp); return -1; } t->passthrough[i] = fp16_to_float_local(hv); }
+    FILE *fp = open_seek(t->path, t->data_offset);
+    if (!fp) {
+        free(t->passthrough);
+        t->passthrough = NULL;
+        t->passthrough_len = 0;
+        return -1;
+    }
+    for (uint64_t i = 0; i < n; i++) {
+        uint16_t hv = 0;
+        if (read_exact(fp, &hv, 2) != 0) {
+            fclose(fp);
+            free(t->passthrough);
+            t->passthrough = NULL;
+            t->passthrough_len = 0;
+            return -1;
+        }
+        t->passthrough[i] = fp16_to_float_local(hv);
+    }
     fclose(fp); return 0;
 }
 
@@ -546,10 +608,19 @@ static int load_tile_codebook(native_tensor_t *t) {
     t->tile_cb_cache = (float *)calloc(n, sizeof(float));
     if (!t->tile_cb_cache) return -1;
     FILE *fp = open_seek(t->path, t->off_tile_cb);
-    if (!fp) return -1;
+    if (!fp) {
+        free(t->tile_cb_cache);
+        t->tile_cb_cache = NULL;
+        return -1;
+    }
     for (size_t i = 0; i < n; i++) {
         uint16_t hv = 0;
-        if (read_exact(fp, &hv, 2) != 0) { fclose(fp); return -1; }
+        if (read_exact(fp, &hv, 2) != 0) {
+            fclose(fp);
+            free(t->tile_cb_cache);
+            t->tile_cb_cache = NULL;
+            return -1;
+        }
         t->tile_cb_cache[i] = fp16_to_float_local(hv);
     }
     fclose(fp);
@@ -877,7 +948,9 @@ static int ensure_sli_ready(native_tensor_t *t) {
     return 0;
 }
 
-static int index_one_native_file(const char *path, native_tensor_t **out, size_t *n_out) {
+static int index_one_native_file(const char *path, native_tensor_t **out, size_t *n_out,
+                                 const char *tied_embedding_tensor,
+                                 int preload_tied_embeddings) {
     FILE *fp = fopen(path, "rb");
     if (!fp) { fprintf(stderr, "fpq_open native: cannot open %s: %s\n", path, strerror(errno)); return -1; }
     native_file_header_disk_t fh;
@@ -919,7 +992,8 @@ static int index_one_native_file(const char *path, native_tensor_t **out, size_t
         compute_offsets(&t);
         t.info.name = t.name; t.info.rows = t.rows; t.info.cols = t.cols; t.info.has_sli = (t.kind == NT_V9);
         t.info.bpw = (t.rows && t.cols) ? (float)(((double)t.data_size * 8.0) / ((double)t.rows * (double)t.cols)) : 0.0f;
-        if (t.kind == NT_FP16 && load_passthrough(&t) != 0) {
+        if (t.kind == NT_FP16 &&
+            load_passthrough(&t, tied_embedding_tensor, preload_tied_embeddings) != 0) {
             fprintf(stderr,
                     "fpq_open native: passthrough load failed path=%s tensor=%s rows=%u cols=%u data_offset=%llu data_size=%llu version=%u\n",
                     path,
@@ -938,10 +1012,13 @@ static int index_one_native_file(const char *path, native_tensor_t **out, size_t
     return 0;
 }
 
-static int load_native_paths(const char *path, native_tensor_t **out, size_t *n_out) {
+static int load_native_paths(const char *path, native_tensor_t **out, size_t *n_out,
+                             const char *tied_embedding_tensor,
+                             int preload_tied_embeddings) {
     char parts_dir[PATH_MAX]; infer_parts_dir(path, parts_dir, sizeof(parts_dir));
     DIR *d = opendir(parts_dir);
-    if (!d) return index_one_native_file(path, out, n_out);
+    if (!d) return index_one_native_file(path, out, n_out,
+                                         tied_embedding_tensor, preload_tied_embeddings);
     char **paths = NULL; size_t n_paths = 0; struct dirent *ent;
     int prefer_legacy = fpq_truthy_env_local("BONFYRE_QWEN_PREFER_LEGACY_FPQ");
     /*
@@ -985,7 +1062,12 @@ static int load_native_paths(const char *path, native_tensor_t **out, size_t *n_
     }
     closedir(d); qsort(paths, n_paths, sizeof(char *), path_cmp);
     int rc = 0;
-    for (size_t i = 0; i < n_paths; i++) { if (index_one_native_file(paths[i], out, n_out) != 0) rc = -1; free(paths[i]); if (rc) break; }
+    for (size_t i = 0; i < n_paths; i++) {
+        if (index_one_native_file(paths[i], out, n_out,
+                                  tied_embedding_tensor, preload_tied_embeddings) != 0) rc = -1;
+        free(paths[i]);
+        if (rc) break;
+    }
     free(paths); return rc;
 }
 
@@ -1091,16 +1173,27 @@ static int decode_residual_block_fd(native_tensor_t *t, int fd, size_t b, float 
     return 0;
 }
 
-fpq_model_t *fpq_open(const char *path) {
+fpq_model_t *fpq_open_with_tied_embedding(const char *path,
+                                          const char *tied_embedding_tensor,
+                                          int preload_tied_embeddings) {
     if (!path) return NULL;
     fpq_model_t *m = (fpq_model_t *)calloc(1, sizeof(fpq_model_t)); if (!m) return NULL;
     m->path = strdup(path);
-    if (load_native_paths(path, &m->tensors, &m->n_tensors) != 0 || m->n_tensors == 0) { fprintf(stderr, "fpq_open lazy-native: failed to load %s\n", path); fpq_close(m); return NULL; }
+    if (load_native_paths(path, &m->tensors, &m->n_tensors,
+                          tied_embedding_tensor, preload_tied_embeddings) != 0 ||
+        m->n_tensors == 0) { fprintf(stderr, "fpq_open lazy-native: failed to load %s\n", path); fpq_close(m); return NULL; }
     size_t n_sli = 0, n_pass = 0, total = 0;
     for (size_t i = 0; i < m->n_tensors; i++) { native_tensor_t *t = &m->tensors[i]; total += (size_t)t->rows * (size_t)t->cols; if (t->kind == NT_V9) n_sli++; else n_pass++; }
     m->cached_info.n_tensors = m->n_tensors; m->cached_info.n_sli_tensors = n_sli; m->cached_info.n_passthrough = n_pass; m->cached_info.total_params = total; m->cached_info.format_version = FPQ_NATIVE_VERSION_EXPECTED;
     fprintf(stderr, "fpq_open lazy-native: %s — %zu tensors (%zu native-matvec, %zu passthrough), %zuM params\n", path, m->n_tensors, n_sli, n_pass, total / 1000000);
     return m;
+}
+
+fpq_model_t *fpq_open(const char *path) {
+    return fpq_open_with_tied_embedding(
+        path,
+        fpq_tied_embedding_tensor_name(),
+        fpq_truthy_env_local("BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS"));
 }
 
 void fpq_close(fpq_model_t *m) {
@@ -1181,14 +1274,23 @@ int fpq_matmul(fpq_model_t *m, const char *tensor_name, const float *x, float *y
             return 0;
 #endif
         }
-        float *rowbuf = (float *)malloc((size_t)t->cols * sizeof(float));
-        if (!rowbuf) return -1;
+        /* Large FP16 tensors such as tied token embeddings intentionally stay
+         * off the resident heap.  Decode them sequentially from their native
+         * payload instead of reopening the pack once per vocabulary row. */
+        uint16_t *rowbuf = (uint16_t *)malloc((size_t)t->cols * sizeof(uint16_t));
+        FILE *fp = rowbuf ? open_seek(t->path, t->data_offset) : NULL;
+        if (!fp) { free(rowbuf); return -1; }
         for (size_t r = 0; r < t->rows; r++) {
-            if (fpq_decode_row_impl(m, tensor_name, r, rowbuf) != 0) { free(rowbuf); return -1; }
+            if (read_exact(fp, rowbuf, (size_t)t->cols * sizeof(uint16_t)) != 0) {
+                fclose(fp);
+                free(rowbuf);
+                return -1;
+            }
             float acc = 0.0f;
-            for (size_t c = 0; c < t->cols; c++) acc += rowbuf[c] * x[c];
+            for (size_t c = 0; c < t->cols; c++) acc += fp16_to_float_local(rowbuf[c]) * x[c];
             y[r] = acc;
         }
+        fclose(fp);
         free(rowbuf);
         return 0;
     }

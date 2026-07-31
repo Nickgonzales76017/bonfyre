@@ -251,6 +251,7 @@ static void qwen_log_mem_layer(const char *tag, int lay, int total_layers) {
 int fpq_release_tensor(fpq_model_t *m, const char *tensor_name);
 static void qwen_release_prefill_layer_tensors(fpq_model_t *model, int lay);
 static const char *fpq_cfg_lm_head_tensor_name(const fpq_run_config_t *cfg);
+static const char *fpq_cfg_output_tensor_name(const fpq_run_config_t *cfg);
 
 
 static int qwen_inline_prefill_threads_enabled(void) {
@@ -1515,7 +1516,7 @@ static void fpq_lm_head_row_probe(fpq_model_t *model,
     int probe_ids[27];
     int n_probe = 0;
     if (!fpq_lm_head_row_probe_enabled()) return;
-    const char *lm_head_name = fpq_cfg_lm_head_tensor_name(cfg);
+    const char *lm_head_name = fpq_cfg_output_tensor_name(cfg);
     fpq_collect_topk_ids(active_logits, vocab_size, 20, top_ids);
     for (int i = 0; i < 20; i++) {
         if (top_ids[i] < 0) continue;
@@ -1589,6 +1590,13 @@ static const char *fpq_cfg_final_norm_tensor_name(const fpq_run_config_t *cfg) {
 
 static const char *fpq_cfg_lm_head_tensor_name(const fpq_run_config_t *cfg) {
     return (cfg && cfg->lm_head_tensor_name[0]) ? cfg->lm_head_tensor_name : "lm_head.weight";
+}
+
+static const char *fpq_cfg_output_tensor_name(const fpq_run_config_t *cfg) {
+    if (cfg && cfg->tie_word_embeddings && cfg->embed_tensor_name[0]) {
+        return cfg->embed_tensor_name;
+    }
+    return fpq_cfg_lm_head_tensor_name(cfg);
 }
 
 static int fpq_cfg_primary_stop_token(const fpq_run_config_t *cfg) {
@@ -2226,7 +2234,7 @@ static void fpq_golden_emit_logits_probe(fpq_model_t *model,
     double sum_abs_delta = 0.0;
     double max_abs_delta = 0.0;
     int ok = 0;
-    const char *lm_head_name = fpq_cfg_lm_head_tensor_name(cfg);
+    const char *lm_head_name = fpq_cfg_output_tensor_name(cfg);
     for (int i = 0; i < 10; i++) {
         int token_id = top_ids[i];
         float ref = 0.0f;
@@ -2756,6 +2764,15 @@ int fpq_run_generate(
     int generated = -1;
     if (!state) {
         fprintf(stderr, "fpq_run: missing persistent state\n");
+        return -1;
+    }
+    /* Every loop iteration writes one KV slot.  Reject an oversized request
+     * before any prefill path can touch the fixed-size cache. */
+    if (prompt_len <= 0 || max_seq <= 0 || max_new < 0 ||
+        prompt_len > max_seq || max_new > max_seq - prompt_len + 1) {
+        fprintf(stderr,
+                "fpq_run: request exceeds context prompt=%d max_new=%d max_seq=%d\n",
+                prompt_len, max_new, max_seq);
         return -1;
     }
     if (prefill_chunk_size <= 0) prefill_chunk_size = 1;
@@ -3509,7 +3526,7 @@ if (qwen_log_layer_progress_enabled()) {
                     step, fpq_vec_l2_norm(h_norm, (size_t)d));
         }
 
-        snprintf(name_buf, sizeof(name_buf), "%s", fpq_cfg_lm_head_tensor_name(cfg));
+        snprintf(name_buf, sizeof(name_buf), "%s", fpq_cfg_output_tensor_name(cfg));
         for (int i = 0; i < cfg->n_vocab; i++) logits[i] = NAN;
         double lm_head_matvec_seconds = 0.0;
         double lm_head_select_seconds = 0.0;
