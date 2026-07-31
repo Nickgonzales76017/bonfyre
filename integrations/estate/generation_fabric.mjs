@@ -90,6 +90,12 @@ export async function discoverNativeTools({ root = process.cwd(), binDir = join(
 }
 
 export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonzales/BonfyreModels', binary, llamaBinary = process.env.BONFYRE_LLAMA_CPP_BINARY || '/opt/homebrew/bin/llama-cli', tokenizerRoot } = {}) {
+  /* Direct discovery is also used outside createGenerationFabric(), where the
+   * native-tool inventory is not available. Resolve Bonfyre's built Qwen
+   * runtime here so verified .fpq sidecars become executable profiles rather
+   * than inert catalog entries. */
+  const nativeBinary = binary || process.env.BONFYRE_QWEN_FPQ_BINARY
+    || join(process.cwd(), 'bin', 'bonfyre-qwen-fpq');
   const packRoot = join(modelRoot, 'fpq');
   const tokenizerBase = tokenizerRoot || join(modelRoot, 'tokenizers');
   let entries = [];
@@ -115,13 +121,13 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     const tokenizerChecks = await Promise.all(tokenizerCandidates.map((path) => stat(path).then(() => path).catch(() => null)));
     const tokenizer = tokenizerChecks.find(Boolean) || tokenizerCandidates[0];
     const checks = await Promise.all([
-      executable(binary || ''),
+      executable(nativeBinary),
       stat(tokenizer).then(() => true).catch(() => false),
       stat(partsDir).then(() => true).catch(() => false),
       ...partPaths.map((path) => stat(path).then(() => true).catch(() => false)),
     ]);
     const missing = [];
-    if (!binary || !checks[0]) missing.push('binary');
+    if (!checks[0]) missing.push('binary');
     if (!checks[1]) missing.push('tokenizer');
     if (!checks[2] || (partPaths.length && checks.slice(3).some((present) => !present))) missing.push('model-parts');
     if (qualityGate !== 'passed') missing.push(`quality-gate:${qualityGate}`);
@@ -131,7 +137,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     profiles.push({
       id: `${model}--${entry.name.replace(/\.fpq2?-pack\.json$/, '')}`,
       model,
-      binary: binary || null,
+      binary: nativeBinary,
       modelPack,
       tokenizer,
       backend: 'cpu_neon',
@@ -167,7 +173,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     const tokenizer = tokenizerChecks.find(Boolean) || tokenizerCandidates[0] || null;
     const qualityGate = text(manifest.quality_gate) || 'unverified';
     const [binaryReady, modelReady] = await Promise.all([
-      executable(binary || ''),
+      executable(nativeBinary),
       stat(modelPack).then((info) => info.isFile()).catch(() => false),
     ]);
     const missing = [];
@@ -178,7 +184,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     profiles.push({
       id: `${model}--${basename(modelPack, '.fpq')}`,
       model,
-      binary: binary || null,
+      binary: nativeBinary,
       modelPack,
       tokenizer,
       backend: 'cpu_neon',
