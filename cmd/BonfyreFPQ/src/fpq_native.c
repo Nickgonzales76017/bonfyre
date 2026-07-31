@@ -242,7 +242,10 @@ int fpq_native_write(const char *path, const fpq_raw_tensor_t *tensors,
         const char *forced_bits = getenv("BONFYRE_FPQ_NATIVE_COORD_BITS");
         if (forced_bits && forced_bits[0]) {
             int parsed = atoi(forced_bits);
-            if (parsed >= 2 && parsed <= 4) cbits = parsed;
+            /* The native byte-coded lattice supports an explicit 2–8 bit
+             * fidelity profile. Adaptive routing remains 2–4 bit; values
+             * above that are opt-in recovery profiles for generation parity. */
+            if (parsed >= 2 && parsed <= 8) cbits = parsed;
         }
         float eta_L = bwa_get_eta_L(t->data, t->rows, t->cols, 0.25f);
         int adaptive_bits = bwa_adaptive_bits(eta_L, cbits);

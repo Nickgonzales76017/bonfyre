@@ -508,7 +508,8 @@ static int load_passthrough(native_tensor_t *t) {
     int force_lm_head =
         t && t->name &&
         strstr(t->name, "lm_head") != NULL &&
-        fpq_truthy_env_local("BONFYRE_QWEN_PRELOAD_LM_HEAD");
+        (fpq_truthy_env_local("BONFYRE_QWEN_PRELOAD_LM_HEAD") ||
+         n <= (uint64_t)192 * 1024 * 1024);
 
     if (n > FPQ_PASSTHROUGH_PRELOAD_LIMIT && !force_lm_head && !force_hot_fp16) return 0;
     if (force_lm_head) {
@@ -1095,14 +1096,18 @@ static int decode_residual_block_fd(native_tensor_t *t, int fd, size_t b, float 
     warp_inverse_block_local(corrected, lattice_scale, warp_norm, coord_scale, beta, z);
     float residual_norm = rn_scale * (float)rn_q;
     if (residual_norm > 1e-20f && qjl_bits) {
-        /* Native 0QPF persists only one 64-bit sketch word per block.
-         * Match the native reader contract here instead of invoking the
-         * much heavier full QJL reconstruction path. */
-        float scale = residual_norm / 8.0f;
-        for (int i = 0; i < 64; i++) {
-            float sign = (qjl_bits & (1ull << (unsigned)i)) ? 1.0f : -1.0f;
-            z[i] += sign * scale;
-        }
+        /* The 64 persisted bits are signs of 64 seeded 256-D projections,
+         * not 64 coordinate values.  Reconstruct in that same projection
+         * basis; applying them to z[0..63] corrupts every compressed block. */
+        fpq_qjl_t qjl = {
+            .n_projections = FPQ_QJL_PROJECTIONS,
+            .n_elements = 256,
+            .proj_seed = seed ^ (uint64_t)b ^ 0xC00DULL,
+            .bits = &qjl_bits
+        };
+        float qjl_residual[256];
+        fpq_qjl_reconstruct(&qjl, residual_norm, qjl_residual);
+        for (int i = 0; i < 256; i++) z[i] += qjl_residual[i];
     }
     fpq_fwht_inverse(z, 256); fpq_random_signs_inverse(z, 256, seed ^ (uint64_t)b);
     for (int i = 0; i < 256; i++) block[i] = z[i];
@@ -1989,6 +1994,19 @@ int fpq_prepare_tensor(fpq_model_t *m, const char *tensor_name) {
             fprintf(stderr,
                     "fpq_prepare_tensor detail passthrough tensor=%s rows=%u cols=%u kind=%d\n",
                     tensor_name, t->rows, t->cols, (int)t->kind);
+            fflush(stderr);
+        }
+        return 0;
+    }
+
+    /* The native residual stream is flat 256-value blocks.  Qwen's 896-wide
+     * matrices cross block boundaries inside rows, so an SLI cache cannot be
+     * used for them and preparation would be pure allocation overhead. */
+    if (!native_sli_layout_safe(t)) {
+        if (log_prepare) {
+            fprintf(stderr,
+                    "fpq_prepare_tensor detail bypass-unaligned tensor=%s rows=%u cols=%u\n",
+                    tensor_name, t->rows, t->cols);
             fflush(stderr);
         }
         return 0;

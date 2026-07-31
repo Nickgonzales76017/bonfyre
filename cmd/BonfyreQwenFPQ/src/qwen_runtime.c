@@ -508,6 +508,11 @@ static void qwen_load_pack_metadata(const char *pack_path,
             qwen_try_apply_config_json(pack_path, cfg);
             qwen_try_apply_manifest_json(pack_path, cfg);
         }
+        /* Never treat a recognized binary pack as a JSON manifest.  A sidecar
+         * may intentionally provide only architecture metadata; reparsing the
+         * multi-hundred-MiB artifact here is both incorrect and can exhaust
+         * memory before the native loader opens it. */
+        if (qwen_is_native_binary_pack_path(pack_path)) return;
         if (meta) {
             if (!meta->model_id) meta->model_id = qwen_pack_json_string(pack_path, "model_id");
             if (!meta->model_id) meta->model_id = qwen_pack_json_string(pack_path, "id");
