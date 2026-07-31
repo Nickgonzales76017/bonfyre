@@ -1019,45 +1019,22 @@ static int read_haar_seed(native_tensor_t *t, uint64_t *seed_out) {
 }
 
 static float warp_inverse_local(float y, float beta) {
-    float x = y;
-    for (int i = 0; i < 8; i++) {
-        float f = x + beta * x * x * x - y;
-        float fp = 1.0f + 3.0f * beta * x * x;
-        if (fabsf(fp) < 1e-20f) break;
-        x -= f / fp;
-    }
-    return x;
+    /* Must be the inverse of v7_warp_forward in v4_optimizations.c:
+     * sign(x) * log(1 + beta * |x|) / log(1 + beta).
+     * The previous cubic Newton solve inverted an unrelated warp and made
+     * every persisted native residual diverge from its encoder value. */
+    float magnitude = expm1f(fabsf(y) * log1pf(beta)) / beta;
+    return y < 0.0f ? -magnitude : magnitude;
 }
 
 static void warp_inverse_block_local(const float corrected[256], float lattice_scale,
                                      float warp_norm, float coord_scale, float beta,
                                      float out[256]) {
-#if defined(__ARM_NEON) || defined(__ARM_NEON__)
-    const float y_scale = warp_norm / lattice_scale;
-    const float32x4_t vy_scale = vdupq_n_f32(y_scale);
-    const float32x4_t vcoord = vdupq_n_f32(coord_scale);
-    const float32x4_t vbeta = vdupq_n_f32(beta);
-    const float32x4_t vthree_beta = vdupq_n_f32(3.0f * beta);
-    const float32x4_t vone = vdupq_n_f32(1.0f);
-    for (int i = 0; i < 256; i += 4) {
-        float32x4_t y = vmulq_f32(vld1q_f32(corrected + i), vy_scale);
-        float32x4_t x = y;
-        for (int it = 0; it < 8; it++) {
-            float32x4_t x2 = vmulq_f32(x, x);
-            float32x4_t x3 = vmulq_f32(x2, x);
-            float32x4_t f = vsubq_f32(vmlaq_f32(x, x3, vbeta), y);
-            float32x4_t fp = vmlaq_f32(vone, x2, vthree_beta);
-            x = vsubq_f32(x, vdivq_f32(f, fp));
-        }
-        vst1q_f32(out + i, vmulq_f32(x, vcoord));
-    }
-#else
     for (int i = 0; i < 256; i++) {
         float lat_val = corrected[i] / lattice_scale * warp_norm;
         float unwarp = warp_inverse_local(lat_val, beta);
         out[i] = unwarp * coord_scale;
     }
-#endif
 }
 
 static int decode_residual_block_fd(native_tensor_t *t, int fd, size_t b, float block[256]) {
