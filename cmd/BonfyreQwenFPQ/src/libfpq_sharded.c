@@ -485,6 +485,13 @@ static native_tensor_t *find_tensor(fpq_model_t *m, const char *name) {
     return NULL;
 }
 
+/* SLI scores residual blocks as blocks_per_row segments. Native FPQ stores
+ * blocks over the flat row-major tensor, so that shortcut is only exact when
+ * a row boundary also lands on a 256-value block boundary. */
+static int native_sli_layout_safe(const native_tensor_t *t) {
+    return t && t->cols > 0 && (t->cols % FPQ_NATIVE_BLOCK_DIM) == 0;
+}
+
 static int append_tensor(native_tensor_t **arr, size_t *n, const native_tensor_t *src) {
     native_tensor_t *g = (native_tensor_t *)realloc(*arr, (*n + 1) * sizeof(native_tensor_t));
     if (!g) return -1; *arr = g; (*arr)[*n] = *src; (*n)++; return 0;
@@ -1276,7 +1283,8 @@ int fpq_matmul(fpq_model_t *m, const char *tensor_name, const float *x, float *y
         }
     }
 
-    if (t->rows >= 256u && t->cols >= 256u && !getenv("FPQ_DENSE_FALLBACK")) {
+    if (t->rows >= 256u && t->cols >= 256u && native_sli_layout_safe(t) &&
+        !getenv("FPQ_DENSE_FALLBACK")) {
         if (!t->sli && ensure_sli_ready(t) != 0) {
             fprintf(stderr, "fpq_matmul lazy-native: SLI prepare failed for tensor '%s'\n", tensor_name ? tensor_name : "(null)");
             return -1;
@@ -1930,6 +1938,7 @@ int fpq_matmul_shared(fpq_model_t *m,
         native_tensor_t *t = find_tensor(m, tensor_names[i]);
         if (!t || !outputs[i]) goto fallback;
         if (t->kind != NT_V9 || t->rows < 256u || t->cols < 256u ||
+            !native_sli_layout_safe(t) ||
             getenv("FPQ_DENSE_FALLBACK")) goto fallback;
         if (ensure_sli_ready(t) != 0 || !t->sli) goto fallback;
         if (i == 0) {
