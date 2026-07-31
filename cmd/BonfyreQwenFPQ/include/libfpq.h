@@ -62,6 +62,13 @@ typedef struct {
  */
 fpq_model_t *fpq_open(const char *path);
 
+/* Load a native pack with an explicit, per-open tied-output preload target.
+ * This avoids using process-global environment state when multiple runtimes
+ * initialize concurrently. */
+fpq_model_t *fpq_open_with_tied_embedding(const char *path,
+                                          const char *tied_embedding_tensor,
+                                          int preload_tied_embeddings);
+
 /*
  * Compute y = W @ x via Spectral Lattice Inference.
  *

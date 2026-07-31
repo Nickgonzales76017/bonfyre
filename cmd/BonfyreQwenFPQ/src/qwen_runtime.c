@@ -303,6 +303,27 @@ static int qwen_prepare_hot_tensor(qwen_runtime_t *rt,
     return 0;
 }
 
+/* Tied causal-LM heads are the embedding matrix, even when a converter left
+ * the conventional lm_head.weight default in the sidecar.  Keeping this in
+ * the runtime as well as fpq_run makes warmup and generation agree. */
+static const char *qwen_output_tensor_name(const qwen_config_t *cfg) {
+    if (cfg && cfg->tie_word_embeddings && cfg->embed_tensor_name[0]) {
+        return cfg->embed_tensor_name;
+    }
+    return (cfg && cfg->lm_head_tensor_name[0]) ? cfg->lm_head_tensor_name : "lm_head.weight";
+}
+
+/* Pass tied-output preload configuration directly into the native loader.
+ * Runtime initialization can therefore proceed concurrently without sharing
+ * process-global environment state. */
+static fpq_model_t *qwen_open_model(const char *pack_path, const qwen_config_t *cfg) {
+    const int preload = cfg && cfg->tie_word_embeddings &&
+        qwen_truthy_env_local("BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS");
+    const char *embedding = (cfg && cfg->embed_tensor_name[0])
+        ? cfg->embed_tensor_name : "model.embed_tokens.weight";
+    return fpq_open_with_tied_embedding(pack_path, embedding, preload);
+}
+
 static int qwen_runtime_warm_hot_set(qwen_runtime_t *rt) {
     char name[128];
     int already_ready = 0;
@@ -315,7 +336,7 @@ static int qwen_runtime_warm_hot_set(qwen_runtime_t *rt) {
         rt->resident_reused_rope += 0;
     }
     if (qwen_prepare_hot_tensor(rt,
-                                rt->config.lm_head_tensor_name[0] ? rt->config.lm_head_tensor_name : "lm_head.weight",
+                                qwen_output_tensor_name(&rt->config),
                                 &already_ready, &prepared_now) == 0 && already_ready) {
         rt->resident_reused_lm_head_prepare++;
     }
@@ -363,6 +384,8 @@ static const char *qwen_backend_name(qwen_backend_t backend) {
     }
 }
 
+static int qwen_json_bool(const char *json, const char *key, int *out);
+
 static void qwen_try_apply_config_json(const char *path, qwen_config_t *cfg) {
     char *json;
     int value;
@@ -381,6 +404,7 @@ static void qwen_try_apply_config_json(const char *path, qwen_config_t *cfg) {
     if (bf_json_int(json, "max_position_embeddings", &value)) cfg->max_seq_len = value;
     if (bf_json_double(json, "rms_norm_eps", &f64)) cfg->rms_norm_eps = (float)f64;
     if (bf_json_double(json, "rope_theta", &f64)) cfg->rope_theta = (float)f64;
+    if (qwen_json_bool(json, "tie_word_embeddings", &value)) cfg->tie_word_embeddings = value;
     if (cfg->n_heads > 0 && cfg->d_model > 0) cfg->head_dim = cfg->d_model / cfg->n_heads;
 
     free(json);
@@ -446,6 +470,93 @@ static void qwen_parse_stop_token_csv(qwen_config_t *cfg, const char *text) {
     }
 }
 
+/* The pack sidecar is normal JSON and emits booleans as true/false, whereas
+ * bf_json_int() intentionally only accepts numeric values.  Keep accepting
+ * 0/1 manifests for compatibility, but do not silently discard the standard
+ * JSON form for architectural switches such as tied output embeddings. */
+static int qwen_json_token_boundary(char c) {
+    return c == '\0' || c == ',' || c == '}' || c == ']' ||
+           c == ' ' || c == '\t' || c == '\n' || c == '\r';
+}
+
+/* Locate a value for a key in the enclosing JSON object only.  Sidecars can
+ * contain nested metadata and arbitrary strings, neither of which may alter
+ * a model-level architecture switch. */
+static const char *qwen_json_top_level_value(const char *json, const char *key) {
+    const char *p = json;
+    size_t key_len;
+    int depth = 0;
+
+    if (!json || !key) return NULL;
+    key_len = strlen(key);
+    while (*p) {
+        if (*p == '"') {
+            const char *start = ++p;
+            const char *after;
+            while (*p && *p != '"') {
+                if (*p == '\\' && p[1]) p += 2;
+                else p++;
+            }
+            if (!*p) return NULL;
+            after = p + 1;
+            while (*after == ' ' || *after == '\t' || *after == '\r' || *after == '\n') after++;
+            if (depth == 1 && (size_t)(p - start) == key_len &&
+                memcmp(start, key, key_len) == 0 && *after == ':') {
+                return after + 1;
+            }
+            p++;
+            continue;
+        }
+        if (*p == '{' || *p == '[') depth++;
+        else if ((*p == '}' || *p == ']') && depth > 0) depth--;
+        p++;
+    }
+    return NULL;
+}
+
+static int qwen_json_bool(const char *json, const char *key, int *out) {
+    const char *p;
+
+    if (!json || !key || !out) return 0;
+    p = qwen_json_top_level_value(json, key);
+    if (!p) return 0;
+    while (*p == ' ' || *p == '\t' || *p == '\r' || *p == '\n') p++;
+    if (strncmp(p, "true", 4) == 0 && qwen_json_token_boundary(p[4])) {
+        *out = 1;
+        return 1;
+    }
+    if (strncmp(p, "false", 5) == 0 && qwen_json_token_boundary(p[5])) {
+        *out = 0;
+        return 1;
+    }
+    if (p[0] == '0' && qwen_json_token_boundary(p[1])) {
+        *out = 0;
+        return 1;
+    }
+    if (p[0] == '1' && qwen_json_token_boundary(p[1])) {
+        *out = 1;
+        return 1;
+    }
+    return 0;
+}
+
+/* Native FPQ keeps KV in FP32 for numerical parity.  Model metadata often
+ * advertises a long context window that is unnecessary for a short request
+ * and can dominate the entire resident footprint.  Permit an explicit,
+ * bounded reduction without ever extending a model's declared context. */
+static void qwen_apply_max_seq_override(qwen_config_t *cfg) {
+    const char *text = getenv("BONFYRE_QWEN_MAX_SEQ_LEN");
+    char *end = NULL;
+    long requested;
+
+    if (!cfg || !text || !text[0]) return;
+    requested = strtol(text, &end, 10);
+    if (end == text || *end != '\0' || requested < 16 || requested > cfg->max_seq_len) return;
+    if ((int)requested == cfg->max_seq_len) return;
+    fprintf(stderr, "qwen_runtime: context override %d -> %ld\n", cfg->max_seq_len, requested);
+    cfg->max_seq_len = (int)requested;
+}
+
 static void qwen_try_apply_manifest_json(const char *path, qwen_config_t *cfg) {
     char *json;
     char buf[4096];
@@ -466,7 +577,7 @@ static void qwen_try_apply_manifest_json(const char *path, qwen_config_t *cfg) {
         cfg->stop_token_ids[0] = value;
         cfg->n_stop_token_ids = 1;
     }
-    if (bf_json_int(json, "tie_word_embeddings", &value)) cfg->tie_word_embeddings = value != 0;
+    if (qwen_json_bool(json, "tie_word_embeddings", &value)) cfg->tie_word_embeddings = value;
 
     free(json);
 }
@@ -1050,6 +1161,7 @@ qwen_runtime_t *qwen_runtime_init(const char *pack_path,
 
     if (resolved_pack && qwen_path_exists(resolved_pack)) pack_path = resolved_pack;
     qwen_load_pack_metadata(pack_path, &rt->config, &meta);
+    qwen_apply_max_seq_override(&rt->config);
     if (!rt->model_id && meta.model_id) rt->model_id = strdup(meta.model_id);
     if ((!tokenizer_path || !tokenizer_path[0]) && meta.tokenizer_ref) tokenizer_path = meta.tokenizer_ref;
     tokenizer_ref = tokenizer_path;
@@ -1066,7 +1178,7 @@ qwen_runtime_t *qwen_runtime_init(const char *pack_path,
 
     /* Load FPQ model */
     fprintf(stderr, "qwen_runtime: loading model from %s\n", pack_path);
-    rt->model = fpq_open(pack_path);
+    rt->model = qwen_open_model(pack_path, &rt->config);
     rt->model_open_seconds = qwen_monotonic_seconds_now() - stage_t0;
     if (!rt->model) {
         fprintf(stderr, "qwen_runtime: failed to open model\n");
@@ -1292,7 +1404,7 @@ int qwen_runtime_warm(qwen_runtime_t *rt) {
 
     if (!rt) return -1;
     warm_tensors[0] = rt->config.embed_tensor_name[0] ? rt->config.embed_tensor_name : "model.embed_tokens.weight";
-    warm_tensors[1] = rt->config.lm_head_tensor_name[0] ? rt->config.lm_head_tensor_name : "lm_head.weight";
+    warm_tensors[1] = qwen_output_tensor_name(&rt->config);
     warm_tensors[2] = "model.layers.0.self_attn.q_proj.weight";
     warm_tensors[3] = "model.layers.0.self_attn.k_proj.weight";
     warm_tensors[4] = "model.layers.0.self_attn.v_proj.weight";
