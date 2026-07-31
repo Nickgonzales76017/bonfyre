@@ -84,6 +84,9 @@ export function createLlamaGenerationClient({
   systemPrompt = 'You are Bonfyre\'s precise local coding assistant. Return the requested result directly.',
   gpuLayers = 99,
   contextSize = 2048,
+  device,
+  opOffload,
+  fit,
   backend = 'llama-cpp',
   maxOutputBytes = 1_000_000,
   spawnImpl = spawn,
@@ -103,6 +106,9 @@ export function createLlamaGenerationClient({
     try {
       await writeFile(promptPath, qwenPrompt(sourcePrompt, systemPrompt), 'utf8');
       const args = [
+        ...(text(device) ? ['--device', text(device)] : []),
+        ...(opOffload === false ? ['--no-op-offload'] : []),
+        ...(fit === false ? ['--fit', 'off'] : []),
         '-m', model,
         '-ngl', String(gpuLayers),
         '-c', String(contextSize),
