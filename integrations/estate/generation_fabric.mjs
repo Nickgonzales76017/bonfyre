@@ -97,6 +97,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
   const nativeBinary = binary || process.env.BONFYRE_QWEN_FPQ_BINARY
     || join(process.cwd(), 'bin', 'bonfyre-qwen-fpq');
   const packRoot = join(modelRoot, 'fpq');
+  const llamaCpuOnly = ['1', 'true', 'yes'].includes(String(process.env.BONFYRE_LLAMA_CPU_ONLY || '').toLowerCase());
   const tokenizerBase = tokenizerRoot || join(modelRoot, 'tokenizers');
   let entries = [];
   try { entries = await readdir(packRoot, { withFileTypes: true }); } catch { entries = []; }
@@ -237,7 +238,8 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
         modelPack: modelPath,
         modelPath,
         runtime: 'llama-cpp',
-        backend: 'metal',
+        backend: llamaCpuOnly ? 'cpu' : 'metal',
+        ...(llamaCpuOnly ? { device: 'none', gpuLayers: 0, opOffload: false, fit: false } : {}),
         available: llamaAvailable,
         missing: llamaAvailable ? [] : ['llama-cli'],
       });
