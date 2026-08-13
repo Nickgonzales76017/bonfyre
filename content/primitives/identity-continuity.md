@@ -49,7 +49,7 @@ tracked issue (#3699), explicitly blocked on #3695 landing first.
 
 ## Bonfyre connection
 
-`Entity`, `Canon`, `Hash`, `ArtifactGraph`, `ProvenanceGraph`. The same
+`Entity`, `Canon`, `Hash`, `ArtifactGraph`. The same
 question this primitive asks about a SARIF finding applies to a video
 clip, an invoice, a research claim, or a repository artifact: what's the
 canonical preimage, and does the identity function actually recompute from

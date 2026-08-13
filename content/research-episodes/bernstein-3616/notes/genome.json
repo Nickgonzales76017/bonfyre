@@ -1,7 +1,7 @@
 {
   "id": 1,
   "created_at": "2026-08-13 04:30:12",
-  "updated_at": "2026-08-13 04:30:12",
+  "updated_at": "2026-08-13 04:57:37",
   "slug": "bernstein-identity-continuity",
   "status": "held",
   "publish_gate": "Hold until PR #3695 merges (per CURRENT_DIRECTIVE.md). Draft may be written now; do not publish before merge.",
@@ -10,7 +10,7 @@
   "counterclaims_json": "[]",
   "evidence_packet_json": "[\"PR #3695 focused suite: 67 tests passed\", \"chernistry's own local Semgrep run against .semgrep.yml: 0 findings across 1861 files (CI's Semgrep failure was infra: git clone cert verification, unrelated)\", \"chernistry fixed 2 real stability gaps directly on the branch: CRLF vs LF snippet text, Unicode NFD vs NFC snippet text, both same-normal-form-different-encoding bug class\", \"commits 154c3b04d (fix) and 19a092a7f (10 tests / 30 cases covering the two properties)\"]",
   "people_and_projects_json": "[\"#3616: original maintainer-authored need for a canonical SARIF finding-payload identity\", \"#3695: our draft PR implementing it -- canonical serializer, verify_run_artifacts() recomputation, provenance CLI\", \"chernistry (reviewer/collaborator): verified stability under Windows separators, ./ and ../ in the URI, dict ordering, untracked SARIF fields\", \"#3699 filed by chernistry, explicitly blocked on #3695 landing first, to reconcile with the weaker addresser in main\"]",
-  "primitive_refs_json": "[\"Identity Continuity\", \"ArtifactGraph\", \"ProvenanceGraph\", \"EvidenceGraph\", \"Canon\", \"Hash\", \"Receipt\"]",
+  "primitive_refs_json": "[\"Identity Continuity\", \"ArtifactGraph\", \"EvidenceGraph\", \"Canon\", \"Hash\", \"Receipt\"]",
   "artifact_refs_json": "[\"https://github.com/sipyourdrink-ltd/bernstein/pull/3695\", \"https://github.com/sipyourdrink-ltd/bernstein/issues/3616\", \"https://github.com/sipyourdrink-ltd/bernstein/issues/3699\"]",
   "visualizable_structures_json": "[]",
   "demoable_structures_json": "[]",
@@ -20,6 +20,6 @@
   "release_constraints": "do not publish before PR #3695 merges; do not claim the CRLF/NFC fix as unilateral -- chernistry authored those commits himself",
   "privacy_constraints": "none; all sourced from public GitHub PR/issue threads",
   "attribution_requirements": "credit chernistry by GitHub handle for the CRLF/NFC fix and the #3699 diagnosis, not just as \"a reviewer\"",
-  "update_dependencies_json": "[]",
+  "update_dependencies_json": "[\"real wiki_page entry id=1, ns=aurekai, bonfyre-zig/bonfyre_cms.db (bonfyre-cms entry get wiki_page 1)\", \"content/research-episodes/bernstein-3616/ is the source material this entry was written from\"]",
   "relationship_id": 1
 }
