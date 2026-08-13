@@ -1,0 +1,124 @@
+name: aurekai-release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            hyper_target: bun-darwin-arm64
+          - os: ubuntu-latest
+            hyper_target: bun-linux-x64
+    runs-on: ${{ matrix.os }}
+    env:
+      MODEL_MEMORY_FAMILY: qwen3-8b
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.13
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Derive version from tag (or fallback)
+        id: ver
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME:-}"
+          if [[ "$TAG" == v* ]]; then
+            echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+            echo "prerelease=$([[ "$TAG" == *alpha* || "$TAG" == *beta* || "$TAG" == *rc* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          else
+            PKG_VER=$(node -e "process.stdout.write(require('./Aurekai/package.json').version)")
+            echo "version=$PKG_VER" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build release artifacts
+        env:
+          AUREKAI_VERSION: ${{ steps.ver.outputs.version }}
+          HYPER_TARGET: ${{ matrix.hyper_target }}
+        run: |
+          make -C Aurekai sha256sums sbom \
+            AUREKAI_VERSION="${AUREKAI_VERSION}" \
+            HYPER_TARGET="${HYPER_TARGET}" \
+            MODEL_MEMORY_FAMILY="${MODEL_MEMORY_FAMILY}"
+
+      - name: Run release-check (doctor --deep)
+        env:
+          AUREKAI_VERSION: ${{ steps.ver.outputs.version }}
+          HYPER_TARGET: ${{ matrix.hyper_target }}
+        run: |
+          make -C Aurekai release-check \
+            AUREKAI_VERSION="${AUREKAI_VERSION}" \
+            HYPER_TARGET="${HYPER_TARGET}" \
+            MODEL_MEMORY_FAMILY="${MODEL_MEMORY_FAMILY}"
+
+      - name: Upload artifacts for release job
+        uses: actions/upload-artifact@v4
+        with:
+          name: aurekai-dist-${{ matrix.hyper_target }}
+          retention-days: 1
+          path: |
+            Aurekai/dist/akai-hyper-v${{ steps.ver.outputs.version }}-${{ matrix.hyper_target }}
+            Aurekai/dist/aurekai-runtime-v${{ steps.ver.outputs.version }}-${{ matrix.hyper_target }}.tar.gz
+            Aurekai/dist/aurekai-runtime-v${{ steps.ver.outputs.version }}-${{ matrix.hyper_target }}.tar.zst
+            Aurekai/dist/aurekai-model-memory-${{ env.MODEL_MEMORY_FAMILY }}-*.tar.gz
+            Aurekai/dist/aurekai-model-memory-${{ env.MODEL_MEMORY_FAMILY }}-*.tar.zst
+            Aurekai/dist/aurekai-appliance-v${{ steps.ver.outputs.version }}-${{ matrix.hyper_target }}.tar.gz
+            Aurekai/dist/aurekai-appliance-v${{ steps.ver.outputs.version }}-${{ matrix.hyper_target }}.tar.zst
+            Aurekai/dist/aurekai.manifest.json
+            Aurekai/dist/bonfyre.manifest.json
+            Aurekai/dist/SHA256SUMS
+            Aurekai/dist/SBOM.spdx.json
+
+  github-release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Derive version + prerelease flag
+        id: ver
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$([[ "$TAG" == *alpha* || "$TAG" == *beta* || "$TAG" == *rc* ]] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: aurekai-dist-*
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Aurekai v${{ steps.ver.outputs.version }}
+          body: |
+            Aurekai v0.8.0-alpha.1 introduces the public platform layer for the Bonfyre native runtime.
+
+            This alpha release adds the akai CLI, Aurekai deployment metadata, first-class .akmodel/.aksae/.akfpqx aliases, Bonfyre compatibility manifests, Helm and VS Code scaffolds, SHA256SUMS, SBOM output, and an end-to-end release-check that validates the underlying runtime with doctor --deep.
+
+            Aurekai is the operating fabric for intelligent work: media, models, memory, routing, billing, proof, and delivery in one traceable AI-native operations platform.
+          prerelease: ${{ steps.ver.outputs.prerelease }}
+          files: release-assets/**

@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.committed_state.v1.json",
+  "title": "Aurekai Committed State",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "state_id",
+    "state_hash",
+    "target",
+    "surface",
+    "committed_at",
+    "canonical_state"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.committed_state.v1" },
+    "state_id": { "type": "string" },
+    "state_hash": { "type": "string" },
+    "target": { "type": "string" },
+    "surface": { "enum": ["hard-fork", "soft-fork", "adapter", "observer", "state-machine"] },
+    "category": { "type": "string" },
+    "runtime_depth": { "type": "string" },
+    "ingress_depth": { "type": "string" },
+    "trust_level": { "type": "string" },
+    "required_kernel_layers": { "type": "array", "items": { "type": "string" } },
+    "chart_family": { "type": "string" },
+    "residual_assessment": { "type": "object" },
+    "mutation_boundary": { "type": ["object", "null"] },
+    "state_machine_types": { "type": "array", "items": { "type": "string" } },
+    "committed_at": { "type": "string", "format": "date-time" },
+    "host_event": { "type": "object" },
+    "canonical_state": { "type": "object" }
+  }
+}

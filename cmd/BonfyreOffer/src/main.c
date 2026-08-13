@@ -10,33 +10,13 @@
 #define MAX_PATH 2048
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 static char *read_file(const char *path, long *size_out) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) return NULL;
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    if (size < 0) {
-        fclose(fp);
-        return NULL;
-    }
-    char *buffer = malloc((size_t)size + 1);
-    if (!buffer) {
-        fclose(fp);
-        return NULL;
-    }
-    fread(buffer, 1, (size_t)size, fp);
-    fclose(fp);
-    buffer[size] = '\0';
-    if (size_out) *size_out = size;
-    return buffer;
+    size_t sz = 0;
+    char *buf = bf_read_file(path, &sz);
+    if (size_out) *size_out = (long)sz;
+    return buf;
 }
 
 static int extract_string_value(const char *json, const char *key, char *buffer, size_t size) {

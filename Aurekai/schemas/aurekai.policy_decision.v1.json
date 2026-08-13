@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.policy_decision.v1.json",
+  "title": "Aurekai Policy Decision",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "policy_id",
+    "surface",
+    "decision",
+    "confidence",
+    "reason_codes"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.policy_decision.v1" },
+    "policy_id": { "type": "string" },
+    "surface": { "enum": ["hard-fork", "soft-fork", "adapter", "observer", "state-machine"] },
+    "category": { "type": "string" },
+    "policy_family": { "type": "string" },
+    "decision": { "enum": ["allow", "gate", "halt"] },
+    "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+    "reason_codes": { "type": "array", "items": { "type": "string" } },
+    "thresholds": { "type": "object" },
+    "continuity_context": { "type": "object" }
+  }
+}

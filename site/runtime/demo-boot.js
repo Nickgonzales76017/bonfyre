@@ -1,6 +1,6 @@
 (function(global) {
   var repoMap = {
-    'bonfyre': 'https://github.com/Nickgonzales76017/bonfyre',
+    'bonfyre': 'https://github.com/Nickgonzales76017/bonfyre-oss',
     'bonfyre-core': 'https://github.com/Nickgonzales76017/bonfyre-core',
     'bonfyre-intake': 'https://github.com/Nickgonzales76017/bonfyre-intake',
     'bonfyre-pipeline': 'https://github.com/Nickgonzales76017/bonfyre-pipeline',

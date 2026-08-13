@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Bonfyre — Model compression + backend infrastructure</title>
-<meta name="description" content="Bonfyre is two things: BonfyreFPQ model compression with direct .fpq inference, and 50 composable C11 binaries replacing your entire backend. MIT licensed.">
+<title>Bonfyre — bonfyre-oss runtime, docs, and pages</title>
+<meta name="description" content="Bonfyre is a C11 runtime and operator stack published through bonfyre-oss: wire capture, artifacts, recipes, stitching, local AI, pages, proxy, orchestration, and shared runtime modules. MIT licensed.">
 <meta name="theme-color" content="#0d1117">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔥</text></svg>">
 <style>
@@ -40,12 +40,13 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
 <body>
 <div class="landing">
   <h1>🔥 <span>Bonfyre</span></h1>
-  <p class="tagline">Model compression that actually runs inference — and 50 C binaries that replace your entire backend. Two flagships. One stack. MIT licensed.</p>
+  <p class="tagline">bonfyre-oss is the current public source of truth for the Bonfyre runtime, CLI, docs, and Pages surfaces: wire capture, artifacts, recipes, stitching, proxy, orchestration, and local AI in C11.</p>
 
   <div class="stats-row">
     <div class="stat"><span class="num" style="color:var(--green)">4×</span><span class="label">Model compression</span></div>
     <div class="stat"><span class="num" style="color:var(--green)">0.997</span><span class="label">Inference cosine</span></div>
-    <div class="stat"><span class="num" style="color:var(--accent)">50</span><span class="label">Backend binaries</span></div>
+    <div class="stat"><span class="num" style="color:var(--accent)">53</span><span class="label">Stack binaries</span></div>
+    <div class="stat"><span class="num">26</span><span class="label">Library modules</span></div>
     <div class="stat"><span class="num">15</span><span class="label"><a href="https://huggingface.co/NICKO" style="color:inherit">Models on HF</a></span></div>
     <div class="stat"><span class="num">20</span><span class="label">Live apps</span></div>
     <div class="stat"><span class="num">~2.1 MB</span><span class="label">Total disk</span></div>
@@ -55,30 +56,72 @@ footer{margin-top:40px;font-size:.82rem;color:var(--text-dim)}footer a{color:var
     <a href="explore.html" class="path-card card-explore">
       <div class="emoji">🚀</div>
       <h2>What Can Bonfyre Do For Me?</h2>
-      <div class="desc">See what Bonfyre does, who it's for, and real-world uses for your business — restaurants, law offices, agencies, podcasters, and more. No technical jargon.</div>
-      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Hardware guide · Use cases</div>
+      <div class="desc">See what Bonfyre does, who it's for, and how the newer stack pieces fit together in practice — local AI, search, pages, proxy, phone edge, relay, and proof surfaces. No technical jargon required.</div>
+      <div class="includes"><strong>Includes:</strong><br>What it replaces · Industry recipes · Live apps · WordPress · Pipelines · Proxy + relay · Under-the-hood overview</div>
       <span class="cta">Explore Bonfyre →</span>
     </a>
     <a href="docs.html" class="path-card card-docs">
       <div class="emoji">🔧</div>
       <h2>Technical Docs &amp; Benchmarks</h2>
-      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, hardware fits with pricing, architecture, all 50 binaries, install, and reproduction commands.</div>
-      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · Install · Binaries</div>
+      <div class="desc">FPQ compression deep-dive, FPQ-X operators, KV cache, runtime architecture, proxy/orchestration/relay surfaces, and reproduction commands.</div>
+      <div class="includes"><strong>Includes:</strong><br>FPQ · FPQ-X · KV cache · Benchmarks · Hardware fits · Architecture · Runtime modules · Proxy · Orchestration · Install</div>
       <span class="cta">Open Technical Docs →</span>
     </a>
   </div>
 
   <div class="links-row">
-    <a href="https://github.com/Nickgonzales76017/bonfyre">⭐ bonfyre</a>
     <a href="https://github.com/Nickgonzales76017/bonfyre-oss">⭐ bonfyre-oss</a>
+    <a href="https://github.com/Nickgonzales76017/bonfyre">archive / legacy repo</a>
     <a href="https://huggingface.co/NICKO">🤗 HuggingFace</a>
     <a href="https://github.com/Nickgonzales76017/hcp-whisper">🎤 HCP Speech</a>
     <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">📋 Live Proof</a>
   </div>
 
+  <!-- Recent additions (content-only) -->
+  <section id="recent-additions" style="padding:40px 0">
+    <div class="container">
+      <h2>Recent additions</h2>
+      <p class="subtitle">A compact look at the newer runtime pieces and product-facing surfaces now inside the stack since the last public push.</p>
+      <div class="killer-grid" style="margin-top:16px">
+        <div class="killer-card">
+          <div class="vs">Runtime layer</div>
+          <div class="detail">Shared-nothing reactor, hot-load pipeline stages, coroutine pipeline flow, zero-copy LMDB + FlatBuffers, SIMD JSON + UTF-8, MessagePack events, DNS, logging, mmap, LZ4, Bloom dedup, and fountain-coded swarm delivery.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Newer surfaces</div>
+          <div class="detail">bonfyre-proxy for OpenAI-compatible local APIs, bonfyre-orchestrate for machine-only planning, bonfyre-tel for the communications edge, bonfyre-swarm for metered distribution, bonfyre-narrate for verified audio output, and bonfyre-moq for private realtime media.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Wire -> artifact -> recipe</div>
+          <div class="detail">BonfyreWire now goes beyond flow reports. It can fingerprint devices, materialize canonical artifacts, and generate stitch-compatible recipes from owned or authorized captures.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Registry + CLI health</div>
+          <div class="detail">The command surface is richer too: health-aware `bonfyre list`, repo/install drift checks, subcommand syncing, workflow listing, recipe browsing, and layer registry inspection.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Speech investigation stack</div>
+          <div class="detail">The repo now includes a fuller speech investigation story: architecture, production integration, quickstart, adversarial hypothesis engine, and discovery pipeline documentation.</div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 22px;text-align:left">
+        <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:10px">Try The New Surface</div>
+        <div style="font-family:var(--mono);font-size:.82rem;color:var(--text-dim);line-height:1.9;overflow:auto">
+          bonfyre wire --help<br>
+          bonfyre list --health<br>
+          bonfyre workflow list<br>
+          bonfyre recipe list<br>
+          bonfyre layer registry --root layeros/state
+        </div>
+        <div style="margin-top:12px;font-size:.84rem;color:var(--text-dim)">These are the quickest commands for seeing the newer operator model: health-aware CLI surfaces, registry-backed discovery, and the wire-to-artifact path.</div>
+      </div>
+    </div>
+  </section>
+
   <footer>
     Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> ·
-    <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">MIT License</a>
+    <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/LICENSE">MIT License</a>
   </footer>
 </div>
 </body>

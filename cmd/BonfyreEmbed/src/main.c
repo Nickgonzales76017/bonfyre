@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/stat.h>
 #include <onnxruntime_c_api.h>
@@ -460,8 +461,13 @@ static const char *resolve_vec_ext(void) {
     const char *env = getenv("BONFYRE_VEC_EXT");
     if (env && env[0]) return env;
     static const char *paths[] = {
-        "/Users/nickgonzales/Library/Python/3.9/lib/python/site-packages/sqlite_vec/vec0",
+        /* macOS Homebrew */
         "/opt/homebrew/lib/sqlite_vec/vec0",
+        /* Linux system-wide */
+        "/usr/lib/x86_64-linux-gnu/sqlite_vec/vec0",
+        "/usr/lib/aarch64-linux-gnu/sqlite_vec/vec0",
+        "/usr/lib/sqlite_vec/vec0",
+        /* universal fallback */
         "/usr/local/lib/sqlite_vec/vec0",
         NULL
     };
@@ -615,6 +621,292 @@ static int write_status_json(const char *path, const char *vector_path,
 
 /* ── main ───────────────────────────────────────────────────── */
 
+/* ─── VECF helpers for subcommands ──────────────────────────── */
+
+static float *load_vecf_sub_(const char *path, uint32_t *out_dim) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    uint32_t magic, dim;
+    if (fread(&magic, 4, 1, f) != 1 || magic != 0x46434556u /* VECF */ ||
+        fread(&dim,   4, 1, f) != 1 || dim == 0 || dim > 65536) {
+        fclose(f); return NULL;
+    }
+    float *v = malloc(dim * sizeof(float));
+    if (!v) { fclose(f); return NULL; }
+    if (fread(v, sizeof(float), dim, f) != (size_t)dim) { free(v); fclose(f); return NULL; }
+    fclose(f);
+    *out_dim = dim;
+    return v;
+}
+
+static int save_vecf_sub_(const char *path, const float *v, uint32_t dim) {
+    FILE *f = fopen(path, "wb");
+    if (!f) return -1;
+    uint32_t magic = 0x46434556u;
+    int ok = (fwrite(&magic, 4, 1, f) == 1 &&
+              fwrite(&dim,   4, 1, f) == 1 &&
+              fwrite(v, sizeof(float), dim, f) == dim);
+    fclose(f);
+    return ok ? 0 : -1;
+}
+
+/* ─── subcommand: pack ───────────────────────────────────────── */
+
+static int cmd_embed_pack_(int argc, char **argv) {
+    (void)argc; (void)argv;
+    const char *home = getenv("HOME");
+    char pack_path[PATH_MAX];
+    snprintf(pack_path, sizeof(pack_path),
+             "%s/.local/share/bonfyre/embeds/pack.bfpack",
+             home ? home : "/tmp");
+    uint32_t n = 0;
+    if (bf_embed_pack_build(pack_path, &n) != 0) {
+        fprintf(stderr, "embed pack: build failed\n"); return 1;
+    }
+    if (n == 0) { printf("embed pack: no loose objects to pack\n"); return 0; }
+    printf("embed pack: packed %u vectors → %s\n", n, pack_path);
+    printf("  run 'bonfyre embed gc' to remove loose files\n");
+    return 0;
+}
+
+/* ─── subcommand: stat ───────────────────────────────────────── */
+
+static int cmd_embed_stat_(int argc, char **argv) {
+    (void)argc; (void)argv;
+    const char *home = getenv("HOME");
+    char dir[PATH_MAX];
+    snprintf(dir, sizeof(dir), "%s/.local/share/bonfyre/embeds",
+             home ? home : "/tmp");
+
+    int loose = 0; off_t loose_bytes = 0;
+    DIR *dd = opendir(dir);
+    if (dd) {
+        struct dirent *de;
+        while ((de = readdir(dd))) {
+            const char *nm = de->d_name;
+            size_t l = strlen(nm);
+            if (l == 72 && strcmp(nm + 64, ".bfembed") == 0) {
+                char fp[PATH_MAX];
+                snprintf(fp, sizeof(fp), "%s/%s", dir, nm);
+                struct stat stt;
+                if (stat(fp, &stt) == 0) { loose++; loose_bytes += stt.st_size; }
+            }
+        }
+        closedir(dd);
+    }
+
+    char pack_path[PATH_MAX];
+    snprintf(pack_path, sizeof(pack_path), "%s/pack.bfpack", dir);
+    struct stat pst;
+    printf("embed store: %s\n", dir);
+    printf("  loose objects: %d  (%.1f KB)\n", loose, loose_bytes / 1024.0);
+    if (stat(pack_path, &pst) == 0) {
+        BfEmbedPack pk = {0};
+        if (bf_embed_pack_open(&pk, pack_path) == 0) {
+            printf("  pack:  %u vectors, dim=%u  (%.1f KB)\n",
+                   pk.n, pk.dim, pst.st_size / 1024.0);
+            bf_embed_pack_close(&pk);
+        } else {
+            printf("  pack:  %s  (%.1f KB, bad header)\n",
+                   pack_path, pst.st_size / 1024.0);
+        }
+    } else {
+        printf("  pack:  none  (run: bonfyre embed pack)\n");
+    }
+
+    /* KV chain stats */
+    char kv_root[PATH_MAX];
+    snprintf(kv_root, sizeof(kv_root),
+             "%s/.local/share/bonfyre/kvcache", home ? home : "/tmp");
+    char kv2_root[PATH_MAX];
+    snprintf(kv2_root, sizeof(kv2_root),
+             "%s/.local/share/bonfyre/kvcache-chain", home ? home : "/tmp");
+    struct stat kvst, kv2st;
+    if (stat(kv_root, &kvst) == 0)
+        printf("  kvcache store:  %s\n", kv_root);
+    if (stat(kv2_root, &kv2st) == 0)
+        printf("  kvcache chain:  %s\n", kv2_root);
+
+    /* Steering vectors */
+    char **snames = NULL; int scount = 0;
+    bf_embed_steer_list(&snames, &scount);
+    if (scount > 0) {
+        printf("  branches (%d):", scount);
+        for (int i = 0; i < scount; i++) { printf(" %s", snames[i]); free(snames[i]); }
+        printf("\n");
+    } else {
+        printf("  branches: none\n");
+    }
+    free(snames);
+    return 0;
+}
+
+/* ─── subcommand: gc ─────────────────────────────────────────── */
+
+static int cmd_embed_gc_(int argc, char **argv) {
+    (void)argc; (void)argv;
+    const char *home = getenv("HOME");
+    char dir[PATH_MAX], pack_path[PATH_MAX];
+    snprintf(dir,       sizeof(dir),       "%s/.local/share/bonfyre/embeds", home ? home : "/tmp");
+    snprintf(pack_path, sizeof(pack_path), "%s/pack.bfpack", dir);
+
+    BfEmbedPack pack = {0};
+    if (bf_embed_pack_open(&pack, pack_path) != 0) {
+        printf("embed gc: no pack found — run 'bonfyre embed pack' first\n");
+        return 0;
+    }
+
+    DIR *dd = opendir(dir);
+    if (!dd) { bf_embed_pack_close(&pack); return 0; }
+
+    int removed = 0;
+    struct dirent *de;
+    while ((de = readdir(dd))) {
+        const char *nm = de->d_name;
+        size_t l = strlen(nm);
+        if (l != 72 || strcmp(nm + 64, ".bfembed") != 0) continue;
+        uint8_t hash[32]; int ok = 1;
+        for (int i = 0; i < 32; i++) {
+            unsigned v;
+            if (sscanf(nm + i * 2, "%02x", &v) != 1) { ok = 0; break; }
+            hash[i] = (uint8_t)v;
+        }
+        if (!ok) continue;
+        if (bf_embed_pack_lookup(&pack, hash)) {
+            char fp[PATH_MAX];
+            snprintf(fp, sizeof(fp), "%s/%s", dir, nm);
+            unlink(fp);
+            removed++;
+        }
+    }
+    closedir(dd);
+    bf_embed_pack_close(&pack);
+    printf("embed gc: removed %d loose objects (now only in pack)\n", removed);
+    return 0;
+}
+
+/* ─── subcommand: branch ─────────────────────────────────────── */
+
+static int cmd_embed_branch_(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr,
+            "Usage:\n"
+            "  bonfyre embed branch list\n"
+            "  bonfyre embed branch add   <name> <delta.vecf>\n"
+            "  bonfyre embed branch delta <base.vecf> <target.vecf> <name>\n"
+            "  bonfyre embed branch apply <input.vecf> --branch <name> [--alpha 0.5]"
+                                        " [--branch <name2> ...] --out <output.vecf>\n"
+        );
+        return 1;
+    }
+
+    const char *action = argv[1];
+
+    /* ── list ── */
+    if (strcmp(action, "list") == 0) {
+        char **names = NULL; int count = 0;
+        bf_embed_steer_list(&names, &count);
+        if (count == 0) printf("no branches stored\n");
+        else for (int i = 0; i < count; i++) { printf("  %s\n", names[i]); free(names[i]); }
+        free(names);
+        return 0;
+    }
+
+    /* ── add: store a pre-computed delta vector as a branch ── */
+    if (strcmp(action, "add") == 0) {
+        if (argc < 4) { fprintf(stderr, "branch add: need <name> <delta.vecf>\n"); return 1; }
+        const char *name = argv[2], *path = argv[3];
+        uint32_t dim = 0;
+        float *vec = load_vecf_sub_(path, &dim);
+        if (!vec) { fprintf(stderr, "branch add: cannot read %s\n", path); return 1; }
+        if (bf_embed_steer_add(name, vec, dim) != 0) {
+            free(vec); fprintf(stderr, "branch add: store failed\n"); return 1;
+        }
+        free(vec);
+        printf("branch '%s' stored  [%u dims]\n", name, dim);
+        return 0;
+    }
+
+    /* ── delta: create branch from difference of two embeddings ── *
+     * This is how you build concept branches:
+     *   "apple (tech context)" - "apple (general)" = tech steering vector
+     */
+    if (strcmp(action, "delta") == 0) {
+        if (argc < 5) {
+            fprintf(stderr, "branch delta: need <base.vecf> <target.vecf> <name>\n");
+            return 1;
+        }
+        const char *base_path   = argv[2];
+        const char *target_path = argv[3];
+        const char *name        = argv[4];
+        uint32_t bdim = 0, tdim = 0;
+        float *base_v   = load_vecf_sub_(base_path,   &bdim);
+        float *target_v = load_vecf_sub_(target_path, &tdim);
+        if (!base_v || !target_v) {
+            free(base_v); free(target_v);
+            fprintf(stderr, "branch delta: cannot read input files\n"); return 1;
+        }
+        if (bdim != tdim) {
+            free(base_v); free(target_v);
+            fprintf(stderr, "branch delta: dimension mismatch (%u vs %u)\n", bdim, tdim);
+            return 1;
+        }
+        /* delta = target - base */
+        for (uint32_t i = 0; i < bdim; i++) base_v[i] = target_v[i] - base_v[i];
+        free(target_v);
+        if (bf_embed_steer_add(name, base_v, bdim) != 0) {
+            free(base_v); fprintf(stderr, "branch delta: store failed\n"); return 1;
+        }
+        free(base_v);
+        printf("branch '%s' = (target - base)  [%u dims]\n", name, bdim);
+        return 0;
+    }
+
+    /* ── apply: steer an embedding along one or more branches ── */
+    if (strcmp(action, "apply") == 0) {
+        if (argc < 3) { fprintf(stderr, "branch apply: need <input.vecf>\n"); return 1; }
+        const char *inpath = argv[2], *outpath = NULL;
+        const char *bnames[32]; float balphas[32]; int nb = 0;
+
+        for (int i = 3; i < argc; i++) {
+            if (strcmp(argv[i], "--branch") == 0 && i + 1 < argc) {
+                bnames[nb]  = argv[++i];
+                balphas[nb] = 1.0f;
+                nb++;
+            } else if (strcmp(argv[i], "--alpha") == 0 && i + 1 < argc && nb > 0) {
+                balphas[nb - 1] = (float)atof(argv[++i]);
+            } else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) {
+                outpath = argv[++i];
+            }
+        }
+        if (nb == 0 || !outpath) {
+            fprintf(stderr, "branch apply: need --branch <name> --out <file>\n");
+            return 1;
+        }
+
+        uint32_t dim = 0;
+        float *vec = load_vecf_sub_(inpath, &dim);
+        if (!vec) { fprintf(stderr, "branch apply: cannot read %s\n", inpath); return 1; }
+
+        if (bf_embed_steer_apply(vec, dim, bnames, balphas, nb) != 0) {
+            free(vec);
+            fprintf(stderr, "branch apply: steer not found or dim mismatch\n");
+            return 1;
+        }
+        if (save_vecf_sub_(outpath, vec, dim) != 0) {
+            free(vec); fprintf(stderr, "branch apply: write failed\n"); return 1;
+        }
+        free(vec);
+        printf("applied %d branch(es): %s → %s  [%u dims]\n", nb, inpath, outpath, dim);
+        return 0;
+    }
+
+    fprintf(stderr, "branch: unknown action '%s'\n", action);
+    return 1;
+}
+
+/* ─── usage + main ───────────────────────────────────────────── */
+
 static void usage(void) {
     fprintf(stderr,
         "Usage: bonfyre-embed --text <path> --out <path> "
@@ -623,10 +915,270 @@ static void usage(void) {
         "[--input-dir <dir>] [--meta-out <path>] [--dry-run]\n"
         "\n"
         "  --input-dir <dir>  Batch mode: embed all .txt files in <dir>\n"
-        "                     (loads model once, amortizes startup)\n");
+        "                     (loads model once, amortizes startup)\n"
+        "\n"
+        "Store management subcommands:\n"
+        "  bonfyre embed pack           — consolidate loose objects into pack\n"
+        "  bonfyre embed stat           — show store stats (loose/pack/branches)\n"
+        "  bonfyre embed gc             — remove loose objects already in pack\n"
+        "  bonfyre embed branch list    — list stored steering vectors\n"
+        "  bonfyre embed branch add  <name> <delta.vecf>\n"
+        "  bonfyre embed branch delta <base.vecf> <target.vecf> <name>\n"
+        "  bonfyre embed branch apply <input.vecf> --branch <name> [--alpha 0.5] --out <out.vecf>\n"
+        "\n"
+        "Semantic search subcommands:\n"
+        "  bonfyre embed index [--k N]           — build IVF ANN index from pack\n"
+        "  bonfyre embed index-q8                — INT8-quantize pack then index\n"
+        "  bonfyre embed nearest <input.vecf> [--k 10] [--n-probe 4] [--brute]\n"
+        "  bonfyre embed merge <a.vecf> <b.vecf> [--alpha 0.5] --out <out.vecf>\n"
+        "\n"
+        "Ref / history subcommands:\n"
+        "  bonfyre embed tag <hash-hex> <name>   — store named ref\n"
+        "  bonfyre embed tag list                — list all named refs\n"
+        "  bonfyre embed tag delete <name>       — remove named ref\n"
+        "  bonfyre embed refs                    — alias for tag list\n"
+        "  bonfyre embed log [--n 20]            — reflog (newest first)\n"
+    );
+}
+
+/* ── slerp helper ────────────────────────────────────────────── */
+static void slerp_e_(const float *a, const float *b, float t,
+                     float *out, uint32_t dim) {
+    float dot = 0.0f;
+    for (uint32_t i = 0; i < dim; i++) dot += a[i] * b[i];
+    if (dot >  1.0f) dot =  1.0f;
+    if (dot < -1.0f) dot = -1.0f;
+    float theta = acosf(dot);
+    if (theta < 1e-6f) {
+        for (uint32_t i = 0; i < dim; i++) out[i] = a[i]*(1.0f-t) + b[i]*t;
+        return;
+    }
+    float s = sinf(theta);
+    float wa = sinf((1.0f - t) * theta) / s;
+    float wb = sinf(t           * theta) / s;
+    for (uint32_t i = 0; i < dim; i++) out[i] = wa * a[i] + wb * b[i];
+}
+
+static void norm_e_(float *v, uint32_t dim) {
+    float n2 = 0.0f;
+    for (uint32_t i = 0; i < dim; i++) n2 += v[i]*v[i];
+    float n = sqrtf(n2);
+    if (n > 1e-9f) for (uint32_t i = 0; i < dim; i++) v[i] /= n;
+}
+
+static void hex_out_e_(const uint8_t h[32], char out[65]) {
+    static const char hc[] = "0123456789abcdef";
+    for (int i = 0; i < 32; i++) { out[i*2]=hc[h[i]>>4]; out[i*2+1]=hc[h[i]&0xf]; }
+    out[64] = '\0';
+}
+
+/* ── subcommand: index ───────────────────────────────────────── */
+static int cmd_embed_index_(int argc, char **argv) {
+    const char *home = getenv("HOME");
+    char pack_path[PATH_MAX], idx_path[PATH_MAX];
+    snprintf(pack_path, sizeof(pack_path),
+             "%s/.local/share/bonfyre/embeds/pack.bfpack", home ? home : "/tmp");
+    snprintf(idx_path,  sizeof(idx_path),
+             "%s/.local/share/bonfyre/embeds/pack.bfidx",  home ? home : "/tmp");
+
+    int do_q8 = (argc >= 2 && (strcmp(argv[1],"q8")==0 || strcmp(argv[1],"--q8")==0));
+    if (do_q8) {
+        uint32_t nq = 0;
+        if (bf_embed_pack_build_q8(pack_path, &nq) != 0) {
+            fprintf(stderr, "embed index: q8 pack build failed\n"); return 1;
+        }
+        printf("embed index: packed %u vectors (INT8) → %s\n", nq, pack_path);
+    }
+
+    uint32_t k = 0;
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "--k") == 0 && i+1 < argc) k = (uint32_t)atoi(argv[++i]);
+
+    struct stat pst;
+    if (stat(pack_path, &pst) != 0) {
+        fprintf(stderr, "embed index: no pack — run 'bonfyre embed pack' first\n");
+        return 1;
+    }
+
+    printf("embed index: clustering (k=%s)...\n", k ? "auto" : "auto");
+    if (bf_embed_index_build(pack_path, k, idx_path) != 0) {
+        fprintf(stderr, "embed index: build failed\n"); return 1;
+    }
+    BfEmbedIndex idx = {0};
+    if (bf_embed_index_open(&idx, idx_path) == 0) {
+        printf("embed index: %llu vectors, %u centroids → %s\n",
+               (unsigned long long)idx.n_vectors, idx.n_centroids, idx_path);
+        bf_embed_index_close(&idx);
+    }
+    return 0;
+}
+
+/* ── subcommand: nearest ─────────────────────────────────────── */
+static int cmd_embed_nearest_(int argc, char **argv) {
+    if (argc < 2) { fprintf(stderr, "nearest: need <input.vecf>\n"); return 1; }
+    const char *inpath = argv[1];
+    int top_k = 10, n_probe = 4, brute = 0;
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i],"--k")==0      && i+1<argc) top_k  = atoi(argv[++i]);
+        if (strcmp(argv[i],"--n-probe")==0 && i+1<argc) n_probe= atoi(argv[++i]);
+        if (strcmp(argv[i],"--brute")==0) brute = 1;
+    }
+    uint32_t dim = 0;
+    float *query = load_vecf_sub_(inpath, &dim);
+    if (!query) { fprintf(stderr, "nearest: cannot read %s\n", inpath); return 1; }
+
+    const char *home = getenv("HOME");
+    char pack_path[PATH_MAX], idx_path[PATH_MAX];
+    snprintf(pack_path, sizeof(pack_path),
+             "%s/.local/share/bonfyre/embeds/pack.bfpack", home ? home : "/tmp");
+    snprintf(idx_path,  sizeof(idx_path),
+             "%s/.local/share/bonfyre/embeds/pack.bfidx",  home ? home : "/tmp");
+
+    BfEmbedPack pack = {0};
+    if (bf_embed_pack_open(&pack, pack_path) != 0) {
+        fprintf(stderr, "nearest: no pack\n"); free(query); return 1;
+    }
+    if (dim != pack.dim) {
+        fprintf(stderr, "nearest: dim mismatch (%u vs %u)\n", dim, pack.dim);
+        bf_embed_pack_close(&pack); free(query); return 1;
+    }
+
+    BfEmbedSearchResult *res = malloc((size_t)top_k * sizeof(BfEmbedSearchResult));
+    if (!res) { bf_embed_pack_close(&pack); free(query); return 1; }
+    int found = 0;
+
+    if (!brute) {
+        BfEmbedIndex idx = {0};
+        if (bf_embed_index_open(&idx, idx_path) == 0) {
+            bf_embed_index_search(&idx, &pack, query, dim, top_k, n_probe, res, &found);
+            bf_embed_index_close(&idx);
+        } else {
+            fprintf(stderr, "nearest: no index, using brute search\n");
+            brute = 1;
+        }
+    }
+    if (brute) bf_embed_brute_search(&pack, query, dim, top_k, res, &found);
+
+    printf("Top-%d for %s:\n", found, inpath);
+    for (int i = 0; i < found; i++) {
+        char hex[65]; hex_out_e_(res[i].hash, hex);
+        printf("  [%2d] %.4f  %s\n", i+1, res[i].score, hex);
+    }
+    free(res); bf_embed_pack_close(&pack); free(query);
+    return 0;
+}
+
+/* ── subcommand: merge ───────────────────────────────────────── */
+static int cmd_embed_merge_(int argc, char **argv) {
+    if (argc < 4) {
+        fprintf(stderr, "merge: need <a.vecf> <b.vecf> --out <out.vecf>\n"); return 1;
+    }
+    float alpha = 0.5f; const char *outpath = NULL;
+    for (int i = 3; i < argc; i++) {
+        if (strcmp(argv[i],"--alpha")==0 && i+1<argc) alpha = (float)atof(argv[++i]);
+        if (strcmp(argv[i],"--out"  )==0 && i+1<argc) outpath = argv[++i];
+    }
+    if (!outpath) { fprintf(stderr, "merge: need --out\n"); return 1; }
+    uint32_t da=0, db=0;
+    float *va = load_vecf_sub_(argv[1], &da);
+    float *vb = load_vecf_sub_(argv[2], &db);
+    if (!va||!vb||da!=db) {
+        free(va); free(vb);
+        fprintf(stderr, "merge: load failed or dim mismatch\n"); return 1;
+    }
+    norm_e_(va, da); norm_e_(vb, db);
+    float *out = malloc(da * sizeof(float));
+    if (!out) { free(va); free(vb); return 1; }
+    slerp_e_(va, vb, alpha, out, da);
+    if (save_vecf_sub_(outpath, out, da) != 0) {
+        fprintf(stderr, "merge: write failed\n");
+        free(va); free(vb); free(out); return 1;
+    }
+    printf("merge: slerp(alpha=%.3f)  %s × %s → %s  [%u dims]\n",
+           alpha, argv[1], argv[2], outpath, da);
+    free(va); free(vb); free(out);
+    return 0;
+}
+
+/* ── subcommand: tag / refs ──────────────────────────────────── */
+static int cmd_embed_tag_(int argc, char **argv) {
+    if (argc < 2) {
+        fprintf(stderr, "tag: need <hash-hex> <name> | list | delete <name>\n"); return 1;
+    }
+    if (strcmp(argv[1], "list") == 0) {
+        char **names = NULL; int count = 0;
+        bf_embed_ref_list(&names, &count);
+        if (count == 0) { printf("no named refs\n"); free(names); return 0; }
+        for (int i = 0; i < count; i++) {
+            uint8_t h[32];
+            if (bf_embed_ref_read(names[i], h) == 0) {
+                char hex[65]; hex_out_e_(h, hex);
+                printf("  %-30s  %s\n", names[i], hex);
+            }
+            free(names[i]);
+        }
+        free(names); return 0;
+    }
+    if (strcmp(argv[1], "delete") == 0) {
+        if (argc < 3) { fprintf(stderr, "tag delete: need <name>\n"); return 1; }
+        return bf_embed_ref_delete(argv[2]) == 0 ? 0 : 1;
+    }
+    if (argc < 3) { fprintf(stderr, "tag: need <hash-hex> <name>\n"); return 1; }
+    const char *hexstr = argv[1];
+    if (strlen(hexstr) != 64) { fprintf(stderr, "tag: bad hash\n"); return 1; }
+    uint8_t hash[32];
+    for (int i = 0; i < 32; i++) {
+        unsigned v;
+        if (sscanf(hexstr+i*2, "%02x", &v) != 1) { fprintf(stderr, "tag: bad hex\n"); return 1; }
+        hash[i] = (uint8_t)v;
+    }
+    if (bf_embed_ref_write(argv[2], hash) != 0) {
+        fprintf(stderr, "tag: write failed\n"); return 1;
+    }
+    printf("ref '%s' → %s\n", argv[2], hexstr);
+    return 0;
+}
+
+/* ── subcommand: log ─────────────────────────────────────────── */
+static int cmd_embed_log_(int argc, char **argv) {
+    int max_n = 20;
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "--n") == 0 && i+1 < argc) max_n = atoi(argv[++i]);
+    BfEmbedReflogEntry *ents = NULL; int count = 0;
+    bf_embed_reflog_read(&ents, &count);
+    if (count == 0) { printf("reflog empty\n"); return 0; }
+    int start = count > max_n ? count - max_n : 0;
+    for (int i = count-1; i >= start; i--) {
+        char hex[65]; hex_out_e_(ents[i].hash, hex);
+        printf("%s  %.8s  %s\n", ents[i].timestamp, hex, ents[i].message);
+    }
+    free(ents);
+    return 0;
 }
 
 int main(int argc, char **argv) {
+    /* Subcommand routing */
+    if (argc >= 2 && argv[1][0] != '-') {
+        const char *sub = argv[1];
+        if (strcmp(sub, "pack")    == 0) return cmd_embed_pack_   (argc-1, argv+1);
+        if (strcmp(sub, "stat")    == 0) return cmd_embed_stat_   (argc-1, argv+1);
+        if (strcmp(sub, "gc")      == 0) return cmd_embed_gc_     (argc-1, argv+1);
+        if (strcmp(sub, "branch")  == 0) return cmd_embed_branch_ (argc-1, argv+1);
+        if (strcmp(sub, "index")   == 0) return cmd_embed_index_  (argc-1, argv+1);
+        if (strcmp(sub, "index-q8")== 0) {
+            char *av2[] = {(char*)"index",(char*)"q8",NULL};
+            return cmd_embed_index_(2, av2);
+        }
+        if (strcmp(sub, "nearest") == 0) return cmd_embed_nearest_(argc-1, argv+1);
+        if (strcmp(sub, "merge")   == 0) return cmd_embed_merge_  (argc-1, argv+1);
+        if (strcmp(sub, "tag")     == 0) return cmd_embed_tag_    (argc-1, argv+1);
+        if (strcmp(sub, "refs")    == 0) {
+            char *av2[] = {(char*)"tag",(char*)"list",NULL};
+            return cmd_embed_tag_(2, av2);
+        }
+        if (strcmp(sub, "log")     == 0) return cmd_embed_log_    (argc-1, argv+1);
+    }
+
     const char *text_path = NULL, *out_path = NULL, *meta_out = NULL;
     const char *model = "all-MiniLM-L6-v2", *backend = "onnx";
     const char *output_fmt = "json";
@@ -786,11 +1338,39 @@ int main(int argc, char **argv) {
                  (out_dir[0]) ? out_dir : ".");
     }
 
+    /* ── Embed cache: hash the complete embedding contract ─── *
+     * Text alone is not sufficient: a 256-d hash fallback cannot
+     * satisfy a 384-d vector-store request for the same document. */
+    uint8_t embed_hash[32];
+    {
+        BfSha256 _sha;
+        static const char cache_schema[] = "bonfyre-embed-cache-v2";
+        char requested_dims[32];
+        snprintf(requested_dims, sizeof(requested_dims), "%d", dims);
+        bf_sha256_init(&_sha);
+        bf_sha256_update(&_sha, (const uint8_t *)cache_schema, sizeof(cache_schema));
+        bf_sha256_update(&_sha, (const uint8_t *)text, text_len);
+        bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
+        bf_sha256_update(&_sha, (const uint8_t *)backend, strlen(backend));
+        bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
+        bf_sha256_update(&_sha, (const uint8_t *)model, strlen(model));
+        bf_sha256_update(&_sha, (const uint8_t *)"\\0", 1);
+        bf_sha256_update(&_sha, (const uint8_t *)requested_dims, strlen(requested_dims));
+        bf_sha256_final(&_sha, embed_hash);
+    }
+
     float *embedding = NULL;
     const char *backend_label = NULL;
+    uint32_t cached_dim = 0;
 
-    /* ONNX backend */
-    if (strcmp(backend, "onnx") == 0) {
+    if (bf_embed_lookup(embed_hash, &embedding, &cached_dim) == 0) {
+        dims = (int)cached_dim;
+        backend_label = "embed-cache";
+        fprintf(stderr, "[embed] cache hit  dims=%d\n", dims);
+    }
+
+    /* ONNX backend (only on cache miss) */
+    if (!embedding && strcmp(backend, "onnx") == 0) {
         const char *mdir = resolve_model_dir(model);
         fprintf(stderr, "[embed] backend=onnx-native  model=%s\n", mdir);
         char vpath[PATH_MAX];
@@ -804,6 +1384,8 @@ int main(int argc, char **argv) {
             if (run_onnx_embed(&vocab, text, mdir, &embedding, &odims) == 0 && embedding) {
                 dims = odims;
                 backend_label = "onnx-runtime-native";
+                /* Persist for all future callers — atomic, idempotent */
+                bf_embed_store(embed_hash, embedding, (uint32_t)dims);
             } else {
                 fprintf(stderr, "[embed] ONNX failed, falling back to hash\n");
                 backend = "hash";
@@ -812,8 +1394,8 @@ int main(int argc, char **argv) {
         }
     }
 
-    /* Hash fallback */
-    if (strcmp(backend, "hash") == 0) {
+    /* Hash fallback (cache miss + no ONNX — not stored; FNV != semantic) */
+    if (!embedding && strcmp(backend, "hash") == 0) {
         if (dims <= 0) dims = 768;
         TokenList toks = normalize_tokens(text);
         embedding = build_hash_embedding(&toks, dims);

@@ -23,114 +23,21 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
+#include "bonfyre.h"
 
 #define MAX_LINE 65536
 #define MAX_CHILDREN 256
 #define MAX_FILES 4096
 #define HASH_LEN 65
 
-/* ---------- SHA-256 implementation (FIPS 180-4, no deps) ---------- */
+/* ---------- SHA-256 (delegates to lib/libbonfyre) ---------- */
 
-static const unsigned int K256[64] = {
-    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
-    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
-    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
-    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
-    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
-    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
-    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
-    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
-};
+typedef BfSha256 SHA256_CTX;
 
-#define RR(x,n) (((x)>>(n))|((x)<<(32-(n))))
-#define S0(x) (RR(x,2)^RR(x,13)^RR(x,22))
-#define S1(x) (RR(x,6)^RR(x,11)^RR(x,25))
-#define s0(x) (RR(x,7)^RR(x,18)^((x)>>3))
-#define s1(x) (RR(x,17)^RR(x,19)^((x)>>10))
-#define CH(e,f,g) (((e)&(f))^((~(e))&(g)))
-#define MAJ(a,b,c) (((a)&(b))^((a)&(c))^((b)&(c)))
-
-typedef struct {
-    unsigned int h[8];
-    unsigned char buf[64];
-    unsigned long long total;
-} SHA256_CTX;
-
-static void sha256_init(SHA256_CTX *c) {
-    c->h[0]=0x6a09e667; c->h[1]=0xbb67ae85; c->h[2]=0x3c6ef372; c->h[3]=0xa54ff53a;
-    c->h[4]=0x510e527f; c->h[5]=0x9b05688c; c->h[6]=0x1f83d9ab; c->h[7]=0x5be0cd19;
-    c->total = 0;
-}
-
-static void sha256_block(SHA256_CTX *c, const unsigned char *data) {
-    unsigned int w[64], a, b, d, e, f, g, h, t1, t2;
-    a = c->h[0]; b = c->h[1]; d = c->h[2]; e = c->h[3] /* reuse var names */;
-    for (int i = 0; i < 16; i++)
-        w[i] = ((unsigned int)data[i*4]<<24)|((unsigned int)data[i*4+1]<<16)|
-               ((unsigned int)data[i*4+2]<<8)|data[i*4+3];
-    for (int i = 16; i < 64; i++)
-        w[i] = s1(w[i-2]) + w[i-7] + s0(w[i-15]) + w[i-16];
-    a=c->h[0]; b=c->h[1]; d=c->h[2]; f=c->h[3];
-    e=c->h[4]; g=c->h[5]; h=c->h[6];
-    unsigned int cc = c->h[7];
-    /* Use proper variable mapping: a,b,c,d,e,f,g,h */
-    unsigned int st[8];
-    for (int i = 0; i < 8; i++) st[i] = c->h[i];
-    for (int i = 0; i < 64; i++) {
-        t1 = st[7] + S1(st[4]) + CH(st[4],st[5],st[6]) + K256[i] + w[i];
-        t2 = S0(st[0]) + MAJ(st[0],st[1],st[2]);
-        st[7]=st[6]; st[6]=st[5]; st[5]=st[4]; st[4]=st[3]+t1;
-        st[3]=st[2]; st[2]=st[1]; st[1]=st[0]; st[0]=t1+t2;
-    }
-    for (int i = 0; i < 8; i++) c->h[i] += st[i];
-    (void)a; (void)b; (void)d; (void)e; (void)f; (void)g; (void)h; (void)cc;
-}
-
-/* #1: Block-aligned update — process full 64-byte blocks directly */
-static void sha256_update(SHA256_CTX *c, const unsigned char *data, size_t len) {
-    size_t off = (size_t)(c->total % 64);
-    c->total += len;
-    if (off > 0) {
-        size_t fill = 64 - off;
-        if (len < fill) { memcpy(c->buf + off, data, len); return; }
-        memcpy(c->buf + off, data, fill);
-        sha256_block(c, c->buf);
-        data += fill; len -= fill;
-    }
-    while (len >= 64) { sha256_block(c, data); data += 64; len -= 64; }
-    if (len > 0) memcpy(c->buf, data, len);
-}
-
-static void sha256_final(SHA256_CTX *c, unsigned char out[32]) {
-    unsigned long long bits = c->total * 8;
-    size_t off = (size_t)(c->total % 64);
-    c->buf[off++] = 0x80;
-    if (off > 56) {
-        while (off < 64) c->buf[off++] = 0;
-        sha256_block(c, c->buf);
-        off = 0;
-    }
-    while (off < 56) c->buf[off++] = 0;
-    for (int i = 7; i >= 0; i--) c->buf[56+(7-i)] = (unsigned char)(bits >> (i*8));
-    sha256_block(c, c->buf);
-    for (int i = 0; i < 8; i++) {
-        out[i*4]   = (unsigned char)(c->h[i]>>24);
-        out[i*4+1] = (unsigned char)(c->h[i]>>16);
-        out[i*4+2] = (unsigned char)(c->h[i]>>8);
-        out[i*4+3] = (unsigned char)(c->h[i]);
-    }
-}
-
-/* #2: Hex lookup table — no sprintf overhead */
-static const char HEX_LUT[16] = "0123456789abcdef";
-
-static void sha256_hex(const unsigned char hash[32], char hex[65]) {
-    for (int i = 0; i < 32; i++) {
-        hex[i*2]   = HEX_LUT[hash[i] >> 4];
-        hex[i*2+1] = HEX_LUT[hash[i] & 0x0f];
-    }
-    hex[64] = '\0';
-}
+static void sha256_init(SHA256_CTX *c) { bf_sha256_init(c); }
+static void sha256_update(SHA256_CTX *c, const unsigned char *data, size_t len) { bf_sha256_update(c, data, len); }
+static void sha256_final(SHA256_CTX *c, unsigned char out[32]) { bf_sha256_final(c, out); }
+static void sha256_hex(const unsigned char hash[32], char hex[65]) { bf_sha256_digest_hex(hash, hex); }
 
 /* ---------- commands ---------- */
 
@@ -358,6 +265,136 @@ static int cmd_merkle(const char *artifact_path, int verify_only) {
     return 0;
 }
 
+static char *read_text_file(const char *path, long *sz_out) {
+    FILE *f = fopen(path, "rb");
+    if (!f) return NULL;
+    fseek(f, 0, SEEK_END);
+    long sz = ftell(f);
+    fseek(f, 0, SEEK_SET);
+    if (sz <= 0 || sz > (16 * 1024 * 1024)) {
+        fclose(f);
+        return NULL;
+    }
+    char *buf = malloc((size_t)sz + 1);
+    if (!buf) {
+        fclose(f);
+        return NULL;
+    }
+    size_t n = fread(buf, 1, (size_t)sz, f);
+    fclose(f);
+    if ((long)n != sz) {
+        free(buf);
+        return NULL;
+    }
+    buf[sz] = '\0';
+    if (sz_out) *sz_out = sz;
+    return buf;
+}
+
+static int json_extract_string_key(const char *json, const char *key, char *out, size_t out_sz) {
+    char needle[128];
+    snprintf(needle, sizeof(needle), "\"%s\"", key);
+    const char *p = strstr(json, needle);
+    if (!p) return 0;
+    p = strchr(p + (int)strlen(needle), ':');
+    if (!p) return 0;
+    p++;
+    while (*p && isspace((unsigned char)*p)) p++;
+    if (*p != '"') return 0;
+    p++;
+    size_t i = 0;
+    while (*p && *p != '"' && i + 1 < out_sz) out[i++] = *p++;
+    out[i] = '\0';
+    return i > 0;
+}
+
+static int json_extract_int_key(const char *json, const char *key, int *out) {
+    char needle[128];
+    snprintf(needle, sizeof(needle), "\"%s\"", key);
+    const char *p = strstr(json, needle);
+    if (!p) return 0;
+    p = strchr(p + (int)strlen(needle), ':');
+    if (!p) return 0;
+    p++;
+    while (*p && isspace((unsigned char)*p)) p++;
+    *out = atoi(p);
+    return 1;
+}
+
+static int cmp_int_asc(const void *a, const void *b) {
+    int ia = *(const int *)a;
+    int ib = *(const int *)b;
+    return (ia > ib) - (ia < ib);
+}
+
+static int extract_feature_ids(const char *json, int *ids, int max_ids) {
+    const char *needle = "\"feature_id\"";
+    int n = 0;
+    const char *p = json;
+    while ((p = strstr(p, needle)) && n < max_ids) {
+        p += strlen(needle);
+        p = strchr(p, ':');
+        if (!p) break;
+        p++;
+        while (*p && isspace((unsigned char)*p)) p++;
+        ids[n++] = atoi(p);
+    }
+    return n;
+}
+
+static int cmd_feature(const char *manifest_path) {
+    long sz = 0;
+    char *json = read_text_file(manifest_path, &sz);
+    if (!json) {
+        fprintf(stderr, "Cannot open feature manifest: %s\n", manifest_path);
+        return 1;
+    }
+
+    char model[128] = "unknown";
+    int layer = 0;
+    (void)json_extract_string_key(json, "model_family", model, sizeof(model));
+    (void)json_extract_int_key(json, "layer", &layer);
+
+    int ids[4096];
+    int n = extract_feature_ids(json, ids, 4096);
+    if (n <= 0) {
+        fprintf(stderr, "No feature_id entries found in: %s\n", manifest_path);
+        free(json);
+        return 1;
+    }
+
+    qsort(ids, (size_t)n, sizeof(int), cmp_int_asc);
+    int uniq = 0;
+    for (int i = 0; i < n; i++) {
+        if (i == 0 || ids[i] != ids[i - 1]) ids[uniq++] = ids[i];
+    }
+
+    SHA256_CTX ctx;
+    sha256_init(&ctx);
+    sha256_update(&ctx, (const unsigned char *)model, strlen(model));
+    sha256_update(&ctx, (const unsigned char *)"|", 1);
+    char lbuf[32];
+    snprintf(lbuf, sizeof(lbuf), "%d", layer);
+    sha256_update(&ctx, (const unsigned char *)lbuf, strlen(lbuf));
+    sha256_update(&ctx, (const unsigned char *)"|", 1);
+    for (int i = 0; i < uniq; i++) {
+        char ibuf[32];
+        snprintf(ibuf, sizeof(ibuf), "%d", ids[i]);
+        sha256_update(&ctx, (const unsigned char *)ibuf, strlen(ibuf));
+        if (i + 1 < uniq)
+            sha256_update(&ctx, (const unsigned char *)",", 1);
+    }
+
+    unsigned char h[32];
+    char hex[65];
+    sha256_final(&ctx, h);
+    sha256_hex(h, hex);
+
+    printf("bfh:feature:%s:l%d:%.16s\n", model, layer, hex);
+    free(json);
+    return 0;
+}
+
 /* ---------- main ---------- */
 
 int main(int argc, char *argv[]) {
@@ -378,6 +415,9 @@ int main(int argc, char *argv[]) {
     if (strcmp(argv[1], "dedup") == 0 && argc >= 3)
         return cmd_dedup(argv[2]);
 
+    if (strcmp(argv[1], "feature") == 0 && argc >= 3)
+        return cmd_feature(argv[2]);
+
 usage:
     fprintf(stderr,
         "BonfyreHash — content-addressing engine\n\n"
@@ -387,6 +427,7 @@ usage:
         "  bonfyre-hash merkle <artifact.json>                    compute/update root_hash\n"
         "  bonfyre-hash verify <artifact.json>                    verify all hashes\n"
         "  bonfyre-hash dedup <dir>                               find duplicate files\n"
+        "  bonfyre-hash feature <features.json>                   stable SAE feature hash URI\n"
     );
     return 1;
 }

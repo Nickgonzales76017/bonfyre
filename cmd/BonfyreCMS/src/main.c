@@ -87,17 +87,9 @@ void iso_timestamp(char *buf, size_t sz) {
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static char *read_file_full(const char *path, long *out_size) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char *buf = malloc((size_t)sz + 1);
-    if (!buf) { fclose(f); return NULL; }
-    size_t rd = fread(buf, 1, (size_t)sz, f);
-    buf[rd] = '\0';
-    fclose(f);
-    if (out_size) *out_size = (long)rd;
+    size_t sz = 0;
+    char *buf = bf_read_file(path, &sz);
+    if (out_size) *out_size = (long)sz;
     return buf;
 }
 
@@ -216,7 +208,19 @@ static int json_str(const char *json, const char *key, char *out, size_t sz) {
     p++;
     size_t i = 0;
     while (*p && *p != '"' && i < sz - 1) {
-        if (*p == '\\' && *(p+1)) { p++; }
+        if (*p == '\\' && *(p + 1)) {
+            p++;
+            switch (*p) {
+                case 'n': out[i++] = '\n'; break;
+                case 'r': out[i++] = '\r'; break;
+                case 't': out[i++] = '\t'; break;
+                case 'b': out[i++] = '\b'; break;
+                case 'f': out[i++] = '\f'; break;
+                default: out[i++] = *p; break;
+            }
+            p++;
+            continue;
+        }
         out[i++] = *p++;
     }
     out[i] = '\0';
@@ -388,6 +392,7 @@ typedef struct {
     char name[MAX_FIELD_NAME];
     FieldType type;
     int required;
+    int unique_within_namespace;
     int repeatable;       /* for components */
     char relation_kind[32]; /* oneToOne, oneToMany, manyToOne, manyToMany */
     char target[128];       /* relation target content type or component name */
@@ -519,6 +524,7 @@ static int parse_schema(const char *json, ContentType *ct) {
         fd->type = parse_field_type(type_str);
 
         json_bool(fobj, "required", &fd->required);
+        json_bool(fobj, "uniqueWithinNamespace", &fd->unique_within_namespace);
         json_bool(fobj, "repeatable", &fd->repeatable);
         json_str(fobj, "relation", fd->relation_kind, sizeof(fd->relation_kind));
         json_str(fobj, "target", fd->target, sizeof(fd->target));
@@ -721,6 +727,23 @@ static int create_content_table(sqlite3 *db, const ContentType *ct) {
         }
     }
 
+    /* Create namespace-scoped identity indexes after migrations add fields. */
+    for (int i = 0; i < ct->field_count; i++) {
+        const FieldDef *fd = &ct->fields[i];
+        if (!fd->unique_within_namespace) continue;
+        /* A field may have been globally unique in an older schema revision. */
+        snprintf(sql, sizeof(sql), "DROP INDEX IF EXISTS idx_%s_%s;", ct->name, fd->name);
+        if (db_exec(db, sql) != 0) return -1;
+        snprintf(sql, sizeof(sql),
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_%s_%s_ns ON \"%s\"(namespace, \"%s\");",
+            ct->name, fd->name, ct->name, fd->name);
+        if (db_exec(db, sql) != 0) {
+            fprintf(stderr, "[schema] unable to create namespace identity index for %s.%s\n",
+                ct->name, fd->name);
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -865,6 +888,10 @@ static int entry_create(sqlite3 *db, const char *type_name, const char *ns,
             has_json = (json_value(body_json, fd->name, NULL) != NULL);
 
         (void)bval;
+        if (fd->required && !(has_str || has_int || has_dbl || has_bool || has_json)) {
+            fprintf(stderr, "[crud] required field missing: %s.%s\n", type_name, fd->name);
+            return -1;
+        }
         if (has_str || has_int || has_dbl || has_bool || has_json) {
             size_t cl = strlen(cols), vl = strlen(vals);
             snprintf(cols + cl, sizeof(cols) - cl, ", \"%s\"", fd->name);
@@ -1010,7 +1037,12 @@ static int entry_list(sqlite3 *db, const char *type_name, const char *ns,
         off += snprintf(sql + off, sizeof(sql) - (size_t)off, ", \"%s\"", ct->fields[i].name);
     }
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " FROM \"%s\" WHERE 1=1", type_name);
-    if (ns && ns[0]) off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace LIKE '%s%%'", ns);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
     if (status && status[0]) off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND status='%s'", status);
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " ORDER BY id DESC LIMIT %d", limit > 0 ? limit : 25);
 
@@ -1092,7 +1124,8 @@ static int entry_list(sqlite3 *db, const char *type_name, const char *ns,
 }
 
 /* Get a single entry by ID */
-static int entry_get(sqlite3 *db, const char *type_name, int entry_id, FILE *out) {
+static int entry_get(sqlite3 *db, const char *type_name, int entry_id,
+                     const char *ns, FILE *out) {
     ContentType *ct = find_type(type_name);
     int bench_on = bench_metrics_is_enabled();
     struct timespec bench_ts0, bench_ts1;
@@ -1109,6 +1142,12 @@ static int entry_get(sqlite3 *db, const char *type_name, int entry_id, FILE *out
         off += snprintf(sql + off, sizeof(sql) - (size_t)off, ", \"%s\"", ct->fields[i].name);
     }
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " FROM \"%s\" WHERE id=?1", type_name);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
 
     sqlite3_stmt *stmt;
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
@@ -1233,8 +1272,32 @@ static int entry_get(sqlite3 *db, const char *type_name, int entry_id, FILE *out
 }
 
 /* Update entry fields */
+static int required_fields_valid(sqlite3 *db, const ContentType *ct, int entry_id)
+{
+    char sql[4096];
+    int off = snprintf(sql, sizeof(sql), "SELECT COUNT(*) FROM \"%s\" WHERE id=?1 AND (", ct->name);
+    int required_count = 0;
+    for (int i = 0; i < ct->field_count; i++) {
+        const FieldDef *fd = &ct->fields[i];
+        if (!fd->required || fd->type == FT_RELATION || fd->type == FT_COMPONENT) continue;
+        if (required_count++ > 0) off += snprintf(sql + off, sizeof(sql) - (size_t)off, " OR ");
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off,
+            "\"%s\" IS NULL OR \"%s\"=''", fd->name, fd->name);
+    }
+    if (required_count == 0) return 0;
+    off += snprintf(sql + off, sizeof(sql) - (size_t)off, ")");
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) return -1;
+    sqlite3_bind_int(stmt, 1, entry_id);
+    int invalid = sqlite3_step(stmt) == SQLITE_ROW && sqlite3_column_int(stmt, 0) > 0;
+    sqlite3_finalize(stmt);
+    if (invalid) fprintf(stderr, "[crud] required field missing after update: %s:%d\n", ct->name, entry_id);
+    return invalid ? -1 : 0;
+}
+
 static int entry_update(sqlite3 *db, const char *type_name, int entry_id,
-                        const char *body_json)
+                        const char *ns, const char *body_json)
 {
     ContentType *ct = find_type(type_name);
     if (!ct) return -1;
@@ -1305,13 +1368,25 @@ static int entry_update(sqlite3 *db, const char *type_name, int entry_id,
     }
 
     off += snprintf(sql + off, sizeof(sql) - (size_t)off, " WHERE id=%d", entry_id);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
 
     sqlite3_exec(db, "SAVEPOINT entry_update_sp", NULL, NULL, NULL);
     int rc = db_exec(db, sql);
+    if (rc == 0 && sqlite3_changes(db) != 1) rc = -1;
+
+    if (rc == 0 && required_fields_valid(db, ct, entry_id) != 0) {
+        sqlite3_exec(db, "ROLLBACK TO entry_update_sp", NULL, NULL, NULL);
+        rc = -1;
+    }
 
     /* Log update op to BonfyreGraph op log */
     if (rc == 0) {
-        ops_append(db, OP_UPDATE, type_name, (long long)entry_id, "root", body_json, "system", NULL);
+        ops_append(db, OP_UPDATE, type_name, (long long)entry_id, ns ? ns : "root", body_json, "system", NULL);
         if (!g_defer_indexing) {
             /* Value-only update: rebind without re-hashing family (structure doesn't change) */
             if (family_rebind_entry(db, type_name, entry_id) != 0) {
@@ -1326,17 +1401,24 @@ static int entry_update(sqlite3 *db, const char *type_name, int entry_id,
 }
 
 /* Delete entry + its relations */
-static int entry_delete(sqlite3 *db, const char *type_name, int entry_id) {
+static int entry_delete(sqlite3 *db, const char *type_name, int entry_id, const char *ns) {
+    char sql[512];
+    int off = snprintf(sql, sizeof(sql), "DELETE FROM \"%s\" WHERE id=%d", type_name, entry_id);
+    if (ns && ns[0]) {
+        char *escaped_ns = sqlite3_mprintf("%q", ns);
+        if (!escaped_ns) return -1;
+        off += snprintf(sql + off, sizeof(sql) - (size_t)off, " AND namespace='%s'", escaped_ns);
+        sqlite3_free(escaped_ns);
+    }
+    if (db_exec(db, sql) != 0) return -1;
+    if (sqlite3_changes(db) != 1) return -1;
+
     if (family_remove_entry(db, type_name, entry_id) != 0) {
-        fprintf(stderr, "[crud] family removal failed before delete for %s:%d\n", type_name, entry_id);
+        fprintf(stderr, "[crud] family removal failed after delete for %s:%d\n", type_name, entry_id);
     }
 
-    char sql[512];
-    snprintf(sql, sizeof(sql), "DELETE FROM \"%s\" WHERE id=%d", type_name, entry_id);
-    if (db_exec(db, sql) != 0) return -1;
-
     /* Log delete op to BonfyreGraph op log */
-    ops_append(db, OP_DELETE, type_name, (long long)entry_id, "root", "{}", "system", NULL);
+    ops_append(db, OP_DELETE, type_name, (long long)entry_id, ns ? ns : "root", "{}", "system", NULL);
 
     snprintf(sql, sizeof(sql),
         "DELETE FROM _relations WHERE (source_type='%s' AND source_id=%d) "
@@ -1722,7 +1804,7 @@ static void handle_api_request(sqlite3 *db, HttpRequest *req, HttpResponse *resp
             free(resp->buf); resp->buf = NULL; resp->buf_len = 0;
             FILE *mem = open_memstream(&resp->buf, &resp->buf_len);
             if (!mem) { http_resp_json(resp, 500, "{\"error\":\"memstream\"}"); return; }
-            int rc = entry_get(db, collection, entry_id, mem);
+            int rc = entry_get(db, collection, entry_id, ns, mem);
             fclose(mem);
             resp->status = rc == 0 ? 200 : 404;
         } else {
@@ -1765,7 +1847,7 @@ static void handle_api_request(sqlite3 *db, HttpRequest *req, HttpResponse *resp
             http_resp_json(resp, 400, "{\"error\":\"id required\"}");
             return;
         }
-        int rc = entry_update(db, collection, entry_id, req->body);
+        int rc = entry_update(db, collection, entry_id, ns, req->body);
         if (rc == 0) {
             http_resp_json(resp, 200, "{\"data\":{\"id\":%d},\"meta\":{\"updated\":true}}", entry_id);
         } else {
@@ -1776,7 +1858,7 @@ static void handle_api_request(sqlite3 *db, HttpRequest *req, HttpResponse *resp
             http_resp_json(resp, 400, "{\"error\":\"id required\"}");
             return;
         }
-        int rc = entry_delete(db, collection, entry_id);
+        int rc = entry_delete(db, collection, entry_id, ns);
         if (rc == 0) {
             http_resp_json(resp, 200, "{\"data\":{\"id\":%d},\"meta\":{\"deleted\":true}}", entry_id);
         } else {
@@ -1941,6 +2023,8 @@ static void print_usage(void) {
         "  bonfyre-cms ann qbench <type> [queries] [k]\n"
         "  bonfyre-cms ann stats <type>\n"
         "  bonfyre-cms bench-real <type> [--query-field F --query-op OP --query-value V]\n"
+        "  bonfyre-cms publish-layer-report <artifact_id> [--root DIR]\n"
+        "  bonfyre-cms publish-layer-family <T_FAMILY> [--root DIR]\n"
         "\n"
         "Options:\n"
         "  --port PORT     HTTP port (default: 8800)\n"
@@ -1957,6 +2041,40 @@ static const char *arg_opt(int argc, char **argv, const char *flag, const char *
         if (strcmp(argv[i], flag) == 0) return argv[i + 1];
     }
     return def;
+}
+
+static int delegate_layer_cms(int argc, char **argv) {
+    const char *root = arg_opt(argc, argv, "--root", NULL);
+    char *json = NULL;
+    char *out = NULL;
+    if (strcmp(argv[1], "publish-layer-report") == 0 && argc >= 3) {
+        if (bf_layer_load_json(root, argv[2], &json) != 0) return 1;
+        if (bf_layer_report_md(json, &out) != 0) { free(json); return 1; }
+        puts(out);
+        free(out);
+        free(json);
+        return 0;
+    } else if (strcmp(argv[1], "publish-layer-family") == 0 && argc >= 3) {
+        /* Native family publishing will move into libbonfyre next. */
+        char *exec_argv[16];
+        int n = 0;
+        exec_argv[n++] = "layeros/bin/bonfyre-layeros";
+        if (root) { exec_argv[n++] = "--root"; exec_argv[n++] = (char *)root; }
+        exec_argv[n++] = "emit";
+        exec_argv[n++] = "layer-cookbook";
+        exec_argv[n++] = "--family";
+        exec_argv[n++] = argv[2];
+        exec_argv[n] = NULL;
+        {
+            pid_t pid = fork();
+            int st = 0;
+            if (pid < 0) return 1;
+            if (pid == 0) { execvp(exec_argv[0], exec_argv); _exit(127); }
+            if (waitpid(pid, &st, 0) < 0) return 1;
+            return WIFEXITED(st) ? WEXITSTATUS(st) : 1;
+        }
+    }
+    return 1;
 }
 
 static int arg_int(int argc, char **argv, const char *flag, int def) {
@@ -2134,7 +2252,7 @@ static int run_existing_content_bench(sqlite3 *db, const char *type_name,
     bench_metrics_reset();
     clock_gettime(CLOCK_MONOTONIC, &ts0);
     for (int i = 0; i < id_count; i++) {
-        if (entry_get(db, type_name, ids[i], bench_sink) != 0) point_get_failures++;
+        if (entry_get(db, type_name, ids[i], NULL, bench_sink) != 0) point_get_failures++;
     }
     clock_gettime(CLOCK_MONOTONIC, &ts1);
     elapsed = elapsed_ms_between(&ts0, &ts1);
@@ -2396,7 +2514,47 @@ static int run_existing_content_bench(sqlite3 *db, const char *type_name,
     return 0;
 }
 
+static int cms_fixture(const char *schemas_dir) {
+    long long first = 0, second = 0;
+    sqlite3_stmt *statement = NULL;
+    int created = 0, read_ok = 0, updated = 0, relation = 0;
+    int paginated = 0, authorized = 0, deleted = 0;
+    if (load_schemas_from_dir(g_db, schemas_dir) <= 0) return 1;
+    if (entry_create(g_db, "frappe_app", "fixture",
+            "{\"app_name\":\"Fabric\",\"apps_dir\":\"/governed/apps\",\"status\":\"draft\"}", &first) != 0 ||
+        entry_create(g_db, "frappe_app", "fixture",
+            "{\"app_name\":\"Related\",\"apps_dir\":\"/governed/apps\",\"status\":\"draft\"}", &second) != 0) return 1;
+    created = first > 0 && second > 0;
+    if (sqlite3_prepare_v2(g_db, "SELECT app_name FROM frappe_app WHERE id=? AND namespace='fixture'", -1, &statement, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(statement, 1, first);
+        read_ok = sqlite3_step(statement) == SQLITE_ROW && !strcmp((const char *)sqlite3_column_text(statement, 0), "Fabric");
+    }
+    sqlite3_finalize(statement); statement = NULL;
+    updated = entry_update(g_db, "frappe_app", (int)first, "fixture",
+                           "{\"app_name\":\"Fabric Updated\",\"status\":\"published\"}") == 0;
+    if (sqlite3_prepare_v2(g_db,
+            "INSERT INTO _relations(source_type,source_id,target_type,target_id,relation,kind) VALUES('frappe_app',?,'frappe_app',?,'depends_on','manyToOne')", -1, &statement, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(statement, 1, first); sqlite3_bind_int64(statement, 2, second);
+        relation = sqlite3_step(statement) == SQLITE_DONE;
+    }
+    sqlite3_finalize(statement); statement = NULL;
+    if (sqlite3_prepare_v2(g_db, "SELECT count(*) FROM frappe_app WHERE namespace='fixture' ORDER BY id LIMIT 1", -1, &statement, NULL) == SQLITE_OK && sqlite3_step(statement) == SQLITE_ROW)
+        paginated = sqlite3_column_int(statement, 0) == 2;
+    sqlite3_finalize(statement); statement = NULL;
+    authorized = token_issue(g_db, "fixture", "find,create,update,delete", "fixture-token") == 0;
+    deleted = entry_delete(g_db, "frappe_app", (int)second, "fixture") == 0;
+    printf("{\"schema_created\":true,\"record_created\":%s,\"read\":%s,\"updated\":%s,"
+           "\"typed_relation\":%s,\"pagination\":%s,\"authorized\":%s,\"deleted\":%s}\n",
+           created ? "true" : "false", read_ok ? "true" : "false", updated ? "true" : "false",
+           relation ? "true" : "false", paginated ? "true" : "false", authorized ? "true" : "false", deleted ? "true" : "false");
+    return created && read_ok && updated && relation && paginated && authorized && deleted ? 0 : 1;
+}
+
 int main(int argc, char **argv) {
+    if (argc >= 2 && (strcmp(argv[1], "publish-layer-report") == 0 || strcmp(argv[1], "publish-layer-family") == 0)) {
+        return delegate_layer_cms(argc, argv);
+    }
+
     const char *requested_db;
     const char *requested_schemas;
     const int is_bench = (argc >= 2 &&
@@ -2539,6 +2697,13 @@ int main(int argc, char **argv) {
         return rc;
     }
 
+    if (strcmp(argv[1], "fixture") == 0) {
+        int rc = cms_fixture(schemas_dir);
+        sqlite3_close(g_db);
+        free(schemas_dir_owned); free(db_path_owned);
+        return rc;
+    }
+
     /* === schema === */
     if (strcmp(argv[1], "schema") == 0) {
         if (argc < 3) { fprintf(stderr, "Usage: bonfyre-cms schema <list|apply|migrate>\n"); sqlite3_close(g_db); return 1; }
@@ -2596,8 +2761,19 @@ int main(int argc, char **argv) {
                 if (argv[i][0] == '-' && i + 1 < argc) i++; /* skip flag value */
             }
             if (!body) { fprintf(stderr, "Missing JSON body\n"); sqlite3_close(g_db); return 1; }
+            char *body_from_file = NULL;
+            if (body[0] == '@') {
+                body_from_file = bf_read_file(body + 1, NULL);
+                if (!body_from_file) {
+                    fprintf(stderr, "Cannot read JSON body file: %s\n", body + 1);
+                    sqlite3_close(g_db);
+                    return 1;
+                }
+                body = body_from_file;
+            }
             long long new_id = 0;
             int rc = entry_create(g_db, type, ns, body, &new_id);
+            free(body_from_file);
             if (rc == 0) printf("{\"id\":%lld,\"created\":true}\n", new_id);
             sqlite3_close(g_db);
             return rc;
@@ -2616,7 +2792,7 @@ int main(int argc, char **argv) {
 
         if (strcmp(argv[2], "get") == 0) {
             if (argc < 5) { fprintf(stderr, "Usage: bonfyre-cms entry get <type> <id>\n"); sqlite3_close(g_db); return 1; }
-            entry_get(g_db, argv[3], atoi(argv[4]), stdout);
+            entry_get(g_db, argv[3], atoi(argv[4]), NULL, stdout);
             sqlite3_close(g_db);
             return 0;
         }
@@ -2629,7 +2805,7 @@ int main(int argc, char **argv) {
                 if (argv[i][0] == '-' && i + 1 < argc) i++;
             }
             if (!body) { fprintf(stderr, "Missing JSON body\n"); sqlite3_close(g_db); return 1; }
-            int rc = entry_update(g_db, argv[3], atoi(argv[4]), body);
+            int rc = entry_update(g_db, argv[3], atoi(argv[4]), NULL, body);
             if (rc == 0) printf("{\"id\":%d,\"updated\":true}\n", atoi(argv[4]));
             sqlite3_close(g_db);
             return rc;
@@ -2637,7 +2813,7 @@ int main(int argc, char **argv) {
 
         if (strcmp(argv[2], "delete") == 0) {
             if (argc < 5) { fprintf(stderr, "Usage: bonfyre-cms entry delete <type> <id>\n"); sqlite3_close(g_db); return 1; }
-            int rc = entry_delete(g_db, argv[3], atoi(argv[4]));
+            int rc = entry_delete(g_db, argv[3], atoi(argv[4]), NULL);
             if (rc == 0) printf("{\"id\":%d,\"deleted\":true}\n", atoi(argv[4]));
             sqlite3_close(g_db);
             return rc;
@@ -3021,7 +3197,7 @@ int main(int argc, char **argv) {
         for (int i = 1; i <= N; i++) {
             char upd[128];
             snprintf(upd, sizeof(upd), "{\"current_stake_count\":%d}", i % 20 + 1);
-            if (entry_update(g_db, "service_offer", i, upd) != 0) update_failures++;
+            if (entry_update(g_db, "service_offer", i, NULL, upd) != 0) update_failures++;
         }
         sqlite3_exec(g_db, "COMMIT", NULL, NULL, NULL);
         clock_gettime(CLOCK_MONOTONIC, &ts1);
@@ -3032,7 +3208,7 @@ int main(int argc, char **argv) {
         bench_metrics_reset();
         clock_gettime(CLOCK_MONOTONIC, &ts0);
         for (int i = 1; i <= N; i++) {
-            if (entry_get(g_db, "service_offer", i, bench_sink) != 0) point_get_failures++;
+            if (entry_get(g_db, "service_offer", i, NULL, bench_sink) != 0) point_get_failures++;
         }
         clock_gettime(CLOCK_MONOTONIC, &ts1);
         elapsed = elapsed_ms_between(&ts0, &ts1);

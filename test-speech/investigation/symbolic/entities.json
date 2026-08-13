@@ -1,0 +1,1432 @@
+{
+  "entities": [
+    {
+      "text": "Lance Cottrell,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 0,
+      "char_offset": 14,
+      "context": "Hi there, I'm Lance Cottrell, your host at Feel the Boot"
+    },
+    {
+      "text": "Boot",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 0,
+      "char_offset": 52,
+      "context": "Hi there, I'm Lance Cottrell, your host at Feel the Boot"
+    },
+    {
+      "text": "John Lee",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 1,
+      "char_offset": 83,
+      "context": "And today I'm talking to John Lee of Pickfu"
+    },
+    {
+      "text": "Pickfu",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 1,
+      "char_offset": 95,
+      "context": "And today I'm talking to John Lee of Pickfu"
+    },
+    {
+      "text": "Pickfu",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 6,
+      "char_offset": 95,
+      "context": "I'm going to put it down in the description where you'll be able to get a substantial discount off t"
+    },
+    {
+      "text": "Boot",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 10,
+      "char_offset": 52,
+      "context": "John, welcome to Feel the Boot"
+    },
+    {
+      "text": "Thanks",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 11,
+      "char_offset": 1014,
+      "context": "Thanks so much for having me"
+    },
+    {
+      "text": "Pickfu",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 15,
+      "char_offset": 95,
+      "context": "So my startup is named is called Pickfu"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 16,
+      "char_offset": 1247,
+      "context": "You can think of Pickfu as a digital focus group"
+    },
+    {
+      "text": "Pickfu",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 16,
+      "char_offset": 95,
+      "context": "You can think of Pickfu as a digital focus group"
+    },
+    {
+      "text": "CPGs",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 17,
+      "char_offset": 1336,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "Procter",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 17,
+      "char_offset": 1346,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "Gamble",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 17,
+      "char_offset": 1356,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "Pickfu",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 17,
+      "char_offset": 95,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "CPGs",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 18,
+      "char_offset": 1336,
+      "context": "And we tap into the same global consumer panels that are used by the large CPGs"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 20,
+      "char_offset": 1247,
+      "context": "You can come on the site, choose your target audience, ask a question, post up to eight different op"
+    },
+    {
+      "text": "Very",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 22,
+      "char_offset": 1868,
+      "context": "Very cool"
+    },
+    {
+      "text": "Microsoft",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 33,
+      "char_offset": 2361,
+      "context": "I was at Microsoft and he was at Hewlett Packard"
+    },
+    {
+      "text": "Hewlett Packard",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 33,
+      "char_offset": 2385,
+      "context": "I was at Microsoft and he was at Hewlett Packard"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 34,
+      "char_offset": 2402,
+      "context": "We left our jobs to start building websites, actually"
+    },
+    {
+      "text": "Learned",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 36,
+      "char_offset": 2565,
+      "context": "Learned a lot about sort of just building sites, monetizing sites, SEO or getting traffic and so on"
+    },
+    {
+      "text": "We'd",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 40,
+      "char_offset": 3060,
+      "context": "We'd ask our friends and family for feedback and, you know, that they would be, we knew that they wo"
+    },
+    {
+      "text": "Same",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 49,
+      "char_offset": 4044,
+      "context": "Same thing"
+    },
+    {
+      "text": "When,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 59,
+      "char_offset": 4757,
+      "context": "When, yeah, when you're, I guess the easiest way to build something that people might want is to sta"
+    },
+    {
+      "text": "Amazon",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 78,
+      "char_offset": 6731,
+      "context": "There was one company where we work with a lot of people who sell on Amazon"
+    },
+    {
+      "text": "Thrasio",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 79,
+      "char_offset": 6769,
+      "context": "And there was a company named Thrasio where they had a business which was to buy up individual Amazo"
+    },
+    {
+      "text": "Amazon",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 79,
+      "char_offset": 6731,
+      "context": "And there was a company named Thrasio where they had a business which was to buy up individual Amazo"
+    },
+    {
+      "text": "Angry Orange",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 80,
+      "char_offset": 6979,
+      "context": "And so there was this one product called Angry Orange"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 83,
+      "char_offset": 1247,
+      "context": "You know, it worked really well"
+    },
+    {
+      "text": "Thrasio",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 85,
+      "char_offset": 6769,
+      "context": "And so the theory, the thesis behind that the Thrasio team had was that they could purchase this lis"
+    },
+    {
+      "text": "Angry Orange",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 89,
+      "char_offset": 6979,
+      "context": "And the one that they wanted involved a $50,000 production design change because they wanted an oran"
+    },
+    {
+      "text": "Amazon",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 94,
+      "char_offset": 6731,
+      "context": "And then they pulled the trigger on it and the day after they relaunched the product on Amazon with "
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 103,
+      "char_offset": 2402,
+      "context": "We have about 15 million panelists globally"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 104,
+      "char_offset": 1247,
+      "context": "You can test between one to eight different options"
+    },
+    {
+      "text": "Facebook",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 107,
+      "char_offset": 9517,
+      "context": "If you needed to test eight different images for a Facebook ad or something, you could put that ther"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 108,
+      "char_offset": 1247,
+      "context": "You can test images, audio, text, video"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 112,
+      "char_offset": 2402,
+      "context": "We are really proud of the depth of targeting that we offer"
+    },
+    {
+      "text": "Amazon Prime",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 114,
+      "char_offset": 10074,
+      "context": "And then we also have really deep targeting, like, if you're an Amazon Prime member, if you're a pet"
+    },
+    {
+      "text": "B2C",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 117,
+      "char_offset": 10561,
+      "context": "Yeah, it sounds very B2C oriented"
+    },
+    {
+      "text": "B2B",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 118,
+      "char_offset": 10609,
+      "context": "Do you have options for more of a B2B kind of targeting"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 119,
+      "char_offset": 2402,
+      "context": "We have some options"
+    },
+    {
+      "text": "B2C",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 120,
+      "char_offset": 10561,
+      "context": "Our main focus is because our panels draw from a general consumer panels, most of our targeting is B"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 121,
+      "char_offset": 2402,
+      "context": "We do offer some limited B2B targeting, like small business owners and so on"
+    },
+    {
+      "text": "B2B",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 121,
+      "char_offset": 10609,
+      "context": "We do offer some limited B2B targeting, like small business owners and so on"
+    },
+    {
+      "text": "Airbnb",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 130,
+      "char_offset": 12107,
+      "context": "So rather than, let's say you're starting like an Airbnb type company or something, rather than tryi"
+    },
+    {
+      "text": "Henry Ford",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 134,
+      "char_offset": 12837,
+      "context": "It reminds me of something that I saw someone post just recently talking about Henry Ford and that t"
+    },
+    {
+      "text": "Lance,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 135,
+      "char_offset": 13259,
+      "context": "So actually, it's funny, it's funny, Lance, because we actually have a couple MBA professors who act"
+    },
+    {
+      "text": "PICFU",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 135,
+      "char_offset": 13351,
+      "context": "So actually, it's funny, it's funny, Lance, because we actually have a couple MBA professors who act"
+    },
+    {
+      "text": "PICFU",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 136,
+      "char_offset": 13351,
+      "context": "And so as part of their, as part of a capstone project, when they're supposed to come up with a busi"
+    },
+    {
+      "text": "Actually,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 148,
+      "char_offset": 15162,
+      "context": "Actually, my co-founder Justin and I, we've always been remote"
+    },
+    {
+      "text": "Justin",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 148,
+      "char_offset": 15186,
+      "context": "Actually, my co-founder Justin and I, we've always been remote"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 159,
+      "char_offset": 2402,
+      "context": "We did have to fly back and forth a lot and do some sprints in person"
+    },
+    {
+      "text": "Slack",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 161,
+      "char_offset": 16469,
+      "context": "Slack"
+    },
+    {
+      "text": "No,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 162,
+      "char_offset": 16476,
+      "context": "No, not Slack"
+    },
+    {
+      "text": "Slack",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 162,
+      "char_offset": 16469,
+      "context": "No, not Slack"
+    },
+    {
+      "text": "Skype",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 163,
+      "char_offset": 16491,
+      "context": "Skype"
+    },
+    {
+      "text": "COVID",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 168,
+      "char_offset": 16811,
+      "context": "It's been interesting to see how COVID really took a lot of people who were more older generation ha"
+    },
+    {
+      "text": "COVID",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 170,
+      "char_offset": 16811,
+      "context": "And I think it wasn't, you know, being remote during COVID wasn't a huge issue for myself and Mike a"
+    },
+    {
+      "text": "Mike",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 170,
+      "char_offset": 17242,
+      "context": "And I think it wasn't, you know, being remote during COVID wasn't a huge issue for myself and Mike a"
+    },
+    {
+      "text": "Justin",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 170,
+      "char_offset": 15186,
+      "context": "And I think it wasn't, you know, being remote during COVID wasn't a huge issue for myself and Mike a"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 175,
+      "char_offset": 2402,
+      "context": "We had a great, great people's operations manager who helped us put together sort of like team handb"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 176,
+      "char_offset": 2402,
+      "context": "We have very regular team sort of socials, gatherings, team building events in a virtual environment"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 185,
+      "char_offset": 2402,
+      "context": "We have a narrow band of time where most of the meetings, most of our team meetings occur"
+    },
+    {
+      "text": "Otherwise",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 186,
+      "char_offset": 19090,
+      "context": "Otherwise it's very much async, you know, async work culture where people are allowed to work their "
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 187,
+      "char_offset": 2402,
+      "context": "We have people who are on the team who are digital nomads who travel around to different time zones"
+    },
+    {
+      "text": "Lance,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 197,
+      "char_offset": 13259,
+      "context": "But what you mentioned is absolutely right, Lance, that it's, we've, I've definitely felt the phase "
+    },
+    {
+      "text": "Slack",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 199,
+      "char_offset": 16469,
+      "context": "Yeah, you need to have some organization around what gets done, who does what, who's responsible as "
+    },
+    {
+      "text": "Giving",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 204,
+      "char_offset": 21434,
+      "context": "Giving away responsibilities"
+    },
+    {
+      "text": "Giving",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 205,
+      "char_offset": 21434,
+      "context": "Giving away the legos is a, it's key thing"
+    },
+    {
+      "text": "Different",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 211,
+      "char_offset": 21938,
+      "context": "Different is not worse"
+    },
+    {
+      "text": "Different",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 212,
+      "char_offset": 21938,
+      "context": "Different could be better, you know, like you, we have to operate with, with a principle of trust an"
+    },
+    {
+      "text": "Excellent",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 215,
+      "char_offset": 22244,
+      "context": "Excellent"
+    },
+    {
+      "text": "It's,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 220,
+      "char_offset": 22737,
+      "context": "It's, it's not like you could say, I have done testing"
+    },
+    {
+      "text": "No,",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 221,
+      "char_offset": 16476,
+      "context": "No, exactly"
+    },
+    {
+      "text": "Thanks",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 228,
+      "char_offset": 1014,
+      "context": "Thanks so much"
+    },
+    {
+      "text": "Thank",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 230,
+      "char_offset": 1014,
+      "context": "Thank you, Lance"
+    },
+    {
+      "text": "Lance",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 230,
+      "char_offset": 14,
+      "context": "Thank you, Lance"
+    },
+    {
+      "text": "Great",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 231,
+      "char_offset": 22963,
+      "context": "Great chatting with you"
+    },
+    {
+      "text": "Thanks",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 232,
+      "char_offset": 1014,
+      "context": "Thanks for watching this interview with John Lee of PickFoo"
+    },
+    {
+      "text": "John Lee",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 232,
+      "char_offset": 83,
+      "context": "Thanks for watching this interview with John Lee of PickFoo"
+    },
+    {
+      "text": "PickFoo",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 232,
+      "char_offset": 23040,
+      "context": "Thanks for watching this interview with John Lee of PickFoo"
+    },
+    {
+      "text": "PickFoo",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 233,
+      "char_offset": 23040,
+      "context": "I hope you found it useful and interesting and don't forget to go down into the description of this "
+    },
+    {
+      "text": "Ciao",
+      "doc_id": "Job - founder-01-pickfu-assumptions-full",
+      "sentence_idx": 239,
+      "char_offset": 23529,
+      "context": "Ciao"
+    },
+    {
+      "text": "Review",
+      "doc_id": "Job - Demo Job",
+      "sentence_idx": 0,
+      "char_offset": 0,
+      "context": "Review the draft"
+    },
+    {
+      "text": "Send",
+      "doc_id": "Job - Demo Job",
+      "sentence_idx": 1,
+      "char_offset": 18,
+      "context": "Send the client an update tomorrow"
+    },
+    {
+      "text": "Lance Cottrell,",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 0,
+      "char_offset": 14,
+      "context": "Hi there, I'm Lance Cottrell, your host at Feel the Boot"
+    },
+    {
+      "text": "Boot",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 0,
+      "char_offset": 52,
+      "context": "Hi there, I'm Lance Cottrell, your host at Feel the Boot"
+    },
+    {
+      "text": "John Lee",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 1,
+      "char_offset": 83,
+      "context": "And today I'm talking to John Lee of Pickfoo"
+    },
+    {
+      "text": "Pickfoo",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 1,
+      "char_offset": 95,
+      "context": "And today I'm talking to John Lee of Pickfoo"
+    },
+    {
+      "text": "Pickfoo",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 6,
+      "char_offset": 95,
+      "context": "I'm going to put it down in the description where you'll be able to get a substantial discount off t"
+    },
+    {
+      "text": "Boot",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 9,
+      "char_offset": 52,
+      "context": "John, welcome to Feel the Boot"
+    },
+    {
+      "text": "Thanks",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 10,
+      "char_offset": 1016,
+      "context": "Thanks so much for having me"
+    },
+    {
+      "text": "Pickfoo",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 14,
+      "char_offset": 95,
+      "context": "So my startup is named is called Pickfoo"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 15,
+      "char_offset": 1250,
+      "context": "You can think of Pickfoo as a digital focus group"
+    },
+    {
+      "text": "Pickfoo",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 15,
+      "char_offset": 95,
+      "context": "You can think of Pickfoo as a digital focus group"
+    },
+    {
+      "text": "CPGs",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 16,
+      "char_offset": 1340,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "Procter",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 16,
+      "char_offset": 1350,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "Gamble",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 16,
+      "char_offset": 1360,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "Pickfoo",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 16,
+      "char_offset": 95,
+      "context": "So the same way that large brands and CPGs like Procter & Gamble use large focus groups to figure ou"
+    },
+    {
+      "text": "CPGs",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 17,
+      "char_offset": 1340,
+      "context": "And we tap into the same global consumer panels that are used by the large CPGs"
+    },
+    {
+      "text": "Pickfoo",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 18,
+      "char_offset": 95,
+      "context": "So Pickfoo is self-service, you can come on the site, choose your target audience, ask a question, p"
+    },
+    {
+      "text": "Very",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 19,
+      "char_offset": 1874,
+      "context": "Very cool, but that's not actually where you started, right"
+    },
+    {
+      "text": "No,",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 20,
+      "char_offset": 1936,
+      "context": "No, it's not"
+    },
+    {
+      "text": "Microsoft",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 26,
+      "char_offset": 2362,
+      "context": "I was at Microsoft and he was at Ulyr Packard"
+    },
+    {
+      "text": "Ulyr Packard",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 26,
+      "char_offset": 2386,
+      "context": "I was at Microsoft and he was at Ulyr Packard"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 27,
+      "char_offset": 2400,
+      "context": "We left our jobs to start building websites, actually"
+    },
+    {
+      "text": "We'd",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 31,
+      "char_offset": 3024,
+      "context": "We'd ask our friends and family for feedback and we knew that they would be biased and at some point"
+    },
+    {
+      "text": "Same",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 38,
+      "char_offset": 3943,
+      "context": "Same thing"
+    },
+    {
+      "text": "When,",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 48,
+      "char_offset": 4656,
+      "context": "When, yeah, when you're, I guess the easiest way to build something that people might want is to sta"
+    },
+    {
+      "text": "Amazon",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 67,
+      "char_offset": 6620,
+      "context": "There was one company where we work with a lot of people who sell on Amazon"
+    },
+    {
+      "text": "Thrasio",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 68,
+      "char_offset": 6654,
+      "context": "There was a company named Thrasio where they had a business which was to buy up individual Amazon sh"
+    },
+    {
+      "text": "Amazon",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 68,
+      "char_offset": 6620,
+      "context": "There was a company named Thrasio where they had a business which was to buy up individual Amazon sh"
+    },
+    {
+      "text": "Angry Orange",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 69,
+      "char_offset": 6857,
+      "context": "There was this one product called Angry Orange"
+    },
+    {
+      "text": "Thrasio",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 73,
+      "char_offset": 6654,
+      "context": "So, the theory, the thesis behind that the Thrasio team had was that they could purchase this listin"
+    },
+    {
+      "text": "Angry Orange",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 75,
+      "char_offset": 6857,
+      "context": "So, the decision that they faced was that rebranding, they actually went through about 300 different"
+    },
+    {
+      "text": "Amazon",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 80,
+      "char_offset": 6620,
+      "context": "And then they pulled the trigger on it and the day after they relaunched the product on Amazon with "
+    },
+    {
+      "text": "Pickfood",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 84,
+      "char_offset": 8722,
+      "context": "So what sorts of things does Pickfood lend itself to testing, where are the boundaries around that"
+    },
+    {
+      "text": "Pickfood,",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 86,
+      "char_offset": 8813,
+      "context": "I mean, so on Pickfood, you can ask open-ended feedback"
+    },
+    {
+      "text": "Pickfood",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 87,
+      "char_offset": 8722,
+      "context": "So Pickfood basically lets you get votes and written feedback from a large set of panelists"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 88,
+      "char_offset": 2400,
+      "context": "We have about 15 million panelists globally"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 89,
+      "char_offset": 1250,
+      "context": "You can test between one to eight different options"
+    },
+    {
+      "text": "Facebook",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 92,
+      "char_offset": 9343,
+      "context": "If you needed to test eight different images for a Facebook ad or something, you could put that ther"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 93,
+      "char_offset": 1250,
+      "context": "You can test images, audio, text, video"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 97,
+      "char_offset": 2400,
+      "context": "We are really proud of the depth of targeting that we offer"
+    },
+    {
+      "text": "Amazon Prime",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 100,
+      "char_offset": 9892,
+      "context": "If you're an Amazon Prime member, if you're a pet owner, if you're specifically a dog or a cat or a "
+    },
+    {
+      "text": "B2C",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 103,
+      "char_offset": 10379,
+      "context": "Yeah, it sounds very B2C oriented"
+    },
+    {
+      "text": "B2B",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 104,
+      "char_offset": 10427,
+      "context": "Do you have options for more of a B2B kind of targeting"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 105,
+      "char_offset": 2400,
+      "context": "We have some options"
+    },
+    {
+      "text": "B2C",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 106,
+      "char_offset": 10379,
+      "context": "Our main focus is because our panels draw from general consumer panels, most of our targeting is B2C"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 107,
+      "char_offset": 2400,
+      "context": "We do offer some limited B2B targeting, like small business owners and so on"
+    },
+    {
+      "text": "B2B",
+      "doc_id": "Job - Founder Sample - PickFu Assumptions",
+      "sentence_idx": 107,
+      "char_offset": 10427,
+      "context": "We do offer some limited B2B targeting, like small business owners and so on"
+    },
+    {
+      "text": "Assume",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 0,
+      "char_offset": 0,
+      "context": "Assume I know what you're talking about"
+    },
+    {
+      "text": "Because",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 3,
+      "char_offset": 115,
+      "context": "Because what I told you, you picked up what these guys must have started building"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 5,
+      "char_offset": 244,
+      "context": "We built out a map on which you could see all these street performers, you could go over there"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 6,
+      "char_offset": 82,
+      "context": "You could see where they are playing"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 7,
+      "char_offset": 82,
+      "context": "You can go there at that date on time, at that location, and give them 10"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 11,
+      "char_offset": 244,
+      "context": "We started asking them that this is what we're building"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 17,
+      "char_offset": 82,
+      "context": "You know what my number one problem is"
+    },
+    {
+      "text": "Finding",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 21,
+      "char_offset": 1013,
+      "context": "Finding this gig is not my biggest problem"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 25,
+      "char_offset": 82,
+      "context": "You have a band"
+    },
+    {
+      "text": "Build",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 34,
+      "char_offset": 1624,
+      "context": "Build one thing, which is the most vital, most valuable"
+    },
+    {
+      "text": "Let's",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 47,
+      "char_offset": 2452,
+      "context": "Let's talk, yeah"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 54,
+      "char_offset": 244,
+      "context": "We are all engineers"
+    },
+    {
+      "text": "AI",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 55,
+      "char_offset": 2940,
+      "context": "And I was like, we need to build an AI engine, which does scoring"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 58,
+      "char_offset": 244,
+      "context": "We came up with a very good algorithm"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 62,
+      "char_offset": 244,
+      "context": "We need to check out their social media"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 63,
+      "char_offset": 244,
+      "context": "We need to screen their video, audio, their website, EPK, whatnot, did all those things, go through "
+    },
+    {
+      "text": "EPK,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 63,
+      "char_offset": 3275,
+      "context": "We need to screen their video, audio, their website, EPK, whatnot, did all those things, go through "
+    },
+    {
+      "text": "I'll",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 68,
+      "char_offset": 3504,
+      "context": "I'll tell you about it"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 72,
+      "char_offset": 82,
+      "context": "You kind of had some assumptions, which is what a lot of people do, right"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 73,
+      "char_offset": 82,
+      "context": "You think about a great idea and then you go tell somebody in that area of work or whatever"
+    },
+    {
+      "text": "Hey,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 74,
+      "char_offset": 3813,
+      "context": "Hey, here's my idea and they're like, well, that's cool, but that's not my main problem, right"
+    },
+    {
+      "text": "Even",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 98,
+      "char_offset": 5727,
+      "context": "Even iPhone went through this"
+    },
+    {
+      "text": "Next",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 101,
+      "char_offset": 5852,
+      "context": "Next group that comes in are early adopters"
+    },
+    {
+      "text": "Next",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 102,
+      "char_offset": 5852,
+      "context": "Next group that comes in is early majority"
+    },
+    {
+      "text": "Even",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 104,
+      "char_offset": 5727,
+      "context": "Even iPhone's adoption curve was like this"
+    },
+    {
+      "text": "Now,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 109,
+      "char_offset": 6255,
+      "context": "Now, if I give it enough time, then I would be able to get a threshold number to be a substantial li"
+    },
+    {
+      "text": "ICP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 112,
+      "char_offset": 6443,
+      "context": "That means my ICP is wrong"
+    },
+    {
+      "text": "ICP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 113,
+      "char_offset": 6443,
+      "context": "I had joined a pre-exilator and they taught me a lot, but they did not teach me really that how do y"
+    },
+    {
+      "text": "ICP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 118,
+      "char_offset": 6443,
+      "context": "So I was like, all right, my ICP is wrong"
+    },
+    {
+      "text": "ICP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 121,
+      "char_offset": 6443,
+      "context": "So I had to change my ICP to event promoters"
+    },
+    {
+      "text": "Event",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 122,
+      "char_offset": 7034,
+      "context": "Event promoters, managers, coordinators, they're a younger group, 25 to 35"
+    },
+    {
+      "text": "LinkedIn",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 123,
+      "char_offset": 7122,
+      "context": "They are on LinkedIn"
+    },
+    {
+      "text": "AI",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 124,
+      "char_offset": 2940,
+      "context": "And they are not afraid of the word AI"
+    },
+    {
+      "text": "ICP,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 127,
+      "char_offset": 7259,
+      "context": "So now with this new ICP, flow is fine"
+    },
+    {
+      "text": "ICP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 128,
+      "char_offset": 6443,
+      "context": "With this new ICP in mind, I'm like, all right"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 134,
+      "char_offset": 82,
+      "context": "You know, type form where you answer one question"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 137,
+      "char_offset": 82,
+      "context": "You don't have to think"
+    },
+    {
+      "text": "You",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 138,
+      "char_offset": 82,
+      "context": "You don't have to look around on the page"
+    },
+    {
+      "text": "Answer",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 139,
+      "char_offset": 7752,
+      "context": "Answer one thing"
+    },
+    {
+      "text": "Next",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 140,
+      "char_offset": 5852,
+      "context": "Next will show up"
+    },
+    {
+      "text": "Keep",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 141,
+      "char_offset": 7790,
+      "context": "Keep answering"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 146,
+      "char_offset": 244,
+      "context": "We are redesigning"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 147,
+      "char_offset": 244,
+      "context": "We have onboarded UI designer, a couple of UI designers, one on the product side, one on the marketi"
+    },
+    {
+      "text": "MVP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 152,
+      "char_offset": 8330,
+      "context": "So we have gone past the MVP stage"
+    },
+    {
+      "text": "MVP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 153,
+      "char_offset": 8330,
+      "context": "And we are reaching the MVP 2 or kind of product market fit stage"
+    },
+    {
+      "text": "LinkedIn",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 154,
+      "char_offset": 7122,
+      "context": "And we have been running our LinkedIn and making connections with a ton of event promoters"
+    },
+    {
+      "text": "AI",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 157,
+      "char_offset": 2940,
+      "context": "And then you need the event promoters to kind of come in, create profiles, break gigs, and then let "
+    },
+    {
+      "text": "This,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 158,
+      "char_offset": 8787,
+      "context": "This, yeah"
+    },
+    {
+      "text": "Bingo,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 162,
+      "char_offset": 9085,
+      "context": "Bingo, you nailed it"
+    },
+    {
+      "text": "California,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 174,
+      "char_offset": 9641,
+      "context": "And where are you based right now, or are you, I think you're in California, memory service"
+    },
+    {
+      "text": "Pasadena",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 175,
+      "char_offset": 9670,
+      "context": "Pasadena"
+    },
+    {
+      "text": "People",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 178,
+      "char_offset": 9800,
+      "context": "People want to be in California and all of that"
+    },
+    {
+      "text": "California",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 178,
+      "char_offset": 9641,
+      "context": "People want to be in California and all of that"
+    },
+    {
+      "text": "MVP",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 179,
+      "char_offset": 8330,
+      "context": "Is that kind of where you're trying to launch your true MVP and kind of really go to market and then"
+    },
+    {
+      "text": "Yes,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 180,
+      "char_offset": 9993,
+      "context": "Yes, exactly"
+    },
+    {
+      "text": "Pasadena",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 183,
+      "char_offset": 9670,
+      "context": "And at least make it work in Pasadena"
+    },
+    {
+      "text": "California,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 187,
+      "char_offset": 9641,
+      "context": "We're going to talk to them in person, take their feedback in person, and then refine the product as"
+    },
+    {
+      "text": "Nevada,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations Deep Clip",
+      "sentence_idx": 187,
+      "char_offset": 10510,
+      "context": "We're going to talk to them in person, take their feedback in person, and then refine the product as"
+    },
+    {
+      "text": "Hey,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 0,
+      "char_offset": 0,
+      "context": "Hey, everybody"
+    },
+    {
+      "text": "Welcome",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 1,
+      "char_offset": 16,
+      "context": "Welcome back to another episode of the growth capital podcast"
+    },
+    {
+      "text": "Justin Dixon",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 2,
+      "char_offset": 94,
+      "context": "I am your host Justin Dixon and today we've got G Gupta on the pod"
+    },
+    {
+      "text": "Gupta",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 2,
+      "char_offset": 129,
+      "context": "I am your host Justin Dixon and today we've got G Gupta on the pod"
+    },
+    {
+      "text": "Squanto,",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 3,
+      "char_offset": 176,
+      "context": "He is the founder and CEO of Squanto, which is a gig app for live entertainment, connecting event ma"
+    },
+    {
+      "text": "We",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 5,
+      "char_offset": 16,
+      "context": "We talk a lot about how he came up with this idea during a trip to Boulder, Colorado in 2019"
+    },
+    {
+      "text": "Boulder, Colorado",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 5,
+      "char_offset": 372,
+      "context": "We talk a lot about how he came up with this idea during a trip to Boulder, Colorado in 2019"
+    },
+    {
+      "text": "Interested",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 13,
+      "char_offset": 851,
+      "context": "Interested in hearing conversations with private equity leaders, CEOs of private equity back compani"
+    },
+    {
+      "text": "CEOs",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 13,
+      "char_offset": 916,
+      "context": "Interested in hearing conversations with private equity leaders, CEOs of private equity back compani"
+    },
+    {
+      "text": "Welcome",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 15,
+      "char_offset": 16,
+      "context": "Welcome back to another episode of the growth capital podcast"
+    },
+    {
+      "text": "Justin Dixon",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 16,
+      "char_offset": 94,
+      "context": "Here's your host Justin Dixon"
+    },
+    {
+      "text": "Thanks",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 18,
+      "char_offset": 1354,
+      "context": "Thanks for being on"
+    },
+    {
+      "text": "Thank",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 19,
+      "char_offset": 1354,
+      "context": "Thank you so much, Justin"
+    },
+    {
+      "text": "Justin",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 19,
+      "char_offset": 94,
+      "context": "Thank you so much, Justin"
+    },
+    {
+      "text": "Awesome",
+      "doc_id": "Job - Customer Sample - Gaurav Conversations",
+      "sentence_idx": 20,
+      "char_offset": 1402,
+      "context": "Awesome"
+    }
+  ]
+}

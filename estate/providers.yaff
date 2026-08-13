@@ -1,0 +1,24 @@
+providers Bonfyre
+generation bootstrap-1
+
+provider feldera
+  name Feldera continuous readiness materializer
+  runtime_image ghcr.io/feldera/pipeline-manager:latest
+  input bonfyre.event.v1
+  output bonfyre.readiness.v1
+  effect external-durable-compute
+  authorization mission-scoped
+  lane external-process
+  maturity adapter_implemented
+  health capacity_pending
+
+provider restate
+  name Restate durable workflow engine
+  runtime_image docker.restate.dev/restatedev/restate:latest
+  input bonfyre.workgraph.node.v1
+  output bonfyre.workgraph.receipt.v1
+  effect external-durable-compute
+  authorization mission-scoped
+  lane external-process
+  maturity integration_verified
+  health core_verified

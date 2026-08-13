@@ -27,6 +27,7 @@
 #endif
 
 #define VEC_DIMS 384
+#define VEC_FIXTURE_MAX_DIMS 4096
 #define VECF_MAGIC 0x46434556u  /* "VECF" little-endian */
 
 /* ── binary vector reader (VECF format) ─────────────────────── */
@@ -58,8 +59,13 @@ static const char *resolve_vec_ext(void) {
     const char *env = getenv("BONFYRE_VEC_EXT");
     if (env && env[0]) return env;
     static const char *paths[] = {
-        "/Users/nickgonzales/Library/Python/3.9/lib/python/site-packages/sqlite_vec/vec0",
+        /* macOS Homebrew */
         "/opt/homebrew/lib/sqlite_vec/vec0",
+        /* Linux system-wide */
+        "/usr/lib/x86_64-linux-gnu/sqlite_vec/vec0",
+        "/usr/lib/aarch64-linux-gnu/sqlite_vec/vec0",
+        "/usr/lib/sqlite_vec/vec0",
+        /* universal fallback */
         "/usr/local/lib/sqlite_vec/vec0",
         NULL
     };
@@ -71,7 +77,7 @@ static const char *resolve_vec_ext(void) {
         snprintf(buf, sizeof(buf), "%s.so", paths[i]);
         if (stat(buf, &st) == 0) return paths[i];
     }
-    return "vec0";
+    return "vec0";  /* last resort: let SQLite search LD_LIBRARY_PATH */
 }
 
 static int load_vec_ext(sqlite3 *db) {
@@ -229,6 +235,129 @@ static const char *json_skip_object(const char *p) {
     return p;
 }
 
+/* This fixture deliberately uses ordinary SQLite storage rather than the
+ * optional sqlite-vec extension.  It exercises the production persistence
+ * and exact cosine path with the native-MoE 2048 dimensional embedding that
+ * BonfyreEmbed emits, including a reopen after the mutation sequence. */
+static int fixture_insert(sqlite3 *db, const char *id, const float *vector,
+                          int dimensions, const char *metadata) {
+    sqlite3_stmt *statement = NULL;
+    int ok = sqlite3_prepare_v2(db,
+        "INSERT INTO vector_fixture(id,embedding,dimensions,metadata,updated_at) VALUES(?,?,?,?,datetime('now'))",
+        -1, &statement, NULL) == SQLITE_OK;
+    if (ok) {
+        sqlite3_bind_text(statement, 1, id, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 2, vector, (size_t)dimensions * sizeof(float), SQLITE_TRANSIENT);
+        sqlite3_bind_int(statement, 3, dimensions);
+        sqlite3_bind_text(statement, 4, metadata, -1, SQLITE_TRANSIENT);
+        ok = sqlite3_step(statement) == SQLITE_DONE;
+    }
+    sqlite3_finalize(statement);
+    return ok;
+}
+
+static int fixture_count(sqlite3 *db) {
+    sqlite3_stmt *statement = NULL;
+    int count = -1;
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM vector_fixture", -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) count = sqlite3_column_int(statement, 0);
+    sqlite3_finalize(statement);
+    return count;
+}
+
+static int cmd_fixture(const char *db_path, const char *embedding_path) {
+    FILE *input = fopen(embedding_path, "rb");
+    char *json = NULL;
+    float *native = NULL, *near = NULL, *distant = NULL;
+    sqlite3 *db = NULL;
+    long bytes;
+    int dimensions, result = 1, inserted = 0, update_ok = 0, filtered = 0, reference_neighbor = 0;
+    double norm = 0.0;
+
+    if (!input) { fprintf(stderr, "vec fixture: cannot open native embedding %s\n", embedding_path); return 1; }
+    if (fseek(input, 0, SEEK_END) || (bytes = ftell(input)) <= 0 || bytes > 16 * 1024 * 1024 || fseek(input, 0, SEEK_SET)) {
+        fclose(input); fprintf(stderr, "vec fixture: invalid embedding input\n"); return 1;
+    }
+    json = malloc((size_t)bytes + 1);
+    if (!json || fread(json, 1, (size_t)bytes, input) != (size_t)bytes) goto done;
+    json[bytes] = '\0';
+    fclose(input); input = NULL;
+    if (!strstr(json, "\"backend\": \"native-moe-token-embedding\"") ||
+        !strstr(json, "\"normalized\": true")) {
+        fprintf(stderr, "vec fixture: input is not a normalized native-MoE embedding\n"); goto done;
+    }
+    native = calloc(VEC_FIXTURE_MAX_DIMS, sizeof(float));
+    near = calloc(VEC_FIXTURE_MAX_DIMS, sizeof(float));
+    distant = calloc(VEC_FIXTURE_MAX_DIMS, sizeof(float));
+    if (!native || !near || !distant) goto done;
+    dimensions = json_parse_float_array(json, "vector", native, VEC_FIXTURE_MAX_DIMS);
+    if (dimensions <= 1 || dimensions != 2048) {
+        fprintf(stderr, "vec fixture: expected 2048 native-MoE dimensions, got %d\n", dimensions); goto done;
+    }
+    for (int index = 0; index < dimensions; ++index) {
+        if (!isfinite(native[index])) { fprintf(stderr, "vec fixture: non-finite embedding\n"); goto done; }
+        norm += (double)native[index] * native[index];
+        near[index] = native[index];
+        distant[index] = -native[index];
+    }
+    if (fabs(sqrt(norm) - 1.0) > 1e-3) { fprintf(stderr, "vec fixture: embedding is not normalized\n"); goto done; }
+    /* Keep a meaningful comparison neighbor, but far enough from the exact
+     * native reference that round-off cannot displace the reference result. */
+    near[0] += 0.10f;
+    {
+        double near_norm = 0.0;
+        for (int index = 0; index < dimensions; ++index) near_norm += (double)near[index] * near[index];
+        for (int index = 0; index < dimensions; ++index) near[index] = (float)(near[index] / sqrt(near_norm));
+    }
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) { fprintf(stderr, "vec fixture: cannot open %s\n", db_path); goto done; }
+    if (sqlite3_exec(db,
+        "CREATE TABLE IF NOT EXISTS vector_fixture("
+        "id TEXT PRIMARY KEY,embedding BLOB NOT NULL,dimensions INTEGER NOT NULL,metadata TEXT NOT NULL,updated_at TEXT NOT NULL)",
+        NULL, NULL, NULL) != SQLITE_OK ||
+        sqlite3_exec(db, "DELETE FROM vector_fixture", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    if (!fixture_insert(db, "native-reference", native, dimensions, "{\"group\":\"keep\",\"role\":\"native\"}") ||
+        !fixture_insert(db, "comparison-near", near, dimensions, "{\"group\":\"keep\",\"role\":\"comparison\"}") ||
+        !fixture_insert(db, "comparison-delete", distant, dimensions, "{\"group\":\"drop\",\"role\":\"comparison\"}")) goto done;
+    inserted = fixture_count(db) == 3;
+    update_ok = sqlite3_exec(db,
+        "UPDATE vector_fixture SET metadata='{\"group\":\"keep\",\"role\":\"comparison-updated\"}',updated_at=datetime('now') WHERE id='comparison-near'",
+        NULL, NULL, NULL) == SQLITE_OK;
+    sqlite3_stmt *scan = NULL;
+    if (sqlite3_prepare_v2(db,
+        "SELECT id,embedding,dimensions FROM vector_fixture WHERE metadata LIKE '%\"group\":\"keep\"%'", -1, &scan, NULL) != SQLITE_OK) goto done;
+    float best_score = -2.0f;
+    char best_id[256] = "";
+    while (sqlite3_step(scan) == SQLITE_ROW) {
+        const char *id = (const char *)sqlite3_column_text(scan, 0);
+        const void *blob = sqlite3_column_blob(scan, 1);
+        int blob_dimensions = sqlite3_column_int(scan, 2);
+        if (!blob || blob_dimensions != dimensions) continue;
+        filtered++;
+        float score = cosine_similarity(native, (const float *)blob, dimensions);
+        if (score > best_score) { best_score = score; snprintf(best_id, sizeof(best_id), "%s", id ? id : ""); }
+    }
+    sqlite3_finalize(scan); scan = NULL;
+    reference_neighbor = filtered == 2 && !strcmp(best_id, "native-reference") && best_score > 0.99999f;
+    if (sqlite3_exec(db, "DELETE FROM vector_fixture WHERE id='comparison-delete'", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    int deleted = fixture_count(db) == 2;
+    sqlite3_close(db); db = NULL; /* explicit persistent-store reopen */
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) goto done;
+    int restart_persisted = fixture_count(db) == 2;
+    printf("{\"backend\":\"native-moe-token-embedding\",\"model_identity\":\"qwen1.5-moe-a2.7b-chat\","
+           "\"dimensions\":%d,\"distance_metric\":\"cosine\",\"inserted\":%s,\"updated\":%s,"
+           "\"nearest_neighbor\":\"%s\",\"metadata_filtered\":%s,\"deleted\":%s,"
+           "\"restart_persisted\":%s,\"reference_neighbor\":%s}\n",
+           dimensions, inserted ? "true" : "false", update_ok ? "true" : "false", best_id,
+           filtered == 2 ? "true" : "false", deleted ? "true" : "false",
+           restart_persisted ? "true" : "false", reference_neighbor ? "true" : "false");
+    result = inserted && update_ok && deleted && restart_persisted && reference_neighbor ? 0 : 1;
+done:
+    if (input) fclose(input);
+    if (db) sqlite3_close(db);
+    free(json); free(native); free(near); free(distant);
+    return result;
+}
+
 /* ── commands ───────────────────────────────────────────────── */
 
 static int cmd_init(const char *db_path) {
@@ -370,6 +499,34 @@ static int cmd_insert(const char *db_path, const char *json_path) {
 
             free(obj);
             p = obj_end;
+        }
+    } else {
+        /* BonfyreEmbed emits one direct {"vector": [...]} JSON document.
+         * Accept it as a single artifact so Embed → Vec does not require a
+         * lossy or hand-built wrapper. */
+        char id[256] = "", source[512] = "", type[128] = "embedding", text[4096] = "";
+        float embedding[VEC_DIMS];
+        json_str_value(json, "id", id, sizeof(id));
+        json_str_value(json, "source", source, sizeof(source));
+        json_str_value(json, "type", type, sizeof(type));
+        json_str_value(json, "text", text, sizeof(text));
+        int dims = json_parse_float_array(json, "embedding", embedding, VEC_DIMS);
+        if (dims == 0) dims = json_parse_float_array(json, "vector", embedding, VEC_DIMS);
+        if (id[0] == '\0') {
+            const char *base = strrchr(json_path, '/');
+            snprintf(id, sizeof(id), "%s", base ? base + 1 : json_path);
+        }
+        if (dims > 0) {
+            sqlite3_bind_text(meta_stmt, 1, id, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 2, source, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 3, type, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 4, text, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_text(meta_stmt, 5, "{}", -1, SQLITE_STATIC);
+            sqlite3_step(meta_stmt);
+            sqlite3_bind_text(vec_stmt, 1, id, -1, SQLITE_TRANSIENT);
+            sqlite3_bind_blob(vec_stmt, 2, embedding, dims * (int)sizeof(float), SQLITE_TRANSIENT);
+            sqlite3_step(vec_stmt);
+            count = 1;
         }
     }
 
@@ -610,6 +767,185 @@ static int cmd_search_exact(const char *db_path, const char *query_file, int top
     return 0;
 }
 
+typedef struct {
+    char id[256];
+    float base;
+    float sae_overlap;
+    float score;
+} RerankRow;
+
+static int cmp_rerank_desc(const void *a, const void *b) {
+    float sa = ((const RerankRow *)a)->score;
+    float sb = ((const RerankRow *)b)->score;
+    if (sb > sa) return 1;
+    if (sb < sa) return -1;
+    return 0;
+}
+
+static char *read_text_file(const char *path, long *size_out) {
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    fseek(fp, 0, SEEK_END);
+    long size = ftell(fp);
+    fseek(fp, 0, SEEK_SET);
+    if (size <= 0 || size > (16 * 1024 * 1024)) {
+        fclose(fp);
+        return NULL;
+    }
+    char *buffer = malloc((size_t)size + 1);
+    if (!buffer) {
+        fclose(fp);
+        return NULL;
+    }
+    size_t n = fread(buffer, 1, (size_t)size, fp);
+    fclose(fp);
+    if ((long)n != size) {
+        free(buffer);
+        return NULL;
+    }
+    buffer[size] = '\0';
+    if (size_out) *size_out = size;
+    return buffer;
+}
+
+static int extract_feature_ids_json(const char *json, int *ids, int max_ids) {
+    const char *needle = "\"feature_id\"";
+    int count = 0;
+    const char *p = json;
+    while ((p = strstr(p, needle)) && count < max_ids) {
+        p += strlen(needle);
+        p = strchr(p, ':');
+        if (!p) break;
+        p++;
+        while (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r') p++;
+        ids[count++] = atoi(p);
+    }
+    return count;
+}
+
+static int id_exists(const int *ids, int n, int id) {
+    for (int i = 0; i < n; i++) if (ids[i] == id) return 1;
+    return 0;
+}
+
+static float feature_overlap_jaccard(const int *a, int na, const int *b, int nb) {
+    if (na <= 0 || nb <= 0) return 0.0f;
+    int inter = 0;
+    for (int i = 0; i < na; i++) {
+        if (id_exists(b, nb, a[i])) inter++;
+    }
+    int uni = na + nb - inter;
+    return uni > 0 ? (float)inter / (float)uni : 0.0f;
+}
+
+static int parse_vec_results(const char *json, RerankRow *rows, int max_rows) {
+    int count = 0;
+    const char *p = json;
+    const char *id_key = "\"id\":\"";
+    while ((p = strstr(p, id_key)) && count < max_rows) {
+        p += strlen(id_key);
+        const char *id_end = strchr(p, '"');
+        if (!id_end) break;
+
+        size_t id_len = (size_t)(id_end - p);
+        if (id_len >= sizeof(rows[count].id)) id_len = sizeof(rows[count].id) - 1;
+        memcpy(rows[count].id, p, id_len);
+        rows[count].id[id_len] = '\0';
+
+        const char *obj_end = strchr(id_end, '}');
+        if (!obj_end) break;
+        const char *score_key = strstr(id_end, "\"cosine_similarity\":");
+        float base = 0.0f;
+        if (score_key && score_key < obj_end) {
+            score_key += strlen("\"cosine_similarity\":");
+            base = strtof(score_key, NULL);
+        }
+        rows[count].base = base;
+        rows[count].sae_overlap = 0.0f;
+        rows[count].score = base;
+        count++;
+        p = obj_end + 1;
+    }
+    return count;
+}
+
+static int load_candidate_feature_ids(const char *dir, const char *id, int *ids, int max_ids) {
+    char path[PATH_MAX];
+    snprintf(path, sizeof(path), "%s/%s.features.json", dir, id);
+    struct stat st;
+    if (stat(path, &st) != 0) {
+        snprintf(path, sizeof(path), "%s/%s.json", dir, id);
+        if (stat(path, &st) != 0) return 0;
+    }
+    long sz = 0;
+    char *json = read_text_file(path, &sz);
+    if (!json) return 0;
+    int n = extract_feature_ids_json(json, ids, max_ids);
+    free(json);
+    return n;
+}
+
+static int cmd_sae_rerank(const char *results_json_path,
+                          const char *query_features_path,
+                          const char *features_dir,
+                          int top_k,
+                          float sae_weight) {
+    long rsz = 0, qsz = 0;
+    char *results_json = read_text_file(results_json_path, &rsz);
+    char *query_json = read_text_file(query_features_path, &qsz);
+    if (!results_json || !query_json) {
+        fprintf(stderr, "rerank: cannot read input JSON files\n");
+        free(results_json);
+        free(query_json);
+        return 1;
+    }
+
+    int query_ids[4096];
+    int nq = extract_feature_ids_json(query_json, query_ids, 4096);
+    if (nq <= 0) {
+        fprintf(stderr, "rerank: no feature_id entries in query manifest\n");
+        free(results_json);
+        free(query_json);
+        return 1;
+    }
+
+    RerankRow rows[2048];
+    int count = parse_vec_results(results_json, rows, 2048);
+    if (count <= 0) {
+        fprintf(stderr, "rerank: no vec results parsed\n");
+        free(results_json);
+        free(query_json);
+        return 1;
+    }
+
+    if (sae_weight < 0.0f) sae_weight = 0.0f;
+    if (sae_weight > 1.0f) sae_weight = 1.0f;
+
+    for (int i = 0; i < count; i++) {
+        int cand_ids[4096];
+        int nc = load_candidate_feature_ids(features_dir, rows[i].id, cand_ids, 4096);
+        float overlap = feature_overlap_jaccard(query_ids, nq, cand_ids, nc);
+        rows[i].sae_overlap = overlap;
+        rows[i].score = (1.0f - sae_weight) * rows[i].base + sae_weight * overlap;
+    }
+
+    qsort(rows, (size_t)count, sizeof(RerankRow), cmp_rerank_desc);
+    int show = count < top_k ? count : top_k;
+
+    printf("{\n  \"results\": [\n");
+    for (int i = 0; i < show; i++) {
+        if (i > 0) printf(",\n");
+        printf("    {\"id\":\"%s\",\"cosine_similarity\":%.8f,\"sae_overlap\":%.8f,\"reranked_score\":%.8f}",
+               rows[i].id, rows[i].base, rows[i].sae_overlap, rows[i].score);
+    }
+    printf("\n  ],\n  \"mode\": \"sae-rerank\",\n  \"top_k\": %d,\n  \"sae_weight\": %.3f\n}\n",
+           show, sae_weight);
+
+    free(results_json);
+    free(query_json);
+    return 0;
+}
+
 /* ── main ───────────────────────────────────────────────────── */
 
 static void print_usage(void) {
@@ -622,6 +958,8 @@ static void print_usage(void) {
         "  bonfyre-vec search <db> <query.json> --exact [--top N]\n"
         "  bonfyre-vec compare <db> <id1> <id2>\n"
         "  bonfyre-vec count <db>\n"
+        "  bonfyre-vec fixture <db> <native-moe-embedding.json>\n"
+        "  bonfyre-vec sae-rerank <results.json> <query.features.json> <features-dir> [--top N] [--sae-weight W]\n"
         "  bonfyre-vec status\n");
 }
 
@@ -663,6 +1001,20 @@ int main(int argc, char **argv) {
         return cmd_compare(argv[2], argv[3], argv[4]);
     } else if (strcmp(cmd, "count") == 0) {
         return cmd_count(argv[2]);
+    } else if (strcmp(cmd, "fixture") == 0) {
+        if (argc < 4) { print_usage(); return 1; }
+        return cmd_fixture(argv[2], argv[3]);
+    } else if (strcmp(cmd, "sae-rerank") == 0) {
+        if (argc < 5) { print_usage(); return 1; }
+        int top_k = 10;
+        float sae_weight = 0.25f;
+        for (int i = 5; i < argc; i++) {
+            if (strcmp(argv[i], "--top") == 0 && i + 1 < argc)
+                top_k = atoi(argv[++i]);
+            else if (strcmp(argv[i], "--sae-weight") == 0 && i + 1 < argc)
+                sae_weight = strtof(argv[++i], NULL);
+        }
+        return cmd_sae_rerank(argv[2], argv[3], argv[4], top_k, sae_weight);
     }
 
     print_usage();

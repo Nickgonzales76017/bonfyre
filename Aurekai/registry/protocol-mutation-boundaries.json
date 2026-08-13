@@ -1,0 +1,216 @@
+{
+  "schema_version": "aurekai.protocol_mutation_boundaries.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "boundaries": [
+    {
+      "protocol": "IBC/Cosmos",
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_type": "transport-edge",
+      "canonical_state_object": "ibc.packet.state",
+      "canonical_transition_function": "packet_emit->relay->verify->execute",
+      "witness_boundary": "packet_commit_ack",
+      "replay_granularity": "packet-step"
+    },
+    {
+      "protocol": "Chainlink/Pyth oracle rounds",
+      "chart_family": "oracle_round",
+      "policy_family": "oracle",
+      "lineage_edge_type": "oracle-edge",
+      "canonical_state_object": "oracle.round.state",
+      "canonical_transition_function": "round_publish->attest->consume",
+      "witness_boundary": "round_attestation",
+      "replay_granularity": "round-step"
+    },
+    {
+      "protocol": "Uniswap",
+      "chart_family": "liquidity_topology",
+      "policy_family": "liquidity",
+      "lineage_edge_type": "liquidity-edge",
+      "canonical_state_object": "dex.pool.route.state",
+      "canonical_transition_function": "route->swap->hook_mutate->settle",
+      "witness_boundary": "swap_settlement",
+      "replay_granularity": "transaction-step"
+    },
+    {
+      "protocol": "Aave",
+      "chart_family": "collateral_graph",
+      "policy_family": "collateral",
+      "lineage_edge_type": "collateral-edge",
+      "canonical_state_object": "lending.position.state",
+      "canonical_transition_function": "deposit->borrow->repay->liquidate",
+      "witness_boundary": "position_health",
+      "replay_granularity": "position-step"
+    },
+    {
+      "protocol": "Celestia",
+      "chart_family": "availability_root",
+      "policy_family": "availability",
+      "lineage_edge_type": "availability-edge",
+      "canonical_state_object": "da.publication.state",
+      "canonical_transition_function": "publish_blob->attest->retrieve",
+      "witness_boundary": "blob_commitment",
+      "replay_granularity": "publication-step"
+    },
+    {
+      "protocol": "EigenLayer",
+      "chart_family": "restaking_topology",
+      "policy_family": "restaking",
+      "lineage_edge_type": "trust-edge",
+      "canonical_state_object": "restaking.delegation.state",
+      "canonical_transition_function": "delegate->restake->slash->rebalance",
+      "witness_boundary": "delegation_slash_set",
+      "replay_granularity": "validator-step"
+    },
+    {
+      "protocol": "LayerZero",
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_type": "transport-edge",
+      "canonical_state_object": "layerzero.packet.state",
+      "canonical_transition_function": "packet_emit->relay->verify->settle",
+      "witness_boundary": "lz_settlement_ack",
+      "replay_granularity": "packet-step"
+    },
+    {
+      "protocol": "Wormhole",
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_type": "transport-edge",
+      "canonical_state_object": "wormhole.vaa.state",
+      "canonical_transition_function": "message_emit->vaa_attest->relay->execute",
+      "witness_boundary": "vaa_quorum",
+      "replay_granularity": "vaa-step"
+    },
+    {
+      "protocol": "Axelar",
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_type": "transport-edge",
+      "canonical_state_object": "axelar.gmp.state",
+      "canonical_transition_function": "command_emit->validator_vote->relay->execute",
+      "witness_boundary": "axelar_command_ack",
+      "replay_granularity": "command-step"
+    },
+    {
+      "protocol": "Hyperlane",
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_type": "transport-edge",
+      "canonical_state_object": "hyperlane.message.state",
+      "canonical_transition_function": "dispatch->checkpoint->relay->process",
+      "witness_boundary": "checkpoint_signature",
+      "replay_granularity": "message-step"
+    },
+    {
+      "protocol": "Stargate",
+      "chart_family": "bridge_packet",
+      "policy_family": "settlement",
+      "lineage_edge_type": "transport-edge",
+      "canonical_state_object": "stargate.transfer.state",
+      "canonical_transition_function": "route->bridge->settlement_ack",
+      "witness_boundary": "bridge_settlement_ack",
+      "replay_granularity": "transfer-step"
+    },
+    {
+      "protocol": "Arbitrum",
+      "chart_family": "execution_batch",
+      "policy_family": "finality",
+      "lineage_edge_type": "execution-edge",
+      "canonical_state_object": "rollup.batch.state",
+      "canonical_transition_function": "batch_post->assert->challenge_window->finalize",
+      "witness_boundary": "assertion_finality",
+      "replay_granularity": "batch-step"
+    },
+    {
+      "protocol": "Optimism",
+      "chart_family": "execution_batch",
+      "policy_family": "finality",
+      "lineage_edge_type": "execution-edge",
+      "canonical_state_object": "op.batch.state",
+      "canonical_transition_function": "batch_publish->prove->finalize",
+      "witness_boundary": "op_batch_finality",
+      "replay_granularity": "batch-step"
+    },
+    {
+      "protocol": "zkSync",
+      "chart_family": "execution_batch",
+      "policy_family": "finality",
+      "lineage_edge_type": "execution-edge",
+      "canonical_state_object": "zksync.proof.batch.state",
+      "canonical_transition_function": "batch_post->prove->verify->finalize",
+      "witness_boundary": "proof_verification",
+      "replay_granularity": "proof-step"
+    },
+    {
+      "protocol": "Starknet",
+      "chart_family": "execution_batch",
+      "policy_family": "finality",
+      "lineage_edge_type": "execution-edge",
+      "canonical_state_object": "starknet.state_update.batch",
+      "canonical_transition_function": "state_update->proof_submit->verify->accept",
+      "witness_boundary": "stark_proof_acceptance",
+      "replay_granularity": "state-update-step"
+    },
+    {
+      "protocol": "Avail",
+      "chart_family": "availability_root",
+      "policy_family": "availability",
+      "lineage_edge_type": "availability-edge",
+      "canonical_state_object": "avail.da.root.state",
+      "canonical_transition_function": "publish->attest->retrieve",
+      "witness_boundary": "avail_root_commitment",
+      "replay_granularity": "root-step"
+    },
+    {
+      "protocol": "EigenDA",
+      "chart_family": "availability_root",
+      "policy_family": "availability",
+      "lineage_edge_type": "availability-edge",
+      "canonical_state_object": "eigenda.blob.state",
+      "canonical_transition_function": "blob_disperse->attest->retrieve",
+      "witness_boundary": "eigenda_blob_quorum",
+      "replay_granularity": "blob-step"
+    },
+    {
+      "protocol": "Morpho",
+      "chart_family": "collateral_graph",
+      "policy_family": "collateral",
+      "lineage_edge_type": "collateral-edge",
+      "canonical_state_object": "morpho.position.state",
+      "canonical_transition_function": "supply->borrow->repay->liquidate",
+      "witness_boundary": "position_health",
+      "replay_granularity": "position-step"
+    },
+    {
+      "protocol": "Maker/Sky",
+      "chart_family": "collateral_graph",
+      "policy_family": "collateral",
+      "lineage_edge_type": "collateral-edge",
+      "canonical_state_object": "vault.state",
+      "canonical_transition_function": "open_vault->draw->repay->close",
+      "witness_boundary": "vault_health",
+      "replay_granularity": "vault-step"
+    },
+    {
+      "protocol": "Pendle",
+      "chart_family": "liquidity_topology",
+      "policy_family": "liquidity",
+      "lineage_edge_type": "liquidity-edge",
+      "canonical_state_object": "yield.pool.state",
+      "canonical_transition_function": "route->swap->mint_yt->settle",
+      "witness_boundary": "pool_settlement",
+      "replay_granularity": "pool-step"
+    },
+    {
+      "protocol": "Ethena",
+      "chart_family": "liquidity_topology",
+      "policy_family": "liquidity",
+      "lineage_edge_type": "liquidity-edge",
+      "canonical_state_object": "delta_neutral.position.state",
+      "canonical_transition_function": "mint->hedge->rebalance->settle",
+      "witness_boundary": "hedge_settlement",
+      "replay_granularity": "position-step"
+    }
+  ]
+}

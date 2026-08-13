@@ -1,0 +1,29 @@
+catalog Bonfyre
+generation bootstrap-1
+
+operator core.identity
+  version 1.0.0
+  input bonfyre.artifact.v1
+  output bonfyre.artifact.v1
+  effect pure-read
+  authorization mission-scoped
+  lane in-process
+  maturity defined
+
+operator core.intake
+  version 1.0.0
+  input intake.package.v1
+  output bonfyre.artifact.v1
+  effect local-derived-state
+  authorization mission-scoped
+  lane in-process
+  maturity defined
+
+operator core.publish
+  version 1.0.0
+  input delivery.package.v1
+  output published.reference.v1
+  effect reversible-external-write
+  authorization explicit-approval
+  lane process
+  maturity defined

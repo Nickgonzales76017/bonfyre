@@ -1,0 +1,228 @@
+{
+  "recipe_id": "M2",
+  "name": "Podcast Multi-Modal Repurposing",
+  "version": "1.0.0",
+  "description": "Full podcast → video clips, audiograms, blog posts, social cards, transcripts",
+  "category": "media-repurposing",
+  "inputs": [
+    {
+      "name": "audio",
+      "type": "audio/*",
+      "required": true,
+      "description": "Podcast audio file"
+    },
+    {
+      "name": "metadata",
+      "type": "application/json",
+      "required": false,
+      "description": "Episode metadata (title, guests, topics)"
+    }
+  ],
+  "outputs": [
+    {
+      "name": "video-clips",
+      "type": "video/mp4",
+      "path": "{out}/clips/*.mp4"
+    },
+    {
+      "name": "audiogram",
+      "type": "video/mp4",
+      "path": "{out}/audiogram.mp4"
+    },
+    {
+      "name": "blog-post",
+      "type": "text/markdown",
+      "path": "{out}/blog-post.md"
+    },
+    {
+      "name": "social-cards",
+      "type": "image/png",
+      "path": "{out}/cards/*.png"
+    }
+  ],
+  "stages": [
+    {
+      "id": "s01",
+      "name": "Audio Normalization",
+      "operator": "BonfyreAudioNormalize",
+      "args": [
+        "--input", "{input}",
+        "--out", "{out}/normalized.wav",
+        "--target-lufs", "-16"
+      ],
+      "outputs": ["{out}/normalized.wav"]
+    },
+    {
+      "id": "s02",
+      "name": "Speech Segmentation",
+      "operator": "BonfyreSpeechLoop",
+      "args": [
+        "--input", "{out}/normalized.wav",
+        "--out", "{out}/segments"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/segments.json"]
+    },
+    {
+      "id": "s03",
+      "name": "Transcription",
+      "operator": "BonfyreTranscribe",
+      "args": [
+        "--input", "{out}/segments.json",
+        "--out", "{out}/transcript",
+        "--model", "whisper-large-v3"
+      ],
+      "parallel": 8,
+      "depends_on": ["s02"],
+      "outputs": ["{out}/transcript/*.json"]
+    },
+    {
+      "id": "s04",
+      "name": "Speaker Diarization",
+      "operator": "BonfyreDiarize",
+      "args": [
+        "--input", "{out}/normalized.wav",
+        "--out", "{out}/speakers.json",
+        "--model", "pyannote-audio"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/speakers.json"]
+    },
+    {
+      "id": "s05",
+      "name": "Transcript + Speaker Merge",
+      "operator": "BonfyreMergeSpeakers",
+      "args": [
+        "--transcript", "{out}/transcript",
+        "--speakers", "{out}/speakers.json",
+        "--out", "{out}/full-transcript.json"
+      ],
+      "depends_on": ["s03", "s04"],
+      "outputs": ["{out}/full-transcript.json"]
+    },
+    {
+      "id": "s06",
+      "name": "Topic Segmentation",
+      "operator": "BonfyreTopicSegment",
+      "args": [
+        "--input", "{out}/full-transcript.json",
+        "--out", "{out}/topics.json",
+        "--min-segment-seconds", "120"
+      ],
+      "depends_on": ["s05"],
+      "outputs": ["{out}/topics.json"],
+      "description": "Detect topic changes for clip boundaries"
+    },
+    {
+      "id": "s07",
+      "name": "Highlight Detection",
+      "operator": "BonfyreHighlights",
+      "args": [
+        "--input", "{out}/full-transcript.json",
+        "--out", "{out}/highlights.json",
+        "--criteria", "humor,insight,controversy,quote"
+      ],
+      "depends_on": ["s05"],
+      "outputs": ["{out}/highlights.json"],
+      "description": "Find shareable moments"
+    },
+    {
+      "id": "s08",
+      "name": "Waveform Visualization",
+      "operator": "BonfyreWaveform",
+      "args": [
+        "--input", "{out}/normalized.wav",
+        "--out", "{out}/waveform.png",
+        "--width", "1920",
+        "--height", "400"
+      ],
+      "depends_on": ["s01"],
+      "outputs": ["{out}/waveform.png"]
+    },
+    {
+      "id": "s09",
+      "name": "Audiogram Generation",
+      "operator": "BonfyreAudiogram",
+      "args": [
+        "--audio", "{out}/normalized.wav",
+        "--waveform", "{out}/waveform.png",
+        "--transcript", "{out}/full-transcript.json",
+        "--out", "{out}/audiogram.mp4",
+        "--duration", "60"
+      ],
+      "depends_on": ["s05", "s08"],
+      "outputs": ["{out}/audiogram.mp4"],
+      "description": "Video with animated waveform + captions"
+    },
+    {
+      "id": "s10",
+      "name": "Video Clips from Highlights",
+      "operator": "BonfyreClipsFromHighlights",
+      "args": [
+        "--audio", "{out}/normalized.wav",
+        "--highlights", "{out}/highlights.json",
+        "--out", "{out}/clips"
+      ],
+      "parallel": 4,
+      "depends_on": ["s07"],
+      "outputs": ["{out}/clips/*.mp4"]
+    },
+    {
+      "id": "s11",
+      "name": "Blog Post Generation",
+      "operator": "BonfyreBlogPost",
+      "args": [
+        "--transcript", "{out}/full-transcript.json",
+        "--topics", "{out}/topics.json",
+        "--out", "{out}/blog-post.md",
+        "--style", "conversational"
+      ],
+      "depends_on": ["s05", "s06"],
+      "outputs": ["{out}/blog-post.md"]
+    },
+    {
+      "id": "s12",
+      "name": "Social Card Design",
+      "operator": "BonfyreSocialCards",
+      "args": [
+        "--highlights", "{out}/highlights.json",
+        "--out", "{out}/cards",
+        "--template", "twitter-instagram",
+        "--count", "5"
+      ],
+      "depends_on": ["s07"],
+      "outputs": ["{out}/cards/*.png"],
+      "description": "Quote cards for social media"
+    },
+    {
+      "id": "s13",
+      "name": "Package Deliverables",
+      "operator": "BonfyrePackage",
+      "args": [
+        "--input", "{out}",
+        "--out", "{out}/deliverables.zip",
+        "--include", "clips,audiogram,blog-post,cards,full-transcript.json"
+      ],
+      "depends_on": ["s09", "s10", "s11", "s12"],
+      "outputs": ["{out}/deliverables.zip"]
+    }
+  ],
+  "models": [
+    {
+      "name": "whisper-large-v3",
+      "hash": "sha256:abc...",
+      "size_mb": 1540
+    },
+    {
+      "name": "pyannote-audio",
+      "hash": "sha256:def...",
+      "size_mb": 120
+    }
+  ],
+  "metadata": {
+    "estimated_time_per_hour": "35 minutes",
+    "tags": ["podcast", "multi-modal", "repurposing", "media"],
+    "author": "bonfyre-core",
+    "license": "MIT"
+  }
+}

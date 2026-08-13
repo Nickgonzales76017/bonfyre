@@ -1,0 +1,6 @@
+Can't open perl script "/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/nightly.pl": Operation not permitted
+Refusing to start nightly_brainstorm: current 1m load 44.36 exceeds safe limit 8.00. Use --unsafe-skip-guardrails to override.
+Refusing to start nightly_brainstorm: current 1m load 8.97 exceeds safe limit 8.00. Use --unsafe-skip-guardrails to override.
+Refusing to start nightly_brainstorm: current 1m load 25.80 exceeds safe limit 8.00. Use --unsafe-skip-guardrails to override.
+Refusing to start nightly_brainstorm: current 1m load 20.53 exceeds safe limit 8.00. Use --unsafe-skip-guardrails to override.
+Refusing to start nightly_brainstorm: current 1m load 19.39 exceeds safe limit 8.00. Use --unsafe-skip-guardrails to override.

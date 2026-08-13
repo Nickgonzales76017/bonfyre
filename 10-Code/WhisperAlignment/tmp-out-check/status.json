@@ -1,0 +1,8 @@
+{
+  "sourceSystem": "WhisperAlignment",
+  "audioPath": "10-Code/LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+  "transcriptPath": "10-Code/LocalAITranscriptionService/outputs/founder-sample-pickfu-assumptions/raw_transcript.txt",
+  "whisperxStatus": "dry-run",
+  "mfaStatus": "dry-run",
+  "simulated": 1
+}

@@ -26,7 +26,52 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "bonfyre.h"
 #include <dirent.h>
+
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
+}
+
+static int run_execvp(char *const argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return 1;
+    }
+    if (pid == 0) {
+        execvp(argv[0], argv);
+        perror("execvp");
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid");
+        return 1;
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+}
+
+static int delegate_layeros_ledger(int argc, char *argv[]) {
+    char *exec_argv[16];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "ledger";
+    exec_argv[n++] = argv[2];
+    exec_argv[n] = NULL;
+    return run_execvp(exec_argv);
+}
 
 /* Per-operation cost-to-replace estimates (USD).
  * These are what it would cost to recreate from scratch. */
@@ -50,14 +95,7 @@ typedef struct {
 } FamilyValue;
 
 static char *read_file_full(const char *path) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) return NULL;
-    fseek(fp, 0, SEEK_END); long sz = ftell(fp); fseek(fp, 0, SEEK_SET);
-    if (sz < 0) { fclose(fp); return NULL; }
-    char *buf = malloc((size_t)sz + 1);
-    if (!buf) { fclose(fp); return NULL; }
-    fread(buf, 1, (size_t)sz, fp); buf[sz] = '\0';
-    fclose(fp); return buf;
+    return bf_read_file(path, NULL);
 }
 
 /* Count occurrences of a substring */
@@ -288,6 +326,10 @@ static int cmd_export(const char *root, const char *fmt) {
 }
 
 int main(int argc, char *argv[]) {
+    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
+        return delegate_layeros_ledger(argc, argv);
+    }
+
     if (argc >= 3 && strcmp(argv[1], "assess") == 0) {
         FamilyValue fv = assess_family(argv[2]);
         print_family_report(&fv);
@@ -322,6 +364,7 @@ int main(int argc, char *argv[]) {
         "  bonfyre-ledger portfolio <root_dir>             full portfolio roll-up\n"
         "  bonfyre-ledger delta <artifact.json>            value changes\n"
         "  bonfyre-ledger export <root_dir> [--format json|csv]\n"
+        "  bonfyre-ledger layer <artifact_id> [--root DIR]\n"
     );
     return 1;
 }

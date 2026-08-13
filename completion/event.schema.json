@@ -1,0 +1,24 @@
+{
+  "type": "object",
+  "description": "The one universal event schema shared by every fabric subsystem (mission execution in engine/core/src/fabric.c, effect commit in fabric_exec.c, workgraph transitions in workgraph_events.c). Backed by the single `events` SQLite table declared identically in fabric.c and workgraph.c.",
+  "required": ["id", "attempt", "actor", "start_at", "effect_class", "status"],
+  "properties": {
+    "id": {"type": "string"},
+    "mission_id": {"type": ["string", "null"]},
+    "task_id": {"type": ["string", "null"]},
+    "attempt": {"type": "integer"},
+    "actor": {"type": "string"},
+    "operator_id": {"type": ["string", "null"]},
+    "provider_id": {"type": ["string", "null"]},
+    "model_id": {"type": ["string", "null"]},
+    "start_at": {"type": "string"},
+    "end_at": {"type": ["string", "null"]},
+    "duration_ms": {"type": ["integer", "null"]},
+    "input_uri": {"type": ["string", "null"]},
+    "output_uri": {"type": ["string", "null"]},
+    "effect_class": {"type": "string"},
+    "status": {"type": "string"},
+    "error_code": {"type": ["string", "null"]},
+    "receipt_id": {"type": ["string", "null"]}
+  }
+}

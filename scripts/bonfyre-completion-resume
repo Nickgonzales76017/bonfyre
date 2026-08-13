@@ -1,0 +1,7 @@
+#!/bin/sh
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+base=${BONFYRE_STATE_DIR:-"${TMPDIR:-/tmp}/bonfyre-completion"}/completion
+run_id=$(cat "$base/latest" 2>/dev/null || true)
+printf 'repository=%s\nrun_id=%s\n' "$root" "${run_id:-none}"
+if [ -n "${run_id:-}" ]; then "$root/scripts/bonfyre-completion-status"; "$root/scripts/bonfyre-completion-next" || true; fi

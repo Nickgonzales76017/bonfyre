@@ -1,0 +1,29 @@
+{
+  "name": "@aurekai/integration-manta",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for Manta.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-manta.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "manta",
+    "hard-fork",
+    "state-machine"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

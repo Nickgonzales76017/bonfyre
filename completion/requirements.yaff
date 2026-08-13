@@ -1,0 +1,271 @@
+# id | severity | dependencies | test command | required evidence
+requirement fabric.declarations.deterministic
+  severity critical
+  depends fabric.controller.evidence_integrity
+  test sh tests/fabric_smoke.sh
+  evidence catalog_generation
+requirement fabric.controller.evidence_integrity
+  severity critical
+  depends none
+  test sh tests/requirements/completion_controller.sh
+  evidence run-scoped-jsonl-and-status
+requirement fabric.roots.cwd_independent
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/fabric_smoke.sh
+  evidence cwd_compile
+requirement fabric.commands.all_93_accounted
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/fabric_smoke.sh
+  evidence catalog_bindings_93
+requirement fabric.commands.contract_runtime
+  severity critical
+  depends fabric.commands.all_93_accounted
+  test sh tests/requirements/operator_contracts.sh
+  evidence operator-contracts
+requirement fabric.commands.major_families_executed
+  severity critical
+  depends fabric.commands.no_stale_generations
+  test sh tests/requirements/major_command_families.sh
+  evidence command-evidence.tsv
+requirement fabric.intake.mixed_artifact
+  severity critical
+  depends fabric.commands.major_families_executed
+  test sh tests/requirements/mixed_artifact.sh
+  evidence intake-package
+requirement fabric.artifacts.relationship_graph
+  severity critical
+  depends fabric.intake.mixed_artifact
+  test sh tests/requirements/artifact_relationships.sh
+  evidence artifact-relations
+requirement fabric.workgraph.fan_out_fan_in
+  severity critical
+  depends fabric.commands.major_families_executed
+  test sh tests/requirements/workgraph_fanout.sh
+  evidence fanout-receipt
+requirement fabric.workgraph.retry
+  severity critical
+  depends fabric.workgraph.fan_out_fan_in
+  test sh tests/requirements/workgraph_retry.sh
+  evidence retry-attempt
+requirement fabric.workgraph.lease_expiry
+  severity critical
+  depends fabric.workgraph.retry
+  test sh tests/requirements/workgraph_lease.sh
+  evidence lease-reclaim
+requirement fabric.workgraph.global_lease_reaping
+  severity critical
+  depends fabric.workgraph.lease_expiry
+  test sh tests/requirements/workgraph_reap_multi_mission.sh
+  evidence multi-mission-lease-reclaim
+requirement fabric.workgraph.daemon_restart_resume
+  severity critical
+  depends fabric.workgraph.global_lease_reaping
+  test sh tests/requirements/daemon_restart.sh
+  evidence resume-receipt
+requirement fabric.model.local_execution
+  severity critical
+  depends fabric.intake.mixed_artifact
+  test sh tests/requirements/model_execution.sh
+  evidence model-event
+requirement fabric.vector.persistence
+  severity critical
+  depends fabric.model.local_execution
+  test sh tests/requirements/vector_persistence.sh
+  evidence vector-query
+requirement fabric.graph.persistence
+  severity critical
+  depends fabric.model.local_execution
+  test sh tests/requirements/graph_persistence.sh
+  evidence lineage-query
+requirement fabric.metrics.factual
+  severity critical
+  depends fabric.commands.major_families_executed
+  test sh tests/requirements/factual_metrics.sh
+  evidence execution-metrics
+requirement fabric.economy.provenance
+  severity high
+  depends fabric.metrics.factual
+  test sh tests/requirements/economy_provenance.sh
+  evidence economic-ledger
+requirement fabric.frappe.phase1
+  severity critical
+  depends none
+  test make -C cmd/BonfyreFrappeCompiler test
+  evidence phase1-schema
+requirement fabric.frappe.nine_apppacks
+  severity critical
+  depends fabric.frappe.phase1
+  test make -C cmd/BonfyreFrappeCompiler test
+  evidence nine-apppacks
+requirement fabric.frappe.cross_app_execution
+  severity critical
+  depends fabric.frappe.nine_apppacks
+  test sh tests/requirements/frappe_cross_app.sh
+  evidence cross-app-receipt
+requirement fabric.substrates.all_14
+  severity critical
+  depends fabric.workgraph.fan_out_fan_in
+  test sh tests/requirements/substrates.sh
+  evidence substrate-receipts
+requirement fabric.effects.commit_verify
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/requirements/workgraph_effect_adapters.sh
+  evidence adapter-commit-verification
+requirement fabric.effects.rollback_verify
+  severity critical
+  depends fabric.effects.commit_verify
+  test sh tests/requirements/workgraph_compensation.sh
+  evidence restartable-rollback-compensation
+requirement fabric.effects.external_blocked
+  severity critical
+  depends fabric.effects.commit_verify
+  test sh tests/fabric_smoke.sh
+  evidence blocked-effect
+requirement fabric.commands.all_93_workload_proven
+  severity critical
+  depends fabric.commands.contract_runtime
+  test sh tests/requirements/command_completion.sh generate
+  evidence command-workloads-93
+requirement fabric.commands.all_93_quality_proven
+  severity critical
+  depends fabric.commands.all_93_workload_proven
+  test sh tests/requirements/command_completion.sh quality
+  evidence command-quality-93
+requirement fabric.commands.no_missing_events
+  severity critical
+  depends fabric.commands.all_93_quality_proven
+  test sh tests/requirements/command_completion.sh events
+  evidence command-events-93
+requirement fabric.commands.no_missing_receipts
+  severity critical
+  depends fabric.commands.no_missing_events
+  test sh tests/requirements/command_completion.sh receipts
+  evidence command-receipts-93
+requirement fabric.commands.no_stale_generations
+  severity critical
+  depends fabric.commands.no_missing_receipts
+  test sh tests/requirements/command_completion.sh generations
+  evidence command-generations-current
+requirement fabric.operators.unproven_safety_blocked
+  severity critical
+  depends fabric.commands.all_93_accounted
+  test sh tests/fabric_smoke.sh
+  evidence blocked-operator
+requirement fabric.api.complete
+  severity critical
+  depends fabric.workgraph.daemon_restart_resume
+  test sh tests/requirements/api_complete.sh
+  evidence api-contract
+requirement fabric.mcp.meta_abi
+  severity critical
+  depends fabric.api.complete
+  test sh tests/requirements/mcp_meta_abi.sh
+  evidence mcp-contract
+requirement fabric.events.universal_schema
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/requirements/event_schema.sh
+  evidence event-schema-conformance
+requirement fabric.readiness.deterministic_adapter
+  severity critical
+  depends fabric.events.universal_schema
+  test sh tests/requirements/readiness_views.sh
+  evidence readiness-view-contract
+requirement fabric.providers.catalog_identity
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/requirements/provider_catalog.sh
+  evidence provider-runtime-image-contract
+requirement fabric.catalog.generation_bridge
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/requirements/catalog_generation_bridge.sh
+  evidence discovery-executable-generation-cross-reference
+requirement fabric.roots.sibling_repository_resolution
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/requirements/sibling_repository_roots.sh
+  evidence sibling-repository-git-identity
+requirement fabric.feldera.source_sink_parity
+  severity critical
+  depends fabric.readiness.deterministic_adapter
+  test sh tests/requirements/feldera_source_sink_parity.sh
+  evidence feldera-pipeline-semantic-parity
+requirement fabric.api_mcp.generation_parity
+  severity critical
+  depends fabric.mcp.meta_abi
+  test sh tests/requirements/api_mcp_parity.sh
+  evidence generation-parity
+requirement fabric.filesystem.projection
+  severity critical
+  depends fabric.artifacts.relationship_graph
+  test sh tests/requirements/filesystem_projection.sh
+  evidence projection-tree
+requirement fabric.surface.operator_ui
+  severity high
+  depends fabric.api.complete
+  test sh tests/requirements/operator_surface.sh
+  evidence operator-ui
+requirement fabric.teardown.clean
+  severity critical
+  depends fabric.effects.rollback_verify
+  test sh tests/requirements/teardown.sh
+  evidence teardown
+requirement fabric.source.no_generated_state
+  severity critical
+  depends fabric.teardown.clean
+  test sh tests/requirements/source_clean.sh
+  evidence source-clean
+requirement fabric.release.install
+  severity critical
+  depends fabric.commands.no_stale_generations
+  test sh tests/requirements/release_lifecycle.sh install
+  evidence release_install
+requirement fabric.release.upgrade
+  severity critical
+  depends fabric.release.install
+  test sh tests/requirements/release_lifecycle.sh upgrade
+  evidence release_upgrade
+requirement fabric.release.rollback
+  severity critical
+  depends fabric.release.upgrade
+  test sh tests/requirements/release_lifecycle.sh rollback
+  evidence release_rollback
+requirement fabric.release.uninstall
+  severity critical
+  depends fabric.release.rollback
+  test sh tests/requirements/release_lifecycle.sh uninstall
+  evidence release_uninstall
+requirement fabric.release.reinstall
+  severity critical
+  depends fabric.release.uninstall
+  test sh tests/requirements/release_lifecycle.sh reinstall
+  evidence release_reinstall
+requirement fabric.release.portable_install
+  severity critical
+  depends fabric.release.reinstall
+  test sh tests/requirements/release_lifecycle.sh portable
+  evidence portable_install
+requirement fabric.release.portable_dispatch
+  severity critical
+  depends fabric.release.portable_install
+  test sh tests/requirements/release_lifecycle.sh portable_dispatch
+  evidence portable_dispatch
+requirement fabric.release.durable_state_recovery
+  severity critical
+  depends fabric.release.portable_dispatch
+  test sh tests/requirements/release_lifecycle.sh recover
+  evidence durable_state_recovery
+requirement fabric.release.supervision
+  severity critical
+  depends fabric.release.durable_state_recovery
+  test sh tests/supervise_lifecycle.sh
+  evidence supervise_lifecycle
+requirement fabric.filesystem.writable_effect_files
+  severity critical
+  depends fabric.declarations.deterministic
+  test sh tests/fs_effects_watch_lifecycle.sh
+  evidence fs_effects_watch_lifecycle

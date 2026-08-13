@@ -1,0 +1,29 @@
+{
+  "name": "@aurekai/integration-0x",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for 0x.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-0x.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "0x",
+    "hard-fork",
+    "state-machine"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

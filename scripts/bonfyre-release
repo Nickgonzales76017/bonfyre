@@ -1,0 +1,194 @@
+#!/bin/sh
+# Release lifecycle for the Fabric binaries (bonfyre, bonfyred).
+#
+# Layout under a prefix:
+#   <prefix>/versions/<version-id>/{bonfyre,bonfyred}
+#   <prefix>/bin -> versions/<version-id>              (symlink; "current")
+#   <prefix>/release-history.tsv
+#
+# Durable state (missions, events, receipts, artifacts, application records)
+# lives entirely outside <prefix>, at BONFYRE_STATE_DIR, and is never touched
+# by install/upgrade/rollback/uninstall/reinstall. Structurally, a bug in this
+# script cannot corrupt durable state because durable state is never inside
+# the paths this script writes to.
+#
+# The "current" pointer is a single symlink; every activation is one
+# rename(2) of a symlink onto the target name, which is atomic on a single
+# filesystem. There is no window in which <prefix>/bin can be a partially
+# written symlink: either the old target or the new target, never a torn
+# state. If a crash happens before that rename, the new version directory is
+# simply orphaned and <prefix>/bin still names the previous, fully intact
+# version; a later install/upgrade creates a fresh version directory and
+# retries the same atomic swap.
+set -eu
+[ -n "${BONFYRE_RELEASE_DEBUG:-}" ] && set -x
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+verb=${1:-}
+prefix=${2:-}
+
+usage() {
+    echo "usage: bonfyre-release install|upgrade|rollback|uninstall|reinstall|status <prefix> [--purge]" >&2
+    exit 2
+}
+
+[ -n "$verb" ] && [ -n "$prefix" ] || usage
+prefix=$(CDPATH= mkdir -p "$prefix" && cd -- "$prefix" && pwd)
+
+history="$prefix/release-history.tsv"
+versions_dir="$prefix/versions"
+current_link="$prefix/bin"
+
+log_event() {
+    event=$1; version=$2
+    printf '%s\t%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$event" "$version" >>"$history"
+}
+
+current_version() {
+    [ -L "$current_link" ] || return 1
+    target=$(readlink "$current_link")
+    basename "$target"
+}
+
+build_binaries() {
+    (cd "$root" && zig build) >&2
+    for binary in bonfyre bonfyred; do
+        [ -x "$root/zig-out/bin/$binary" ] || { echo "release: $binary was not built" >&2; exit 1; }
+    done
+}
+
+new_version_id() {
+    rev=$(cd "$root" && git rev-parse --short HEAD 2>/dev/null || echo nogit)
+    printf '%s-%s-%s' "$(date -u +%Y%m%dT%H%M%SZ)" "$rev" "$$"
+}
+
+activate_version() {
+    version=$1
+    if [ -n "${BONFYRE_RELEASE_CRASH_BEFORE_ACTIVATE:-}" ]; then
+        # Test-only crash injection point: the new version directory exists
+        # and is fully populated, but the atomic activation swap has not
+        # happened yet. <prefix>/bin must still name the previous version.
+        kill -KILL $$
+    fi
+    # ln -f replaces an existing symlink destination in place (via a
+    # temp-name-then-rename internally); -n stops it from treating an
+    # existing symlink-to-directory destination as a directory to move
+    # into, which is what a plain `mv src dst` would otherwise do here.
+    ln -sfn "versions/$version" "$current_link"
+}
+
+bundle_toolset() {
+    # Packages everything `fabric compile` and the operator resolver need
+    # to run standalone, relocated away from this dev checkout: the
+    # declaration files it reads (estate/, recipes/, docs/recipes/,
+    # bonfyre.workspace.yaff, bonfyre.lock.yaff), the one source file the
+    # lock pins a hash to, and whatever operator binaries are already built
+    # under cmd/*/ -- preserving the same cmd/<Operator>/<binary> relative
+    # layout the resolver expects, so a portable install can dispatch real
+    # operators without the original checkout present.
+    target=$1
+    mkdir -p "$target/estate" "$target/recipes" "$target/docs/recipes" "$target/lib/libbonfyre/src"
+    cp -R "$root/estate/." "$target/estate/"
+    [ -d "$root/recipes" ] && cp -R "$root/recipes/." "$target/recipes/"
+    [ -d "$root/docs/recipes" ] && cp -R "$root/docs/recipes/." "$target/docs/recipes/"
+    cp "$root/bonfyre.workspace.yaff" "$root/bonfyre.lock.yaff" "$target/"
+    cp "$root/lib/libbonfyre/src/bf_sha256.c" "$target/lib/libbonfyre/src/"
+    for module_dir in "$root"/cmd/*/; do
+        module=$(basename "$module_dir")
+        for candidate in "$module_dir"bonfyre-* "$module_dir"build/bonfyre-*; do
+            [ -x "$candidate" ] || continue
+            case "$candidate" in *.o|*.a|*.dylib|*.so) continue ;; esac
+            rel=${candidate#"$module_dir"}
+            mkdir -p "$target/cmd/$module/$(dirname -- "$rel")"
+            cp "$candidate" "$target/cmd/$module/$rel"
+        done
+    done
+}
+
+install_version() {
+    build_binaries
+    version=$(new_version_id)
+    mkdir -p "$versions_dir/$version"
+    cp "$root/zig-out/bin/bonfyre" "$root/zig-out/bin/bonfyred" "$versions_dir/$version/"
+    bundle_toolset "$versions_dir/$version"
+    activate_version "$version"
+    log_event "$1" "$version"
+    printf '%s\n' "$version"
+}
+
+cmd_install() {
+    [ -e "$current_link" ] && { echo "release: already installed at $prefix (use upgrade or reinstall)" >&2; exit 1; }
+    mkdir -p "$versions_dir"
+    install_version install
+}
+
+cmd_upgrade() {
+    [ -L "$current_link" ] || { echo "release: nothing installed at $prefix (use install)" >&2; exit 1; }
+    install_version upgrade
+}
+
+cmd_rollback() {
+    [ -L "$current_link" ] || { echo "release: nothing installed at $prefix" >&2; exit 1; }
+    now=$(current_version)
+    previous=$(awk -F'\t' -v cur="$now" '
+        $2 == "install" || $2 == "upgrade" || $2 == "rollback" { seq[NR] = $3 }
+        END {
+            for (i = NR; i >= 1; i--) { if (seq[i] == cur) { for (j = i - 1; j >= 1; j--) if (seq[j] != cur) { print seq[j]; exit } } }
+        }' "$history")
+    [ -n "$previous" ] || { echo "release: no prior version to roll back to" >&2; exit 1; }
+    [ -d "$versions_dir/$previous" ] || { echo "release: prior version $previous no longer present" >&2; exit 1; }
+    activate_version "$previous"
+    log_event rollback "$previous"
+    printf '%s\n' "$previous"
+}
+
+cmd_uninstall() {
+    purge=0
+    [ "${3:-}" = "--purge" ] && purge=1
+    [ -e "$current_link" ] || [ -d "$versions_dir" ] || { echo "release: nothing installed at $prefix" >&2; exit 1; }
+    rm -f "$current_link"
+    rm -rf "$versions_dir"
+    log_event uninstall "-"
+    if [ "$purge" -eq 1 ] && [ -n "${BONFYRE_STATE_DIR:-}" ]; then
+        rm -rf "$BONFYRE_STATE_DIR"
+        log_event purge-state "$BONFYRE_STATE_DIR"
+    fi
+}
+
+cmd_reinstall() {
+    if [ -e "$current_link" ] || [ -d "$versions_dir" ]; then
+        rm -f "$current_link"
+        rm -rf "$versions_dir"
+        log_event uninstall "-"
+    fi
+    mkdir -p "$versions_dir"
+    install_version reinstall
+}
+
+cmd_status() {
+    if [ -L "$current_link" ]; then
+        printf 'installed_version=%s\n' "$(current_version)"
+        printf 'prefix=%s\n' "$prefix"
+    else
+        printf 'installed_version=none\n'
+    fi
+    printf 'known_versions=%s\n' "$(ls "$versions_dir" 2>/dev/null | wc -l | tr -d ' ')"
+    if [ -n "${BONFYRE_STATE_DIR:-}" ] && [ -f "$BONFYRE_STATE_DIR/fabric.db" ]; then
+        missions=$(sqlite3 "$BONFYRE_STATE_DIR/fabric.db" 'SELECT count(*) FROM missions;' 2>/dev/null || echo 0)
+        events=$(sqlite3 "$BONFYRE_STATE_DIR/fabric.db" 'SELECT count(*) FROM events;' 2>/dev/null || echo 0)
+        receipts=$(sqlite3 "$BONFYRE_STATE_DIR/fabric.db" 'SELECT count(*) FROM receipts;' 2>/dev/null || echo 0)
+        printf 'state_missions=%s\nstate_events=%s\nstate_receipts=%s\n' "$missions" "$events" "$receipts"
+    else
+        printf 'state_missions=0\nstate_events=0\nstate_receipts=0\n'
+    fi
+}
+
+case "$verb" in
+    install) cmd_install ;;
+    upgrade) cmd_upgrade ;;
+    rollback) cmd_rollback ;;
+    uninstall) cmd_uninstall "$@" ;;
+    reinstall) cmd_reinstall ;;
+    status) cmd_status ;;
+    *) usage ;;
+esac

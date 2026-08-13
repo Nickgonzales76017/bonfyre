@@ -1,0 +1,286 @@
+#!/bin/sh
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+state=${BONFYRE_STATE_DIR:?BONFYRE_STATE_DIR is required}
+fabric="$root/programs/bonfyre/bonfyre"
+fixtures="$state/command-workloads"
+mkdir -p "$fixtures"
+
+build_command() {
+    command_dir=$1
+    if [ -f "$root/cmd/$command_dir/Makefile" ]; then
+        make -C "$root/cmd/$command_dir" >/dev/null
+    fi
+}
+
+ingest_artifact() {
+    path=$1
+    media_type=$2
+    "$fabric" artifact ingest "$path" "$media_type" | sed -n 's/^uri=//p'
+}
+
+artifact_path() {
+    uri=$1
+    "$fabric" namespace show "$uri" | sed -n 's/^locator=//p'
+}
+
+run_operator() {
+    command_name=$1
+    input_uri=$2
+    mission="command-$command_name"
+
+    "$fabric" mission create "$mission" >/dev/null
+    "$fabric" work add "$mission" execute "command.$command_name" "$input_uri" >/dev/null
+    result=$("$fabric" work run "$mission")
+    printf '%s\n' "$result" | grep -q '^node=execute status=complete output=bonfyre://artifact/'
+    printf '%s\n' "$result" | sed -n 's/.* output=\([^ ]*\).*/\1/p'
+}
+
+for command_dir in \
+    BonfyreIngest BonfyreMediaPrep BonfyreBrief BonfyreProof BonfyreOffer \
+    BonfyrePack BonfyreRepurpose BonfyreClips BonfyreFrameExtract \
+    BonfyreSceneDetect BonfyreVideoDemux BonfyreDetectObjects \
+    BonfyreTranscriptClean BonfyreParagraph BonfyreMFADict BonfyreCanon \
+    BonfyreCompress BonfyreRender BonfyreQwenFPQ BonfyreQuant BonfyreMoE \
+    BonfyreVec BonfyreGraph BonfyreCMS BonfyreQueue BonfyreMeter BonfyreWire \
+    BonfyreAuth BonfyreProject BonfyreSpace BonfyreHash BonfyreFragment \
+    BonfyreWorkflow BonfyreFamily BonfyreSegment BonfyreGen BonfyreFPQ \
+    BonfyreFlashQLA BonfyreKVCache BonfyreEntity BonfyreFlow BonfyreGate \
+    BonfyreEconomy BonfyreFinance BonfyreControl BonfyreTone BonfyreTag \
+    BonfyreSync BonfyreTime BonfyreLearn BonfyreCompete BonfyrePay \
+    BonfyreTier BonfyreOutreach BonfyreSurface BonfyreStitch \
+    BonfyreDistribute BonfyreRecipe BonfyreTranscribe \
+    BonfyreTranscriptFamily BonfyreNarrate BonfyreSpeechLoop BonfyreLayer \
+    BonfyreCapability BonfyreIndex BonfyreQuery BonfyreEmit BonfyreLedger \
+    BonfyreRuntime BonfyreLeapfrog BonfyreViolence \
+    BonfyreDiscipl BonfyreFPQX BonfyreNet BonfyreOrchestrate BonfyrePhysics \
+    BonfyreReason BonfyreSAE BonfyreSLI BonfyreCLI BonfyreRun BonfyrePipeline \
+    BonfyreWatch BonfyreWeaviateIndex BonfyreProxy \
+    BonfyreAPI BonfyreMoQ BonfyreSwarm; do
+    build_command "$command_dir"
+done
+
+printf '%s\n%s\n' \
+    'Bonfyre completion validates durable evidence. The scheduler records every transition and receipt.' \
+    'The release operator must preserve user-owned data. Alice will verify the package tomorrow.' \
+    > "$fixtures/text.txt"
+text_uri=$(ingest_artifact "$fixtures/text.txt" text/plain)
+
+printf 'name,amount\nalpha,10\nbeta,20\n' > "$fixtures/table.csv"
+table_uri=$(ingest_artifact "$fixtures/table.csv" text/csv)
+
+printf '%s\n%s\n' '#include <stdio.h>' \
+    'int main(void) { printf("bonfyre\\n"); return 0; }' > "$fixtures/source.c"
+source_uri=$(ingest_artifact "$fixtures/source.c" text/x-c)
+
+printf '%s\n' \
+    '{"text":"Bonfyre completion validates durable evidence.","segments":[{"start":0.0,"end":4.0,"text":"Bonfyre completion validates durable evidence.","confidence":0.98},{"start":4.0,"end":8.0,"text":"The scheduler records every transition and receipt.","confidence":0.97}]}' \
+    > "$fixtures/whisper.json"
+whisper_uri=$(ingest_artifact "$fixtures/whisper.json" application/json)
+
+ffmpeg -v error -f lavfi -i sine=frequency=440:duration=1 \
+    -ar 16000 -ac 1 "$fixtures/tone.wav"
+audio_uri=$(ingest_artifact "$fixtures/tone.wav" audio/wav)
+/usr/bin/say -o "$fixtures/speech.aiff" \
+    'Bonfire completion validates durable evidence. The scheduler records every transition and receipt.'
+ffmpeg -v error -i "$fixtures/speech.aiff" -ar 16000 -ac 1 "$fixtures/speech.wav"
+speech_uri=$(ingest_artifact "$fixtures/speech.wav" audio/wav)
+ffmpeg -v error -f lavfi -i color=c=blue:s=320x240:d=1 \
+    -f lavfi -i sine=frequency=440:duration=1 -shortest \
+    -c:v mpeg4 -c:a aac "$fixtures/video.mp4"
+video_uri=$(ingest_artifact "$fixtures/video.mp4" video/mp4)
+
+ffmpeg -v error -f lavfi -i sine=frequency=880:duration=1 \
+    -ar 16000 -ac 1 -f f32le "$fixtures/kv-input.bin"
+kv_uri=$(ingest_artifact "$fixtures/kv-input.bin" application/octet-stream)
+
+"$root/cmd/BonfyreFlashQLA/bonfyre-flashqla" gen \
+    --B 1 --T 8 --H 2 --K 8 --V 8 --out "$fixtures/flashqla-input.bfgla" >/dev/null
+flashqla_uri=$(ingest_artifact "$fixtures/flashqla-input.bfgla" application/octet-stream)
+
+printf '%s\n' \
+    '{"id":"completion-flow","name":"Completion Flow","entry":"ingest","stages":[{"id":"ingest","recipe":"intake"}],"edges":[]}' \
+    > "$fixtures/flow.json"
+flow_uri=$(ingest_artifact "$fixtures/flow.json" application/json)
+
+printf '%s\n' \
+    'adapter: completion-ui' \
+    'type: operator' \
+    'reads: [missions, artifacts, receipts]' \
+    'emits: [cancel, approve, rollback]' \
+    'requires: [authenticated-daemon]' \
+    'does_not_own: [scheduler-state]' \
+    > "$fixtures/client_surface.yaml"
+surface_uri=$(ingest_artifact "$fixtures/client_surface.yaml" application/yaml)
+
+printf '%s\n' \
+    '{"operators": [{"op": "Normalize", "input": "source", "output": "normalized"}]}' \
+    > "$fixtures/stitch-artifact.json"
+stitch_uri=$(ingest_artifact "$fixtures/stitch-artifact.json" application/json)
+
+printf '%s\n' \
+    '{"artifact_id":"command-completion-source","artifact_type":"document","source_system":"bonfyre-command-workloads","created_at":"2026-08-05T12:00:00Z","root_hash":"sha256:9e0ec5290f36ed024cd7e6a8e4c54c757c922f9c37835ee90c4d47602c411d44","atoms":[{"id":"source","media_type":"text/plain"}],"operators":[{"id":"normalize","kind":"Normalize"}],"realizations":[{"id":"canonical","path":"text.txt"}]}' \
+    > "$fixtures/artifact.json"
+
+printf '%s\n%s\n' \
+    '{"src_ip":"10.0.0.10","dst_ip":"10.0.0.20","src_port":5004,"dst_port":5004,"size":1024,"proto":"UDP","hint":"rtp","ts":"2026-08-05T12:00:00Z"}' \
+    '{"src_ip":"10.0.0.20","dst_ip":"10.0.0.10","src_port":443,"dst_port":54000,"size":512,"proto":"TCP","app_proto":"HTTPS","encrypted":true,"ts":"2026-08-05T12:00:01Z"}' \
+    > "$fixtures/wire-events.jsonl"
+wire_uri=$(ingest_artifact "$fixtures/wire-events.jsonl" application/x-ndjson)
+
+python3 - "$fixtures/fixture.bqfp" <<'PY'
+import struct, random, sys
+BQFP_MAGIC = 0x50464251
+TILE_DIM = 16
+eff_k = 4
+with open(sys.argv[1], 'wb') as f:
+    f.write(struct.pack('<4I', BQFP_MAGIC, 0, 1, 8))
+    f.write(b'workload_tensor'.ljust(256, b'\x00'))
+    f.write(struct.pack('<QQII', 16, 0, eff_k, 0))
+    random.seed(7)
+    codebook = [random.uniform(-1, 1) for _ in range(eff_k * TILE_DIM)]
+    f.write(struct.pack('<%df' % len(codebook), *codebook))
+PY
+bqfp_uri=$(ingest_artifact "$fixtures/fixture.bqfp" application/octet-stream)
+
+python3 - "$fixtures/fixture.vecf" <<'PY'
+import struct, sys
+VECF_MAGIC = 0x46434556
+with open(sys.argv[1], 'wb') as f:
+    f.write(struct.pack('<2I', VECF_MAGIC, 4))
+    f.write(struct.pack('<4f', 3.0, 4.0, 0.0, 0.0))
+PY
+vecf_uri=$(ingest_artifact "$fixtures/fixture.vecf" application/octet-stream)
+
+printf '%s\n' \
+    '.WORLD demo' \
+    '.COMPONENT phy0   BonfyrePhysics dt=0.05 sigma=0.8' \
+    '.COMPONENT met0   BonfyreMeter   key=acme' \
+    '' \
+    '.NET phy0.entropy   met0.usage    cost' \
+    '' \
+    '.TRAN 0 32 0.05' \
+    '.PROBE phy0.q phy0.entropy met0.invoice' \
+    > "$fixtures/fixture.bfnet"
+bfnet_uri=$(ingest_artifact "$fixtures/fixture.bfnet" application/x-bfnet)
+
+ffmpeg -v error -f lavfi -i color=c=blue:s=64x64:d=0.1 -frames:v 1 -y "$fixtures/detect-image.jpg"
+detect_image_uri=$(ingest_artifact "$fixtures/detect-image.jpg" image/jpeg)
+
+run_operator hash "$source_uri" >/dev/null
+intake_uri=$(run_operator ingest "$table_uri")
+run_operator mediaprep "$audio_uri" >/dev/null
+clean_uri=$(run_operator clean "$text_uri")
+run_operator paragraph "$text_uri" >/dev/null
+brief_uri=$(run_operator brief "$text_uri")
+proof_uri=$(run_operator proof "$brief_uri")
+offer_uri=$(run_operator offer "$proof_uri")
+run_operator repurpose "$brief_uri" >/dev/null
+run_operator clips "$whisper_uri" >/dev/null
+frame_uri=$(run_operator frame-extract "$video_uri")
+run_operator scene-detect "$frame_uri" >/dev/null
+run_operator video-demux "$video_uri" >/dev/null
+run_operator mfa-dict "$clean_uri" >/dev/null
+run_operator canon "$whisper_uri" >/dev/null
+run_operator compress "$source_uri" >/dev/null
+run_operator fragment "$text_uri" >/dev/null
+run_operator workflow "$text_uri" >/dev/null
+run_operator family "$text_uri" >/dev/null
+run_operator segment "$whisper_uri" >/dev/null
+run_operator gen "$text_uri" >/dev/null
+run_operator fpq "$text_uri" >/dev/null
+run_operator flashqla "$flashqla_uri" >/dev/null
+run_operator kvcache "$kv_uri" >/dev/null
+run_operator entity "$text_uri" >/dev/null
+run_operator flow "$flow_uri" >/dev/null
+run_operator gate "$text_uri" >/dev/null
+run_operator economy "$text_uri" >/dev/null
+run_operator finance "$text_uri" >/dev/null
+run_operator control "$text_uri" >/dev/null
+run_operator tone "$audio_uri" >/dev/null
+run_operator tag "$text_uri" >/dev/null
+run_operator sync "$intake_uri" >/dev/null
+run_operator time "$text_uri" >/dev/null
+run_operator learn "$text_uri" >/dev/null
+run_operator compete "$text_uri" >/dev/null
+run_operator pay "$text_uri" >/dev/null
+run_operator tier "$text_uri" >/dev/null
+run_operator outreach "$text_uri" >/dev/null
+run_operator surface "$surface_uri" >/dev/null
+run_operator stitch "$stitch_uri" >/dev/null
+run_operator distribute "$offer_uri" >/dev/null
+run_operator recipe "$text_uri" >/dev/null
+run_operator transcribe "$speech_uri" >/dev/null
+run_operator transcript-family "$speech_uri" >/dev/null
+run_operator narrate "$text_uri" >/dev/null
+run_operator speech-loop "$speech_uri" >/dev/null
+run_operator layer "$text_uri" >/dev/null
+run_operator layer-c "$text_uri" >/dev/null
+run_operator capabilities "$text_uri" >/dev/null
+run_operator index "$stitch_uri" >/dev/null
+run_operator query "$stitch_uri" >/dev/null
+run_operator emit "$proof_uri" >/dev/null
+run_operator ledger "$stitch_uri" >/dev/null
+run_operator runtime "$text_uri" >/dev/null
+run_operator leapfrog "$stitch_uri" >/dev/null
+run_operator violence "$stitch_uri" >/dev/null
+
+package_input="$fixtures/package-input"
+mkdir -p "$package_input"
+brief_path=$(artifact_path "$brief_uri")
+proof_path=$(artifact_path "$proof_uri")
+offer_path=$(artifact_path "$offer_uri")
+cp "$brief_path" "$package_input/deliverable.md"
+cp "$fixtures/text.txt" "$package_input/transcript.txt"
+cp "$proof_path" "$package_input/proof-bundle.json"
+cp "$offer_path" "$package_input/offer.json"
+cp "$offer_path" "$package_input/offer.md"
+cp "$offer_path" "$package_input/outreach.md"
+tar -czf "$fixtures/package-input.tar.gz" -C "$package_input" .
+package_uri=$(ingest_artifact "$fixtures/package-input.tar.gz" application/gzip)
+run_operator pack "$package_uri" >/dev/null
+
+run_operator render "$text_uri" >/dev/null
+model_prompt="$fixtures/model-prompt.txt"
+printf 'Write exactly one valid Blender Python line that creates a cube.\n' > "$model_prompt"
+model_uri=$(ingest_artifact "$model_prompt" text/plain)
+run_operator model "$model_uri" >/dev/null
+run_operator quant "$model_uri" >/dev/null
+embedding_uri=$(run_operator embed "$text_uri")
+run_operator vec "$embedding_uri" >/dev/null
+run_operator graph "$text_uri" >/dev/null
+run_operator cms "$text_uri" >/dev/null
+run_operator queue "$text_uri" >/dev/null
+run_operator meter "$text_uri" >/dev/null
+run_operator wire "$wire_uri" >/dev/null
+run_operator auth "$text_uri" >/dev/null
+run_operator project "$text_uri" >/dev/null
+run_operator space "$text_uri" >/dev/null
+
+run_operator doctor "$text_uri" >/dev/null
+run_operator discipl "$text_uri" >/dev/null
+run_operator fpqx "$bqfp_uri" >/dev/null
+run_operator net "$bfnet_uri" >/dev/null
+run_operator orchestrate "$text_uri" >/dev/null
+run_operator physics "$vecf_uri" >/dev/null
+run_operator reason "$text_uri" >/dev/null
+run_operator sae "$text_uri" >/dev/null
+run_operator sli "$bqfp_uri" >/dev/null
+run_operator self "$text_uri" >/dev/null
+run_operator precision "$text_uri" >/dev/null
+run_operator status "$text_uri" >/dev/null
+run_operator run "$text_uri" >/dev/null
+run_operator pipeline "$text_uri" >/dev/null
+mkdir -p "$fixtures/watch-only"
+printf 'watch fixture, isolated so --once only processes this one file\n' > "$fixtures/watch-only/watch-fixture.txt"
+watch_uri=$(ingest_artifact "$fixtures/watch-only/watch-fixture.txt" text/plain)
+run_operator watch "$watch_uri" >/dev/null
+printf '%s\n' '{"vector":[0.1,0.2,0.3,0.4],"id":"weaviate-selftest-doc"}' > "$fixtures/weaviate-fixture.json"
+weaviate_uri=$(ingest_artifact "$fixtures/weaviate-fixture.json" application/json)
+run_operator weaviate "$weaviate_uri" >/dev/null
+run_operator detect-objects "$detect_image_uri" >/dev/null
+run_operator proxy "$text_uri" >/dev/null
+run_operator api "$text_uri" >/dev/null
+run_operator moq "$text_uri" >/dev/null
+run_operator swarm "$text_uri" >/dev/null

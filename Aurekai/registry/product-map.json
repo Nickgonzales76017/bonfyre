@@ -1,0 +1,48 @@
+{
+  "product": "Aurekai",
+  "legacy_codename": "Bonfyre",
+  "cli": "akai",
+  "tagline": "The operating fabric for intelligent work.",
+  "families": [
+    {
+      "legacy": "bonfyre-control",
+      "public": "Aurekai Runtime",
+      "description": "Execution, routing, queues, workflows, API, service control"
+    },
+    {
+      "legacy": "bonfyre-intake",
+      "public": "Aurekai Intake",
+      "description": "Audio, video, document ingestion, transcription, segmentation"
+    },
+    {
+      "legacy": "bonfyre-intelligence",
+      "public": "Aurekai Intelligence",
+      "description": "FPQ, FPQx, embeddings, vectors, graph, reasoning, proof, model registry"
+    },
+    {
+      "legacy": "bonfyre-core",
+      "public": "Aurekai Core",
+      "description": "Hashing, canon, compression, layer registry, time, space, wire, capability"
+    },
+    {
+      "legacy": "bonfyre-publish",
+      "public": "Aurekai Publish",
+      "description": "Rendering, narration, bundling, emitting, repurposing, distribution"
+    },
+    {
+      "legacy": "Bun HyperRuntime",
+      "public": "Aurekai HyperRuntime",
+      "description": "Appliance control plane, dashboard, install, doctor, registry"
+    },
+    {
+      "legacy": "SAE/model memory",
+      "public": "Aurekai Memory",
+      "description": ".akmodel, .aksae, semantic cache, feature SQL, FPQx"
+    },
+    {
+      "legacy": "proof bundles",
+      "public": "Aurekai Proof",
+      "description": "Audit bundles, lineage, feature traces, semantic hashes"
+    }
+  ]
+}

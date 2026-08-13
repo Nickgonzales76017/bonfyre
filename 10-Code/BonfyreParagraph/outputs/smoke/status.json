@@ -1,0 +1,9 @@
+{
+  "sourceSystem": "BonfyreParagraph",
+  "status": "completed",
+  "inputPath": "/tmp/bonfyre-paragraph-smoke.txt",
+  "outputPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreParagraph/outputs/smoke/paragraphed.md",
+  "paragraphCount": 2,
+  "withHeaders": true,
+  "deterministic": true
+}

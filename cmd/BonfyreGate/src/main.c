@@ -23,14 +23,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
+#include <bonfyre.h>
 
 #define VERSION "1.0.0"
 
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static void iso_timestamp_future(char *buf, size_t sz, int days) {
     time_t now = time(NULL) + (time_t)days * 86400;
@@ -125,15 +125,7 @@ static int cmd_issue(const char *tier, const char *org, const char *out) {
 }
 
 static char *read_file_full(const char *path) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) return NULL;
-    fseek(fp, 0, SEEK_END); long sz = ftell(fp); fseek(fp, 0, SEEK_SET);
-    if (sz < 0) { fclose(fp); return NULL; }
-    char *buf = malloc((size_t)sz + 1);
-    if (!buf) { fclose(fp); return NULL; }
-    fread(buf, 1, (size_t)sz, fp); buf[sz] = '\0';
-    fclose(fp);
-    return buf;
+    return bf_read_file(path, NULL);
 }
 
 static int json_str(const char *json, const char *key, char *out, size_t sz) {
@@ -206,6 +198,29 @@ static int cmd_guard(const char *key_path, const char *operation) {
 /* ---------- main ---------- */
 
 int main(int argc, char *argv[]) {
+    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
+        const char *root = NULL;
+        char *json = NULL, *out = NULL;
+        for (int i=1;i<argc-1;i++) if (strcmp(argv[i],"--root")==0) { root = argv[i+1]; break; }
+        if (bf_layer_load_json(root, argv[2], &json) != 0) return 1;
+        if (bf_layer_gate_json(json, "inspect", &out) != 0) { free(json); return 1; }
+        puts(out);
+        free(out);
+        free(json);
+        return 0;
+    }
+    if (argc >= 4 && strcmp(argv[1], "layer-op") == 0) {
+        const char *root = NULL;
+        char *json = NULL, *out = NULL;
+        for (int i=1;i<argc-1;i++) if (strcmp(argv[i],"--root")==0) { root = argv[i+1]; break; }
+        if (bf_layer_load_json(root, argv[3], &json) != 0) return 1;
+        if (bf_layer_gate_json(json, argv[2], &out) != 0) { free(json); return 1; }
+        puts(out);
+        free(out);
+        free(json);
+        return 0;
+    }
+
     if (argc >= 2 && strcmp(argv[1], "issue") == 0) {
         const char *tier = "free", *org = "default", *out = "key.json";
         for (int i = 2; i < argc - 1; i++) {
@@ -231,6 +246,8 @@ int main(int argc, char *argv[]) {
         "  bonfyre-gate issue --tier free|pro|enterprise [--org NAME] [--out F]\n"
         "  bonfyre-gate check <key.json>\n"
         "  bonfyre-gate guard <key.json> --op OPERATION\n"
+        "  bonfyre-gate layer <artifact_id> [--root DIR]\n"
+        "  bonfyre-gate layer-op <operation> <artifact_id> [--root DIR]\n"
     );
     return 1;
 }

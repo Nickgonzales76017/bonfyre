@@ -25,9 +25,10 @@
 #include <bonfyre.h>
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
+
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
 }
 
 static int run_cmd(const char *const argv[]) {
@@ -36,6 +37,35 @@ static int run_cmd(const char *const argv[]) {
     if (pid == 0) { execvp(argv[0], (char *const *)argv); _exit(127); }
     int st; waitpid(pid, &st, 0);
     return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+static int delegate_layeros_compress(int argc, char *argv[]) {
+    char *exec_argv[24];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "compress";
+    exec_argv[n++] = argv[3];
+    exec_argv[n++] = argv[2];
+    for (int i = 4; i < argc; i++) {
+        if ((strcmp(argv[i], "--root") == 0 && i + 1 < argc)) {
+            i++;
+            continue;
+        }
+        exec_argv[n++] = argv[i];
+    }
+    exec_argv[n] = NULL;
+    return run_cmd((const char *const *)exec_argv);
 }
 
 static unsigned long dir_size(const char *path) {
@@ -143,6 +173,10 @@ int main(int argc, char *argv[]) {
     const char *dict = NULL;
     int level = 19;
 
+    if (argc >= 4 && strcmp(argv[1], "layer") == 0) {
+        return delegate_layeros_compress(argc, argv);
+    }
+
     for (int i = 1; i < argc - 1; i++) {
         if (strcmp(argv[i], "--dict") == 0) dict = argv[i+1];
         if (strcmp(argv[i], "--level") == 0) level = atoi(argv[i+1]);
@@ -180,6 +214,7 @@ int main(int argc, char *argv[]) {
         "  bonfyre-compress unpack <in> <out> [--dict D]  Decompress file\n"
         "  bonfyre-compress family <dir> [--out F]        Pack entire family\n"
         "  bonfyre-compress savings <dir>                 Report savings\n"
+        "  bonfyre-compress layer <artifact_id> <layer|layer-pack> [--fpq|--fpqx] [--root DIR]\n"
     );
     return 1;
 }

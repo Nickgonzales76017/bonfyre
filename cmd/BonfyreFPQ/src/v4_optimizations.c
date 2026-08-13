@@ -3129,7 +3129,15 @@ fpq_tensor_t *fpq_encode_tensor_v8(const float *weights, size_t rows, size_t col
     if (effective_k > V8_RVQ_TILES) effective_k = V8_RVQ_TILES;
 
     float *tiles = (float *)calloc((size_t)effective_k * V8_TILE_DIM, sizeof(float));
-    v8_learn_tiles(all_pair_residuals, total_pairs, tiles, effective_k);
+    int rvq_disabled = getenv("BONFYRE_FPQ_DISABLE_RVQ") != NULL &&
+                       strcmp(getenv("BONFYRE_FPQ_DISABLE_RVQ"), "0") != 0;
+    if (!rvq_disabled)
+        v8_learn_tiles(all_pair_residuals, total_pairs, tiles, effective_k);
+    /* A residual-VQ codebook must include the identity correction.  Some
+     * small or highly dispersed tensors otherwise receive a centroid that
+     * increases their E8 error. Reserving tile zero provides the invariant
+     * that RVQ assignment can never be worse than the base lattice point. */
+    memset(tiles, 0, V8_TILE_DIM * sizeof(float));
 
     /* ── PHASE 4: Assign tiles + build corrected reconstruction ── */
 
@@ -3168,6 +3176,10 @@ fpq_tensor_t *fpq_encode_tensor_v8(const float *weights, size_t rows, size_t col
             const float *pair_res = _apr + ridx;
 
             int ti = v8_find_nearest_tile(pair_res, _tiles4, _ek4);
+            if (v8_dist16d(pair_res, _tiles4 + ti * V8_TILE_DIM, FLT_MAX) >
+                v8_dist16d(pair_res, _tiles4, FLT_MAX))
+                ti = 0;
+            if (rvq_disabled) ti = 0;
             tile_indices[b][p] = (uint8_t)ti;
 
             size_t pair_base = (size_t)p * V8_TILE_DIM;
@@ -3261,6 +3273,10 @@ fpq_tensor_t *fpq_encode_tensor_v8(const float *weights, size_t rows, size_t col
             const float *pair_res = all_pair_residuals + ridx;
 
             int ti = v8_find_nearest_tile(pair_res, tiles, effective_k);
+            if (v8_dist16d(pair_res, tiles + ti * V8_TILE_DIM, FLT_MAX) >
+                v8_dist16d(pair_res, tiles, FLT_MAX))
+                ti = 0;
+            if (rvq_disabled) ti = 0;
             tile_indices[b][p] = (uint8_t)ti;
 
             /* Apply correction: e8 + tile */
@@ -4320,7 +4336,16 @@ fpq_tensor_t *fpq_encode_tensor_v9(const float *weights, size_t rows, size_t col
     if (effective_k > V8_RVQ_TILES) effective_k = V8_RVQ_TILES;
 
     float *tiles = (float *)calloc((size_t)effective_k * V8_TILE_DIM, sizeof(float));
-    v8_learn_tiles(all_pair_residuals, total_pairs, tiles, effective_k);
+    int rvq_disabled = getenv("BONFYRE_FPQ_DISABLE_RVQ") != NULL &&
+                       strcmp(getenv("BONFYRE_FPQ_DISABLE_RVQ"), "0") != 0;
+    if (!rvq_disabled)
+        v8_learn_tiles(all_pair_residuals, total_pairs, tiles, effective_k);
+
+    /* Keep the zero correction as a legal residual codeword.  V9 is the
+     * encoder used by the native writer; without this guard a learned RVQ
+     * centroid can make a lattice reconstruction worse than doing no residual
+     * correction at all. */
+    memset(tiles, 0, V8_TILE_DIM * sizeof(float));
 
     /* ── Phase 1c: Tile assignment + QJL + full-block reconstruction ── */
     uint8_t **tile_indices = (uint8_t **)calloc(n_blocks, sizeof(uint8_t *));
@@ -4348,8 +4373,18 @@ fpq_tensor_t *fpq_encode_tensor_v9(const float *weights, size_t rows, size_t col
             size_t ridx = (b * V8_E8_PAIRS + (size_t)p) * V8_TILE_DIM;
 #ifdef __APPLE__
             int ti = v8_find_nearest_tile(all_pair_residuals + ridx, _tiles_v9, _ek_v9);
+            if (v8_dist16d(all_pair_residuals + ridx,
+                           _tiles_v9 + ti * V8_TILE_DIM, FLT_MAX) >
+                v8_dist16d(all_pair_residuals + ridx, _tiles_v9, FLT_MAX))
+                ti = 0;
+            if (rvq_disabled) ti = 0;
 #else
             int ti = v8_find_nearest_tile(all_pair_residuals + ridx, tiles, effective_k);
+            if (v8_dist16d(all_pair_residuals + ridx,
+                           tiles + ti * V8_TILE_DIM, FLT_MAX) >
+                v8_dist16d(all_pair_residuals + ridx, tiles, FLT_MAX))
+                ti = 0;
+            if (rvq_disabled) ti = 0;
 #endif
             tile_indices[b][p] = (uint8_t)ti;
 

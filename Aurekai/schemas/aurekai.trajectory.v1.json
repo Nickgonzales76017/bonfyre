@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.trajectory.v1.json",
+  "title": "Aurekai Trajectory",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "trajectory_id",
+    "trajectory_root",
+    "history_accumulator",
+    "folded_witness",
+    "step_count",
+    "edge_count"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.trajectory.v1" },
+    "trajectory_id": { "type": "string" },
+    "trajectory_root": { "type": "string" },
+    "history_accumulator": { "type": "string" },
+    "folded_witness": { "type": "string" },
+    "step_count": { "type": "integer", "minimum": 0 },
+    "edge_count": { "type": "integer", "minimum": 0 },
+    "edge_families": { "type": "array", "items": { "type": "string" } },
+    "branch_count": { "type": "integer", "minimum": 0 },
+    "branches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "branch_id": { "type": "string" },
+          "edge_family": { "type": "string" },
+          "edge_ids": { "type": "array", "items": { "type": "string" } },
+          "fold_count": { "type": "integer", "minimum": 0 },
+          "folded_witness": { "type": "string" }
+        }
+      }
+    },
+    "replay_slices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "slice_id": { "type": "string" },
+          "mode": { "type": "string" },
+          "transition_ids": { "type": "array", "items": { "type": "string" } },
+          "edge_ids": { "type": "array", "items": { "type": "string" } },
+          "witness_root": { "type": "string" }
+        }
+      }
+    },
+    "branch_compression": { "type": "object" },
+    "continuity_queries": { "type": "array", "items": { "type": "object" } },
+    "replay_mode": { "type": "string" },
+    "continuity_summary": { "type": "object" }
+  }
+}

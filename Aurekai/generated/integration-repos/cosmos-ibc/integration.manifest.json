@@ -1,0 +1,48 @@
+{
+  "schema_version": "aurekai.integration_repo_manifest.v1",
+  "target": "Cosmos/IBC",
+  "slug": "cosmos-ibc",
+  "repo_name": "aurekai-integration-cosmos-ibc",
+  "package_name": "@aurekai/integration-cosmos-ibc",
+  "surfaces": [
+    "state-machine"
+  ],
+  "categories": [
+    "transport_continuity"
+  ],
+  "chart_families": [
+    "bridge_packet"
+  ],
+  "policy_families": [
+    "settlement"
+  ],
+  "runtime_depths": [
+    "continuity-native"
+  ],
+  "state_machine_types": [
+    "transport_continuity"
+  ],
+  "ingress_depth": "coprocessor",
+  "required_kernel_layers": [
+    "representation",
+    "commitment",
+    "trajectory",
+    "policy",
+    "lineage",
+    "transport",
+    "claims"
+  ],
+  "must_map_into": [
+    "committed_state",
+    "transitions",
+    "policies",
+    "lineage_edges",
+    "export_projections",
+    "functional_claims"
+  ],
+  "scaffold_notes": [
+    "Thin adapters must project into Aurekai kernel semantics only.",
+    "Hard-fork targets should emit protocol-native committed state and transition witnesses.",
+    "This scaffold is repo-ready and intended for extraction into its own repository when needed."
+  ]
+}

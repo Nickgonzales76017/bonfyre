@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.treasury_continuity.v1.json",
+  "title": "Aurekai Treasury Continuity",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "treasury_id",
+    "invoice_refs",
+    "settlement_refs",
+    "continuity_verdict",
+    "issued_at"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.treasury_continuity.v1" },
+    "treasury_id": { "type": "string" },
+    "invoice_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "settlement_refs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "deformation_thresholds": {
+      "type": "object",
+      "additionalProperties": { "type": "number" }
+    },
+    "continuity_verdict": { "enum": ["allow", "gate", "halt"] },
+    "triggered_fail_conditions": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "issued_at": { "type": "string", "format": "date-time" }
+  }
+}

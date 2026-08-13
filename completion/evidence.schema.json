@@ -1,0 +1,1 @@
+{"type":"object","required":["requirement","status","command","timestamp","evidence"],"properties":{"requirement":{"type":"string"},"status":{"enum":["passed","failed","blocked_external"]},"command":{"type":"string"},"timestamp":{"type":"string"},"evidence":{"type":"string"},"error":{"type":"string"}}}

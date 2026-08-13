@@ -1,0 +1,11 @@
+{
+  "name": "@aurekai/continuity-core",
+  "version": "0.1.0-alpha.0",
+  "description": "Isolated continuity kernel APIs for Aurekai",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/index.mjs",
+    "./state-runtime": "./src/state-runtime.mjs"
+  }
+}

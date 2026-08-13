@@ -1,0 +1,28 @@
+{
+  "name": "@aurekai/integration-layerzero-packet-state",
+  "version": "0.1.0-alpha.1",
+  "description": "Standalone Aurekai integration scaffold for LayerZero packet state.",
+  "type": "module",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aurekai/aurekai-integration-layerzero-packet-state.git"
+  },
+  "keywords": [
+    "aurekai",
+    "akai",
+    "integration",
+    "layerzero-packet-state",
+    "observer"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@aurekai/continuity-core": "^0.1.0-alpha.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

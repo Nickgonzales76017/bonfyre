@@ -25,8 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <time.h>
+#include <unistd.h>
 #include <sqlite3.h>
+#include <bonfyre.h>
 
 #define MAX_PATH  2048
 
@@ -55,10 +58,7 @@ static const PriceEntry PRICES[] = {
 
 /* ── Utility ──────────────────────────────────────────────────────── */
 
-static void iso_now(char *buf, size_t sz) {
-    time_t t=time(NULL); struct tm tm; gmtime_r(&t,&tm);
-    strftime(buf,sz,"%Y-%m-%dT%H:%M:%SZ",&tm);
-}
+static void iso_now(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 /* ── Database ─────────────────────────────────────────────────────── */
 
@@ -426,7 +426,8 @@ static void usage(void) {
         "  bonfyre-pay [--db FILE] credit --user-id ID --amount CENTS --reason REASON\n"
         "  bonfyre-pay [--db FILE] balance --user-id ID\n"
         "  bonfyre-pay [--db FILE] report [--period YYYY-MM]\n"
-        "  bonfyre-pay [--db FILE] status\n");
+        "  bonfyre-pay [--db FILE] status\n"
+        "  bonfyre-pay layer <artifact_id> [--op verify|materialize|compose|run] [--root DIR]\n");
 }
 
 int main(int argc, char **argv) {
@@ -443,6 +444,16 @@ int main(int argc, char **argv) {
     if (ca<2) { usage(); return 1; }
 
     const char *cmd=cv[1];
+
+    if (strcmp(cmd,"layer")==0 && ca>=3) {
+        const char *op = arg_get(ca, cv, "--op");
+        char *out = NULL;
+        if (!op) op = "verify";
+        if (bf_layer_pay_json(cv[2], op, &out) != 0 || !out) return 1;
+        puts(out);
+        free(out);
+        return 0;
+    }
 
     sqlite3 *db=open_db(db_path);
     if (!db) return 1;

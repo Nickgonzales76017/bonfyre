@@ -1,0 +1,94 @@
+operator_id	contract_id	family	argument_defaults	workload_fixture	quality_probe_override
+command.ingest	document_intake_v1	document_pdf_table	{}		
+command.mediaprep	media_normalize_v1	audio_video_transcript	{}		
+command.transcribe	whisper_transcribe_v1	audio_video_transcript	{"model_path":"/Users/nickgonzales/.local/share/whisper/ggml-tiny.en.bin"}		whisper-semantic
+command.clean	transcript_clean_v1	audio_video_transcript	{}		clean-transcript
+command.paragraph	paragraph_structure_v1	document_pdf_table	{}		paragraph-structure
+command.brief	brief_document_v1	document_pdf_table	{}		brief-semantics
+command.proof	proof_score_v1	artifact_intake_archive	{}		proof-semantics
+command.offer	offer_generate_v1	artifact_intake_archive	{}		offer-semantics
+command.narrate	piper_narrate_v1	audio_video_transcript	{"voice_model":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		narrate-semantic
+command.pack	pack_assemble_v1	render_pack_publish	{}		package-manifest
+command.distribute	distribute_message_v1	render_pack_publish	{"offer_name":"Quality proof for outputs Native Offer"}		distribute-semantic
+command.transcript-family	transcript_family_v1	audio_video_transcript	{"model_path":"/Users/nickgonzales/.local/share/whisper/ggml-tiny.en.bin"}		transcript-family-semantic
+command.render	render_artifact_v1	render_pack_publish	{}		
+command.repurpose	repurpose_all_v1	render_pack_publish	{}		repurpose-manifest
+command.clips	clips_discover_v1	audio_video_transcript	{}		clip-candidates
+command.frame-extract	frame_extract_v1	audio_video_transcript	{}		jpeg-frame
+command.scene-detect	scene_detect_v1	audio_video_transcript	{}		scene-boundaries
+command.video-demux	video_demux_v1	audio_video_transcript	{}		wave-audio
+command.detect-objects	detect_objects_v1	audio_video_transcript	{}		detect-objects-semantic
+command.fragment	fragment_create_v1	artifact_intake_archive	{"payload":"durable-command-fragment"}		fragment-semantic
+command.workflow	workflow_describe_v1	queue_flow_pipeline	{"workflow_id":"/Users/nickgonzales/Documents/Bonfyre/docs/recipes/A3-full-speech-investigation.json"}		workflow-semantic
+command.watch	watch_once_v1	queue_flow_pipeline	{}		watch-semantic
+command.family	family_explain_v1	model_inference	{"family_id":"T_SHARED_QK"}		family-semantic
+command.model	qwen_native_inference_v1	model_inference	{"model_uri":"bonfyre://root/model-vault/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq","pack_uri":"bonfyre://root/model-vault/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq","representation":"native-fp16","tokenizer_uri":"bonfyre://root/model-vault/small/qwen2.5-coder-0.5b-instruct/tokenizer.json","prepared_state_uri":"bonfyre://state/fpq-active","max_tokens":40,"temperature":0.0,"top_p":1.0,"seed":0,"context_length":96,"device":"cpu"}	model-inference-fixture	qwen-blender-line
+command.embed	embedding_generate_v1	embedding_vector	{"backend":"native-moe-token-embedding","model_uri":"bonfyre://root/model-vault/native/qwen1.5-moe-a2.7b-chat","dimensions":2048,"vector_store":"bonfyre://state/vector"}	embedding-vector-fixture	model-embedding
+command.vec	vector_store_fixture_v1	embedding_vector	{"backend":"native-moe-token-embedding","index_uri":"bonfyre://state/vector","distance_metric":"cosine","operation":"insert-query-filter-update-delete-restart"}	vector-store-native-moe-fixture	vector-store-state
+command.segment	segment_graph_v1	audio_video_transcript	{}		segment-graph
+command.speech-loop	speechloop_transform_v1	audio_video_transcript	{"whisper_model":"/Users/nickgonzales/.local/share/whisper/ggml-tiny.en.bin","voice_model":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		speechloop-semantic
+command.mfa-dict	mfa_dictionary_v1	audio_video_transcript	{}		artifact-integrity
+command.tone	tone_extract_v1	audio_video_transcript	{}		tone-semantic
+command.tag	tag_language_v1	document_pdf_table	{}		tag-semantic
+command.entity	entity_resolve_v1	graph_store_query	{"identity":"alice@example.com"}		entity-semantic
+command.canon	canon_normalize_v1	document_pdf_table	{}		artifact-integrity
+command.gen	recipe_generate_v1	queue_flow_pipeline	{"intent":"transcribe audio and extract action items"}		recipe-semantic
+command.sli	sli_inspect_v1	model_or_vector	{}		sli-semantic
+command.quant	quant_roundtrip_v1	fpq_quant_prepare	{"bits":3,"limit":1,"prepared_state_uri":"bonfyre://state/fpq-quant"}	quant-roundtrip-fixture	quant-roundtrip
+command.fpq	fpq_roundtrip_v1	model_inference	{"model_path":"/Users/nickgonzales/BonfyreModels/gguf/qwen1.5-moe-a2.7b-chat/Qwen1.5-MoE-A2.7B-Chat-Q2_K.gguf"}		fpq-semantic
+command.fpqx	fpqx_self_align_v1	model_or_vector	{}		fpqx-semantic
+command.layer	layer_extract_v1	model_inference	{"model_path":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		layer-extract-semantic
+command.layer-c	layer_inspect_v1	model_inference	{"model_path":"/Users/nickgonzales/.local/share/piper/en_US-lessac-medium.onnx"}		layer-inspect-semantic
+command.sae	sae_synth_v1	model_inference	{}		sae-semantic
+command.learn	learn_feedback_v1	agent_project_space	{}		learn-semantic
+command.weaviate	weaviate_ingest_v1	embedding_vector	{}		weaviate-semantic
+command.leapfrog	leapfrog_validation_v1	model_inference	{}		leapfrog-semantic
+command.violence	violence_coupling_v1	model_inference	{}		violence-semantic
+command.reason	reason_start_v1	model_inference	{}		reason-semantic
+command.net	net_run_v1	model_inference	{}		net-semantic
+command.flashqla	flashqla_run_v1	model_inference	{}		flashqla-semantic
+command.physics	physics_init_v1	model_inference	{}		physics-semantic
+command.recipe	recipe_validate_v1	queue_flow_pipeline	{"recipe_path":"/Users/nickgonzales/Documents/Bonfyre/docs/recipes/A3-full-speech-investigation.json"}		recipe-validation
+command.run	run_recipe_execute_v1	queue_flow_pipeline	{}		run-semantic
+command.flow	flow_define_v1	queue_flow_pipeline	{}		flow-semantic
+command.pipeline	pipeline_run_v1	queue_flow_pipeline	{}		pipeline-run-semantic
+command.runtime	runtime_loop_v1	daemon_runtime_release	{}		runtime-semantic
+command.discipl	discipl_contracts_import_v1	daemon_runtime_release	{}		discipl-semantic
+command.orchestrate	orchestrate_status_v1	daemon_runtime_release	{}		orchestrate-semantic
+command.control	control_entropy_v1	meter_economy_ledger_time_finance_control	{}		control-semantic
+command.swarm	swarm_selftest_v1	daemon_runtime_release	{}		swarm-selftest-semantic
+command.project	frappe_project_context_v1	frappe_application	{"application":"frappe","operation":"typed-record-crud-workflow-relation-restart"}	frappe-app-fixture	cms-crud-state
+command.space	project_space_put_v1	agent_project_space	{"space_uri":"bonfyre://state/project-space","operation":"put-get-isolation-handoff-restart"}	project-space-fixture	project-space-state
+command.proxy	proxy_status_v1	daemon_runtime_release	{}		proxy-semantic
+command.doctor	runtime_doctor_v1	daemon_runtime_release	{}		doctor-semantic
+command.capabilities	capability_match_v1	cms_api	{"intent":"transcribe audio and extract action items"}		capability-semantic
+command.hash	artifact_file_v1	artifact_intake_archive	{}		
+command.index	index_build_v1	artifact_intake_archive	{}		index-semantic
+command.compress	compress_roundtrip_source_v1	artifact_intake_archive	{}		compress-roundtrip-semantic
+command.emit	emit_html_v1	render_pack_publish	{}		emit-semantic
+command.stitch	stitch_plan_v1	render_pack_publish	{}		stitch-semantic
+command.queue	queue_workflow_fixture_v1	queue_flow_pipeline	{"queue_uri":"bonfyre://state/queue","operation":"enqueue-claim-lease-ack-retry-dead-letter-fanout-fanin-restart"}	queue-workflow-fixture	queue-workflow-state
+command.sync	sync_intake_v1	transport_quic_moq	{}		sync-semantic
+command.graph	graph_fixture_v1	graph_store_query	{"graph_store_uri":"bonfyre://state/graph","operation":"mutation-lineage-query"}	graph-mutation-traversal-fixture	graph-lineage
+command.query	query_scan_v1	graph_store_query	{}		query-semantic
+command.wire	wire_ingest_v1	transport_quic_moq	{"transport":"wire","operation":"authorized-metadata-ingest"}	transport-ingest-fixture	wire-ingest-semantic
+command.surface	surface_validate_v1	cms_api	{}		surface-semantic
+command.kvcache	kvcache_roundtrip_v1	model_inference	{}		kvcache-semantic
+command.auth	auth_authority_fixture_v1	auth_gate	{"auth_store_uri":"bonfyre://state/auth","operation":"credential-token-scope-effect-gate-restart"}	auth-authority-fixture	auth-authority-state
+command.tel	blocked_requires_service_v1	service_dependent	{}		
+command.moq	moq_selftest_v1	transport_quic_moq	{}		moq-selftest-semantic
+command.cms	cms_schema_state_v1	cms_api	{"database_uri":"bonfyre://state/cms","operation":"schema-crud-relation-pagination-auth-delete"}	cms-crud-fixture	cms-crud-state
+command.api	api_selftest_v1	daemon_runtime_release	{}		api-selftest-semantic
+command.time	time_schedule_v1	meter_economy_ledger_time_finance_control	{}		time-semantic
+command.gate	gate_issue_v1	auth_gate	{}		gate-semantic
+command.meter	meter_record_v1	meter_economy_ledger_time_finance_control	{"ledger_uri":"bonfyre://state/meter","operation":"record"}	meter-record-fixture	meter-record
+command.ledger	ledger_assess_v1	meter_economy_ledger_time_finance_control	{}		ledger-semantic
+command.economy	economy_cost_record_v1	meter_economy_ledger_time_finance_control	{}		economy-semantic
+command.compete	compete_pair_v1	meter_economy_ledger_time_finance_control	{}		compete-semantic
+command.pay	pay_credit_v1	meter_economy_ledger_time_finance_control	{}		pay-semantic
+command.finance	finance_service_add_v1	meter_economy_ledger_time_finance_control	{}		finance-semantic
+command.tier	tier_assign_v1	meter_economy_ledger_time_finance_control	{}		tier-semantic
+command.outreach	outreach_send_v1	meter_economy_ledger_time_finance_control	{}		outreach-semantic
+command.self	cli_self_ontology_v1	daemon_runtime_release	{}		self-ontology-semantic
+command.precision	cli_precision_ontology_v1	daemon_runtime_release	{}		precision-ontology-semantic
+command.status	cli_status_v1	daemon_runtime_release	{}		cli-status-semantic

@@ -1,0 +1,11 @@
+{
+  "name": "frappe_app",
+  "displayName": "Frappe Application",
+  "description": "Real installed Frappe apps integrated with the Bonfyre native estate",
+  "attributes": {
+    "app_name": {"type": "string", "required": true},
+    "apps_dir": {"type": "string", "required": true},
+    "doctype_count": {"type": "integer", "required": false},
+    "status": {"type": "string", "required": true}
+  }
+}

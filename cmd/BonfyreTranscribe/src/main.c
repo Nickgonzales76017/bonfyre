@@ -18,6 +18,7 @@
 #ifdef __APPLE__
 #include <mach/mach_time.h>
 #endif
+#include "fragment.h"
 
 /* ================================================================
  * Vocabulary Accumulator — information-theoretic learning engine.
@@ -538,12 +539,7 @@ static int write_chunk_progress(const char *path, int total_chunks, int complete
     return 0;
 }
 
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 /* Resolve a model name (e.g. "base") to a ggml model file path.
  * Prefers quantized (Q5_0) models over float16 — 62% smaller, 39% faster. */
@@ -1945,6 +1941,48 @@ int main(int argc, char **argv) {
             transcript_vtt_path,
             meta_path);
     fclose(status);
+
+    /* ── Fragment emission (opt-in via BONFYRE_FRAGMENT_STORE) ─── */
+    const char *frag_store_path = getenv("BONFYRE_FRAGMENT_STORE");
+    if (frag_store_path) {
+        bf_fragment_store_t *fstore = bf_fragment_store_open(frag_store_path);
+        if (fstore) {
+            char frag_id[BF_FRAGMENT_ID_LEN];
+            char payload[8192];
+            char persp[128];
+            snprintf(persp, sizeof(persp), "whisper-%s", model);
+            int emitted = 0;
+            for (int i = 0; i < result.count; i++) {
+                const TranscriptSegment *seg = &result.segments[i];
+                /* Escape double-quotes in text for JSON safety */
+                char safe_text[4096];
+                const char *src = seg->text;
+                int ti = 0;
+                while (*src && ti < (int)sizeof(safe_text) - 2) {
+                    if (*src == '"') safe_text[ti++] = '\\';
+                    safe_text[ti++] = *src++;
+                }
+                safe_text[ti] = '\0';
+                snprintf(payload, sizeof(payload),
+                    "{\"text\":\"%s\",\"quality\":%.4f,\"logprob\":%.3f,"
+                    "\"hallucination_flags\":%d,\"speaker_turn\":%d}",
+                    safe_text, (double)seg->quality, (double)seg->logprob,
+                    seg->hallucination_flags, seg->speaker_turn);
+                bf_fragment_create(fstore, BFK_SEGMENT,
+                                   persp, seg->confidence,
+                                   seg->t0_ms, seg->t1_ms,
+                                   payload, NULL, 0,
+                                   frag_id);
+                emitted++;
+            }
+            bf_fragment_store_close(fstore);
+            fprintf(stderr, "[fragment] emitted %d segment fragments → %s\n",
+                    emitted, frag_store_path);
+        } else {
+            fprintf(stderr, "[fragment] warning: cannot open store %s\n",
+                    frag_store_path);
+        }
+    }
 
     transcript_result_free(&result);
 

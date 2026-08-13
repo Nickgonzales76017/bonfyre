@@ -25,9 +25,10 @@
 #include <bonfyre.h>
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
+
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
 }
 
 static int run_cmd(const char *const argv[]) {
@@ -36,6 +37,34 @@ static int run_cmd(const char *const argv[]) {
     if (pid == 0) { execvp(argv[0], (char *const *)argv); _exit(127); }
     int st; waitpid(pid, &st, 0);
     return WIFEXITED(st) ? WEXITSTATUS(st) : -1;
+}
+
+static int delegate_layeros_emit(int argc, char *argv[], const char *subcmd) {
+    char *exec_argv[32];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 1; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "emit";
+    exec_argv[n++] = (char *)subcmd;
+    for (int i = 2; i < argc; i++) {
+        if ((strcmp(argv[i], "--root") == 0 && i + 1 < argc)) {
+            i++;
+            continue;
+        }
+        exec_argv[n++] = argv[i];
+    }
+    exec_argv[n] = NULL;
+    return run_cmd((const char *const *)exec_argv);
 }
 
 static int file_exists(const char *p) { struct stat st; return stat(p, &st) == 0; }
@@ -151,6 +180,13 @@ static void write_emission_manifest(const char *outdir, const char **formats, in
 /* ---------- main ---------- */
 
 int main(int argc, char *argv[]) {
+    if (argc >= 2) {
+        if (strcmp(argv[1], "layer-manifest") == 0) return delegate_layeros_emit(argc, argv, "layer-manifest");
+        if (strcmp(argv[1], "layer-report") == 0) return delegate_layeros_emit(argc, argv, "layer-report");
+        if (strcmp(argv[1], "layer-graph") == 0) return delegate_layeros_emit(argc, argv, "layer-graph");
+        if (strcmp(argv[1], "layer-cookbook") == 0) return delegate_layeros_emit(argc, argv, "layer-cookbook");
+    }
+
     const char *art_dir = NULL;
     const char *format = NULL;
     const char *out = NULL;
@@ -166,6 +202,10 @@ int main(int argc, char *argv[]) {
             "BonfyreEmit — multi-format output engine\n\n"
             "Usage:\n"
             "  bonfyre-emit <artifact-dir> --format html|pdf|epub|rss|txt|bundle [--out FILE]\n"
+            "  bonfyre-emit layer-manifest <artifact_id> [--format json] [--root DIR]\n"
+            "  bonfyre-emit layer-report <artifact_id> [--format md] [--root DIR]\n"
+            "  bonfyre-emit layer-graph <artifact_id> [--format dot] [--root DIR]\n"
+            "  bonfyre-emit layer-cookbook --family T_* [--root DIR]\n"
         );
         return 1;
     }

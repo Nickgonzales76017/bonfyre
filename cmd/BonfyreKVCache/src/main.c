@@ -23,6 +23,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <float.h>
+#include <dirent.h>
+#include <sys/stat.h>
 #include <bonfyre.h>
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -443,9 +445,28 @@ static void usage(void) {
         "bonfyre-kvcache — v8 RLF KV cache compression\n"
         "\n"
         "Usage:\n"
+        "  bonfyre-kvcache store      <model_hash_hex> <ctx_hash_hex> <input.bfkv>\n"
+        "  bonfyre-kvcache fetch      <model_hash_hex> <ctx_hash_hex> [--out file]\n"
         "  bonfyre-kvcache roundtrip  <input.bin> [--bits N]\n"
         "  bonfyre-kvcache benchmark  [--bits N]\n"
+        "  bonfyre-kvcache context-plan [--mode dense|compressed|membrane|state|hybrid] [--dense-window N] [--sq-token-blocks N] [--sq-kv-mb N] [--compressed-kv-mb N] [--state-atoms N] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--continuity-fails N] [--continuity-drifts N]\n"
+        "  bonfyre-kvcache context-kv-registry [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--objective balanced|latency|continuity|fidelity] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X]\n"
+        "  bonfyre-kvcache context-selector-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-delta X] [--residual-threshold X] [--buried-fail 0|1] [--proof-hash 0|1] [--high-residual 0|1] [--low-risk 0|1]\n"
+        "  bonfyre-kvcache context-kv-compare [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X]\n"
+        "  bonfyre-kvcache context-kv-verify  [--mode dense|compressed|membrane|state|hybrid] [--layers N] [--heads N] [--tokens N] [--block-tokens N] [--top-blocks N] [--hot-budget-blocks N] [--membrane-budget-blocks N] [--compress-budget-blocks N] [--evict-budget-blocks N] [--required-witnesses N] [--base-residual X] [--continuity-fail-rate 0..1] [--objective balanced|latency|continuity|fidelity] [--w-attention X] [--w-state X] [--w-witness X] [--w-continuity X] [--w-layer X] [--w-recency X] [--w-objective X] [--w-memory-cost X] [--w-residual X] [--residual-threshold X] [--kv-budget-mb X]\n"
+        "  bonfyre-kvcache context-compile    [--mode dense|compressed|membrane|state|hybrid] [--heads N] [--tokens N] [--block-tokens N] [--token-index N] [--kv-index N] [--state-index N] [--witness-index N] [--token-budget-blocks N] [--kv-budget-blocks N] [--state-atoms N] [--required-witnesses N] [--objective balanced|latency|continuity|fidelity] [--base-residual X] [--continuity-fail-rate 0..1] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
+        "  bonfyre-kvcache context-compile-smoke [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--buried-fail 0|1] [--proof-hash 0|1] [--oracle-shock 0|1] [--multi-turn-drift 0|1] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
+        "  bonfyre-kvcache context-compile-smoke-compare [--mode dense|compressed|membrane|state|hybrid] [--required-witnesses N] [--residual-threshold X] [--kv-budget-mb X] [--latency-budget-ms X] [--buried-fail 0|1] [--proof-hash 0|1] [--oracle-shock 0|1] [--multi-turn-drift 0|1] [--fail-on-missing-witness|--no-fail-on-missing-witness]\n"
         "  bonfyre-kvcache --help\n"
+        "\n"
+        "Commit chain (Merkle DAG) subcommands:\n"
+        "  bonfyre-kvcache chain     <model_hex> <parent_hex|0> <data_file>\n"
+        "  bonfyre-kvcache ancestry  <model_hex> <ctx_hex> [--max N]\n"
+        "\n"
+        "Pack / store subcommands:\n"
+        "  bonfyre-kvcache kvpack    [--out <pack.bfkvpack>]\n"
+        "  bonfyre-kvcache kvgc      [--pack <pack.bfkvpack>]\n"
+        "  bonfyre-kvcache kvlog     <model_hex>\n"
         "\n"
         "KV cache compression using E8 lattice + μ-law + 16D RVQ.\n"
         "Error compounds across layers — use 4+ bits for production.\n"
@@ -459,6 +480,498 @@ static void usage(void) {
     );
 }
 
+static int parse_i32_flag_(int argc, char **argv, const char *flag, int fallback) {
+    const char *v = bf_arg_value(argc, argv, flag);
+    if (!v || !v[0]) return fallback;
+    return atoi(v);
+}
+
+static double parse_f64_flag_(int argc, char **argv, const char *flag, double fallback) {
+    const char *v = bf_arg_value(argc, argv, flag);
+    if (!v || !v[0]) return fallback;
+    return atof(v);
+}
+
+static int kvcache_cmd_context_plan_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextPlanConfig cfg;
+    bf_context_plan_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.dense_window_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--dense-window", (int)cfg.dense_window_tokens);
+    cfg.sq_token_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--sq-token-blocks", (int)cfg.sq_token_budget_blocks);
+    cfg.sq_kv_budget_mb = (uint32_t)parse_i32_flag_(argc, argv, "--sq-kv-mb", (int)cfg.sq_kv_budget_mb);
+    cfg.compressed_kv_budget_mb = (uint32_t)parse_i32_flag_(argc, argv, "--compressed-kv-mb", (int)cfg.compressed_kv_budget_mb);
+    cfg.state_atom_budget = (uint32_t)parse_i32_flag_(argc, argv, "--state-atoms", (int)cfg.state_atom_budget);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_delta_estimate = parse_f64_flag_(argc, argv, "--residual-delta", cfg.residual_delta_estimate);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.continuity_fail_events = parse_i32_flag_(argc, argv, "--continuity-fails", cfg.continuity_fail_events);
+    cfg.continuity_drift_events = parse_i32_flag_(argc, argv, "--continuity-drifts", cfg.continuity_drift_events);
+
+    if (bf_arg_has(argc, argv, "--witness-required")) cfg.witness_required = 1;
+    if (bf_arg_has(argc, argv, "--no-witness-required")) cfg.witness_required = 0;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_plan_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-plan: failed to build plan\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_kv_registry_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextKVRegistryConfig cfg;
+    bf_context_kv_registry_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.layers = (uint32_t)parse_i32_flag_(argc, argv, "--layers", (int)cfg.layers);
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.top_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--top-blocks", (int)cfg.top_blocks);
+    cfg.hot_exact_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--hot-budget-blocks", (int)cfg.hot_exact_budget_blocks);
+    cfg.membrane_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--membrane-budget-blocks", (int)cfg.membrane_budget_blocks);
+    cfg.compress_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--compress-budget-blocks", (int)cfg.compress_budget_blocks);
+    cfg.evict_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--evict-budget-blocks", (int)cfg.evict_budget_blocks);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    const char *objective = bf_arg_value(argc, argv, "--objective");
+    if (objective && objective[0]) cfg.objective_profile = objective;
+    cfg.w_attention_predictor = parse_f64_flag_(argc, argv, "--w-attention", cfg.w_attention_predictor);
+    cfg.w_state_relevance = parse_f64_flag_(argc, argv, "--w-state", cfg.w_state_relevance);
+    cfg.w_witness_relevance = parse_f64_flag_(argc, argv, "--w-witness", cfg.w_witness_relevance);
+    cfg.w_continuity_risk = parse_f64_flag_(argc, argv, "--w-continuity", cfg.w_continuity_risk);
+    cfg.w_layer_need = parse_f64_flag_(argc, argv, "--w-layer", cfg.w_layer_need);
+    cfg.w_recency = parse_f64_flag_(argc, argv, "--w-recency", cfg.w_recency);
+    cfg.w_objective_match = parse_f64_flag_(argc, argv, "--w-objective", cfg.w_objective_match);
+    cfg.w_memory_cost = parse_f64_flag_(argc, argv, "--w-memory-cost", cfg.w_memory_cost);
+    cfg.w_residual_error = parse_f64_flag_(argc, argv, "--w-residual", cfg.w_residual_error);
+
+    char *json = NULL;
+    if (bf_context_kv_registry_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-kv-registry: failed to build registry\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_selector_smoke_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextSelectorSmokeConfig cfg;
+    bf_context_selector_smoke_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_delta_estimate = parse_f64_flag_(argc, argv, "--residual-delta", cfg.residual_delta_estimate);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.buried_continuity_fail_present = parse_i32_flag_(argc, argv, "--buried-fail", cfg.buried_continuity_fail_present) ? 1 : 0;
+    cfg.proof_hash_present = parse_i32_flag_(argc, argv, "--proof-hash", cfg.proof_hash_present) ? 1 : 0;
+    cfg.high_residual_event_present = parse_i32_flag_(argc, argv, "--high-residual", cfg.high_residual_event_present) ? 1 : 0;
+    cfg.low_risk_irrelevant_tokens_present = parse_i32_flag_(argc, argv, "--low-risk", cfg.low_risk_irrelevant_tokens_present) ? 1 : 0;
+
+    char *json = NULL;
+    if (bf_context_selector_smoke_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-selector-smoke: failed to build smoke artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_kv_compare_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextKVCompareConfig cfg;
+    bf_context_kv_compare_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.layers = (uint32_t)parse_i32_flag_(argc, argv, "--layers", (int)cfg.layers);
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.top_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--top-blocks", (int)cfg.top_blocks);
+    cfg.hot_exact_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--hot-budget-blocks", (int)cfg.hot_exact_budget_blocks);
+    cfg.membrane_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--membrane-budget-blocks", (int)cfg.membrane_budget_blocks);
+    cfg.compress_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--compress-budget-blocks", (int)cfg.compress_budget_blocks);
+    cfg.evict_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--evict-budget-blocks", (int)cfg.evict_budget_blocks);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    cfg.w_attention_predictor = parse_f64_flag_(argc, argv, "--w-attention", cfg.w_attention_predictor);
+    cfg.w_state_relevance = parse_f64_flag_(argc, argv, "--w-state", cfg.w_state_relevance);
+    cfg.w_witness_relevance = parse_f64_flag_(argc, argv, "--w-witness", cfg.w_witness_relevance);
+    cfg.w_continuity_risk = parse_f64_flag_(argc, argv, "--w-continuity", cfg.w_continuity_risk);
+    cfg.w_layer_need = parse_f64_flag_(argc, argv, "--w-layer", cfg.w_layer_need);
+    cfg.w_recency = parse_f64_flag_(argc, argv, "--w-recency", cfg.w_recency);
+    cfg.w_objective_match = parse_f64_flag_(argc, argv, "--w-objective", cfg.w_objective_match);
+    cfg.w_memory_cost = parse_f64_flag_(argc, argv, "--w-memory-cost", cfg.w_memory_cost);
+    cfg.w_residual_error = parse_f64_flag_(argc, argv, "--w-residual", cfg.w_residual_error);
+
+    char *json = NULL;
+    if (bf_context_kv_compare_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-kv-compare: failed to build compare artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_kv_verify_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextVerifyConfig cfg;
+    bf_context_kv_verify_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.layers = (uint32_t)parse_i32_flag_(argc, argv, "--layers", (int)cfg.layers);
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.top_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--top-blocks", (int)cfg.top_blocks);
+    cfg.hot_exact_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--hot-budget-blocks", (int)cfg.hot_exact_budget_blocks);
+    cfg.membrane_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--membrane-budget-blocks", (int)cfg.membrane_budget_blocks);
+    cfg.compress_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--compress-budget-blocks", (int)cfg.compress_budget_blocks);
+    cfg.evict_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--evict-budget-blocks", (int)cfg.evict_budget_blocks);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    const char *objective = bf_arg_value(argc, argv, "--objective");
+    if (objective && objective[0]) cfg.objective_profile = objective;
+    cfg.w_attention_predictor = parse_f64_flag_(argc, argv, "--w-attention", cfg.w_attention_predictor);
+    cfg.w_state_relevance = parse_f64_flag_(argc, argv, "--w-state", cfg.w_state_relevance);
+    cfg.w_witness_relevance = parse_f64_flag_(argc, argv, "--w-witness", cfg.w_witness_relevance);
+    cfg.w_continuity_risk = parse_f64_flag_(argc, argv, "--w-continuity", cfg.w_continuity_risk);
+    cfg.w_layer_need = parse_f64_flag_(argc, argv, "--w-layer", cfg.w_layer_need);
+    cfg.w_recency = parse_f64_flag_(argc, argv, "--w-recency", cfg.w_recency);
+    cfg.w_objective_match = parse_f64_flag_(argc, argv, "--w-objective", cfg.w_objective_match);
+    cfg.w_memory_cost = parse_f64_flag_(argc, argv, "--w-memory-cost", cfg.w_memory_cost);
+    cfg.w_residual_error = parse_f64_flag_(argc, argv, "--w-residual", cfg.w_residual_error);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.kv_budget_mb = parse_f64_flag_(argc, argv, "--kv-budget-mb", cfg.kv_budget_mb);
+
+    char *json = NULL;
+    if (bf_context_kv_verify_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-kv-verify: failed to build verify artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_compile_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextCompileConfig cfg;
+    bf_context_compile_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.heads = (uint32_t)parse_i32_flag_(argc, argv, "--heads", (int)cfg.heads);
+    cfg.seq_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--tokens", (int)cfg.seq_tokens);
+    cfg.block_tokens = (uint32_t)parse_i32_flag_(argc, argv, "--block-tokens", (int)cfg.block_tokens);
+    cfg.token_index_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--token-index", (int)cfg.token_index_blocks);
+    cfg.kv_index_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--kv-index", (int)cfg.kv_index_blocks);
+    cfg.state_index_atoms = (uint32_t)parse_i32_flag_(argc, argv, "--state-index", (int)cfg.state_index_atoms);
+    cfg.witness_index_anchors = (uint32_t)parse_i32_flag_(argc, argv, "--witness-index", (int)cfg.witness_index_anchors);
+    cfg.token_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--token-budget-blocks", (int)cfg.token_budget_blocks);
+    cfg.kv_budget_blocks = (uint32_t)parse_i32_flag_(argc, argv, "--kv-budget-blocks", (int)cfg.kv_budget_blocks);
+    cfg.state_atom_budget = (uint32_t)parse_i32_flag_(argc, argv, "--state-atoms", (int)cfg.state_atom_budget);
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.kv_budget_mb = parse_f64_flag_(argc, argv, "--kv-budget-mb", cfg.kv_budget_mb);
+    cfg.latency_budget_ms = parse_f64_flag_(argc, argv, "--latency-budget-ms", cfg.latency_budget_ms);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.base_residual = parse_f64_flag_(argc, argv, "--base-residual", cfg.base_residual);
+    cfg.continuity_fail_rate = parse_f64_flag_(argc, argv, "--continuity-fail-rate", cfg.continuity_fail_rate);
+    const char *objective = bf_arg_value(argc, argv, "--objective");
+    if (objective && objective[0]) cfg.objective_profile = objective;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_compile_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-compile: failed to build compile artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_compile_smoke_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextCompileSmokeConfig cfg;
+    bf_context_compile_smoke_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.kv_budget_mb = parse_f64_flag_(argc, argv, "--kv-budget-mb", cfg.kv_budget_mb);
+    cfg.latency_budget_ms = parse_f64_flag_(argc, argv, "--latency-budget-ms", cfg.latency_budget_ms);
+    cfg.buried_continuity_fail_present = parse_i32_flag_(argc, argv, "--buried-fail", cfg.buried_continuity_fail_present) ? 1 : 0;
+    cfg.proof_hash_present = parse_i32_flag_(argc, argv, "--proof-hash", cfg.proof_hash_present) ? 1 : 0;
+    cfg.oracle_shock_present = parse_i32_flag_(argc, argv, "--oracle-shock", cfg.oracle_shock_present) ? 1 : 0;
+    cfg.multi_turn_drift_present = parse_i32_flag_(argc, argv, "--multi-turn-drift", cfg.multi_turn_drift_present) ? 1 : 0;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_compile_smoke_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-compile-smoke: failed to build smoke artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static int kvcache_cmd_context_compile_smoke_compare_(int argc, char **argv) {
+    (void)argc;
+
+    BfContextCompileSmokeCompareConfig cfg;
+    bf_context_compile_smoke_compare_defaults(&cfg);
+
+    const char *mode = bf_arg_value(argc, argv, "--mode");
+    if (mode && mode[0]) cfg.mode = mode;
+
+    cfg.required_witnesses = (uint32_t)parse_i32_flag_(argc, argv, "--required-witnesses", (int)cfg.required_witnesses);
+    cfg.residual_drift_threshold = parse_f64_flag_(argc, argv, "--residual-threshold", cfg.residual_drift_threshold);
+    cfg.kv_budget_mb = parse_f64_flag_(argc, argv, "--kv-budget-mb", cfg.kv_budget_mb);
+    cfg.latency_budget_ms = parse_f64_flag_(argc, argv, "--latency-budget-ms", cfg.latency_budget_ms);
+    cfg.buried_continuity_fail_present = parse_i32_flag_(argc, argv, "--buried-fail", cfg.buried_continuity_fail_present) ? 1 : 0;
+    cfg.proof_hash_present = parse_i32_flag_(argc, argv, "--proof-hash", cfg.proof_hash_present) ? 1 : 0;
+    cfg.oracle_shock_present = parse_i32_flag_(argc, argv, "--oracle-shock", cfg.oracle_shock_present) ? 1 : 0;
+    cfg.multi_turn_drift_present = parse_i32_flag_(argc, argv, "--multi-turn-drift", cfg.multi_turn_drift_present) ? 1 : 0;
+    if (bf_arg_has(argc, argv, "--fail-on-missing-witness")) cfg.fail_on_missing_witness = 1;
+    if (bf_arg_has(argc, argv, "--no-fail-on-missing-witness")) cfg.fail_on_missing_witness = 0;
+
+    char *json = NULL;
+    if (bf_context_compile_smoke_compare_json(&cfg, &json) != 0 || !json) {
+        fprintf(stderr, "context-compile-smoke-compare: failed to build compare artifact\n");
+        return 1;
+    }
+
+    fputs(json, stdout);
+    free(json);
+    return 0;
+}
+
+static void hex_kv_(const uint8_t h[32], char out[65]) {
+    static const char hc[] = "0123456789abcdef";
+    for (int i=0;i<32;i++){out[i*2]=hc[h[i]>>4];out[i*2+1]=hc[h[i]&0xf];}
+    out[64]='\0';
+}
+
+/* Forward declaration needed by helpers below */
+static int parse_hex32(const char *hex, uint8_t out[32]);
+
+/* ── chain / ancestry / kvlog / kvpack static helpers ────────── */
+
+static int kvcache_cmd_chain_(int argc, char **argv) {
+    /* chain <model_hex> <parent_hex|0> <data_file> */
+    if (argc < 4) {
+        fprintf(stderr,
+            "Usage: bonfyre-kvcache chain <model_hex> <parent_hex|0> <data_file>\n"
+            "  parent_hex = 0 (or 64 zeros) for root of new sequence\n"); return 1;
+    }
+    uint8_t model_hash[32], parent_hash[32];
+    if (parse_hex32(argv[1], model_hash) != 0) {
+        /* try all-zeros for convenience */
+        fprintf(stderr, "chain: model_hex must be 64 hex chars\n"); return 1;
+    }
+    const char *phex = argv[2];
+    if (strcmp(phex, "0") == 0 || strlen(phex) < 64) {
+        memset(parent_hash, 0, 32);
+    } else {
+        if (parse_hex32(phex, parent_hash) != 0) {
+            fprintf(stderr, "chain: parent_hex must be 64 hex chars or '0'\n"); return 1;
+        }
+    }
+    size_t len = 0;
+    void *data = (void *)bf_read_file(argv[3], &len);
+    if (!data) { perror(argv[3]); return 1; }
+
+    uint8_t new_ctx[32];
+    int rc = bf_kvcache_chain(model_hash, parent_hash, data, len, new_ctx);
+    free(data);
+    if (rc != 0) { fprintf(stderr, "chain: write failed\n"); return 1; }
+
+    char hex[65]; hex_kv_(new_ctx, hex);
+    printf("chain: new_ctx_hash=%s\n", hex);
+    printf("  model=%.16s...\n  parent=%.16s%s\n",
+           argv[1], argv[2], strlen(argv[2]) >= 64 ? "..." : "");
+    return 0;
+}
+
+static int kvcache_cmd_ancestry_(int argc, char **argv) {
+    /* ancestry <model_hex> <ctx_hex> [--max N] */
+    if (argc < 3) {
+        fprintf(stderr, "Usage: bonfyre-kvcache ancestry <model_hex> <ctx_hex> [--max N]\n");
+        return 1;
+    }
+    uint8_t model_hash[32], ctx_hash[32];
+    if (parse_hex32(argv[1], model_hash) != 0 ||
+        parse_hex32(argv[2], ctx_hash)   != 0) {
+        fprintf(stderr, "ancestry: hashes must be 64 hex chars\n"); return 1;
+    }
+    int max_depth = 64;
+    for (int i = 3; i < argc; i++)
+        if (strcmp(argv[i], "--max") == 0 && i+1 < argc) max_depth = atoi(argv[++i]);
+
+    uint8_t (*hashes)[32] = malloc((size_t)max_depth * 32);
+    if (!hashes) return 1;
+    int depth = bf_kvcache_ancestry(model_hash, ctx_hash, hashes, max_depth);
+    printf("ancestry: %d ancestors\n", depth);
+    for (int i = 0; i < depth; i++) {
+        char hex[65]; hex_kv_(hashes[i], hex);
+        printf("  [%2d] %s%s\n", i, hex, i==0?" (newest)":i==depth-1?" (root)":"");
+    }
+    free(hashes);
+    return 0;
+}
+
+static int kvcache_cmd_kvlog_(int argc, char **argv) {
+    /* kvlog <model_hex> — list all .bfkv files for a model */
+    if (argc < 2) {
+        fprintf(stderr, "Usage: bonfyre-kvcache kvlog <model_hex>\n"); return 1;
+    }
+    const char *home = getenv("HOME");
+    char dir[4096];
+    snprintf(dir, sizeof(dir), "%s/.local/share/bonfyre/kvcache/%s",
+             home ? home : "/tmp", argv[1]);
+    DIR *d = opendir(dir);
+    if (!d) { printf("kvlog: no entries for model %.16s...\n", argv[1]); return 0; }
+    int count = 0;
+    struct dirent *de;
+    printf("KV objects for model %.16s...:\n", argv[1]);
+    while ((de = readdir(d))) {
+        const char *nm = de->d_name;
+        size_t nl = strlen(nm);
+        if (nl != 69 || strcmp(nm+64, ".bfkv") != 0) continue;
+        char path[4096];
+        snprintf(path, sizeof(path), "%s/%s", dir, nm);
+        struct stat st;
+        if (stat(path, &st) == 0) {
+            printf("  %.16s...  %lld B\n", nm, (long long)st.st_size);
+            count++;
+        }
+    }
+    closedir(d);
+    /* Also check chain dir */
+    snprintf(dir, sizeof(dir), "%s/.local/share/bonfyre/kvcache-chain/%s",
+             home ? home : "/tmp", argv[1]);
+    d = opendir(dir);
+    if (d) {
+        printf("KV chain commits for model %.16s...:\n", argv[1]);
+        while ((de = readdir(d))) {
+            const char *nm = de->d_name;
+            size_t nl = strlen(nm);
+            if (nl != 71 || strcmp(nm+64, ".bfkv2") != 0) continue;
+            char path[4096];
+            snprintf(path, sizeof(path), "%s/%s", dir, nm);
+            struct stat st;
+            if (stat(path, &st) == 0) {
+                printf("  %.16s...  %lld B\n", nm, (long long)st.st_size);
+                count++;
+            }
+        }
+        closedir(d);
+    }
+    if (count == 0) printf("  (none)\n");
+    return 0;
+}
+
+static int kvcache_cmd_kvpack_(int argc, char **argv) {
+    const char *home = getenv("HOME");
+    char pack_path[4096];
+    /* default path */
+    const char *out = NULL;
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "--out") == 0 && i+1 < argc) out = argv[++i];
+    if (out) snprintf(pack_path, sizeof(pack_path), "%s", out);
+    else snprintf(pack_path, sizeof(pack_path),
+                  "%s/.local/share/bonfyre/kvcache/pack.bfkvpack",
+                  home ? home : "/tmp");
+
+    uint32_t n = 0;
+    if (bf_kvcache_pack_build(pack_path, &n) != 0) {
+        fprintf(stderr, "kvpack: build failed\n"); return 1;
+    }
+    if (n == 0) { printf("kvpack: no loose .bfkv objects to pack\n"); return 0; }
+    printf("kvpack: packed %u KV blobs → %s\n", n, pack_path);
+    printf("  run 'bonfyre-kvcache kvgc' to remove loose files\n");
+    return 0;
+}
+
+static int kvcache_cmd_kvgc_(int argc, char **argv) {
+    const char *home = getenv("HOME");
+    char pack_path[4096];
+    const char *pp = NULL;
+    for (int i = 1; i < argc; i++)
+        if (strcmp(argv[i], "--pack") == 0 && i+1 < argc) pp = argv[++i];
+    if (pp) snprintf(pack_path, sizeof(pack_path), "%s", pp);
+    else snprintf(pack_path, sizeof(pack_path),
+                  "%s/.local/share/bonfyre/kvcache/pack.bfkvpack",
+                  home ? home : "/tmp");
+
+    BfKVCachePack pack = {0};
+    if (bf_kvcache_pack_open(&pack, pack_path) != 0) {
+        printf("kvgc: no pack found — run 'bonfyre-kvcache kvpack' first\n"); return 0;
+    }
+    int removed = bf_kvcache_pack_gc(&pack);
+    bf_kvcache_pack_close(&pack);
+    printf("kvgc: removed %d loose .bfkv files\n", removed);
+    return 0;
+}
+
+/* ─────────────────────────────────────────────────────────── */
+
+/* Parse a 64-char hex string into 32 bytes. Returns 0 on success. */
+static int parse_hex32(const char *hex, uint8_t out[32]) {
+    if (strlen(hex) != 64) return -1;
+    for (int i = 0; i < 32; i++) {
+        unsigned int byte;
+        if (sscanf(hex + i * 2, "%02x", &byte) != 1) return -1;
+        out[i] = (uint8_t)byte;
+    }
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc < 2) { usage(); return 1; }
 
@@ -470,6 +983,59 @@ int main(int argc, char **argv) {
     int bits = 4;  /* default 4-bit for KV (safer) */
     const char *v;
     if ((v = bf_arg_value(argc, argv, "--bits"))) bits = atoi(v);
+
+    /* ── store: persist a .bfkv blob by (model_hash, ctx_hash) ── */
+    if (strcmp(cmd, "store") == 0) {
+        if (argc < 5) {
+            fprintf(stderr, "Usage: bonfyre-kvcache store <model_hash_hex> <ctx_hash_hex> <file.bfkv>\n");
+            return 1;
+        }
+        uint8_t mhash[32], chash[32];
+        if (parse_hex32(argv[2], mhash) != 0 || parse_hex32(argv[3], chash) != 0) {
+            fprintf(stderr, "store: hashes must be 64 hex chars each\n"); return 1;
+        }
+        const char *inpath = argv[4];
+        size_t len = 0;
+        void *data = (void *)bf_read_file(inpath, &len);
+        if (!data) { perror(inpath); return 1; }
+        int rc = bf_kvcache_store(mhash, chash, data, len);
+        free(data);
+        if (rc != 0) { fprintf(stderr, "store: write failed\n"); return 1; }
+        fprintf(stdout, "stored: model=%.8s... ctx=%.8s... bytes=%zu\n",
+                argv[2], argv[3], len);
+        return 0;
+    }
+
+    /* ── fetch: retrieve a .bfkv blob by (model_hash, ctx_hash) ── */
+    if (strcmp(cmd, "fetch") == 0) {
+        if (argc < 4) {
+            fprintf(stderr, "Usage: bonfyre-kvcache fetch <model_hash_hex> <ctx_hash_hex> [--out file]\n");
+            return 1;
+        }
+        uint8_t mhash[32], chash[32];
+        if (parse_hex32(argv[2], mhash) != 0 || parse_hex32(argv[3], chash) != 0) {
+            fprintf(stderr, "fetch: hashes must be 64 hex chars each\n"); return 1;
+        }
+        const char *outpath = (v = bf_arg_value(argc, argv, "--out")) ? v : NULL;
+        void *data = NULL;
+        size_t len = 0;
+        if (bf_kvcache_fetch(mhash, chash, &data, &len) != 0) {
+            fprintf(stderr, "fetch: cache miss — model=%.8s... ctx=%.8s...\n",
+                    argv[2], argv[3]);
+            return 2;  /* 2 = miss (distinguishable from error) */
+        }
+        if (outpath) {
+            FILE *f = fopen(outpath, "wb");
+            if (!f) { perror(outpath); free(data); return 1; }
+            fwrite(data, 1, len, f);
+            fclose(f);
+            fprintf(stdout, "fetched: %zu bytes → %s\n", len, outpath);
+        } else {
+            fwrite(data, 1, len, stdout);
+        }
+        free(data);
+        return 0;
+    }
 
     if (strcmp(cmd, "roundtrip") == 0) {
         if (argc < 3) { usage(); return 1; }
@@ -558,7 +1124,48 @@ int main(int argc, char **argv) {
         return 0;
     }
 
+    if (strcmp(cmd, "context-plan") == 0) {
+        return kvcache_cmd_context_plan_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-kv-registry") == 0) {
+        return kvcache_cmd_context_kv_registry_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-selector-smoke") == 0) {
+        return kvcache_cmd_context_selector_smoke_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-kv-compare") == 0) {
+        return kvcache_cmd_context_kv_compare_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-kv-verify") == 0) {
+        return kvcache_cmd_context_kv_verify_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-compile") == 0) {
+        return kvcache_cmd_context_compile_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-compile-smoke") == 0) {
+        return kvcache_cmd_context_compile_smoke_(argc - 1, argv + 1);
+    }
+
+    if (strcmp(cmd, "context-compile-smoke-compare") == 0) {
+        return kvcache_cmd_context_compile_smoke_compare_(argc - 1, argv + 1);
+    }
+
+    /* ── new subcommands: chain/ancestry/kvlog/kvpack/kvgc ─── */
+    if (strcmp(cmd, "chain")    == 0) return kvcache_cmd_chain_   (argc-1, argv+1);
+    if (strcmp(cmd, "ancestry") == 0) return kvcache_cmd_ancestry_(argc-1, argv+1);
+    if (strcmp(cmd, "kvlog")    == 0) return kvcache_cmd_kvlog_   (argc-1, argv+1);
+    if (strcmp(cmd, "kvpack")   == 0) return kvcache_cmd_kvpack_  (argc-1, argv+1);
+    if (strcmp(cmd, "kvgc")     == 0) return kvcache_cmd_kvgc_    (argc-1, argv+1);
+
     fprintf(stderr, "Unknown command: %s\n", cmd);
     usage();
     return 1;
 }
+
+/* ─── stub comment (placeholder removed) ─── */

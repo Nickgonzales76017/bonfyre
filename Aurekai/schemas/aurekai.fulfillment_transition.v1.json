@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://registry.aurekai.ai/schemas/aurekai.fulfillment_transition.v1.json",
+  "title": "Aurekai Fulfillment Transition",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "transition_id",
+    "service_step",
+    "prior_commitment",
+    "next_commitment",
+    "delivery_witness",
+    "chargeable_units",
+    "continuity_verdict"
+  ],
+  "properties": {
+    "schema_version": { "const": "aurekai.fulfillment_transition.v1" },
+    "transition_id": { "type": "string" },
+    "service_step": { "type": "string" },
+    "prior_commitment": { "type": "string" },
+    "next_commitment": { "type": "string" },
+    "delivery_witness": { "type": "string" },
+    "residual_delta": { "type": "number" },
+    "chargeable_units": { "type": "number", "minimum": 0 },
+    "continuity_verdict": { "enum": ["allow", "gate", "halt"] }
+  }
+}

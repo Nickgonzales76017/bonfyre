@@ -1,0 +1,679 @@
+{
+  "schema_version": "aurekai.integration_connector_presets.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "presets": [
+    {
+      "id": "ibc-cosmos-transport",
+      "target": "IBC/Cosmos",
+      "surface": "hard-fork",
+      "category": "transport",
+      "parser": "ibc-packet",
+      "default_endpoint": "https://example-ibc-relayer.local/events/latest",
+      "action_default": "packet_commit",
+      "source_default": "ibc-relayer",
+      "field_map": {
+        "event_id": ["event_id", "packet.sequence", "sequence"],
+        "action": ["action", "packet.action", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "layerzero-transport",
+      "target": "LayerZero",
+      "surface": "hard-fork",
+      "category": "transport",
+      "parser": "layerzero-packet",
+      "default_endpoint": "https://example-layerzero-indexer.local/messages/latest",
+      "action_default": "message_commit",
+      "source_default": "layerzero-endpoint",
+      "field_map": {
+        "event_id": ["event_id", "message.guid", "guid"],
+        "action": ["action", "message.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "axelar-gmp",
+      "target": "Axelar",
+      "surface": "hard-fork",
+      "category": "transport",
+      "parser": "axelar-gmp",
+      "default_endpoint": "https://example-axelar-indexer.local/gmp/latest",
+      "action_default": "gmp_execute",
+      "source_default": "axelar-gmp",
+      "field_map": {
+        "event_id": ["event_id", "gmp.tx_hash", "tx_hash"],
+        "action": ["action", "gmp.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "wormhole-vaa",
+      "target": "Wormhole",
+      "surface": "hard-fork",
+      "category": "transport",
+      "parser": "wormhole-vaa",
+      "default_endpoint": "https://example-wormhole-indexer.local/vaa/latest",
+      "action_default": "vaa_observe",
+      "source_default": "wormhole-guardian",
+      "field_map": {
+        "event_id": ["event_id", "vaa.digest", "digest"],
+        "action": ["action", "vaa.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "hyperlane-message",
+      "target": "Hyperlane",
+      "surface": "hard-fork",
+      "category": "transport",
+      "parser": "hyperlane-message",
+      "default_endpoint": "https://example-hyperlane-indexer.local/messages/latest",
+      "action_default": "message_dispatch",
+      "source_default": "hyperlane-mailbox",
+      "field_map": {
+        "event_id": ["event_id", "message.id", "id"],
+        "action": ["action", "message.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "stargate-transfer",
+      "target": "Stargate",
+      "surface": "hard-fork",
+      "category": "transport",
+      "parser": "stargate-transfer",
+      "default_endpoint": "https://example-stargate-indexer.local/transfers/latest",
+      "action_default": "transfer_settle",
+      "source_default": "stargate-router",
+      "field_map": {
+        "event_id": ["event_id", "transfer.id", "id"],
+        "action": ["action", "transfer.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "zksync-rollup-proof",
+      "target": "zkSync",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-zksync-prover.local/proofs/latest",
+      "action_default": "proof_accept",
+      "source_default": "zksync-prover",
+      "field_map": {
+        "event_id": ["event_id", "proof.batch_id", "batch_id"],
+        "action": ["action", "proof.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "starknet-rollup-proof",
+      "target": "Starknet",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-starknet-prover.local/proofs/latest",
+      "action_default": "proof_accept",
+      "source_default": "starknet-prover",
+      "field_map": {
+        "event_id": ["event_id", "proof.batch_id", "batch_id"],
+        "action": ["action", "proof.status", "type"],
+        "risk_score": ["risk_score", "risk"],
+        "deformation_score": ["deformation_score", "monitor.deformation"],
+        "witness_skew": ["witness_skew", "monitor.witness_skew"]
+      }
+    },
+    {
+      "id": "arbitrum-rollup-proof",
+      "target": "Arbitrum",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-arbitrum-indexer.local/assertions/latest",
+      "action_default": "assertion_confirm",
+      "source_default": "arbitrum-sequencer",
+      "field_map": {
+        "event_id": ["event_id", "assertion.id", "id"],
+        "action": ["action", "assertion.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "optimism-rollup-proof",
+      "target": "Optimism",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-optimism-indexer.local/outputs/latest",
+      "action_default": "output_publish",
+      "source_default": "op-sequencer",
+      "field_map": {
+        "event_id": ["event_id", "output.id", "id"],
+        "action": ["action", "output.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "taiko-rollup-proof",
+      "target": "Taiko",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-taiko-indexer.local/proofs/latest",
+      "action_default": "proof_verify",
+      "source_default": "taiko-prover",
+      "field_map": {
+        "event_id": ["event_id", "proof.id", "id"],
+        "action": ["action", "proof.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "scroll-rollup-proof",
+      "target": "Scroll",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-scroll-indexer.local/proofs/latest",
+      "action_default": "proof_verify",
+      "source_default": "scroll-prover",
+      "field_map": {
+        "event_id": ["event_id", "proof.id", "id"],
+        "action": ["action", "proof.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "linea-rollup-proof",
+      "target": "Linea",
+      "surface": "hard-fork",
+      "category": "rollup_pipeline",
+      "parser": "rollup-proof",
+      "default_endpoint": "https://example-linea-indexer.local/proofs/latest",
+      "action_default": "proof_verify",
+      "source_default": "linea-prover",
+      "field_map": {
+        "event_id": ["event_id", "proof.id", "id"],
+        "action": ["action", "proof.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "uniswap-v4-hooks",
+      "target": "Uniswap v4 hooks",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "uniswap-v4-hook",
+      "default_endpoint": "https://example-uniswap-v4-indexer.local/hooks/latest",
+      "action_default": "hook_apply",
+      "source_default": "uniswap-v4-pool-manager",
+      "field_map": {
+        "event_id": ["event_id", "hook.id", "id"],
+        "action": ["action", "hook.event", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "aave-positions",
+      "target": "Aave",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "defi-position",
+      "default_endpoint": "https://example-aave-indexer.local/positions/latest",
+      "action_default": "position_update",
+      "source_default": "aave-pool",
+      "field_map": {
+        "event_id": ["event_id", "position.id", "id"],
+        "action": ["action", "position.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "morpho-positions",
+      "target": "Morpho",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "defi-position",
+      "default_endpoint": "https://example-morpho-indexer.local/positions/latest",
+      "action_default": "position_update",
+      "source_default": "morpho-market",
+      "field_map": {
+        "event_id": ["event_id", "position.id", "id"],
+        "action": ["action", "position.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "pendle-positions",
+      "target": "Pendle",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "defi-position",
+      "default_endpoint": "https://example-pendle-indexer.local/positions/latest",
+      "action_default": "position_update",
+      "source_default": "pendle-market",
+      "field_map": {
+        "event_id": ["event_id", "position.id", "id"],
+        "action": ["action", "position.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "ethena-positions",
+      "target": "Ethena",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "defi-position",
+      "default_endpoint": "https://example-ethena-indexer.local/positions/latest",
+      "action_default": "position_update",
+      "source_default": "ethena-engine",
+      "field_map": {
+        "event_id": ["event_id", "position.id", "id"],
+        "action": ["action", "position.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "eigenlayer-operators",
+      "target": "EigenLayer",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "defi-position",
+      "default_endpoint": "https://example-eigenlayer-indexer.local/operators/latest",
+      "action_default": "operator_update",
+      "source_default": "eigenlayer-avs",
+      "field_map": {
+        "event_id": ["event_id", "operator.id", "id"],
+        "action": ["action", "operator.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "maker-sky-vaults",
+      "target": "Maker/Sky",
+      "surface": "hard-fork",
+      "category": "financial_topology",
+      "parser": "defi-position",
+      "default_endpoint": "https://example-maker-sky-indexer.local/vaults/latest",
+      "action_default": "vault_update",
+      "source_default": "maker-sky-core",
+      "field_map": {
+        "event_id": ["event_id", "vault.id", "id"],
+        "action": ["action", "vault.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "celestia-da",
+      "target": "Celestia",
+      "surface": "hard-fork",
+      "category": "availability",
+      "parser": "da-publication",
+      "default_endpoint": "https://example-celestia-indexer.local/publications/latest",
+      "action_default": "blob_publish",
+      "source_default": "celestia-da",
+      "field_map": {
+        "event_id": ["event_id", "blob.commitment", "commitment"],
+        "action": ["action", "blob.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "avail-da",
+      "target": "Avail",
+      "surface": "hard-fork",
+      "category": "availability",
+      "parser": "da-publication",
+      "default_endpoint": "https://example-avail-indexer.local/publications/latest",
+      "action_default": "blob_publish",
+      "source_default": "avail-da",
+      "field_map": {
+        "event_id": ["event_id", "blob.commitment", "commitment"],
+        "action": ["action", "blob.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "eigenda-da",
+      "target": "EigenDA",
+      "surface": "hard-fork",
+      "category": "availability",
+      "parser": "da-publication",
+      "default_endpoint": "https://example-eigenda-indexer.local/publications/latest",
+      "action_default": "blob_publish",
+      "source_default": "eigenda-da",
+      "field_map": {
+        "event_id": ["event_id", "blob.commitment", "commitment"],
+        "action": ["action", "blob.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "n8n-loop",
+      "target": "n8n",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "workflow-loop",
+      "default_endpoint": "https://example-n8n.local/api/v1/executions/current",
+      "action_default": "loop_tick",
+      "source_default": "n8n-runtime",
+      "field_map": {
+        "event_id": ["event_id", "execution.id", "id"],
+        "action": ["action", "execution.status", "type"],
+        "stage": ["stage", "execution.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "langgraph-loop",
+      "target": "LangGraph",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "agent-loop",
+      "default_endpoint": "https://example-langgraph.local/runs/current",
+      "action_default": "loop_tick",
+      "source_default": "langgraph-runtime",
+      "field_map": {
+        "event_id": ["event_id", "run.id", "id"],
+        "action": ["action", "run.status", "type"],
+        "stage": ["stage", "run.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "autogpt-loop",
+      "target": "AutoGPT",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "agent-loop",
+      "default_endpoint": "https://example-autogpt.local/runs/current",
+      "action_default": "loop_tick",
+      "source_default": "autogpt-runtime",
+      "field_map": {
+        "event_id": ["event_id", "run.id", "id"],
+        "action": ["action", "run.status", "type"],
+        "stage": ["stage", "run.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "autogen-loop",
+      "target": "AutoGen",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "agent-loop",
+      "default_endpoint": "https://example-autogen.local/runs/current",
+      "action_default": "loop_tick",
+      "source_default": "autogen-runtime",
+      "field_map": {
+        "event_id": ["event_id", "run.id", "id"],
+        "action": ["action", "run.status", "type"],
+        "stage": ["stage", "run.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "continue-dev-loop",
+      "target": "Continue.dev via CI/editor path",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "ide-loop",
+      "default_endpoint": "https://example-continue.local/events/current",
+      "action_default": "editor_tick",
+      "source_default": "continue-runtime",
+      "field_map": {
+        "event_id": ["event_id", "event.id", "id"],
+        "action": ["action", "event.type", "type"],
+        "stage": ["stage", "event.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "chainlink-pyth-oracle-rounds",
+      "target": "Chainlink/Pyth oracle rounds",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "observer-event",
+      "default_endpoint": "https://example-oracle-observer.local/rounds/latest",
+      "action_default": "round_finalize",
+      "source_default": "oracle-observer",
+      "field_map": {
+        "event_id": ["event_id", "round.id", "id"],
+        "action": ["action", "round.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "safe-gelato-execution-trails",
+      "target": "Safe/Gelato execution trails",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "observer-event",
+      "default_endpoint": "https://example-safe-gelato-observer.local/trails/latest",
+      "action_default": "execution_trail_append",
+      "source_default": "safe-gelato-observer",
+      "field_map": {
+        "event_id": ["event_id", "trail.id", "id"],
+        "action": ["action", "trail.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "the-graph-indexing-snapshots",
+      "target": "The Graph indexing snapshots",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "observer-event",
+      "default_endpoint": "https://example-graph-observer.local/snapshots/latest",
+      "action_default": "snapshot_publish",
+      "source_default": "graph-observer",
+      "field_map": {
+        "event_id": ["event_id", "snapshot.id", "id"],
+        "action": ["action", "snapshot.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "tradingagents-loop",
+      "target": "TradingAgents",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "agent-loop",
+      "default_endpoint": "https://example-tradingagents.local/runs/current",
+      "action_default": "loop_tick",
+      "source_default": "tradingagents-runtime",
+      "field_map": {
+        "event_id": ["event_id", "run.id", "id"],
+        "action": ["action", "run.status", "type"],
+        "stage": ["stage", "run.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "openhands-loop",
+      "target": "OpenHands",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "agent-loop",
+      "default_endpoint": "https://example-openhands.local/runs/current",
+      "action_default": "loop_tick",
+      "source_default": "openhands-runtime",
+      "field_map": {
+        "event_id": ["event_id", "run.id", "id"],
+        "action": ["action", "run.status", "type"],
+        "stage": ["stage", "run.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "browser-use-loop",
+      "target": "Browser-Use",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "workflow-loop",
+      "default_endpoint": "https://example-browser-use.local/events/current",
+      "action_default": "browser_step",
+      "source_default": "browser-use-runtime",
+      "field_map": {
+        "event_id": ["event_id", "execution.id", "event.id", "id"],
+        "action": ["action", "execution.status", "event.type", "type"],
+        "stage": ["stage", "execution.stage", "event.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "continue-dev-loop-direct",
+      "target": "Continue.dev",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "ide-loop",
+      "default_endpoint": "https://example-continue.local/events/current",
+      "action_default": "editor_tick",
+      "source_default": "continue-runtime",
+      "field_map": {
+        "event_id": ["event_id", "event.id", "id"],
+        "action": ["action", "event.type", "type"],
+        "stage": ["stage", "event.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "mem0-loop",
+      "target": "Mem0",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "workflow-loop",
+      "default_endpoint": "https://example-mem0.local/memory/events/current",
+      "action_default": "memory_sync",
+      "source_default": "mem0-runtime",
+      "field_map": {
+        "event_id": ["event_id", "execution.id", "event.id", "id"],
+        "action": ["action", "execution.status", "event.type", "type"],
+        "stage": ["stage", "execution.stage", "event.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "ollama-loop",
+      "target": "Ollama",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "workflow-loop",
+      "default_endpoint": "https://example-ollama.local/generate/events/current",
+      "action_default": "model_step",
+      "source_default": "ollama-runtime",
+      "field_map": {
+        "event_id": ["event_id", "execution.id", "event.id", "id"],
+        "action": ["action", "execution.status", "event.type", "type"],
+        "stage": ["stage", "execution.stage", "event.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "comfyui-loop",
+      "target": "ComfyUI",
+      "surface": "soft-fork",
+      "category": "runtime-shim",
+      "parser": "workflow-loop",
+      "default_endpoint": "https://example-comfyui.local/workflows/current",
+      "action_default": "workflow_tick",
+      "source_default": "comfyui-runtime",
+      "field_map": {
+        "event_id": ["event_id", "execution.id", "event.id", "id"],
+        "action": ["action", "execution.status", "event.type", "type"],
+        "stage": ["stage", "execution.stage", "event.stage", "loop_stage"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "ibc-packet-flows-observer",
+      "target": "IBC packet flows",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "ibc-packet",
+      "default_endpoint": "https://example-ibc-observer.local/packets/latest",
+      "action_default": "packet_observe",
+      "source_default": "ibc-observer",
+      "field_map": {
+        "event_id": ["event_id", "packet.sequence", "sequence"],
+        "action": ["action", "packet.action", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "layerzero-packet-state-observer",
+      "target": "LayerZero packet state",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "layerzero-packet",
+      "default_endpoint": "https://example-layerzero-observer.local/packets/latest",
+      "action_default": "packet_state_observe",
+      "source_default": "layerzero-observer",
+      "field_map": {
+        "event_id": ["event_id", "message.guid", "guid"],
+        "action": ["action", "message.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "wormhole-packet-state-observer",
+      "target": "Wormhole packet state",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "wormhole-vaa",
+      "default_endpoint": "https://example-wormhole-observer.local/vaa/latest",
+      "action_default": "packet_state_observe",
+      "source_default": "wormhole-observer",
+      "field_map": {
+        "event_id": ["event_id", "vaa.digest", "digest"],
+        "action": ["action", "vaa.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "hyperlane-packet-state-observer",
+      "target": "Hyperlane packet state",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "hyperlane-message",
+      "default_endpoint": "https://example-hyperlane-observer.local/messages/latest",
+      "action_default": "packet_state_observe",
+      "source_default": "hyperlane-observer",
+      "field_map": {
+        "event_id": ["event_id", "message.id", "id"],
+        "action": ["action", "message.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    },
+    {
+      "id": "da-storage-publication-flows",
+      "target": "DA/storage publication flows",
+      "surface": "observer",
+      "category": "protocol-observer-layer",
+      "parser": "da-publication",
+      "default_endpoint": "https://example-da-storage-observer.local/publications/latest",
+      "action_default": "publication_observe",
+      "source_default": "da-storage-observer",
+      "field_map": {
+        "event_id": ["event_id", "blob.commitment", "commitment"],
+        "action": ["action", "blob.status", "type"],
+        "risk_score": ["risk_score", "risk"]
+      }
+    }
+  ]
+}

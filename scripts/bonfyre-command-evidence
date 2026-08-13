@@ -1,0 +1,63 @@
+#!/bin/sh
+set -eu
+
+# Produce the command matrix exclusively from the active Fabric database.  A
+# command without a successful event, receipt, output, and probe remains
+# bound_not_workload_proven; this tool never manufactures evidence.
+state=${BONFYRE_STATE_DIR:?BONFYRE_STATE_DIR is required}
+db=${BONFYRE_FABRIC_DB:-"$state/fabric.db"}
+output=${BONFYRE_COMMAND_EVIDENCE:-"$state/completion/command-evidence.tsv"}
+
+[ -f "$db" ] || { echo "fabric database not found: $db" >&2; exit 1; }
+mkdir -p "$(dirname "$output")"
+
+sqlite3 -tabs "$db" '
+WITH active AS (
+  SELECT value AS generation FROM fabric_meta WHERE key = "catalog_generation"
+), latest_event AS (
+  SELECT e.*, row_number() OVER (PARTITION BY e.operator_id ORDER BY e.end_at DESC, e.id DESC) AS ordinal
+  FROM events e
+  WHERE e.status = "complete"
+)
+SELECT
+  c.id,
+  b.family,
+  cb.binding_state,
+  b.generation,
+  CASE WHEN e.id IS NOT NULL THEN e.operator_id ELSE "" END,
+  COALESCE(e.input_uri, ""),
+  COALESCE(e.output_uri, ""),
+  COALESCE(e.id, ""),
+  COALESCE(e.receipt_id, ""),
+  CASE WHEN e.id IS NOT NULL THEN "0" ELSE "" END,
+  COALESCE(json_extract(r.payload, "$.quality_result"), "not_evaluated"),
+  CASE
+    WHEN e.id IS NOT NULL
+     AND e.output_uri IS NOT NULL
+     AND e.receipt_id IS NOT NULL
+     AND json_extract(r.payload, "$.workload_result") = "passed"
+     AND json_extract(r.payload, "$.quality_result") = "passed"
+     AND c.maturity = "quality_proven" THEN "quality_proven"
+    WHEN cb.binding_state = "bound" THEN "bound_not_workload_proven"
+    ELSE "declared_unbound"
+  END
+FROM catalog c
+JOIN catalog_bindings cb ON cb.operator_id = c.id
+JOIN operator_contract_bindings b ON b.operator_id = c.id
+JOIN active a ON cb.catalog_generation = a.generation AND b.generation = a.generation
+LEFT JOIN latest_event e ON e.operator_id = c.id AND e.ordinal = 1
+LEFT JOIN receipts r ON r.id = e.receipt_id
+WHERE c.id LIKE "command.%"
+ORDER BY c.id;
+' | {
+  printf 'operator\tfamily\tbinding_state\tcontract_generation\tworkload_command\tinput_artifact\toutput_artifact\tevent_id\treceipt_id\texit_status\tquality_result\tmaturity\n'
+  cat
+} >"$output"
+
+rows=$(awk 'NR > 1 { count++ } END { print count + 0 }' "$output")
+unique=$(awk -F '\t' 'NR > 1 { seen[$1] = 1 } END { print length(seen) }' "$output")
+[ "$rows" -eq 93 ] && [ "$unique" -eq 93 ] || {
+  echo "invalid command evidence matrix: rows=$rows unique=$unique" >&2
+  exit 1
+}
+printf '%s\n' "$output"

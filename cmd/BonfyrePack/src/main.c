@@ -135,6 +135,66 @@ static int command_archive(const char *proof_dir, const char *offer_dir, const c
     return 1;
 }
 
+static void cleanup_package_dir(const char *directory) {
+    const char *files[] = {
+        "deliverable.md",
+        "transcript.txt",
+        "proof-bundle.json",
+        "offer.json",
+        "offer.md",
+        "outreach.md",
+        "package-manifest.txt",
+        NULL
+    };
+
+    for (int index = 0; files[index]; index++) {
+        char path[MAX_PATH];
+
+        path_join(path, sizeof(path), directory, files[index]);
+        remove(path);
+    }
+    rmdir(directory);
+}
+
+static int command_assemble_archive(const char *input_tar, const char *output_dir) {
+    char temporary_dir[MAX_PATH];
+    pid_t pid;
+    int spawn_result;
+    int status = 0;
+
+    snprintf(temporary_dir, sizeof(temporary_dir),
+             "/tmp/bonfyre-pack-input-%d", (int)getpid());
+    if (ensure_dir(temporary_dir) != 0) {
+        fprintf(stderr, "Failed to create temporary package dir.\n");
+        return 1;
+    }
+
+    char *arguments[] = {
+        "tar",
+        "-xzf",
+        (char *)input_tar,
+        "-C",
+        temporary_dir,
+        NULL
+    };
+    spawn_result = posix_spawnp(&pid, "tar", NULL, NULL, arguments, environ);
+    if (spawn_result != 0) {
+        fprintf(stderr, "Failed to spawn tar: %s\n", strerror(spawn_result));
+        cleanup_package_dir(temporary_dir);
+        return 1;
+    }
+    if (waitpid(pid, &status, 0) < 0 ||
+        !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
+        fprintf(stderr, "Failed to extract package input.\n");
+        cleanup_package_dir(temporary_dir);
+        return 1;
+    }
+
+    int result = command_assemble(temporary_dir, temporary_dir, output_dir);
+    cleanup_package_dir(temporary_dir);
+    return result;
+}
+
 int main(int argc, char **argv) {
     if (argc == 5 && strcmp(argv[1], "assemble") == 0) {
         return command_assemble(argv[2], argv[3], argv[4]);
@@ -142,9 +202,13 @@ int main(int argc, char **argv) {
     if (argc == 5 && strcmp(argv[1], "archive") == 0) {
         return command_archive(argv[2], argv[3], argv[4]);
     }
+    if (argc == 4 && strcmp(argv[1], "assemble-archive") == 0) {
+        return command_assemble_archive(argv[2], argv[3]);
+    }
     fprintf(stderr,
             "Usage:\n"
             "  bonfyre-pack assemble <proof-dir> <offer-dir> <output-dir>\n"
+            "  bonfyre-pack assemble-archive <input.tar.gz> <output-dir>\n"
             "  bonfyre-pack archive  <proof-dir> <offer-dir> <output.tar.gz>\n");
     return 1;
 }

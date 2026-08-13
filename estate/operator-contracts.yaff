@@ -1,0 +1,1274 @@
+# Checked-in invocation contracts.  Templates are argv tokens, never shell.
+contract artifact_file_v1
+  invocation_kind native-process
+  argv ${binary} file ${input.path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe sha256-output
+
+contract artifact_inspect_v1
+  invocation_kind native-process
+  argv ${binary} inspect ${input.path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe structured-output
+
+contract document_intake_v1
+  invocation_kind native-process
+  argv ${binary} ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/intake-manifest.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract media_normalize_v1
+  invocation_kind native-process
+  argv ${binary} normalize ${input.path} ${output.dir}/normalized.wav
+  input_binding artifact
+  output_discovery output.dir/normalized.wav
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 8388608
+  retry_policy bounded:0
+  workload_probe output-exists
+  quality_probe artifact-integrity
+
+contract render_artifact_v1
+  invocation_kind native-process
+  argv ${binary} artifact ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/render-status.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 8388608
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract qwen_native_inference_v1
+  invocation_kind native-process
+  argv ${binary} generate --pack /Users/nickgonzales/BonfyreModels/fpq/qwen2.5-coder-0.5b-instruct-native-fp16.fpq --tokenizer /Users/nickgonzales/BonfyreModels/small/qwen2.5-coder-0.5b-instruct/tokenizer.json --prompt ${input.path} --out ${output.dir}/normalized_generation.py --max-new-tokens 40 --greedy --prefill-chunk 32 --manifest ${output.dir}/model-inference.json --token-trace ${output.dir}/model-token-trace.jsonl
+  input_binding artifact
+  output_discovery output.dir/normalized_generation.py
+  environment PATH=/usr/bin:/bin,BONFYRE_QWEN_MAX_SEQ_LEN=96,BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS=0,BONFYRE_QWEN_REQUIRE_BLENDER_LINE=1
+  working_directory mission.dir
+  timeout_seconds 180
+  output_limit_bytes 10485760
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe qwen-blender-line
+
+contract quant_roundtrip_v1
+  invocation_kind native-process
+  argv ${binary} roundtrip ${input.path} --bits 3 --limit 1
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe quant-roundtrip
+
+contract embedding_generate_v1
+  invocation_kind native-process
+  argv ${binary} embed --model /Users/nickgonzales/BonfyreModels/native/qwen1.5-moe-a2.7b-chat --text ${input.path} --out ${output.dir}/embedding.json
+  input_binding artifact
+  output_discovery output.dir/embedding.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe model-embedding
+
+contract vector_store_fixture_v1
+  invocation_kind native-process
+  argv ${binary} fixture ${output.dir}/vector.sqlite ${input.path}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe vector-store-state
+
+contract graph_fixture_v1
+  invocation_kind native-process
+  argv ${binary} fixture ${output.dir}/graph.sqlite
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe graph-lineage
+
+contract cms_schema_state_v1
+  invocation_kind native-process
+  argv ${binary} fixture --db ${output.dir}/cms.sqlite
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe cms-crud-state
+
+contract queue_enqueue_v1
+  invocation_kind native-process
+  argv ${binary} enqueue render ${input.path} --db ${output.dir}/queue.sqlite --output ${output.dir}/job-output
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:1
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract queue_workflow_fixture_v1
+  invocation_kind native-process
+  argv ${binary} fixture --db ${output.dir}/queue.sqlite
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe queue-workflow-state
+
+contract meter_record_v1
+  invocation_kind native-process
+  argv ${binary} record --key fabric-fixture --op model-inference --bytes 64 --duration 1 --db ${output.dir}/meter.sqlite
+  input_binding artifact
+  output_discovery stderr
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract wire_ingest_v1
+  invocation_kind native-process
+  argv ${binary} ingest-pcap ${input.path} --authorized --metadata-only --root ${output.dir}/wire-state
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract auth_signup_v1
+  invocation_kind native-process
+  argv ${binary} --db ${output.dir}/auth.sqlite signup --email fabric@example.test --name Fabric --password governed-passphrase --tier free
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract auth_authority_fixture_v1
+  invocation_kind native-process
+  argv ${binary} --db ${output.dir}/auth.sqlite fixture
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe auth-authority-state
+
+contract frappe_project_context_v1
+  invocation_kind native-process
+  argv ${binary} cms fixture --db ${output.dir}/frappe.sqlite
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe cms-crud-state
+
+contract project_space_put_v1
+  invocation_kind native-process
+  argv ${binary} fixture ${output.dir}/project-space.sqlite
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe project-space-state
+
+contract explicit_io_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.path} --output ${output.dir}/result
+  input_binding artifact
+  output_discovery output.dir/result
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 10485760
+  retry_policy bounded:1
+  workload_probe output-artifact
+  quality_probe output-exists
+
+contract transcript_clean_v1
+  invocation_kind native-process
+  argv ${binary} --transcript ${input.path} --out ${output.dir}/cleaned.txt
+  input_binding artifact
+  output_discovery output.dir/cleaned.txt
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract paragraph_structure_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.path} --out ${output.dir}/paragraphs.txt
+  input_binding artifact
+  output_discovery output.dir/paragraphs.txt
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract mfa_dictionary_v1
+  invocation_kind native-process
+  argv ${binary} --transcript ${input.path} --out ${output.dir}/pronunciation.dict
+  input_binding artifact
+  output_discovery output.dir/pronunciation.dict
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract brief_document_v1
+  invocation_kind native-process
+  argv ${binary} ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/brief.md
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract proof_score_v1
+  invocation_kind native-process
+  argv ${binary} full ${input.dir} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/proof-bundle.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract offer_generate_v1
+  invocation_kind native-process
+  argv ${binary} generate ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/offer.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract pack_assemble_v1
+  invocation_kind native-process
+  argv ${binary} assemble-archive ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/package-manifest.txt
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract repurpose_all_v1
+  invocation_kind native-process
+  argv ${binary} all ${input.dir} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/repurpose-manifest.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract clips_discover_v1
+  invocation_kind native-process
+  argv ${binary} discover ${input.path} ${output.dir} --top 2 --min-dur 1 --max-dur 30
+  input_binding artifact
+  output_discovery output.dir/clips.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract frame_extract_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.path} --out ${output.dir} --fps 2 --format jpg
+  input_binding artifact
+  output_discovery glob:frame-*.jpg
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 8388608
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract scene_detect_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.dir} --out ${output.dir} --threshold 0.20
+  input_binding artifact
+  output_discovery output.dir/boundaries.json
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 8388608
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract video_demux_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.path} --out ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/audio.wav
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 8388608
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract object_detect_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.path} --out ${output.dir} --confidence 0.5
+  input_binding artifact
+  output_discovery output.dir/objects.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 8388608
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract canon_normalize_v1
+  invocation_kind native-process
+  argv ${binary} normalize ${input.path} ${output.dir}/normalized.json
+  input_binding artifact
+  output_discovery output.dir/normalized.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract compress_roundtrip_source_v1
+  invocation_kind native-process
+  argv ${binary} pack ${input.path} ${output.dir}/input.zst
+  input_binding artifact
+  output_discovery output.dir/input.zst
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract fragment_create_v1
+  invocation_kind native-process
+  argv ${binary} create --store ${output.dir}/fragments.sqlite --kind evidence --persp command --conf 0.95 --payload ${argument.payload}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract workflow_describe_v1
+  invocation_kind native-process
+  argv ${binary} show ${argument.workflow_id}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_CATALOG_DB=fabric.sqlite,BONFYRE_REPO_ROOT=/Users/nickgonzales/Documents/Bonfyre
+  working_directory state.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract family_explain_v1
+  invocation_kind native-process
+  argv ${binary} explain ${argument.family_id}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_CATALOG_DB=fabric.sqlite,BONFYRE_REPO_ROOT=/Users/nickgonzales/Documents/Bonfyre
+  working_directory state.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract segment_graph_v1
+  invocation_kind native-process
+  argv ${binary} graph ${input.path} ${output.dir} --silence-gap 1.0
+  input_binding artifact
+  output_discovery output.dir/segment-graph.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract recipe_generate_v1
+  invocation_kind native-process
+  argv ${binary} ${argument.intent}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract fpq_roundtrip_v1
+  invocation_kind native-process
+  argv ${binary} roundtrip ${argument.model_path} --tensor output_norm.weight --limit 1
+  input_binding artifact
+  output_discovery stderr
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 120
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract flashqla_run_v1
+  invocation_kind native-process
+  argv ${binary} run --in ${input.path} --out ${output.dir}/output.bfgdn --backend ref
+  input_binding artifact
+  output_discovery output.dir/output.bfgdn
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract kvcache_roundtrip_v1
+  invocation_kind native-process
+  argv ${binary} roundtrip ${input.path} --bits 4
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract entity_resolve_v1
+  invocation_kind native-process
+  argv ${binary} resolve email ${argument.identity}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_ENTITY_DB=entity.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract flow_define_v1
+  invocation_kind native-process
+  argv ${binary} define ${input.path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_FLOW_DB=flow.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract gate_issue_v1
+  invocation_kind native-process
+  argv ${binary} issue --tier pro --org bonfyre-acceptance --out ${output.dir}/key.json
+  input_binding artifact
+  output_discovery output.dir/key.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract economy_cost_record_v1
+  invocation_kind native-process
+  argv ${binary} cost record completion execute local 0.01
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_ECONOMY_DB=economy.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract finance_service_add_v1
+  invocation_kind native-process
+  argv ${binary} --db ${output.dir}/finance.sqlite service add --name completion-proof --buy 1.00 --sell 3.00 --source local --category validation
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract control_entropy_v1
+  invocation_kind native-process
+  argv ${binary} entropy-check ${input.path} 0.1
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_CONTROL_DB=control.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract tone_extract_v1
+  invocation_kind native-process
+  argv ${binary} extract ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/tone.json
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract tag_language_v1
+  invocation_kind native-process
+  argv ${binary} detect-lang ${input.path} ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/lang.json
+  environment PATH=/usr/bin:/bin,BONFYRE_LANGID_MODEL=/Users/nickgonzales/.bonfyre/models/lid.176.bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract sync_intake_v1
+  invocation_kind native-process
+  argv ${binary} inspect-intake ${input.path}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract time_schedule_v1
+  invocation_kind native-process
+  argv ${binary} schedule ${input.uri} completion-recipe
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_TIME_DB=time.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract learn_feedback_v1
+  invocation_kind native-process
+  argv ${binary} feedback completion-run 0.92 good
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_LEARN_DB=learn.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract compete_pair_v1
+  invocation_kind native-process
+  argv ${binary} pair completion-recipe proof
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_COMPETE_DB=compete.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract pay_credit_v1
+  invocation_kind native-process
+  argv ${binary} --db ${output.dir}/pay.sqlite credit --user-id 42 --amount 500 --reason acceptance-credit
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract tier_assign_v1
+  invocation_kind native-process
+  argv ${binary} set completion-recipe proof fast
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_TIER_DB=tier.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract outreach_send_v1
+  invocation_kind native-process
+  argv ${binary} --db ${output.dir}/outreach.sqlite send --channel dm --target acceptance@example.com --offer completion-proof --message durable-evidence-ready
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract surface_validate_v1
+  invocation_kind native-process
+  argv ${binary} validate ${input.path}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract stitch_plan_v1
+  invocation_kind native-process
+  argv ${binary} plan ${input.path} --target normalized
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract distribute_message_v1
+  invocation_kind native-process
+  argv ${binary} message ${input.path} ${argument.offer_name} dm
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract recipe_validate_v1
+  invocation_kind native-process
+  argv ${binary} validate ${argument.recipe_path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract whisper_transcribe_v1
+  invocation_kind native-process
+  argv ${binary} ${input.path} ${output.dir} --model ${argument.model_path} --language en --no-vocab --greedy
+  input_binding artifact
+  output_discovery output.dir/transcript.json
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 90
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract transcript_family_v1
+  invocation_kind native-process
+  argv ${binary} ${input.path} ${output.dir} --model ${argument.model_path} --language en --no-vocab --greedy --with-headers
+  input_binding artifact
+  output_discovery output.dir/family-status.json
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 120
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract piper_narrate_v1
+  invocation_kind native-process
+  argv ${binary} ${input.path} ${output.dir} --voice-model ${argument.voice_model} --no-pitch-shift --no-envelope
+  input_binding artifact
+  output_discovery output.dir/artifact.manifest.json
+  environment PATH=/Users/nickgonzales/Library/Python/3.9/bin:/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 90
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract speechloop_transform_v1
+  invocation_kind native-process
+  argv ${binary} transform ${input.path} ${output.dir} --model ${argument.whisper_model} --voice-model ${argument.voice_model} --compress --brief
+  input_binding artifact
+  output_discovery output.dir/speechloop-manifest.json
+  environment PATH=/Users/nickgonzales/Library/Python/3.9/bin:/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 180
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract layer_extract_v1
+  invocation_kind native-process
+  argv ${binary} pull-layer ${argument.model_path} --range 0:10 --out ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/artifact.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe structured-output
+  quality_probe json-schema
+
+contract layer_inspect_v1
+  invocation_kind native-process
+  argv ${binary} inspect ${argument.model_path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract capability_match_v1
+  invocation_kind native-process
+  argv ${binary} match ${argument.intent}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,BONFYRE_CAPABILITY_DB=capability.sqlite
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract index_build_v1
+  invocation_kind native-process
+  argv ${binary} build ${input.dir} --db ${output.dir}/index.sqlite
+  input_binding artifact
+  output_discovery stderr
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract query_scan_v1
+  invocation_kind native-process
+  argv ${binary} scan ${input.dir}
+  input_binding artifact
+  output_discovery stderr
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory output.dir
+  timeout_seconds 60
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract emit_html_v1
+  invocation_kind native-process
+  argv ${binary} ${input.dir} --format html --out ${output.dir}/deliverable.html
+  input_binding artifact
+  output_discovery output.dir/deliverable.html
+  environment PATH=/opt/homebrew/bin:/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract ledger_assess_v1
+  invocation_kind native-process
+  argv ${binary} assess ${input.path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract runtime_loop_v1
+  invocation_kind native-process
+  argv ${binary} loop 1 /bin/echo runtime-executed
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract runtime_doctor_v1
+  invocation_kind native-process
+  argv ${binary} doctor --json
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract swarm_selftest_v1
+  invocation_kind native-process
+  argv ${binary}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin,TMPDIR=/tmp
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract moq_selftest_v1
+  invocation_kind native-process
+  argv ${binary}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin,TMPDIR=/tmp
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract api_selftest_v1
+  invocation_kind native-process
+  argv ${binary}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin,TMPDIR=/tmp
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract proxy_status_v1
+  invocation_kind native-process
+  argv ${binary} status
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract detect_objects_v1
+  invocation_kind native-process
+  argv ${binary} --input ${input.path} --out ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/objects.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract weaviate_ingest_v1
+  invocation_kind native-process
+  argv ${binary} --emb ${input.path} --meta ${input.path} --out ${output.dir}/payload.json
+  input_binding artifact
+  output_discovery output.dir/status.json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract watch_once_v1
+  invocation_kind native-process
+  argv ${binary} ${input.dir} --pipeline pipeline --out ${output.dir} --once
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract pipeline_run_v1
+  invocation_kind native-process
+  argv ${binary} run ${input.path} --out ${output.dir} --type text
+  input_binding artifact
+  output_discovery stderr
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract run_recipe_execute_v1
+  invocation_kind native-process
+  argv ${binary} TESTRUN1 --input ${input.path} --out ${output.dir}
+  input_binding artifact
+  output_discovery output.dir/recipe.json
+  environment PATH=/usr/bin:/bin,BONFYRE_REPO_ROOT=/Users/nickgonzales/Documents/Bonfyre
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract cli_self_ontology_v1
+  invocation_kind native-process
+  argv ${binary} self ontology all
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract cli_precision_ontology_v1
+  invocation_kind native-process
+  argv ${binary} precision ontology
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract cli_status_v1
+  invocation_kind native-process
+  argv ${binary} status
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract sli_inspect_v1
+  invocation_kind native-process
+  argv ${binary} inspect --model ${input.path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract sae_synth_v1
+  invocation_kind native-process
+  argv ${binary} synth --out ${output.dir}/dict.bfsae --features 256 --hidden-dim 64
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract reason_start_v1
+  invocation_kind native-process
+  argv ${binary} start --prompt ${input.path} --session ${mission.id}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract physics_init_v1
+  invocation_kind native-process
+  argv ${binary} init ${input.path} --state ${output.dir}/state.bfps
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract orchestrate_status_v1
+  invocation_kind native-process
+  argv ${binary} status
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract net_run_v1
+  invocation_kind native-process
+  argv ${binary} run ${input.path}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract fpqx_self_align_v1
+  invocation_kind native-process
+  argv ${binary} align ${input.path} ${input.path} --out ${output.dir}
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract discipl_contracts_import_v1
+  invocation_kind native-process
+  argv ${binary} contracts import --root ${output.dir}
+  input_binding artifact
+  output_discovery stdout-json
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe json-schema
+
+contract leapfrog_validation_v1
+  invocation_kind native-process
+  argv ${binary} --data ${input.dir} --pack ${output.dir}/leapfrog.bfpk --bvh ${output.dir}/leapfrog.bfvh
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract violence_coupling_v1
+  invocation_kind native-process
+  argv ${binary} --data ${input.dir} --pack ${output.dir}/violence.bfpk --bvh ${output.dir}/violence.bfvh
+  input_binding artifact
+  output_discovery stdout
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 60
+  output_limit_bytes 4194304
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe artifact-integrity
+
+contract blocked_requires_service_v1
+  invocation_kind blocked
+  argv ${binary}
+  input_binding artifact
+  output_discovery namespace-state
+  environment PATH=/usr/bin:/bin
+  working_directory mission.dir
+  timeout_seconds 30
+  output_limit_bytes 1048576
+  retry_policy bounded:0
+  workload_probe output-artifact
+  quality_probe output-exists

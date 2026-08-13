@@ -1,0 +1,147 @@
+{
+  "schema_version": "aurekai.fork_surfaces.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "hard_forks": {
+    "status": "active-buildout",
+    "targets": [
+      {
+        "name": "IBC/Cosmos-style transport",
+        "category": "transport",
+        "depth": "hard",
+        "runtime_target": "observer+coprocessor"
+      },
+      {
+        "name": "LayerZero",
+        "category": "transport",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Axelar",
+        "category": "transport",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Wormhole",
+        "category": "transport",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Hyperlane",
+        "category": "transport",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Stargate",
+        "category": "transport",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "zkSync",
+        "category": "rollup-pipeline",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Starknet",
+        "category": "rollup-pipeline",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Arbitrum/Optimism-style pipelines",
+        "category": "rollup-pipeline",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Taiko/Scroll/Linea",
+        "category": "rollup-pipeline",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Uniswap v4 hooks",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "shim+coprocessor"
+      },
+      {
+        "name": "Aave",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Morpho",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Pendle",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Ethena",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "EigenLayer",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Maker/Sky",
+        "category": "financial-topology",
+        "depth": "hard",
+        "runtime_target": "coprocessor"
+      },
+      {
+        "name": "Celestia",
+        "category": "availability",
+        "depth": "hard",
+        "runtime_target": "observer+coprocessor"
+      },
+      {
+        "name": "Avail",
+        "category": "availability",
+        "depth": "hard",
+        "runtime_target": "observer+coprocessor"
+      },
+      {
+        "name": "EigenDA",
+        "category": "availability",
+        "depth": "hard",
+        "runtime_target": "observer+coprocessor"
+      }
+    ]
+  },
+  "soft_forks": {
+    "status": "active-buildout",
+    "targets": [
+      "n8n",
+      "LangGraph",
+      "AutoGPT",
+      "AutoGen",
+      "Ollama routing/proxy path",
+      "Mem0",
+      "Continue.dev via CI/editor path",
+      "Browser-Use",
+      "OpenHands",
+      "ComfyUI",
+      "GitHub Actions",
+      "VS Code",
+      "MCP surfaces"
+    ]
+  }
+}

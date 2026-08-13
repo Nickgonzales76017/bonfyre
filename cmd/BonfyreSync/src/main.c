@@ -7,32 +7,68 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "bonfyre.h"
 
 extern char **environ;
 
+static const char *layeros_binary(void) {
+    return "layeros/bin/bonfyre-layeros";
+}
+
+static int run_execvp(char *const argv[]) {
+    pid_t pid = fork();
+    if (pid < 0) {
+        perror("fork");
+        return 1;
+    }
+    if (pid == 0) {
+        execvp(argv[0], argv);
+        perror("execvp");
+        _exit(127);
+    }
+    int status = 0;
+    if (waitpid(pid, &status, 0) < 0) {
+        perror("waitpid");
+        return 1;
+    }
+    return WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+}
+
+static int delegate_layeros_sync(int argc, char **argv) {
+    char *exec_argv[16];
+    int n = 0;
+    exec_argv[n++] = (char *)layeros_binary();
+    const char *root = NULL;
+    for (int i = 2; i < argc - 1; i++) {
+        if (strcmp(argv[i], "--root") == 0) {
+            root = argv[i + 1];
+            break;
+        }
+    }
+    if (root) {
+        exec_argv[n++] = "--root";
+        exec_argv[n++] = (char *)root;
+    }
+    exec_argv[n++] = "sync";
+    exec_argv[n++] = "layer";
+    if (argc >= 3) exec_argv[n++] = argv[2];
+    for (int i = 3; i < argc; i++) {
+        if ((strcmp(argv[i], "--root") == 0 && i + 1 < argc)) {
+            i++;
+            continue;
+        }
+        exec_argv[n++] = argv[i];
+    }
+    exec_argv[n] = NULL;
+    return run_execvp(exec_argv);
+}
+
 static char *read_file(const char *path, long *size_out) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) {
-        perror("fopen");
-        return NULL;
-    }
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    if (size < 0) {
-        fclose(fp);
-        return NULL;
-    }
-    char *buffer = malloc((size_t)size + 1);
-    if (!buffer) {
-        fclose(fp);
-        return NULL;
-    }
-    fread(buffer, 1, (size_t)size, fp);
-    fclose(fp);
-    buffer[size] = '\0';
-    if (size_out) *size_out = size;
-    return buffer;
+    size_t sz = 0;
+    char *buf = bf_read_file(path, &sz);
+    if (!buf) perror("fopen");
+    if (size_out) *size_out = (long)sz;
+    return buf;
 }
 
 static int has_key(const char *json, const char *key) {
@@ -66,31 +102,48 @@ static int command_inspect_intake(const char *path) {
     char *json = read_file(path, &size);
     if (!json) return 1;
 
-    const char *required[] = {
+    const char *legacy_required[] = {
         "schemaVersion", "manifest", "sourceFile", "jobId", "jobSlug",
         "jobTitle", "fileName", "dataBase64", NULL
     };
-    int valid = 1;
-    for (int i = 0; required[i]; i++) {
-        if (!has_key(json, required[i])) {
-            valid = 0;
-        }
+    const char *canonical_required[] = {
+        "ingest_version", "source_file", "source_bytes", "detected_type",
+        "normalized_path", "normalized_bytes", "content_hash", "media_type",
+        "status", NULL
+    };
+    int legacy_valid = 1;
+    int canonical_valid = 1;
+    for (int i = 0; legacy_required[i]; i++) {
+        if (!has_key(json, legacy_required[i])) legacy_valid = 0;
     }
+    for (int i = 0; canonical_required[i]; i++) {
+        if (!has_key(json, canonical_required[i])) canonical_valid = 0;
+    }
+    int valid = legacy_valid || canonical_valid;
 
     char job_slug[256] = "";
     char job_title[256] = "";
     char file_name[256] = "";
+    char content_hash[128] = "";
+    char status[64] = "";
     extract_string_value(json, "jobSlug", job_slug, sizeof(job_slug));
     extract_string_value(json, "jobTitle", job_title, sizeof(job_title));
     extract_string_value(json, "fileName", file_name, sizeof(file_name));
+    if (!file_name[0])
+        extract_string_value(json, "source_file", file_name, sizeof(file_name));
+    extract_string_value(json, "content_hash", content_hash, sizeof(content_hash));
+    extract_string_value(json, "status", status, sizeof(status));
 
     printf("{\n");
     printf("  \"kind\": \"intake-package\",\n");
+    printf("  \"format\": \"%s\",\n", canonical_valid ? "bonfyre-intake-v1" : "legacy-intake");
     printf("  \"path\": \"%s\",\n", path);
     printf("  \"valid\": %s,\n", valid ? "true" : "false");
     printf("  \"jobSlug\": \"%s\",\n", job_slug);
     printf("  \"jobTitle\": \"%s\",\n", job_title);
     printf("  \"fileName\": \"%s\",\n", file_name);
+    printf("  \"contentHash\": \"%s\",\n", content_hash);
+    printf("  \"status\": \"%s\",\n", status);
     printf("  \"sizeBytes\": %ld\n", size);
     printf("}\n");
 
@@ -228,6 +281,10 @@ static int command_pull(const char *remote_url, const char *local_path) {
 int main(int argc, char **argv) {
     if (argc < 2) goto usage;
 
+    if (argc >= 3 && strcmp(argv[1], "layer") == 0) {
+        return delegate_layeros_sync(argc, argv);
+    }
+
     if (argc == 3 && strcmp(argv[1], "inspect-intake") == 0) {
         return command_inspect_intake(argv[2]);
     }
@@ -247,6 +304,7 @@ usage:
             "  bonfyre-sync inspect-intake <path>\n"
             "  bonfyre-sync inspect-status <path>\n"
             "  bonfyre-sync push <local.json> <remote-url>\n"
-            "  bonfyre-sync pull <remote-url> <local.json>\n");
+            "  bonfyre-sync pull <remote-url> <local.json>\n"
+            "  bonfyre-sync layer <artifact_id> [--manifest-only|--include-payload] [--root DIR]\n");
     return 1;
 }

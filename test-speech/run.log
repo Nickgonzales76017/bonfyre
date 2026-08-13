@@ -1,0 +1,251 @@
+══════════════════════════════════════════════════════════════════════
+BONFYRE INVESTIGATION PIPELINE
+══════════════════════════════════════════════════════════════════════
+
+Corpus:  test-speech/transcripts/*.txt
+Output:  test-speech/investigation
+
+══════════════════════════════════════════════════════════════════════
+PHASE 1: SYMBOLIC PROCESSING
+══════════════════════════════════════════════════════════════════════
+
+Using: BonfyreEntity, BonfyreCanon, BonfyreGraph (Python stubs)
+TODO: Replace with C binaries from /tmp/bonfyre-oss/build/
+
+======================================================================
+STEP 1a: Building Corpus Statistics
+======================================================================
+
+Processing 5 files for statistics...
+✓ Analyzed 162 unique capitalized words
+
+======================================================================
+STEP 1b: Entity Extraction (stub for BonfyreEntity)
+======================================================================
+
+Extracting entities with structural filtering...
+  Job - founder-01-pickfu-assumptions-full: 194 entities
+  Job - Demo Job: 2 entities
+  Job - Founder Sample - PickFu Assumptions: 95 entities
+  Job - Customer Sample - Gaurav Conversations Deep Clip: 109 entities
+  Job - Customer Sample - Gaurav Conversations: 22 entities
+
+✓ Extracted 422 entity mentions (after filtering)
+
+Top 10 entities after structural filtering:
+  So: 72
+  We: 24
+  Yeah,: 19
+  I'm: 17
+  You: 17
+  Yeah: 14
+  So,: 13
+  It's: 12
+  Like: 9
+  That's: 7
+
+✓ Saved to test-speech/investigation/symbolic/entities.json
+
+======================================================================
+STEP 2: Canonicalization (stub for BonfyreCanon)
+======================================================================
+
+✓ Canonicalized 117 variants → 116 canonical entities
+✓ Saved to test-speech/investigation/symbolic/canon.json
+
+======================================================================
+STEP 3: Graph Construction (stub for BonfyreGraph)
+======================================================================
+
+✓ Built graph: 116 nodes, 4199 edges
+✓ Saved to test-speech/investigation/symbolic/graph.json
+
+======================================================================
+SYMBOLIC PROCESSING COMPLETE
+======================================================================
+
+Output directory: test-speech/investigation/symbolic
+  entities.json  - 422 entity mentions
+  canon.json     - 116 canonical entities
+  graph.json     - 116 nodes, 4199 edges
+
+Next step:
+  python3 scripts/graph_to_claims.py --graph test-speech/investigation/symbolic/graph.json --memory-dir /tmp/memory
+
+══════════════════════════════════════════════════════════════════════
+PHASE 2: GRAPH → CLAIMS CONVERSION
+══════════════════════════════════════════════════════════════════════
+
+======================================================================
+GRAPH → CLAIMS BRIDGE
+======================================================================
+
+Loading graph: test-speech/investigation/symbolic/graph.json
+  → 116 nodes, 4199 edges
+
+Converting graph to claims...
+  → 4199 claims generated
+
+Storing in memory.db...
+✓ Stored 4199 claims (114 unique subjects) in test-speech/investigation/graphs/memory.db
+
+Writing claims.json...
+✓ Wrote 4199 claims to test-speech/investigation/graphs/claims.json
+
+======================================================================
+DONE - Claims ready for hypothesis discovery
+======================================================================
+
+Next step:
+  python3 scripts/hypothesis_discovery.py \
+    --memory-dir test-speech/investigation/graphs \
+    --max-hypotheses 5 \
+    --output report.json
+
+══════════════════════════════════════════════════════════════════════
+PHASE 3: AUTONOMOUS HYPOTHESIS DISCOVERY
+══════════════════════════════════════════════════════════════════════
+
+
+══════════════════════════════════════════════════════════════════════
+PHASE 17: AUTONOMOUS HYPOTHESIS DISCOVERY
+══════════════════════════════════════════════════════════════════════
+
+[1/4] Detecting signals...
+  → Found 20 strong signals
+    1. cooccurrence_anomaly      | 1.00 | High co-occurrence: 'Absolutely' and 'Along' (6050
+    2. cooccurrence_anomaly      | 1.00 | High co-occurrence: 'Absolutely' and 'Amazon' (594
+    3. cooccurrence_anomaly      | 1.00 | High co-occurrence: 'Absolutely' and 'Amazon Prime
+    4. cooccurrence_anomaly      | 1.00 | High co-occurrence: 'Absolutely' and 'Angry Orange
+    5. cooccurrence_anomaly      | 1.00 | High co-occurrence: 'Along' and 'Amazon' (5712 tim
+
+[2/4] Generating hypotheses...
+  → Generated 20 candidate hypotheses
+  → After deduplication: 10 unique hypotheses
+  → Top 10 by investigation score:
+    1. alias_same_Absolutely_Along                   | score: 0.250
+    2. alias_same_Absolutely_Amazon                  | score: 0.250
+    3. alias_same_Absolutely_Amazon_Prime            | score: 0.250
+    4. alias_same_Absolutely_Angry_Orange            | score: 0.250
+    5. alias_same_Along_Amazon                       | score: 0.250
+
+[3/4] Testing top hypotheses...
+
+  Testing single hypothesis: alias_same_Absolutely_Along
+
+  Testing single hypothesis: alias_same_Absolutely_Amazon
+
+  Testing single hypothesis: alias_same_Absolutely_Amazon_Prime
+
+  Testing single hypothesis: alias_same_Absolutely_Angry_Orange
+
+  Testing single hypothesis: alias_same_Along_Amazon
+
+  Testing single hypothesis: alias_same_Absolutely_B2B
+
+  Testing single hypothesis: alias_same_Along_Amazon_Prime
+
+  Testing single hypothesis: alias_same_Amazon_Amazon_Prime
+
+  Testing single hypothesis: alias_same_Absolutely_B2C
+
+  Testing single hypothesis: alias_same_Along_Angry_Orange
+
+[4/4] Building report...
+
+══════════════════════════════════════════════════════════════════════
+DISCOVERY COMPLETE
+══════════════════════════════════════════════════════════════════════
+  Signals detected:      20
+  Hypotheses generated:  10
+  After deduplication:   10
+  Hypotheses tested:     10
+
+  Top 3 by investigation score:
+    1. alias_same_Absolutely_Along                  
+       investigation_score: 0.250
+       (impact=1.00, leverage=1.00, cost=2.0)
+    2. alias_same_Absolutely_Amazon                 
+       investigation_score: 0.250
+       (impact=1.00, leverage=1.00, cost=2.0)
+    3. alias_same_Absolutely_Amazon_Prime           
+       investigation_score: 0.250
+       (impact=1.00, leverage=1.00, cost=2.0)
+══════════════════════════════════════════════════════════════════════
+
+✓ Report saved to test-speech/investigation/reports/discovery.json
+
+══════════════════════════════════════════════════════════════════════
+PHASE 4: ADVERSARIAL HYPOTHESIS TESTING
+══════════════════════════════════════════════════════════════════════
+
+Testing top hypotheses from discovery...
+
+Testing 5 top hypotheses via Phase 16.5...
+
+[1/5] Testing: alias_same_Bush_Congress (score: 0.250)
+[2/5] Testing: alias_same_Abidal_Anelka (score: 0.250)
+[3/5] Testing: alias_same_Abidal_Ben_Arfa (score: 0.250)
+[4/5] Testing: alias_same_Anelka_Ben_Arfa (score: 0.250)
+[5/5] Testing: alias_same_Abidal_Benzema (score: 0.250)
+
+✓ Tested 5 hypotheses
+✓ Saved to investigation_out/reports/tested_hypotheses.json
+
+
+══════════════════════════════════════════════════════════════════════
+PHASE 5: CONVERGENCE + ORTHOGONAL PRESSURE
+══════════════════════════════════════════════════════════════════════
+
+Classifying claims into stable/fragile/conflict buckets...
+
+Classification results:
+  Stable:    46557 claims (strength > 0.8)
+  Fragile:   0 claims (0.5 < strength ≤ 0.8)
+  Conflicts: 0 claims (strength ≤ 0.5)
+
+✓ Saved stable_graph.json, fragile_graph.json, conflict_graph.json
+
+
+══════════════════════════════════════════════════════════════════════
+PHASE 6: STRUCTURAL INTERVENTION (Hot Zone Resolution)
+══════════════════════════════════════════════════════════════════════
+
+Checking for unresolved hot zones...
+
+✓ No conflicts detected - investigation converged successfully
+
+
+══════════════════════════════════════════════════════════════════════
+INVESTIGATION COMPLETE
+══════════════════════════════════════════════════════════════════════
+
+Output structure:
+  test-speech/investigation/
+    symbolic/
+      entities.json       - Entity extraction
+      canon.json          - Canonicalized entities
+      graph.json          - Entity graph
+    graphs/
+      memory.db           - Claims database
+      claims.json         - Claims (JSON format)
+      stable_graph.json   - High-confidence claims
+      fragile_graph.json  - Medium-confidence claims
+      conflict_graph.json - Low-confidence / conflicting claims
+    reports/
+      discovery.json      - Hypothesis discovery results
+      tested_hypotheses.json - Adversarial test results
+    interventions/
+      metadata.json       - Intervention recommendations
+
+Key metrics:
+  Entities:     2753
+  Edges:        46557
+  Signals:      20
+  Hypotheses:   10
+  Stable:       46557
+  Fragile:      0
+  Conflicts:    0
+
+✓ Investigation pipeline complete
+

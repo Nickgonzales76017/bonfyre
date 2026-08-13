@@ -84,13 +84,14 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <a href="index.html" class="nav-brand">🔥 Bonfyre</a>
     <div style="display:flex;gap:4px">
       <a href="#what-it-replaces">What It Replaces</a>
+      <a href="#upgrades">What's New</a>
       <a href="#solutions">Solutions</a>
       <a href="#hardware">Does My Hardware Work?</a>
       <a href="#use-cases">Use Cases</a>
       <a href="#wordpress">WordPress</a>
       <a href="#recipes">Recipes</a>
       <a href="#apps">Live Apps</a>
-      <a href="docs.html#relay" style="color:#b392f0">MoQ Relay →</a>
+      <a href="docs.html#relay" style="color:#b392f0">Realtime Relay →</a>
       <a href="docs.html" style="color:var(--green)">Technical Docs →</a>
     </div>
   </div>
@@ -109,8 +110,8 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       </div>
       <div style="background:var(--surface);border:2px solid var(--green);border-radius:10px;padding:18px 28px;flex:1;min-width:260px;text-align:left">
         <div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--green);font-weight:700;margin-bottom:6px">A Complete Backend In 2 MB</div>
-        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">50 tiny programs that replace your entire tech stack.</div>
-        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Transcription · search · auth · payments · file packaging · content management — all local, all $0/month.</div>
+        <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:6px">53 binaries around a 26-module runtime that stretch from local AI to delivery.</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Transcription · search · auth · payments · proxy · orchestration · telephony · relay · swarm delivery · verified narration — all local, all $0/month.</div>
       </div>
     </div>
 
@@ -119,17 +120,101 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:var(--green)">100% private</span><span style="font-size:.85rem;color:var(--text-dim)">Data never leaves</span></div>
       <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">20</span><span style="font-size:.85rem;color:var(--text-dim)">Live apps running now</span></div>
       <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">15</span><span style="font-size:.85rem;color:var(--text-dim)"><a href="https://huggingface.co/NICKO" style="color:inherit">AI models published</a></span></div>
-      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:#b392f0">Relay</span><span style="font-size:.85rem;color:var(--text-dim)">MoQ + mesh + RL</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700">26</span><span style="font-size:.85rem;color:var(--text-dim)">Shared library modules</span></div>
+      <div style="text-align:center"><span style="display:block;font-size:2rem;font-weight:700;color:#b392f0">Relay</span><span style="font-size:.85rem;color:var(--text-dim)">Private realtime media in C</span></div>
     </div>
 
     <div class="btn-row">
-      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">View on GitHub</a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary">View on GitHub</a>
       <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" class="btn btn-outline">See a live proof →</a>
       <a href="#recipes" class="btn btn-outline">Find your industry ↓</a>
       <a href="#apps" class="btn btn-outline">20 live apps ↓</a>
     </div>
   </div>
 </header>
+
+<!-- Public-source proof banner -->
+<section style="padding:40px 0;background:linear-gradient(135deg,rgba(63,185,80,.06) 0%,rgba(13,17,23,1) 60%)">
+  <div class="container">
+    <h2 style="text-align:center">What's under the hood</h2>
+    <p class="subtitle" style="text-align:center">This isn't a wrapper around someone else's tooling. Every piece is built from scratch in C.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:1040px;margin:0 auto 32px">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:4px">51</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Static C binaries</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Each is 20–60 KB (except the quantizer at 227 KB). No runtime dependencies. No containers. No Node.js. Just copy the binary and run it.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--green);margin-bottom:4px">26</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Shared library modules</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Crypto, compression, threading, JSON parsing, Unicode, networking, config management, containers, CLI — all in one 180 KB library. Zero external dependencies beyond libc.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--blue);margin-bottom:4px">~2.1 MB</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Total disk footprint</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">The entire backend — auth, payments, search, transcription, CMS, API gateway, compression, pipeline engine — fits in less space than a single JPEG photo.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:4px">5–8 ms</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Per pipeline stage</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Audio in, invoice out. Each processing stage completes in single-digit milliseconds. Re-runs skip unchanged stages entirely via content-addressed caching.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--green);margin-bottom:4px">4×</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">AI model compression</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">3-bit quantization with 0.9999+ cosine similarity. AI models that required $10K cloud GPUs now run on a $500 laptop. 15 models published on HuggingFace.</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px">
+        <div style="font-size:1.6rem;font-weight:800;color:var(--blue);margin-bottom:4px">167</div>
+        <div style="font-size:.9rem;font-weight:600;color:var(--text);margin-bottom:6px">Tests pass</div>
+        <div style="font-size:.82rem;color:var(--text-dim);line-height:1.5">Full test suite, all reproducible from source. Every benchmark number on this site comes from scripts in the repo that you can run yourself.</div>
+      </div>
+    </div>
+    <div style="max-width:740px;margin:0 auto;text-align:center">
+      <p style="font-size:.88rem;color:var(--text-dim);line-height:1.7">Bonfyre's binaries are organized into four layers: <strong style="color:var(--text)">Substrate</strong> (ingest, normalize, segment), <strong style="color:var(--text)">Transform</strong> (transcribe, summarize, score, embed), <strong style="color:var(--text)">Surface</strong> (format, render, deliver), and <strong style="color:var(--text)">Value</strong> (price, invoice, pay, prove). Each operator declares whether it's cacheable, reversible, and idempotent — so the pipeline can parallelize, skip, and retry safely.</p>
+    </div>
+  </div>
+</section>
+
+<section id="upgrades">
+  <div class="container">
+    <h2>What changed since the last public push</h2>
+    <p class="subtitle">The stack is not just bigger. The shape of the product has changed in useful ways.</p>
+    <div class="killer-grid">
+      <div class="killer-card">
+        <div class="vs">Network observation became a product surface</div>
+        <div class="ratio">capture → recipe</div>
+        <div class="detail">BonfyreWire now fingerprints devices, emits canonical artifacts, and generates stitch-compatible recipes from owned or authorized captures. It is not just packet accounting anymore.</div>
+      </div>
+      <div class="killer-card">
+        <div class="vs">CLI became more operationally truthful</div>
+        <div class="ratio">health-aware</div>
+        <div class="detail">`bonfyre list --health`, `bonfyre doctor sync-subcommands`, workflow listing, recipe browsing, and layer registry inspection now make the runtime easier to inspect and trust after updates.</div>
+      </div>
+      <div class="killer-card">
+        <div class="vs">Speech moved from feature to system</div>
+        <div class="ratio">stacked</div>
+        <div class="detail">The repo now carries a deeper speech investigation story: architecture, production integration, quickstart, hypothesis engine, and discovery pipeline work, not just a standalone transcription binary.</div>
+      </div>
+      <div class="killer-card">
+        <div class="vs">Pages and runtime are converging</div>
+        <div class="ratio">repo-aligned</div>
+        <div class="detail">The public docs, Pages workflows, and runtime packaging are being pointed at `bonfyre-oss` so the repo, the site, and the automation describe the same product instead of different snapshots.</div>
+      </div>
+    </div>
+    <div style="max-width:780px;margin:24px auto 0;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 24px">
+      <div style="font-size:.74rem;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);font-weight:700;margin-bottom:10px">What That Means In Practice</div>
+      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7;margin-bottom:14px">A week ago the public story was still mostly compression, transcription, and backend footprint. The newer repo shape adds a more operational Bonfyre: captures become artifacts, artifacts become recipes, recipes become execution plans, and the CLI now exposes more of the health and registry state needed to work with that system confidently.</p>
+      <div style="font-family:var(--mono);font-size:.8rem;color:var(--text-dim);line-height:1.9;overflow:auto">
+        bonfyre wire ingest-pcap capture.pcap --dumb-device --root layeros/state<br>
+        bonfyre wire probe &lt;capture_id&gt; --root layeros/state<br>
+        bonfyre wire artifacts &lt;capture_id&gt; --root layeros/state<br>
+        bonfyre wire recipe &lt;capture_id&gt; --root layeros/state &gt; recipe.json<br>
+        bonfyre stitch plan recipe.json
+      </div>
+    </div>
+  </div>
+</section>
 
 <!-- Public-source proof banner -->
 <section style="padding:40px 0;background:linear-gradient(135deg,rgba(249,115,22,.06) 0%,rgba(13,17,23,1) 60%)">
@@ -161,37 +246,37 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="killer-card">
         <div class="vs">vs Strapi (content management)</div>
         <div class="ratio">1,742× smaller</div>
-        <div class="detail">500 MB install → 287 KB. 400 npm packages → 0. Cold start 2 minutes → instant.</div>
+        <div class="detail">500 MB install → 287 KB binary. 400 npm packages → 0 dependencies. Cold start 2 min → instant. Dynamic schemas, token auth, REST API, full-text search — backed by a 26-module C runtime with its own SIMD JSON parser, BLAKE2b crypto, LZ4 compression, and work-stealing thread pool.</div>
       </div>
       <div class="killer-card">
         <div class="vs">vs Deepgram / OpenAI (transcription)</div>
         <div class="ratio">$0 / minute</div>
-        <div class="detail">Cloud transcription at $0.006/min adds up fast. Bonfyre runs locally with visible quality metrics. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" style="color:var(--accent)">See live proof →</a></div>
+        <div class="detail">Cloud transcription at $0.006/min adds up fast. Bonfyre runs HCP-enhanced Whisper locally: speaker segmentation, filler detection, hallucination filtering via Hyperscan pattern fusion (>1 GB/s), and quality scoring with OpenSMILE eGeMAPSv02 (88 audio features). Visible metrics, not a black box. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/" style="color:var(--accent)">See live proof →</a></div>
       </div>
       <div class="killer-card">
         <div class="vs">vs Pinecone (search)</div>
         <div class="ratio">$0 / month</div>
-        <div class="detail">$70–250/mo hosted search → local search in 5 milliseconds. Runs on your machine.</div>
+        <div class="detail">$70–250/mo hosted vector search → local NEON SIMD cosine similarity in 5 ms. Embeddings stored in zero-copy LMDB (pointer casts into mmap — no deserialization). BM25 text ranking for hybrid results. Runs on your machine, scales to millions of documents.</div>
       </div>
       <div class="killer-card">
         <div class="vs">vs Twilio (phone)</div>
         <div class="ratio">No per-call billing</div>
-        <div class="detail">SaaS vendor lock-in → local telephony adapter. Call routing, IVR, no recurring fees.</div>
+        <div class="detail">SaaS vendor lock-in → local communications edge. bonfyre-tel handles calls, SMS, MMS, routing, and identity/event state; bonfyre-moq covers browser-native live media; fountain-coded swarm delivery helps move artifacts across unreliable links. No recurring fees, no per-minute markup.</div>
       </div>
       <div class="killer-card">
         <div class="vs">vs full SaaS stack</div>
         <div class="ratio">$0 / month total</div>
-        <div class="detail">Auth + billing + gateway + CMS + search: typically $2,500/mo → Bonfyre does it all for free.</div>
+        <div class="detail">Auth + billing + API gateway + CMS + vector search + OpenAI-compatible proxy + local orchestration + phone edge + relay: typically multiple vendors and glue services. Bonfyre keeps those surfaces in one stack, backed by the same shared runtime, for ~2.1 MB on disk.</div>
       </div>
       <div class="killer-card" style="border-color:rgba(249,115,22,.4)">
         <div class="vs">vs cloud AI APIs</div>
         <div class="ratio">100% private</div>
-        <div class="detail">Your data never leaves your device. No OpenAI API key needed. Works offline.</div>
+        <div class="detail">Your data never leaves your device. You can still point existing AI clients at a local OpenAI-compatible endpoint through bonfyre-proxy, but the work stays on your hardware and can run offline when the path allows it.</div>
       </div>
       <div class="killer-card" style="border-color:rgba(179,146,240,.5)">
         <div class="vs">vs LiveKit / Twilio Media (real-time relay)</div>
         <div class="ratio" style="color:#b392f0">$0 / stream</div>
-        <div class="detail">bonfyre-moq is a pure C MoQ/WebTransport relay. No SaaS fees, no Node.js runtime, no per-stream billing. Self-tunes via RL, meshes with peers via gossip, elects a consensus leader automatically. <a href="docs.html#relay" style="color:#b392f0">Details →</a></div>
+        <div class="detail">bonfyre-moq is a pure C WebTransport/MoQ relay for private realtime audio and media fan-out. No SaaS relay bill, no Node.js in production, no per-stream markup. It fits the same local-backend story as the rest of Bonfyre instead of pushing you into a separate realtime vendor stack. <a href="docs.html#relay" style="color:#b392f0">Details →</a></div>
       </div>
     </div>
   </div>
@@ -206,19 +291,19 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">⚖️ Legal: Private Client Calls → Organized Briefs</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record a client intake call. Bonfyre transcribes it privately on your machine, summarizes the discussion, identifies key issues, and packages everything into a structured brief. Your client's data never touches the cloud.</p>
+        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record a client intake call. Bonfyre transcribes it locally (HCP Whisper with speaker segmentation), identifies key issues via BM25 ranking, scores transcript quality, and packages everything into a structured brief with content-addressed artifacts. Your client's data never touches the cloud — BLAKE2b hashing proves provenance.</p>
         <div style="font-size:.78rem;color:var(--green)">Previously required: $400/month in cloud APIs</div>
       </div>
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🏥 Healthcare: Local SOAP Notes</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Patient conversations transcribed and summarized into structured SOAP notes — all on-premise. HIPAA-compliant by default because nothing leaves the building. An 8 GB device runs the entire stack.</p>
+        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Patient conversations transcribed and summarized into structured SOAP notes — all on-premise. HIPAA-compliant by default because nothing leaves the building. XSalsa20-Poly1305 encryption at rest, Ed25519 signing for audit trails. An 8 GB device runs the entire stack: transcription, summarization, quality scoring, and delivery.</p>
         <div style="font-size:.78rem;color:var(--green)">Previously required: Cloud subscription + compliance overhead</div>
       </div>
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🎙️ Podcast → Monetized Asset</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Drop in a raw episode → get a transcript, show notes, social media clips, and a checkout page — all generated locally in under 5 minutes. No API costs. No monthly subscriptions.</p>
+        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Drop in a raw episode → get a transcript (speaker-segmented), show notes, social media clips, and a checkout page with dynamic pricing — all generated locally in under 5 minutes. The pipeline: bonfyre-intake → bonfyre-transcribe → bonfyre-summarize → bonfyre-format → bonfyre-offer. Each stage is content-addressed; re-runs skip unchanged work.</p>
         <div style="font-size:.78rem;color:var(--green)">Previously required: GPT-4 API + Descript + manual work</div>
       </div>
 
@@ -230,7 +315,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
         <div style="font-size:1rem;font-weight:700;color:var(--text);margin-bottom:8px">🌍 Field Research: Record → Archive → Search</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record interviews in the field with no internet. Bonfyre transcribes on-device, creates searchable archives, and publishes a static website — all from a MacBook. Multi-lingual support included.</p>
+        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">Record interviews in the field with no internet. Bonfyre transcribes on-device, embeds documents for SIMD vector search, creates searchable archives with zero-copy LMDB caching, and publishes a static site — all from a MacBook. Fountain codes handle lossy syncs back to base.</p>
         <div style="font-size:.78rem;color:var(--green)">Previously required: Cloud transcription + database hosting</div>
       </div>
 
@@ -253,9 +338,9 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       </div>
 
       <div style="background:var(--surface);border:2px solid rgba(179,146,240,.4);border-radius:10px;padding:24px;transition:border-color .15s" onmouseover="this.style.borderColor='#b392f0'" onmouseout="this.style.borderColor='rgba(179,146,240,.4)'">
-        <div style="font-size:1rem;font-weight:700;color:#b392f0;margin-bottom:8px">📡 Real-Time AI Relay: Self-Tuning + Distributed</div>
-        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">bonfyre-moq is a pure C MoQ/WebTransport relay that runs inline AI inference on every media object, tunes its own buffer and routing policy via a live RL agent, discovers peers via gossip multicast, and elects a consensus leader for distributed announce/subscribe. No Node.js. No SaaS relay fees.</p>
-        <div style="font-size:.78rem;color:var(--green)">Previously required: LiveKit cloud + media SaaS at per-stream cost</div>
+        <div style="font-size:1rem;font-weight:700;color:#b392f0;margin-bottom:8px">Real-Time Media, Still In The Bonfyre Style</div>
+        <p style="font-size:.85rem;color:var(--text-dim);line-height:1.5;margin-bottom:10px">bonfyre-moq is the realtime version of the same idea as the rest of Bonfyre: a small C binary you can run yourself. It terminates WebTransport, speaks MoQ, records stream events to SQLite, and gives you a private relay primitive for live audio, agent calls, and browser-native media flows.</p>
+        <div style="font-size:.78rem;color:var(--green)">Previously required: LiveKit/Twilio-style media infrastructure or a custom relay team</div>
         <div style="margin-top:10px"><a href="docs.html#relay" style="color:#b392f0;font-size:.82rem">Technical details →</a></div>
       </div>
 
@@ -263,7 +348,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
     <div style="max-width:680px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px 28px;text-align:center">
       <div style="font-size:.95rem;font-weight:600;color:var(--text);margin-bottom:8px">The common pattern</div>
-      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7">Data comes in (audio, files, notes) → Bonfyre processes it locally → organized output comes out (summaries, briefs, archives, checkout pages). No cloud. No API keys. No monthly bills.</p>
+      <p style="font-size:.9rem;color:var(--text-dim);line-height:1.7">Calls, files, notes, recordings, repos, and live streams come in → Bonfyre processes them locally → organized output comes out as summaries, briefs, archives, pages, audio, search surfaces, and delivery flows. No cloud dependency. No recurring vendor chain.</p>
     </div>
   </div>
 </section>
@@ -320,43 +405,51 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
     <div class="use-cases">
       <div class="use-case">
         <h3>Content Management</h3>
-        <p>Replace bloated CMS platforms with a tiny, fast content engine. Dynamic data, search, and auth in one package. <a href="https://github.com/Nickgonzales76017/bonfyre-cms">Repo →</a></p>
+        <p>Replace bloated CMS platforms with a 287 KB binary. Dynamic schemas, token auth, REST API, full-text search — 1,742× smaller than Strapi with zero npm dependencies. <a href="https://github.com/Nickgonzales76017/bonfyre-cms">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>Local Transcription</h3>
-        <p>Transcribe audio and video locally — no cloud, no API keys, no per-minute charges. See quality metrics and proof artifacts. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">Live proof →</a> <a href="https://github.com/Nickgonzales76017/bonfyre-intake">Repo →</a></p>
+        <p>HCP-enhanced Whisper runs locally: speaker segmentation, filler/hallucination filtering, quality scoring (88 audio features via eGeMAPSv02). No cloud, no API keys, no per-minute charges. <a href="https://nickgonzales76017.github.io/pages-shift-handoff/">Live proof →</a> <a href="https://github.com/Nickgonzales76017/bonfyre-intake">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>Audio → Invoice Pipeline</h3>
-        <p>Drop in audio. Get a transcript, summary, quality score, pricing, and packaged deliverable — in one step. <a href="https://github.com/Nickgonzales76017/bonfyre-pipeline">Repo →</a></p>
+        <p>Drop in audio → transcript → summary → quality score → pricing → packaged deliverable. 5–8 ms per stage. Content-addressed caching skips unchanged stages on re-runs. <a href="https://github.com/Nickgonzales76017/bonfyre-pipeline">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>Smart Search</h3>
-        <p>Search your documents by meaning, not just keywords. Replace expensive hosted search with local, instant results. <a href="https://github.com/Nickgonzales76017/bonfyre-embed">Repo →</a></p>
+        <p>NEON SIMD cosine similarity + BM25 text ranking. Zero-copy LMDB storage (pointer casts into mmap). Replace $250/mo Pinecone with local 5 ms queries. <a href="https://github.com/Nickgonzales76017/bonfyre-embed">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>Self-Hosted Backend</h3>
-        <p>Auth, payments, metering, API keys, rate limiting, telephony — composable pieces that replace your whole cloud stack. <a href="https://github.com/Nickgonzales76017/bonfyre">Repo →</a></p>
+        <p>Auth, metering, API gateway, rate limiting, telephony, proxy, orchestration, work-stealing thread pools, compression, config, and CLI surfaces — all backed by the same shared runtime instead of a pile of separate services. <a href="https://github.com/Nickgonzales76017/bonfyre">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>AI Model Compression</h3>
-        <p>Shrink any AI model ~4× so it runs on cheaper hardware. 15 models already published on <a href="https://huggingface.co/NICKO">HuggingFace</a>. <a href="https://github.com/Nickgonzales76017/bonfyre-oss">Repo →</a></p>
+        <p>3-bit quantization via E8 lattice snap + μ-law warp + 16D RVQ. Cosine 0.9999+. 15 models published on <a href="https://huggingface.co/NICKO">HuggingFace</a>. Run on a $500 laptop what used to require a $10K GPU. <a href="https://github.com/Nickgonzales76017/bonfyre-oss">Repo →</a></p>
       </div>
       <div class="use-case">
         <h3>OpenAI Drop-In Replacement</h3>
-        <p>Already using OpenAI's API? Point your code at Bonfyre instead. Same endpoints, local processing, $0 cost.</p>
+        <p>53 KB binary. Set OPENAI_API_BASE=http://localhost:8787. Same endpoints, local processing, $0 cost. Good when you want existing tools to keep working while Bonfyre handles transcription, briefing, and local model-facing flows underneath.</p>
+      </div>
+      <div class="use-case">
+        <h3>Machine-Only Orchestration</h3>
+        <p>bonfyre-orchestrate is not a chat wrapper. It is a planner layer that scores pathways, stores policy memory, and decides when extra Bonfyre blocks like narrate, render, emit, or pack should be used to improve the result.</p>
       </div>
       <div class="use-case">
         <h3>Long-Context AI</h3>
-        <p>Process entire 90-minute lectures or long documents in a single AI pass — 4× more context than before in the same hardware budget.</p>
+        <p>KV cache compression: 4× more context tokens in the same VRAM. 9 optimization passes. Works with both nn.Linear and FPQ layers. Process entire 90-minute lectures in a single pass.</p>
+      </div>
+      <div class="use-case">
+        <h3>Verified Narration</h3>
+        <p>bonfyre-narrate turns briefs, updates, and changelogs into audio with inline feature extraction, fidelity scoring, and refinement. It is not just “TTS added later” — it is a proof-minded output layer in the same stack.</p>
       </div>
       <div class="use-case" style="border-color:rgba(179,146,240,.4)">
-        <h3 style="color:#b392f0">Self-Tuning Real-Time Relay</h3>
-        <p>Run a private WebTransport/MoQ relay that scores every media object with inline AI, auto-tunes routing via RL, and forms a gossip mesh with other nodes. No cloud. No per-stream fee. <a href="docs.html#relay">Docs →</a></p>
+        <h3 style="color:#b392f0">Private Realtime Relay</h3>
+        <p>Run a private WebTransport/MoQ relay in C for browser-native audio, live agent sessions, and local media fan-out. Same Bonfyre values: local-first, low overhead, SQLite logs, no recurring relay vendor tax. <a href="docs.html#relay">Docs →</a></p>
       </div>
       <div class="use-case" style="border-color:rgba(88,166,255,.4)">
-        <h3 style="color:var(--blue)">Distributed Consensus Routing</h3>
-        <p>Run multiple bonfyre-moq relays that automatically elect a leader via Raft-style consensus and distribute MoQ announce/subscribe traffic without a central broker.</p>
+        <h3 style="color:var(--blue)">Communications And Delivery</h3>
+        <p>Use SIP where it fits, MoQ where it fits, and swarm delivery where it fits. Bonfyre now has a broader transport story: telephony, browser-native relay, QUIC-aware artifact movement, and metered peer distribution in one family.</p>
       </div>
     </div>
   </div>
@@ -405,7 +498,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
       <div class="wp-sprawl-col clean">
         <h4>Bonfyre</h4>
         <ul>
-          <li>50 tools — $0/month</li>
+          <li>53 binaries in the stack + 26-module runtime — $0/month</li>
           <li>~2.1 MB total on disk</li>
           <li>Auth + billing + metering</li>
           <li>Local transcription</li>
@@ -602,12 +695,31 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 </section>
 
 <!-- CTA -->
+  
+  <!-- Recent additions (content-only) -->
+  <section id="recent-additions" style="padding:40px 0">
+    <div class="container">
+      <h2>Recent additions</h2>
+      <p class="subtitle">Newer runtime pieces and outward-facing surfaces, summarized without turning this page into release notes.</p>
+      <div class="killer-grid" style="margin-top:16px">
+        <div class="killer-card">
+          <div class="vs">Runtime additions</div>
+          <div class="detail">Reactor, hot-load stages, coroutine pipeline flow, zero-copy cache + manifests, SIMD JSON and UTF-8, DNS, logging, mmap, MessagePack, LZ4, Bloom dedup, and the newer fountain/swarm path.</div>
+        </div>
+        <div class="killer-card">
+          <div class="vs">Newer product surfaces</div>
+          <div class="detail">bonfyre-proxy, bonfyre-orchestrate, bonfyre-tel, bonfyre-moq, bonfyre-swarm, bonfyre-narrate, bonfyre-quant, and bonfyre-kvcache broadened the stack beyond “transcribe and summarize.”</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 <section style="text-align:center;padding:80px 0">
   <div class="container">
     <h2>Open source. MIT licensed. $0/month.</h2>
-    <p class="subtitle">Two products. One stack. Your data stays yours.</p>
+    <p class="subtitle">53 binaries in the stack. 26 shared library modules. Pages, proxy, orchestration, relay, and delivery still keep the same local-first shape.</p>
     <div class="btn-row">
-      <a href="https://github.com/Nickgonzales76017/bonfyre" class="btn btn-primary">⭐ Star on GitHub</a>
+      <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary">⭐ Star on GitHub</a>
       <a href="https://github.com/Nickgonzales76017/bonfyre-oss" class="btn btn-primary" style="background:var(--green)">⭐ Star bonfyre-oss</a>
       <a href="https://huggingface.co/NICKO" class="btn btn-outline">HuggingFace models</a>
       <a href="docs.html" class="btn btn-outline" style="border-color:var(--green);color:var(--green)">Technical docs →</a>
@@ -617,7 +729,7 @@ footer a{color:var(--text-dim)}footer a:hover{color:var(--text)}
 
 <footer>
   <div class="container">
-    <p>Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> · <a href="https://github.com/Nickgonzales76017/bonfyre">GitHub (stack)</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub (FPQ)</a> · <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">MIT License</a> · <a href="docs.html">Technical Docs</a></p>
+    <p>Made by <a href="https://nickgonzales76017.github.io">Nick Gonzales</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss">GitHub</a> · <a href="https://github.com/Nickgonzales76017/bonfyre-oss/blob/main/LICENSE">MIT License</a> · <a href="docs.html">Technical Docs</a></p>
     <p style="margin-top:8px"><a href="#" style="color:var(--text-dim);font-size:.85rem">↑ Back to top</a></p>
   </div>
 </footer>

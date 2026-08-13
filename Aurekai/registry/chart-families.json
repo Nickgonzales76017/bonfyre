@@ -1,0 +1,102 @@
+{
+  "schema_version": "aurekai.chart_families.v1",
+  "updated_at": "2026-05-07T00:00:00.000Z",
+  "families": [
+    {
+      "id": "generic",
+      "domain": "general",
+      "residual_semantics": "generalized deformation",
+      "default_policy_family": "finality"
+    },
+    {
+      "id": "bridge_packet",
+      "domain": "transport",
+      "residual_semantics": "packet continuity and ordering drift",
+      "default_policy_family": "settlement"
+    },
+    {
+      "id": "oracle_round",
+      "domain": "attestation",
+      "residual_semantics": "round drift and staleness",
+      "default_policy_family": "oracle"
+    },
+    {
+      "id": "execution_batch",
+      "domain": "execution",
+      "residual_semantics": "batch execution divergence",
+      "default_policy_family": "finality"
+    },
+    {
+      "id": "execution_pipeline",
+      "domain": "execution",
+      "residual_semantics": "cross-stage execution continuity drift",
+      "default_policy_family": "pipeline"
+    },
+    {
+      "id": "availability_root",
+      "domain": "availability",
+      "residual_semantics": "publication and retrieval divergence",
+      "default_policy_family": "availability"
+    },
+    {
+      "id": "liquidity_topology",
+      "domain": "financial",
+      "residual_semantics": "liquidity graph deformation",
+      "default_policy_family": "liquidity"
+    },
+    {
+      "id": "collateral_graph",
+      "domain": "financial",
+      "residual_semantics": "collateralization graph stress",
+      "default_policy_family": "collateral"
+    },
+    {
+      "id": "yield_curve",
+      "domain": "financial",
+      "residual_semantics": "maturity and rate surface drift",
+      "default_policy_family": "liquidity"
+    },
+    {
+      "id": "restaking_topology",
+      "domain": "restaking",
+      "residual_semantics": "delegation and slash risk deformation",
+      "default_policy_family": "restaking"
+    },
+    {
+      "id": "governance_state",
+      "domain": "governance",
+      "residual_semantics": "vote and quorum transition drift",
+      "default_policy_family": "governance"
+    },
+    {
+      "id": "identity_claim",
+      "domain": "identity",
+      "residual_semantics": "privacy-preserving claim deviation",
+      "default_policy_family": "identity"
+    },
+    {
+      "id": "fulfillment_state",
+      "domain": "commerce",
+      "residual_semantics": "delivery and SLA continuity drift",
+      "default_policy_family": "fulfillment"
+    },
+    {
+      "id": "workflow_state",
+      "domain": "workflow",
+      "residual_semantics": "step-to-step control flow deformation",
+      "default_policy_family": "workflow"
+    },
+    {
+      "id": "treasury_state",
+      "domain": "commerce",
+      "residual_semantics": "treasury allocation deformation",
+      "default_policy_family": "treasury"
+    },
+    {
+      "id": "risk_surface",
+      "domain": "risk",
+      "residual_semantics": "multi-factor risk curvature drift",
+      "default_policy_family": "finality"
+    }
+  ]
+}
