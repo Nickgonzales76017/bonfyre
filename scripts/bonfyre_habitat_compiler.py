@@ -26,6 +26,7 @@ claim to implement. It proves one thing: a spatial scene can be compiled
 deterministically from real graph state, with every object's identity and
 status traceable to its source of truth.
 """
+import datetime
 import json
 import os
 import re
@@ -232,6 +233,13 @@ STATUS_ROOM_STATE = {
     "ready": "staged",
     "published": "open",
 }
+
+
+def _has_col(con, table, col):
+    try:
+        return any(r[1] == col for r in con.execute(f"PRAGMA table_info({table})"))
+    except sqlite3.Error:
+        return False
 
 
 def connect(path):
@@ -814,6 +822,260 @@ def compile_scene():
     for g in gravity:
         g["share"] = round(g["weight"] / total_weight, 4)
 
+    # ------------------------------------------------------------------
+    # DECAY / temporal state. The doc: time makes the world alive, and
+    # objects carry a real `decay_state`. Age comes from the newest real
+    # timestamp that actually touches each room -- an event, a receipt, or
+    # a relationship episode. Nothing decays on a timer; it decays because
+    # nothing has happened to it.
+    # ------------------------------------------------------------------
+    now = datetime.datetime.now(datetime.timezone.utc)
+
+    def parse_ts(value):
+        if not value:
+            return None
+        text = str(value).replace("Z", "+00:00").replace(" ", "T", 1)
+        try:
+            parsed = datetime.datetime.fromisoformat(text)
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+        return parsed
+
+    room_last_touch = {}
+    for entry in timeline:
+        rid = entry.get("room")
+        ts = parse_ts(entry.get("at"))
+        if rid and ts and (rid not in room_last_touch or ts > room_last_touch[rid]):
+            room_last_touch[rid] = ts
+
+    decay = []
+    for room in rooms:
+        last = room_last_touch.get(room["id"])
+        if last is None:
+            state, age_h = "untouched", None
+        else:
+            age_h = round((now - last).total_seconds() / 3600, 1)
+            if age_h < 24:
+                state = "fresh"
+            elif age_h < 24 * 7:
+                state = "settling"
+            elif age_h < 24 * 30:
+                state = "dusty"
+            else:
+                state = "weathered"
+        decay.append(
+            {
+                "target": room["id"],
+                "decay_state": state,
+                "age_hours": age_h,
+                "last_touch": last.isoformat() if last else None,
+                "source": {"db": "fabric.db", "table": "events+receipts", "id": room["id"]},
+            }
+        )
+
+    # ------------------------------------------------------------------
+    # HabitatBasis detection. The doc wants LambdaTensor to eventually
+    # learn spatial grammar by finding repeated topology and factoring it
+    # into `basis + bindings + exceptions`. That needs recurrence -- and
+    # there IS real recurrence here, within this one world: several rooms
+    # have structurally identical contents. Detected, not assumed: rooms
+    # are signed by the multiset of object kinds they contain, and a
+    # signature occurring more than once becomes a named basis with the
+    # differing rooms recorded as bindings.
+    # ------------------------------------------------------------------
+    room_signature = {}
+    for room in rooms:
+        kinds = sorted(o["kind"] for o in objects if o.get("room") == room["id"])
+        room_signature[room["id"]] = tuple(kinds)
+
+    basis_groups = {}
+    for rid, sig in room_signature.items():
+        basis_groups.setdefault(sig, []).append(rid)
+
+    habitat_basis = []
+    for sig, members in basis_groups.items():
+        if len(members) < 2 or not sig:
+            continue
+        name = "".join(part.split("-")[0].capitalize() for part in sig) + "HabitatBasis"
+        habitat_basis.append(
+            {
+                "id": f"basis-{name}",
+                "name": name,
+                "signature": list(sig),
+                "occurrences": len(members),
+                "bindings": [
+                    {
+                        "room": rid,
+                        "state": next(r["state"] for r in rooms if r["id"] == rid),
+                        "cursor": next(r["workgraph_cursor"] for r in rooms if r["id"] == rid),
+                    }
+                    for rid in members
+                ],
+                "exceptions": [
+                    rid for rid, s in room_signature.items() if s != sig and s
+                ],
+                "note": (
+                    "Detected by structural recurrence across real rooms, not authored. "
+                    "basis + bindings + exceptions, the same factoring LambdaTensor applies elsewhere."
+                ),
+                "source": {"db": "fabric.db+bonfyre_cms.db", "table": "missions x artifacts/wiki_page"},
+            }
+        )
+    habitat_basis.sort(key=lambda b: -b["occurrences"])
+
+    # ------------------------------------------------------------------
+    # VISITOR PROJECTION. There is no second Bonfyre to federate with yet,
+    # but the boundary itself is real and testable: this computes what a
+    # visitor would actually be allowed to see, by applying each zone's
+    # FederationBoundary to the objects inside it. Anything the boundary
+    # hides is listed as withheld, with the rule that withheld it -- so
+    # the boundary can be audited rather than trusted.
+    # ------------------------------------------------------------------
+    zone_of = {}
+    for z in zones:
+        for pattern in z["contains"]:
+            zone_of[pattern] = z
+
+    def zone_for(node_id):
+        for pattern, z in zone_of.items():
+            if pattern.endswith("*") and node_id.startswith(pattern[:-1]):
+                return z
+            if pattern == node_id:
+                return z
+        return None
+
+    visible, withheld = [], []
+    all_nodes = (
+        [(r["id"], r["label"], "room") for r in rooms]
+        + [(o["id"], o["label"], "object") for o in objects]
+        + [(g["id"], g["label"], "gate") for g in gates]
+        + [(s["id"], s["label"], "stall") for s in stalls]
+        + [(m["id"], m["learning_type"], "monument") for m in monuments]
+        + [(f["id"], f["label"], "foundation") for f in foundations]
+    )
+    for node_id, label, kind in all_nodes:
+        z = zone_for(node_id)
+        if z is None:
+            # rooms are contained by explicit id in zone-work
+            z = next((zz for zz in zones if node_id in zz["contains"]), None)
+        if z and "visitor" in z["federation_boundary"]["visible_to"]:
+            visible.append(
+                {
+                    "id": node_id, "label": label, "kind": kind, "zone": z["id"],
+                    "copyable": z["federation_boundary"]["copyable"],
+                    "referenceable": z["federation_boundary"]["referenceable"],
+                }
+            )
+        else:
+            withheld.append(
+                {
+                    "id": node_id, "label": label, "kind": kind,
+                    "zone": z["id"] if z else "unzoned",
+                    "withheld_by": (
+                        f"{z['class']} zone: visible_to={z['federation_boundary']['visible_to']}"
+                        if z else "no zone declares this node visible to visitors"
+                    ),
+                }
+            )
+
+    visitor_projection = {
+        "note": (
+            "What a visiting Bonfyre would actually be allowed to see, computed by "
+            "applying each zone's FederationBoundary. No peer exists yet -- this "
+            "makes the boundary auditable rather than assumed."
+        ),
+        "visible_count": len(visible),
+        "withheld_count": len(withheld),
+        "visible": visible,
+        "withheld": withheld,
+        "asset_passport": {
+            "note": "A passport offers bounded rights, never raw data.",
+            "grants": sorted({
+                ("copy" if v["copyable"] else "reference") for v in visible
+            }),
+            "never_granted": ["authoritative mutation", "credential delegation"],
+        },
+    }
+
+    # ------------------------------------------------------------------
+    # BonfyreFS. The mount is a real macFUSE filesystem serving the same
+    # fabric.db rows as files (/Missions/<id>.json, /Artifacts/<digest>
+    # .json). Habitat reports the path each object is ALSO reachable at,
+    # which is the doc's point about one identity wearing many
+    # representations -- a mission is a row, a file, and a room at once.
+    # ------------------------------------------------------------------
+    fs_mount = os.environ.get("BONFYRE_FS_MOUNT", "/tmp/bfs")
+    fs_entries = []
+    if os.path.isdir(fs_mount):
+        for sub in ("Missions", "Artifacts"):
+            d = os.path.join(fs_mount, sub)
+            if not os.path.isdir(d):
+                continue
+            for name in sorted(os.listdir(d)):
+                full = os.path.join(d, name)
+                try:
+                    size = os.path.getsize(full)
+                except OSError:
+                    size = None
+                fs_entries.append({
+                    "path": "/" + sub + "/" + name,
+                    "kind": sub[:-1].lower(),
+                    "key": name.rsplit(".json", 1)[0],
+                    "bytes": size,
+                    "source": {"fs": "BonfyreFS", "mount": fs_mount},
+                })
+
+    # ------------------------------------------------------------------
+    # CMS structural substrate. `_families` / `_family_members` are the
+    # real on-disk equivalent of the doc's LambdaTensor factoring: a
+    # family hash plus a generator (the shared field shape) plus its
+    # members. This is recurrence Bonfyre already detected -- it is not
+    # re-derived here.
+    # ------------------------------------------------------------------
+    families = []
+    content_types = []
+    if cms:
+        try:
+            for row in cms.execute(
+                "SELECT id, family_hash, content_type, generator, member_count"
+                " FROM _families ORDER BY member_count DESC"
+            ):
+                try:
+                    gen = json.loads(row["generator"] or "{}")
+                except (ValueError, TypeError):
+                    gen = {}
+                # real columns are target_type/target_id, not content_type/entry_id
+                members = []
+                if _has_col(cms, "_family_members", "family_id"):
+                    members = [
+                        {"target_type": m["target_type"], "target_id": m["target_id"]}
+                        for m in cms.execute(
+                            "SELECT target_type, target_id FROM _family_members"
+                            " WHERE family_id=?",
+                            (row["id"],),
+                        )
+                    ]
+                families.append({
+                    "id": f"family-{row['id']}",
+                    "family_hash": row["family_hash"],
+                    "content_type": row["content_type"],
+                    "member_count": row["member_count"],
+                    "basis_fields": sorted(gen.keys()),
+                    "members": members,
+                    "note": ("Structural family already detected by BonfyreCMS: "
+                             "shared field-shape basis plus per-entry bindings."),
+                    "source": {"db": "bonfyre_cms.db", "table": "_families", "id": row["id"]},
+                })
+        except sqlite3.Error:
+            pass
+        try:
+            for row in cms.execute("SELECT name FROM _content_types ORDER BY name"):
+                content_types.append(row["name"])
+        except sqlite3.Error:
+            pass
+
     for c in (fabric, cms, capital):
         if c:
             c.close()
@@ -850,12 +1112,16 @@ def compile_scene():
         "latent_compositions": latent,
         "narration": narration,
         "semantic_gravity": gravity,
+        "decay": decay,
+        "habitat_basis": habitat_basis,
+        "visitor_projection": visitor_projection,
+        "bonfyrefs": fs_entries,
+        "families": families,
+        "content_types": content_types,
     }
 
 
 if __name__ == "__main__":
-    import datetime
-
     scene = compile_scene()
     scene["compiled_at"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
     out_path = sys.argv[1] if len(sys.argv) > 1 else "/tmp/bonfyre-habitat-scene.json"
@@ -871,5 +1137,10 @@ if __name__ == "__main__":
         f"workboard={len(scene['workboard'])}\n"
         f"zones={len(scene['zones'])} landmarks={len(scene['landmarks'])} "
         f"latent={len(scene['latent_compositions'])} narration={len(scene['narration'])} "
-        f"profiles={len(scene['embodiment_profiles'])}"
+        f"profiles={len(scene['embodiment_profiles'])}\n"
+        f"decay={len(scene['decay'])} basis={len(scene['habitat_basis'])} "
+        f"visitor_visible={scene['visitor_projection']['visible_count']} "
+        f"visitor_withheld={scene['visitor_projection']['withheld_count']}\n"
+        f"bonfyrefs={len(scene['bonfyrefs'])} families={len(scene['families'])} "
+        f"content_types={len(scene['content_types'])}"
     )
