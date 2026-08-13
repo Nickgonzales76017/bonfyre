@@ -1,0 +1,280 @@
+{
+  "schema_version": "bonfyre.habitat.scene.v0",
+  "compiled_at": "2026-08-13T05:31:59Z",
+  "note": "Prototype scene, not full HabitatCompiler. Every room/object/path/character has a `source` pointing at the real row it was compiled from -- nothing here is invented.",
+  "buildings": [
+    {
+      "id": "building-aurekai-research",
+      "label": "Aurekai Research Wing",
+      "rooms": [
+        "room-bernstein-3616-research-episode",
+        "room-agentguard-213-research-episode",
+        "room-hqq-claim-invalidation-episode"
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room-bernstein-3616-research-episode",
+      "kind": "research-room",
+      "label": "bernstein-3616-research-episode",
+      "state": "locked",
+      "workgraph_cursor": "awaiting-pr-merge",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "source": {
+        "db": "fabric.db",
+        "table": "missions",
+        "id": "bernstein-3616-research-episode"
+      }
+    },
+    {
+      "id": "room-agentguard-213-research-episode",
+      "kind": "research-room",
+      "label": "agentguard-213-research-episode",
+      "state": "under-construction",
+      "workgraph_cursor": "5-prs-open-sequential-review",
+      "position": {
+        "x": 4,
+        "y": 0,
+        "z": 0
+      },
+      "source": {
+        "db": "fabric.db",
+        "table": "missions",
+        "id": "agentguard-213-research-episode"
+      }
+    },
+    {
+      "id": "room-hqq-claim-invalidation-episode",
+      "kind": "research-room",
+      "label": "hqq-claim-invalidation-episode",
+      "state": "under-construction",
+      "workgraph_cursor": "ready-to-write-not-yet-written",
+      "position": {
+        "x": 8,
+        "y": 0,
+        "z": 0
+      },
+      "source": {
+        "db": "fabric.db",
+        "table": "missions",
+        "id": "hqq-claim-invalidation-episode"
+      }
+    }
+  ],
+  "objects": [
+    {
+      "id": "object-sha256:0513aab72",
+      "kind": "document",
+      "label": "maintainer-review-verbatim.md",
+      "room": "room-bernstein-3616-research-episode",
+      "bytes": 2904,
+      "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3",
+      "source": {
+        "db": "fabric.db",
+        "table": "artifacts",
+        "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3"
+      }
+    },
+    {
+      "id": "object-sha256:9283848af",
+      "kind": "document",
+      "label": "case-study-source.md",
+      "room": "room-agentguard-213-research-episode",
+      "bytes": 1543,
+      "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6",
+      "source": {
+        "db": "fabric.db",
+        "table": "artifacts",
+        "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6"
+      }
+    },
+    {
+      "id": "object-sha256:227d466f9",
+      "kind": "document",
+      "label": "case-study-source.md",
+      "room": "room-hqq-claim-invalidation-episode",
+      "bytes": 1459,
+      "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a",
+      "source": {
+        "db": "fabric.db",
+        "table": "artifacts",
+        "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a"
+      }
+    },
+    {
+      "id": "wiki-page-1",
+      "kind": "wiki-page",
+      "label": "Bernstein: Identity Continuity Case Study",
+      "room": "room-bernstein-3616-research-episode",
+      "state": "held",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page",
+        "id": 1
+      }
+    },
+    {
+      "id": "wiki-page-2",
+      "kind": "wiki-page",
+      "label": "AgentGuard: Dependency Closure Case Study",
+      "room": "room-agentguard-213-research-episode",
+      "state": "held",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page",
+        "id": 2
+      }
+    },
+    {
+      "id": "wiki-page-3",
+      "kind": "wiki-page",
+      "label": "HQQ/WikiText-2: Claim Invalidation Case Study",
+      "room": "room-hqq-claim-invalidation-episode",
+      "state": "held",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page",
+        "id": 3
+      }
+    },
+    {
+      "id": "course-lesson-1",
+      "kind": "lesson-board",
+      "label": "Primitive: Identity Continuity",
+      "room": null,
+      "note": "shared across rooms via example_of relations, not owned by one room",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "course_lesson",
+        "id": 1
+      }
+    }
+  ],
+  "paths": [
+    {
+      "id": "path-5",
+      "from": "room-bernstein-3616-research-episode",
+      "to": "room-agentguard-213-research-episode",
+      "relation": "related_relationship_pattern",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "_relations",
+        "id": 5
+      }
+    },
+    {
+      "id": "path-6",
+      "from": "room-bernstein-3616-research-episode",
+      "to": "room-hqq-claim-invalidation-episode",
+      "relation": "related_relationship_pattern",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "_relations",
+        "id": 6
+      }
+    }
+  ],
+  "characters": [
+    {
+      "id": "character-1",
+      "label": "chernistry",
+      "role": "collaborator/reviewer",
+      "relationship_state": "TRUSTED_INTERACTION",
+      "home_room": "room-bernstein-3616-research-episode",
+      "visit_history": [
+        {
+          "kind": "review",
+          "direction": "inbound",
+          "at": "2026-08-12 10:54:47"
+        },
+        {
+          "kind": "collaboration",
+          "direction": "outbound",
+          "at": "2026-08-12 21:52:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 1
+      }
+    },
+    {
+      "id": "character-2",
+      "label": "richinmrudul",
+      "role": "maintainer",
+      "relationship_state": "TECHNICAL_ENGAGEMENT",
+      "home_room": "room-agentguard-213-research-episode",
+      "visit_history": [
+        {
+          "kind": "correction",
+          "direction": "inbound",
+          "at": "2026-08-12 16:15:19"
+        },
+        {
+          "kind": "correction",
+          "direction": "outbound",
+          "at": "2026-08-12 21:30:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 2
+      }
+    },
+    {
+      "id": "character-3",
+      "label": "rajeshl8",
+      "role": "community/issue participant",
+      "relationship_state": "RESPONDED",
+      "home_room": null,
+      "visit_history": [
+        {
+          "kind": "reply",
+          "direction": "inbound",
+          "at": "2026-08-12 16:18:39"
+        },
+        {
+          "kind": "proposal",
+          "direction": "outbound",
+          "at": "2026-08-12 22:10:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 3
+      }
+    },
+    {
+      "id": "character-4",
+      "label": "Melvin0070",
+      "role": "adjacent maintainer (Amberfork)",
+      "relationship_state": "RESPONDED",
+      "home_room": null,
+      "visit_history": [
+        {
+          "kind": "introduction",
+          "direction": "inbound",
+          "at": "2026-08-12 18:34:15"
+        },
+        {
+          "kind": "proposal",
+          "direction": "outbound",
+          "at": "2026-08-12 22:10:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,524 @@
+<title>Habitat Floor Plan</title>
+<style>
+  :root {
+    --bg: #f4f1e8;
+    --surface: #ffffff;
+    --surface-2: #ece7d8;
+    --ink: #1a2740;
+    --muted: #5c6b85;
+    --faint: #97a3b8;
+    --line: #2c3e5c;
+    --grid: #d9d2bd;
+    --accent: #b5651d;
+    --accent-ink: #ffffff;
+    --draft: #7d8ba3;
+    --evidence: #3d6b52;
+    --path: #4a7a8c;
+    --shadow: 0 1px 0 rgba(26,39,64,0.06);
+    --radius: 2px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #10192b;
+      --surface: #16223a;
+      --surface-2: #1c2c48;
+      --ink: #eef2fa;
+      --muted: #93a3c2;
+      --faint: #5c6d8e;
+      --line: #5c86c4;
+      --grid: #223252;
+      --accent: #e0ac5c;
+      --accent-ink: #1a2740;
+      --draft: #7f92b8;
+      --evidence: #6fae8c;
+      --path: #6fb8cc;
+      --shadow: 0 1px 0 rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10192b;
+    --surface: #16223a;
+    --surface-2: #1c2c48;
+    --ink: #eef2fa;
+    --muted: #93a3c2;
+    --faint: #5c6d8e;
+    --line: #5c86c4;
+    --grid: #223252;
+    --accent: #e0ac5c;
+    --accent-ink: #1a2740;
+    --draft: #7f92b8;
+    --evidence: #6fae8c;
+    --path: #6fb8cc;
+    --shadow: 0 1px 0 rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  .mono {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 28px 64px;
+  }
+
+  header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px 28px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid var(--grid);
+    margin-bottom: 28px;
+  }
+  header .title-block { max-width: 640px; }
+  h1 {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    max-width: 58ch;
+  }
+  .stamp {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 12px;
+    color: var(--faint);
+    text-align: right;
+    line-height: 1.7;
+    white-space: nowrap;
+  }
+  .stamp .k { text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .plan-card {
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .plan-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--grid);
+  }
+  .plan-card-head .label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .legend {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 11px;
+    color: var(--muted);
+  }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 9px; height: 9px; border-radius: 1px; display: inline-block; }
+
+  svg { display: block; width: 100%; height: auto; }
+  .grid-line { stroke: var(--grid); stroke-width: 1; }
+  .room-rect {
+    fill: var(--surface);
+    stroke: var(--line);
+    stroke-width: 1.4;
+    cursor: pointer;
+    transition: fill 120ms ease;
+  }
+  .room-rect:hover, .room-group:focus-visible .room-rect { fill: var(--surface-2); }
+  .room-group:focus-visible { outline: none; }
+  .room-group:focus-visible .room-rect { stroke-width: 2.2; }
+  .room-tick { stroke: var(--line); stroke-width: 1.2; }
+  .room-label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    fill: var(--ink);
+  }
+  .room-cursor {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 9.5px;
+    fill: var(--muted);
+  }
+  .path-line { stroke: var(--path); stroke-width: 1.4; stroke-dasharray: 3 3; fill: none; }
+  .path-label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 9px;
+    letter-spacing: 0.03em;
+    fill: var(--path);
+  }
+  .obj-dot { stroke: var(--surface); stroke-width: 1; cursor: pointer; }
+  .obj-doc { fill: var(--evidence); }
+  .obj-wiki { fill: var(--accent); }
+  .obj-lesson { fill: var(--path); }
+  .obj-label {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 8.5px;
+    fill: var(--muted);
+  }
+  .char-dot { stroke: var(--surface); stroke-width: 1.4; cursor: pointer; }
+  .badge {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 8.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .badge-locked { fill: var(--accent); }
+  .badge-draft { fill: var(--draft); }
+
+  .side {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--grid);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 16px 18px;
+  }
+  .panel h2 {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .empty-hint { color: var(--faint); font-size: 13px; }
+
+  .detail-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .detail-sub {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: var(--muted);
+    margin: 0 0 14px;
+    word-break: break-all;
+  }
+  .chip {
+    display: inline-block;
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+  }
+  .chip-locked { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--accent); }
+  .chip-draft { background: color-mix(in srgb, var(--draft) 20%, transparent); color: var(--draft); }
+  .chip-trusted { background: color-mix(in srgb, var(--evidence) 18%, transparent); color: var(--evidence); }
+  .chip-engaged { background: color-mix(in srgb, var(--path) 18%, transparent); color: var(--path); }
+  .chip-responded { background: color-mix(in srgb, var(--faint) 22%, transparent); color: var(--muted); }
+
+  .field-list { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+  .field-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    border-top: 1px solid var(--grid);
+  }
+  .field-list li:first-child { border-top: none; }
+  .field-list .k { color: var(--muted); }
+  .field-list .v { text-align: right; font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 12px; word-break: break-word; max-width: 62%; }
+
+  .visit {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    padding: 6px 0;
+    border-top: 1px solid var(--grid);
+  }
+  .visit:first-child { border-top: none; }
+  .visit .dir { color: var(--faint); font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; font-size: 10px; }
+
+  .provenance {
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .provenance code {
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    background: var(--surface-2);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-size: 11px;
+  }
+
+  footer {
+    margin-top: 32px;
+    padding-top: 18px;
+    border-top: 1px solid var(--grid);
+    color: var(--faint);
+    font-size: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+  }
+  footer code { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; }
+
+  button.reset {
+    all: unset;
+    cursor: pointer;
+    font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  button.reset:hover, button.reset:focus-visible { color: var(--ink); }
+  button.reset:focus-visible { outline: 2px solid var(--path); outline-offset: 2px; border-radius: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .room-rect { transition: none; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="title-block">
+      <h1>Habitat Floor Plan</h1>
+      <p>First real HabitatCompiler output. Every room, object, path, and character below is compiled from an actual row in <code class="mono">fabric.db</code>, <code class="mono">bonfyre_cms.db</code>, or <code class="mono">capital.db</code> &mdash; nothing here is invented.</p>
+    </div>
+    <div class="stamp" id="stamp"></div>
+  </header>
+
+  <div class="layout">
+    <div class="plan-card">
+      <div class="plan-card-head">
+        <span class="label">Aurekai Research Wing</span>
+        <div class="legend">
+          <span><i class="swatch" style="background:var(--evidence)"></i>document</span>
+          <span><i class="swatch" style="background:var(--accent)"></i>wiki page</span>
+          <span><i class="swatch" style="background:var(--path)"></i>lesson board</span>
+        </div>
+      </div>
+      <svg id="plan" viewBox="0 0 900 420" role="img" aria-label="Floor plan of the Aurekai research wing"></svg>
+    </div>
+
+    <div class="side">
+      <div class="panel" id="detail">
+        <h2>Selection</h2>
+        <p class="empty-hint">Click a room, object, or character in the plan to inspect its source row.</p>
+      </div>
+      <div class="panel">
+        <h2>Compiler note</h2>
+        <p class="provenance" id="note"></p>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <span>Prototype scene &mdash; no embodiment profiles, sound, narration, time, or cross-Bonfyre federation yet.</span>
+    <span><code>scripts/bonfyre_habitat_compiler.py</code></span>
+  </footer>
+</div>
+
+<script>
+const SCENE = {"schema_version": "bonfyre.habitat.scene.v0", "compiled_at": "2026-08-13T05:31:59Z", "note": "Prototype scene, not full HabitatCompiler. Every room/object/path/character has a `source` pointing at the real row it was compiled from -- nothing here is invented.", "buildings": [{"id": "building-aurekai-research", "label": "Aurekai Research Wing", "rooms": ["room-bernstein-3616-research-episode", "room-agentguard-213-research-episode", "room-hqq-claim-invalidation-episode"]}], "rooms": [{"id": "room-bernstein-3616-research-episode", "kind": "research-room", "label": "bernstein-3616-research-episode", "state": "locked", "workgraph_cursor": "awaiting-pr-merge", "position": {"x": 0, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "bernstein-3616-research-episode"}}, {"id": "room-agentguard-213-research-episode", "kind": "research-room", "label": "agentguard-213-research-episode", "state": "under-construction", "workgraph_cursor": "5-prs-open-sequential-review", "position": {"x": 4, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "agentguard-213-research-episode"}}, {"id": "room-hqq-claim-invalidation-episode", "kind": "research-room", "label": "hqq-claim-invalidation-episode", "state": "under-construction", "workgraph_cursor": "ready-to-write-not-yet-written", "position": {"x": 8, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "hqq-claim-invalidation-episode"}}], "objects": [{"id": "object-sha256:0513aab72", "kind": "document", "label": "maintainer-review-verbatim.md", "room": "room-bernstein-3616-research-episode", "bytes": 2904, "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3"}}, {"id": "object-sha256:9283848af", "kind": "document", "label": "case-study-source.md", "room": "room-agentguard-213-research-episode", "bytes": 1543, "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6"}}, {"id": "object-sha256:227d466f9", "kind": "document", "label": "case-study-source.md", "room": "room-hqq-claim-invalidation-episode", "bytes": 1459, "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a"}}, {"id": "wiki-page-1", "kind": "wiki-page", "label": "Bernstein: Identity Continuity Case Study", "room": "room-bernstein-3616-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 1}}, {"id": "wiki-page-2", "kind": "wiki-page", "label": "AgentGuard: Dependency Closure Case Study", "room": "room-agentguard-213-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 2}}, {"id": "wiki-page-3", "kind": "wiki-page", "label": "HQQ/WikiText-2: Claim Invalidation Case Study", "room": "room-hqq-claim-invalidation-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 3}}, {"id": "course-lesson-1", "kind": "lesson-board", "label": "Primitive: Identity Continuity", "room": null, "note": "shared across rooms via example_of relations, not owned by one room", "source": {"db": "bonfyre_cms.db", "table": "course_lesson", "id": 1}}], "paths": [{"id": "path-5", "from": "room-bernstein-3616-research-episode", "to": "room-agentguard-213-research-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 5}}, {"id": "path-6", "from": "room-bernstein-3616-research-episode", "to": "room-hqq-claim-invalidation-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 6}}], "characters": [{"id": "character-1", "label": "chernistry", "role": "collaborator/reviewer", "relationship_state": "TRUSTED_INTERACTION", "home_room": "room-bernstein-3616-research-episode", "visit_history": [{"kind": "review", "direction": "inbound", "at": "2026-08-12 10:54:47"}, {"kind": "collaboration", "direction": "outbound", "at": "2026-08-12 21:52:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 1}}, {"id": "character-2", "label": "richinmrudul", "role": "maintainer", "relationship_state": "TECHNICAL_ENGAGEMENT", "home_room": "room-agentguard-213-research-episode", "visit_history": [{"kind": "correction", "direction": "inbound", "at": "2026-08-12 16:15:19"}, {"kind": "correction", "direction": "outbound", "at": "2026-08-12 21:30:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 2}}, {"id": "character-3", "label": "rajeshl8", "role": "community/issue participant", "relationship_state": "RESPONDED", "home_room": null, "visit_history": [{"kind": "reply", "direction": "inbound", "at": "2026-08-12 16:18:39"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 3}}, {"id": "character-4", "label": "Melvin0070", "role": "adjacent maintainer (Amberfork)", "relationship_state": "RESPONDED", "home_room": null, "visit_history": [{"kind": "introduction", "direction": "inbound", "at": "2026-08-12 18:34:15"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 4}}]};
+
+const svg = document.getElementById('plan');
+const detail = document.getElementById('detail');
+const NS = 'http://www.w3.org/2000/svg';
+
+function el(tag, attrs, parent) {
+  const node = document.createElementNS(NS, tag);
+  for (const k in attrs) node.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(node);
+  return node;
+}
+
+document.getElementById('stamp').innerHTML =
+  '<span class="k">Compiled</span> ' + SCENE.compiled_at + '<br>' +
+  '<span class="k">Schema</span> ' + SCENE.schema_version;
+document.getElementById('note').textContent = SCENE.note;
+
+// --- layout: rooms on a grid, objects/characters placed inside ---
+const ROOM_W = 220, ROOM_H = 260, GAP = 60, ORIGIN_X = 40, ORIGIN_Y = 50;
+const roomsById = {};
+SCENE.rooms.forEach((r, i) => { roomsById[r.id] = { ...r, i }; });
+
+// background grid
+for (let x = 0; x <= 900; x += 30) el('line', { x1: x, y1: 0, x2: x, y2: 420, class: 'grid-line' }, svg);
+for (let y = 0; y <= 420; y += 30) el('line', { x1: 0, y1: y, x2: 900, y2: y, class: 'grid-line' }, svg);
+
+function roomOrigin(room) {
+  const x = ORIGIN_X + room.i * (ROOM_W + GAP);
+  const y = ORIGIN_Y;
+  return { x, y };
+}
+
+// paths (drawn first, under rooms)
+SCENE.paths.forEach(p => {
+  const a = roomsById[p.from], b = roomsById[p.to];
+  if (!a || !b) return;
+  const ao = roomOrigin(a), bo = roomOrigin(b);
+  const x1 = ao.x + ROOM_W, y1 = ao.y + ROOM_H / 2;
+  const x2 = bo.x, y2 = bo.y + ROOM_H / 2;
+  el('path', {
+    d: `M ${x1} ${y1} C ${x1 + 30} ${y1}, ${x2 - 30} ${y2}, ${x2} ${y2}`,
+    class: 'path-line'
+  }, svg);
+  el('text', { x: (x1 + x2) / 2, y: (y1 + y2) / 2 - 6, class: 'path-label', 'text-anchor': 'middle' }, svg)
+    .textContent = p.relation;
+});
+
+function showDetail(html) { detail.innerHTML = html; }
+
+function fieldList(pairs) {
+  return '<ul class="field-list">' + pairs.map(([k, v]) =>
+    `<li><span class="k">${k}</span><span class="v">${v}</span></li>`
+  ).join('') + '</ul>';
+}
+
+function selectRoom(room) {
+  const objs = SCENE.objects.filter(o => o.room === room.id);
+  const chars = SCENE.characters.filter(c => c.home_room === room.id);
+  const chipClass = room.state === 'locked' ? 'chip-locked' : 'chip-draft';
+  showDetail(
+    '<h2>Room</h2>' +
+    `<p class="detail-title">${room.label}</p>` +
+    `<p class="detail-sub">${room.source.db} &middot; ${room.source.table} &middot; ${room.source.id}</p>` +
+    `<span class="chip ${chipClass}">${room.state}</span>` +
+    fieldList([
+      ['workgraph_cursor', room.workgraph_cursor],
+      ['objects', objs.length],
+      ['residents', chars.length],
+    ])
+  );
+}
+
+function selectObject(obj) {
+  const kindLabel = { document: 'Document', 'wiki-page': 'Wiki page', 'lesson-board': 'Lesson board' }[obj.kind] || obj.kind;
+  const pairs = [['kind', kindLabel]];
+  if (obj.bytes) pairs.push(['bytes', obj.bytes]);
+  if (obj.digest) pairs.push(['digest', obj.digest.slice(0, 24) + '&hellip;']);
+  if (obj.state) pairs.push(['state', obj.state]);
+  if (obj.note) pairs.push(['note', obj.note]);
+  showDetail(
+    '<h2>Object</h2>' +
+    `<p class="detail-title">${obj.label}</p>` +
+    `<p class="detail-sub">${obj.source.db} &middot; ${obj.source.table} &middot; ${obj.source.id ?? obj.source.digest?.slice(0,16)}</p>` +
+    fieldList(pairs)
+  );
+}
+
+function selectCharacter(ch) {
+  const stateChip = {
+    TRUSTED_INTERACTION: 'chip-trusted',
+    TECHNICAL_ENGAGEMENT: 'chip-engaged',
+    RESPONDED: 'chip-responded',
+  }[ch.relationship_state] || 'chip-responded';
+  const visits = ch.visit_history.map(v =>
+    `<div class="visit"><span>${v.kind}</span><span class="dir">${v.direction} &middot; ${v.at}</span></div>`
+  ).join('');
+  showDetail(
+    '<h2>Character</h2>' +
+    `<p class="detail-title">${ch.label}</p>` +
+    `<p class="detail-sub">${ch.role}</p>` +
+    `<span class="chip ${stateChip}">${ch.relationship_state}</span>` +
+    '<div style="margin-top:10px">' + visits + '</div>'
+  );
+}
+
+// rooms
+SCENE.rooms.forEach(room => {
+  const { x, y } = roomOrigin(room);
+  const g = el('g', { class: 'room-group', tabindex: '0', role: 'button', 'aria-label': 'Room: ' + room.label }, svg);
+  el('rect', { x, y, width: ROOM_W, height: ROOM_H, class: 'room-rect', rx: 1 }, g);
+  // corner ticks, drafting-plan style
+  [[x, y], [x + ROOM_W, y], [x, y + ROOM_H], [x + ROOM_W, y + ROOM_H]].forEach(([cx, cy]) => {
+    el('line', { x1: cx - 6, y1: cy, x2: cx + 6, y2: cy, class: 'room-tick' }, g);
+    el('line', { x1: cx, y1: cy - 6, x2: cx, y2: cy + 6, class: 'room-tick' }, g);
+  });
+  el('text', { x: x + 12, y: y + 22, class: 'room-label' }, g).textContent = room.label.length > 26 ? room.label.slice(0, 24) + '…' : room.label;
+  el('text', { x: x + 12, y: y + ROOM_H - 12, class: 'room-cursor' }, g).textContent = room.workgraph_cursor;
+  const badgeClass = room.state === 'locked' ? 'badge-locked' : 'badge-draft';
+  el('text', { x: x + ROOM_W - 12, y: y + 22, class: 'badge ' + badgeClass, 'text-anchor': 'end' }, g).textContent = room.state;
+
+  g.addEventListener('click', () => selectRoom(room));
+  g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectRoom(room); } });
+
+  // objects inside this room
+  const objs = SCENE.objects.filter(o => o.room === room.id);
+  objs.forEach((obj, oi) => {
+    const ox = x + 26 + (oi % 3) * 56;
+    const oy = y + 60 + Math.floor(oi / 3) * 46;
+    const dotClass = obj.kind === 'document' ? 'obj-doc' : obj.kind === 'wiki-page' ? 'obj-wiki' : 'obj-lesson';
+    const og = el('g', { style: 'cursor:pointer' }, svg);
+    el('circle', { cx: ox, cy: oy, r: 6, class: 'obj-dot ' + dotClass }, og);
+    el('text', { x: ox, y: oy + 18, class: 'obj-label', 'text-anchor': 'middle' }, og).textContent =
+      obj.label.length > 14 ? obj.label.slice(0, 12) + '…' : obj.label;
+    og.addEventListener('click', ev => { ev.stopPropagation(); selectObject(obj); });
+  });
+
+  // resident characters, bottom edge of the room
+  const chars = SCENE.characters.filter(c => c.home_room === room.id);
+  chars.forEach((ch, ci) => {
+    const cx = x + ROOM_W - 20 - ci * 22;
+    const cy = y + ROOM_H - 34;
+    const stateColor = {
+      TRUSTED_INTERACTION: 'var(--evidence)',
+      TECHNICAL_ENGAGEMENT: 'var(--path)',
+      RESPONDED: 'var(--faint)',
+    }[ch.relationship_state] || 'var(--faint)';
+    const cg = el('g', { style: 'cursor:pointer' }, svg);
+    el('circle', { cx, cy, r: 7, class: 'char-dot', fill: stateColor }, cg);
+    cg.addEventListener('click', ev => { ev.stopPropagation(); selectCharacter(ch); });
+  });
+});
+
+// unplaced characters (no home room) shown as a small dock, top-right
+const loose = SCENE.characters.filter(c => !c.home_room);
+if (loose.length) {
+  el('text', { x: 860, y: 22, class: 'room-cursor', 'text-anchor': 'end' }, svg).textContent = 'visiting';
+  loose.forEach((ch, i) => {
+    const cx = 860 - i * 22, cy = 34;
+    const g = el('g', { style: 'cursor:pointer' }, svg);
+    el('circle', { cx, cy, r: 7, class: 'char-dot', fill: 'var(--faint)' }, g);
+    g.addEventListener('click', () => selectCharacter(ch));
+  });
+}
+</script>
