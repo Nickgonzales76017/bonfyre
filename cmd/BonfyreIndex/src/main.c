@@ -28,10 +28,7 @@
 
 #define MAX_LINE 65536
 
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static const char *arg_get(int argc, char **argv, const char *flag) {
     for (int i = 1; i < argc - 1; i++) {

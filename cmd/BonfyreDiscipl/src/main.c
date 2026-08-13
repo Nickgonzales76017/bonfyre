@@ -270,10 +270,12 @@ static int import_layer_actors(const char *root, DisciplActorWriter *writer) {
     char db_path[PATH_MAX];
     sqlite3 *db = NULL;
     sqlite3_stmt *st = NULL;
-    if (bf_layer_state_db_path(root, "layers.db", db_path, sizeof(db_path)) != 0) return 1;
-    if (bf_sqlite3_open_ro(db_path, &db) != SQLITE_OK) return 1;
+    /* Layer artifacts are optional.  Command and service actors still form a
+     * valid actor graph on a machine that has not materialized layer state. */
+    if (bf_layer_state_db_path(root, "layers.db", db_path, sizeof(db_path)) != 0) return 0;
+    if (bf_sqlite3_open_ro(db_path, &db) != SQLITE_OK) return 0;
     if (sqlite3_prepare_v2(db, "SELECT artifact_json FROM layer_artifacts ORDER BY artifact_id", -1, &st, NULL) != SQLITE_OK) {
-        sqlite3_close(db); return 1;
+        sqlite3_close(db); return 0;
     }
     while (sqlite3_step(st) == SQLITE_ROW) {
         const char *artifact_json = (const char *)sqlite3_column_text(st, 0);

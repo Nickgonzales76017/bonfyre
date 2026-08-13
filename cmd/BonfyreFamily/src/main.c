@@ -925,6 +925,20 @@ static int load_families(const char *index_path, FamilySummary *items, int max_i
     }
     sqlite3_finalize(st);
     sqlite3_close(db);
+    if (count == 0) {
+        for (const FamilyHint *hint = FAMILY_HINTS;
+             hint->id && count < max_items;
+             hint++) {
+            snprintf(items[count].id, sizeof(items[count].id), "%s", hint->id);
+            snprintf(items[count].category_name,
+                     sizeof(items[count].category_name),
+                     "%s", "Model Structure Families");
+            snprintf(items[count].category_key,
+                     sizeof(items[count].category_key),
+                     "%s", "model_structure_families");
+            count++;
+        }
+    }
     qsort(items, (size_t)count, sizeof(items[0]), cmp_family_summary);
     return count;
 }

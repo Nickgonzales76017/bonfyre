@@ -1,0 +1,11 @@
+/Users/nickgonzales/Documents/Bonfyre
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/crm
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/drive
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/erpnext
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/frappe
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/helpdesk
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/hrms
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/insights
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/lms
+/Users/nickgonzales/Documents/Bonfyre/integrations/frappe-bench/apps/wiki
+/Users/nickgonzales/Documents/Bonfyre/vendor/hvm4

@@ -37,8 +37,8 @@
 #define N_STEPS       1000
 #define SIGMA         0.5f
 #define P_SCALE       0.3f          /* initial momentum magnitude              */
-#define PACK_PATH     "/tmp/bonfyre-violence.bfpk"
-#define BVH_PATH      "/tmp/bonfyre-violence.bfvh"
+static const char *pack_path = "/tmp/bonfyre-violence.bfpk";
+static const char *bvh_path = "/tmp/bonfyre-violence.bfvh";
 #define REAL_DATA_DEFAULT "real-data"
 /* Override corpus path via BF_REAL_DATA env var, fallback to ./real-data */
 static const char *real_data_path(void) {
@@ -201,7 +201,19 @@ static void run_trial(const BfEmbedPack *pack, const BfEmbedBVH *bvh, float dt) 
 }
 
 /* ── main ─────────────────────────────────────────────────────────────── */
-int main(void) {
+int main(int argc, char **argv) {
+    for (int index = 1; index < argc; index++) {
+        if (strcmp(argv[index], "--data") == 0 && index + 1 < argc) {
+            setenv("BF_REAL_DATA", argv[++index], 1);
+        } else if (strcmp(argv[index], "--pack") == 0 && index + 1 < argc) {
+            pack_path = argv[++index];
+        } else if (strcmp(argv[index], "--bvh") == 0 && index + 1 < argc) {
+            bvh_path = argv[++index];
+        } else {
+            fprintf(stderr, "usage: bonfyre-leapfrog [--data DIR] [--pack FILE] [--bvh FILE]\n");
+            return 1;
+        }
+    }
     const char *sep = "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━";
     printf("\n%s\n", sep);
     printf("  BONFYRE LEAPFROG TEST\n");
@@ -212,31 +224,31 @@ int main(void) {
 
     /* ── ensure pack + BVH exist ── */
     {
-        FILE *f = fopen(PACK_PATH, "rb");
+        FILE *f = fopen(pack_path, "rb");
         if (!f) {
             printf("  building corpus (pack/BVH not found)...\n");
             if (build_corpus() != 0) return 1;
             uint32_t n_packed = 0;
-            if (bf_embed_pack_build(PACK_PATH, &n_packed) != 0) {
+            if (bf_embed_pack_build(pack_path, &n_packed) != 0) {
                 fprintf(stderr, "leapfrog: pack build failed\n"); return 1;
             }
-            if (bf_embed_bvh_build(PACK_PATH, BVH_PATH) != 0) {
+            if (bf_embed_bvh_build(pack_path, bvh_path) != 0) {
                 fprintf(stderr, "leapfrog: bvh build failed\n"); return 1;
             }
-            printf("  pack built: %u vecs → %s\n", n_packed, PACK_PATH);
-            printf("  BVH  built: %s\n", BVH_PATH);
+            printf("  pack built: %u vecs → %s\n", n_packed, pack_path);
+            printf("  BVH  built: %s\n", bvh_path);
         } else {
             fclose(f);
-            printf("  reusing existing pack: %s\n", PACK_PATH);
+            printf("  reusing existing pack: %s\n", pack_path);
         }
     }
 
     BfEmbedPack pack = {0};
     BfEmbedBVH  bvh  = {0};
-    if (bf_embed_pack_open(&pack, PACK_PATH) != 0) {
+    if (bf_embed_pack_open(&pack, pack_path) != 0) {
         fprintf(stderr, "leapfrog: cannot open pack\n"); return 1;
     }
-    if (bf_embed_bvh_open(&bvh, BVH_PATH) != 0) {
+    if (bf_embed_bvh_open(&bvh, bvh_path) != 0) {
         fprintf(stderr, "leapfrog: cannot open BVH\n");
         bf_embed_pack_close(&pack); return 1;
     }

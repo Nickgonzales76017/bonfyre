@@ -52,6 +52,15 @@ typedef struct {
     float       bpw;             /* effective bits per weight in .fpq */
 } fpq_tensor_info_t;
 
+/* Physical storage selected from the native pack header.  This is deliberately
+ * independent of the file extension: a .fpq pack can contain both raw FP16
+ * and compressed V9 tensors. */
+typedef enum {
+    FPQ_TENSOR_STORAGE_UNKNOWN = 0,
+    FPQ_TENSOR_STORAGE_NATIVE_FP16 = 1,
+    FPQ_TENSOR_STORAGE_COMPRESSED_V9 = 2,
+} fpq_tensor_storage_t;
+
 /*
  * Load a .fpq model file.
  *
@@ -193,6 +202,9 @@ const fpq_tensor_info_t *fpq_tensor_at(fpq_model_t *m, size_t index);
  * Returns NULL if not found.
  */
 const fpq_tensor_info_t *fpq_tensor_find(fpq_model_t *m, const char *name);
+
+/* Return the actual storage representation for one indexed tensor. */
+fpq_tensor_storage_t fpq_tensor_storage(fpq_model_t *m, const char *name);
 
 /*
  * Get raw float pointer for passthrough (small/1D) tensors.

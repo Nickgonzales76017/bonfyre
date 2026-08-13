@@ -30,12 +30,7 @@
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL);
-    struct tm t;
-    gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static char *read_file_contents(const char *path) {
     return bf_read_file(path, NULL);
@@ -296,8 +291,13 @@ static void fprint_json_str(FILE *fp, const char *s) {
 static int emit_clips(const WhisperDoc *doc, const char *out_dir,
                       int top_n, double min_dur, double max_dur) {
     /* Generate candidate clips using sliding windows of 1-5 segments */
-    ClipCandidate clips[MAX_CLIPS];
+    ClipCandidate *clips = calloc(MAX_CLIPS, sizeof(*clips));
     int nc = 0;
+
+    if (!clips) {
+        fprintf(stderr, "error: unable to allocate clip candidates\n");
+        return 1;
+    }
 
     for (int window = 1; window <= 5 && window <= doc->count; window++) {
         for (int i = 0; i <= doc->count - window && nc < MAX_CLIPS; i++) {
@@ -357,7 +357,10 @@ static int emit_clips(const WhisperDoc *doc, const char *out_dir,
     iso_timestamp(ts, sizeof(ts));
 
     FILE *fp = fopen(path, "w");
-    if (!fp) return 1;
+    if (!fp) {
+        free(clips);
+        return 1;
+    }
 
     fprintf(fp, "{\n");
     fprintf(fp, "  \"source_system\": \"BonfyreClips\",\n");
@@ -395,6 +398,7 @@ static int emit_clips(const WhisperDoc *doc, const char *out_dir,
     fprintf(fp, "}\n");
 
     fclose(fp);
+    free(clips);
     return 0;
 }
 
@@ -403,8 +407,13 @@ static int emit_clips(const WhisperDoc *doc, const char *out_dir,
 static int emit_timestamps(const WhisperDoc *doc, const char *out_dir,
                            int top_n, double min_dur, double max_dur) {
     /* Reuse clip discovery, then emit ffmpeg-ready timestamps */
-    ClipCandidate clips[MAX_CLIPS];
+    ClipCandidate *clips = calloc(MAX_CLIPS, sizeof(*clips));
     int nc = 0;
+
+    if (!clips) {
+        fprintf(stderr, "error: unable to allocate clip candidates\n");
+        return 1;
+    }
 
     for (int window = 1; window <= 5 && window <= doc->count; window++) {
         for (int i = 0; i <= doc->count - window && nc < MAX_CLIPS; i++) {
@@ -441,7 +450,10 @@ static int emit_timestamps(const WhisperDoc *doc, const char *out_dir,
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/clip-timestamps.txt", out_dir);
     FILE *fp = fopen(path, "w");
-    if (!fp) return 1;
+    if (!fp) {
+        free(clips);
+        return 1;
+    }
 
     fprintf(fp, "# BonfyreClips — ffmpeg-ready timestamps\n");
     fprintf(fp, "# Usage: ffmpeg -i audio.wav -ss START -to END -c copy clip_N.wav\n\n");
@@ -456,6 +468,7 @@ static int emit_timestamps(const WhisperDoc *doc, const char *out_dir,
     }
 
     fclose(fp);
+    free(clips);
     return 0;
 }
 
@@ -490,31 +503,46 @@ int main(int argc, char **argv) {
     char *json = read_file_contents(json_path);
     if (!json) { fprintf(stderr, "error: cannot read %s\n", json_path); return 1; }
 
-    WhisperDoc doc;
-    if (parse_whisper_json(json, &doc) != 0) { free(json); return 1; }
+    WhisperDoc *doc = calloc(1, sizeof(*doc));
+    if (!doc) {
+        fprintf(stderr, "error: unable to allocate transcript document\n");
+        free(json);
+        return 1;
+    }
+    if (parse_whisper_json(json, doc) != 0) {
+        free(doc);
+        free(json);
+        return 1;
+    }
     free(json);
 
-    if (doc.count == 0) {
+    if (doc->count == 0) {
         fprintf(stderr, "error: no segments in whisper JSON\n");
+        free(doc);
         return 1;
     }
 
-    if (ensure_dir(out_dir) != 0) return 1;
+    if (ensure_dir(out_dir) != 0) {
+        free(doc);
+        return 1;
+    }
 
     int rc = 0;
     if (strcmp(mode, "discover") == 0 || strcmp(mode, "all") == 0)
-        rc |= emit_clips(&doc, out_dir, top_n, min_dur, max_dur);
+        rc |= emit_clips(doc, out_dir, top_n, min_dur, max_dur);
     if (strcmp(mode, "timestamps") == 0 || strcmp(mode, "all") == 0)
-        rc |= emit_timestamps(&doc, out_dir, top_n, min_dur, max_dur);
+        rc |= emit_timestamps(doc, out_dir, top_n, min_dur, max_dur);
 
     if (strcmp(mode, "discover") != 0 && strcmp(mode, "timestamps") != 0 &&
         strcmp(mode, "all") != 0) {
         fprintf(stderr, "error: unknown mode '%s'\n", mode);
         print_usage();
+        free(doc);
         return 1;
     }
 
     if (rc == 0) printf("Clips: %d segments analyzed → top %d candidates (%s)\n",
-                        doc.count, top_n, mode);
+                        doc->count, top_n, mode);
+    free(doc);
     return rc;
 }

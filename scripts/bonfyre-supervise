@@ -1,0 +1,108 @@
+#!/bin/sh
+# RuntimeImage supervision for bonfyred: keeps the daemon running, restarting
+# it with exponential backoff on any unexpected exit, until explicitly
+# stopped. This does not register anything with launchd/systemd -- it is a
+# plain foreground-or-backgroundable watchdog loop the caller owns. Wiring it
+# into a system service manager is a separate, explicit step for the
+# operator to take; this script only owns the restart policy.
+#
+# Layout under a prefix (the same <prefix> bonfyre-release installs into):
+#   <prefix>/supervise.pid  -- pid of the running supervisor loop
+#   <prefix>/supervise.log  -- one line per start/exit/restart event
+set -eu
+
+verb=${1:-}
+prefix=${2:-}
+
+usage() {
+    echo "usage: bonfyre-supervise start|stop|status <prefix> [--port PORT]" >&2
+    exit 2
+}
+
+[ -n "$verb" ] && [ -n "$prefix" ] || usage
+prefix=$(CDPATH= cd -- "$prefix" && pwd) || { echo "supervise: prefix does not exist: $prefix" >&2; exit 1; }
+
+pid_file="$prefix/supervise.pid"
+log_file="$prefix/supervise.log"
+port=9070
+if [ "${3:-}" = "--port" ] && [ -n "${4:-}" ]; then port=$4; fi
+
+log() { printf '%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" >>"$log_file"; }
+
+running_pid() {
+    [ -f "$pid_file" ] || return 1
+    p=$(cat "$pid_file" 2>/dev/null) || return 1
+    [ -n "$p" ] && kill -0 "$p" 2>/dev/null || return 1
+    printf '%s\n' "$p"
+}
+
+cmd_status() {
+    if p=$(running_pid); then
+        printf 'supervising=yes\npid=%s\nprefix=%s\n' "$p" "$prefix"
+    else
+        printf 'supervising=no\nprefix=%s\n' "$prefix"
+    fi
+}
+
+cmd_stop() {
+    if p=$(running_pid); then
+        kill -TERM "$p"
+        log "stop requested (pid=$p)"
+        printf 'stopped=%s\n' "$p"
+    else
+        echo "supervise: nothing running at $prefix" >&2
+        exit 1
+    fi
+}
+
+cmd_start() {
+    if p=$(running_pid); then
+        echo "supervise: already running at $prefix (pid=$p)" >&2
+        exit 1
+    fi
+    daemon="$prefix/bin/bonfyred"
+    [ -x "$daemon" ] || { echo "supervise: $daemon not found or not executable" >&2; exit 1; }
+
+    : >"$log_file" 2>/dev/null || true
+    log "supervisor starting, target=$daemon --port $port"
+
+    child_pid=""
+    supervisor_term=0
+    on_term() { supervisor_term=1; [ -n "$child_pid" ] && kill -TERM "$child_pid" 2>/dev/null || true; }
+    trap on_term TERM INT
+
+    echo $$ >"$pid_file"
+    backoff=1
+    while [ "$supervisor_term" -eq 0 ]; do
+        start_ms=$(date -u +%s)
+        "$daemon" serve --port "$port" >>"$log_file" 2>&1 &
+        child_pid=$!
+        # wait's exit status reflects the child's abnormal termination (the
+        # expected case here: a crash or a SIGTERM from on_term) -- under
+        # set -e that nonzero status would otherwise kill this script before
+        # the restart logic below ever runs.
+        code=0
+        wait "$child_pid" 2>/dev/null || code=$?
+        child_pid=""
+        [ "$supervisor_term" -eq 1 ] && break
+        end_ms=$(date -u +%s)
+        alive_s=$((end_ms - start_ms))
+        log "daemon exited code=$code after ${alive_s}s, restarting in ${backoff}s"
+        # A daemon that stays up for a while before dying is treated as a
+        # fresh failure, not a crash loop: reset backoff instead of letting
+        # it climb forever on an intermittently-flaky-but-mostly-fine daemon.
+        if [ "$alive_s" -ge 60 ]; then backoff=1; fi
+        sleep "$backoff"
+        backoff=$((backoff * 2))
+        [ "$backoff" -gt 60 ] && backoff=60
+    done
+    log "supervisor stopped"
+    rm -f "$pid_file"
+}
+
+case "$verb" in
+    start) cmd_start ;;
+    stop) cmd_stop ;;
+    status) cmd_status ;;
+    *) usage ;;
+esac

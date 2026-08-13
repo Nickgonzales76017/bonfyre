@@ -1,0 +1,26 @@
+{
+  "capability_count": 21,
+  "capabilities": [
+    {"id":"bonfyre_api","binary":"bonfyre-api","subcommand":"serve","layer":"layer6","artifact_in":"AppPack","artifact_out":"HTTPRouteSet","effects":"network,queue","proof_required":"PolicyClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_surface","binary":"bonfyre-surface","subcommand":"list","layer":"layer5","artifact_in":"DocType","artifact_out":"SurfaceDescriptor","effects":"read","proof_required":"SurfaceClaim","proof_emitted":"SurfaceClaim"},
+    {"id":"bonfyre_capability","binary":"bonfyre-capability","subcommand":"list","layer":"layer6","artifact_in":"CapabilityQuery","artifact_out":"CapabilityMatch","effects":"read","proof_required":"IntegrityClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_rules","binary":"bonfyre-frappe-compiler","subcommand":"phase 7","layer":"layer2","artifact_in":"SchemaGraph","artifact_out":"RuleUniverse","effects":"derive","proof_required":"PolicyClaim","proof_emitted":"RuleActivationClaim"},
+    {"id":"bonfyre_canon","binary":"bonfyre-canon","subcommand":"normalize","layer":"layer0","artifact_in":"FrappeDocument","artifact_out":"CanonicalDocument","effects":"pure","proof_required":"IntegrityClaim","proof_emitted":"IntegrityClaim"},
+    {"id":"bonfyre_hash","binary":"bonfyre-hash","subcommand":"file","layer":"layer0","artifact_in":"CanonicalDocument","artifact_out":"HashArtifact","effects":"pure","proof_required":"IntegrityClaim","proof_emitted":"IntegrityClaim"},
+    {"id":"bonfyre_graph","binary":"bonfyre-graph","subcommand":"layer","layer":"layer1","artifact_in":"SchemaGraph","artifact_out":"RelationGraph","effects":"read,write","proof_required":"IntegrityClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_index","binary":"bonfyre-index","subcommand":"build","layer":"layer1","artifact_in":"RelationGraph","artifact_out":"IndexArtifact","effects":"read,write","proof_required":"IntegrityClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_query","binary":"bonfyre-query","subcommand":"status","layer":"layer1","artifact_in":"IndexArtifact","artifact_out":"QueryResult","effects":"read","proof_required":"IntegrityClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_ingest","binary":"bonfyre-ingest","subcommand":"run","layer":"layer0","artifact_in":"ExternalArtifact","artifact_out":"IngestedArtifact","effects":"io","proof_required":"ProvenanceClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_fragment","binary":"bonfyre-fragment","subcommand":"ingest","layer":"layer0","artifact_in":"IngestedArtifact","artifact_out":"FragmentSet","effects":"write","proof_required":"ProvenanceClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_media_prep","binary":"bonfyre-media-prep","subcommand":"normalize","layer":"layer0","artifact_in":"MediaArtifact","artifact_out":"PreparedMediaArtifact","effects":"transform","proof_required":"IntegrityClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_workflow","binary":"bonfyre-workflow","subcommand":"steps","layer":"layer2","artifact_in":"DocumentState","artifact_out":"WorkflowPlan","effects":"read,write","proof_required":"PolicyClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_flow","binary":"bonfyre-flow","subcommand":"run","layer":"layer2","artifact_in":"WorkflowPlan","artifact_out":"FlowExecution","effects":"write","proof_required":"PolicyClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_ledger","binary":"bonfyre-ledger","subcommand":"assess-json","layer":"layer1","artifact_in":"FinancialDocument","artifact_out":"LedgerAssessment","effects":"read","proof_required":"IntegrityClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_physics","binary":"bonfyre-physics","subcommand":"diff","layer":"layer4","artifact_in":"AmendmentTrajectory","artifact_out":"TrajectoryDelta","effects":"read","proof_required":"ProvenanceClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_reason","binary":"bonfyre-reason","subcommand":"run","layer":"layer4","artifact_in":"TrajectoryDelta","artifact_out":"ReasonedTrajectory","effects":"read,write","proof_required":"ProvenanceClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_model","binary":"bonfyre-model","subcommand":"list","layer":"layer4","artifact_in":"SemanticSource","artifact_out":"ModelDescriptor","effects":"read","proof_required":"PolicyClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_embed","binary":"bonfyre-embed","subcommand":"index","layer":"layer4","artifact_in":"SemanticSource","artifact_out":"EmbeddingArtifact","effects":"transform","proof_required":"SemanticClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_vec","binary":"bonfyre-vec","subcommand":"search","layer":"layer4","artifact_in":"EmbeddingArtifact","artifact_out":"VectorIndexArtifact","effects":"read,write","proof_required":"SemanticClaim","proof_emitted":"ExecutionClaim"},
+    {"id":"bonfyre_proof","binary":"bonfyre-proof","subcommand":"bundle","layer":"layer1","artifact_in":"FragmentSet","artifact_out":"ProofBundle","effects":"compose","proof_required":"IntegrityClaim","proof_emitted":"PolicyClaim"}
+  ]
+}

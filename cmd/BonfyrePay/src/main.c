@@ -58,10 +58,7 @@ static const PriceEntry PRICES[] = {
 
 /* ── Utility ──────────────────────────────────────────────────────── */
 
-static void iso_now(char *buf, size_t sz) {
-    time_t t=time(NULL); struct tm tm; gmtime_r(&t,&tm);
-    strftime(buf,sz,"%Y-%m-%dT%H:%M:%SZ",&tm);
-}
+static void iso_now(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 /* ── Database ─────────────────────────────────────────────────────── */
 

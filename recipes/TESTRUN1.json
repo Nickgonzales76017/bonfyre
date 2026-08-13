@@ -1,0 +1,13 @@
+{
+  "code": "TESTRUN1",
+  "recipe_id": "TESTRUN1",
+  "name": "Test Run Recipe",
+  "description": "Minimal single-stage recipe for command.run local proof",
+  "stages": [
+    {
+      "id": "hash-stage",
+      "operator": "BonfyreHash",
+      "args": ["file", "{input}"]
+    }
+  ]
+}

@@ -2,15 +2,15 @@ CC ?= cc
 CFLAGS ?= -O2 -Wall -Wextra -std=c11
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
 LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lsqlite3
-TARGET = bonfyre-layer
+TARGETS = bonfyre-layer bonfyre-layer-c
 SRC = src/main.c
 
-all: $(TARGET)
+all: $(TARGETS)
 
-$(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $(TARGET) $(SRC) $(LDFLAGS)
+$(TARGETS): $(SRC)
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $@ $(SRC) $(LDFLAGS)
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGETS)
 
 .PHONY: all clean

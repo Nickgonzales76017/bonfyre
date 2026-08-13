@@ -1,0 +1,4 @@
+composition artifact-hash
+  input artifact.v1
+  node hash operator command.hash
+  terminal complete

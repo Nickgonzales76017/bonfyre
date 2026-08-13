@@ -17,6 +17,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "bonfyre.h"
 
 #define MAX_FRAMES 100000
 
@@ -62,12 +63,7 @@ static int ensure_dir(const char *path) {
     return 0;
 }
 
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 static int has_image_ext(const char *name) {
     const char *dot = strrchr(name, '.');

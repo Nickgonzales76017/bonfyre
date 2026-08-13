@@ -1,0 +1,50 @@
+#!/bin/sh
+# Real source binding for the Feldera readiness pipeline (feldera/readiness_pipeline.sql):
+# exports the live fabric.db source tables as NDJSON in Feldera's documented
+# insert-format connector shape (one {"insert": {...}} object per line),
+# matching exactly the column set feldera/readiness_pipeline.sql declares.
+#
+# Usage: bonfyre-feldera-export <fabric.db> <output-dir>
+#
+# This is a real, runnable artifact today -- it does not require a running
+# Feldera instance. When real Feldera has capacity to run
+# (feldera.local_image_pull=capacity_pending, see docs/FELDERA_STATUS.md),
+# its file connector points directly at the files this produces.
+set -eu
+
+db=${1:?usage: bonfyre-feldera-export <fabric.db> <output-dir>}
+out=${2:?usage: bonfyre-feldera-export <fabric.db> <output-dir>}
+mkdir -p "$out"
+
+sqlite3 "$db" <<'SQL' >"$out/workgraph_nodes.ndjson"
+SELECT json_object('insert', json_object(
+  'mission_id', mission_id, 'node_id', node_id, 'status', status,
+  'lease_expires_at_ms', lease_expires_at_ms))
+FROM workgraph_nodes;
+SQL
+
+sqlite3 "$db" <<'SQL' >"$out/effects.ndjson"
+SELECT json_object('insert', json_object(
+  'id', id, 'mission_id', mission_id, 'state', state))
+FROM effects;
+SQL
+
+sqlite3 "$db" <<'SQL' >"$out/workgraph_compensations.ndjson"
+SELECT json_object('insert', json_object(
+  'mission_id', mission_id, 'node_id', node_id, 'effect_id', effect_id, 'state', state))
+FROM workgraph_compensations;
+SQL
+
+sqlite3 "$db" <<'SQL' >"$out/catalog_bindings.ndjson"
+SELECT json_object('insert', json_object(
+  'operator_id', operator_id, 'binding_state', binding_state))
+FROM catalog_bindings
+WHERE operator_id LIKE 'command.%';
+SQL
+
+sqlite3 "$db" <<'SQL' >"$out/fabric_meta.ndjson"
+SELECT json_object('insert', json_object('key', key, 'value', value))
+FROM fabric_meta;
+SQL
+
+echo "feldera_export=$out"

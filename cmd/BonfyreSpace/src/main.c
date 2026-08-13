@@ -257,8 +257,41 @@ static void cmd_help(void){
     VERSION);
 }
 
+static int cmd_fixture(const char *path) {
+    sqlite3 *db;
+    sqlite3_stmt *st = NULL;
+    int put = 0, isolated = 0, handoff = 0, restart = 0;
+    if (!path || setenv(DB_ENV, path, 1) != 0) return 1;
+    db = open_db();
+    cmd_put(db, "fixture-project", "source", "governed-artifact");
+    cmd_put(db, "fixture-project", "handoff", "downstream-stage");
+    cmd_put(db, "other-project", "source", "isolated-artifact");
+    cmd_attach(db, "fixture-project", "worker-a");
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM entries WHERE space='fixture-project' AND key='source' AND value='governed-artifact'", -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        put = sqlite3_column_int(st, 0) == 1;
+    sqlite3_finalize(st); st = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM entries WHERE space='other-project' AND key='source' AND value='governed-artifact'", -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        isolated = sqlite3_column_int(st, 0) == 0;
+    sqlite3_finalize(st); st = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM entries WHERE space='fixture-project' AND key='handoff' AND value='downstream-stage'", -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        handoff = sqlite3_column_int(st, 0) == 1;
+    sqlite3_finalize(st); sqlite3_close(db);
+    db = open_db();
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM entries WHERE space='fixture-project' AND key='source'", -1, &st, NULL) == SQLITE_OK && sqlite3_step(st) == SQLITE_ROW)
+        restart = sqlite3_column_int(st, 0) == 1;
+    sqlite3_finalize(st); sqlite3_close(db);
+    printf("{\"put\":%s,\"get\":%s,\"isolation\":%s,\"handoff\":%s,\"restart_persisted\":%s}\n",
+           put ? "true" : "false", put ? "true" : "false", isolated ? "true" : "false",
+           handoff ? "true" : "false", restart ? "true" : "false");
+    return put && isolated && handoff && restart ? 0 : 1;
+}
+
 int main(int argc,char **argv){
     if(argc<2||strcmp(argv[1],"help")==0||strcmp(argv[1],"--help")==0){cmd_help();return 0;}
+    if (strcmp(argv[1], "fixture") == 0) {
+        if (argc != 3) { fprintf(stderr, "usage: bonfyre-space fixture <db>\n"); return 1; }
+        return cmd_fixture(argv[2]);
+    }
     sqlite3 *db=open_db();
     int rc=0;const char *cmd=argv[1];
     if(strcmp(cmd,"status")==0) cmd_status(db);

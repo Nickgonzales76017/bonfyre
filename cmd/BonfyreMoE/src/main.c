@@ -8,8 +8,8 @@
  *   plan     — Inspect placement strategy without loading (fast, read-only)
  *   doctor   — Validate model files, memory, network peers (readiness check)
  *   chat     — Interactive chat session with persistent KV cache
- *   serve    — OpenAI-compatible HTTP API server
- *   peer     — Expert server mode (provide experts to other nodes)
+ *   serve    — OpenAI-compatible HTTP API for GGUF MoE checkpoints
+ *   peer     — reserved expert-server surface for native Colibri checkpoints
  *   rebalance— Analyze router cache and replicate hot experts across fleet
  *
  * Examples:
@@ -21,10 +21,14 @@
  */
 
 #include "colibri_bonfyre.h"
+#include <errno.h>
+#include <limits.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
 
@@ -37,18 +41,24 @@ static void usage(const char *argv0) {
         "BonfyreMoE — Distributed expert-streaming MoE inference\n"
         "\n"
         "Usage:\n"
+        "  %s --help | help\n"
+        "  %s --version\n"
+        "  %s status\n"
         "  %s list-archs\n"
         "  %s plan --model <path> [options]\n"
         "  %s doctor --model <path> [options]\n"
         "  %s chat --model <path> [options]\n"
         "  %s serve --model <path> [options]\n"
-        "  %s peer --model <path> --port <port>\n"
+        "  %s peer --model <path> --port <port> (unavailable in this build)\n"
         "  %s rebalance --model <path> --peers <host:port,...>\n"
+        "  %s embed --model <path> --text <file> --out <file>\n"
         "\n"
         "Model configuration:\n"
         "  --model <path>         Model directory (required for most modes)\n"
         "  --arch <name>          Architecture name or alias (default: auto-detect)\n"
         "                         Use 'list-archs' to see available architectures\n"
+        "  --gpu-layers <N>       llama.cpp GPU layers for GGUF MoE (default: 99)\n"
+        "  --ctx-size <N>         llama.cpp context for GGUF MoE (default: 2048)\n"
         "\n"
         "Memory tiers:\n"
         "  --vram <GB>            VRAM budget (0 = auto-detect, default)\n"
@@ -65,21 +75,118 @@ static void usage(const char *argv0) {
         "  --io-threads <N>       Async I/O pool size (0 = auto, default: 4)\n"
         "  --prefetch <N>         Router lookahead layers (0 = disable, default: 1)\n"
         "  --numa                 NUMA-aware weight placement (default: off)\n"
-        "  --no-spec              Disable speculative decoding (default: enabled)\n"
         "\n"
         "Network (distributed):\n"
         "  --peers <list>         Comma-separated host:port peers\n"
-        "  --port <port>          QUIC listen port (default: 7000)\n"
+        "  --port <port>          API listen port for GGUF serve (default: 7000)\n"
         "\n"
         "Examples:\n"
         "  %s list-archs\n"
         "  %s plan --model /nvme/glm52 --vram 80 --ram 128\n"
         "  %s chat --model /nvme/mixtral --arch mixtral\n"
-        "  %s serve --model /nvme/glm52 --port 8080 --peers node-2:7000\n"
-        "  %s peer --model /nvme/glm52 --port 7000\n"
+        "  %s status\n"
+        "  %s serve --model /models/Qwen1.5-MoE-A2.7B-Chat.gguf --port 7000\n"
         "\n",
-        argv0, argv0, argv0, argv0, argv0, argv0, argv0,
-        argv0, argv0, argv0, argv0, argv0);
+        argv0, argv0, argv0, argv0, argv0, argv0, argv0, argv0, argv0, argv0,
+        argv0, argv0, argv0, argv0, argv0, argv0);
+}
+
+/* Kept dependency-free so MCP/fleet probes do not need a model checkpoint. */
+static int mode_status(void) {
+    puts("{\"schema\":\"bonfyre.moe.status.v1\","
+         "\"name\":\"bonfyre-moe\","
+         "\"planner\":true,"
+         "\"doctor\":true,"
+         "\"interactive_chat\":true,"
+         "\"gguf_moe_backend\":\"llama.cpp\","
+         "\"http_api\":true,"
+         "\"quic_peer_server\":false,"
+         "\"model_required_for_inference\":true}");
+    return 0;
+}
+
+static int mode_reserved_service(const char *mode) {
+    fprintf(stderr,
+            "BonfyreMoE: '%s' is not available in this build. "
+            "It previously entered an idle loop while advertising a live service; "
+            "that behavior has been removed. Use 'plan', 'doctor', or 'chat' "
+            "with a materialized MoE checkpoint.\n",
+            mode);
+    return 78; /* EX_CONFIG: capability intentionally not configured. */
+}
+
+static bool has_suffix(const char *value, const char *suffix) {
+    size_t value_len;
+    size_t suffix_len;
+    if (!value || !suffix) return false;
+    value_len = strlen(value);
+    suffix_len = strlen(suffix);
+    return value_len >= suffix_len &&
+           strcmp(value + value_len - suffix_len, suffix) == 0;
+}
+
+static bool is_gguf_model(const char *model_path) {
+    return has_suffix(model_path, ".gguf");
+}
+
+/* The distributed Colibri format and GGUF are intentionally separate.  For
+ * GGUF MoE checkpoints delegate to llama.cpp, which executes their router and
+ * experts faithfully and provides the OpenAI HTTP surface.  execvp avoids a
+ * shell entirely, so model paths and flags never become command text. */
+static int exec_llama_cpp(const char *program,
+                          const char *model_path,
+                          uint16_t port,
+                          uint32_t gpu_layers,
+                          uint32_t context_size,
+                          bool serve) {
+    char port_buf[16];
+    char gpu_layers_buf[16];
+    char context_buf[16];
+    char *argv[16];
+    int argi = 0;
+
+    if (!program || !model_path) return 2;
+    snprintf(port_buf, sizeof(port_buf), "%u", (unsigned)port);
+    snprintf(gpu_layers_buf, sizeof(gpu_layers_buf), "%u", gpu_layers);
+    snprintf(context_buf, sizeof(context_buf), "%u", context_size);
+
+    argv[argi++] = (char *)program;
+    argv[argi++] = "-m";
+    argv[argi++] = (char *)model_path;
+    argv[argi++] = "-ngl";
+    argv[argi++] = gpu_layers_buf;
+    argv[argi++] = "-c";
+    argv[argi++] = context_buf;
+    if (serve) {
+        argv[argi++] = "--host";
+        argv[argi++] = "127.0.0.1";
+        argv[argi++] = "--port";
+        argv[argi++] = port_buf;
+    } else {
+        argv[argi++] = "-cnv";
+    }
+    argv[argi] = NULL;
+
+    execvp(program, argv);
+    fprintf(stderr, "BonfyreMoE: failed to start %s: %s\n", program, strerror(errno));
+    return 127;
+}
+
+static int mode_gguf_doctor(const char *model_path) {
+    struct stat st;
+    if (!model_path || stat(model_path, &st) != 0 || !S_ISREG(st.st_mode) || st.st_size == 0) {
+        fprintf(stderr, "BonfyreMoE: GGUF checkpoint is missing or empty: %s\n",
+                model_path ? model_path : "(null)");
+        return 1;
+    }
+    printf("BonfyreMoE GGUF Doctor\n"
+           "======================\n"
+           "Model: %s\n"
+           "Bytes: %llu\n"
+           "Backend: llama.cpp\n"
+           "✓ Checkpoint is ready for chat or OpenAI-compatible serve\n",
+           model_path, (unsigned long long)st.st_size);
+    return 0;
 }
 
 static int argi(const char *s, int fallback) {
@@ -269,7 +376,7 @@ static int mode_chat(const char *model_path, const cbf_model_shape_t *shape,
 
         /* Tokenize input */
         rc = cbf_tokenizer_encode(tokenizer, input_buffer, tokens, 2048, &token_count);
-        if (rc != CBF_OK) {
+        if (rc != CBF_OK || token_count == 0) {
             fprintf(stderr, "✗ Tokenization failed\n");
             continue;
         }
@@ -277,16 +384,28 @@ static int mode_chat(const char *model_path, const cbf_model_shape_t *shape,
         printf("Assistant: ");
         fflush(stdout);
 
+        /* Prefill every user token. Passing only the final token here loses the
+         * actual prompt context and makes a loaded MoE model look incoherent. */
+        rc = cbf_forward(engine, tokens, token_count, kv_cache, logits);
+        if (rc != CBF_OK) {
+            fprintf(stderr, "\n✗ Prompt prefill failed: %s\n", cbf_strerror(rc));
+            continue;
+        }
+        if (getenv("BONFYRE_DEBUG_LOGITS")) {
+            uint32_t nz = 0;
+            uint32_t am = 0;
+            float amv = logits[0];
+            for (uint32_t j = 0; j < shape->n_vocab; j++) {
+                if (logits[j] != 0.0f) nz++;
+                if (logits[j] > amv) { amv = logits[j]; am = j; }
+            }
+            fprintf(stderr, "[debug] PREFILL logits: nonzero=%u/%u argmax_id=%u argmax_val=%f first5=[%f %f %f %f %f]\n",
+                    nz, shape->n_vocab, am, amv, logits[0], logits[1], logits[2], logits[3], logits[4]);
+        }
+
         /* Generate response (max 256 tokens) */
         uint32_t max_new_tokens = 256;
         for (uint32_t i = 0; i < max_new_tokens; i++) {
-            /* Forward pass */
-            rc = cbf_forward(engine, tokens + token_count - 1, 1, kv_cache, logits);
-            if (rc != CBF_OK) {
-                fprintf(stderr, "\n✗ Forward pass failed: %s\n", cbf_strerror(rc));
-                break;
-            }
-
             /* Sample from logits (greedy decoding for simplicity) */
             uint32_t best_token = 0;
             float best_logit = logits[0];
@@ -310,6 +429,25 @@ static int mode_chat(const char *model_path, const cbf_model_shape_t *shape,
             /* Add to context */
             if (token_count < 2048) {
                 tokens[token_count++] = best_token;
+                rc = cbf_forward(engine, &best_token, 1, kv_cache, logits);
+                if (rc != CBF_OK) {
+                    fprintf(stderr, "\n✗ Decode step failed: %s\n", cbf_strerror(rc));
+                    break;
+                }
+                if (getenv("BONFYRE_DEBUG_LOGITS") && i < 3) {
+                    uint32_t nz = 0;
+                    uint32_t am = 0;
+                    float amv = logits[0];
+                    for (uint32_t j = 0; j < shape->n_vocab; j++) {
+                        if (logits[j] != 0.0f) nz++;
+                        if (logits[j] > amv) { amv = logits[j]; am = j; }
+                    }
+                    fprintf(stderr, "[debug] DECODE[%u] logits: nonzero=%u/%u argmax_id=%u argmax_val=%f first5=[%f %f %f %f %f]\n",
+                            i, nz, shape->n_vocab, am, amv, logits[0], logits[1], logits[2], logits[3], logits[4]);
+                }
+            } else {
+                fprintf(stderr, "\n✗ Context limit reached\n");
+                break;
             }
         }
 
@@ -323,6 +461,7 @@ static int mode_chat(const char *model_path, const cbf_model_shape_t *shape,
     return 0;
 }
 
+#if 0 /* Disabled: these former placeholder loops must never advertise service. */
 static int mode_serve(const char *model_path, const cbf_model_shape_t *shape,
                       const cbf_memory_config_t *memory, uint16_t port) {
     printf("BonfyreMoE API Server\n");
@@ -450,6 +589,7 @@ static int mode_peer(const char *model_path, const cbf_model_shape_t *shape,
     cbf_engine_free(engine);
     return 0;
 }
+#endif
 
 static int mode_rebalance(const char *model_path, const cbf_model_shape_t *shape,
                           const cbf_memory_config_t *memory,
@@ -483,6 +623,81 @@ static int mode_rebalance(const char *model_path, const cbf_model_shape_t *shape
     return (rc == CBF_OK) ? 0 : 1;
 }
 
+/* A real model-backed embedding route.  It tokenizes with the native MoE
+ * tokenizer, reads only the corresponding rows from the materialized model
+ * embedding table, mean-pools them, then L2-normalizes the model vector. */
+static int mode_embed(const char *model_path, const cbf_model_shape_t *shape,
+                      const char *text_path, const char *out_path) {
+    char tokenizer_path[1024], embeddings_path[1024];
+    FILE *input = NULL, *embeddings = NULL, *out = NULL;
+    char *text = NULL;
+    long text_size;
+    uint32_t tokens[256], token_count = 0;
+    float *vector = NULL, *row = NULL;
+    cbf_tokenizer_t *tokenizer = NULL;
+    int rc = 1;
+
+    if (!text_path || !out_path || !shape || !shape->d_model || !shape->n_vocab) return 2;
+    input = fopen(text_path, "rb");
+    if (!input || fseek(input, 0, SEEK_END) || (text_size = ftell(input)) < 0 ||
+        fseek(input, 0, SEEK_SET)) goto done;
+    text = calloc((size_t)text_size + 1, 1);
+    if (!text || fread(text, 1, (size_t)text_size, input) != (size_t)text_size) goto done;
+    snprintf(tokenizer_path, sizeof(tokenizer_path), "%s/tokenizer.model", model_path);
+    snprintf(embeddings_path, sizeof(embeddings_path), "%s/embeddings.bin", model_path);
+    tokenizer = cbf_tokenizer_load(tokenizer_path);
+    if (!tokenizer || cbf_tokenizer_encode(tokenizer, text, tokens,
+                                            (uint32_t)(sizeof(tokens) / sizeof(tokens[0])),
+                                            &token_count) != CBF_OK || !token_count) {
+        fprintf(stderr, "BonfyreMoE: native tokenizer failed for embedding input\n");
+        goto done;
+    }
+    embeddings = fopen(embeddings_path, "rb");
+    vector = calloc(shape->d_model, sizeof(float));
+    row = malloc((size_t)shape->d_model * sizeof(float));
+    if (!embeddings || !vector || !row) goto done;
+    for (uint32_t index = 0; index < token_count; ++index) {
+        uint32_t token = tokens[index];
+        uint64_t offset;
+        if (token >= shape->n_vocab) { fprintf(stderr, "BonfyreMoE: token out of model vocabulary\n"); goto done; }
+        offset = (uint64_t)token * (uint64_t)shape->d_model * sizeof(float);
+        if (offset > LONG_MAX || fseek(embeddings, (long)offset, SEEK_SET) ||
+            fread(row, sizeof(float), shape->d_model, embeddings) != shape->d_model) {
+            fprintf(stderr, "BonfyreMoE: embedding row read failed for token %u\n", token);
+            goto done;
+        }
+        for (uint32_t dim = 0; dim < shape->d_model; ++dim) vector[dim] += row[dim];
+    }
+    {
+        double norm = 0.0;
+        for (uint32_t dim = 0; dim < shape->d_model; ++dim) {
+            vector[dim] /= (float)token_count;
+            if (!isfinite(vector[dim])) { fprintf(stderr, "BonfyreMoE: non-finite embedding value\n"); goto done; }
+            norm += (double)vector[dim] * vector[dim];
+        }
+        norm = sqrt(norm);
+        if (!isfinite(norm) || norm <= 0.0) { fprintf(stderr, "BonfyreMoE: zero embedding norm\n"); goto done; }
+        for (uint32_t dim = 0; dim < shape->d_model; ++dim) vector[dim] = (float)(vector[dim] / norm);
+    }
+    out = fopen(out_path, "w");
+    if (!out) goto done;
+    fprintf(out, "{\n  \"backend\": \"native-moe-token-embedding\",\n"
+                 "  \"model_path\": \"%s\",\n  \"dimensions\": %u,\n"
+                 "  \"token_count\": %u,\n  \"normalized\": true,\n  \"vector\": [",
+            model_path, shape->d_model, token_count);
+    for (uint32_t dim = 0; dim < shape->d_model; ++dim)
+        fprintf(out, "%s%.9g", dim ? "," : "", vector[dim]);
+    fprintf(out, "]\n}\n");
+    rc = ferror(out) ? 1 : 0;
+done:
+    if (out) fclose(out);
+    if (input) fclose(input);
+    if (embeddings) fclose(embeddings);
+    if (tokenizer) cbf_tokenizer_free(tokenizer);
+    free(text); free(vector); free(row);
+    return rc;
+}
+
 /* ═══════════════════════════════════════════════════════════════════
  * Main entry point
  * ═══════════════════════════════════════════════════════════════════ */
@@ -495,6 +710,20 @@ int main(int argc, char **argv) {
 
     const char *mode = argv[1];
 
+    /* Model-free modes are stable fleet/MCP probe surfaces. */
+    if (strcmp(mode, "--help") == 0 || strcmp(mode, "-h") == 0 ||
+        strcmp(mode, "help") == 0) {
+        usage(argv[0]);
+        return 0;
+    }
+    if (strcmp(mode, "--version") == 0 || strcmp(mode, "version") == 0) {
+        puts("bonfyre-moe 0.1.0");
+        return 0;
+    }
+    if (strcmp(mode, "status") == 0) {
+        return mode_status();
+    }
+
     /* Special mode: list architectures (no other args needed) */
     if (strcmp(mode, "list-archs") == 0) {
         cbf_arch_list_all();
@@ -506,6 +735,8 @@ int main(int argc, char **argv) {
     const char *arch = "auto";  /* Changed from glm52 to auto */
     const char *workload = "default";
     const char *peer_str = NULL;
+    const char *text_path = NULL;
+    const char *out_path = NULL;
     uint64_t vram_gb = DEFAULT_VRAM_GB;
     uint64_t ram_gb = DEFAULT_RAM_GB;
     const char *disk_path = NULL;
@@ -514,8 +745,9 @@ int main(int argc, char **argv) {
     float pin_threshold = 0.5f;
     uint32_t io_threads = 4;
     uint32_t prefetch = 1;
+    uint32_t gpu_layers = 99;
+    uint32_t context_size = 2048;
     bool numa = false;
-    bool spec = true;
     uint16_t port = DEFAULT_PORT;
 
     for (int i = 2; i < argc; i++) {
@@ -530,10 +762,19 @@ int main(int argc, char **argv) {
         else if (strcmp(argv[i], "--pin-threshold") == 0 && i + 1 < argc) pin_threshold = argf(argv[++i], pin_threshold);
         else if (strcmp(argv[i], "--io-threads") == 0 && i + 1 < argc) io_threads = argi(argv[++i], io_threads);
         else if (strcmp(argv[i], "--prefetch") == 0 && i + 1 < argc) prefetch = argi(argv[++i], prefetch);
+        else if (strcmp(argv[i], "--gpu-layers") == 0 && i + 1 < argc) gpu_layers = argi(argv[++i], gpu_layers);
+        else if (strcmp(argv[i], "--ctx-size") == 0 && i + 1 < argc) context_size = argi(argv[++i], context_size);
         else if (strcmp(argv[i], "--numa") == 0) numa = true;
-        else if (strcmp(argv[i], "--no-spec") == 0) spec = false;
+        else if (strcmp(argv[i], "--no-spec") == 0) {
+            fprintf(stderr,
+                    "Error: speculative decoding is not configurable in this build; "
+                    "the option has no safe implementation.\n");
+            return 2;
+        }
         else if (strcmp(argv[i], "--peers") == 0 && i + 1 < argc) peer_str = argv[++i];
         else if (strcmp(argv[i], "--port") == 0 && i + 1 < argc) port = argi(argv[++i], port);
+        else if (strcmp(argv[i], "--text") == 0 && i + 1 < argc) text_path = argv[++i];
+        else if (strcmp(argv[i], "--out") == 0 && i + 1 < argc) out_path = argv[++i];
         else {
             usage(argv[0]);
             return 2;
@@ -544,6 +785,24 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: --model required\n");
         usage(argv[0]);
         return 2;
+    }
+
+    if (is_gguf_model(model_path)) {
+        if (strcmp(mode, "doctor") == 0) {
+            return mode_gguf_doctor(model_path);
+        }
+        if (strcmp(mode, "chat") == 0) {
+            return exec_llama_cpp(getenv("BONFYRE_LLAMA_CLI_BIN") ? getenv("BONFYRE_LLAMA_CLI_BIN") : "llama-cli",
+                                  model_path, port, gpu_layers, context_size, false);
+        }
+        if (strcmp(mode, "serve") == 0) {
+            return exec_llama_cpp(getenv("BONFYRE_LLAMA_SERVER_BIN") ? getenv("BONFYRE_LLAMA_SERVER_BIN") : "llama-server",
+                                  model_path, port, gpu_layers, context_size, true);
+        }
+        if (strcmp(mode, "peer") == 0) {
+            fprintf(stderr, "BonfyreMoE: peer mode requires the native Colibri expert format; GGUF MoE supports chat and serve.\n");
+            return 78;
+        }
     }
 
     /* Default disk path */
@@ -598,10 +857,16 @@ int main(int argc, char **argv) {
         return mode_doctor(model_path, &shape, &memory);
     } else if (strcmp(mode, "chat") == 0) {
         return mode_chat(model_path, &shape, &memory, workload);
+    } else if (strcmp(mode, "embed") == 0) {
+        if (!text_path || !out_path) {
+            fprintf(stderr, "Error: embed requires --text and --out\n");
+            return 2;
+        }
+        return mode_embed(model_path, &shape, text_path, out_path);
     } else if (strcmp(mode, "serve") == 0) {
-        return mode_serve(model_path, &shape, &memory, port);
+        return mode_reserved_service(mode);
     } else if (strcmp(mode, "peer") == 0) {
-        return mode_peer(model_path, &shape, &memory, port);
+        return mode_reserved_service(mode);
     } else if (strcmp(mode, "rebalance") == 0) {
         cbf_peer_t *peers = NULL;
         uint32_t n_peers = 0;

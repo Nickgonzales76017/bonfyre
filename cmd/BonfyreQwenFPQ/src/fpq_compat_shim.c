@@ -108,8 +108,14 @@ int fpq_decode_row(fpq_model_t *m, const char *tensor_name,
         return 0;
     }
 
-    if (getenv("BONFYRE_QWEN_BOOTSTRAP_SYNTHETIC_ROWS") ||
-        strcmp(tensor_name, "model.embed_tokens.weight") == 0) {
+    /* Real decode failed. Only fabricate a row when explicitly requested for
+     * testing (BONFYRE_QWEN_BOOTSTRAP_SYNTHETIC_ROWS) -- this used to also
+     * trigger unconditionally for model.embed_tokens.weight, which silently
+     * fed every token a random hash-noise embedding instead of its real
+     * trained vector regardless of whether the real decoder worked. That is
+     * the root cause of incoherent generation across every FPQ pack tested. */
+    const char *synthetic_rows = getenv("BONFYRE_QWEN_BOOTSTRAP_SYNTHETIC_ROWS");
+    if (synthetic_rows && *synthetic_rows && strcmp(synthetic_rows, "0") != 0) {
         static int logged_row = 0;
         if (logged_row < 40) {
             fprintf(stderr,

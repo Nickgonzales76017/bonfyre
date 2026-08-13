@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+base=${BONFYRE_STATE_DIR:-"${TMPDIR:-/tmp}/bonfyre-completion"}/completion
+run_id=$(cat "$base/latest"); run="$base/runs/$run_id"; table="$run/requirement-status.tsv"
+total=$(awk 'END{print NR-1}' "$table"); passed=$(awk -F '\t' 'NR>1&&$2=="passed"{n++}END{print n+0}' "$table"); failed=$(awk -F '\t' 'NR>1&&$2=="failed"{n++}END{print n+0}' "$table"); blocked=$(awk -F '\t' 'NR>1&&$2=="blocked_dependency"{n++}END{print n+0}' "$table")
+printf 'run_id=%s total=%s passed=%s failed=%s blocked_dependency=%s evidence_paths=%s\n' "$run_id" "$total" "$passed" "$failed" "$blocked" "$run"

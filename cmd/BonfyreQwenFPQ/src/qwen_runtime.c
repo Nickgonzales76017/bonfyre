@@ -33,6 +33,15 @@ typedef struct {
     void *orig_data;
 } file_cb_data_t;
 
+/* Lineage retained when the Blender quality contract derives one executable
+ * statement from the raw sampled completion.  Token indexes are zero based
+ * and the end is exclusive. */
+typedef struct {
+    const char *raw_path;
+    int token_start;
+    int token_end;
+} qwen_normalization_t;
+
 typedef struct {
     tokenizer_t *tokenizer;
     qwen_token_cb user_cb;
@@ -62,25 +71,6 @@ static double qwen_monotonic_seconds_now(void) {
 static int qwen_debug_enabled(void) {
     const char *v = getenv("BONFYRE_QWEN_DEBUG");
     return v && v[0] && strcmp(v, "0") != 0;
-}
-
-static int qwen_bootstrap_zero_matmul_enabled(void) {
-    const char *v = getenv("BONFYRE_QWEN_BOOTSTRAP_ZERO_MATMUL");
-    return v && v[0] && strcmp(v, "0") != 0;
-}
-
-static const char *qwen_bootstrap_fallback_line(const qwen_runtime_t *rt,
-                                                const char *prompt_text) {
-    if (!rt) return NULL;
-    if (rt->config.mode && strcmp(rt->config.mode, "blender") == 0) {
-        return "bpy.ops.mesh.primitive_cube_add()";
-    }
-    if (prompt_text &&
-        strstr(prompt_text, "Blender") &&
-        strstr(prompt_text, "cube")) {
-        return "bpy.ops.mesh.primitive_cube_add()";
-    }
-    return NULL;
 }
 
 static int qwen_path_exists(const char *path) {
@@ -317,10 +307,21 @@ static const char *qwen_output_tensor_name(const qwen_config_t *cfg) {
  * Runtime initialization can therefore proceed concurrently without sharing
  * process-global environment state. */
 static fpq_model_t *qwen_open_model(const char *pack_path, const qwen_config_t *cfg) {
-    const int preload = cfg && cfg->tie_word_embeddings &&
-        qwen_truthy_env_local("BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS");
+    /* llama.cpp's serving path keeps the output embedding resident.  For a
+     * tied causal LM this is both the vocabulary head and input table; without
+     * residency we stream every vocabulary row from the FPQ pack per token.
+     * The per-open loader still enforces its 1 GiB hard ceiling, so larger
+     * models safely stay lazy unless an operator raises no limits (there is no
+     * unbounded allocation path).  Explicit 0 preserves a low-memory lane. */
+    const char *preload_env = getenv("BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS");
     const char *embedding = (cfg && cfg->embed_tensor_name[0])
         ? cfg->embed_tensor_name : "model.embed_tokens.weight";
+    const int tied_output = cfg &&
+        ((cfg->tie_word_embeddings && cfg->embed_tensor_name[0]) ||
+         (cfg->lm_head_tensor_name[0] &&
+          strcmp(cfg->lm_head_tensor_name, embedding) == 0));
+    const int preload = tied_output &&
+        (!preload_env || !*preload_env || qwen_truthy_env_local("BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS"));
     return fpq_open_with_tied_embedding(pack_path, embedding, preload);
 }
 
@@ -381,6 +382,14 @@ static const char *qwen_backend_name(qwen_backend_t backend) {
         case QWEN_BACKEND_CPU_NEON_FUSED: return "cpu_neon_fused";
         case QWEN_BACKEND_FLASHQLA_PREFILL: return "flashqla_prefill";
         default: return "cpu_neon";
+    }
+}
+
+static const char *qwen_storage_name(fpq_tensor_storage_t storage) {
+    switch (storage) {
+        case FPQ_TENSOR_STORAGE_NATIVE_FP16: return "native-fp16";
+        case FPQ_TENSOR_STORAGE_COMPRESSED_V9: return "compressed-v9";
+        default: return "unknown";
     }
 }
 
@@ -750,6 +759,36 @@ static int qwen_prompt_special_collapse_enabled(void) {
     return !v || (v[0] && strcmp(v, "0") != 0);
 }
 
+/* Qwen instruction checkpoints expect ChatML turns.  Keep this at the runtime
+ * boundary rather than making every caller (CLI, Estate, CMS, QUIC) reinvent
+ * the prompt contract.  Preformatted multi-turn requests pass through
+ * unchanged, and the explicit raw escape hatch remains useful for base-model
+ * evaluation. */
+static char *qwen_format_prompt(const qwen_runtime_t *rt, const char *prompt) {
+    static const char system_prompt[] =
+        "You are Bonfyre's precise local assistant. Return the requested result directly.";
+    const char *raw = getenv("BONFYRE_QWEN_RAW_PROMPT");
+    size_t len;
+    char *formatted;
+
+    if (!prompt) return NULL;
+    if (!rt || rt->config.tokenizer_policy != FPQ_RUN_TOKENIZER_POLICY_CHATML ||
+        (raw && raw[0] && strcmp(raw, "0") != 0) ||
+        strstr(prompt, "<|im_start|>") || strstr(prompt, "<|im_end|>")) {
+        return strdup(prompt);
+    }
+
+    len = strlen(system_prompt) + strlen(prompt) + 96;
+    formatted = (char *)malloc(len);
+    if (!formatted) return NULL;
+    snprintf(formatted, len,
+             "<|im_start|>system\n%s\n<|im_end|>\n"
+             "<|im_start|>user\n%s\n<|im_end|>\n"
+             "<|im_start|>assistant\n",
+             system_prompt, prompt);
+    return formatted;
+}
+
 static int qwen_match_token_seq(const int *ids, int n, int pos, const int *seq, int m) {
     if (!ids || !seq || pos < 0 || m <= 0 || pos + m > n) return 0;
     for (int i = 0; i < m; i++) {
@@ -951,11 +990,81 @@ static void file_token_cb_impl(int token_id, const char *text, void *data) {
     if (fcd->orig_cb) fcd->orig_cb(token_id, text, fcd->orig_data);
 }
 
+/* The Blender contract asks for a single executable statement.  The model
+ * commonly emits that statement inside a Markdown fence together with an
+ * import and an explanatory comment.  This extractor never invents text: it
+ * preserves exactly the cube operation sampled into the token trace and
+ * rejects a completion which did not contain one. */
+static int qwen_extract_sampled_blender_line(const char *raw_path,
+                                             const char *out_path,
+                                             tokenizer_t *tokenizer,
+                                             const int *token_ids,
+                                             int token_count,
+                                             qwen_normalization_t *lineage) {
+    static const char operation[] = "bpy.ops.mesh.primitive_cube_add";
+    char *raw = NULL;
+    char *begin;
+    char *end;
+    size_t raw_len = 0;
+    size_t line_len;
+    size_t begin_offset, end_offset, previous_len = 0;
+    FILE *file;
+
+    if (!raw_path || !out_path || !tokenizer || !token_ids || token_count <= 0 ||
+        !(raw = bf_read_file(raw_path, &raw_len))) return -1;
+    begin = strstr(raw, operation);
+    if (!begin) { free(raw); return -1; }
+    end = begin;
+    while (*end && *end != '\n' && *end != '\r') ++end;
+    while (end > begin && isspace((unsigned char)end[-1])) --end;
+    line_len = (size_t)(end - begin);
+    if (line_len <= strlen(operation) || line_len >= 1024 ||
+        !memchr(begin, '(', line_len) || !memchr(begin, ')', line_len)) {
+        free(raw);
+        return -1;
+    }
+    begin_offset = (size_t)(begin - raw);
+    end_offset = begin_offset + line_len - 1;
+    if (lineage) {
+        lineage->raw_path = raw_path;
+        lineage->token_start = -1;
+        lineage->token_end = -1;
+        for (int index = 1; index <= token_count; ++index) {
+            char *decoded = tok_decode(tokenizer, token_ids, index);
+            size_t decoded_len = decoded ? strlen(decoded) : previous_len;
+            if (lineage->token_start < 0 && begin_offset >= previous_len && begin_offset < decoded_len)
+                lineage->token_start = index - 1;
+            if (end_offset >= previous_len && end_offset < decoded_len) {
+                lineage->token_end = index;
+                free(decoded);
+                break;
+            }
+            previous_len = decoded_len;
+            free(decoded);
+        }
+        if (lineage->token_start < 0 || lineage->token_end <= lineage->token_start) {
+            free(raw);
+            return -1;
+        }
+    }
+    file = fopen(out_path, "w");
+    if (!file) { free(raw); return -1; }
+    if (fwrite(begin, 1, line_len, file) != line_len || fputc('\n', file) == EOF) {
+        fclose(file);
+        free(raw);
+        return -1;
+    }
+    fclose(file);
+    free(raw);
+    return 0;
+}
+
 static void qwen_emit_run_manifest(qwen_runtime_t *rt,
                                    const char *prompt_path,
                                    const char *out_path,
                                    double time_seconds,
-                                   int success) {
+                                   int success,
+                                   const qwen_normalization_t *lineage) {
     const char *manifest_path = getenv("BONFYRE_QWEN_MANIFEST_PATH");
     const char *catalog_db = getenv("BONFYRE_CATALOG_DB");
     const fpq_run_metrics_t *metrics = rt ? fpq_run_state_metrics(rt->run_state) : NULL;
@@ -966,6 +1075,9 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
     FILE *fp;
     char prompt_hash[65] = {0};
     char model_hash[65] = {0};
+    char tokenizer_hash[65] = {0};
+    char output_hash[65] = {0}, raw_output_hash[65] = {0};
+    const char *raw_output_path = lineage ? lineage->raw_path : getenv("BONFYRE_QWEN_RAW_OUTPUT_PATH");
     char created_at[32];
 
     if (!manifest_path || !manifest_path[0] || !rt) return;
@@ -975,7 +1087,10 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
 
     bf_iso_timestamp(created_at, sizeof(created_at));
     if (prompt_path) (void)bf_sha256_file(prompt_path, prompt_hash);
-    if (rt->pack_path) bf_sha256_hex((const uint8_t *)rt->pack_path, strlen(rt->pack_path), model_hash);
+    if (rt->pack_path) (void)bf_sha256_file(rt->pack_path, model_hash);
+    if (rt->tokenizer_path) (void)bf_sha256_file(rt->tokenizer_path, tokenizer_hash);
+    if (out_path) (void)bf_sha256_file(out_path, output_hash);
+    if (raw_output_path && raw_output_path[0]) (void)bf_sha256_file(raw_output_path, raw_output_hash);
 
     fprintf(fp,
             "{\n"
@@ -990,7 +1105,17 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
             "  \"tokenizer_id\": \"%s\",\n"
             "  \"prompt_path\": \"%s\",\n"
             "  \"output_path\": \"%s\",\n"
+            "  \"normalized_output_path\": \"%s\",\n"
             "  \"model_hash\": \"%s\",\n"
+            "  \"representation\": \"%s\",\n"
+            "  \"tokenizer_hash\": \"%s\",\n"
+            "  \"output_hash\": \"%s\",\n"
+            "  \"normalized_output_digest\": \"%s\",\n"
+            "  \"raw_output_path\": \"%s\",\n"
+            "  \"raw_output_digest\": \"%s\",\n"
+            "  \"normalized_from_token_start\": %d,\n"
+            "  \"normalized_from_token_end\": %d,\n"
+            "  \"finite_model_state\": %s,\n"
             "  \"prompt_hash\": \"%s\",\n"
             "  \"backend\": \"%s\",\n"
             "  \"latency_seconds\": %.6f,\n"
@@ -1015,7 +1140,17 @@ static void qwen_emit_run_manifest(qwen_runtime_t *rt,
             tokenizer_id ? tokenizer_id : "",
             prompt_path ? prompt_path : "",
             out_path ? out_path : "",
+            out_path ? out_path : "",
             model_hash,
+            rt->representation,
+            tokenizer_hash,
+            output_hash,
+            output_hash,
+            raw_output_path ? raw_output_path : "",
+            raw_output_hash,
+            lineage ? lineage->token_start : -1,
+            lineage ? lineage->token_end : -1,
+            success ? "true" : "false",
             prompt_hash,
             qwen_backend_name(rt->backend),
             time_seconds,
@@ -1187,6 +1322,27 @@ qwen_runtime_t *qwen_runtime_init(const char *pack_path,
         free(resolved_tokenizer);
         free(rt);
         return NULL;
+    }
+    {
+        char probe_name[128];
+        fpq_tensor_storage_t storage;
+        snprintf(probe_name, sizeof(probe_name),
+                 "model.layers.0.self_attn.q_proj.weight");
+        storage = fpq_tensor_storage(rt->model, probe_name);
+        snprintf(rt->representation, sizeof(rt->representation), "%s",
+                 qwen_storage_name(storage));
+        if (storage == FPQ_TENSOR_STORAGE_UNKNOWN) {
+            fprintf(stderr,
+                    "qwen_runtime: unsupported model representation; missing storage probe %s\n",
+                    probe_name);
+            qwen_runtime_free(rt);
+            qwen_pack_metadata_clear(&meta);
+            free(resolved_pack);
+            free(resolved_tokenizer);
+            return NULL;
+        }
+        fprintf(stderr, "qwen_runtime: representation=%s tensor=%s\n",
+                rt->representation, probe_name);
     }
 
     /* Load tokenizer */
@@ -1436,12 +1592,16 @@ int qwen_runtime_generate(qwen_runtime_t *rt,
                           qwen_token_cb token_cb,
                           qwen_stop_cb stop_cb,
                           void *user_data) {
+    char *formatted_prompt;
     if (!rt || !prompt) return -1;
+
+    formatted_prompt = qwen_format_prompt(rt, prompt);
+    if (!formatted_prompt) return -1;
 
     /* Tokenize prompt */
     int *prompt_ids = NULL;
     int prompt_len = 0;
-    if (rt->last_prompt && strcmp(rt->last_prompt, prompt) == 0 &&
+    if (rt->last_prompt && strcmp(rt->last_prompt, formatted_prompt) == 0 &&
         rt->last_prompt_ids && rt->last_prompt_len > 0) {
         prompt_len = rt->last_prompt_len;
         prompt_ids = (int *)malloc((size_t)prompt_len * sizeof(int));
@@ -1452,11 +1612,11 @@ int qwen_runtime_generate(qwen_runtime_t *rt,
         }
     }
     if (!prompt_ids) {
-        prompt_ids = tok_encode(rt->tokenizer, prompt, 0, &prompt_len);
+        prompt_ids = tok_encode(rt->tokenizer, formatted_prompt, 0, &prompt_len);
         rt->resident_cache_misses++;
         free(rt->last_prompt);
         free(rt->last_prompt_ids);
-        rt->last_prompt = strdup(prompt);
+        rt->last_prompt = strdup(formatted_prompt);
         rt->last_prompt_ids = NULL;
         rt->last_prompt_len = prompt_len;
         if (prompt_ids && prompt_len > 0) {
@@ -1468,6 +1628,7 @@ int qwen_runtime_generate(qwen_runtime_t *rt,
     }
     if (prompt_len <= 0 || !prompt_ids) {
         fprintf(stderr, "qwen_runtime_generate: tokenization failed\n");
+        free(formatted_prompt);
         return -1;
     }
     if (rt->config.tokenizer_policy == FPQ_RUN_TOKENIZER_POLICY_CHATML) {
@@ -1530,8 +1691,12 @@ int qwen_runtime_generate(qwen_runtime_t *rt,
                 run_cfg.sample_n_vocab, run_cfg.n_vocab);
     }
 
+    if (qwen_debug_enabled()) {
+        fprintf(stderr, "qwen_runtime_generate: stage=model-validation\n");
+    }
     if (!rt->model_validated && qwen_validate_loaded_model(rt) != 0) {
         free(prompt_ids);
+        free(formatted_prompt);
         return -1;
     }
 
@@ -1544,6 +1709,9 @@ int qwen_runtime_generate(qwen_runtime_t *rt,
 
     (void)stop_cb;
     qwen_kv_cache_reset(rt->kv_cache);
+    if (qwen_debug_enabled()) {
+        fprintf(stderr, "qwen_runtime_generate: stage=prefill-decode prompt_tokens=%d\n", prompt_len);
+    }
 
     int generated = fpq_run_generate(
         rt->model,
@@ -1557,7 +1725,11 @@ int qwen_runtime_generate(qwen_runtime_t *rt,
         fpq_token_cb_wrapper,
         &cb_wrapper);
 
+    if (qwen_debug_enabled()) {
+        fprintf(stderr, "qwen_runtime_generate: stage=prefill-decode-complete generated=%d\n", generated);
+    }
     free(prompt_ids);
+    free(formatted_prompt);
 
     if (generated < 0) return -1;
     if (generated == 0) {
@@ -1596,8 +1768,8 @@ char *qwen_runtime_status_json(const qwen_runtime_t *rt) {
     }
 
     off += (size_t)snprintf(buf + off, cap - off,
-                            "{\"backend\":\"%s\",\"model_path\":\"",
-                            qwen_backend_name(rt->backend));
+                            "{\"backend\":\"%s\",\"representation\":\"%s\",\"model_path\":\"",
+                            qwen_backend_name(rt->backend), rt->representation);
     qwen_json_escape_append(buf, cap, &off, rt->pack_path ? rt->pack_path : "");
     off += (size_t)snprintf(buf + off, cap - off, "\",\"model_id\":\"");
     qwen_json_escape_append(buf, cap, &off, model_id ? model_id : "");
@@ -1646,9 +1818,10 @@ int qwen_runtime_generate_file(qwen_runtime_t *rt,
     FILE *trace_fp = NULL;
     long out_size;
     int result;
+    qwen_normalization_t lineage = {0};
+    char lineage_raw_path[PATH_MAX] = {0};
     struct timespec t0;
     struct timespec t1;
-    const char *bootstrap_fallback = NULL;
 
     if (!rt || !prompt_path || !out_path) return -1;
 
@@ -1701,28 +1874,6 @@ int qwen_runtime_generate_file(qwen_runtime_t *rt,
     clock_gettime(CLOCK_MONOTONIC, &t0);
     result = qwen_runtime_generate(rt, prompt.text, file_token_cb_impl, NULL, &cb_data);
     clock_gettime(CLOCK_MONOTONIC, &t1);
-    if (result == 0 && qwen_bootstrap_zero_matmul_enabled()) {
-        bootstrap_fallback = qwen_bootstrap_fallback_line(rt, prompt.text);
-        if (bootstrap_fallback) {
-            int fd = fileno(out_fp);
-            fflush(out_fp);
-            if (fd >= 0 && ftruncate(fd, 0) == 0) {
-                rewind(out_fp);
-                fputs(bootstrap_fallback, out_fp);
-                fflush(out_fp);
-                fprintf(stderr,
-                        "qwen_runtime: bootstrap fallback output applied mode=%s text=\"%s\"\n",
-                        rt->config.mode,
-                        bootstrap_fallback);
-                if (trace_fp) {
-                    fprintf(trace_fp,
-                            "{\"type\":\"bootstrap_fallback\",\"mode\":\"%s\",\"text\":\"%s\"}\n",
-                            rt->config.mode,
-                            bootstrap_fallback);
-                }
-            }
-        }
-    }
     if (trace_fp) {
         const fpq_run_metrics_t *metrics = fpq_run_state_metrics(rt->run_state);
         if (metrics) {
@@ -1758,12 +1909,48 @@ int qwen_runtime_generate_file(qwen_runtime_t *rt,
 
     fclose(out_fp);
     if (trace_fp) fclose(trace_fp);
-    free(cb_data.token_ids);
-    qwen_unload_prompt_file(&prompt);
+    if (result == 0 && qwen_truthy_env_local("BONFYRE_QWEN_REQUIRE_BLENDER_LINE")) {
+        const char *raw_path = getenv("BONFYRE_QWEN_RAW_OUTPUT_PATH");
+        char derived_raw_path[PATH_MAX];
+        if (!raw_path || !raw_path[0]) {
+            char *slash;
+            snprintf(derived_raw_path, sizeof(derived_raw_path), "%s", out_path);
+            slash = strrchr(derived_raw_path, '/');
+            if (!slash) {
+                result = -4;
+                goto generation_done;
+            }
+            snprintf(slash + 1, sizeof(derived_raw_path) - (size_t)(slash + 1 - derived_raw_path),
+                     "raw_generation.txt");
+            raw_path = derived_raw_path;
+            setenv("BONFYRE_QWEN_RAW_OUTPUT_PATH", raw_path, 1);
+        }
+        if (rename(out_path, raw_path) != 0 ||
+            qwen_extract_sampled_blender_line(raw_path, out_path, rt->tokenizer,
+                                              cb_data.token_ids, cb_data.token_count,
+                                              &lineage) != 0) {
+            fprintf(stderr,
+                    "qwen_runtime_generate_file: sampled completion contains no Blender cube statement\n");
+            result = -4;
+        } else {
+            snprintf(lineage_raw_path, sizeof(lineage_raw_path), "%s", raw_path);
+            lineage.raw_path = lineage_raw_path;
+        }
+    }
 
+generation_done:
+    if (result == 0) {
+        struct stat output_stat;
+        if (stat(out_path, &output_stat) != 0 || output_stat.st_size <= 0) {
+            fprintf(stderr, "qwen_runtime_generate_file: empty output written to %s\n", out_path);
+            result = -3;
+        } else {
+            out_size = output_stat.st_size;
+        }
+    }
     if (result == 0 && out_size == 0) {
         fprintf(stderr, "qwen_runtime_generate_file: empty output written to %s\n", out_path);
-        return -3;
+        result = -3;
     }
 
     if (result == 0) {
@@ -1773,7 +1960,11 @@ int qwen_runtime_generate_file(qwen_runtime_t *rt,
                            prompt_path,
                            out_path,
                            (t1.tv_sec - t0.tv_sec) + (t1.tv_nsec - t0.tv_nsec) / 1e9,
-                           result == 0);
+                           result == 0,
+                           &lineage);
+
+    free(cb_data.token_ids);
+    qwen_unload_prompt_file(&prompt);
 
     return result;
 }

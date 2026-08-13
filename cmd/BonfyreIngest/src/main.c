@@ -30,12 +30,7 @@
 /* ---------- utilities (shared pattern) ---------- */
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL);
-    struct tm t;
-    gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static unsigned long file_size(const char *path) {
     struct stat st;
@@ -55,13 +50,15 @@ static const char *basename_of(const char *path) {
 
 /* ---------- type detection ---------- */
 
-typedef enum { TYPE_AUDIO, TYPE_TEXT, TYPE_IMAGE, TYPE_URL, TYPE_UNKNOWN } IngestType;
+typedef enum { TYPE_AUDIO, TYPE_TEXT, TYPE_IMAGE, TYPE_TABLE, TYPE_DOCUMENT, TYPE_URL, TYPE_UNKNOWN } IngestType;
 
 static IngestType detect_type(const char *path, const char *hint) {
     if (hint) {
         if (strcmp(hint, "audio") == 0) return TYPE_AUDIO;
         if (strcmp(hint, "text")  == 0) return TYPE_TEXT;
         if (strcmp(hint, "image") == 0) return TYPE_IMAGE;
+        if (strcmp(hint, "table") == 0) return TYPE_TABLE;
+        if (strcmp(hint, "document") == 0) return TYPE_DOCUMENT;
         if (strcmp(hint, "url")   == 0) return TYPE_URL;
     }
     /* detect URLs */
@@ -72,14 +69,16 @@ static IngestType detect_type(const char *path, const char *hint) {
         strcasecmp(ext, "flac") == 0 || strcasecmp(ext, "m4a") == 0 ||
         strcasecmp(ext, "ogg") == 0 || strcasecmp(ext, "opus") == 0)
         return TYPE_AUDIO;
+    if (strcasecmp(ext, "csv") == 0) return TYPE_TABLE;
     if (strcasecmp(ext, "txt") == 0 || strcasecmp(ext, "md") == 0 ||
         strcasecmp(ext, "vtt") == 0 || strcasecmp(ext, "srt") == 0 ||
         strcasecmp(ext, "json") == 0)
         return TYPE_TEXT;
     if (strcasecmp(ext, "png") == 0 || strcasecmp(ext, "jpg") == 0 ||
         strcasecmp(ext, "jpeg") == 0 || strcasecmp(ext, "tiff") == 0 ||
-        strcasecmp(ext, "bmp") == 0 || strcasecmp(ext, "pdf") == 0)
+        strcasecmp(ext, "bmp") == 0)
         return TYPE_IMAGE;
+    if (strcasecmp(ext, "pdf") == 0) return TYPE_DOCUMENT;
     return TYPE_UNKNOWN;
 }
 
@@ -88,6 +87,8 @@ static const char *type_str(IngestType t) {
         case TYPE_AUDIO: return "audio";
         case TYPE_TEXT:  return "text";
         case TYPE_IMAGE: return "image";
+        case TYPE_TABLE: return "table";
+        case TYPE_DOCUMENT: return "document";
         case TYPE_URL:   return "url";
         default:         return "unknown";
     }
@@ -110,6 +111,8 @@ static const char *media_type(IngestType t, const char *ext) {
             if (strcasecmp(ext, "jpg") == 0 || strcasecmp(ext, "jpeg") == 0) return "image/jpeg";
             if (strcasecmp(ext, "pdf") == 0)  return "application/pdf";
             return "image/unknown";
+        case TYPE_TABLE: return "text/csv";
+        case TYPE_DOCUMENT: return "application/pdf";
         default: return "application/octet-stream";
     }
 }
@@ -161,6 +164,60 @@ static int normalize_text(const char *input, const char *outdir, char *out_path,
     }
     fclose(in);
     fclose(out);
+    return 0;
+}
+
+static int normalize_table(const char *input, const char *outdir, char *out_path, size_t out_sz) {
+    FILE *in = fopen(input, "rb");
+    if (!in) return 1;
+    snprintf(out_path, out_sz, "%s/normalized.csv", outdir);
+    FILE *out = fopen(out_path, "wb");
+    if (!out) { fclose(in); return 1; }
+    char line[MAX_LINE]; int rows = 0;
+    while (fgets(line,sizeof(line),in)) {
+        size_t length=strlen(line);
+        while(length && (line[length-1]=='\n'||line[length-1]=='\r'||line[length-1]==' '||line[length-1]=='\t')) line[--length]='\0';
+        if (!length) continue;
+        if (!strchr(line,',')) { fclose(in); fclose(out); unlink(out_path); return 1; }
+        fprintf(out,"%s\n",line); ++rows;
+    }
+    fclose(in); fclose(out);
+    if (rows < 2) { unlink(out_path); return 1; }
+    return 0;
+}
+
+static int normalize_pdf_text(const char *input, const char *outdir, char *out_path, size_t out_sz) {
+    FILE *in=fopen(input,"rb");
+    if(!in) return 1;
+    char header[5]={0};
+    if(fread(header,1,4,in)!=4 || memcmp(header,"%PDF",4)){fclose(in);return 1;}
+    rewind(in); snprintf(out_path,out_sz,"%s/extracted.txt",outdir);
+    FILE *out=fopen(out_path,"wb"); if(!out){fclose(in);return 1;}
+    int c, written=0, in_string=0, escape=0;
+    while((c=fgetc(in))!=EOF) {
+        if(in_string) { if(escape){ fputc(c,out); written++; escape=0; } else if(c=='\\')escape=1; else if(c==')'){fputc('\n',out);in_string=0;} else if(c>=0x20&&c<0x7f){fputc(c,out);written++;} }
+        else if(c=='(') in_string=1;
+    }
+    fclose(in); fclose(out);
+    if(!written){unlink(out_path);return 1;}
+
+    /* PDF text streams often contain literal CSV-like rows.  Preserve those
+     * rows as a typed table sibling rather than flattening table evidence
+     * into the extracted prose artifact. */
+    FILE *text = fopen(out_path, "rb");
+    char table_path[PATH_MAX];
+    snprintf(table_path, sizeof(table_path), "%s/extracted-table.csv", outdir);
+    FILE *table = text ? fopen(table_path, "wb") : NULL;
+    int table_rows = 0;
+    char line[MAX_LINE];
+    if (text && table) {
+        while (fgets(line, sizeof(line), text)) {
+            if (strchr(line, ',')) { fputs(line, table); ++table_rows; }
+        }
+    }
+    if (text) fclose(text);
+    if (table) fclose(table);
+    if (table_rows < 2) unlink(table_path);
     return 0;
 }
 
@@ -325,87 +382,11 @@ static int ingest_url(const char *url, const char *outdir, char *out_path, size_
     return 0;
 }
 
-/* ---------- SHA-256 (FIPS 180-4, inline, zero deps) ---------- */
-
-static const unsigned int K256[64] = {
-    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
-    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
-    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
-    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
-    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
-    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
-    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
-    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
-};
-#define RR(x,n) (((x)>>(n))|((x)<<(32-(n))))
-#define SHA_S0(x) (RR(x,2)^RR(x,13)^RR(x,22))
-#define SHA_S1(x) (RR(x,6)^RR(x,11)^RR(x,25))
-#define SHA_s0(x) (RR(x,7)^RR(x,18)^((x)>>3))
-#define SHA_s1(x) (RR(x,17)^RR(x,19)^((x)>>10))
-#define CH(e,f,g) (((e)&(f))^((~(e))&(g)))
-#define MAJ(a,b,c) (((a)&(b))^((a)&(c))^((b)&(c)))
-
-typedef struct { unsigned int h[8]; unsigned char buf[64]; unsigned long long total; } SHA256_CTX;
-
-static void sha256_init(SHA256_CTX *c) {
-    c->h[0]=0x6a09e667; c->h[1]=0xbb67ae85; c->h[2]=0x3c6ef372; c->h[3]=0xa54ff53a;
-    c->h[4]=0x510e527f; c->h[5]=0x9b05688c; c->h[6]=0x1f83d9ab; c->h[7]=0x5be0cd19;
-    c->total = 0;
-}
-static void sha256_block(SHA256_CTX *c, const unsigned char *data) {
-    unsigned int w[64], st[8], t1, t2;
-    for (int i = 0; i < 16; i++)
-        w[i] = ((unsigned int)data[i*4]<<24)|((unsigned int)data[i*4+1]<<16)|
-               ((unsigned int)data[i*4+2]<<8)|data[i*4+3];
-    for (int i = 16; i < 64; i++)
-        w[i] = SHA_s1(w[i-2]) + w[i-7] + SHA_s0(w[i-15]) + w[i-16];
-    for (int i = 0; i < 8; i++) st[i] = c->h[i];
-    for (int i = 0; i < 64; i++) {
-        t1 = st[7] + SHA_S1(st[4]) + CH(st[4],st[5],st[6]) + K256[i] + w[i];
-        t2 = SHA_S0(st[0]) + MAJ(st[0],st[1],st[2]);
-        st[7]=st[6]; st[6]=st[5]; st[5]=st[4]; st[4]=st[3]+t1;
-        st[3]=st[2]; st[2]=st[1]; st[1]=st[0]; st[0]=t1+t2;
-    }
-    for (int i = 0; i < 8; i++) c->h[i] += st[i];
-}
-static void sha256_update(SHA256_CTX *c, const unsigned char *data, size_t len) {
-    size_t off = (size_t)(c->total % 64); c->total += len;
-    for (size_t i = 0; i < len; i++) {
-        c->buf[off++] = data[i];
-        if (off == 64) { sha256_block(c, c->buf); off = 0; }
-    }
-}
-static void sha256_final(SHA256_CTX *c, unsigned char out[32]) {
-    unsigned long long bits = c->total * 8;
-    size_t off = (size_t)(c->total % 64);
-    c->buf[off++] = 0x80;
-    if (off > 56) { while (off < 64) c->buf[off++] = 0; sha256_block(c, c->buf); off = 0; }
-    while (off < 56) c->buf[off++] = 0;
-    for (int i = 7; i >= 0; i--) c->buf[56+(7-i)] = (unsigned char)(bits >> (i*8));
-    sha256_block(c, c->buf);
-    for (int i = 0; i < 8; i++) {
-        out[i*4]=(unsigned char)(c->h[i]>>24); out[i*4+1]=(unsigned char)(c->h[i]>>16);
-        out[i*4+2]=(unsigned char)(c->h[i]>>8); out[i*4+3]=(unsigned char)(c->h[i]);
-    }
-}
-
-static const char g_hex_lut[16] = "0123456789abcdef";
+/* ---------- SHA-256 (delegates to lib/libbonfyre) ---------- */
 
 static int compute_sha256(const char *path, char *hash_out, size_t hash_sz) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) return 1;
-    SHA256_CTX ctx; sha256_init(&ctx);
-    unsigned char buf[8192]; size_t n;
-    while ((n = fread(buf, 1, sizeof(buf), fp)) > 0) sha256_update(&ctx, buf, n);
-    fclose(fp);
-    unsigned char h[32]; sha256_final(&ctx, h);
     if (hash_sz < 65) return 1;
-    for (int i = 0; i < 32; i++) {
-        hash_out[i*2]   = g_hex_lut[h[i] >> 4];
-        hash_out[i*2+1] = g_hex_lut[h[i] & 0x0f];
-    }
-    hash_out[64] = '\0';
-    return 0;
+    return bf_sha256_file(path, hash_out) == 0 ? 0 : 1;
 }
 
 /* ---------- main ---------- */
@@ -425,7 +406,7 @@ int main(int argc, char *argv[]) {
         }
     }
     if (!input || !outdir) {
-        fprintf(stderr, "Usage: bonfyre-ingest <input> <output_dir> [--type audio|text|image|url]\n");
+        fprintf(stderr, "Usage: bonfyre-ingest <input> <output_dir> [--type audio|text|image|table|document|url]\n");
         return 1;
     }
 
@@ -456,6 +437,12 @@ int main(int argc, char *argv[]) {
         case TYPE_IMAGE:
             norm_ok = normalize_image(input, outdir, norm_path, sizeof(norm_path));
             break;
+        case TYPE_TABLE:
+            norm_ok = normalize_table(input, outdir, norm_path, sizeof(norm_path));
+            break;
+        case TYPE_DOCUMENT:
+            norm_ok = normalize_pdf_text(input, outdir, norm_path, sizeof(norm_path));
+            break;
         case TYPE_URL:
             norm_ok = ingest_url(input, outdir, norm_path, sizeof(norm_path));
             break;
@@ -476,6 +463,12 @@ int main(int argc, char *argv[]) {
             break;
     }
     if (norm_ok != 0) {
+        /* Structured document/table inputs are not safely recoverable as a
+         * raw byte copy: callers requested a typed representation. */
+        if (itype == TYPE_TABLE || itype == TYPE_DOCUMENT) {
+            fprintf(stderr, "[ingest] normalization rejected typed %s input\n", type_str(itype));
+            return 1;
+        }
         fprintf(stderr, "[ingest] WARNING: normalization returned %d, continuing with raw copy\n", norm_ok);
         snprintf(norm_path, sizeof(norm_path), "%s/%s", outdir, basename_of(input));
     }

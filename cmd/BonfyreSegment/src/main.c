@@ -30,12 +30,7 @@
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL);
-    struct tm t;
-    gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static char *read_file_contents(const char *path) {
     return bf_read_file(path, NULL);
@@ -550,45 +545,58 @@ int main(int argc, char **argv) {
     char *json = read_file_contents(json_path);
     if (!json) { fprintf(stderr, "error: cannot read %s\n", json_path); return 1; }
 
-    WhisperDoc doc;
-    if (parse_whisper_json(json, &doc) != 0) { free(json); return 1; }
+    WhisperDoc *doc = calloc(1, sizeof(*doc));
+    if (!doc) {
+        fprintf(stderr, "error: unable to allocate transcript document\n");
+        free(json);
+        return 1;
+    }
+    if (parse_whisper_json(json, doc) != 0) {
+        free(doc);
+        free(json);
+        return 1;
+    }
     free(json);
 
-    if (doc.count == 0) {
+    if (doc->count == 0) {
         fprintf(stderr, "error: no segments found in whisper JSON\n");
+        free(doc);
         return 1;
     }
 
     if (ensure_dir(out_dir) != 0) {
         fprintf(stderr, "error: cannot create %s\n", out_dir);
+        free(doc);
         return 1;
     }
 
     IdeaBoundary bounds[MAX_BOUNDARIES];
-    int nb = detect_boundaries(&doc, silence_gap, bounds);
+    int nb = detect_boundaries(doc, silence_gap, bounds);
 
     int rc = 0;
 
     if (strcmp(mode, "graph") == 0 || strcmp(mode, "all") == 0) {
-        rc |= emit_graph(&doc, bounds, nb, out_dir);
+        rc |= emit_graph(doc, bounds, nb, out_dir);
     }
     if (strcmp(mode, "boundaries") == 0 || strcmp(mode, "all") == 0) {
-        rc |= emit_boundaries(&doc, bounds, nb, out_dir);
+        rc |= emit_boundaries(doc, bounds, nb, out_dir);
     }
     if (strcmp(mode, "rhythm") == 0 || strcmp(mode, "all") == 0) {
-        rc |= emit_rhythm(&doc, out_dir);
+        rc |= emit_rhythm(doc, out_dir);
     }
 
     if (strcmp(mode, "graph") != 0 && strcmp(mode, "boundaries") != 0 &&
         strcmp(mode, "rhythm") != 0 && strcmp(mode, "all") != 0) {
         fprintf(stderr, "error: unknown mode '%s'\n", mode);
         print_usage();
+        free(doc);
         return 1;
     }
 
     if (rc == 0) {
         printf("Segmented: %d whisper segments → %d idea boundaries (%s)\n",
-               doc.count, nb, mode);
+               doc->count, nb, mode);
     }
+    free(doc);
     return rc;
 }

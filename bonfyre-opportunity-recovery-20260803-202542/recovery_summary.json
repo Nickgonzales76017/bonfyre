@@ -1,0 +1,6 @@
+{
+  "record_objects_scanned": 0,
+  "money_field_sums": {},
+  "procurement_or_govcon_records": 0,
+  "important_distinction": "expected_unlock_value_usd is modeled cross-form leverage, not verified contract value. Do not combine it with estimated/gross procurement values."
+}

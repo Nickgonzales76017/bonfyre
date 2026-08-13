@@ -431,6 +431,7 @@ int bf_catalog_find_repo_root(char *buf, size_t sz);
 int bf_catalog_sync_repo(const char *db_path, const char *repo_root);
 int bf_catalog_sync_default(const char *db_path);
 int bf_catalog_record_run_manifest(const char *db_path, const char *manifest_path);
+int bf_catalog_stamp_generation(const char *db_path, const char *fabric_db_path);
 int bf_catalog_projection_rules_json(char **out_json);
 int bf_catalog_capability_tagging_rules_json(const char *filter, char **out_json);
 

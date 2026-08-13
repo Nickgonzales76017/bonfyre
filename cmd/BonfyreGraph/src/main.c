@@ -36,92 +36,10 @@
 #define MAX_LINE  65536
 #define FILE_CHUNK 65536
 
-/* ── SHA-256 (FIPS 180-4, self-contained) ─────────────────────────────── */
-
-static const unsigned sha256_k[64] = {
-    0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
-    0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
-    0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
-    0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
-    0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
-    0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
-    0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
-    0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2,
-};
-
-#define RR(x,n) (((x)>>(n))|((x)<<(32-(n))))
-#define CH(x,y,z) (((x)&(y))^((~(x))&(z)))
-#define MAJ(x,y,z) (((x)&(y))^((x)&(z))^((y)&(z)))
-#define EP0(x) (RR(x,2)^RR(x,13)^RR(x,22))
-#define EP1(x) (RR(x,6)^RR(x,11)^RR(x,25))
-#define SIG0(x) (RR(x,7)^RR(x,18)^((x)>>3))
-#define SIG1(x) (RR(x,17)^RR(x,19)^((x)>>10))
-
-typedef struct {
-    unsigned state[8];
-    unsigned char buf[64];
-    unsigned long long bitlen;
-    unsigned buflen;
-} Sha256;
-
-static void sha256_init(Sha256 *ctx) {
-    ctx->state[0]=0x6a09e667; ctx->state[1]=0xbb67ae85;
-    ctx->state[2]=0x3c6ef372; ctx->state[3]=0xa54ff53a;
-    ctx->state[4]=0x510e527f; ctx->state[5]=0x9b05688c;
-    ctx->state[6]=0x1f83d9ab; ctx->state[7]=0x5be0cd19;
-    ctx->bitlen=0; ctx->buflen=0;
-}
-
-static void sha256_transform(Sha256 *ctx, const unsigned char *data) {
-    unsigned w[64], a,b,c,d,e,f,g,h,t1,t2;
-    for (int i=0;i<16;i++)
-        w[i]=(unsigned)data[i*4]<<24|(unsigned)data[i*4+1]<<16|
-             (unsigned)data[i*4+2]<<8|(unsigned)data[i*4+3];
-    for (int i=16;i<64;i++)
-        w[i]=SIG1(w[i-2])+w[i-7]+SIG0(w[i-15])+w[i-16];
-    a=ctx->state[0];b=ctx->state[1];c=ctx->state[2];d=ctx->state[3];
-    e=ctx->state[4];f=ctx->state[5];g=ctx->state[6];h=ctx->state[7];
-    for (int i=0;i<64;i++){
-        t1=h+EP1(e)+CH(e,f,g)+sha256_k[i]+w[i];
-        t2=EP0(a)+MAJ(a,b,c);
-        h=g;g=f;f=e;e=d+t1;d=c;c=b;b=a;a=t1+t2;
-    }
-    ctx->state[0]+=a;ctx->state[1]+=b;ctx->state[2]+=c;ctx->state[3]+=d;
-    ctx->state[4]+=e;ctx->state[5]+=f;ctx->state[6]+=g;ctx->state[7]+=h;
-}
-
-static void sha256_update(Sha256 *ctx, const unsigned char *data, size_t len) {
-    for (size_t i=0;i<len;i++){
-        ctx->buf[ctx->buflen++]=data[i];
-        if (ctx->buflen==64){ sha256_transform(ctx,ctx->buf); ctx->bitlen+=512; ctx->buflen=0; }
-    }
-}
-
-static void sha256_final(Sha256 *ctx, unsigned char hash[32]) {
-    unsigned i=ctx->buflen;
-    ctx->buf[i++]=0x80;
-    if (i>56){ while(i<64) ctx->buf[i++]=0; sha256_transform(ctx,ctx->buf); i=0; }
-    while(i<56) ctx->buf[i++]=0;
-    ctx->bitlen+=ctx->buflen*8;
-    for (int j=7;j>=0;j--) ctx->buf[56+(7-j)]=(unsigned char)(ctx->bitlen>>(j*8));
-    sha256_transform(ctx,ctx->buf);
-    for (int j=0;j<8;j++){
-        hash[j*4]=(ctx->state[j]>>24)&0xff; hash[j*4+1]=(ctx->state[j]>>16)&0xff;
-        hash[j*4+2]=(ctx->state[j]>>8)&0xff; hash[j*4+3]=ctx->state[j]&0xff;
-    }
-}
-
-static const char g_hex_lut[16] = "0123456789abcdef";
+/* ── SHA-256 (delegates to lib/libbonfyre) ─────────────────────────────── */
 
 static void sha256_hex(const unsigned char *data, size_t len, char out[65]) {
-    Sha256 ctx; sha256_init(&ctx);
-    sha256_update(&ctx, data, len);
-    unsigned char hash[32]; sha256_final(&ctx, hash);
-    for (int i=0;i<32;i++){
-        out[i*2]  =g_hex_lut[hash[i]>>4];
-        out[i*2+1]=g_hex_lut[hash[i]&0x0f];
-    }
-    out[64]='\0';
+    bf_sha256_hex(data, len, out);
 }
 
 /* ── Canonical JSON (deterministic, sorted keys) ──────────────────────── */
@@ -132,14 +50,7 @@ static void sha256_hex(const unsigned char *data, size_t len, char out[65]) {
 /* ── Utility ──────────────────────────────────────────────────────────── */
 
 static char *read_file_full(const char *path) {
-    FILE *fp=fopen(path,"rb");
-    if (!fp) return NULL;
-    fseek(fp,0,SEEK_END); long sz=ftell(fp); fseek(fp,0,SEEK_SET);
-    if (sz<0){ fclose(fp); return NULL; }
-    char *buf=malloc((size_t)sz+1);
-    if (!buf){ fclose(fp); return NULL; }
-    fread(buf,1,(size_t)sz,fp); buf[sz]='\0';
-    fclose(fp); return buf;
+    return bf_read_file(path, NULL);
 }
 
 /* ── Tiny JSON parser (read-only, no deps) ────────────────────────────── */
@@ -509,6 +420,46 @@ static int cmd_lineage(const char *db_path, const char *node_id) {
     }
     sqlite3_close(db);
     return 0;
+}
+
+static int cmd_fixture(const char *db_path) {
+    sqlite3 *db = NULL;
+    sqlite3_stmt *statement = NULL;
+    int atom_exists = 0, operation_exists = 0, lineage_correct = 0;
+    int no_dangling = 0, query_identity = 0, restart_persisted = 0;
+    if (cmd_init(db_path) != 0 ||
+        cmd_add_atom(db_path, "fixture-input", "fixture-sha256", "text", NULL) != 0 ||
+        cmd_add_op(db_path, "fixture-op", "graph-fixture", "fixture-input",
+                   "fixture-output", "{\"semantic\":true}", "1") != 0) return 1;
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) return 1;
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM atoms WHERE atom_id='fixture-input'", -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) atom_exists = sqlite3_column_int(statement, 0) == 1;
+    sqlite3_finalize(statement); statement = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT inputs,output FROM operators WHERE operator_id='fixture-op'", -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) {
+        const char *inputs = (const char *)sqlite3_column_text(statement, 0);
+        const char *output = (const char *)sqlite3_column_text(statement, 1);
+        operation_exists = inputs && output;
+        lineage_correct = inputs && strstr(inputs, "fixture-input") && output && !strcmp(output, "fixture-output");
+        query_identity = lineage_correct;
+    }
+    sqlite3_finalize(statement); statement = NULL;
+    if (sqlite3_prepare_v2(db,
+            "SELECT count(*) FROM operators o WHERE o.inputs NOT LIKE '%fixture-input%' "
+            "OR NOT EXISTS(SELECT 1 FROM atoms a WHERE a.atom_id='fixture-input')", -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) no_dangling = sqlite3_column_int(statement, 0) == 0;
+    sqlite3_finalize(statement); sqlite3_close(db); db = NULL;
+    /* Reopen the durable store before asserting persistence. */
+    if (sqlite3_open(db_path, &db) == SQLITE_OK &&
+        sqlite3_prepare_v2(db, "SELECT count(*) FROM operators WHERE operator_id='fixture-op'", -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) restart_persisted = sqlite3_column_int(statement, 0) == 1;
+    sqlite3_finalize(statement); if (db) sqlite3_close(db);
+    printf("{\"atom_exists\":%s,\"operation_exists\":%s,\"lineage_correct\":%s,"
+           "\"no_dangling_relation\":%s,\"query_identity\":%s,\"restart_persisted\":%s}\n",
+           atom_exists ? "true" : "false", operation_exists ? "true" : "false",
+           lineage_correct ? "true" : "false", no_dangling ? "true" : "false",
+           query_identity ? "true" : "false", restart_persisted ? "true" : "false");
+    return atom_exists && operation_exists && lineage_correct && no_dangling && query_identity && restart_persisted ? 0 : 1;
 }
 
 static int cmd_export(const char *db_path, const char *out_path) {
@@ -968,6 +919,14 @@ int main(int argc, char **argv) {
     if (strcmp(cmd,"init")==0) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph init <db>\n"); return 1; }
         return cmd_init(argv[2]);
+    }
+    /* A bounded Fabric workload that exercises durable graph mutation and
+     * traversal in one native invocation.  It is not a synthetic result: the
+     * atom and operation are committed to the supplied SQLite graph before
+     * lineage is queried and emitted. */
+    if (strcmp(cmd,"fixture")==0) {
+        if (argc < 3) { fprintf(stderr, "Usage: bonfyre-graph fixture <db>\n"); return 1; }
+        return cmd_fixture(argv[2]);
     }
     if (strcmp(cmd,"add-atom")==0) {
         if (argc<3){ fprintf(stderr,"Usage: bonfyre-graph add-atom <db> --id .. --hash .. --type ..\n"); return 1; }

@@ -245,7 +245,7 @@ int main(int argc, char **argv) {
     }
 
     char transcript_path[PATH_MAX];
-    snprintf(transcript_path, sizeof(transcript_path), "%s/normalized.txt", transcribe_dir);
+    snprintf(transcript_path, sizeof(transcript_path), "%s/transcript.txt", transcribe_dir);
 
     /* Step 2: Clean */
     char clean_dir[PATH_MAX], clean_path[PATH_MAX];
@@ -257,7 +257,7 @@ int main(int argc, char **argv) {
         if (ensure_dir(clean_dir) != 0) return 1;
         char *c_argv[] = {
             (char *)clean_bin, "--transcript", transcript_path,
-            "--output", clean_dir, NULL
+            "--out", clean_path, NULL
         };
         rc = run_process(c_argv);
         all_steps[nsteps++] = "clean";
@@ -272,12 +272,14 @@ int main(int argc, char **argv) {
     /* Step 3: Paragraph (if brief mode) */
     char para_dir[PATH_MAX], para_path[PATH_MAX];
     snprintf(para_dir, sizeof(para_dir), "%s/paragraph", out_dir);
+    snprintf(para_path, sizeof(para_path), "%s/paragraphs.txt", para_dir);
 
     if (do_brief) {
         printf("[3] Structuring paragraphs...\n");
         if (ensure_dir(para_dir) != 0) return 1;
         char *p_argv[] = {
-            (char *)para_bin, clean_path, para_dir, NULL
+            (char *)para_bin, "--input", clean_path,
+            "--out", para_path, NULL
         };
         rc = run_process(p_argv);
         all_steps[nsteps++] = "paragraph";

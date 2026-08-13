@@ -94,6 +94,10 @@ static int fpqx_sli_prepare_f16_only_enabled(void) {
     return fpqx_env_enabled("BONFYRE_QWEN_PREPARE_F16_ONLY");
 }
 
+static int fpqx_sli_linear_enabled(void) {
+    return fpqx_env_enabled("BONFYRE_QWEN_LINEAR_SLI");
+}
+
 static int fpqx_sli_has_precomputed_fast_data(const fpqx_sli_ctx_t *ctx) {
     if (!ctx || !ctx->z_precomputed) return 0;
     if (ctx->z_data) return 1;
@@ -1622,6 +1626,49 @@ static inline float sli_fast_block_score(
     return vaddvq_f32(acc0);
 }
 
+/* The Haar sign is fixed for a prepared weight block.  Folding it into the
+ * transformed weight lets the runtime use a single BLAS GEMV with a zero-padded
+ * activation.  This is algebraically identical to z^T(sign \u2299 x). */
+static void fpqx_sli_fold_block_signs(float *dst, const float *src,
+                                      uint64_t block_seed) {
+    uint64_t state = block_seed ? block_seed : 0x5DEECE66DUL;
+    for (size_t i = 0; i < 256; i += 64) {
+        state ^= state << 13;
+        state ^= state >> 7;
+        state ^= state << 17;
+        for (size_t k = 0; k < 64; k++) {
+            float value = src[i + k];
+            dst[i + k] = ((state >> k) & 1u) ? -value : value;
+        }
+    }
+}
+
+static int fpqx_sli_linear_residual(const fpqx_sli_ctx_t *ctx,
+                                    const float *x,
+                                    float *output) {
+    const size_t linear_cols = ctx->blocks_per_row * SLI_BLOCK_DIM;
+    float *x_linear;
+    if (!ctx || !ctx->z_linear_data || !x || !output || linear_cols < ctx->cols) return -1;
+    x_linear = (float *)calloc(linear_cols, sizeof(float));
+    if (!x_linear) return -1;
+    memcpy(x_linear, x, ctx->cols * sizeof(float));
+#if USE_ACCELERATE
+    cblas_sgemv(CblasRowMajor, CblasNoTrans,
+                (int)ctx->rows, (int)linear_cols, 1.0f,
+                ctx->z_linear_data, (int)linear_cols,
+                x_linear, 1, 1.0f, output, 1);
+#else
+    for (size_t row = 0; row < ctx->rows; row++) {
+        const float *w = ctx->z_linear_data + row * linear_cols;
+        float sum = 0.0f;
+        for (size_t col = 0; col < linear_cols; col++) sum += w[col] * x_linear[col];
+        output[row] += sum;
+    }
+#endif
+    free(x_linear);
+    return 0;
+}
+
 static inline float sli_fast_block_score_f16(
     const __fp16 *z_b,
     const float *x_src,
@@ -2357,6 +2404,23 @@ fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t) {
 
     ctx->z_fwht_preapplied = 1;
 
+    /* Row-padded V9 tensors (including Qwen's 896-wide projections) have one
+     * complete 256-value SLI block sequence per row.  Pack their exact
+     * transformed residual once so decode is a BLAS GEMV, not a scalar block
+     * loop or an on-disk residual stream. */
+    if (fpqx_sli_linear_enabled() && ctx->blocks_per_row > 0 &&
+        n_blocks == rows * ctx->blocks_per_row &&
+        n_blocks <= SIZE_MAX / (SLI_BLOCK_DIM * sizeof(float))) {
+        ctx->z_linear_data = (float *)malloc(n_blocks * SLI_BLOCK_DIM * sizeof(float));
+        if (ctx->z_linear_data) {
+            for (size_t b = 0; b < n_blocks; b++) {
+                fpqx_sli_fold_block_signs(ctx->z_linear_data + b * SLI_BLOCK_DIM,
+                                          z_region + b * SLI_BLOCK_DIM,
+                                          enc->haar_seed ^ (uint64_t)b);
+            }
+        }
+    }
+
     if (fpqx_sli_prepare_f16_only_enabled()) {
         ctx->z_data_f16 = (__fp16 *)malloc(n_blocks * SLI_BLOCK_DIM * sizeof(__fp16));
         if (ctx->z_data_f16) {
@@ -2592,6 +2656,15 @@ int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
      * No E8 scoring, no tile lookup, no QJL projection, no unwarp.
      */
     if (fpqx_sli_has_precomputed_fast_data(ctx)) {
+        if (fpqx_sli_linear_residual(ctx, x_eff, output) == 0) {
+            goto sli_scored;
+        }
+        /* Apple Metal executes the exact same precomputed FP32 transformed
+         * residual.  The CPU path remains the correctness fallback and is
+         * also used when a lower-precision prepared representation is chosen. */
+        if (fpqx_metal_sli_try_matvec(ctx, x_eff, output, enc->haar_seed) == 0) {
+            goto sli_scored;
+        }
 #ifdef FPQ_JIT_SLI
         /* Innovation 3: use JIT-compiled kernel if available.
          * The JIT kernel has N_ROWS and BPR baked as literals, allowing the
@@ -2696,6 +2769,7 @@ int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output) {
         free(x_spectral);
     }
 
+sli_scored:
     /* ── Phase 3: Ghost correction ──
      * y_ghost = σ · u · (v^T · x)
      */
@@ -2731,6 +2805,7 @@ int fpqx_sli_matvec_oneshot(const fpqx_tensor_t *t,
 
 void fpqx_sli_free(fpqx_sli_ctx_t *ctx) {
     if (!ctx) return;
+    fpqx_metal_sli_free(ctx);
     if (ctx->tables) {
         for (size_t i = 0; i < ctx->n_block_cols; i++) {
             free(ctx->tables[i].x_spectral);
@@ -2743,6 +2818,7 @@ void fpqx_sli_free(fpqx_sli_ctx_t *ctx) {
         ctx->z_data = NULL;
     }
     free(ctx->z_data_f16);
+    free(ctx->z_linear_data);
     free(ctx->output);
     free(ctx->m_fold_col);   /* Innovation 2: safe even if NULL */
 #ifdef FPQ_INT8_SDOT
@@ -2884,6 +2960,74 @@ int fpqx_sli_matvec_shared(fpqx_sli_shared_spectral_t *grp,
          * We'll re-use grp->ctxs[t]->m_fold_col in the SLI block below.
          * Free per-tensor x_mfold here — the SLI phase will re-fold if needed. */
         free(x_mfold);
+    }
+
+    {
+        int linear_ok = 1;
+        for (int t = 0; t < n; t++) {
+            if (!grp->ctxs[t]->z_linear_data || grp->ctxs[t]->m_fold_col) {
+                linear_ok = 0;
+                break;
+            }
+        }
+        if (linear_ok) {
+            for (int t = 0; t < n; t++) {
+                if (fpqx_sli_linear_residual(grp->ctxs[t], x, outputs[t]) != 0) {
+                    linear_ok = 0;
+                    break;
+                }
+            }
+            if (linear_ok) goto shared_sli_scored;
+        }
+    }
+
+    /* The grouped CPU implementation shares a small activation read, but its
+     * residual reductions remain scalar per tensor.  On Metal, dispatching
+     * each exact transformed residual is decisively faster and still consumes
+     * the same prepared FP32 blocks.  Preserve the pre-LR outputs so any
+     * backend failure can fall through to the established shared CPU path. */
+    {
+        float **metal_baseline = (float **)calloc((size_t)n, sizeof(*metal_baseline));
+        int metal_ok = metal_baseline != NULL;
+        if (metal_ok) {
+            for (int t = 0; t < n; t++) {
+                fpqx_sli_ctx_t *ctx = grp->ctxs[t];
+                if (!ctx || ctx->m_fold_col || !ctx->z_data || ctx->z_data_f16) {
+                    metal_ok = 0;
+                    break;
+                }
+                metal_baseline[t] = (float *)malloc(ctx->rows * sizeof(float));
+                if (!metal_baseline[t]) {
+                    metal_ok = 0;
+                    break;
+                }
+                memcpy(metal_baseline[t], outputs[t], ctx->rows * sizeof(float));
+            }
+        }
+        if (metal_ok) {
+            for (int t = 0; t < n; t++) {
+                fpqx_sli_ctx_t *ctx = grp->ctxs[t];
+                if (fpqx_metal_sli_try_matvec(ctx, x, outputs[t],
+                                               grp->haar_seeds[t]) != 0) {
+                    metal_ok = 0;
+                    break;
+                }
+            }
+        }
+        if (metal_ok) {
+            for (int t = 0; t < n; t++) free(metal_baseline[t]);
+            free(metal_baseline);
+            goto shared_sli_scored;
+        }
+        if (metal_baseline) {
+            for (int t = 0; t < n; t++) {
+                if (metal_baseline[t]) {
+                    memcpy(outputs[t], metal_baseline[t], grp->ctxs[t]->rows * sizeof(float));
+                    free(metal_baseline[t]);
+                }
+            }
+            free(metal_baseline);
+        }
     }
 
     /* ── Phase 1+2: Shared-x SLI scoring ──
@@ -3053,6 +3197,7 @@ int fpqx_sli_matvec_shared(fpqx_sli_shared_spectral_t *grp,
         free(probe_row_match);
     }
 
+shared_sli_scored:
     /* ── Phase 3: Ghost correction for each tensor ── */
     for (int t = 0; t < n; t++) {
         fpqx_sli_ctx_t   *ctx = grp->ctxs[t];

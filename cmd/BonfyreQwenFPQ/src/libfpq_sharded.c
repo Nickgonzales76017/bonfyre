@@ -511,11 +511,25 @@ static native_tensor_t *find_tensor(fpq_model_t *m, const char *name) {
     return NULL;
 }
 
-/* SLI scores residual blocks as blocks_per_row segments. Native FPQ stores
- * blocks over the flat row-major tensor, so that shortcut is only exact when
- * a row boundary also lands on a 256-value block boundary. */
+/* SLI scores residual blocks as blocks_per_row segments.  Older native packs
+ * are flat row-major and require a 256-aligned width; current Qwen FPQ packs
+ * explicitly pad every row to the next SLI block.  Detect that structural
+ * contract from the encoded block count instead of rejecting e.g. Qwen's
+ * 896-wide projections and falling back to per-file residual streaming. */
 static int native_sli_layout_safe(const native_tensor_t *t) {
-    return t && t->cols > 0 && (t->cols % FPQ_NATIVE_BLOCK_DIM) == 0;
+    uint64_t blocks_per_row;
+    uint64_t required_blocks;
+    if (!t || t->kind != NT_V9 || t->rows == 0 || t->cols == 0) return 0;
+    if ((t->cols % FPQ_NATIVE_BLOCK_DIM) == 0) return 1;
+    blocks_per_row = ((uint64_t)t->cols + FPQ_NATIVE_BLOCK_DIM - 1u) /
+                     FPQ_NATIVE_BLOCK_DIM;
+    if ((uint64_t)t->rows > UINT64_MAX / blocks_per_row) return 0;
+    required_blocks = (uint64_t)t->rows * blocks_per_row;
+    /* The exact row-padded GEMV is an explicit prewarmed lane while its
+     * prepared representation is being moved into a persistent cache.  The
+     * default preserves the established low-memory streaming behavior. */
+    return fpq_truthy_env_local("BONFYRE_QWEN_LINEAR_SLI") &&
+           (uint64_t)t->n_blocks == required_blocks;
 }
 
 static int append_tensor(native_tensor_t **arr, size_t *n, const native_tensor_t *src) {
@@ -2068,11 +2082,25 @@ int fpq_prepare_tensor(fpq_model_t *m, const char *tensor_name) {
         return -1;
     }
 
-    if (t->kind != NT_V9) {
+    if (t->kind == NT_FP16) {
+        /* Native FP16 weights are normally decoded lazily to keep the model
+         * cold footprint small.  A prefill layer, however, reuses each matrix
+         * for many prompt activations.  Materialize it once here so a bounded
+         * layer-major prefill never reopens and decodes the same tensor for
+         * every token.  The runtime releases this cache at its layer boundary.
+         */
+        if (!t->passthrough) {
+            if (load_passthrough(t, t->name, 1) != 0 || !t->passthrough) {
+                fprintf(stderr,
+                        "fpq_prepare_tensor native-fp16: failed tensor=%s rows=%u cols=%u\\n",
+                        tensor_name, t->rows, t->cols);
+                return -1;
+            }
+        }
         if (log_prepare) {
             fprintf(stderr,
-                    "fpq_prepare_tensor detail passthrough tensor=%s rows=%u cols=%u kind=%d\n",
-                    tensor_name, t->rows, t->cols, (int)t->kind);
+                    "fpq_prepare_tensor detail native-fp16-ready tensor=%s rows=%u cols=%u\n",
+                    tensor_name, t->rows, t->cols);
             fflush(stderr);
         }
         return 0;
@@ -2117,7 +2145,7 @@ int fpq_prepare_tensor(fpq_model_t *m, const char *tensor_name) {
 int fpq_tensor_is_prepared(fpq_model_t *m, const char *tensor_name) {
     native_tensor_t *t = find_tensor(m, tensor_name);
     if (!t) return 0;
-    return t->sli != NULL;
+    return t->kind == NT_FP16 ? t->passthrough != NULL : t->sli != NULL;
 }
 
 int fpq_release_tensor(fpq_model_t *m, const char *tensor_name) {
@@ -2128,6 +2156,16 @@ int fpq_release_tensor(fpq_model_t *m, const char *tensor_name) {
 
     int released = 0;
     uint64_t est_sli_bytes = (uint64_t)t->n_blocks * 256ull * 4ull;
+
+    if (t->kind == NT_FP16 && t->passthrough) {
+        /* FP16 prefill preparation owns this transient expanded cache.  Do
+         * not retain a whole model merely because prefill touched a layer. */
+        free(t->passthrough);
+        t->passthrough = NULL;
+        t->passthrough_len = 0;
+        bonfyre_tensor_set_state(t, BONFYRE_TENSOR_STATE_INDEXED);
+        released = 1;
+    }
 
     if (t->sli) {
         fpqx_sli_free(t->sli);
@@ -2185,6 +2223,11 @@ int fpq_decode_all(fpq_model_t *m, const char *out_path) { (void)m; (void)out_pa
 fpq_info_t fpq_info(fpq_model_t *m) { fpq_info_t z; memset(&z, 0, sizeof(z)); return m ? m->cached_info : z; }
 const fpq_tensor_info_t *fpq_tensor_at(fpq_model_t *m, size_t index) { if (!m || index >= m->n_tensors) return NULL; return &m->tensors[index].info; }
 const fpq_tensor_info_t *fpq_tensor_find(fpq_model_t *m, const char *name) { native_tensor_t *t = find_tensor(m, name); return t ? &t->info : NULL; }
+fpq_tensor_storage_t fpq_tensor_storage(fpq_model_t *m, const char *name) {
+    native_tensor_t *t = find_tensor(m, name);
+    if (!t) return FPQ_TENSOR_STORAGE_UNKNOWN;
+    return t->kind == NT_FP16 ? FPQ_TENSOR_STORAGE_NATIVE_FP16 : FPQ_TENSOR_STORAGE_COMPRESSED_V9;
+}
 const float *fpq_get_passthrough(fpq_model_t *m, const char *tensor_name) { native_tensor_t *t = find_tensor(m, tensor_name); return (t && t->kind == NT_FP16) ? t->passthrough : NULL; }
 void fpq_model_set_active_cache(fpq_model_t *m, void *cache) { if (m) m->active_cache = cache; }
 void *fpq_model_get_active_cache(fpq_model_t *m) { return m ? m->active_cache : NULL; }

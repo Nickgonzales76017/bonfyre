@@ -150,3 +150,79 @@ export function createLlamaGenerationClient({
 
   return { generate };
 }
+
+/**
+ * Use a persistent llama-server rather than reloading a GGUF for every Estate
+ * request.  llama.cpp exposes an OpenAI-compatible local endpoint, so this
+ * keeps the Metal-resident MoE warm while retaining the same generation
+ * receipt shape as the CLI client above.
+ */
+export function createLlamaServerGenerationClient({
+  serverUrl,
+  model,
+  modelPath,
+  modelPack,
+  systemPrompt = 'You are Bonfyre\'s precise local coding assistant. Return the requested result directly.',
+  backend = 'llama-cpp-server',
+  maxOutputBytes = 1_000_000,
+  fetchImpl = globalThis.fetch,
+} = {}) {
+  const endpoint = text(serverUrl).replace(/\/$/, '');
+  const modelName = text(model) || text(modelPath) || text(modelPack);
+  if (!/^https?:\/\//.test(endpoint)) throw new Error('serverUrl must be an http(s) URL');
+  if (!modelName) throw new Error('model, modelPath, or modelPack is required');
+  if (typeof fetchImpl !== 'function') throw new Error('fetchImpl is required');
+
+  async function generate({ prompt, maxNewTokens = 64, greedy = true, env: _env = {}, timeoutMs = 120_000 } = {}) {
+    const sourcePrompt = typeof prompt === 'string' ? prompt : '';
+    if (!sourcePrompt.trim()) throw new Error('prompt is required');
+    const limit = positiveInteger(maxNewTokens, 64);
+    const started = Date.now();
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      const response = await fetchImpl(`${endpoint}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          model: modelName,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: sourcePrompt },
+          ],
+          max_tokens: limit,
+          temperature: greedy ? 0 : 0.7,
+          stream: false,
+        }),
+        signal: controller.signal,
+      });
+      const raw = await response.text();
+      if (Buffer.byteLength(raw) > maxOutputBytes) throw new Error(`llama.cpp server response exceeded ${maxOutputBytes} output bytes`);
+      if (!response.ok) throw new Error(`llama.cpp server generation failed (${response.status}): ${raw.slice(-4_000)}`);
+      let payload;
+      try { payload = JSON.parse(raw); } catch { throw new Error('llama.cpp server returned invalid JSON'); }
+      const output = payload?.choices?.[0]?.message?.content;
+      if (typeof output !== 'string' || !output.trim()) throw new Error('llama.cpp server returned empty output');
+      return {
+        schema_version: GENERATION_SCHEMA,
+        generated_at: new Date().toISOString(),
+        model: { name: 'llama.cpp', binary: endpoint, pack: modelName, runtime: 'llama-cpp-server' },
+        backend,
+        request: { prompt: sourcePrompt, max_new_tokens: limit, greedy },
+        prompt_sha256: createHash('sha256').update(sourcePrompt).digest('hex'),
+        output,
+        output_sha256: createHash('sha256').update(output).digest('hex'),
+        stderr: '',
+        stdout: raw,
+        elapsed_ms: Date.now() - started,
+      };
+    } catch (error) {
+      if (error?.name === 'AbortError') throw new Error(`llama.cpp server generation timed out after ${timeoutMs}ms`);
+      throw error;
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  return { generate };
+}

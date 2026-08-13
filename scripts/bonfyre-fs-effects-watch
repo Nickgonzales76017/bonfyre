@@ -1,0 +1,177 @@
+#!/bin/sh
+# Writable-.effect-file watcher for the BonfyreFS virtual backend.
+#
+# This is the deterministic, macFUSE-independent half of the "writable
+# governed effect files" requirement: a directory that, when a *.effect
+# JSON file lands in it, drives that file through the real, already-tested
+# workgraph effect machinery (mission create -> node add -> claim ->
+# effect-prepare -> effect-commit -- the exact same functions
+# engine/core/tests/effect_commit_crash_test.c exercises), not a
+# reimplementation of effect logic. A real FUSE mount can later replace only
+# the "watch a directory" half of this with kernel write notifications;
+# the commit machinery underneath does not change.
+#
+# Effect file format (JSON), written atomically (temp file + rename into
+# the watched directory -- a bare `> file.effect` from a shell is NOT atomic
+# and may be picked up mid-write; see bonfyre-fs-write-effect for the safe
+# way to author one):
+#   {
+#     "mission_id": "m-example",
+#     "adapter": "publish-local",
+#     "target_uri": "file:///abs/path/to/target",
+#     "input_artifact_uri": "file:///abs/path/to/input",
+#     "verification_policy": "sha256",
+#     "rollback_contract": "remove-created-target",
+#     "authority": "operator-identity"
+#   }
+#
+# A file is only processed once its size stops changing across two polls
+# (partial writes are never committed). Successfully committed files move to
+# committed/<name> with a <name>.receipt.json sibling; failures move to
+# failed/<name> with a <name>.error.json sibling. Opening, reading, or
+# partially writing a file in pending/ never mutates anything external --
+# only a fully-written, stable file that reaches effect-commit does.
+set -eu
+
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+fabric="$root/programs/bonfyre/bonfyre"
+verb=${1:-}
+watch_dir=${2:-}
+
+usage() {
+    echo "usage: bonfyre-fs-effects-watch run|tick <projection-dir> [--once]" >&2
+    exit 2
+}
+
+[ -n "$verb" ] && [ -n "$watch_dir" ] || usage
+watch_dir=$(CDPATH= cd -- "$watch_dir" && pwd) || { echo "watch: projection dir does not exist: $watch_dir" >&2; exit 1; }
+pending="$watch_dir/effects/pending"
+committed="$watch_dir/effects/committed"
+failed="$watch_dir/effects/failed"
+mkdir -p "$pending" "$committed" "$failed"
+
+log() { printf '%s\t%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$1" >>"$watch_dir/effects/watch.log"; }
+
+stable_size() {
+    # Two size samples 200ms apart; equal means the writer is done (or at
+    # least paused long enough that treating it as complete is reasonable).
+    s1=$(wc -c <"$1" 2>/dev/null || echo -1)
+    perl -e 'select(undef,undef,undef,0.2)' 2>/dev/null || sleep 1
+    s2=$(wc -c <"$1" 2>/dev/null || echo -2)
+    [ "$s1" = "$s2" ] && [ "$s1" -gt 0 ]
+}
+
+process_one() {
+    file=$1
+    name=$(basename "$file")
+    node_id="n-$$-$(date -u +%s)-$name"
+
+    parsed=$(BONFYRE_STATE_DIR="$BONFYRE_STATE_DIR" python3 - "$file" <<'PY'
+import json, sys
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception as exc:
+    print("PARSE_ERROR\t" + str(exc))
+    sys.exit(0)
+required = ["mission_id", "adapter", "target_uri"]
+missing = [k for k in required if not d.get(k)]
+if missing:
+    print("PARSE_ERROR\tmissing required field(s): " + ",".join(missing))
+    sys.exit(0)
+print("\t".join([
+    "OK",
+    d.get("mission_id", ""),
+    d.get("adapter", ""),
+    d.get("target_uri", ""),
+    d.get("input_artifact_uri", ""),
+    d.get("verification_policy", "sha256"),
+    d.get("rollback_contract", "remove-created-target"),
+    d.get("authority", "bonfyre-fs-effects-watch"),
+]))
+PY
+)
+    status_word=$(printf '%s' "$parsed" | cut -f1)
+    if [ "$status_word" != "OK" ]; then
+        reason=$(printf '%s' "$parsed" | cut -f2-)
+        printf '{"error":"%s"}\n' "$reason" >"$failed/$name.error.json"
+        mv "$file" "$failed/$name"
+        log "failed name=$name reason=$reason"
+        return 0
+    fi
+    mission_id=$(printf '%s' "$parsed" | cut -f2)
+    adapter=$(printf '%s' "$parsed" | cut -f3)
+    target_uri=$(printf '%s' "$parsed" | cut -f4)
+    input_uri=$(printf '%s' "$parsed" | cut -f5)
+    verification=$(printf '%s' "$parsed" | cut -f6)
+    rollback=$(printf '%s' "$parsed" | cut -f7)
+    authority=$(printf '%s' "$parsed" | cut -f8)
+
+    "$fabric" mission create "$mission_id" >/dev/null 2>&1 || true
+    if ! "$fabric" work add "$mission_id" "$node_id" "fs.effect" >"$watch_dir/effects/.last-add.log" 2>&1; then
+        cp "$watch_dir/effects/.last-add.log" "$failed/$name.error.json"
+        mv "$file" "$failed/$name"
+        log "failed name=$name reason=work_add_failed"
+        return 0
+    fi
+    worker="fs-watch-$$"
+    if ! claim_out=$("$fabric" work claim "$mission_id" "$node_id" "$worker" --lease-ms 60000 2>&1); then
+        echo "$claim_out" >"$failed/$name.error.json"
+        mv "$file" "$failed/$name"
+        log "failed name=$name reason=claim_failed"
+        return 0
+    fi
+    claim_token=$(printf '%s\n' "$claim_out" | sed -n 's/^claim_token=//p')
+    if [ -z "$claim_token" ]; then
+        echo "$claim_out" >"$failed/$name.error.json"
+        mv "$file" "$failed/$name"
+        log "failed name=$name reason=no_claim_token"
+        return 0
+    fi
+
+    prepare_args="$mission_id $node_id $worker $claim_token $node_id.effect $target_uri --adapter $adapter --verification-policy $verification --rollback-contract $rollback --authority $authority"
+    if [ -n "$input_uri" ]; then
+        prepare_args="$prepare_args --input-artifact-uri $input_uri"
+    fi
+    if ! prepare_out=$("$fabric" work effect-prepare $prepare_args 2>&1); then
+        echo "$prepare_out" >"$failed/$name.error.json"
+        mv "$file" "$failed/$name"
+        log "failed name=$name reason=prepare_failed"
+        return 0
+    fi
+
+    if ! commit_out=$("$fabric" work effect-commit "$mission_id" "$node_id" "$worker" "$claim_token" "$node_id.effect" 2>&1); then
+        echo "$commit_out" >"$failed/$name.error.json"
+        mv "$file" "$failed/$name"
+        log "failed name=$name reason=commit_failed"
+        return 0
+    fi
+
+    receipt_id=$(printf '%s\n' "$commit_out" | sed -n 's/^receipt_id=//p')
+    event_id=$(printf '%s\n' "$commit_out" | sed -n 's/^event_id=//p')
+    printf '{"mission_id":"%s","node_id":"%s","receipt_id":"%s","event_id":"%s"}\n' \
+        "$mission_id" "$node_id" "$receipt_id" "$event_id" >"$committed/$name.receipt.json"
+    mv "$file" "$committed/$name"
+    log "committed name=$name mission=$mission_id node=$node_id receipt=$receipt_id"
+}
+
+tick() {
+    for f in "$pending"/*.effect; do
+        [ -e "$f" ] || continue
+        stable_size "$f" || continue
+        process_one "$f"
+    done
+}
+
+case "$verb" in
+    tick)
+        tick
+        ;;
+    run)
+        while :; do
+            tick
+            [ "${3:-}" = "--once" ] && break
+            sleep 1
+        done
+        ;;
+    *) usage ;;
+esac

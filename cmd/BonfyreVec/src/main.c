@@ -27,6 +27,7 @@
 #endif
 
 #define VEC_DIMS 384
+#define VEC_FIXTURE_MAX_DIMS 4096
 #define VECF_MAGIC 0x46434556u  /* "VECF" little-endian */
 
 /* ── binary vector reader (VECF format) ─────────────────────── */
@@ -232,6 +233,129 @@ static const char *json_skip_object(const char *p) {
         p++;
     }
     return p;
+}
+
+/* This fixture deliberately uses ordinary SQLite storage rather than the
+ * optional sqlite-vec extension.  It exercises the production persistence
+ * and exact cosine path with the native-MoE 2048 dimensional embedding that
+ * BonfyreEmbed emits, including a reopen after the mutation sequence. */
+static int fixture_insert(sqlite3 *db, const char *id, const float *vector,
+                          int dimensions, const char *metadata) {
+    sqlite3_stmt *statement = NULL;
+    int ok = sqlite3_prepare_v2(db,
+        "INSERT INTO vector_fixture(id,embedding,dimensions,metadata,updated_at) VALUES(?,?,?,?,datetime('now'))",
+        -1, &statement, NULL) == SQLITE_OK;
+    if (ok) {
+        sqlite3_bind_text(statement, 1, id, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_blob(statement, 2, vector, (size_t)dimensions * sizeof(float), SQLITE_TRANSIENT);
+        sqlite3_bind_int(statement, 3, dimensions);
+        sqlite3_bind_text(statement, 4, metadata, -1, SQLITE_TRANSIENT);
+        ok = sqlite3_step(statement) == SQLITE_DONE;
+    }
+    sqlite3_finalize(statement);
+    return ok;
+}
+
+static int fixture_count(sqlite3 *db) {
+    sqlite3_stmt *statement = NULL;
+    int count = -1;
+    if (sqlite3_prepare_v2(db, "SELECT count(*) FROM vector_fixture", -1, &statement, NULL) == SQLITE_OK &&
+        sqlite3_step(statement) == SQLITE_ROW) count = sqlite3_column_int(statement, 0);
+    sqlite3_finalize(statement);
+    return count;
+}
+
+static int cmd_fixture(const char *db_path, const char *embedding_path) {
+    FILE *input = fopen(embedding_path, "rb");
+    char *json = NULL;
+    float *native = NULL, *near = NULL, *distant = NULL;
+    sqlite3 *db = NULL;
+    long bytes;
+    int dimensions, result = 1, inserted = 0, update_ok = 0, filtered = 0, reference_neighbor = 0;
+    double norm = 0.0;
+
+    if (!input) { fprintf(stderr, "vec fixture: cannot open native embedding %s\n", embedding_path); return 1; }
+    if (fseek(input, 0, SEEK_END) || (bytes = ftell(input)) <= 0 || bytes > 16 * 1024 * 1024 || fseek(input, 0, SEEK_SET)) {
+        fclose(input); fprintf(stderr, "vec fixture: invalid embedding input\n"); return 1;
+    }
+    json = malloc((size_t)bytes + 1);
+    if (!json || fread(json, 1, (size_t)bytes, input) != (size_t)bytes) goto done;
+    json[bytes] = '\0';
+    fclose(input); input = NULL;
+    if (!strstr(json, "\"backend\": \"native-moe-token-embedding\"") ||
+        !strstr(json, "\"normalized\": true")) {
+        fprintf(stderr, "vec fixture: input is not a normalized native-MoE embedding\n"); goto done;
+    }
+    native = calloc(VEC_FIXTURE_MAX_DIMS, sizeof(float));
+    near = calloc(VEC_FIXTURE_MAX_DIMS, sizeof(float));
+    distant = calloc(VEC_FIXTURE_MAX_DIMS, sizeof(float));
+    if (!native || !near || !distant) goto done;
+    dimensions = json_parse_float_array(json, "vector", native, VEC_FIXTURE_MAX_DIMS);
+    if (dimensions <= 1 || dimensions != 2048) {
+        fprintf(stderr, "vec fixture: expected 2048 native-MoE dimensions, got %d\n", dimensions); goto done;
+    }
+    for (int index = 0; index < dimensions; ++index) {
+        if (!isfinite(native[index])) { fprintf(stderr, "vec fixture: non-finite embedding\n"); goto done; }
+        norm += (double)native[index] * native[index];
+        near[index] = native[index];
+        distant[index] = -native[index];
+    }
+    if (fabs(sqrt(norm) - 1.0) > 1e-3) { fprintf(stderr, "vec fixture: embedding is not normalized\n"); goto done; }
+    /* Keep a meaningful comparison neighbor, but far enough from the exact
+     * native reference that round-off cannot displace the reference result. */
+    near[0] += 0.10f;
+    {
+        double near_norm = 0.0;
+        for (int index = 0; index < dimensions; ++index) near_norm += (double)near[index] * near[index];
+        for (int index = 0; index < dimensions; ++index) near[index] = (float)(near[index] / sqrt(near_norm));
+    }
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) { fprintf(stderr, "vec fixture: cannot open %s\n", db_path); goto done; }
+    if (sqlite3_exec(db,
+        "CREATE TABLE IF NOT EXISTS vector_fixture("
+        "id TEXT PRIMARY KEY,embedding BLOB NOT NULL,dimensions INTEGER NOT NULL,metadata TEXT NOT NULL,updated_at TEXT NOT NULL)",
+        NULL, NULL, NULL) != SQLITE_OK ||
+        sqlite3_exec(db, "DELETE FROM vector_fixture", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    if (!fixture_insert(db, "native-reference", native, dimensions, "{\"group\":\"keep\",\"role\":\"native\"}") ||
+        !fixture_insert(db, "comparison-near", near, dimensions, "{\"group\":\"keep\",\"role\":\"comparison\"}") ||
+        !fixture_insert(db, "comparison-delete", distant, dimensions, "{\"group\":\"drop\",\"role\":\"comparison\"}")) goto done;
+    inserted = fixture_count(db) == 3;
+    update_ok = sqlite3_exec(db,
+        "UPDATE vector_fixture SET metadata='{\"group\":\"keep\",\"role\":\"comparison-updated\"}',updated_at=datetime('now') WHERE id='comparison-near'",
+        NULL, NULL, NULL) == SQLITE_OK;
+    sqlite3_stmt *scan = NULL;
+    if (sqlite3_prepare_v2(db,
+        "SELECT id,embedding,dimensions FROM vector_fixture WHERE metadata LIKE '%\"group\":\"keep\"%'", -1, &scan, NULL) != SQLITE_OK) goto done;
+    float best_score = -2.0f;
+    char best_id[256] = "";
+    while (sqlite3_step(scan) == SQLITE_ROW) {
+        const char *id = (const char *)sqlite3_column_text(scan, 0);
+        const void *blob = sqlite3_column_blob(scan, 1);
+        int blob_dimensions = sqlite3_column_int(scan, 2);
+        if (!blob || blob_dimensions != dimensions) continue;
+        filtered++;
+        float score = cosine_similarity(native, (const float *)blob, dimensions);
+        if (score > best_score) { best_score = score; snprintf(best_id, sizeof(best_id), "%s", id ? id : ""); }
+    }
+    sqlite3_finalize(scan); scan = NULL;
+    reference_neighbor = filtered == 2 && !strcmp(best_id, "native-reference") && best_score > 0.99999f;
+    if (sqlite3_exec(db, "DELETE FROM vector_fixture WHERE id='comparison-delete'", NULL, NULL, NULL) != SQLITE_OK) goto done;
+    int deleted = fixture_count(db) == 2;
+    sqlite3_close(db); db = NULL; /* explicit persistent-store reopen */
+    if (sqlite3_open(db_path, &db) != SQLITE_OK) goto done;
+    int restart_persisted = fixture_count(db) == 2;
+    printf("{\"backend\":\"native-moe-token-embedding\",\"model_identity\":\"qwen1.5-moe-a2.7b-chat\","
+           "\"dimensions\":%d,\"distance_metric\":\"cosine\",\"inserted\":%s,\"updated\":%s,"
+           "\"nearest_neighbor\":\"%s\",\"metadata_filtered\":%s,\"deleted\":%s,"
+           "\"restart_persisted\":%s,\"reference_neighbor\":%s}\n",
+           dimensions, inserted ? "true" : "false", update_ok ? "true" : "false", best_id,
+           filtered == 2 ? "true" : "false", deleted ? "true" : "false",
+           restart_persisted ? "true" : "false", reference_neighbor ? "true" : "false");
+    result = inserted && update_ok && deleted && restart_persisted && reference_neighbor ? 0 : 1;
+done:
+    if (input) fclose(input);
+    if (db) sqlite3_close(db);
+    free(json); free(native); free(near); free(distant);
+    return result;
 }
 
 /* ── commands ───────────────────────────────────────────────── */
@@ -834,6 +958,7 @@ static void print_usage(void) {
         "  bonfyre-vec search <db> <query.json> --exact [--top N]\n"
         "  bonfyre-vec compare <db> <id1> <id2>\n"
         "  bonfyre-vec count <db>\n"
+        "  bonfyre-vec fixture <db> <native-moe-embedding.json>\n"
         "  bonfyre-vec sae-rerank <results.json> <query.features.json> <features-dir> [--top N] [--sae-weight W]\n"
         "  bonfyre-vec status\n");
 }
@@ -876,6 +1001,9 @@ int main(int argc, char **argv) {
         return cmd_compare(argv[2], argv[3], argv[4]);
     } else if (strcmp(cmd, "count") == 0) {
         return cmd_count(argv[2]);
+    } else if (strcmp(cmd, "fixture") == 0) {
+        if (argc < 4) { print_usage(); return 1; }
+        return cmd_fixture(argv[2], argv[3]);
     } else if (strcmp(cmd, "sae-rerank") == 0) {
         if (argc < 5) { print_usage(); return 1; }
         int top_k = 10;

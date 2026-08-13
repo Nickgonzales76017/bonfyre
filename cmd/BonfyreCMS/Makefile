@@ -20,13 +20,20 @@ HDR = src/bench_metrics.h src/ephemeral.h src/canonical.h src/lt_egraph.h src/te
       src/type_check.h src/meta_gen.h src/columnar.h src/hybrid_reduce.h \
       src/provenance.h src/transfer.h src/compact_bindings.h
 
-all: $(LT_LIB) $(TARGET)
+SYNC_BIN = $(HOME)/.bonfyre/bin/$(TARGET)
+
+all: $(LT_LIB) $(TARGET) install-bin
 
 $(LT_LIB):
 	$(MAKE) -C $(LT_DIR) liblambda-tensors.a
 
 $(TARGET): $(SRC) $(HDR) $(LT_LIB)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) $(LT_INC) -o $(TARGET) $(SRC) $(LT_LIB) -lsqlite3 -lpthread -lm -lz $(LDFLAGS)
+
+install-bin: $(TARGET)
+	@mkdir -p $(dir $(SYNC_BIN))
+	@cp $(TARGET) $(SYNC_BIN)
+	@codesign --force --sign - $(SYNC_BIN) >/dev/null 2>&1 || true
 
 $(COMPACT_PROBE): tests/compact_probe.c src/compact_bindings.c src/compact_bindings.h src/bench_metrics.c src/bench_metrics.h $(LT_LIB)
 	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -Isrc $(LT_INC) -o $(COMPACT_PROBE) tests/compact_probe.c src/compact_bindings.c src/bench_metrics.c $(LT_LIB) -lsqlite3 -lm
@@ -44,4 +51,4 @@ install: $(TARGET)
 uninstall:
 	rm -f $(DESTDIR)$(PREFIX)/bin/$(TARGET)
 
-.PHONY: all clean compact-probe install uninstall
+.PHONY: all clean compact-probe install install-bin uninstall

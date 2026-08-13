@@ -1,0 +1,5 @@
+profile local-native
+  state-root platform-default
+  artifact-policy zero-copy-reference
+  effect-policy plan-approve-adapter-commit
+  catalog-generation bootstrap-1

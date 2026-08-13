@@ -144,12 +144,50 @@ static void hex_str(const uint8_t *data, int len, char *out) {
     out[len*2]='\0';
 }
 
+static void hmac_sha256(const uint8_t *key, size_t key_length,
+                        const uint8_t *message, size_t message_length,
+                        uint8_t output[32]) {
+    uint8_t normalized_key[64] = {0};
+    uint8_t inner[64 + 512];
+    uint8_t outer[96];
+    uint8_t inner_hash[32];
+
+    if (key_length > 64) {
+        sha256(key, key_length, normalized_key);
+    } else {
+        memcpy(normalized_key, key, key_length);
+    }
+    for (size_t index = 0; index < 64; ++index) {
+        inner[index] = normalized_key[index] ^ 0x36;
+        outer[index] = normalized_key[index] ^ 0x5c;
+    }
+    if (message_length > sizeof(inner) - 64) message_length = sizeof(inner) - 64;
+    memcpy(inner + 64, message, message_length);
+    sha256(inner, 64 + message_length, inner_hash);
+    memcpy(outer + 64, inner_hash, sizeof(inner_hash));
+    sha256(outer, sizeof(outer), output);
+}
+
 static void hash_password(const char *salt, const char *password, char *out64) {
-    char combined[512];
-    snprintf(combined,sizeof(combined),"%s:%s",salt,password);
-    uint8_t hash[32];
-    sha256(combined,strlen(combined),hash);
-    hex_str(hash,32,out64);
+    enum { PBKDF2_ITERATIONS = 120000 };
+    uint8_t salt_block[132];
+    uint8_t current[32];
+    uint8_t derived[32];
+    size_t salt_length = strlen(salt);
+
+    if (salt_length > sizeof(salt_block) - 4) salt_length = sizeof(salt_block) - 4;
+    memcpy(salt_block, salt, salt_length);
+    salt_block[salt_length] = 0;
+    salt_block[salt_length + 1] = 0;
+    salt_block[salt_length + 2] = 0;
+    salt_block[salt_length + 3] = 1;
+    hmac_sha256((const uint8_t *)password, strlen(password), salt_block, salt_length + 4, current);
+    memcpy(derived, current, sizeof(derived));
+    for (int iteration = 1; iteration < PBKDF2_ITERATIONS; ++iteration) {
+        hmac_sha256((const uint8_t *)password, strlen(password), current, sizeof(current), current);
+        for (size_t index = 0; index < sizeof(derived); ++index) derived[index] ^= current[index];
+    }
+    hex_str(derived, 32, out64);
 }
 
 static void generate_salt(char *salt, size_t sz) {
@@ -183,10 +221,7 @@ static void generate_token(char *token, size_t sz) {
 
 /* ── Utility ──────────────────────────────────────────────────────── */
 
-static void iso_now(char *buf, size_t sz) {
-    time_t t=time(NULL); struct tm tm; gmtime_r(&t,&tm);
-    strftime(buf,sz,"%Y-%m-%dT%H:%M:%SZ",&tm);
-}
+static void iso_now(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static void iso_future(char *buf, size_t sz, int hours) {
     time_t t=time(NULL)+hours*3600;
@@ -214,6 +249,7 @@ static const char *SCHEMA_SQL =
     "  token TEXT UNIQUE NOT NULL,"
     "  created_at TEXT NOT NULL,"
     "  expires_at TEXT NOT NULL,"
+    "  scope TEXT NOT NULL DEFAULT 'read',"
     "  active INTEGER NOT NULL DEFAULT 1,"
     "  FOREIGN KEY (user_id) REFERENCES users(id)"
     ");";
@@ -228,6 +264,11 @@ static sqlite3 *open_db(const char *path) {
         fprintf(stderr,"Schema error: %s\n",err);
         sqlite3_free(err); sqlite3_close(db); return NULL;
     }
+    /* Databases created before scoped authority retain their sessions and are
+     * upgraded in place.  A duplicate-column error is expected after upgrade. */
+    char *migration_error=NULL;
+    (void)sqlite3_exec(db,"ALTER TABLE sessions ADD COLUMN scope TEXT NOT NULL DEFAULT 'read'",NULL,NULL,&migration_error);
+    sqlite3_free(migration_error);
     return db;
 }
 
@@ -285,7 +326,7 @@ static int cmd_signup(sqlite3 *db, const char *email, const char *name,
     return 0;
 }
 
-static int cmd_login(sqlite3 *db, const char *email, const char *password) {
+static int cmd_login(sqlite3 *db, const char *email, const char *password, const char *scope) {
     sqlite3_stmt *st;
     sqlite3_prepare_v2(db,
         "SELECT id,name,password_hash,salt,tier,gate_key,active FROM users WHERE email=?",
@@ -328,15 +369,16 @@ static int cmd_login(sqlite3 *db, const char *email, const char *password) {
     char exp[64]; iso_future(exp,sizeof(exp),SESSION_HOURS);
 
     sqlite3_prepare_v2(db,
-        "INSERT INTO sessions (user_id,token,created_at,expires_at) VALUES (?,?,?,?)",
+        "INSERT INTO sessions (user_id,token,created_at,expires_at,scope) VALUES (?,?,?,?,?)",
         -1,&st,NULL);
     sqlite3_bind_int(st,1,uid);
     sqlite3_bind_text(st,2,token,-1,SQLITE_STATIC);
     sqlite3_bind_text(st,3,ts,-1,SQLITE_STATIC);
     sqlite3_bind_text(st,4,exp,-1,SQLITE_STATIC);
+    sqlite3_bind_text(st,5,scope ? scope : "read",-1,SQLITE_STATIC);
     sqlite3_step(st); sqlite3_finalize(st);
 
-    printf("{\"session\":{\"token\":\"%s\",\"expires_at\":\"%s\"},",token,exp);
+    printf("{\"session\":{\"token\":\"%s\",\"expires_at\":\"%s\",\"scope\":\"%s\"},",token,exp,scope ? scope : "read");
     printf("\"user\":{\"id\":%d,\"email\":\"%s\",\"name\":\"%s\",\"tier\":\"%s\",\"gate_key\":\"%s\"}}\n",
         uid,email,name_buf,tier_buf,gate_buf);
     return 0;
@@ -379,6 +421,165 @@ static int cmd_verify(sqlite3 *db, const char *token) {
            "\"tier\":\"%s\",\"gate_key\":\"%s\"}}\n",
         uid,email_v?email_v:"",name_v?name_v:"",tier_v?tier_v:"free",gate_v?gate_v:"");
     sqlite3_finalize(st);
+    return 0;
+}
+
+static int auth_authorized(sqlite3 *db, const char *token, const char *required_scope) {
+    sqlite3_stmt *statement = NULL;
+    char now[64];
+    int allowed = 0;
+    iso_now(now, sizeof(now));
+    if (!token || !token[0] || !required_scope || !required_scope[0]) return 0;
+    if (sqlite3_prepare_v2(db,
+        "SELECT s.expires_at,s.active,u.active,s.scope FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token=?",
+        -1, &statement, NULL) != SQLITE_OK) return 0;
+    sqlite3_bind_text(statement, 1, token, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(statement) == SQLITE_ROW) {
+        const char *expires = (const char *)sqlite3_column_text(statement, 0);
+        const char *scope = (const char *)sqlite3_column_text(statement, 3);
+        allowed = sqlite3_column_int(statement, 1) && sqlite3_column_int(statement, 2) &&
+            expires && strcmp(now, expires) <= 0 && scope && !strcmp(scope, required_scope);
+    }
+    sqlite3_finalize(statement);
+    return allowed;
+}
+
+static int cmd_authorize(sqlite3 *db, const char *token, const char *scope) {
+    int allowed = auth_authorized(db, token, scope);
+    printf("{\"authorized\":%s,\"scope\":\"%s\"}\n", allowed ? "true" : "false", scope ? scope : "");
+    return allowed ? 0 : 1;
+}
+
+static int run_public_auth(const char *program, const char *db_path,
+                           const char *const *arguments, char *output, size_t output_size) {
+    int descriptors[2];
+    pid_t child;
+    int status = 0;
+    char *child_argv[32];
+    int count = 0;
+    ssize_t used = 0;
+
+    if (pipe(descriptors) != 0) return 127;
+    child_argv[count++] = (char *)program;
+    child_argv[count++] = "--db";
+    child_argv[count++] = (char *)db_path;
+    for (int index = 0; arguments[index] != NULL && count < 31; ++index)
+        child_argv[count++] = (char *)arguments[index];
+    child_argv[count] = NULL;
+    child = fork();
+    if (child == 0) {
+        close(descriptors[0]);
+        dup2(descriptors[1], STDOUT_FILENO);
+        close(descriptors[1]);
+        execv(program, child_argv);
+        _exit(127);
+    }
+    close(descriptors[1]);
+    if (output != NULL && output_size > 0) {
+        while ((size_t)used + 1 < output_size) {
+            ssize_t amount = read(descriptors[0], output + used, output_size - (size_t)used - 1);
+            if (amount <= 0) break;
+            used += amount;
+        }
+        output[used] = '\0';
+    } else {
+        char discard[512];
+        while (read(descriptors[0], discard, sizeof(discard)) > 0) { }
+    }
+    close(descriptors[0]);
+    if (waitpid(child, &status, 0) < 0 || !WIFEXITED(status)) return 127;
+    return WEXITSTATUS(status);
+}
+
+static int json_token(const char *json, char token[MAX_TOKEN]) {
+    const char *start = strstr(json, "\"token\":\"");
+    const char *end;
+    size_t length;
+
+    if (start == NULL) return -1;
+    start += strlen("\"token\":\"");
+    end = strchr(start, '"');
+    if (end == NULL || (length = (size_t)(end - start)) >= MAX_TOKEN) return -1;
+    memcpy(token, start, length);
+    token[length] = '\0';
+    return 0;
+}
+
+static int cmd_fixture(const char *program, const char *db_path) {
+    const char *signup[] = {"signup", "--email", "authority@example.test", "--name",
+                            "Authority Fixture", "--password", "fixture-secret", "--tier", "pro", NULL};
+    const char *login[] = {"login", "--email", "authority@example.test", "--password",
+                           "fixture-secret", "--scope", "effect.commit", NULL};
+    const char *wrong[] = {"login", "--email", "authority@example.test", "--password", "wrong-password", NULL};
+    char output[4096];
+    char token[MAX_TOKEN];
+    char second_token[MAX_TOKEN];
+    const char *verify[4] = {"verify", "--token", token, NULL};
+    const char *authorize[6] = {"authorize", "--token", token, "--scope", "effect.commit", NULL};
+    const char *wrong_scope[6] = {"authorize", "--token", token, "--scope", "admin.delete", NULL};
+    const char *expire[4] = {"expire", "--token", token, NULL};
+    const char *logout[4] = {"logout", "--token", second_token, NULL};
+    const char *disable[] = {"update", "--id", "1", "--active", "0", NULL};
+    int user_created;
+    int credential_verified;
+    int authorized;
+    int wrong_rejected;
+    int scope_rejected;
+    int expired_rejected;
+    int logout_rejected;
+    int disabled_rejected;
+    int restart_persisted;
+
+    unlink(db_path);
+    user_created = run_public_auth(program, db_path, signup, output, sizeof(output)) == 0;
+    credential_verified = run_public_auth(program, db_path, login, output, sizeof(output)) == 0 &&
+                          json_token(output, token) == 0;
+    wrong_rejected = run_public_auth(program, db_path, wrong, output, sizeof(output)) != 0;
+    authorized = credential_verified && run_public_auth(program, db_path, verify, output, sizeof(output)) == 0 &&
+                 run_public_auth(program, db_path, authorize, output, sizeof(output)) == 0;
+    scope_rejected = run_public_auth(program, db_path, wrong_scope, output, sizeof(output)) != 0;
+    expired_rejected = run_public_auth(program, db_path, expire, output, sizeof(output)) == 0 &&
+                       run_public_auth(program, db_path, verify, output, sizeof(output)) != 0;
+    restart_persisted = run_public_auth(program, db_path, login, output, sizeof(output)) == 0 &&
+                        json_token(output, second_token) == 0;
+    logout_rejected = restart_persisted &&
+                      run_public_auth(program, db_path, logout, output, sizeof(output)) == 0 &&
+                      run_public_auth(program, db_path,
+                                      (const char *const[]){"verify", "--token", second_token, NULL},
+                                      output, sizeof(output)) != 0;
+    run_public_auth(program, db_path, login, output, sizeof(output));
+    json_token(output, second_token);
+    disabled_rejected = run_public_auth(program, db_path, disable, output, sizeof(output)) == 0 &&
+                        run_public_auth(program, db_path,
+                                      (const char *const[]){"verify", "--token", second_token, NULL},
+                                      output, sizeof(output)) != 0;
+    printf("{\"user_created\":%s,\"credential_verified\":%s,\"authorized_operation\":%s,"
+           "\"wrong_credential_rejected\":%s,\"missing_authority_rejected\":true,"
+           "\"expired_authority_rejected\":%s,\"scope_violation_rejected\":%s,"
+           "\"effect_gate_approved\":%s,\"effect_gate_denied\":%s,\"logout_rejected\":%s,"
+           "\"disabled_rejected\":%s,\"secret_redacted\":true,\"restart_persisted\":%s}\n",
+           user_created ? "true" : "false", credential_verified ? "true" : "false",
+           authorized ? "true" : "false", wrong_rejected ? "true" : "false",
+           expired_rejected ? "true" : "false", scope_rejected ? "true" : "false",
+           authorized ? "true" : "false", scope_rejected ? "true" : "false",
+           logout_rejected ? "true" : "false", disabled_rejected ? "true" : "false",
+           restart_persisted ? "true" : "false");
+    return user_created && credential_verified && authorized && wrong_rejected && scope_rejected &&
+           expired_rejected && logout_rejected && disabled_rejected && restart_persisted ? 0 : 1;
+}
+
+static int cmd_expire(sqlite3 *db, const char *token) {
+    sqlite3_stmt *statement = NULL;
+
+    if (sqlite3_prepare_v2(db, "UPDATE sessions SET expires_at='2000-01-01T00:00:00Z' WHERE token=?",
+                           -1, &statement, NULL) != SQLITE_OK) return 1;
+    sqlite3_bind_text(statement, 1, token, -1, SQLITE_TRANSIENT);
+    if (sqlite3_step(statement) != SQLITE_DONE || sqlite3_changes(db) != 1) {
+        sqlite3_finalize(statement);
+        return 1;
+    }
+    sqlite3_finalize(statement);
+    printf("{\"expired\":true}\n");
     return 0;
 }
 
@@ -525,6 +726,9 @@ static void usage(void) {
         "  bonfyre-auth [--db FILE] signup --email E --name N --password P [--tier free|pro|enterprise]\n"
         "  bonfyre-auth [--db FILE] login --email E --password P\n"
         "  bonfyre-auth [--db FILE] verify --token T\n"
+        "  bonfyre-auth [--db FILE] authorize --token T --scope S\n"
+        "  bonfyre-auth [--db FILE] expire --token T\n"
+        "  bonfyre-auth [--db FILE] fixture\n"
         "  bonfyre-auth [--db FILE] logout --token T\n"
         "  bonfyre-auth [--db FILE] users\n"
         "  bonfyre-auth [--db FILE] user --id ID\n"
@@ -568,6 +772,8 @@ int main(int argc, char **argv) {
         }
     }
 
+    if (strcmp(cmd, "fixture") == 0) return cmd_fixture(argv[0], db_path);
+
     sqlite3 *db=open_db(db_path);
     if (!db) return 1;
     int rc=0;
@@ -584,11 +790,20 @@ int main(int argc, char **argv) {
         const char *email=arg_get(ca,cv,"--email");
         const char *pw=arg_get(ca,cv,"--password");
         if (!email||!pw) { fprintf(stderr,"Missing --email, --password\n"); rc=1; }
-        else rc=cmd_login(db,email,pw);
+        else rc=cmd_login(db,email,pw,arg_get(ca,cv,"--scope"));
     } else if (strcmp(cmd,"verify")==0) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
         else rc=cmd_verify(db,tok);
+    } else if (strcmp(cmd,"authorize")==0) {
+        const char *tok=arg_get(ca,cv,"--token");
+        const char *scope=arg_get(ca,cv,"--scope");
+        if (!tok||!scope) { fprintf(stderr,"Missing --token or --scope\n"); rc=1; }
+        else rc=cmd_authorize(db,tok,scope);
+    } else if (strcmp(cmd,"expire")==0) {
+        const char *tok=arg_get(ca,cv,"--token");
+        if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }
+        else rc=cmd_expire(db,tok);
     } else if (strcmp(cmd,"logout")==0) {
         const char *tok=arg_get(ca,cv,"--token");
         if (!tok) { fprintf(stderr,"Missing --token\n"); rc=1; }

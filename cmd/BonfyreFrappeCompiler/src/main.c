@@ -50,6 +50,113 @@ static void print_usage(const char *prog) {
     printf("\n");
 }
 
+static void json_string(FILE *file, const char *value) {
+    fputc('"', file);
+    for (const unsigned char *cursor = (const unsigned char *)(value ? value : ""); *cursor; cursor++) {
+        if (*cursor == '"' || *cursor == '\\') fputc('\\', file);
+        if (*cursor >= 0x20) fputc(*cursor, file);
+    }
+    fputc('"', file);
+}
+
+static void json_pack_revision(FILE *file, const BfAppPack *pack) {
+    static const char digits[] = "0123456789abcdef";
+    char revision[65];
+    for (size_t index = 0; index < 32; ++index) {
+        revision[index * 2] = digits[pack->pack_hash[index] >> 4];
+        revision[index * 2 + 1] = digits[pack->pack_hash[index] & 15];
+    }
+    revision[64] = '\0';
+    json_string(file, revision);
+}
+
+static void emit_schema_graph(FILE *file, const BfAppPack *pack) {
+    fprintf(file, "\"schema\":{\"app\":"); json_string(file, pack->schema ? pack->schema->app_name : pack->app_name);
+    fprintf(file, ",\"doctypes\":[");
+    for (size_t i = 0; pack->schema && i < pack->schema->doctype_count; i++) {
+        BfDocType *doctype = pack->schema->doctypes[i];
+        if (i) fputc(',', file);
+        fprintf(file, "{\"name\":"); json_string(file, doctype->name);
+        fprintf(file, ",\"module\":"); json_string(file, doctype->module);
+        fprintf(file, ",\"controller\":"); json_string(file, doctype->controller_path);
+        fprintf(file, ",\"fields\":[");
+        for (size_t j = 0; j < doctype->field_count; j++) {
+            BfField *field = &doctype->fields[j];
+            if (j) fputc(',', file);
+            fprintf(file, "{\"name\":"); json_string(file, field->fieldname);
+            fprintf(file, ",\"label\":"); json_string(file, field->label);
+            fprintf(file, ",\"type\":%d,\"required\":%s,\"options\":", (int)field->fieldtype, field->reqd ? "true" : "false");
+            json_string(file, field->options); fputc('}', file);
+        }
+        fprintf(file, "],\"relations\":[");
+        for (size_t j = 0; j < doctype->relation_count; j++) {
+            BfRelation *relation = &doctype->relations[j];
+            if (j) fputc(',', file);
+            fprintf(file, "{\"type\":%d,\"source\":", (int)relation->type); json_string(file, relation->source_doctype);
+            fprintf(file, ",\"field\":"); json_string(file, relation->source_field);
+            fprintf(file, ",\"target\":"); json_string(file, relation->target_doctype); fputc('}', file);
+        }
+        fprintf(file, "]}");
+    }
+    fprintf(file, "]}");
+}
+
+static void emit_bindings(FILE *file, const BfAppPack *pack) {
+    fprintf(file, "\"bindings\":[");
+    for (size_t i = 0; i < pack->binding_count; i++) {
+        BfBinding *binding = pack->bindings[i];
+        if (i) fputc(',', file);
+        fprintf(file, "{\"doctype\":"); json_string(file, binding->doctype);
+        fprintf(file, ",\"capabilities\":[");
+        for (size_t j = 0; j < binding->capability_count; j++) { if (j) fputc(',', file); json_string(file, binding->capability_ids[j]); }
+        fprintf(file, "]}");
+    }
+    fprintf(file, "]");
+}
+
+static void emit_rule_universes(FILE *file, const BfAppPack *pack) {
+    fprintf(file, "\"rule_universes\":[");
+    for (size_t i = 0; i < pack->rule_universe_count; i++) {
+        BfRuleUniverse *rules = pack->rule_universes[i];
+        if (i) fputc(',', file);
+        fprintf(file, "{\"doctype\":"); json_string(file, rules->doctype);
+        fprintf(file, ",\"proof_policy\":"); json_string(file, rules->proof_policy);
+        fprintf(file, ",\"activation_policy\":"); json_string(file, rules->activation_policy);
+        fprintf(file, ",\"operators\":[");
+        for (size_t j = 0; j < rules->operator_count; j++) { if (j) fputc(',', file); json_string(file, rules->operators[j]); }
+        fprintf(file, "]}");
+    }
+    fprintf(file, "]");
+}
+
+static int emit_projection(const char *path, const char *kind, const BfAppPack *pack) {
+    FILE *file = fopen(path, "wb");
+    if (!file) {
+        fprintf(stderr, "Error: cannot emit %s to %s\n", kind, path);
+        return -1;
+    }
+    fprintf(file, "{\"kind\":"); json_string(file, kind);
+    fprintf(file, ",\"app\":"); json_string(file, pack->app_name);
+    fprintf(file, ",\"version\":"); json_string(file, pack->app_version);
+    fprintf(file, ",\"source_revision\":"); json_pack_revision(file, pack);
+    fputc(',', file);
+    if (!strcmp(kind, "BfSchemaGraph")) emit_schema_graph(file, pack);
+    else if (!strcmp(kind, "CapabilityBindings")) emit_bindings(file, pack);
+    else if (!strcmp(kind, "RuleUniverses")) emit_rule_universes(file, pack);
+    else { emit_schema_graph(file, pack); fputc(',', file); emit_bindings(file, pack); fputc(',', file); emit_rule_universes(file, pack); }
+    fprintf(file, ",\"routes\":[");
+    for (size_t i = 0; i < pack->route_count; i++) { if (i) fputc(',', file); json_string(file, pack->api_routes[i]); }
+    fprintf(file, "],\"surfaces\":[");
+    for (size_t i = 0; i < pack->surface_count; i++) { if (i) fputc(',', file); json_string(file, pack->surfaces[i]); }
+    fprintf(file, "],\"migrations\":[");
+    for (size_t i = 0; i < pack->migration_count; i++) { if (i) fputc(',', file); json_string(file, pack->migrations[i]); }
+    fprintf(file, "],\"coverage_score\":%.6f}\n", pack->coverage_score);
+    int ok = ferror(file) ? -1 : 0;
+    if (fclose(file) != 0) ok = -1;
+    if (ok != 0) fprintf(stderr, "Error: failed writing %s to %s\n", kind, path);
+    return ok;
+}
+
 int main(int argc, char **argv) {
     char *app_path = NULL;
     char *output_dir = "output";
@@ -131,6 +238,11 @@ int main(int argc, char **argv) {
 
     app_path = argv[optind];
 
+    if (dry_run && (emit_schema_ir || emit_bindings || emit_rule_universes || emit_pack)) {
+        fprintf(stderr, "Error: --dry-run cannot be combined with --emit-* because it must not write artifacts\n");
+        return 1;
+    }
+
     /* Determine bonfyre_root */
     if (!bonfyre_root) {
         bonfyre_root = getenv("BONFYRE_ROOT");
@@ -176,22 +288,22 @@ int main(int argc, char **argv) {
     /* Emit outputs if requested */
     if (emit_schema_ir) {
         printf("\nEmitting schema IR to: %s\n", emit_schema_ir);
-        /* TODO: Serialize schema to JSON */
+        if (emit_projection(emit_schema_ir, "BfSchemaGraph", pack) != 0) { bf_app_pack_free(pack); return 1; }
     }
 
     if (emit_bindings) {
         printf("\nEmitting bindings to: %s\n", emit_bindings);
-        /* TODO: Serialize bindings to JSON */
+        if (emit_projection(emit_bindings, "CapabilityBindings", pack) != 0) { bf_app_pack_free(pack); return 1; }
     }
 
     if (emit_rule_universes) {
         printf("\nEmitting rule universes to: %s\n", emit_rule_universes);
-        /* TODO: Serialize rule universes to JSON */
+        if (emit_projection(emit_rule_universes, "RuleUniverses", pack) != 0) { bf_app_pack_free(pack); return 1; }
     }
 
     if (emit_pack) {
         printf("\nEmitting app pack to: %s\n", emit_pack);
-        /* TODO: Serialize complete pack */
+        if (emit_projection(emit_pack, "AppPack", pack) != 0) { bf_app_pack_free(pack); return 1; }
     }
 
     /* Success */
