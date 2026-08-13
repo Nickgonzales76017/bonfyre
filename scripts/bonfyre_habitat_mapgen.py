@@ -103,7 +103,7 @@ def compile_map(scene):
     # compiles a different town than one with 40 offers.
     # ------------------------------------------------------------------
     gravity = {g["district"]: g for g in scene.get("semantic_gravity", [])}
-    order = ["research", "market", "civic", "foundation", "gates"]
+    order = ["apps", "research", "market", "civic", "foundation", "gates"]
     present = [d for d in order if gravity.get(d, {}).get("members")]
     total_share = sum(gravity[d]["share"] for d in present) or 1.0
 
@@ -143,6 +143,19 @@ def compile_map(scene):
             on_place(item, cursor_x, row_y, st)
             cursor_x += st["w"] + 3
             row_h = max(row_h, st["h"])
+
+    # --- app district: one building per real compiled Frappe app. The
+    # room template is chosen by scale, so erpnext (502 doctypes) gets a
+    # bigger structure than drive (12) -- the estate's real shape shows.
+    def on_app(a, ox, oy, st):
+        labels.append({"x": ox + st["w"] // 2, "y": oy - 1,
+                       "text": a["app"], "sub": f"{a['doctypes']} doctypes · {a['audit']}"})
+        markers.append({"x": ox + st["w"] // 2, "y": oy + st["h"] // 2,
+                        "glyph": "🏛️" if a["status"] == "compiled" else "⚠️",
+                        "kind": "civic", "civic": "app", "label": a["app"], "data": a})
+
+    apps_sorted = sorted(scene.get("apps", []), key=lambda a: -a["doctypes"])
+    place_row("apps", apps_sorted, 1, on_app)
 
     # --- research district: one real room per real fabric.db mission
     def on_mission(m, ox, oy, st):

@@ -811,7 +811,54 @@ def compile_scene():
     # ground given to it. The doc: "same engine, different life" -- two
     # users' worlds must compile differently from their own graphs.
     # ------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # The nine-app estate, actually compiled. BonfyreFrappeCompiler runs
+    # 12 phases over each real Frappe app and audits 12 theorems; the
+    # results are written to bonfyre_cms.frappe_app. These are by far the
+    # heaviest real structures Bonfyre owns (1131 doctypes), so they
+    # dominate semantic gravity -- which is the correct outcome, not a
+    # problem to normalise away.
+    # ------------------------------------------------------------------
+    apps = []
+    if cms:
+        try:
+            for row in cms.execute(
+                "SELECT id, app_name, apps_dir, doctype_count, status"
+                " FROM frappe_app ORDER BY doctype_count DESC"
+            ):
+                apps.append({
+                    "id": f"app-{row['id']}",
+                    "app": row["app_name"],
+                    "dir": row["apps_dir"],
+                    "doctypes": row["doctype_count"],
+                    "status": row["status"],
+                    "audit": ("12/12 theorems" if row["status"] == "compiled"
+                              else "coverage audit failed: 4 of 12 theorems violated"),
+                    "source": {"db": "bonfyre_cms.db", "table": "frappe_app", "id": row["id"]},
+                })
+        except sqlite3.Error:
+            pass
+
+    # A failed theorem audit is a real gate on a real app -- surface it
+    # rather than letting it pass quietly.
+    for a in apps:
+        if a["status"] != "compiled":
+            gates.append({
+                "id": f"gate-app-{a['app']}",
+                "label": f"{a['app']}: coverage audit failed",
+                "opportunity": "native app compilation",
+                "gate_class": "proof",
+                "status": "blocked",
+                "value_at_stake": 0,
+                "external_ref": a["dir"],
+                "blocks": ("BonfyreFrappeCompiler phase 12 reports 4 of 12 theorems "
+                           "violated; the binary reports the count, not which."),
+                "source": a["source"],
+            })
+
     gravity = [
+        {"district": "apps", "weight": sum(a["doctypes"] for a in apps) // 20,
+         "members": len(apps)},
         {"district": "research", "weight": len(rooms) + len(objects), "members": len(rooms)},
         {"district": "gates", "weight": len(gates), "members": len(gates)},
         {"district": "market", "weight": len(stalls) * 2, "members": len(stalls)},
@@ -1118,6 +1165,7 @@ def compile_scene():
         "bonfyrefs": fs_entries,
         "families": families,
         "content_types": content_types,
+        "apps": apps,
     }
 
 
@@ -1142,5 +1190,6 @@ if __name__ == "__main__":
         f"visitor_visible={scene['visitor_projection']['visible_count']} "
         f"visitor_withheld={scene['visitor_projection']['withheld_count']}\n"
         f"bonfyrefs={len(scene['bonfyrefs'])} families={len(scene['families'])} "
-        f"content_types={len(scene['content_types'])}"
+        f"content_types={len(scene['content_types'])} apps={len(scene['apps'])} "
+        f"app_doctypes={sum(a['doctypes'] for a in scene['apps'])}"
     )
