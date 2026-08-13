@@ -13,9 +13,17 @@ is the real starting point, not a continuation of hidden prior work.
   wiki_page/course_lesson entries and `_relations`, and real `capital.db`
   content_genomes/relationship_episodes. Every node's `source` field points
   at the exact row it was compiled from.
-- `floor-plan-viewer-2026-08-13.html` — a static rendering of that scene
-  (blueprint-style floor plan, click a room/object/character to see its
-  source). Published live at:
+- `floor-plan-viewer-2026-08-13.html` — first pass: a static blueprint-style
+  floor plan, click a room/object/character to see its source. Superseded
+  by the version below same day, kept for the iteration history.
+- `town-2026-08-13.html` — second pass, current: a walkable 2D top-down
+  town in the Smallville / Generative-Agents interaction style
+  (github.com/nmatter1/smallville) — controllable avatar (arrow keys/WASD),
+  residents with an ambient name+status tag who idle near their real home
+  room, proximity-triggered dialog boxes with the real record. All sprites
+  and tiles are drawn procedurally in Canvas, not the source repo's
+  LimeZu tileset (that's licensed art, not reused here) — same interaction
+  paradigm, original graphics. This is the version published live at:
   https://claude.ai/code/artifact/a0580535-e11c-4c1d-8696-e51d869be659
 
 ## What this prototype does NOT implement

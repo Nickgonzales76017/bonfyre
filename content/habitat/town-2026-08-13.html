@@ -1,0 +1,559 @@
+<title>Aurekai Research Wing</title>
+<style>
+  :root {
+    --bg: #0e1a12;
+    --ink: #eef4ec;
+    --muted: #9db3a0;
+    --panel: #16261b;
+    --panel-border: #3a5942;
+    --accent: #e0ac5c;
+    --grass: #2f5233;
+    --grass-2: #355c3a;
+    --path: #a98f66;
+    --wall: #4a3a2c;
+    --floor: #6b5843;
+    --floor-2: #705d47;
+    --held: #e0ac5c;
+    --draft: #7f92b8;
+    --trusted: #6fae8c;
+    --engaged: #6fb8cc;
+    --responded: #9db3a0;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #dce8dc;
+      --ink: #1c2b1e;
+      --muted: #4d6350;
+      --panel: #f4f1e4;
+      --panel-border: #b7a983;
+      --accent: #a5651d;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #dce8dc;
+    --ink: #1c2b1e;
+    --muted: #4d6350;
+    --panel: #f4f1e4;
+    --panel-border: #b7a983;
+    --accent: #a5651d;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 28px 16px 40px;
+  }
+  .stack {
+    width: 100%;
+    max-width: 1040px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+  }
+  h1 {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 20px;
+    letter-spacing: 0.02em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  header p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    max-width: 56ch;
+  }
+  .frame {
+    position: relative;
+    border: 3px solid var(--panel-border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.25);
+    line-height: 0;
+  }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: var(--grass); }
+  .hint {
+    position: absolute;
+    left: 12px;
+    bottom: 12px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    color: #eef4ec;
+    background: rgba(10,18,12,0.72);
+    padding: 5px 9px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .foot code { color: var(--ink); }
+</style>
+
+<div class="stack">
+  <header>
+    <h1>Aurekai Research Wing</h1>
+    <p>Walk with the arrow keys or WASD. Step up to a door, a resident, or an item and press <b>E</b> (or click it) to read the real record behind it.</p>
+  </header>
+  <div class="frame">
+    <canvas id="game" width="960" height="540" tabindex="0"></canvas>
+    <div class="hint" id="hint"></div>
+  </div>
+  <div class="foot">
+    <span>Every room, resident, and item is compiled from a real database row &mdash; <code>fabric.db</code> &middot; <code>bonfyre_cms.db</code> &middot; <code>capital.db</code>. Nothing here is invented.</span>
+    <span><code>scripts/bonfyre_habitat_compiler.py</code></span>
+  </div>
+</div>
+
+<script>
+const SCENE = {"schema_version": "bonfyre.habitat.scene.v0", "compiled_at": "2026-08-13T05:31:59Z", "note": "Prototype scene, not full HabitatCompiler. Every room/object/path/character has a `source` pointing at the real row it was compiled from -- nothing here is invented.", "buildings": [{"id": "building-aurekai-research", "label": "Aurekai Research Wing", "rooms": ["room-bernstein-3616-research-episode", "room-agentguard-213-research-episode", "room-hqq-claim-invalidation-episode"]}], "rooms": [{"id": "room-bernstein-3616-research-episode", "kind": "research-room", "label": "bernstein-3616-research-episode", "state": "locked", "workgraph_cursor": "awaiting-pr-merge", "position": {"x": 0, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "bernstein-3616-research-episode"}}, {"id": "room-agentguard-213-research-episode", "kind": "research-room", "label": "agentguard-213-research-episode", "state": "under-construction", "workgraph_cursor": "5-prs-open-sequential-review", "position": {"x": 4, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "agentguard-213-research-episode"}}, {"id": "room-hqq-claim-invalidation-episode", "kind": "research-room", "label": "hqq-claim-invalidation-episode", "state": "under-construction", "workgraph_cursor": "ready-to-write-not-yet-written", "position": {"x": 8, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "hqq-claim-invalidation-episode"}}], "objects": [{"id": "object-sha256:0513aab72", "kind": "document", "label": "maintainer-review-verbatim.md", "room": "room-bernstein-3616-research-episode", "bytes": 2904, "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3"}}, {"id": "object-sha256:9283848af", "kind": "document", "label": "case-study-source.md", "room": "room-agentguard-213-research-episode", "bytes": 1543, "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6"}}, {"id": "object-sha256:227d466f9", "kind": "document", "label": "case-study-source.md", "room": "room-hqq-claim-invalidation-episode", "bytes": 1459, "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a"}}, {"id": "wiki-page-1", "kind": "wiki-page", "label": "Bernstein: Identity Continuity Case Study", "room": "room-bernstein-3616-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 1}}, {"id": "wiki-page-2", "kind": "wiki-page", "label": "AgentGuard: Dependency Closure Case Study", "room": "room-agentguard-213-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 2}}, {"id": "wiki-page-3", "kind": "wiki-page", "label": "HQQ/WikiText-2: Claim Invalidation Case Study", "room": "room-hqq-claim-invalidation-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 3}}, {"id": "course-lesson-1", "kind": "lesson-board", "label": "Primitive: Identity Continuity", "room": null, "note": "shared across rooms via example_of relations, not owned by one room", "source": {"db": "bonfyre_cms.db", "table": "course_lesson", "id": 1}}], "paths": [{"id": "path-5", "from": "room-bernstein-3616-research-episode", "to": "room-agentguard-213-research-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 5}}, {"id": "path-6", "from": "room-bernstein-3616-research-episode", "to": "room-hqq-claim-invalidation-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 6}}], "characters": [{"id": "character-1", "label": "chernistry", "role": "collaborator/reviewer", "relationship_state": "TRUSTED_INTERACTION", "home_room": "room-bernstein-3616-research-episode", "visit_history": [{"kind": "review", "direction": "inbound", "at": "2026-08-12 10:54:47"}, {"kind": "collaboration", "direction": "outbound", "at": "2026-08-12 21:52:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 1}}, {"id": "character-2", "label": "richinmrudul", "role": "maintainer", "relationship_state": "TECHNICAL_ENGAGEMENT", "home_room": "room-agentguard-213-research-episode", "visit_history": [{"kind": "correction", "direction": "inbound", "at": "2026-08-12 16:15:19"}, {"kind": "correction", "direction": "outbound", "at": "2026-08-12 21:30:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 2}}, {"id": "character-3", "label": "rajeshl8", "role": "community/issue participant", "relationship_state": "RESPONDED", "home_room": null, "visit_history": [{"kind": "reply", "direction": "inbound", "at": "2026-08-12 16:18:39"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 3}}, {"id": "character-4", "label": "Melvin0070", "role": "adjacent maintainer (Amberfork)", "relationship_state": "RESPONDED", "home_room": null, "visit_history": [{"kind": "introduction", "direction": "inbound", "at": "2026-08-12 18:34:15"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 4}}]};
+
+/* ---------------------------------------------------------------
+   Tiny hand-rolled top-down engine. No external assets or CDNs --
+   every sprite below is drawn procedurally with canvas primitives.
+   Interaction model follows the Smallville / Generative Agents
+   pattern (github.com/nmatter1/smallville): an ambient name+status
+   tag floats over each resident at all times, and stepping close
+   opens a bordered dialog box with the underlying record.
+------------------------------------------------------------------ */
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const TILE = 32;
+
+// ---- layout: one building per real mission, positioned left to right,
+// connected by a dirt path exactly where a real `_relations` edge exists.
+const BUILD_W = 260, BUILD_H = 220, GAP = 60, TOP = 70;
+const rooms = SCENE.rooms.map((r, i) => ({
+  ...r,
+  x: 40 + i * (BUILD_W + GAP),
+  y: TOP,
+  w: BUILD_W,
+  h: BUILD_H,
+}));
+const roomById = Object.fromEntries(rooms.map(r => [r.id, r]));
+
+const STATE_COLOR = {
+  held: 'var(--held)', locked: 'var(--held)',
+  draft: 'var(--draft)', 'under-construction': 'var(--draft)',
+};
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name.replace('var(', '').replace(')', '')).trim() || name;
+}
+function stateColor(state) {
+  const key = STATE_COLOR[state] || 'var(--draft)';
+  return cssVar(key);
+}
+const REL_COLOR = {
+  TRUSTED_INTERACTION: 'var(--trusted)',
+  TECHNICAL_ENGAGEMENT: 'var(--engaged)',
+  RESPONDED: 'var(--responded)',
+};
+
+// door: bottom-center gap of each building
+function doorPos(room) { return { x: room.x + room.w / 2, y: room.y + room.h }; }
+
+// ---- entities ----
+let entities = []; // { id, kind, x, y, label, sub, color, wander, data }
+
+// player
+const player = { x: W / 2, y: H - 60, w: 20, h: 24, speed: 2.4, dir: 'down', frame: 0, moving: false };
+
+// residents = real relationship characters
+SCENE.characters.forEach((ch, i) => {
+  const room = roomById[ch.home_room];
+  const base = room
+    ? { x: room.x + 40 + (i % 2) * 60, y: room.y + room.h - 46 }
+    : { x: W - 90 - i * 46, y: TOP - 34 };
+  entities.push({
+    id: ch.id,
+    kind: 'character',
+    x: base.x, y: base.y,
+    homeX: base.x, homeY: base.y,
+    w: 18, h: 22,
+    label: ch.label,
+    sub: ch.relationship_state,
+    color: cssVar(REL_COLOR[ch.relationship_state] || 'var(--responded)'),
+    wanderPhase: Math.random() * Math.PI * 2,
+    data: ch,
+  });
+});
+
+// items = real documents / wiki pages / lesson boards
+const KIND_GLYPH = { document: '☷', 'wiki-page': '▦', 'lesson-board': '✦' };
+SCENE.objects.forEach((obj, i) => {
+  const room = roomById[obj.room];
+  const pos = room
+    ? { x: room.x + 30 + (i % 3) * 46, y: room.y + 40 + Math.floor(i / 3) * 34 }
+    : { x: 70 + i * 40, y: 40 };
+  entities.push({
+    id: obj.id,
+    kind: 'object',
+    x: pos.x, y: pos.y,
+    w: 16, h: 16,
+    label: obj.label,
+    glyph: KIND_GLYPH[obj.kind] || '•',
+    data: obj,
+  });
+});
+
+// ---- input ----
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === 'e') tryInteract();
+  if (['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase())) e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+canvas.addEventListener('click', e => {
+  canvas.focus();
+  const rect = canvas.getBoundingClientRect();
+  const scale = W / rect.width;
+  const mx = (e.clientX - rect.left) * scale, my = (e.clientY - rect.top) * scale;
+  const hit = entities.find(en => Math.hypot(en.x - mx, en.y - my) < 26);
+  if (hit) openDialog(hit);
+  else if (dialogOpen) closeDialog();
+});
+canvas.addEventListener('keydown', () => {});
+canvas.setAttribute('tabindex', '0');
+
+// ---- collision: keep player outside building walls, allow through door gap ----
+function collides(nx, ny) {
+  for (const room of rooms) {
+    const inX = nx > room.x - 8 && nx < room.x + room.w + 8;
+    const inY = ny > room.y - 8 && ny < room.y + room.h + 8;
+    if (!inX || !inY) continue;
+    const door = doorPos(room);
+    const nearDoor = Math.abs(nx - door.x) < 22 && ny > room.y + room.h - 30;
+    if (nearDoor) continue;
+    return true;
+  }
+  return false;
+}
+
+// ---- dialog ----
+let dialogOpen = null;
+let hoverTarget = null;
+
+function openDialog(entity) { dialogOpen = entity; }
+function closeDialog() { dialogOpen = null; }
+
+function tryInteract() {
+  if (dialogOpen) { closeDialog(); return; }
+  if (hoverTarget) openDialog(hoverTarget);
+}
+
+function nearestEntity() {
+  let best = null, bestD = 34;
+  for (const en of entities) {
+    const d = Math.hypot(en.x - player.x, en.y - player.y);
+    if (d < bestD) { best = en; bestD = d; }
+  }
+  // also check building doors
+  for (const room of rooms) {
+    const door = doorPos(room);
+    const d = Math.hypot(door.x - player.x, door.y - player.y);
+    if (d < 30) { best = { kind: 'room', label: room.label, data: room }; bestD = d; }
+  }
+  return best;
+}
+
+// ---- update ----
+function update() {
+  let dx = 0, dy = 0;
+  if (keys['arrowup'] || keys['w']) dy -= 1;
+  if (keys['arrowdown'] || keys['s']) dy += 1;
+  if (keys['arrowleft'] || keys['a']) dx -= 1;
+  if (keys['arrowright'] || keys['d']) dx += 1;
+  player.moving = dx !== 0 || dy !== 0;
+  if (player.moving) {
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = player.x + (dx / len) * player.speed;
+    const ny = player.y + (dy / len) * player.speed;
+    if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? 'right' : 'left';
+    else if (dy !== 0) player.dir = dy > 0 ? 'down' : 'up';
+    if (!collides(nx, player.y)) player.x = nx;
+    if (!collides(player.x, ny)) player.y = ny;
+    player.x = Math.max(14, Math.min(W - 14, player.x));
+    player.y = Math.max(14, Math.min(H - 14, player.y));
+    player.frame += 0.18;
+  }
+
+  // gentle idle wander for residents, bounded near home
+  const t = performance.now() / 1000;
+  for (const en of entities) {
+    if (en.kind !== 'character') continue;
+    en.x = en.homeX + Math.sin(t * 0.6 + en.wanderPhase) * 10;
+    en.y = en.homeY + Math.cos(t * 0.4 + en.wanderPhase) * 5;
+  }
+
+  hoverTarget = dialogOpen ? null : nearestEntity();
+  document.getElementById('hint').textContent = dialogOpen
+    ? 'E / click to close'
+    : hoverTarget ? `E / click — ${hoverTarget.label}` : 'Arrows / WASD to walk';
+}
+
+// ---- draw helpers ----
+function drawGrass() {
+  ctx.fillStyle = cssVar('var(--grass)');
+  ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = cssVar('var(--grass-2)');
+  for (let gx = 0; gx < W; gx += TILE) {
+    for (let gy = 0; gy < H; gy += TILE) {
+      if ((gx / TILE + gy / TILE) % 5 === 0) ctx.fillRect(gx + 6, gy + 6, 4, 4);
+    }
+  }
+}
+
+function drawPaths() {
+  ctx.strokeStyle = cssVar('var(--path)');
+  ctx.lineWidth = 14;
+  ctx.lineCap = 'round';
+  SCENE.paths.forEach(p => {
+    const a = roomById[p.from], b = roomById[p.to];
+    if (!a || !b) return;
+    const ad = doorPos(a), bd = doorPos(b);
+    ctx.beginPath();
+    ctx.moveTo(ad.x, ad.y + 6);
+    ctx.bezierCurveTo(ad.x, ad.y + 60, bd.x, bd.y + 60, bd.x, bd.y + 6);
+    ctx.stroke();
+  });
+  // player entry path
+  ctx.beginPath();
+  ctx.moveTo(W / 2, H - 12);
+  ctx.lineTo(W / 2, H - 60);
+  ctx.stroke();
+}
+
+function drawBuilding(room) {
+  const { x, y, w, h } = room;
+  // floor
+  ctx.fillStyle = cssVar('var(--floor)');
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = cssVar('var(--floor-2)');
+  for (let fx = x; fx < x + w; fx += TILE) {
+    for (let fy = y; fy < y + h; fy += TILE) {
+      if ((fx / TILE + fy / TILE) % 2 === 0) ctx.fillRect(fx, fy, TILE, TILE);
+    }
+  }
+  // walls
+  ctx.strokeStyle = cssVar('var(--wall)');
+  ctx.lineWidth = 8;
+  ctx.strokeRect(x, y, w, h);
+  // door gap
+  const door = doorPos(room);
+  ctx.strokeStyle = cssVar('var(--floor)');
+  ctx.lineWidth = 10;
+  ctx.beginPath();
+  ctx.moveTo(door.x - 16, y + h);
+  ctx.lineTo(door.x + 16, y + h);
+  ctx.stroke();
+
+  // roof band
+  ctx.fillStyle = cssVar('var(--wall)');
+  ctx.fillRect(x - 4, y - 20, w + 8, 20);
+
+  // label plate
+  ctx.fillStyle = cssVar('var(--panel)');
+  ctx.strokeStyle = cssVar('var(--panel-border)');
+  ctx.lineWidth = 1.5;
+  const plateW = Math.min(w - 8, 8 + ctx.measureText(room.label).width + 16);
+  ctx.font = '11px ui-monospace, monospace';
+  const label = room.label.length > 22 ? room.label.slice(0, 20) + '…' : room.label;
+  const tw = ctx.measureText(label).width;
+  ctx.fillRect(x + 4, y - 40, tw + 16, 18);
+  ctx.strokeRect(x + 4, y - 40, tw + 16, 18);
+  ctx.fillStyle = cssVar('var(--ink)');
+  ctx.fillText(label, x + 12, y - 27);
+
+  // status chip
+  ctx.fillStyle = stateColor(room.state);
+  ctx.beginPath();
+  ctx.arc(x + w - 12, y - 31, 5, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawObject(en) {
+  ctx.save();
+  ctx.translate(en.x, en.y);
+  ctx.fillStyle = cssVar('var(--panel-border)');
+  ctx.fillRect(-8, -8, 16, 16);
+  ctx.fillStyle = cssVar('var(--accent)');
+  ctx.font = '12px ui-monospace, monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(en.glyph, 0, 0);
+  ctx.restore();
+}
+
+function drawSprite(x, y, color, dir, frame, w, h) {
+  const bob = Math.sin(frame) * 1.4;
+  ctx.save();
+  ctx.translate(x, y + bob);
+  // shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath();
+  ctx.ellipse(0, h / 2 + 2, w / 2, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // legs
+  ctx.fillStyle = '#2b2320';
+  const legOffset = Math.sin(frame) * 3;
+  ctx.fillRect(-6, h / 2 - 8 + legOffset, 4, 8);
+  ctx.fillRect(2, h / 2 - 8 - legOffset, 4, 8);
+  // body
+  ctx.fillStyle = color;
+  ctx.fillRect(-w / 2, -h / 2 + 6, w, h - 14);
+  // head
+  ctx.fillStyle = '#f0d3a8';
+  ctx.beginPath();
+  ctx.arc(0, -h / 2 + 4, 7, 0, Math.PI * 2);
+  ctx.fill();
+  // face direction hint
+  ctx.fillStyle = '#2b2320';
+  const eyeX = dir === 'left' ? -3 : dir === 'right' ? 3 : 0;
+  ctx.fillRect(eyeX - 1, -h / 2 + 2, 2, 2);
+  ctx.restore();
+}
+
+function drawTag(x, y, label, sub, color) {
+  ctx.font = 'bold 10px ui-monospace, monospace';
+  const text = sub ? `${label} · ${sub}` : label;
+  const tw = ctx.measureText(text).width;
+  const bx = x - tw / 2 - 6, by = y - 44;
+  ctx.fillStyle = 'rgba(10,18,12,0.72)';
+  ctx.fillRect(bx, by, tw + 12, 15);
+  if (color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(bx, by, 3, 15);
+  }
+  ctx.fillStyle = '#eef4ec';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label + (sub ? '' : ''), bx + (color ? 7 : 4), by + 7.5);
+  if (sub) {
+    ctx.fillStyle = color || '#9db3a0';
+    ctx.fillText(' · ' + sub, bx + 6 + ctx.measureText(label).width, by + 7.5);
+  }
+}
+
+function wrapText(text, maxWidth) {
+  const words = text.split(' ');
+  const lines = [];
+  let cur = '';
+  for (const word of words) {
+    const test = cur ? cur + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = word; }
+    else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function drawDialog(entity) {
+  const boxW = 620, boxH = 190;
+  const bx = (W - boxW) / 2, by = H - boxH - 24;
+  ctx.fillStyle = cssVar('var(--panel)');
+  ctx.strokeStyle = cssVar('var(--panel-border)');
+  ctx.lineWidth = 3;
+  ctx.fillRect(bx, by, boxW, boxH);
+  ctx.strokeRect(bx, by, boxW, boxH);
+
+  let title = entity.label, lines = [];
+  if (entity.kind === 'character') {
+    const c = entity.data;
+    title = `${c.label} — ${c.role}`;
+    lines.push(`state: ${c.relationship_state}    source: capital.db / relationships / id ${c.source.id}`);
+    lines.push('');
+    lines.push('visit history:');
+    c.visit_history.forEach(v => lines.push(`  ${v.at}  ${v.direction.padEnd(8)} ${v.kind}`));
+  } else if (entity.kind === 'object') {
+    const o = entity.data;
+    title = o.label;
+    lines.push(`kind: ${o.kind}`);
+    if (o.bytes) lines.push(`bytes: ${o.bytes}`);
+    if (o.digest) lines.push(`digest: ${o.digest}`);
+    if (o.state) lines.push(`state: ${o.state}`);
+    if (o.note) lines.push(...wrapText(o.note, boxW - 40));
+    lines.push('');
+    lines.push(`source: ${o.source.db} / ${o.source.table} / ${o.source.id ?? o.source.digest}`);
+  } else if (entity.kind === 'room') {
+    const r = entity.data;
+    title = r.label;
+    lines.push(`state: ${r.state}`);
+    lines.push(`workgraph_cursor: ${r.workgraph_cursor}`);
+    lines.push(`source: ${r.source.db} / ${r.source.table} / ${r.source.id}`);
+  }
+
+  ctx.fillStyle = cssVar('var(--accent)');
+  ctx.font = 'bold 14px ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText(title.length > 60 ? title.slice(0, 58) + '…' : title, bx + 18, by + 28);
+
+  ctx.fillStyle = cssVar('var(--ink)');
+  ctx.font = '12px ui-monospace, monospace';
+  lines.forEach((l, i) => ctx.fillText(l, bx + 18, by + 52 + i * 16));
+
+  ctx.fillStyle = cssVar('var(--muted)');
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('E / click to close', bx + boxW - 14, by + boxH - 12);
+}
+
+// ---- render ----
+function render() {
+  drawGrass();
+  drawPaths();
+  rooms.forEach(drawBuilding);
+  entities.filter(e => e.kind === 'object').forEach(drawObject);
+  entities.filter(e => e.kind === 'character').forEach(en => {
+    drawSprite(en.x, en.y, en.color, 'down', performance.now() / 300 + en.wanderPhase, en.w, en.h);
+    drawTag(en.x, en.y, en.label, en.sub, en.color);
+  });
+  drawSprite(player.x, player.y, cssVar('var(--accent)'), player.dir, player.moving ? player.frame : 0, player.w, player.h);
+
+  if (hoverTarget && !dialogOpen) {
+    ctx.save();
+    ctx.strokeStyle = '#eef4ec';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    const hx = hoverTarget.x ?? doorPos(hoverTarget.data).x;
+    const hy = hoverTarget.y ?? doorPos(hoverTarget.data).y;
+    ctx.beginPath();
+    ctx.arc(hx, hy, 24, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  if (dialogOpen) drawDialog(dialogOpen);
+}
+
+function loop() {
+  update();
+  render();
+  requestAnimationFrame(loop);
+}
+canvas.focus();
+loop();
+</script>
