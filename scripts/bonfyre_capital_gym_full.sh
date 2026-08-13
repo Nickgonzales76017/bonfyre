@@ -2768,8 +2768,15 @@ fi
 is_hard_capacity_stop() {
   local f="$1"
 
+  # 2026-08-12 postmortem: the real Codex message is "You've hit your usage
+  # limit ... or try again at Aug 18th, 2026 8:45 PM." None of the prior
+  # patterns matched "hit" (only "reached"), so this fell through to the
+  # generic sleep-10-and-retry path for 1,366 rounds over ~13 hours against a
+  # provider that had already stated its own recovery time. Match on the
+  # stable "usage limit" / "out of credits" / "purchase more credits" phrases
+  # regardless of the verb in front of them.
   grep -Eiq \
-    'out of credits|no credits remaining|insufficient credits|credit balance.*(zero|exhausted)|usage limit reached|reached your.*usage limit|you.?ve reached.*limit|insufficient_quota|quota exhausted|no remaining quota|agentic usage limit|credit quota exhausted|not enough credits' \
+    'out of credits|no credits remaining|insufficient credits|credit balance.*(zero|exhausted)|usage limit|purchase more credits|insufficient_quota|quota exhausted|no remaining quota|agentic usage limit|credit quota exhausted|not enough credits' \
     "$f"
 }
 
@@ -2967,6 +2974,24 @@ while true; do
   echo "START $TS" | tee -a "$SUPERVISOR_LOG"
   echo "PREPARING prompt/session/ledger..." | tee -a "$SUPERVISOR_LOG"
 
+  # This is the only point in the loop where no Codex turn is active: the
+  # previous turn's ended_at was just written, and the next turn's row has
+  # not been inserted yet. The manager side-car tries to catch this same gap
+  # by polling codex_turn_active() externally, but during productive runs the
+  # gap between one turn's end and the next turn's start collapses to a few
+  # bash statements (sub-second), so external polling can miss it for the
+  # entire life of a session (observed: turns 106-134 ran unbroken on one
+  # session despite a pending rollover request). Checking the request here,
+  # synchronously in the only process that actually knows the turn boundary,
+  # makes the rollover deterministic instead of a race.
+  ROLL_REQUEST="$STATE_ROOT/claude-manager/RESET_CODEX_SESSION.request"
+  if [[ -f "$ROLL_REQUEST" && -s "$SESSION_FILE" ]]; then
+    OLD_SESSION_FOR_ROLL="$(cat "$SESSION_FILE" 2>/dev/null || true)"
+    rm -f "$SESSION_FILE" "$ROLL_REQUEST"
+    echo "SESSION ROLLOVER applied at round boundary (was $OLD_SESSION_FOR_ROLL)" \
+      | tee -a "$SUPERVISOR_LOG"
+  fi
+
   if [[ "$FIRST_THREAD" -eq 1 ]]; then
     PROMPT_FILE="$INITIAL"
   else
@@ -3036,18 +3061,23 @@ while true; do
   ###########################################################################
 
   if is_hard_capacity_stop "$COMBINED"; then
+    RETRY_AT="$(grep -Eio 'try again at [^.]*' "$COMBINED" | head -n 1 | sed -E 's/^try again at //I')"
+
     {
       echo
       echo "======================================================================"
       echo "CODEX CAPACITY / CREDIT LIMIT REACHED"
-      echo "Time:  $(date)"
-      echo "Round: $ROUND"
+      echo "Time:       $(date)"
+      echo "Round:      $ROUND"
+      echo "Retry at:   ${RETRY_AT:-unknown; provider gave no recovery time}"
       echo "======================================================================"
     } | tee -a "$SUPERVISOR_LOG"
 
+    RETRY_AT_ESCAPED="$(printf "%s" "${RETRY_AT:-}" | sed "s/'/''/g")"
     db_exec "INSERT OR REPLACE INTO meta(key,value)
                VALUES('terminal_state','codex_capacity_exhausted'),
-                     ('terminal_time',datetime('now'));" 2>/dev/null || true
+                     ('terminal_time',datetime('now')),
+                     ('capacity_retry_at','$RETRY_AT_ESCAPED');" 2>/dev/null || true
 
     break
   fi
