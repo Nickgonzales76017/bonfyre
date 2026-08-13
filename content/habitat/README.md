@@ -36,6 +36,20 @@ is the real starting point, not a continuation of hidden prior work.
   art and still isn't reused -- everything is drawn procedurally. Same
   real data, same source-of-truth discipline throughout. Published live
   at: https://claude.ai/code/artifact/a0580535-e11c-4c1d-8696-e51d869be659
+- `town-2026-08-13-v3.html` — fourth pass, current: sprites and item icons
+  rebuilt as true pixel-grid art instead of smooth canvas primitives.
+  Characters are a programmatically generated 14x22-unit chibi rig (shaped
+  hair with bangs/crown/side coverage, direction-aware eyes, tapered
+  shirt with a shaded far side, skin-toned arms, two-frame alternating-
+  stride legs, boots) drawn pixel-by-pixel with an automatic 1px dark
+  outline (the standard pixel-art outline trick), palette-swapped per
+  resident. Items got distinct detailed icons per real kind instead of
+  one generic box: documents are a desk with a dog-eared paper and
+  visible text lines, wiki pages are a corkboard with a pinned note,
+  lesson boards are a bookcase with varied book spines. Buildings gained
+  shingle-course roof shading, a smoking chimney, a mullioned
+  shutter-and-flower-box window, and a plank door with a real handle.
+  Published live at the same URL, replacing the prior pass there.
 
 ## What this prototype does NOT implement
 

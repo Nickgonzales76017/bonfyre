@@ -1,0 +1,935 @@
+<title>Aurekai Research Wing</title>
+<style>
+  :root {
+    --bg: #0c1610;
+    --ink: #eef4ec;
+    --muted: #9db3a0;
+    --panel: #1b2a1f;
+    --panel-2: #24371f;
+    --panel-border: #4a6b4a;
+    --accent: #e8b25f;
+    --held: #e8b25f;
+    --draft: #7f92b8;
+    --trusted: #7ecb9f;
+    --engaged: #7fc9e0;
+    --responded: #b7c4b8;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #dce8dc;
+      --ink: #1c2b1e;
+      --muted: #4d6350;
+      --panel: #f4f1e4;
+      --panel-2: #e8e2cc;
+      --panel-border: #b7a983;
+      --accent: #a5651d;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #dce8dc;
+    --ink: #1c2b1e;
+    --muted: #4d6350;
+    --panel: #f4f1e4;
+    --panel-2: #e8e2cc;
+    --panel-border: #b7a983;
+    --accent: #a5651d;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 14px 36px;
+  }
+  .stack { width: 100%; max-width: 1040px; display: flex; flex-direction: column; gap: 12px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 24px; }
+  h1 {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 19px; letter-spacing: 0.02em; margin: 0; text-wrap: balance;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 12.5px; max-width: 54ch; }
+  .frame {
+    position: relative;
+    border: 3px solid var(--panel-border);
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+    line-height: 0;
+  }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #2c4a2e; }
+  .hint {
+    position: absolute; left: 10px; bottom: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; color: #f2f7ee;
+    background: rgba(8,14,10,0.78);
+    padding: 5px 9px; border-radius: 3px; letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+  .compass {
+    position: absolute; right: 10px; top: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10px; color: #f2f7ee;
+    background: rgba(8,14,10,0.78);
+    padding: 4px 8px; border-radius: 3px;
+    pointer-events: none;
+  }
+  .foot {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 20px;
+    font-size: 11px; color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .foot code { color: var(--ink); }
+</style>
+
+<div class="stack">
+  <header>
+    <h1>Aurekai Research Wing</h1>
+    <p>Arrow keys / WASD to walk. Approach a resident, a door, or an item and press <b>E</b> (or click it) to read the real record.</p>
+  </header>
+  <div class="frame">
+    <canvas id="game" width="960" height="540" tabindex="0"></canvas>
+    <div class="hint" id="hint"></div>
+    <div class="compass" id="mini"></div>
+  </div>
+  <div class="foot">
+    <span>Every building, resident, and item is compiled from a real row in <code>fabric.db</code> · <code>bonfyre_cms.db</code> · <code>capital.db</code>. Nothing here is invented.</span>
+    <span><code>scripts/bonfyre_habitat_compiler.py</code></span>
+  </div>
+</div>
+
+<script>
+const SCENE = {"schema_version": "bonfyre.habitat.scene.v0", "compiled_at": "2026-08-13T05:31:59Z", "note": "Prototype scene, not full HabitatCompiler. Every room/object/path/character has a `source` pointing at the real row it was compiled from -- nothing here is invented.", "buildings": [{"id": "building-aurekai-research", "label": "Aurekai Research Wing", "rooms": ["room-bernstein-3616-research-episode", "room-agentguard-213-research-episode", "room-hqq-claim-invalidation-episode"]}], "rooms": [{"id": "room-bernstein-3616-research-episode", "kind": "research-room", "label": "bernstein-3616-research-episode", "state": "locked", "workgraph_cursor": "awaiting-pr-merge", "position": {"x": 0, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "bernstein-3616-research-episode"}}, {"id": "room-agentguard-213-research-episode", "kind": "research-room", "label": "agentguard-213-research-episode", "state": "under-construction", "workgraph_cursor": "5-prs-open-sequential-review", "position": {"x": 4, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "agentguard-213-research-episode"}}, {"id": "room-hqq-claim-invalidation-episode", "kind": "research-room", "label": "hqq-claim-invalidation-episode", "state": "under-construction", "workgraph_cursor": "ready-to-write-not-yet-written", "position": {"x": 8, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "hqq-claim-invalidation-episode"}}], "objects": [{"id": "object-sha256:0513aab72", "kind": "document", "label": "maintainer-review-verbatim.md", "room": "room-bernstein-3616-research-episode", "bytes": 2904, "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3"}}, {"id": "object-sha256:9283848af", "kind": "document", "label": "case-study-source.md", "room": "room-agentguard-213-research-episode", "bytes": 1543, "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6"}}, {"id": "object-sha256:227d466f9", "kind": "document", "label": "case-study-source.md", "room": "room-hqq-claim-invalidation-episode", "bytes": 1459, "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a"}}, {"id": "wiki-page-1", "kind": "wiki-page", "label": "Bernstein: Identity Continuity Case Study", "room": "room-bernstein-3616-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 1}}, {"id": "wiki-page-2", "kind": "wiki-page", "label": "AgentGuard: Dependency Closure Case Study", "room": "room-agentguard-213-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 2}}, {"id": "wiki-page-3", "kind": "wiki-page", "label": "HQQ/WikiText-2: Claim Invalidation Case Study", "room": "room-hqq-claim-invalidation-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 3}}, {"id": "course-lesson-1", "kind": "lesson-board", "label": "Primitive: Identity Continuity", "room": null, "note": "shared across rooms via example_of relations, not owned by one room", "source": {"db": "bonfyre_cms.db", "table": "course_lesson", "id": 1}}], "paths": [{"id": "path-5", "from": "room-bernstein-3616-research-episode", "to": "room-agentguard-213-research-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 5}}, {"id": "path-6", "from": "room-bernstein-3616-research-episode", "to": "room-hqq-claim-invalidation-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 6}}], "characters": [{"id": "character-1", "label": "chernistry", "role": "collaborator/reviewer", "relationship_state": "TRUSTED_INTERACTION", "home_room": "room-bernstein-3616-research-episode", "visit_history": [{"kind": "review", "direction": "inbound", "at": "2026-08-12 10:54:47"}, {"kind": "collaboration", "direction": "outbound", "at": "2026-08-12 21:52:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 1}}, {"id": "character-2", "label": "richinmrudul", "role": "maintainer", "relationship_state": "TECHNICAL_ENGAGEMENT", "home_room": "room-agentguard-213-research-episode", "visit_history": [{"kind": "correction", "direction": "inbound", "at": "2026-08-12 16:15:19"}, {"kind": "correction", "direction": "outbound", "at": "2026-08-12 21:30:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 2}}, {"id": "character-3", "label": "rajeshl8", "role": "community/issue participant", "relationship_state": "RESPONDED", "home_room": null, "visit_history": [{"kind": "reply", "direction": "inbound", "at": "2026-08-12 16:18:39"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 3}}, {"id": "character-4", "label": "Melvin0070", "role": "adjacent maintainer (Amberfork)", "relationship_state": "RESPONDED", "home_room": null, "visit_history": [{"kind": "introduction", "direction": "inbound", "at": "2026-08-12 18:34:15"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 4}}]};
+
+/* -----------------------------------------------------------------
+   Hand-rolled top-down engine, no external assets/CDNs. Follows the
+   interaction shape of github.com/nmatter1/smallville (Generative
+   Agents for video games): a scrolling world larger than the
+   viewport, a camera that follows the player, Y-sorted depth so
+   sprites overlap correctly, residents that carry an always-visible
+   name+status tag, and an RPG-style dialog box on interact. Their
+   LimeZu tileset is licensed art and isn't reproduced here -- every
+   tile and sprite below is drawn procedurally.
+-------------------------------------------------------------------- */
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const VW = canvas.width, VH = canvas.height;
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name.replace('var(', '').replace(')', '')).trim() || name;
+}
+
+// ---------------------------------------------------------------
+// World layout: buildings spaced out like town lots along a main
+// path, with a plaza in the middle. World is bigger than the
+// viewport so the camera has room to follow the player.
+// ---------------------------------------------------------------
+const WORLD_W = 1700, WORLD_H = 900;
+const BUILD_W = 300, BUILD_H = 230, LOT_GAP = 160, TOP = 140;
+
+const rooms = SCENE.rooms.map((r, i) => ({
+  ...r,
+  x: 90 + i * (BUILD_W + LOT_GAP),
+  y: TOP,
+  w: BUILD_W,
+  h: BUILD_H,
+}));
+const roomById = Object.fromEntries(rooms.map(r => [r.id, r]));
+
+const STATE_KEY = { held: 'held', locked: 'held', draft: 'draft', 'under-construction': 'draft' };
+function stateColor(state) { return cssVar('var(--' + (STATE_KEY[state] || 'draft') + ')'); }
+const REL_KEY = { TRUSTED_INTERACTION: 'trusted', TECHNICAL_ENGAGEMENT: 'engaged', RESPONDED: 'responded' };
+function relColor(state) { return cssVar('var(--' + (REL_KEY[state] || 'responded') + ')'); }
+
+function doorPos(room) { return { x: room.x + room.w / 2, y: room.y + room.h + 6 }; }
+
+// deterministic pseudo-random so decoration doesn't flicker per frame
+function seeded(seed) {
+  let s = seed;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// ground decoration: trees/bushes/flowers scattered around lots, seeded once
+const rng = seeded(42);
+const decorations = [];
+for (let i = 0; i < 90; i++) {
+  const x = rng() * WORLD_W, y = 40 + rng() * (WORLD_H - 80);
+  // keep clear of building interiors
+  const inBuilding = rooms.some(r => x > r.x - 30 && x < r.x + r.w + 30 && y > r.y - 40 && y < r.y + r.h + 30);
+  if (inBuilding) continue;
+  const kind = rng() < 0.18 ? 'lamp' : rng() < 0.55 ? 'tree' : rng() < 0.8 ? 'bush' : 'flower';
+  decorations.push({ x, y, kind, seed: rng() });
+}
+
+// ---------------------------------------------------------------
+// Entities
+// ---------------------------------------------------------------
+let entities = [];
+
+const player = {
+  x: 90 + BUILD_W / 2, y: TOP + BUILD_H + 140,
+  w: 15, h: 26, speed: 2.6, dir: 'down', frame: 0, moving: false,
+  hair: '#3c2a1e', shirt: cssVar('var(--accent)'), skin: '#f0c9a0',
+};
+
+SCENE.characters.forEach((ch, i) => {
+  const room = roomById[ch.home_room];
+  const base = room
+    ? { x: room.x + 60 + (i % 2) * 130, y: room.y + room.h - 50 }
+    : { x: WORLD_W - 160 - i * 60, y: TOP - 60 };
+  const palette = [
+    { hair: '#7a3b2e', shirt: '#4c7d6b' },
+    { hair: '#caa24a', shirt: '#5a6ea8' },
+    { hair: '#2b2320', shirt: '#a8674c' },
+    { hair: '#8a5a3c', shirt: '#7a5a9c' },
+  ][i % 4];
+  entities.push({
+    id: ch.id, kind: 'character',
+    x: base.x, y: base.y, homeX: base.x, homeY: base.y,
+    w: 15, h: 26,
+    label: ch.label, sub: ch.relationship_state,
+    color: relColor(ch.relationship_state),
+    hair: palette.hair, shirt: palette.shirt, skin: '#f0c9a0',
+    wanderPhase: rng() * Math.PI * 2,
+    data: ch,
+  });
+});
+
+const FURNITURE = {
+  document: { icon: 'desk' },
+  'wiki-page': { icon: 'board' },
+  'lesson-board': { icon: 'shelf' },
+};
+SCENE.objects.forEach((obj, i) => {
+  const room = roomById[obj.room];
+  const pos = room
+    ? { x: room.x + 46 + (i % 3) * 90, y: room.y + 56 + Math.floor(i / 3) * 60 }
+    : { x: 120 + i * 60, y: 60 };
+  entities.push({
+    id: obj.id, kind: 'object',
+    x: pos.x, y: pos.y, w: 22, h: 20,
+    label: obj.label,
+    furniture: FURNITURE[obj.kind]?.icon || 'crate',
+    data: obj,
+  });
+});
+
+// ---------------------------------------------------------------
+// Input
+// ---------------------------------------------------------------
+const keys = {};
+window.addEventListener('keydown', e => {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key.toLowerCase() === 'e') tryInteract();
+  if (['arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase())) e.preventDefault();
+});
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+canvas.addEventListener('click', e => {
+  canvas.focus();
+  const rect = canvas.getBoundingClientRect();
+  const scale = VW / rect.width;
+  const mx = (e.clientX - rect.left) * scale + camera.x, my = (e.clientY - rect.top) * scale + camera.y;
+  const hit = entities.find(en => Math.hypot(en.x - mx, en.y - my) < 26);
+  if (hit) openDialog(hit);
+  else if (dialogOpen) closeDialog();
+});
+canvas.setAttribute('tabindex', '0');
+
+// ---------------------------------------------------------------
+// Collision
+// ---------------------------------------------------------------
+function collides(nx, ny) {
+  for (const room of rooms) {
+    const inX = nx > room.x - 6 && nx < room.x + room.w + 6;
+    const inY = ny > room.y - 6 && ny < room.y + room.h + 6;
+    if (!inX || !inY) continue;
+    const door = doorPos(room);
+    const nearDoor = Math.abs(nx - door.x) < 26 && ny > room.y + room.h - 34;
+    if (nearDoor) continue;
+    return true;
+  }
+  return nx < 20 || nx > WORLD_W - 20 || ny < 30 || ny > WORLD_H - 20;
+}
+
+// ---------------------------------------------------------------
+// Dialog / interaction
+// ---------------------------------------------------------------
+let dialogOpen = null, hoverTarget = null;
+function openDialog(entity) { dialogOpen = entity; }
+function closeDialog() { dialogOpen = null; }
+function tryInteract() {
+  if (dialogOpen) { closeDialog(); return; }
+  if (hoverTarget) openDialog(hoverTarget);
+}
+function nearestEntity() {
+  let best = null, bestD = 40;
+  for (const en of entities) {
+    const d = Math.hypot(en.x - player.x, en.y - player.y);
+    if (d < bestD) { best = en; bestD = d; }
+  }
+  for (const room of rooms) {
+    const door = doorPos(room);
+    const d = Math.hypot(door.x - player.x, door.y - player.y);
+    if (d < 34) { best = { kind: 'room', label: room.label, data: room, x: room.x + room.w / 2, y: room.y + room.h / 2 }; bestD = d; }
+  }
+  return best;
+}
+
+// ---------------------------------------------------------------
+// Camera
+// ---------------------------------------------------------------
+const camera = { x: 0, y: 0 };
+function updateCamera() {
+  const tx = Math.max(0, Math.min(WORLD_W - VW, player.x - VW / 2));
+  const ty = Math.max(0, Math.min(WORLD_H - VH, player.y - VH / 2));
+  camera.x += (tx - camera.x) * 0.14;
+  camera.y += (ty - camera.y) * 0.14;
+}
+
+// ---------------------------------------------------------------
+// Update
+// ---------------------------------------------------------------
+function update() {
+  let dx = 0, dy = 0;
+  if (keys['arrowup'] || keys['w']) dy -= 1;
+  if (keys['arrowdown'] || keys['s']) dy += 1;
+  if (keys['arrowleft'] || keys['a']) dx -= 1;
+  if (keys['arrowright'] || keys['d']) dx += 1;
+  player.moving = dx !== 0 || dy !== 0;
+  if (player.moving) {
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = player.x + (dx / len) * player.speed;
+    const ny = player.y + (dy / len) * player.speed;
+    if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? 'right' : 'left';
+    else if (dy !== 0) player.dir = dy > 0 ? 'down' : 'up';
+    if (!collides(nx, player.y)) player.x = nx;
+    if (!collides(player.x, ny)) player.y = ny;
+    player.frame += 0.2;
+  }
+
+  const t = performance.now() / 1000;
+  for (const en of entities) {
+    if (en.kind !== 'character') continue;
+    en.x = en.homeX + Math.sin(t * 0.5 + en.wanderPhase) * 14;
+    en.y = en.homeY + Math.cos(t * 0.35 + en.wanderPhase) * 6;
+  }
+
+  updateCamera();
+  hoverTarget = dialogOpen ? null : nearestEntity();
+  document.getElementById('hint').textContent = dialogOpen
+    ? 'E / click to close'
+    : hoverTarget ? `E / click — ${hoverTarget.label}` : 'Arrows / WASD to walk';
+  document.getElementById('mini').textContent =
+    rooms.map(r => r.label.split('-')[0]).join('   ·   ');
+}
+
+// ---------------------------------------------------------------
+// Draw: ground
+// ---------------------------------------------------------------
+function drawGround() {
+  ctx.fillStyle = '#3a6440';
+  ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  // grass tuft texture, seeded
+  const g = seeded(7);
+  ctx.fillStyle = '#356138';
+  for (let i = 0; i < 2200; i++) {
+    const x = g() * WORLD_W, y = g() * WORLD_H;
+    ctx.fillRect(x, y, 3, 2);
+  }
+  ctx.fillStyle = '#457048';
+  for (let i = 0; i < 1400; i++) {
+    const x = g() * WORLD_W, y = g() * WORLD_H;
+    ctx.fillRect(x, y, 2, 2);
+  }
+}
+
+function drawPaths() {
+  ctx.lineCap = 'round';
+  function pathStroke(from, to, width, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.bezierCurveTo(from.x, from.y + 60, to.x, to.y - 60, to.x, to.y);
+    ctx.stroke();
+  }
+  SCENE.paths.forEach(p => {
+    const a = roomById[p.from], b = roomById[p.to];
+    if (!a || !b) return;
+    const ad = doorPos(a), bd = doorPos(b);
+    pathStroke(ad, { x: bd.x, y: bd.y + 40 }, 22, '#8a7350');
+    pathStroke(ad, { x: bd.x, y: bd.y + 40 }, 16, '#a08a63');
+  });
+  // spawn path
+  ctx.strokeStyle = '#a08a63';
+  ctx.lineWidth = 16;
+  ctx.beginPath();
+  ctx.moveTo(player.x, player.y + 40);
+  ctx.lineTo(player.x, doorPos(rooms[0]).y);
+  ctx.stroke();
+}
+
+function drawDecorations(filterY) {
+  decorations.filter(d => Math.floor(d.y) === filterY || (filterY === undefined)).forEach(d => drawProp(d));
+}
+
+function drawProp(d) {
+  const s = 0.8 + d.seed * 0.5;
+  ctx.save();
+  ctx.translate(d.x, d.y);
+  ctx.scale(s, s);
+  if (d.kind === 'tree') {
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath(); ctx.ellipse(0, 6, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5a3d28';
+    ctx.fillRect(-3, -6, 6, 14);
+    ctx.fillStyle = '#2f6b3a';
+    ctx.beginPath(); ctx.arc(0, -16, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3c8248';
+    ctx.beginPath(); ctx.arc(-5, -20, 9, 0, Math.PI * 2); ctx.fill();
+  } else if (d.kind === 'bush') {
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath(); ctx.ellipse(0, 4, 9, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3c7a42';
+    ctx.beginPath(); ctx.arc(-4, 0, 6, 0, Math.PI * 2); ctx.arc(4, 0, 6, 0, Math.PI * 2); ctx.arc(0, -4, 6, 0, Math.PI * 2); ctx.fill();
+  } else if (d.kind === 'flower') {
+    const colors = ['#e0688a', '#e8c85f', '#8f7fe0'];
+    ctx.fillStyle = colors[Math.floor(d.seed * 3)];
+    for (let a = 0; a < 4; a++) {
+      ctx.beginPath();
+      ctx.arc(Math.cos(a * 1.57) * 2.4, Math.sin(a * 1.57) * 2.4, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#f4e07a';
+    ctx.beginPath(); ctx.arc(0, 0, 1.6, 0, Math.PI * 2); ctx.fill();
+  } else if (d.kind === 'lamp') {
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath(); ctx.ellipse(0, 2, 5, 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2c2620';
+    ctx.fillRect(-1.5, -22, 3, 24);
+    ctx.fillStyle = '#e8c85f';
+    ctx.beginPath(); ctx.arc(0, -25, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(232,200,95,0.25)';
+    ctx.beginPath(); ctx.arc(0, -25, 16, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Draw: buildings
+// ---------------------------------------------------------------
+function drawBuildingBack(room) {
+  const { x, y, w, h } = room;
+  const roofColor = '#6b4530';
+  const roofDark = '#523320';
+  const roofLight = '#7c5238';
+  const peakX = x + w / 2, peakY = y - 50, baseY = y - 4;
+
+  // roof shadow silhouette (reads as the underside/eave)
+  ctx.fillStyle = roofDark;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, y); ctx.lineTo(peakX, y - 46); ctx.lineTo(x + w + 14, y);
+  ctx.closePath(); ctx.fill();
+
+  // main roof face
+  ctx.fillStyle = roofColor;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, baseY); ctx.lineTo(peakX, peakY); ctx.lineTo(x + w + 14, baseY);
+  ctx.closePath(); ctx.fill();
+
+  // shingle courses: short horizontal ticks stepping up each roof slope
+  ctx.strokeStyle = roofLight;
+  ctx.lineWidth = 1;
+  const courses = 5;
+  for (let i = 1; i < courses; i++) {
+    const t = i / courses;
+    const yy = y - 4 - (y - 4 - peakY) * t;
+    const leftSpan = (peakX - (x - 14)) * (1 - t);
+    ctx.beginPath(); ctx.moveTo(peakX - leftSpan, yy); ctx.lineTo(peakX - leftSpan * 0.15, yy); ctx.stroke();
+    const rightSpan = ((x + w + 14) - peakX) * (1 - t);
+    ctx.beginPath(); ctx.moveTo(peakX + rightSpan * 0.15, yy); ctx.lineTo(peakX + rightSpan, yy); ctx.stroke();
+  }
+
+  // ridge line
+  ctx.strokeStyle = roofDark;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(peakX, peakY); ctx.lineTo(peakX, baseY); ctx.stroke();
+
+  // chimney with a little idle smoke puff
+  const chimX = x + w * 0.72;
+  ctx.fillStyle = '#8a7460';
+  ctx.fillRect(chimX, peakY + 6, 12, 24);
+  ctx.fillStyle = '#6f5c49';
+  ctx.fillRect(chimX - 1, peakY + 4, 14, 5);
+  const t = performance.now() / 900;
+  ctx.fillStyle = 'rgba(230,230,230,0.35)';
+  for (let i = 0; i < 3; i++) {
+    const puffT = (t + i / 3) % 1;
+    ctx.beginPath();
+    ctx.arc(chimX + 6 + Math.sin((t + i) * 2) * 4, peakY - puffT * 26, 3 + puffT * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+function drawBuildingFront(room) {
+  const { x, y, w, h, label, state, workgraph_cursor } = room;
+  // interior floor
+  ctx.fillStyle = '#8a6f4e';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#7d6446';
+  for (let fx = x; fx < x + w; fx += 24) {
+    for (let fy = y; fy < y + h; fy += 24) {
+      if (((fx - x) / 24 + (fy - y) / 24) % 2 === 0) ctx.fillRect(fx, fy, 24, 24);
+    }
+  }
+  // rug under the "desk" area, colored by status
+  ctx.fillStyle = stateColor(state) + '33';
+  ctx.fillRect(x + 18, y + 18, w - 36, h - 60);
+
+  // walls (low, plank texture) framing the interior
+  ctx.fillStyle = '#5a4530';
+  ctx.fillRect(x - 6, y - 6, w + 12, 10);
+  ctx.fillRect(x - 6, y - 6, 10, h + 12);
+  ctx.fillRect(x + w - 4, y - 6, 10, h + 12);
+  ctx.fillRect(x - 6, y + h - 4, 10, 10);
+  ctx.fillRect(x + w - 4, y + h - 4, 10, 10);
+
+  // door: plank panel with visible board seams, arched top, round handle
+  const door = doorPos(room);
+  ctx.fillStyle = '#3d2f20';
+  ctx.fillRect(door.x - 26, y + h - 4, 52, 10);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(door.x - 22, y + h - 30, 44, 36);
+  ctx.clip();
+  ctx.fillStyle = '#6b4a30';
+  ctx.fillRect(door.x - 22, y + h - 30, 44, 36);
+  ctx.strokeStyle = '#4a3220';
+  ctx.lineWidth = 1.5;
+  for (let px = door.x - 14; px < door.x + 20; px += 8) {
+    ctx.beginPath(); ctx.moveTo(px, y + h - 30); ctx.lineTo(px, y + h + 6); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(door.x, y + h - 30, 22, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#e8c85f';
+  ctx.beginPath(); ctx.arc(door.x + 14, y + h - 12, 2, 0, Math.PI * 2); ctx.fill();
+
+  // window: mullioned panes, shutters, flower box beneath
+  const winX = x + 26, winY = y + h - 34, winW = 34, winH = 26;
+  ctx.fillStyle = '#5a4530';
+  ctx.fillRect(winX - 4, winY - 4, 6, winH + 8);
+  ctx.fillRect(winX + winW - 2, winY - 4, 6, winH + 8);
+  ctx.fillStyle = '#8fd0dc';
+  ctx.fillRect(winX, winY, winW, winH);
+  ctx.fillStyle = '#bfe8ee';
+  ctx.fillRect(winX + 2, winY + 2, winW / 2 - 3, winH / 2 - 3);
+  ctx.strokeStyle = '#3d2f20';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(winX, winY, winW, winH);
+  ctx.beginPath();
+  ctx.moveTo(winX + winW / 2, winY); ctx.lineTo(winX + winW / 2, winY + winH);
+  ctx.moveTo(winX, winY + winH / 2); ctx.lineTo(winX + winW, winY + winH / 2);
+  ctx.stroke();
+  // shutters
+  ctx.fillStyle = '#3d5a3d';
+  ctx.fillRect(winX - 10, winY, 6, winH);
+  ctx.fillRect(winX + winW + 4, winY, 6, winH);
+  // flower box
+  ctx.fillStyle = '#6b4a30';
+  ctx.fillRect(winX - 2, winY + winH + 2, winW + 4, 6);
+  const boxColors = ['#e0688a', '#e8c85f', '#8f7fe0', '#e0688a'];
+  for (let i = 0; i < 4; i++) {
+    ctx.fillStyle = boxColors[i];
+    ctx.beginPath();
+    ctx.arc(winX + 4 + i * (winW / 3.2), winY + winH, 2.2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // sign post at the door
+  ctx.fillStyle = '#3d2f20';
+  ctx.fillRect(door.x - 1.5, door.y + 4, 3, 22);
+  const signLabel = label.length > 24 ? label.slice(0, 22) + '…' : label;
+  ctx.font = '10px ui-monospace, monospace';
+  const tw = ctx.measureText(signLabel).width;
+  ctx.fillStyle = '#f4ecd8';
+  ctx.strokeStyle = '#3d2f20';
+  ctx.lineWidth = 2;
+  const plateX = door.x - tw / 2 - 8, plateY = door.y + 2;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(plateX, plateY, tw + 16, 16, 3) : ctx.rect(plateX, plateY, tw + 16, 16);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#2b2320';
+  ctx.textAlign = 'left';
+  ctx.fillText(signLabel, plateX + 8, plateY + 11);
+
+  // status pennant on the roof peak
+  ctx.fillStyle = stateColor(state);
+  ctx.beginPath();
+  ctx.moveTo(x + w / 2, y - 50);
+  ctx.lineTo(x + w / 2 + 16, y - 44);
+  ctx.lineTo(x + w / 2, y - 38);
+  ctx.closePath();
+  ctx.fill();
+
+  // cursor caption, small, top-left of interior
+  ctx.font = '9px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(43,35,32,0.65)';
+  ctx.fillText(workgraph_cursor.length > 34 ? workgraph_cursor.slice(0, 32) + '…' : workgraph_cursor, x + 18, y + 16);
+}
+
+// ---------------------------------------------------------------
+// Pixel-grid rendering. Real detail comes from individually placed
+// pixels with a hard 1px outline (classic pixel-art technique), not
+// from smooth canvas primitives -- every sprite below is built as a
+// list of (col, row, paletteKey) cells at PX-unit resolution, drawn
+// with image-rendering:pixelated so it stays crisp when scaled up.
+// ---------------------------------------------------------------
+const PX = 3; // pixel-grid unit size in canvas px
+
+function plotPixels(cells, palette, originX, originY, outlineColor) {
+  // outline pass: every filled cell casts a 1px shadow onto its four
+  // neighbors first, so the whole silhouette gets a clean dark rim
+  ctx.fillStyle = outlineColor;
+  for (const [gx, gy] of cells) {
+    ctx.fillRect(originX + (gx - 1) * PX, originY + gy * PX, PX, PX);
+    ctx.fillRect(originX + (gx + 1) * PX, originY + gy * PX, PX, PX);
+    ctx.fillRect(originX + gx * PX, originY + (gy - 1) * PX, PX, PX);
+    ctx.fillRect(originX + gx * PX, originY + (gy + 1) * PX, PX, PX);
+  }
+  // color pass
+  for (const [gx, gy, key] of cells) {
+    ctx.fillStyle = palette[key];
+    ctx.fillRect(originX + gx * PX, originY + gy * PX, PX, PX);
+  }
+}
+
+// ---------------------------------------------------------------
+// Draw: furniture (objects) -- distinct detailed pixel icon per
+// real object kind, not one generic box.
+// ---------------------------------------------------------------
+function deskCells() {
+  const cells = [];
+  // desk top
+  for (let gx = -5; gx <= 5; gx++) for (let gy = -1; gy <= 1; gy++) cells.push([gx, gy, gx === 5 ? 'O' : 'D']);
+  // legs
+  for (const lx of [-5, 4]) for (let gy = 2; gy <= 4; gy++) { cells.push([lx, gy, 'L']); cells.push([lx + 1, gy, 'L']); }
+  // paper on top with visible text lines
+  for (let gx = -3; gx <= 1; gx++) for (let gy = -4; gy <= -2; gy++) cells.push([gx, gy, 'F']);
+  cells.push([-3, -4, 'B']); // dog-ear corner
+  cells.push([-2, -3, 'T']); cells.push([-1, -3, 'T']);
+  cells.push([-2, -2, 'T']);
+  return cells;
+}
+function boardCells() {
+  const cells = [];
+  // post
+  for (let gy = -1; gy <= 4; gy++) { cells.push([0, gy, 'D']); cells.push([1, gy, 'D']); }
+  // corkboard
+  for (let gx = -5; gx <= 6; gx++) for (let gy = -9; gy <= -2; gy++) cells.push([gx, gy, gx === -5 || gx === 6 || gy === -9 || gy === -2 ? 'K' : 'F']);
+  // pinned note + pin
+  for (let gx = -3; gx <= 0; gx++) for (let gy = -7; gy <= -5; gy++) cells.push([gx, gy, 'T']);
+  cells.push([-2, -8, 'R']);
+  for (let gx = 1; gx <= 4; gx++) for (let gy = -6; gy <= -4; gy++) cells.push([gx, gy, 'B']);
+  cells.push([2, -8, 'R']);
+  return cells;
+}
+function shelfCells() {
+  const cells = [];
+  // case
+  for (let gx = -6; gx <= 6; gx++) for (let gy = -9; gy <= 3; gy++) {
+    const edge = gx === -6 || gx === 6 || gy === -9 || gy === 3;
+    cells.push([gx, gy, edge ? 'D' : 'L']);
+  }
+  // shelf boards
+  for (let gy of [-6, -2]) for (let gx = -5; gx <= 5; gx++) cells.push([gx, gy, 'D']);
+  // book spines, varying color/height
+  const spineColors = ['R', 'B', 'T', 'O', 'R', 'B'];
+  let gx = -5;
+  spineColors.forEach((c, i) => {
+    const h = i % 2 === 0 ? 2 : 3;
+    for (let gy = -8; gy <= -8 + h; gy++) cells.push([gx, gy, c]);
+    gx += 2;
+  });
+  return cells;
+}
+const FURNITURE_BUILDERS = { desk: deskCells, board: boardCells, shelf: shelfCells };
+const FURNITURE_PALETTE = {
+  D: '#5a3e26', L: '#7a5636', O: '#3f2a19',
+  F: '#f1ead2', B: '#d8cfa8', T: '#7d6b45',
+  K: '#8a6a48', R: '#b04a3f',
+};
+function drawFurniture(en) {
+  const { x, y, furniture } = en;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(x, y + 12, 17, 4, 0, 0, Math.PI * 2); ctx.fill();
+  const build = FURNITURE_BUILDERS[furniture] || deskCells;
+  plotPixels(build(), FURNITURE_PALETTE, Math.round(x), Math.round(y), '#241a10');
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Draw: characters -- programmatically generated pixel-grid chibi
+// sprite (14x22 units): shaped hair with bangs and side coverage,
+// round face with direction-aware eyes, tapered shirt with a shaded
+// side seam, skin-toned arms, two-frame alternating-stride legs,
+// and boots. Palette-swapped per resident so each is recognizable
+// while sharing one rig -- the same technique real sprite sheets use.
+// ---------------------------------------------------------------
+function characterCells(dir, walking, frame) {
+  const cells = [];
+  const cx = 6.5;
+
+  // --- head + hair ---
+  for (let gy = 0; gy <= 8; gy++) {
+    for (let gx = 0; gx <= 13; gx++) {
+      const dx = gx - cx, dy = (gy - 4.3) * 1.15;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 4.5) continue;
+      const isBangs = gy <= 2;
+      const isSide = Math.abs(dx) >= 3.1;
+      const isCrown = gy <= 1;
+      if (isBangs || isSide || isCrown) cells.push([gx, gy, 'H']);
+      else cells.push([gx, gy, 'S']);
+    }
+  }
+  // eyes -- direction aware
+  if (dir === 'down') { cells.push([4, 5, 'E']); cells.push([9, 5, 'E']); }
+  else if (dir === 'up') { /* back of head, no face */ }
+  else { const ex = dir === 'left' ? 3 : 10; cells.push([ex, 5, 'E']); }
+
+  // --- neck ---
+  for (let gx = 5; gx <= 8; gx++) cells.push([gx, 9, 'S']);
+
+  // --- body / shirt, tapered, shaded far side ---
+  const bodyRows = [
+    { gy: 10, from: 2, to: 11 },
+    { gy: 11, from: 2, to: 11 },
+    { gy: 12, from: 3, to: 10 },
+    { gy: 13, from: 3, to: 10 },
+    { gy: 14, from: 3, to: 10 },
+    { gy: 15, from: 4, to: 9 },
+  ];
+  bodyRows.forEach(({ gy, from, to }) => {
+    for (let gx = from; gx <= to; gx++) cells.push([gx, gy, gx >= to - 1 ? 'O' : 'C']);
+  });
+
+  // --- arms: sleeve then hand ---
+  const armSwing = walking ? Math.round(Math.sin(frame) * 1.4) : 0;
+  for (let gy = 11; gy <= 12; gy++) { cells.push([0, gy, 'C']); cells.push([13, gy, 'C']); }
+  for (let gy = 13; gy <= 14; gy++) {
+    cells.push([0, gy + (dir === 'left' ? armSwing : -armSwing), 'S']);
+    cells.push([13, gy + (dir === 'right' ? armSwing : -armSwing), 'S']);
+  }
+
+  // --- legs: two-frame alternating stride ---
+  const stride = walking && frame % 2 === 1 ? 1 : 0;
+  for (let gy = 16; gy <= 18; gy++) {
+    cells.push([4, gy - stride, 'P']); cells.push([5, gy - stride, 'P']);
+    cells.push([8, gy + stride, 'P']); cells.push([9, gy + stride, 'P']);
+  }
+  // --- boots ---
+  for (const [bx1, bx2, off] of [[4, 5, -stride], [8, 9, stride]]) {
+    cells.push([bx1, 19 + off, 'B']); cells.push([bx2, 19 + off, 'B']);
+  }
+
+  return cells;
+}
+
+function drawCharacter(x, y, hair, shirt, skin, dir, frame, w, h, accent) {
+  const walking = frame !== 0;
+  const stepFrame = Math.floor((frame || 0) * 1.6) % 2;
+  const bob = walking ? Math.round(Math.sin(frame) * 1) : 0;
+  const palette = {
+    H: hair, S: skin, E: '#26201c', C: shirt,
+    O: shadeColor(shirt, -0.28), P: '#33261a', B: '#221a12',
+  };
+  const originX = Math.round(x - 7 * PX);
+  const originY = Math.round(y - 22 * PX + bob);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath(); ctx.ellipse(x, y + 1, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+  plotPixels(characterCells(dir, walking, stepFrame), palette, originX, originY, '#1c1712');
+
+  if (accent) {
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(x, y - 22 * PX + 4 * PX, 4.9 * PX, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+function shadeColor(hex, amt) {
+  const c = hex.replace('#', '');
+  const num = parseInt(c.length === 3 ? c.split('').map(ch => ch + ch).join('') : c, 16);
+  let r = (num >> 16) & 0xff, g = (num >> 8) & 0xff, b = num & 0xff;
+  const f = amt < 0 ? (1 + amt) : 1;
+  const add = amt > 0 ? Math.round(255 * amt) : 0;
+  r = Math.max(0, Math.min(255, Math.round(r * f) + add));
+  g = Math.max(0, Math.min(255, Math.round(g * f) + add));
+  b = Math.max(0, Math.min(255, Math.round(b * f) + add));
+  return `rgb(${r},${g},${b})`;
+}
+
+function drawSpeechTag(x, y, label, sub, color) {
+  ctx.font = '9.5px ui-monospace, monospace';
+  const text1 = label, text2 = sub || '';
+  const tw = Math.max(ctx.measureText(text1).width, ctx.measureText(text2).width);
+  const bw = tw + 14, bh = sub ? 28 : 16;
+  const bx = x - bw / 2, by = y - h_offset(sub);
+  ctx.fillStyle = 'rgba(10,16,11,0.8)';
+  ctx.beginPath();
+  const r = 4;
+  if (ctx.roundRect) { ctx.roundRect(bx, by, bw, bh, r); ctx.fill(); } else { ctx.fillRect(bx, by, bw, bh); }
+  ctx.fillStyle = color;
+  ctx.fillRect(bx, by, 3, bh);
+  // tail
+  ctx.beginPath();
+  ctx.moveTo(x - 4, by + bh);
+  ctx.lineTo(x + 4, by + bh);
+  ctx.lineTo(x, by + bh + 5);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(10,16,11,0.8)';
+  ctx.fill();
+
+  ctx.fillStyle = '#f2f7ee';
+  ctx.textAlign = 'center';
+  ctx.fillText(text1, x, by + 12);
+  if (sub) { ctx.fillStyle = color; ctx.fillText(text2, x, by + 24); }
+}
+function h_offset(sub) { return sub ? 76 : 62; }
+
+// ---------------------------------------------------------------
+// Draw: dialog box (RPG textbox)
+// ---------------------------------------------------------------
+function wrapText(text, maxWidth) {
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  for (const word of words) {
+    const test = cur ? cur + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = word; } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+function drawDialog(entity) {
+  const boxW = 660, boxH = 200;
+  const bx = (VW - boxW) / 2, by = VH - boxH - 20;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  ctx.fillStyle = 'rgba(12,18,13,0.94)';
+  ctx.strokeStyle = cssVar('var(--accent)');
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, boxW, boxH, 8); else ctx.rect(bx, by, boxW, boxH);
+  ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx + 5, by + 5, boxW - 10, boxH - 10, 5); else ctx.rect(bx+5, by+5, boxW-10, boxH-10);
+  ctx.stroke();
+
+  let title = entity.label, lines = [], tagColor = cssVar('var(--accent)');
+  if (entity.kind === 'character') {
+    const c = entity.data;
+    title = `${c.label} — ${c.role}`;
+    tagColor = relColor(c.relationship_state);
+    lines.push(`state  ${c.relationship_state}`);
+    lines.push(`source  capital.db / relationships / id ${c.source.id}`);
+    lines.push('');
+    lines.push('visit history:');
+    c.visit_history.forEach(v => lines.push(`  ${v.at}   ${v.direction.padEnd(8)} ${v.kind}`));
+  } else if (entity.kind === 'object') {
+    const o = entity.data;
+    title = o.label;
+    if (o.bytes) lines.push(`bytes  ${o.bytes}`);
+    if (o.digest) lines.push(`digest  ${o.digest}`);
+    if (o.state) lines.push(`state  ${o.state}`);
+    if (o.note) lines.push(...wrapText(o.note, boxW - 44));
+    lines.push('');
+    lines.push(`source  ${o.source.db} / ${o.source.table} / ${o.source.id ?? o.source.digest}`);
+  } else if (entity.kind === 'room') {
+    const r = entity.data;
+    title = r.label;
+    tagColor = stateColor(r.state);
+    lines.push(`state  ${r.state}`);
+    lines.push(`workgraph_cursor  ${r.workgraph_cursor}`);
+    lines.push(`source  ${r.source.db} / ${r.source.table} / ${r.source.id}`);
+  }
+
+  ctx.fillStyle = tagColor;
+  ctx.fillRect(bx + 16, by + 14, 5, 20);
+  ctx.font = 'bold 14px ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText(title.length > 62 ? title.slice(0, 60) + '…' : title, bx + 28, by + 29);
+
+  ctx.font = '12px ui-monospace, monospace';
+  ctx.fillStyle = '#cfe0d0';
+  lines.forEach((l, i) => ctx.fillText(l, bx + 20, by + 54 + i * 16));
+
+  ctx.fillStyle = 'rgba(207,224,208,0.55)';
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('E / click to close', bx + boxW - 16, by + boxH - 12);
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Main render: everything Y-sorted so overlaps read correctly
+// ---------------------------------------------------------------
+function render() {
+  ctx.save();
+  ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
+
+  drawGround();
+  drawPaths();
+  decorations.forEach(drawProp);
+  rooms.forEach(drawBuildingBack);
+  rooms.forEach(drawBuildingFront);
+
+  const drawables = [
+    ...entities.filter(e => e.kind === 'object').map(o => ({ y: o.y, draw: () => drawFurniture(o) })),
+    ...entities.filter(e => e.kind === 'character').map(c => ({
+      y: c.y,
+      draw: () => {
+        drawCharacter(c.x, c.y, c.hair, c.shirt, c.skin, 'down', performance.now() / 260 + c.wanderPhase, c.w, c.h, c.color);
+        drawSpeechTag(c.x, c.y - c.h / 2, c.label, c.sub, c.color);
+      },
+    })),
+    {
+      y: player.y,
+      draw: () => drawCharacter(player.x, player.y, player.hair, player.shirt, player.skin, player.dir, player.moving ? player.frame : 0, player.w, player.h, null),
+    },
+  ];
+  drawables.sort((a, b) => a.y - b.y).forEach(d => d.draw());
+
+  if (hoverTarget && !dialogOpen) {
+    ctx.save();
+    ctx.strokeStyle = '#f2f7ee';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.arc(hoverTarget.x, hoverTarget.y, 26, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore(); // back to screen space
+
+  if (dialogOpen) drawDialog(dialogOpen);
+}
+
+function loop() { update(); render(); requestAnimationFrame(loop); }
+canvas.focus();
+loop();
+</script>
