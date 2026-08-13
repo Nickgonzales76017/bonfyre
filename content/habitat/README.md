@@ -63,6 +63,19 @@ is the real starting point, not a continuation of hidden prior work.
   furniture beyond the real data objects — a wall bookshelf, a filing
   cabinet, a potted plant, a chair pair — all pixel-grid, all procedural.
   Published live at the same URL.
+- `town-2026-08-13-v5.html` — sixth pass, current: fixed a real structural
+  bug the last four passes shared. Buildings were a flat top-down floor
+  plan with a roof triangle floating disconnected above it (roof base at
+  `y-50`, door/window at `y+h` -- nothing in between actually connected
+  them). That's not the 16/32-bit dimetric look real SNES-era top-down
+  RPGs use (Stardew Valley, RPG Maker VX, Secret of Mana), where the roof
+  and a real, tall, textured back-wall face are one continuous structure.
+  Added `WALL_H`, a proper back-wall band directly under the roof eave
+  (with an eave shadow cast onto it so the two visually read as one
+  piece), moved the window from the floor-level "front" to the back-wall
+  face where it actually belongs, added side-wall returns for depth, kept
+  the door at the near/open side (unchanged gameplay collision). Published
+  live at the same URL.
 
 ## What this prototype does NOT implement
 
