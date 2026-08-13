@@ -50,6 +50,19 @@ is the real starting point, not a continuation of hidden prior work.
   shingle-course roof shading, a smoking chimney, a mullioned
   shutter-and-flower-box window, and a plank door with a real handle.
   Published live at the same URL, replacing the prior pass there.
+- `town-2026-08-13-v4.html` — fifth pass, current: rebuilt against the
+  actual reference images this time, not just the code. Downloaded and
+  viewed the Generative Agents paper (arxiv.org/pdf/2304.03442, Figures
+  1/3/4) directly, plus read `agents.ts`'s real sprite-sheet frame-index
+  math. The reference's characters are small and simple — the real detail
+  is in speech-bubble callouts ("ML:", "IR: 😊") and richly furnished
+  rooms (bed+nightstand, stove+counter+table, bathroom fixtures, dense
+  2-tone tile floor). Replaced the plain name tag with a proper callout
+  bubble (initials + a status glyph, rounded box, tail, matching Fig. 4
+  exactly), tightened the floor checker, and gave every room fixed
+  furniture beyond the real data objects — a wall bookshelf, a filing
+  cabinet, a potted plant, a chair pair — all pixel-grid, all procedural.
+  Published live at the same URL.
 
 ## What this prototype does NOT implement
 
