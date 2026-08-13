@@ -177,6 +177,7 @@ static const bf_catalog_projection_rule_t BF_CATALOG_PROJECTION_RULES[] = {
     {"sync yaml google", "sync", "catalog_nodes(kind=recipe)", "project google yaml recipes into catalog"},
     {"sync yaml topology", "sync", "catalog_nodes(kind=recipe)", "project topology yaml recipes into catalog"},
     {"sync yaml cross_fusion", "sync", "catalog_nodes(kind=recipe)", "project cross_fusion yaml recipes into catalog"},
+    {"sync surfaces and transports", "sync", "catalog_nodes(kind=surface|transport)", "project operator-contract-bindings.tsv surface/transport families into catalog"},
     {"seed family relationships", "derive", "catalog_edges(rel=specialized_by_family|related_family)", "seed family relationships into graph"},
     {"derive capability-family relationships", "derive", "catalog_edges(rel=related_family|supports_capability)", "derive capability-family links from workflow-step/family evidence"},
     {"rebuild fts", "index", "catalog_fts", "refresh full-text search projection"},
@@ -1283,6 +1284,56 @@ static int sync_capability_registry(sqlite3 *db) {
     return 0;
 }
 
+/* Projects the fabric's own operator-contract-bindings.tsv (operator_id,
+ * contract_id, family, ...) into catalog_nodes as kind=transport (family
+ * contains "transport") and kind=surface (contract_id contains "surface").
+ * These are real, already-bound operators (command.sync/wire/moq for
+ * transport, command.surface for surface) -- not invented categories. */
+static int sync_surfaces_and_transports(sqlite3 *db, const char *repo_root) {
+    char path[PATH_MAX];
+    FILE *file;
+    char line[4096];
+
+    snprintf(path, sizeof(path), "%s/estate/operator-contract-bindings.tsv", repo_root);
+    file = fopen(path, "r");
+    if (!file) return 0;
+    if (!fgets(line, sizeof(line), file)) { fclose(file); return 0; }
+
+    while (fgets(line, sizeof(line), file)) {
+        char *fields[3];
+        char *cursor = line;
+        int field = 0;
+        while (field < 3 && cursor) {
+            fields[field++] = cursor;
+            cursor = strchr(cursor, '\t');
+            if (cursor) *cursor++ = '\0';
+        }
+        if (field != 3) continue;
+        const char *operator_id = fields[0];
+        const char *contract_id = fields[1];
+        const char *family = fields[2];
+        char node_id[224];
+        char json[384];
+
+        if (strstr(family, "transport")) {
+            snprintf(node_id, sizeof(node_id), "transport:%s", operator_id);
+            snprintf(json, sizeof(json), "{\"operator_id\":\"%s\",\"contract_id\":\"%s\",\"family\":\"%s\"}",
+                     operator_id, contract_id, family);
+            upsert_node(db, node_id, "transport", operator_id, operator_id, family,
+                        "Wire-protocol transport operator", path, "", json);
+        }
+        if (strstr(contract_id, "surface")) {
+            snprintf(node_id, sizeof(node_id), "surface:%s", operator_id);
+            snprintf(json, sizeof(json), "{\"operator_id\":\"%s\",\"contract_id\":\"%s\",\"family\":\"%s\"}",
+                     operator_id, contract_id, family);
+            upsert_node(db, node_id, "surface", operator_id, operator_id, family,
+                        "UI/document surface operator", path, "", json);
+        }
+    }
+    fclose(file);
+    return 0;
+}
+
 static int sync_model_registry(sqlite3 *db) {
     sqlite3 *model_db = NULL;
     sqlite3_stmt *st = NULL;
@@ -1643,6 +1694,8 @@ int bf_catalog_sync_repo(const char *db_path, const char *repo_root) {
     if (ok) BF_SYNC_STEP("delete model-source", delete_scope(db, "model-source:"));
     if (ok) BF_SYNC_STEP("delete layer", delete_scope(db, "layer:"));
     if (ok) BF_SYNC_STEP("delete recipe", delete_scope(db, "recipe:"));
+    if (ok) BF_SYNC_STEP("delete transport", delete_scope(db, "transport:"));
+    if (ok) BF_SYNC_STEP("delete surface", delete_scope(db, "surface:"));
     if (ok) BF_SYNC_STEP("sync family index", sync_family_index(db, repo_root));
     if (ok) BF_SYNC_STEP("sync capability registry", sync_capability_registry(db));
     if (ok) BF_SYNC_STEP("sync model registry", sync_model_registry(db));
@@ -1652,6 +1705,7 @@ int bf_catalog_sync_repo(const char *db_path, const char *repo_root) {
     if (ok) BF_SYNC_STEP("sync yaml google", sync_yaml_dir(db, repo_root, "recipes/google", "recipe"));
     if (ok) BF_SYNC_STEP("sync yaml topology", sync_yaml_dir(db, repo_root, "recipes/topology", "recipe"));
     if (ok) BF_SYNC_STEP("sync yaml cross_fusion", sync_yaml_dir(db, repo_root, "recipes/cross_fusion", "recipe"));
+    if (ok) BF_SYNC_STEP("sync surfaces and transports", sync_surfaces_and_transports(db, repo_root));
     if (ok) BF_SYNC_STEP("seed family relationships", seed_family_relationships(db));
     if (ok) BF_SYNC_STEP("derive capability-family relationships", derive_capability_family_relationships(db));
 

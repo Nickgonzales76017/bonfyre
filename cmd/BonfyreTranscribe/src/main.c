@@ -539,12 +539,7 @@ static int write_chunk_progress(const char *path, int total_chunks, int complete
     return 0;
 }
 
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 /* Resolve a model name (e.g. "base") to a ggml model file path.
  * Prefers quantized (Q5_0) models over float16 — 62% smaller, 39% faster. */

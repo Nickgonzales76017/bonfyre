@@ -293,10 +293,7 @@ static void free_request(HttpRequest *req) { free(req->body); }
 
 /* ── Utilities ────────────────────────────────────────────────────── */
 
-static void iso_now(char *buf, size_t sz) {
-    time_t t = time(NULL); struct tm tm; gmtime_r(&t, &tm);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &tm);
-}
+static void iso_now(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static int path_segments(const char *path, char segs[][256], int max) {
     int c = 0; const char *p = path;

@@ -448,6 +448,15 @@ typedef struct {
     int     z_precomputed;       /* 1 if z vectors are ready */
     int     z_fwht_preapplied;   /* 1 if z_data stores FWHT(z) instead of z */
 
+    /* Exact row-padded execution packing.  The per-block Haar signs are
+     * static, so folding them into FWHT(z) turns SLI into one dense GEMV over
+     * the already-compressed residual representation. */
+    float  *z_linear_data;       /* [rows × blocks_per_row × 256], owned */
+
+    /* Apple Metal execution state for the exact FP32 transformed residual.
+     * Opaque so the core FPQ format and the non-Apple build stay C-only. */
+    void   *metal_sli;
+
     /* M-operator approximate column fold (Innovation 2 — M-fold).
      * At fpqx_sli_prepare() time: if tensor->scale != NULL, compute the
      * per-column approximate fold factor col_fold[j] = 1 + dot(A_mean, B[j,:])
@@ -510,6 +519,15 @@ fpqx_sli_ctx_t *fpqx_sli_prepare(const fpqx_tensor_t *t);
  * Returns 0 on success.
  */
 int fpqx_sli_matvec(fpqx_sli_ctx_t *ctx, const float *x, float *output);
+
+/* Exact Metal implementation of the transformed residual score.  It is an
+ * execution backend, not a new quantization: it consumes the same FWHT(z)
+ * values as fpqx_sli_matvec and falls back to CPU on any backend failure. */
+int fpqx_metal_sli_try_matvec(fpqx_sli_ctx_t *ctx,
+                              const float *x,
+                              float *output,
+                              uint64_t haar_seed);
+void fpqx_metal_sli_free(fpqx_sli_ctx_t *ctx);
 
 /*
  * One-shot convenience: prepare + matvec + cleanup.

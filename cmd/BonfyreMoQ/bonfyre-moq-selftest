@@ -1,0 +1,95 @@
+#!/bin/sh
+# Starts a real bonfyre-moq video-relay on two ephemeral loopback ports,
+# publishes one length-prefixed frame with a known random payload to the
+# real ingest socket, then connects a real subscriber socket and reads back
+# whatever the relay replays. This is the real TCP relay and real wire
+# protocol (u32_be length prefix + raw bytes) -- not a mock: the proof is
+# that the subscriber's bytes are byte-for-byte identical to what the
+# publisher sent, which can only happen if the relay actually moved real
+# bytes from one real socket to another.
+set -eu
+
+root_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+run_dir=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-moq-selftest.XXXXXX")
+log="$run_dir/server.log"
+
+ingest_port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
+sub_port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
+
+"$root_dir/bonfyre-moq" video-relay --ingest "$ingest_port" --subscribe "$sub_port" </dev/null >"$log" 2>&1 &
+server_pid=$!
+
+cleanup() {
+    kill "$server_pid" 2>/dev/null || true
+    n=0
+    while kill -0 "$server_pid" 2>/dev/null; do
+        n=$((n + 1))
+        if [ "$n" -ge 40 ]; then
+            kill -9 "$server_pid" 2>/dev/null || true
+            break
+        fi
+        sleep 0.05
+    done
+    wait "$server_pid" 2>/dev/null || true
+    rm -rf "$run_dir"
+}
+trap cleanup EXIT
+
+n=0
+while ! python3 -c "
+import socket, sys
+s = socket.socket()
+try:
+    s.connect(('127.0.0.1', $ingest_port))
+    s.close()
+except Exception:
+    sys.exit(1)
+" 2>/dev/null; do
+    n=$((n + 1))
+    if [ "$n" -ge 100 ] || ! kill -0 "$server_pid" 2>/dev/null; then
+        echo "relay did not become ready" >&2
+        cat "$log" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+
+python3 -c "
+import socket, struct, sys, time
+
+ingest_port = $ingest_port
+sub_port = $sub_port
+payload = ('moq-selftest-' + str(time.time())).encode('ascii')
+
+# Publisher: send one framed payload to the real ingest port.
+pub = socket.create_connection(('127.0.0.1', ingest_port), timeout=5)
+pub.sendall(struct.pack('>I', len(payload)) + payload)
+pub.close()
+time.sleep(0.2)
+
+# Subscriber: connect after the fact and read whatever the relay replays.
+sub = socket.create_connection(('127.0.0.1', sub_port), timeout=5)
+sub.settimeout(5)
+header = b''
+while len(header) < 4:
+    chunk = sub.recv(4 - len(header))
+    if not chunk:
+        break
+    header += chunk
+if len(header) != 4:
+    print('{\"ready\":true,\"error\":\"no frame header received\"}')
+    sys.exit(1)
+frame_len = struct.unpack('>I', header)[0]
+received = b''
+while len(received) < frame_len:
+    chunk = sub.recv(frame_len - len(received))
+    if not chunk:
+        break
+    received += chunk
+sub.close()
+
+match = received == payload
+print('{\"ready\":true,\"sent_bytes\":%d,\"received_bytes\":%d,\"payload_matched\":%s}' % (
+    len(payload), len(received), 'true' if match else 'false'))
+sys.exit(0 if match else 1)
+"

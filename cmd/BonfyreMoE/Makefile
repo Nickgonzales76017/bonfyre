@@ -45,15 +45,15 @@ LIBS     := -L$(LIBDIR)/libcolibri-bonfyre/lib -lcolibri-bonfyre \
             -L$(LIBDIR)/libquic-transport -lquic-transport \
             -L$(LIBDIR)/liblambda-tensors -llambda-tensors \
             -L/opt/homebrew/lib -lssl -lcrypto \
-            -L$(LIBDIR)/libbonfyre -lbonfyre \
             -lpthread -lm -lsqlite3
 
 # Output binary
 TARGET   := bonfyre-moe
+SYNC_BIN := ../../bin/bonfyre-moe
 
-.PHONY: all clean test
+.PHONY: all clean test install-bin
 
-all: $(TARGET)
+all: $(TARGET) install-bin
 
 $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) $^ $(LIBS) -o $@
@@ -66,13 +66,27 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.c | $(OBJDIR)
 $(OBJDIR):
 	mkdir -p $@
 
+install-bin: $(TARGET)
+	mkdir -p ../../bin
+	cp $(TARGET) $(SYNC_BIN)
+	codesign -s - $(SYNC_BIN) >/dev/null 2>&1 || true
+	mkdir -p $(HOME)/.bonfyre/bin
+	cp $(TARGET) $(HOME)/.bonfyre/bin/$(TARGET)
+	codesign -s - $(HOME)/.bonfyre/bin/$(TARGET) >/dev/null 2>&1 || true
+
 clean:
 	rm -rf $(OBJDIR) $(TARGET)
 
 test: $(TARGET)
 	@echo "Running BonfyreMoE tests..."
-	./$(TARGET) plan --model /tmp/test_model --vram 80 --ram 128 || true
-	./$(TARGET) doctor --model /tmp/test_model || true
-	@echo "✓ Smoke test passed"
+	@task_bin=$$(mktemp /tmp/bonfyre-moe-test.XXXXXX); \
+	trap 'rm -f "$$task_bin"' EXIT; \
+	cp ./$(TARGET) "$$task_bin"; \
+	chmod +x "$$task_bin"; \
+	if command -v codesign >/dev/null 2>&1; then codesign -s - "$$task_bin" >/dev/null 2>&1 || true; fi; \
+	"$$task_bin" --help >/dev/null 2>&1; \
+	"$$task_bin" status | grep -q '"schema":"bonfyre.moe.status.v1"'; \
+	"$$task_bin" plan --model /tmp/test_model --arch mixtral --vram 8 --ram 16 --no-network >/dev/null
+	@echo "✓ CLI, status, and placement-plan checks passed"
 
 .PHONY: test

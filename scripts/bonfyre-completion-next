@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+base=${BONFYRE_STATE_DIR:-"${TMPDIR:-/tmp}/bonfyre-completion"}/completion
+run_id=$(cat "$base/latest")
+run="$base/runs/$run_id"; table="$run/requirement-status.tsv"
+tail -n +2 "$table" | while IFS='	' read -r id state deps command code out err state_dir proof excerpt; do
+  [ "$state" = failed ] || continue
+  ready=1
+  if [ "$deps" != none ]; then
+    oldifs=$IFS; IFS=,; set -- $deps; IFS=$oldifs
+    for dependency in "$@"; do awk -F '\t' -v id="$dependency" 'NR>1 && $1==id && $2=="passed" {ok=1} END {exit ok?0:1}' "$table" || ready=0; done
+  fi
+  [ "$ready" -eq 1 ] || continue
+  printf 'requirement=%s\nexact_command=%s\nexit_code=%s\nlog_path=%s\nfailure_excerpt=%s\n' "$id" "$command" "$code" "$err" "$excerpt"
+  exit 0
+done

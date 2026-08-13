@@ -32,6 +32,13 @@ a manifest as a runnable model. On the current machine it finds the runnable
 0.5B pack and 14B manifests whose large model parts are absent; those 14B
 profiles remain visible but unavailable until the parts are restored.
 
+GGUF profiles whose filename identifies an MoE automatically use the managed
+local llama.cpp server (`BONFYRE_MOE_SERVER_URL`, default
+`http://127.0.0.1:7000`) when it is present. This avoids reloading the model
+for each Estate request and exposes `openai-compatible-http` in the profile
+inventory. The project MCP also exposes `bonfyre_moe_status` and
+`bonfyre_moe_generate`; generation returns a bounded, hashed MoE receipt.
+
 The fleet catalog includes Agent Deck, Cavemem, Automerge, Feldera, egglog,
 HVM4, the separately identified HVM2 compatibility runtime, Hydro, CubeCL,
 Tract, the separately surfaced llama.cpp GGUF runtime, Burn, YaFF, Lance,

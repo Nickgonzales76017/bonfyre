@@ -7,6 +7,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
+#include "bonfyre.h"
 
 extern char **environ;
 
@@ -63,28 +64,11 @@ static int delegate_layeros_sync(int argc, char **argv) {
 }
 
 static char *read_file(const char *path, long *size_out) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) {
-        perror("fopen");
-        return NULL;
-    }
-    fseek(fp, 0, SEEK_END);
-    long size = ftell(fp);
-    fseek(fp, 0, SEEK_SET);
-    if (size < 0) {
-        fclose(fp);
-        return NULL;
-    }
-    char *buffer = malloc((size_t)size + 1);
-    if (!buffer) {
-        fclose(fp);
-        return NULL;
-    }
-    fread(buffer, 1, (size_t)size, fp);
-    fclose(fp);
-    buffer[size] = '\0';
-    if (size_out) *size_out = size;
-    return buffer;
+    size_t sz = 0;
+    char *buf = bf_read_file(path, &sz);
+    if (!buf) perror("fopen");
+    if (size_out) *size_out = (long)sz;
+    return buf;
 }
 
 static int has_key(const char *json, const char *key) {
@@ -118,31 +102,48 @@ static int command_inspect_intake(const char *path) {
     char *json = read_file(path, &size);
     if (!json) return 1;
 
-    const char *required[] = {
+    const char *legacy_required[] = {
         "schemaVersion", "manifest", "sourceFile", "jobId", "jobSlug",
         "jobTitle", "fileName", "dataBase64", NULL
     };
-    int valid = 1;
-    for (int i = 0; required[i]; i++) {
-        if (!has_key(json, required[i])) {
-            valid = 0;
-        }
+    const char *canonical_required[] = {
+        "ingest_version", "source_file", "source_bytes", "detected_type",
+        "normalized_path", "normalized_bytes", "content_hash", "media_type",
+        "status", NULL
+    };
+    int legacy_valid = 1;
+    int canonical_valid = 1;
+    for (int i = 0; legacy_required[i]; i++) {
+        if (!has_key(json, legacy_required[i])) legacy_valid = 0;
     }
+    for (int i = 0; canonical_required[i]; i++) {
+        if (!has_key(json, canonical_required[i])) canonical_valid = 0;
+    }
+    int valid = legacy_valid || canonical_valid;
 
     char job_slug[256] = "";
     char job_title[256] = "";
     char file_name[256] = "";
+    char content_hash[128] = "";
+    char status[64] = "";
     extract_string_value(json, "jobSlug", job_slug, sizeof(job_slug));
     extract_string_value(json, "jobTitle", job_title, sizeof(job_title));
     extract_string_value(json, "fileName", file_name, sizeof(file_name));
+    if (!file_name[0])
+        extract_string_value(json, "source_file", file_name, sizeof(file_name));
+    extract_string_value(json, "content_hash", content_hash, sizeof(content_hash));
+    extract_string_value(json, "status", status, sizeof(status));
 
     printf("{\n");
     printf("  \"kind\": \"intake-package\",\n");
+    printf("  \"format\": \"%s\",\n", canonical_valid ? "bonfyre-intake-v1" : "legacy-intake");
     printf("  \"path\": \"%s\",\n", path);
     printf("  \"valid\": %s,\n", valid ? "true" : "false");
     printf("  \"jobSlug\": \"%s\",\n", job_slug);
     printf("  \"jobTitle\": \"%s\",\n", job_title);
     printf("  \"fileName\": \"%s\",\n", file_name);
+    printf("  \"contentHash\": \"%s\",\n", content_hash);
+    printf("  \"status\": \"%s\",\n", status);
     printf("  \"sizeBytes\": %ld\n", size);
     printf("}\n");
 

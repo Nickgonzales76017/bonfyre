@@ -186,36 +186,13 @@ static int __attribute__((unused)) find_workflow_dir(char *out, size_t out_sz) {
 }
 
 static char *read_file(const char *path, size_t *out_size) {
-    FILE *fp = fopen(path, "rb");
-    char *buf;
-    size_t nread;
-    long size;
-    if (!fp) return NULL;
-
-    if (fseek(fp, 0, SEEK_END) != 0) {
-        fclose(fp);
+    size_t sz = 0;
+    char *buf = bf_read_file(path, &sz);
+    if (buf && sz > MAX_JSON_BYTES) {
+        free(buf);
         return NULL;
     }
-    size = ftell(fp);
-    if (size < 0 || size > MAX_JSON_BYTES) {
-        fclose(fp);
-        return NULL;
-    }
-    if (fseek(fp, 0, SEEK_SET) != 0) {
-        fclose(fp);
-        return NULL;
-    }
-
-    buf = malloc((size_t)size + 1);
-    if (!buf) {
-        fclose(fp);
-        return NULL;
-    }
-
-    nread = fread(buf, 1, (size_t)size, fp);
-    fclose(fp);
-    buf[nread] = '\0';
-    if (out_size) *out_size = nread;
+    if (out_size) *out_size = sz;
     return buf;
 }
 
@@ -1294,8 +1271,7 @@ static void cmd_list_json(const char *root, const WorkflowSummary *items, int co
 }
 
 static int path_exists(const char *path) {
-    struct stat st;
-    return path && stat(path, &st) == 0 && S_ISREG(st.st_mode);
+    return path && access(path, R_OK) == 0;
 }
 
 static char *fetch_workflow_json_from_catalog(const char *workflow_id) {
@@ -1336,8 +1312,10 @@ static int resolve_workflow_target(const char *arg, const WorkflowSummary *items
     if (strchr(arg, '/') || is_json_file(arg)) {
         if (!path_exists(arg))
             return 0;
+        if (resolved_wf && !load_workflow_summary(arg, resolved_wf))
+            return 0;
         snprintf(target_path, target_path_sz, "%s", arg);
-        return resolved_wf ? load_workflow_summary(target_path, resolved_wf) : 1;
+        return 1;
     }
 
     for (int i = 0; i < count; i++) {

@@ -15,12 +15,7 @@ static void path_join(char *buffer, size_t size, const char *left, const char *r
     snprintf(buffer, size, "%s/%s", left, right);
 }
 
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 static void resolve_executable_sibling(char *buffer, size_t size, const char *argv0, const char *sibling_dir, const char *binary_name) {
     if (argv0 && argv0[0] == '/') {
@@ -116,7 +111,7 @@ int main(int argc, char **argv) {
     path_join(transcribe_dir, sizeof(transcribe_dir), out_dir, "transcribe");
     path_join(cleaned_path, sizeof(cleaned_path), out_dir, "cleaned.txt");
     path_join(paragraphed_path, sizeof(paragraphed_path), out_dir, "paragraphed.md");
-    path_join(transcript_path, sizeof(transcript_path), transcribe_dir, "normalized.txt");
+    path_join(transcript_path, sizeof(transcript_path), transcribe_dir, "transcript.txt");
 
     if (ensure_dir(out_dir) != 0 || ensure_dir(transcribe_dir) != 0) {
         fprintf(stderr, "Failed to create output directories.\n");

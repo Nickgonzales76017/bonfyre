@@ -101,6 +101,7 @@ struct bf_quic_ctx {
 };
 
 struct bf_quic_stream {
+    struct bf_quic_conn   *conn;
     int64_t               stream_id;
     bf_quic_stream_meta_t meta;
     uint64_t              bytes_written;
@@ -108,6 +109,8 @@ struct bf_quic_stream {
     ngtcp2_tstamp         t_start;
     int                   fin_sent;
     int                   header_sent;
+    size_t                header_received;
+    uint8_t               header[STREAM_HEADER_SIZE];
 };
 
 struct bf_quic_conn {
@@ -115,6 +118,8 @@ struct bf_quic_conn {
     SSL                     *ssl;
     bf_quic_ctx_t           *ctx;
     int                      fd;
+    int                      owns_fd;
+    int                      is_server;
     struct sockaddr_storage  remote_addr;
     socklen_t                remote_addrlen;
     struct sockaddr_storage  local_addr;
@@ -132,6 +137,9 @@ struct bf_quic_conn {
 
     /* Connection ref for ngtcp2 TLS integration */
     ngtcp2_crypto_conn_ref   conn_ref;
+    ngtcp2_crypto_ossl_ctx  *crypto_ctx;
+    ngtcp2_cid               scid;
+    ngtcp2_cid               initial_dcid;
 };
 
 struct bf_quic_server {
@@ -142,7 +150,29 @@ struct bf_quic_server {
     void                *user;
     bf_quic_conn_t      *conns[64];
     int                  conn_count;
+    struct sockaddr_storage local_addr;
+    socklen_t            local_addrlen;
 };
+
+static ngtcp2_conn *crypto_get_conn(ngtcp2_crypto_conn_ref *conn_ref)
+{
+    bf_quic_conn_t *conn;
+    if (!conn_ref) return NULL;
+    conn = (bf_quic_conn_t *)conn_ref->user_data;
+    return conn ? conn->qconn : NULL;
+}
+
+static ssize_t quic_send_packet(const bf_quic_conn_t *conn,
+                                const uint8_t *data, size_t len)
+{
+    if (!conn || !data || len == 0) return -1;
+    if (conn->is_server) {
+        return sendto(conn->fd, data, len, 0,
+                      (const struct sockaddr *)&conn->remote_addr,
+                      conn->remote_addrlen);
+    }
+    return send(conn->fd, data, len, 0);
+}
 
 /* ── QUIC stream priority from layer ─────────────────────────── */
 
@@ -198,9 +228,6 @@ static SSL_CTX *create_ssl_ctx(const char *cert_path, const char *key_path, int 
     /* Enable 0-RTT early data */
     SSL_CTX_set_max_early_data(ctx, 0xFFFFFFFF);
 
-    /* ngtcp2 crypto integration */
-    ngtcp2_crypto_ossl_configure_client_context(ctx);
-
     return ctx;
 }
 
@@ -230,8 +257,9 @@ static int recv_stream_data_cb(ngtcp2_conn *conn, uint32_t flags,
                                  const uint8_t *data, size_t datalen,
                                  void *user_data, void *stream_user_data)
 {
-    (void)conn; (void)flags; (void)offset; (void)stream_user_data;
+    (void)conn; (void)stream_user_data;
     bf_quic_conn_t *c = (bf_quic_conn_t *)user_data;
+    bf_quic_stream_t *stream = NULL;
 
     if (!c->recv_cb) return 0;
 
@@ -242,31 +270,40 @@ static int recv_stream_data_cb(ngtcp2_conn *conn, uint32_t flags,
     /* Find which stream this belongs to */
     for (int i = 0; i < c->stream_count; i++) {
         if (c->streams[i].stream_id == stream_id) {
-            family_key = c->streams[i].meta.family_key;
+            stream = &c->streams[i];
+            family_key = stream->meta.family_key;
             break;
         }
     }
 
-    /* If this is the very first data on a new stream, parse the header */
-    if (offset == 0 && datalen >= STREAM_HEADER_SIZE) {
-        if (memcmp(data, STREAM_MAGIC, 4) == 0) {
-            /* Register the stream */
-            if (c->stream_count < MAX_STREAMS) {
-                bf_quic_stream_t *s = &c->streams[c->stream_count];
-                s->stream_id = stream_id;
-                memcpy(s->meta.family_key, data + 4, 16);
-                s->meta.family_key[16] = '\0';
-                s->meta.layer = data[20];
-                s->meta.total_bytes = get_be64(data + 21);
-                memcpy(s->meta.content_hash, data + 29, 64);
-                s->meta.content_hash[64] = '\0';
-                s->t_start = now_ns();
-                c->stream_count++;
-                family_key = s->meta.family_key;
-            }
-            /* Skip header, deliver payload only */
-            data += STREAM_HEADER_SIZE;
-            datalen -= STREAM_HEADER_SIZE;
+    if (!stream && offset == 0 && c->stream_count < MAX_STREAMS) {
+        stream = &c->streams[c->stream_count++];
+        memset(stream, 0, sizeof(*stream));
+        stream->conn = c;
+        stream->stream_id = stream_id;
+        stream->t_start = now_ns();
+    }
+    if (!stream) return 0;
+
+    /* The application header can span QUIC frames; retain it until complete. */
+    while (datalen > 0 && !stream->header_sent) {
+        size_t take = STREAM_HEADER_SIZE - stream->header_received;
+        if (take > datalen) take = datalen;
+        memcpy(stream->header + stream->header_received, data, take);
+        stream->header_received += take;
+        data += take;
+        datalen -= take;
+        if (stream->header_received == STREAM_HEADER_SIZE) {
+            if (memcmp(stream->header, STREAM_MAGIC, sizeof(STREAM_MAGIC)) != 0)
+                return NGTCP2_ERR_CALLBACK_FAILURE;
+            memcpy(stream->meta.family_key, stream->header + 4, 16);
+            stream->meta.family_key[16] = '\0';
+            stream->meta.layer = stream->header[20];
+            stream->meta.total_bytes = get_be64(stream->header + 21);
+            memcpy(stream->meta.content_hash, stream->header + 29, 64);
+            stream->meta.content_hash[64] = '\0';
+            stream->header_sent = 1;
+            family_key = stream->meta.family_key;
         }
     }
 
@@ -309,6 +346,57 @@ static int acked_stream_data_offset_cb(ngtcp2_conn *conn, int64_t stream_id,
     return 0;
 }
 
+static int configure_tls_session(bf_quic_conn_t *conn, const char *host)
+{
+    if (!conn || !conn->ctx || !conn->qconn) return -1;
+    conn->ssl = SSL_new(conn->ctx->ssl_ctx);
+    if (!conn->ssl) return -1;
+    if (ngtcp2_crypto_ossl_ctx_new(&conn->crypto_ctx, conn->ssl) != 0)
+        goto fail;
+    conn->conn_ref.get_conn = crypto_get_conn;
+    conn->conn_ref.user_data = conn;
+    SSL_set_app_data(conn->ssl, &conn->conn_ref);
+    if ((conn->is_server
+             ? ngtcp2_crypto_ossl_configure_server_session(conn->ssl)
+             : ngtcp2_crypto_ossl_configure_client_session(conn->ssl)) != 0)
+        goto fail;
+    if (conn->is_server) {
+        SSL_set_accept_state(conn->ssl);
+        SSL_set_quic_tls_early_data_enabled(conn->ssl, 1);
+    } else {
+        SSL_set_connect_state(conn->ssl);
+        if (host && host[0]) SSL_set_tlsext_host_name(conn->ssl, host);
+    }
+    ngtcp2_conn_set_tls_native_handle(conn->qconn, conn->crypto_ctx);
+    return 0;
+
+fail:
+    if (conn->ssl) {
+        SSL_set_app_data(conn->ssl, NULL);
+        SSL_free(conn->ssl);
+        conn->ssl = NULL;
+    }
+    if (conn->crypto_ctx) {
+        ngtcp2_crypto_ossl_ctx_del(conn->crypto_ctx);
+        conn->crypto_ctx = NULL;
+    }
+    return -1;
+}
+
+static void free_tls_session(bf_quic_conn_t *conn)
+{
+    if (!conn) return;
+    if (conn->ssl) {
+        SSL_set_app_data(conn->ssl, NULL);
+        SSL_free(conn->ssl);
+        conn->ssl = NULL;
+    }
+    if (conn->crypto_ctx) {
+        ngtcp2_crypto_ossl_ctx_del(conn->crypto_ctx);
+        conn->crypto_ctx = NULL;
+    }
+}
+
 /* ── Context lifecycle ───────────────────────────────────────── */
 
 bf_quic_ctx_t *bf_quic_ctx_new(const char *cert_path,
@@ -324,6 +412,11 @@ bf_quic_ctx_t *bf_quic_ctx_new(const char *cert_path,
         free(ctx);
         return NULL;
     }
+    if (ngtcp2_crypto_ossl_init() != 0) {
+        SSL_CTX_free(ctx->ssl_ctx);
+        free(ctx);
+        return NULL;
+    }
 
     if (session_file) {
         ctx->session_file = strdup(session_file);
@@ -336,6 +429,7 @@ void bf_quic_ctx_free(bf_quic_ctx_t *ctx)
 {
     if (!ctx) return;
     SSL_CTX_free(ctx->ssl_ctx);
+    ngtcp2_crypto_ossl_free();
     free(ctx->session_file);
     free(ctx->zerortt_token);
     free(ctx);
@@ -393,6 +487,7 @@ bf_quic_conn_t *bf_quic_connect(bf_quic_ctx_t *ctx,
     bf_quic_conn_t *c = calloc(1, sizeof(*c));
     if (!c) return NULL;
     c->ctx = ctx;
+    c->owns_fd = 1;
 
     c->fd = resolve_and_connect(host, port, &c->remote_addr, &c->remote_addrlen);
     if (c->fd < 0) { free(c); return NULL; }
@@ -400,12 +495,6 @@ bf_quic_conn_t *bf_quic_connect(bf_quic_ctx_t *ctx,
     /* Get local address */
     c->local_addrlen = sizeof(c->local_addr);
     getsockname(c->fd, (struct sockaddr *)&c->local_addr, &c->local_addrlen);
-
-    /* Create SSL */
-    c->ssl = SSL_new(ctx->ssl_ctx);
-    if (!c->ssl) { close(c->fd); free(c); return NULL; }
-    SSL_set_connect_state(c->ssl);
-    SSL_set_tlsext_host_name(c->ssl, host);
 
     /* ngtcp2 client connection */
     ngtcp2_cid scid, dcid;
@@ -419,46 +508,22 @@ bf_quic_conn_t *bf_quic_connect(bf_quic_ctx_t *ctx,
     ngtcp2_addr_init(&path.remote, (struct sockaddr *)&c->remote_addr, c->remote_addrlen);
 
     ngtcp2_callbacks callbacks = {
-        ngtcp2_crypto_client_initial_cb,
-        NULL, /* recv_client_initial */
-        ngtcp2_crypto_recv_crypto_data_cb,
-        NULL, /* handshake_completed */
-        NULL, /* recv_version_negotiation */
-        ngtcp2_crypto_encrypt_cb,
-        ngtcp2_crypto_decrypt_cb,
-        ngtcp2_crypto_hp_mask_cb,
-        recv_stream_data_cb,
-        acked_stream_data_offset_cb,
-        NULL, /* stream_open */
-        stream_close_cb,
-        NULL, /* recv_stateless_reset */
-        ngtcp2_crypto_recv_retry_cb,
-        NULL, /* extend_max_local_bidi_streams */
-        NULL, /* extend_max_local_uni_streams */
-        rand_cb,
-        get_new_cid_cb,
-        NULL, /* remove_connection_id */
-        ngtcp2_crypto_update_key_cb,
-        NULL, /* path_validation */
-        NULL, /* select_preferred_addr */
-        NULL, /* stream_reset */
-        NULL, /* extend_max_remote_bidi_streams */
-        NULL, /* extend_max_remote_uni_streams */
-        NULL, /* extend_max_stream_data */
-        NULL, /* dcid_status */
-        NULL, /* handshake_confirmed */
-        NULL, /* recv_new_token */
-        ngtcp2_crypto_delete_crypto_aead_ctx_cb,
-        ngtcp2_crypto_delete_crypto_cipher_ctx_cb,
-        NULL, /* recv_datagram */
-        NULL, /* ack_datagram */
-        NULL, /* lost_datagram */
-        ngtcp2_crypto_get_path_challenge_data_cb,
-        NULL, /* stream_stop_sending */
-        ngtcp2_crypto_version_negotiation_cb,
-        NULL, /* recv_rx_key */
-        NULL, /* recv_tx_key */
-        NULL, /* early_data_rejected */
+        .client_initial = ngtcp2_crypto_client_initial_cb,
+        .recv_crypto_data = ngtcp2_crypto_recv_crypto_data_cb,
+        .encrypt = ngtcp2_crypto_encrypt_cb,
+        .decrypt = ngtcp2_crypto_decrypt_cb,
+        .hp_mask = ngtcp2_crypto_hp_mask_cb,
+        .recv_stream_data = recv_stream_data_cb,
+        .acked_stream_data_offset = acked_stream_data_offset_cb,
+        .stream_close = stream_close_cb,
+        .recv_retry = ngtcp2_crypto_recv_retry_cb,
+        .rand = rand_cb,
+        .get_new_connection_id = get_new_cid_cb,
+        .update_key = ngtcp2_crypto_update_key_cb,
+        .delete_crypto_aead_ctx = ngtcp2_crypto_delete_crypto_aead_ctx_cb,
+        .delete_crypto_cipher_ctx = ngtcp2_crypto_delete_crypto_cipher_ctx_cb,
+        .get_path_challenge_data = ngtcp2_crypto_get_path_challenge_data_cb,
+        .version_negotiation = ngtcp2_crypto_version_negotiation_cb,
     };
 
     ngtcp2_settings settings;
@@ -486,17 +551,17 @@ bf_quic_conn_t *bf_quic_connect(bf_quic_ctx_t *ctx,
                                       NGTCP2_PROTO_VER_V1, &callbacks,
                                       &settings, &params, NULL, c);
     if (rv != 0) {
-        SSL_free(c->ssl);
         close(c->fd);
         free(c);
         return NULL;
     }
 
-    /* Wire up SSL ↔ ngtcp2 */
-    c->conn_ref.get_conn = NULL;
-    c->conn_ref.user_data = c;
-    SSL_set_app_data(c->ssl, &c->conn_ref);
-    ngtcp2_conn_set_tls_native_handle(c->qconn, c->ssl);
+    if (configure_tls_session(c, host) != 0) {
+        ngtcp2_conn_del(c->qconn);
+        close(c->fd);
+        free(c);
+        return NULL;
+    }
 
     /* Drive initial handshake packets */
     ngtcp2_tstamp ts = now_ns();
@@ -507,7 +572,7 @@ bf_quic_conn_t *bf_quic_connect(bf_quic_ctx_t *ctx,
         nwrite = ngtcp2_conn_write_pkt(c->qconn, NULL, &pi,
                                          c->pkt_buf, sizeof(c->pkt_buf), ts);
         if (nwrite > 0) {
-            send(c->fd, c->pkt_buf, (size_t)nwrite, 0);
+            quic_send_packet(c, c->pkt_buf, (size_t)nwrite);
         }
         if (nwrite == 0 || nwrite == NGTCP2_ERR_WRITE_MORE) break;
 
@@ -551,18 +616,20 @@ void bf_quic_conn_close(bf_quic_conn_t *conn)
     if (conn->qconn) {
         /* Send CONNECTION_CLOSE */
         ngtcp2_pkt_info pi;
+        ngtcp2_ccerr ccerr;
+        ngtcp2_ccerr_default(&ccerr);
         ngtcp2_ssize nwrite = ngtcp2_conn_write_connection_close(
             conn->qconn, NULL, &pi,
             conn->pkt_buf, sizeof(conn->pkt_buf),
-            NULL, now_ns());
+            &ccerr, now_ns());
         if (nwrite > 0) {
-            send(conn->fd, conn->pkt_buf, (size_t)nwrite, 0);
+            quic_send_packet(conn, conn->pkt_buf, (size_t)nwrite);
         }
         ngtcp2_conn_del(conn->qconn);
     }
 
-    if (conn->ssl) SSL_free(conn->ssl);
-    if (conn->fd >= 0) close(conn->fd);
+    free_tls_session(conn);
+    if (conn->owns_fd && conn->fd >= 0) close(conn->fd);
     free(conn);
 }
 
@@ -578,15 +645,13 @@ bf_quic_stream_t *bf_quic_stream_open(bf_quic_conn_t *conn,
     int rv = ngtcp2_conn_open_uni_stream(conn->qconn, &stream_id, NULL);
     if (rv != 0) return NULL;
 
-    /* Set stream priority based on layer */
-    ngtcp2_conn_set_stream_priority(conn->qconn, stream_id,
-        &(ngtcp2_stream_priority){
-            .urgency = layer_to_urgency(meta->layer),
-            .inc = 0
-        });
+    /* ngtcp2 1.24 no longer exposes a per-stream priority API.  Preserve
+     * Bonfyre's layer metadata on the stream; callers can schedule batches
+     * by layer before opening streams. */
 
     bf_quic_stream_t *s = &conn->streams[conn->stream_count++];
     memset(s, 0, sizeof(*s));
+    s->conn = conn;
     s->stream_id = stream_id;
     s->meta = *meta;
     s->t_start = now_ns();
@@ -597,13 +662,60 @@ bf_quic_stream_t *bf_quic_stream_open(bf_quic_conn_t *conn,
 int bf_quic_stream_write(bf_quic_stream_t *stream,
                           const uint8_t *data, size_t len, int fin)
 {
-    if (!stream) return BF_QUIC_ERR_INVALID;
+    bf_quic_conn_t *conn;
+    uint8_t *wire;
+    size_t wire_len, off = 0, payload_off;
+    int guard = 0;
+    if (!stream || (!data && len != 0)) return BF_QUIC_ERR_INVALID;
+    conn = stream->conn;
+    if (!conn || !conn->qconn || stream->fin_sent) return BF_QUIC_ERR_STREAM;
 
-    /* Find the connection that owns this stream */
-    /* Note: in production, stream would carry a back-pointer. For now,
-     * this is called via bf_quic_send_batch which has the conn. */
+    payload_off = stream->header_sent ? 0 : STREAM_HEADER_SIZE;
+    wire_len = payload_off + len;
+    wire = calloc(wire_len ? wire_len : 1, 1);
+    if (!wire) return BF_QUIC_ERR_MEMORY;
+    if (!stream->header_sent) {
+        memcpy(wire, STREAM_MAGIC, sizeof(STREAM_MAGIC));
+        memcpy(wire + 4, stream->meta.family_key, strlen(stream->meta.family_key));
+        wire[20] = stream->meta.layer;
+        put_be64(wire + 21, stream->meta.total_bytes);
+        if (stream->meta.content_hash[0])
+            memcpy(wire + 29, stream->meta.content_hash, strlen(stream->meta.content_hash));
+    }
+    if (len) memcpy(wire + payload_off, data, len);
 
-    stream->bytes_written += len;
+    while (off < wire_len || (wire_len == 0 && guard == 0)) {
+        ngtcp2_pkt_info pi = {0};
+        ngtcp2_vec vec = { .base = wire + off, .len = wire_len - off };
+        ngtcp2_ssize wrote_data = 0;
+        uint32_t flags = fin ? NGTCP2_WRITE_STREAM_FLAG_FIN : NGTCP2_WRITE_STREAM_FLAG_MORE;
+        ngtcp2_ssize nwrite = ngtcp2_conn_writev_stream(
+            conn->qconn, NULL, &pi, conn->pkt_buf, sizeof(conn->pkt_buf),
+            &wrote_data, flags, stream->stream_id, &vec, 1, now_ns());
+        if (nwrite < 0 && nwrite != NGTCP2_ERR_WRITE_MORE) {
+            free(wire);
+            return BF_QUIC_ERR_STREAM;
+        }
+        if (wrote_data > 0) {
+            size_t consumed = (size_t)wrote_data;
+            size_t payload_start = off < payload_off ? payload_off : off;
+            size_t payload_end = off + consumed;
+            if (payload_end > payload_start)
+                stream->bytes_written += payload_end - payload_start;
+            off += consumed;
+            if (off >= payload_off) stream->header_sent = 1;
+        }
+        if (nwrite > 0) quic_send_packet(conn, conn->pkt_buf, (size_t)nwrite);
+        if (nwrite == 0 && wrote_data == 0) {
+            free(wire);
+            return BF_QUIC_ERR_STREAM;
+        }
+        if (++guard > 4096) {
+            free(wire);
+            return BF_QUIC_ERR_STREAM;
+        }
+    }
+    free(wire);
     if (fin) stream->fin_sent = 1;
     return BF_QUIC_OK;
 }
@@ -611,7 +723,7 @@ int bf_quic_stream_write(bf_quic_stream_t *stream,
 void bf_quic_stream_close(bf_quic_stream_t *stream)
 {
     if (stream && !stream->fin_sent)
-        stream->fin_sent = 1;
+        (void)bf_quic_stream_write(stream, NULL, 0, 1);
 }
 
 /* ── Internal: write stream header + payload in one shot ─────── */
@@ -619,6 +731,10 @@ void bf_quic_stream_close(bf_quic_stream_t *stream)
 static int stream_write_full(bf_quic_conn_t *conn, bf_quic_stream_t *s,
                                const uint8_t *payload, size_t len)
 {
+    (void)conn;
+    return bf_quic_stream_write(s, payload, len, 1);
+
+#if 0
     /* Build header */
     uint8_t hdr[STREAM_HEADER_SIZE];
     memcpy(hdr, STREAM_MAGIC, 4);
@@ -640,7 +756,7 @@ static int stream_write_full(bf_quic_conn_t *conn, bf_quic_stream_t *s,
     nwrite = ngtcp2_conn_writev_stream(conn->qconn, NULL, &pi,
                                          conn->pkt_buf, sizeof(conn->pkt_buf),
                                          NULL, 0, s->stream_id,
-                                         &hdr_vec, 1, 0, now_ns());
+                                         &hdr_vec, 1, now_ns());
     if (nwrite > 0)
         send(conn->fd, conn->pkt_buf, (size_t)nwrite, 0);
 
@@ -654,10 +770,8 @@ static int stream_write_full(bf_quic_conn_t *conn, bf_quic_stream_t *s,
         ngtcp2_vec vec = { .base = (uint8_t *)(payload + off), .len = chunk };
         nwrite = ngtcp2_conn_writev_stream(conn->qconn, NULL, &pi,
                                              conn->pkt_buf, sizeof(conn->pkt_buf),
-                                             NULL, 0, s->stream_id,
-                                             &vec, 1,
-                                             is_fin ? NGTCP2_WRITE_STREAM_FLAG_FIN : 0,
-                                             now_ns());
+                                             NULL, is_fin ? NGTCP2_WRITE_STREAM_FLAG_FIN : 0,
+                                             s->stream_id, &vec, 1, now_ns());
         if (nwrite > 0) {
             send(conn->fd, conn->pkt_buf, (size_t)nwrite, 0);
         } else if (nwrite < 0 && nwrite != NGTCP2_ERR_WRITE_MORE) {
@@ -669,6 +783,7 @@ static int stream_write_full(bf_quic_conn_t *conn, bf_quic_stream_t *s,
 
     s->fin_sent = 1;
     return BF_QUIC_OK;
+#endif
 }
 
 /* ── Batch transfer (main BonfyreDistribute path) ────────────── */
@@ -820,7 +935,14 @@ int bf_quic_recv_poll(bf_quic_conn_t *conn, int timeout_ms)
     ngtcp2_pkt_info pi = {0};
     int rv = ngtcp2_conn_read_pkt(conn->qconn, &path, &pi,
                                     buf, (size_t)nread, now_ns());
-    if (rv != 0) return BF_QUIC_ERR_STREAM;
+    if (rv != 0) {
+        const ngtcp2_ccerr *ccerr = ngtcp2_conn_get_ccerr2(conn->qconn);
+        fprintf(stderr, "bf_quic: client read packet failed: %s (tls=%d alert=%u ccerr=%llu)\n",
+                ngtcp2_strerror(rv), ngtcp2_conn_get_tls_error2(conn->qconn),
+                (unsigned)ngtcp2_conn_get_tls_alert2(conn->qconn),
+                (unsigned long long)(ccerr ? ccerr->error_code : 0));
+        return BF_QUIC_ERR_STREAM;
+    }
 
     /* Write any ACKs or response packets */
     for (;;) {
@@ -829,7 +951,7 @@ int bf_quic_recv_poll(bf_quic_conn_t *conn, int timeout_ms)
                                                        sizeof(conn->pkt_buf),
                                                        now_ns());
         if (nwrite <= 0) break;
-        send(conn->fd, conn->pkt_buf, (size_t)nwrite, 0);
+        quic_send_packet(conn, conn->pkt_buf, (size_t)nwrite);
     }
 
     return 1;
@@ -884,6 +1006,13 @@ bf_quic_server_t *bf_quic_server_start(bf_quic_ctx_t *ctx,
         free(srv);
         return NULL;
     }
+    srv->local_addrlen = sizeof(srv->local_addr);
+    if (getsockname(srv->fd, (struct sockaddr *)&srv->local_addr,
+                    &srv->local_addrlen) != 0) {
+        close(srv->fd);
+        free(srv);
+        return NULL;
+    }
 
     /* Non-blocking */
     int flags = fcntl(srv->fd, F_GETFL, 0);
@@ -901,6 +1030,104 @@ bf_quic_server_t *bf_quic_server_start(bf_quic_ctx_t *ctx,
 #endif
 
     return srv;
+}
+
+static int cid_equal_bytes(const ngtcp2_cid *cid, const uint8_t *data, size_t len)
+{
+    return cid && data && cid->datalen == len &&
+           memcmp(cid->data, data, len) == 0;
+}
+
+static int server_flush(bf_quic_conn_t *conn)
+{
+    int sent = 0;
+    for (int guard = 0; guard < 128; guard++) {
+        ngtcp2_pkt_info pi = {0};
+        ngtcp2_ssize nwrite = ngtcp2_conn_write_pkt(
+            conn->qconn, NULL, &pi, conn->pkt_buf, sizeof(conn->pkt_buf), now_ns());
+        if (nwrite < 0) {
+            fprintf(stderr, "bf_quic: server write packet failed: %s\n", ngtcp2_strerror((int)nwrite));
+            return -1;
+        }
+        if (nwrite == 0) break;
+        if (quic_send_packet(conn, conn->pkt_buf, (size_t)nwrite) < 0) return -1;
+        sent++;
+    }
+    return sent;
+}
+
+static bf_quic_conn_t *server_new_connection(bf_quic_server_t *srv,
+                                               const ngtcp2_pkt_hd *hd,
+                                               const struct sockaddr_storage *remote,
+                                               socklen_t remote_len)
+{
+    bf_quic_conn_t *conn;
+    ngtcp2_callbacks callbacks = {
+        .recv_client_initial = ngtcp2_crypto_recv_client_initial_cb,
+        .recv_crypto_data = ngtcp2_crypto_recv_crypto_data_cb,
+        .encrypt = ngtcp2_crypto_encrypt_cb,
+        .decrypt = ngtcp2_crypto_decrypt_cb,
+        .hp_mask = ngtcp2_crypto_hp_mask_cb,
+        .recv_stream_data = recv_stream_data_cb,
+        .acked_stream_data_offset = acked_stream_data_offset_cb,
+        .stream_close = stream_close_cb,
+        .rand = rand_cb,
+        .get_new_connection_id = get_new_cid_cb,
+        .update_key = ngtcp2_crypto_update_key_cb,
+        .delete_crypto_aead_ctx = ngtcp2_crypto_delete_crypto_aead_ctx_cb,
+        .delete_crypto_cipher_ctx = ngtcp2_crypto_delete_crypto_cipher_ctx_cb,
+        .get_path_challenge_data = ngtcp2_crypto_get_path_challenge_data_cb,
+        .version_negotiation = ngtcp2_crypto_version_negotiation_cb,
+    };
+    ngtcp2_settings settings;
+    ngtcp2_transport_params params;
+    ngtcp2_path path;
+    int rv;
+
+    conn = calloc(1, sizeof(*conn));
+    if (!conn) return NULL;
+    conn->ctx = srv->ctx;
+    conn->fd = srv->fd;
+    conn->is_server = 1;
+    memcpy(&conn->local_addr, &srv->local_addr, srv->local_addrlen);
+    conn->local_addrlen = srv->local_addrlen;
+    memcpy(&conn->remote_addr, remote, remote_len);
+    conn->remote_addrlen = remote_len;
+    conn->scid.datalen = NGTCP2_MIN_INITIAL_DCIDLEN;
+    if (RAND_bytes(conn->scid.data, (int)conn->scid.datalen) != 1) goto fail;
+
+    ngtcp2_settings_default(&settings);
+    settings.initial_ts = now_ns();
+    settings.max_window = 24 * 1024 * 1024;
+    settings.max_stream_window = 16 * 1024 * 1024;
+
+    ngtcp2_transport_params_default(&params);
+    params.initial_max_streams_uni = MAX_STREAMS;
+    params.initial_max_streams_bidi = MAX_STREAMS;
+    params.initial_max_stream_data_bidi_local = 16 * 1024 * 1024;
+    params.initial_max_stream_data_bidi_remote = 16 * 1024 * 1024;
+    params.initial_max_stream_data_uni = 16 * 1024 * 1024;
+    params.initial_max_data = 64 * 1024 * 1024;
+    conn->initial_dcid = hd->dcid;
+    params.original_dcid = hd->dcid;
+    params.original_dcid_present = 1;
+
+    ngtcp2_addr_init(&path.local, (struct sockaddr *)&conn->local_addr,
+                     conn->local_addrlen);
+    ngtcp2_addr_init(&path.remote, (struct sockaddr *)&conn->remote_addr,
+                     conn->remote_addrlen);
+    rv = ngtcp2_conn_server_new(&conn->qconn, &hd->scid, &conn->scid, &path,
+                                hd->version, &callbacks, &settings, &params,
+                                NULL, conn);
+    if (rv != 0) goto fail;
+    if (configure_tls_session(conn, NULL) != 0) goto fail;
+    return conn;
+
+fail:
+    if (conn->qconn) ngtcp2_conn_del(conn->qconn);
+    free_tls_session(conn);
+    free(conn);
+    return NULL;
 }
 
 void bf_quic_server_stop(bf_quic_server_t *srv)
@@ -941,12 +1168,48 @@ int bf_quic_server_poll(bf_quic_server_t *srv, int timeout_ms)
                               (struct sockaddr *)&from, &fromlen);
     if (nread <= 0) return 0;
 
-    /* TODO: route to existing connection by DCID or create new one */
-    /* For now, invoke accept callback for new connections */
-    if (srv->on_accept && srv->conn_count < 64) {
-        /* This is simplified — real impl needs DCID routing */
-        (void)buf; (void)nread;
+    ngtcp2_version_cid vc;
+    if (ngtcp2_pkt_decode_version_cid(&vc, buf, (size_t)nread,
+                                      NGTCP2_MIN_INITIAL_DCIDLEN) != 0)
+        return 0;
+
+    bf_quic_conn_t *conn = NULL;
+    for (int i = 0; i < srv->conn_count; i++) {
+        if (cid_equal_bytes(&srv->conns[i]->scid, vc.dcid, vc.dcidlen) ||
+            cid_equal_bytes(&srv->conns[i]->initial_dcid, vc.dcid, vc.dcidlen)) {
+            conn = srv->conns[i];
+            break;
+        }
     }
+    if (!conn) {
+        ngtcp2_pkt_hd hd;
+        if (srv->conn_count >= 64 || ngtcp2_accept(&hd, buf, (size_t)nread) != 0 ||
+            hd.type != NGTCP2_PKT_INITIAL)
+            return 0;
+        conn = server_new_connection(srv, &hd, &from, fromlen);
+        if (!conn) return -1;
+        srv->conns[srv->conn_count++] = conn;
+        if (srv->on_accept) srv->on_accept(conn, srv->user);
+    }
+
+    ngtcp2_path path;
+    ngtcp2_pkt_info pi = {0};
+    ngtcp2_addr_init(&path.local, (struct sockaddr *)&conn->local_addr,
+                     conn->local_addrlen);
+    ngtcp2_addr_init(&path.remote, (struct sockaddr *)&from, fromlen);
+    int read_rv = ngtcp2_conn_read_pkt(conn->qconn, &path, &pi, buf, (size_t)nread,
+                                       now_ns());
+    if (read_rv == NGTCP2_ERR_DRAINING || read_rv == NGTCP2_ERR_CLOSING)
+        return 0;
+    if (read_rv != 0) {
+        const ngtcp2_ccerr *ccerr = ngtcp2_conn_get_ccerr2(conn->qconn);
+        fprintf(stderr, "bf_quic: server read packet failed: %s (tls=%d alert=%u ccerr=%llu)\n",
+                ngtcp2_strerror(read_rv), ngtcp2_conn_get_tls_error2(conn->qconn),
+                (unsigned)ngtcp2_conn_get_tls_alert2(conn->qconn),
+                (unsigned long long)(ccerr ? ccerr->error_code : 0));
+        return -1;
+    }
+    if (server_flush(conn) < 0) return -1;
 
     return n;
 }

@@ -982,21 +982,7 @@ static int copy_file_bytes(const char *src, const char *dst) {
 }
 
 static char *read_file_text_alloc(const char *path) {
-    FILE *fp = fopen(path, "rb");
-    char *buf = NULL;
-    long sz;
-    size_t nread;
-    if (!fp) return NULL;
-    if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return NULL; }
-    sz = ftell(fp);
-    if (sz < 0) { fclose(fp); return NULL; }
-    rewind(fp);
-    buf = (char *)malloc((size_t)sz + 1);
-    if (!buf) { fclose(fp); return NULL; }
-    nread = fread(buf, 1, (size_t)sz, fp);
-    fclose(fp);
-    buf[nread] = '\0';
-    return buf;
+    return bf_read_file(path, NULL);
 }
 
 static int write_text_file(const char *path, const char *text) {

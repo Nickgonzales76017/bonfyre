@@ -15,30 +15,28 @@ static void path_join(char *buffer, size_t size, const char *left, const char *r
     snprintf(buffer, size, "%s/%s", left, right);
 }
 
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 static void resolve_executable_sibling(char *buffer, size_t size, const char *argv0, const char *sibling_dir, const char *binary_name) {
-    if (argv0 && argv0[0] == '/') snprintf(buffer, size, "%s", argv0);
+    char executable[PATH_MAX];
+    char parent[PATH_MAX];
+    if (argv0 && argv0[0] == '/') snprintf(executable, sizeof(executable), "%s", argv0);
     else if (argv0 && strstr(argv0, "/")) {
         char cwd[PATH_MAX];
-        if (getcwd(cwd, sizeof(cwd))) snprintf(buffer, size, "%s/%s", cwd, argv0);
-        else snprintf(buffer, size, "%s", argv0);
+        if (getcwd(cwd, sizeof(cwd))) snprintf(executable, sizeof(executable), "%s/%s", cwd, argv0);
+        else snprintf(executable, sizeof(executable), "%s", argv0);
     } else {
         buffer[0] = '\0';
         return;
     }
-    char *last = strrchr(buffer, '/');
+    char *last = strrchr(executable, '/');
     if (!last) { buffer[0] = '\0'; return; }
     *last = '\0';
-    last = strrchr(buffer, '/');
+    snprintf(parent, sizeof(parent), "%s", executable);
+    last = strrchr(parent, '/');
     if (!last) { buffer[0] = '\0'; return; }
     *last = '\0';
-    snprintf(buffer, size, "%s/%s/%s", buffer, sibling_dir, binary_name);
+    snprintf(buffer, size, "%s/%s/%s", parent, sibling_dir, binary_name);
 }
 
 static const char *default_binary(const char *env_name, const char *argv0, char *resolved, size_t resolved_size, const char *dir, const char *name, const char *fallback) {

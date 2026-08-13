@@ -30,10 +30,7 @@
 
 #define VERSION "1.0.0"
 
-static void iso_timestamp(char *buf, size_t sz) {
-    time_t now = time(NULL); struct tm t; gmtime_r(&now, &t);
-    strftime(buf, sz, "%Y-%m-%dT%H:%M:%SZ", &t);
-}
+static void iso_timestamp(char *buf, size_t sz) { bf_iso_timestamp(buf, sz); }
 
 static void iso_timestamp_future(char *buf, size_t sz, int days) {
     time_t now = time(NULL) + (time_t)days * 86400;
@@ -128,15 +125,7 @@ static int cmd_issue(const char *tier, const char *org, const char *out) {
 }
 
 static char *read_file_full(const char *path) {
-    FILE *fp = fopen(path, "rb");
-    if (!fp) return NULL;
-    fseek(fp, 0, SEEK_END); long sz = ftell(fp); fseek(fp, 0, SEEK_SET);
-    if (sz < 0) { fclose(fp); return NULL; }
-    char *buf = malloc((size_t)sz + 1);
-    if (!buf) { fclose(fp); return NULL; }
-    fread(buf, 1, (size_t)sz, fp); buf[sz] = '\0';
-    fclose(fp);
-    return buf;
+    return bf_read_file(path, NULL);
 }
 
 static int json_str(const char *json, const char *key, char *out, size_t sz) {

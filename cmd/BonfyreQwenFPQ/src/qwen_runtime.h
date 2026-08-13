@@ -76,6 +76,7 @@ typedef struct {
     float *final_norm;    /* [d_model] */
     char *pack_path;
     char *tokenizer_path;
+    char representation[32]; /* verified from indexed tensor storage */
     char *model_id;
     char *tokenizer_id;
     qwen_backend_t backend;

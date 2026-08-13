@@ -1,0 +1,27 @@
+{
+  "bonfyre_root": "/Users/nickgonzales/Documents/Bonfyre",
+  "command_count": 94,
+  "commands": [
+    {"capability_id":"bonfyre_api","command_dir":"BonfyreAPI","binary":"bonfyre-api","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreAPI/bonfyre-api","present":true},
+    {"capability_id":"bonfyre_surface","command_dir":"BonfyreSurface","binary":"bonfyre-surface","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreSurface/bonfyre-surface","present":true},
+    {"capability_id":"bonfyre_capability","command_dir":"BonfyreCapability","binary":"bonfyre-capability","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCapability/bonfyre-capability","present":true},
+    {"capability_id":"bonfyre_rules","command_dir":"BonfyreFrappeCompiler","binary":"bonfyre-frappe-compiler","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFrappeCompiler/bonfyre-frappe-compiler","present":true},
+    {"capability_id":"bonfyre_canon","command_dir":"BonfyreCanon","binary":"bonfyre-canon","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCanon/bonfyre-canon","present":true},
+    {"capability_id":"bonfyre_hash","command_dir":"BonfyreHash","binary":"bonfyre-hash","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreHash/bonfyre-hash","present":true},
+    {"capability_id":"bonfyre_graph","command_dir":"BonfyreGraph","binary":"bonfyre-graph","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreGraph/bonfyre-graph","present":true},
+    {"capability_id":"bonfyre_index","command_dir":"BonfyreIndex","binary":"bonfyre-index","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreIndex/bonfyre-index","present":true},
+    {"capability_id":"bonfyre_query","command_dir":"BonfyreQuery","binary":"bonfyre-query","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreQuery/bonfyre-query","present":true},
+    {"capability_id":"bonfyre_ingest","command_dir":"BonfyreIngest","binary":"bonfyre-ingest","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreIngest/bonfyre-ingest","present":true},
+    {"capability_id":"bonfyre_fragment","command_dir":"BonfyreFragment","binary":"bonfyre-fragment","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFragment/bonfyre-fragment","present":false},
+    {"capability_id":"bonfyre_media_prep","command_dir":"BonfyreMediaPrep","binary":"bonfyre-media-prep","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreMediaPrep/bonfyre-media-prep","present":true},
+    {"capability_id":"bonfyre_workflow","command_dir":"BonfyreWorkflow","binary":"bonfyre-workflow","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreWorkflow/bonfyre-workflow","present":false},
+    {"capability_id":"bonfyre_flow","command_dir":"BonfyreFlow","binary":"bonfyre-flow","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreFlow/bonfyre-flow","present":true},
+    {"capability_id":"bonfyre_ledger","command_dir":"BonfyreLedger","binary":"bonfyre-ledger","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreLedger/bonfyre-ledger","present":true},
+    {"capability_id":"bonfyre_physics","command_dir":"BonfyrePhysics","binary":"bonfyre-physics","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyrePhysics/bonfyre-physics","present":true},
+    {"capability_id":"bonfyre_reason","command_dir":"BonfyreReason","binary":"bonfyre-reason","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreReason/bonfyre-reason","present":true},
+    {"capability_id":"bonfyre_model","command_dir":"BonfyreModel","binary":"bonfyre-model","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreModel/bonfyre-model","present":true},
+    {"capability_id":"bonfyre_embed","command_dir":"BonfyreEmbed","binary":"bonfyre-embed","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreEmbed/bonfyre-embed","present":true},
+    {"capability_id":"bonfyre_vec","command_dir":"BonfyreVec","binary":"bonfyre-vec","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreVec/bonfyre-vec","present":true},
+    {"capability_id":"bonfyre_proof","command_dir":"BonfyreProof","binary":"bonfyre-proof","binary_path":"/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreProof/bonfyre-proof","present":true}
+  ]
+}

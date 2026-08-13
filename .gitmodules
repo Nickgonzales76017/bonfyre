@@ -1,0 +1,3 @@
+[submodule "vendor/hvm4"]
+	path = vendor/hvm4
+	url = https://github.com/HigherOrderCO/HVM4.git

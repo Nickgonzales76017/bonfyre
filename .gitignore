@@ -1,6 +1,7 @@
 # Compiled binaries
 cmd/*/bonfyre-*
 !cmd/*/src/
+!cmd/*/bonfyre-*-selftest
 cmd/*/build/
 cmd/*/obj/
 lib/liblambda-tensors/*.a
@@ -10,18 +11,26 @@ lib/liblambda-tensors/src/*.o
 lib/liblambda-tensors/test_lambda_tensors
 lib/*/obj/
 
+# Python virtual environments
+venv/
+__pycache__/
+*.pyc
+
 # Build artifacts
 *.o
 *.a
 *.so
 *.dylib
 *.dSYM/
+/zig-out/
+/.zig-cache/
 
 # SQLite databases (runtime state)
 *.db
 *.db-journal
 *.db-wal
 *.db-shm
+*.duckdb
 
 # OS files
 .DS_Store
@@ -83,3 +92,6 @@ pipeline/.env
 # Model directories
 models/
 *.cache/huggingface/
+
+# Generated Frappe bench (framework + venv, not source) — never track
+integrations/frappe-bench/

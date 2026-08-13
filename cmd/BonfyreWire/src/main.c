@@ -179,7 +179,12 @@ int main(int argc, char **argv) {
                 snprintf(capture.source_path, sizeof(capture.source_path), "%s", raw_copy);
             }
         }
-        if (bf_wire_ingest_file(root, &capture, path_or_id, payload) != 0) return 1;
+        if (bf_wire_ingest_file(root, &capture, path_or_id, payload) != 0) {
+            fprintf(stderr, "bonfyre-wire ingest-pcap: could not ingest %s "
+                            "(not a readable pcap file or recognized synthetic JSON capture)\n",
+                    path_or_id);
+            return 1;
+        }
         snprintf(capture.status, sizeof(capture.status), "ingested");
         bf_wire_capture_update_summary(root, &capture);
         printf("{\"capture_id\":\"%s\",\"packet_count\":%lld,\"byte_count\":%lld,\"mode\":\"%s\",\"source\":",

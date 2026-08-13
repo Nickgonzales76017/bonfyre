@@ -1,0 +1,56 @@
+workspace Bonfyre
+version 1
+
+root historical-laboratory
+  kind source
+  locator .
+  authority frozen-history
+  mode read-only-by-policy
+
+root native-engine
+  kind source
+  locator engine
+  authority native-fabric
+  mode read-write
+
+root runtime-state
+  kind state
+  locator platform-default
+  authority fabric-core
+  mode read-write
+
+root artifacts
+  kind artifact
+  locator platform-default
+  authority content-addressed
+  mode read-write
+
+root generated
+  kind generated
+  locator platform-default
+  authority fabric-core
+  mode read-write
+
+root model-vault
+  kind model
+  locator platform-default
+  authority model-plane
+  mode read-write
+
+root provider-runtime
+  kind provider
+  locator platform-default
+  authority runtime-image
+  mode read-write
+
+root historical-archive
+  kind archive
+  locator platform-default
+  authority retention-policy
+  mode read-write
+
+root secrets
+  kind secret
+  locator platform-default
+  authority isolated-credentials
+  mode read-write

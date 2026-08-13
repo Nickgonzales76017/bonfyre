@@ -1,0 +1,239 @@
+{
+  "main": {
+    "id": "f56389f00e2194db",
+    "type": "split",
+    "children": [
+      {
+        "id": "7f1dd8ea3255c13a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0f345a38041b2d62",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "4e827a1aaf2aa1a8",
+    "type": "split",
+    "children": [
+      {
+        "id": "34aeea49f612c53b",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "880c9a6d8529ee5c",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "9b1685caa6e562c5",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "4d2670f36b02de5a",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 393.5
+  },
+  "right": {
+    "id": "f189b600108cc1d6",
+    "type": "split",
+    "children": [
+      {
+        "id": "f4f374faf3225a80",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "c3c4c56382bc73a4",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "03-Research/Research - Auto-Producer for Social Shorts.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for Research - Auto-Producer for Social Shorts"
+            }
+          },
+          {
+            "id": "df42b723ad611eea",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "03-Research/Research - Auto-Producer for Social Shorts.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from Research - Auto-Producer for Social Shorts"
+            }
+          },
+          {
+            "id": "8e924c268e8841d9",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "d4c1f76e42d2f335",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "632e7296e4be486d",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "03-Research/Research - Auto-Producer for Social Shorts.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Research - Auto-Producer for Social Shorts"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "random-note:Open random note": false,
+      "workspaces:Manage workspace layouts": false,
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false,
+      "templater-obsidian:Templater": false,
+      "audio-recorder:Start/stop recording": false
+    }
+  },
+  "active": "0f345a38041b2d62",
+  "lastOpenFiles": [
+    "cmd/BonfyreFPQ/build/fpq_native-0627b60b.o.tmp",
+    "cmd/BonfyreEmbed/bonfyre-embed",
+    "integrations/estate/llama_generation.test.mjs",
+    "integrations/estate/llama_generation.mjs",
+    "integrations/estate/control_plane.test.mjs",
+    "integrations/estate/control_plane.mjs",
+    "integrations/estate/model_recovery.test.mjs",
+    "integrations/estate/fixtures/hvm2_smoke.hvm",
+    "integrations/estate/fixtures",
+    "layeros/state/estate-adapter-receipts.jsonl",
+    "integrations/estate/live_adapters.test.mjs",
+    "integrations/estate/README.md",
+    "test-speech/SPEECH_DEMO.md",
+    "10-Code/ZstdFamilyCompressor/README.md",
+    "10-Code/YtdlpIngest/README.md",
+    "10-Code/WhisperModelCacheManager/README.md",
+    "10-Code/WhisperFFmpegWrapperKit/README.md",
+    "10-Code/WhisperAlignment/README.md",
+    "10-Code/WebWorkerSaaS/icons/icon-512.svg",
+    "10-Code/WebWorkerSaaS/icons/icon-192.svg",
+    "10-Code/WebWorkerSaaS/README.md",
+    "10-Code/TreeSitterCanon/README.md",
+    "10-Code/TranscriptQACleaner/README.md",
+    "10-Code/TranscriptParagraphizer/README.md",
+    "10-Code/TranscriptCleanupLayer/README.md",
+    "10-Code/TranscriptAssetStore/README.md",
+    "10-Code/TokenizerLayer/README.md",
+    "10-Code/TesseractOCR/README.md",
+    "10-Code/SummaryPromptPack/README.md",
+    "10-Code/SpeakerSegmentationLayer/README.md",
+    "10-Code/SoxAudioOps/README.md",
+    "10-Code/SimpleIntakePortal/README.md",
+    "10-Code/SileroVADCLI/README.md",
+    "10-Code/ServiceArbitrageHub/README.md",
+    "10-Code/SQLiteGraphStore/README.md",
+    "10-Code/RepackagedServiceMarketplace/README.md",
+    "10-Code/RNNTGrpcServer/README.md",
+    "10-Code/README.md",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/workgraph.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/workers.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/wiki.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/vouchers.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/vectors.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/tensors.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/skills.png",
+    "bonfyre-zig/output/oracle-replica/explainer-agent/explainer_2026-07-27T12-46-58-079Z/shoutout.png",
+    "System Architecture.canvas",
+    "Revenue Pipeline.canvas",
+    "Idea Lifecycle.canvas",
+    "Untitled.canvas"
+  ]
+}

@@ -408,6 +408,46 @@ static int try_operator_candidate(const char *command,
         return file_exists_executable(resolved) ? 0 : -1;
     }
 
+    /* Sibling Bonfyre binaries are tried before a bare $PATH search. A
+     * generic PATH lookup can silently collide with an unrelated system
+     * utility of the same name (e.g. operator "hash" matching the shell's
+     * own /usr/bin/hash), which "succeeds" without ever invoking the real
+     * operator -- exactly the kind of false-positive a recipe stage must
+     * not be able to produce.
+     *
+     * BONFYRE_REPO_ROOT is tried first because a governed invocation's
+     * working directory is a mission-scoped path, not the repo checkout,
+     * so relative cmd/ lookups from the process cwd would never resolve. */
+    {
+        const char *repo_root = getenv("BONFYRE_REPO_ROOT");
+        char cwd[MAX_PATH];
+        const char *bases[3];
+        int base_count = 0;
+        if (repo_root && repo_root[0]) bases[base_count++] = repo_root;
+        if (getcwd(cwd, sizeof(cwd))) bases[base_count++] = cwd;
+
+        static const char *const relative_prefixes[] = {
+            "", "../", "../../", NULL
+        };
+        char candidate[MAX_PATH];
+        for (int b = 0; b < base_count; b++) {
+            for (int i = 0; relative_prefixes[i]; i++) {
+                snprintf(candidate, sizeof(candidate), "%s/%scmd/%s/build/%s",
+                         bases[b], relative_prefixes[i], operator_name, command);
+                if (file_exists_executable(candidate)) {
+                    snprintf(resolved, resolved_size, "%s", candidate);
+                    return 0;
+                }
+                snprintf(candidate, sizeof(candidate), "%s/%scmd/%s/%s",
+                         bases[b], relative_prefixes[i], operator_name, command);
+                if (file_exists_executable(candidate)) {
+                    snprintf(resolved, resolved_size, "%s", candidate);
+                    return 0;
+                }
+            }
+        }
+    }
+
     const char *path_env = getenv("PATH");
     if (path_env) {
         char *paths = xstrdup(path_env);
@@ -426,46 +466,6 @@ static int try_operator_candidate(const char *command,
             }
         }
         free(paths);
-    }
-
-    char cwd[MAX_PATH];
-    if (!getcwd(cwd, sizeof(cwd))) return -1;
-
-    char candidate[MAX_PATH];
-    snprintf(candidate, sizeof(candidate), "%s/cmd/%s/build/%s", cwd, operator_name, command);
-    if (file_exists_executable(candidate)) {
-        snprintf(resolved, resolved_size, "%s", candidate);
-        return 0;
-    }
-
-    snprintf(candidate, sizeof(candidate), "%s/cmd/%s/%s", cwd, operator_name, command);
-    if (file_exists_executable(candidate)) {
-        snprintf(resolved, resolved_size, "%s", candidate);
-        return 0;
-    }
-
-    snprintf(candidate, sizeof(candidate), "%s/../%s/build/%s", cwd, operator_name, command);
-    if (file_exists_executable(candidate)) {
-        snprintf(resolved, resolved_size, "%s", candidate);
-        return 0;
-    }
-
-    snprintf(candidate, sizeof(candidate), "%s/../%s/%s", cwd, operator_name, command);
-    if (file_exists_executable(candidate)) {
-        snprintf(resolved, resolved_size, "%s", candidate);
-        return 0;
-    }
-
-    snprintf(candidate, sizeof(candidate), "%s/../../cmd/%s/build/%s", cwd, operator_name, command);
-    if (file_exists_executable(candidate)) {
-        snprintf(resolved, resolved_size, "%s", candidate);
-        return 0;
-    }
-
-    snprintf(candidate, sizeof(candidate), "%s/../../cmd/%s/%s", cwd, operator_name, command);
-    if (file_exists_executable(candidate)) {
-        snprintf(resolved, resolved_size, "%s", candidate);
-        return 0;
     }
 
     return -1;

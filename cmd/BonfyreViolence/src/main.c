@@ -55,8 +55,8 @@
 #define EMBED_DIM   32u
 #define N_VECS      128u
 #define N_STEPS     32
-#define PACK_PATH   "/tmp/bonfyre-violence.bfpk"
-#define BVH_PATH    "/tmp/bonfyre-violence.bfvh"
+static const char *pack_path = "/tmp/bonfyre-violence.bfpk";
+static const char *bvh_path = "/tmp/bonfyre-violence.bfvh";
 #define REAL_DATA_DEFAULT "real-data"
 /* Override corpus path via BF_REAL_DATA env var, fallback to ./real-data */
 static const char *real_data_path(void) {
@@ -186,7 +186,19 @@ static void print_hash8(const uint8_t h[32]) {
 }
 
 /* ── main ────────────────────────────────────────────────────────────── */
-int main(void) {
+int main(int argc, char **argv) {
+    for (int index = 1; index < argc; index++) {
+        if (strcmp(argv[index], "--data") == 0 && index + 1 < argc) {
+            setenv("BF_REAL_DATA", argv[++index], 1);
+        } else if (strcmp(argv[index], "--pack") == 0 && index + 1 < argc) {
+            pack_path = argv[++index];
+        } else if (strcmp(argv[index], "--bvh") == 0 && index + 1 < argc) {
+            bvh_path = argv[++index];
+        } else {
+            fprintf(stderr, "usage: bonfyre-violence [--data DIR] [--pack FILE] [--bvh FILE]\n");
+            return 1;
+        }
+    }
     printf("\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n");
     printf("  BONFYRE VIOLENCE TEST  —  real coupling run\n");
     printf("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
@@ -199,24 +211,24 @@ int main(void) {
 
     /* ── 2. build pack ── */
     uint32_t n_packed = 0;
-    if (bf_embed_pack_build(PACK_PATH, &n_packed) != 0) {
+    if (bf_embed_pack_build(pack_path, &n_packed) != 0) {
         fprintf(stderr, "violence: bf_embed_pack_build failed\n"); return 1;
     }
-    printf("  ▶ pack built: %u vectors → %s\n", n_packed, PACK_PATH);
+    printf("  ▶ pack built: %u vectors → %s\n", n_packed, pack_path);
 
     /* ── 3. build BVH ── */
-    if (bf_embed_bvh_build(PACK_PATH, BVH_PATH) != 0) {
+    if (bf_embed_bvh_build(pack_path, bvh_path) != 0) {
         fprintf(stderr, "violence: bf_embed_bvh_build failed\n"); return 1;
     }
-    printf("  ▶ BVH  built: %s\n", BVH_PATH);
+    printf("  ▶ BVH  built: %s\n", bvh_path);
 
     /* ── 4. open pack + BVH ── */
     BfEmbedPack pack = {0};
     BfEmbedBVH  bvh  = {0};
-    if (bf_embed_pack_open(&pack, PACK_PATH) != 0) {
+    if (bf_embed_pack_open(&pack, pack_path) != 0) {
         fprintf(stderr, "violence: cannot open pack\n"); return 1;
     }
-    if (bf_embed_bvh_open(&bvh, BVH_PATH) != 0) {
+    if (bf_embed_bvh_open(&bvh, bvh_path) != 0) {
         fprintf(stderr, "violence: cannot open BVH\n");
         bf_embed_pack_close(&pack); return 1;
     }

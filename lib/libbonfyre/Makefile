@@ -15,6 +15,7 @@ SRCS    = $(SRCDIR)/bf_artifact.c \
           $(SRCDIR)/bf_discipl.c \
           $(SRCDIR)/bf_layer_artifact.c \
           $(SRCDIR)/bf_catalog.c \
+          $(SRCDIR)/bf_catalog_generation.c \
           $(SRCDIR)/bf_sha256.c \
           $(SRCDIR)/bf_operators.c \
           $(SRCDIR)/bf_sae.c

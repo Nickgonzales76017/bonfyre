@@ -1,0 +1,16 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+recursive-include bonfyre_erpnext *.css
+recursive-include bonfyre_erpnext *.csv
+recursive-include bonfyre_erpnext *.html
+recursive-include bonfyre_erpnext *.ico
+recursive-include bonfyre_erpnext *.js
+recursive-include bonfyre_erpnext *.json
+recursive-include bonfyre_erpnext *.md
+recursive-include bonfyre_erpnext *.png
+recursive-include bonfyre_erpnext *.py
+recursive-include bonfyre_erpnext *.svg
+recursive-include bonfyre_erpnext *.txt
+recursive-exclude bonfyre_erpnext *.pyc

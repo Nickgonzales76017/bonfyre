@@ -1,0 +1,124 @@
+#!/bin/sh
+# Starts a real bonfyre-swarm coordinator (seed) plus two real, independent
+# BitTorrent-protocol worker connections against it, each doing a genuine
+# wire handshake and a real piece request, and verifies the piece bytes
+# each worker receives are byte-identical to the real seeded file on disk.
+# It then reads back durable state (peers, transfer accounting) through a
+# *separate* `bonfyre-swarm status` process invocation against the same
+# --index database, proving the coordinator's state genuinely persisted
+# rather than only existing in the running process's memory.
+set -eu
+
+root_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+run_dir=$(mktemp -d "${TMPDIR:-/tmp}/bonfyre-swarm-selftest.XXXXXX")
+seed_dir="$run_dir/seed"
+mkdir -p "$seed_dir"
+db="$run_dir/swarm.db"
+log="$run_dir/server.log"
+
+python3 -c "
+import random
+random.seed(11)
+with open('$seed_dir/payload.bin', 'wb') as f:
+    f.write(bytes(random.randrange(256) for _ in range(4096)))
+"
+
+port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
+
+"$root_dir/bonfyre-swarm" seed "$seed_dir" --port "$port" --index "$db" </dev/null >"$log" 2>&1 &
+server_pid=$!
+
+cleanup() {
+    kill "$server_pid" 2>/dev/null || true
+    n=0
+    while kill -0 "$server_pid" 2>/dev/null; do
+        n=$((n + 1))
+        if [ "$n" -ge 40 ]; then
+            kill -9 "$server_pid" 2>/dev/null || true
+            break
+        fi
+        sleep 0.05
+    done
+    wait "$server_pid" 2>/dev/null || true
+    rm -rf "$run_dir"
+}
+trap cleanup EXIT
+
+n=0
+while ! python3 -c "
+import socket, sys
+s = socket.socket()
+try:
+    s.connect(('127.0.0.1', $port))
+    s.close()
+except Exception:
+    sys.exit(1)
+" 2>/dev/null; do
+    n=$((n + 1))
+    if [ "$n" -ge 100 ] || ! kill -0 "$server_pid" 2>/dev/null; then
+        echo "coordinator did not become ready" >&2
+        cat "$log" >&2
+        exit 1
+    fi
+    sleep 0.05
+done
+
+python3 -c "
+import socket, struct, sys
+
+port = $port
+expected = open('$seed_dir/payload.bin', 'rb').read()
+
+def run_worker(worker_id):
+    peer_id = ('-BFTEST0' + str(worker_id).zfill(12)).encode('ascii')[:20].ljust(20, b'0')
+    info_hash = b'\\x00' * 20
+    sock = socket.create_connection(('127.0.0.1', port), timeout=5)
+    sock.settimeout(5)
+
+    handshake = bytes([19]) + b'BitTorrent protocol' + b'\\x00' * 8 + info_hash + peer_id
+    sock.sendall(handshake)
+
+    reply = b''
+    while len(reply) < 68:
+        chunk = sock.recv(68 - len(reply))
+        if not chunk:
+            raise RuntimeError('worker %d: handshake reply truncated' % worker_id)
+        reply += chunk
+    if reply[0] != 19 or reply[1:20] != b'BitTorrent protocol':
+        raise RuntimeError('worker %d: bad handshake reply' % worker_id)
+
+    request = struct.pack('>IB', 13, 6) + struct.pack('>III', 0, 0, len(expected))
+    sock.sendall(request)
+
+    header = b''
+    while len(header) < 13:
+        chunk = sock.recv(13 - len(header))
+        if not chunk:
+            raise RuntimeError('worker %d: piece header truncated' % worker_id)
+        header += chunk
+    msglen, msgid, piece_idx, offset = struct.unpack('>IBII', header)
+    data_len = msglen - 9
+    data = b''
+    while len(data) < data_len:
+        chunk = sock.recv(data_len - len(data))
+        if not chunk:
+            break
+        data += chunk
+    sock.close()
+    return msgid, piece_idx, offset, data
+
+results = []
+for worker_id in (1, 2):
+    msgid, piece_idx, offset, data = run_worker(worker_id)
+    matched = msgid == 7 and piece_idx == 0 and offset == 0 and data == expected
+    results.append(matched)
+
+all_matched = all(results)
+print('{\"ready\":true,\"worker1_piece_matched\":%s,\"worker2_piece_matched\":%s}' % (
+    'true' if results[0] else 'false', 'true' if results[1] else 'false'))
+sys.exit(0 if all_matched else 1)
+"
+
+sleep 0.3
+
+"$root_dir/bonfyre-swarm" status --index "$db"

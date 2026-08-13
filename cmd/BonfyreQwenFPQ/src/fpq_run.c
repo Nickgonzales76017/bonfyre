@@ -1575,11 +1575,6 @@ static int fpq_logits_collapsed(const float *logits, int vocab_size,
     return 0;
 }
 
-static int fpq_bootstrap_zero_matmul_enabled(void) {
-    const char *v = getenv("BONFYRE_QWEN_BOOTSTRAP_ZERO_MATMUL");
-    return v && v[0] && strcmp(v, "0") != 0;
-}
-
 static const char *fpq_cfg_embed_tensor_name(const fpq_run_config_t *cfg) {
     return (cfg && cfg->embed_tensor_name[0]) ? cfg->embed_tensor_name : "model.embed_tokens.weight";
 }
@@ -2336,6 +2331,64 @@ static void qwen_log_norm_inventory_once(const float *norm_layers, int n_lay, in
     }
 }
 
+/* The extension says nothing about the representation of its tensors.  The
+ * native pack can also mix formats, so dispatch is based on the seven actual
+ * layer matrices used by prefill.  A mixed core layer has no safe concurrent
+ * cache invariant in this runtime and is rejected before submitting work. */
+static int fpq_prefill_layer_representation(fpq_model_t *model,
+                                            const fpq_run_config_t *cfg,
+                                            int lay,
+                                            int *native_fp16_out) {
+    static const char *const suffixes[] = {
+        "self_attn.q_proj.weight", "self_attn.k_proj.weight",
+        "self_attn.v_proj.weight", "self_attn.o_proj.weight",
+        "mlp.gate_proj.weight", "mlp.up_proj.weight", "mlp.down_proj.weight",
+    };
+    const size_t expected_rows[] = {
+        (size_t)cfg->n_heads * (size_t)cfg->head_dim,
+        (size_t)cfg->n_kv_heads * (size_t)cfg->head_dim,
+        (size_t)cfg->n_kv_heads * (size_t)cfg->head_dim,
+        (size_t)cfg->d_model, (size_t)cfg->d_ffn, (size_t)cfg->d_ffn,
+        (size_t)cfg->d_model,
+    };
+    const size_t expected_cols[] = {
+        (size_t)cfg->d_model, (size_t)cfg->d_model, (size_t)cfg->d_model,
+        (size_t)cfg->n_heads * (size_t)cfg->head_dim,
+        (size_t)cfg->d_model, (size_t)cfg->d_model, (size_t)cfg->d_ffn,
+    };
+    int native_count = 0;
+
+    if (native_fp16_out) *native_fp16_out = 0;
+    if (!model || !cfg || lay < 0 || !native_fp16_out) return -1;
+    for (size_t i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); i++) {
+        char name[FPQ_RUN_NAME_BUF];
+        const fpq_tensor_info_t *info;
+        fpq_tensor_storage_t storage;
+        tname(name, cfg->arch, suffixes[i], lay);
+        info = fpq_tensor_find(model, name);
+        storage = fpq_tensor_storage(model, name);
+        if (!info || storage == FPQ_TENSOR_STORAGE_UNKNOWN) {
+            fprintf(stderr, "fpq_prefill: missing tensor layer=%d tensor=%s\n", lay, name);
+            return -1;
+        }
+        if (info->rows != expected_rows[i] || info->cols != expected_cols[i]) {
+            fprintf(stderr,
+                    "fpq_prefill: shape mismatch layer=%d tensor=%s got=%zux%zu expected=%zux%zu\n",
+                    lay, name, info->rows, info->cols, expected_rows[i], expected_cols[i]);
+            return -1;
+        }
+        if (storage == FPQ_TENSOR_STORAGE_NATIVE_FP16) native_count++;
+    }
+    if (native_count != 0 && native_count != (int)(sizeof(suffixes) / sizeof(suffixes[0]))) {
+        fprintf(stderr,
+                "fpq_prefill: unsupported mixed core storage layer=%d native_fp16=%d compressed=%zu\n",
+                lay, native_count, (sizeof(suffixes) / sizeof(suffixes[0])) - (size_t)native_count);
+        return -1;
+    }
+    *native_fp16_out = native_count != 0;
+    return 0;
+}
+
 static int fpq_run_flash_prefill_prefix(
         fpq_model_t *model,
         const float *embed_table,
@@ -2356,6 +2409,14 @@ static int fpq_run_flash_prefill_prefix(
     const float theta = cfg->rope_theta;
     const fpq_run_arch_t arch = cfg->arch;
     if (!model || !prompt_ids || prefix_len <= 0 || !cfg || !state || !norm_layers) return 0;
+    if (d <= 0 || d_ffn <= 0 || n_lay <= 0 || n_h <= 0 || n_kv <= 0 || hd <= 0 ||
+        n_h * hd != d || n_kv > n_h || prefix_len > max_seq ||
+        !state->k_caches || !state->v_caches) {
+        fprintf(stderr,
+                "fpq_prefill: invalid configuration d=%d ffn=%d layers=%d heads=%d kv_heads=%d head_dim=%d prefix=%d max_seq=%d\n",
+                d, d_ffn, n_lay, n_h, n_kv, hd, prefix_len, max_seq);
+        return -1;
+    }
 
     size_t token_stride_d = (size_t)d;
     size_t token_stride_ffn = (size_t)d_ffn;
@@ -2417,6 +2478,19 @@ static int fpq_run_flash_prefill_prefix(
         char prewarm_v[FPQ_RUN_NAME_BUF];
         char prewarm_up[FPQ_RUN_NAME_BUF];
         char prewarm_gate[FPQ_RUN_NAME_BUF];
+        int native_fp16_layer = 0;
+        int inline_tasks;
+
+        if (fpq_prefill_layer_representation(model, cfg, lay, &native_fp16_layer) != 0) {
+            free(hs); free(h_norms); free(qs); free(ks); free(vs);
+            free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
+            return -1;
+        }
+        /* FP16 task bodies perform full GEMVs.  Serializing them after the
+         * per-layer acquire below bounds inflight work at one and makes each
+         * matrix cache owned by exactly this layer.  Compressed V9 retains the
+         * established parallel prefill path. */
+        inline_tasks = native_fp16_layer || qwen_inline_prefill_threads_enabled();
 
         clock_gettime(CLOCK_MONOTONIC, &seg_t0);
         for (int t = 0; t < prefix_len; t++) {
@@ -2467,10 +2541,11 @@ static int fpq_run_flash_prefill_prefix(
         {
             clock_gettime(CLOCK_MONOTONIC, &seg_t0);
             pthread_t *threads = (pthread_t *)calloc((size_t)prefix_len, sizeof(*threads));
+            unsigned char *submitted = (unsigned char *)calloc((size_t)prefix_len, 1);
             fpq_prefill_qkv_task_t *tasks =
                 (fpq_prefill_qkv_task_t *)calloc((size_t)prefix_len, sizeof(*tasks));
-            if (!threads || !tasks) {
-                free(threads); free(tasks);
+            if (!threads || !submitted || !tasks) {
+                free(threads); free(submitted); free(tasks);
                 free(hs); free(h_norms); free(qs); free(ks); free(vs);
                 free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
                 return -1;
@@ -2488,24 +2563,27 @@ static int fpq_run_flash_prefill_prefix(
                 tasks[t].q_buf = qs + (size_t)t * token_stride_q;
                 tasks[t].k_buf = ks + (size_t)t * token_stride_kv;
                 tasks[t].v_buf = vs + (size_t)t * token_stride_kv;
-                if (qwen_inline_prefill_threads_enabled()) {
+                if (inline_tasks) {
                     (void)fpq_prefill_qkv_thread_fn(&tasks[t]);
                 } else if (pthread_create(&threads[t], qwen_small_pthread_attr(), fpq_prefill_qkv_thread_fn, &tasks[t]) != 0) {
                     tasks[t].rc = -1;
+                } else {
+                    submitted[t] = 1;
                 }
             }
             for (int t = 0; t < prefix_len; t++) {
-                if (!qwen_inline_prefill_threads_enabled()) {
+                if (!inline_tasks && submitted[t]) {
                     pthread_join(threads[t], NULL);
                 }
                 if (tasks[t].rc != 0) {
-                    free(threads); free(tasks);
+                    free(threads); free(submitted); free(tasks);
                     free(hs); free(h_norms); free(qs); free(ks); free(vs);
                     free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
                     return -1;
                 }
             }
             free(threads);
+            free(submitted);
             free(tasks);
             clock_gettime(CLOCK_MONOTONIC, &seg_t1);
             qkv_seconds = fpq_elapsed_seconds(&seg_t0, &seg_t1);
@@ -2546,10 +2624,11 @@ static int fpq_run_flash_prefill_prefix(
         {
             clock_gettime(CLOCK_MONOTONIC, &seg_t0);
             pthread_t *threads = (pthread_t *)calloc((size_t)prefix_len, sizeof(*threads));
+            unsigned char *submitted = (unsigned char *)calloc((size_t)prefix_len, 1);
             fpq_prefill_o_task_t *tasks =
                 (fpq_prefill_o_task_t *)calloc((size_t)prefix_len, sizeof(*tasks));
-            if (!threads || !tasks) {
-                free(threads); free(tasks);
+            if (!threads || !submitted || !tasks) {
+                free(threads); free(submitted); free(tasks);
                 free(hs); free(h_norms); free(qs); free(ks); free(vs);
                 free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
                 return -1;
@@ -2561,18 +2640,20 @@ static int fpq_run_flash_prefill_prefix(
                 tasks[t].d = d;
                 tasks[t].attn_in = attn_outs + (size_t)t * token_stride_q;
                 tasks[t].o_buf = os + (size_t)t * token_stride_d;
-                if (qwen_inline_prefill_threads_enabled()) {
+                if (inline_tasks) {
                     (void)fpq_prefill_o_thread_fn(&tasks[t]);
                 } else if (pthread_create(&threads[t], qwen_small_pthread_attr(), fpq_prefill_o_thread_fn, &tasks[t]) != 0) {
                     tasks[t].rc = -1;
+                } else {
+                    submitted[t] = 1;
                 }
             }
             for (int t = 0; t < prefix_len; t++) {
-                if (!qwen_inline_prefill_threads_enabled()) {
+                if (!inline_tasks && submitted[t]) {
                     pthread_join(threads[t], NULL);
                 }
                 if (tasks[t].rc != 0) {
-                    free(threads); free(tasks);
+                    free(threads); free(submitted); free(tasks);
                     free(hs); free(h_norms); free(qs); free(ks); free(vs);
                     free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
                     return -1;
@@ -2582,6 +2663,7 @@ static int fpq_run_flash_prefill_prefix(
                 for (int i = 0; i < d; i++) h[i] += o[i];
             }
             free(threads);
+            free(submitted);
             free(tasks);
             clock_gettime(CLOCK_MONOTONIC, &seg_t1);
             o_seconds = fpq_elapsed_seconds(&seg_t0, &seg_t1);
@@ -2601,10 +2683,11 @@ static int fpq_run_flash_prefill_prefix(
         {
             clock_gettime(CLOCK_MONOTONIC, &seg_t0);
             pthread_t *threads = (pthread_t *)calloc((size_t)prefix_len, sizeof(*threads));
+            unsigned char *submitted = (unsigned char *)calloc((size_t)prefix_len, 1);
             fpq_prefill_mlp_task_t *tasks =
                 (fpq_prefill_mlp_task_t *)calloc((size_t)prefix_len, sizeof(*tasks));
-            if (!threads || !tasks) {
-                free(threads); free(tasks);
+            if (!threads || !submitted || !tasks) {
+                free(threads); free(submitted); free(tasks);
                 free(hs); free(h_norms); free(qs); free(ks); free(vs);
                 free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
                 return -1;
@@ -2619,18 +2702,20 @@ static int fpq_run_flash_prefill_prefix(
                 tasks[t].gate_buf = gates + (size_t)t * token_stride_ffn;
                 tasks[t].up_buf = ups + (size_t)t * token_stride_ffn;
                 tasks[t].ffn_out = ffns + (size_t)t * token_stride_d;
-                if (qwen_inline_prefill_threads_enabled()) {
+                if (inline_tasks) {
                     (void)fpq_prefill_mlp_thread_fn(&tasks[t]);
                 } else if (pthread_create(&threads[t], qwen_small_pthread_attr(), fpq_prefill_mlp_thread_fn, &tasks[t]) != 0) {
                     tasks[t].rc = -1;
+                } else {
+                    submitted[t] = 1;
                 }
             }
             for (int t = 0; t < prefix_len; t++) {
-                if (!qwen_inline_prefill_threads_enabled()) {
+                if (!inline_tasks && submitted[t]) {
                     pthread_join(threads[t], NULL);
                 }
                 if (tasks[t].rc != 0) {
-                    free(threads); free(tasks);
+                    free(threads); free(submitted); free(tasks);
                     free(hs); free(h_norms); free(qs); free(ks); free(vs);
                     free(attn_outs); free(os); free(gates); free(ups); free(ffns); free(attn_scratch);
                     return -1;
@@ -2640,6 +2725,7 @@ static int fpq_run_flash_prefill_prefix(
                 for (int i = 0; i < d; i++) h[i] += ffn[i];
             }
             free(threads);
+            free(submitted);
             free(tasks);
             clock_gettime(CLOCK_MONOTONIC, &seg_t1);
             mlp_seconds = fpq_elapsed_seconds(&seg_t0, &seg_t1);
@@ -2651,7 +2737,7 @@ static int fpq_run_flash_prefill_prefix(
             state->metrics.prefill_layer_total_seconds[lay] += fpq_elapsed_seconds(&lay_t0, &lay_t1);
             state->metrics.prefill_layer_prepare_seconds[lay] += prepare_seconds;
         }
-        if (qwen_release_layer_after_prefill_enabled()) {
+        if (native_fp16_layer || qwen_release_layer_after_prefill_enabled()) {
             struct timespec release_t0 = {0};
             struct timespec release_t1 = {0};
             clock_gettime(CLOCK_MONOTONIC, &release_t0);
@@ -3587,16 +3673,10 @@ if (qwen_log_layer_progress_enabled()) {
             fpq_lm_head_row_probe(model, h_norm, logits, sample_n_vocab, cfg, step);
             if (fpq_logits_collapsed(logits, sample_n_vocab,
                                      &min_logit, &max_logit, &non_finite)) {
-                if (fpq_bootstrap_zero_matmul_enabled()) {
-                    fprintf(stderr,
-                            "qwen_runtime: bootstrap collapsed logits tolerated (min=%g max=%g non_finite=%d)\n",
-                            (double)min_logit, (double)max_logit, non_finite);
-                } else {
-                    fprintf(stderr,
-                            "qwen_runtime: FATAL collapsed logits (min=%g max=%g non_finite=%d)\n",
-                            (double)min_logit, (double)max_logit, non_finite);
-                    return -1;
-                }
+                fprintf(stderr,
+                        "qwen_runtime: FATAL collapsed logits (min=%g max=%g non_finite=%d)\n",
+                        (double)min_logit, (double)max_logit, non_finite);
+                return -1;
             }
         }
 

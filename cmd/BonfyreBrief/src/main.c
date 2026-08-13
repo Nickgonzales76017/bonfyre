@@ -37,12 +37,7 @@ static VocabEntry g_vocab[MAX_VOCAB];
 static int g_vocab_count = 0;
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
-static void iso_timestamp(char *buffer, size_t size) {
-    time_t now = time(NULL);
-    struct tm tm_utc;
-    gmtime_r(&now, &tm_utc);
-    strftime(buffer, size, "%Y-%m-%dT%H:%M:%SZ", &tm_utc);
-}
+static void iso_timestamp(char *buffer, size_t size) { bf_iso_timestamp(buffer, size); }
 
 static char *trim_copy(const char *src) {
     while (*src && isspace((unsigned char)*src)) src++;

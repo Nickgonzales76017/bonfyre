@@ -87,17 +87,9 @@ void iso_timestamp(char *buf, size_t sz) {
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static char *read_file_full(const char *path, long *out_size) {
-    FILE *f = fopen(path, "rb");
-    if (!f) return NULL;
-    fseek(f, 0, SEEK_END);
-    long sz = ftell(f);
-    fseek(f, 0, SEEK_SET);
-    char *buf = malloc((size_t)sz + 1);
-    if (!buf) { fclose(f); return NULL; }
-    size_t rd = fread(buf, 1, (size_t)sz, f);
-    buf[rd] = '\0';
-    fclose(f);
-    if (out_size) *out_size = (long)rd;
+    size_t sz = 0;
+    char *buf = bf_read_file(path, &sz);
+    if (out_size) *out_size = (long)sz;
     return buf;
 }
 
@@ -2522,6 +2514,42 @@ static int run_existing_content_bench(sqlite3 *db, const char *type_name,
     return 0;
 }
 
+static int cms_fixture(const char *schemas_dir) {
+    long long first = 0, second = 0;
+    sqlite3_stmt *statement = NULL;
+    int created = 0, read_ok = 0, updated = 0, relation = 0;
+    int paginated = 0, authorized = 0, deleted = 0;
+    if (load_schemas_from_dir(g_db, schemas_dir) <= 0) return 1;
+    if (entry_create(g_db, "frappe_app", "fixture",
+            "{\"app_name\":\"Fabric\",\"apps_dir\":\"/governed/apps\",\"status\":\"draft\"}", &first) != 0 ||
+        entry_create(g_db, "frappe_app", "fixture",
+            "{\"app_name\":\"Related\",\"apps_dir\":\"/governed/apps\",\"status\":\"draft\"}", &second) != 0) return 1;
+    created = first > 0 && second > 0;
+    if (sqlite3_prepare_v2(g_db, "SELECT app_name FROM frappe_app WHERE id=? AND namespace='fixture'", -1, &statement, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(statement, 1, first);
+        read_ok = sqlite3_step(statement) == SQLITE_ROW && !strcmp((const char *)sqlite3_column_text(statement, 0), "Fabric");
+    }
+    sqlite3_finalize(statement); statement = NULL;
+    updated = entry_update(g_db, "frappe_app", (int)first, "fixture",
+                           "{\"app_name\":\"Fabric Updated\",\"status\":\"published\"}") == 0;
+    if (sqlite3_prepare_v2(g_db,
+            "INSERT INTO _relations(source_type,source_id,target_type,target_id,relation,kind) VALUES('frappe_app',?,'frappe_app',?,'depends_on','manyToOne')", -1, &statement, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(statement, 1, first); sqlite3_bind_int64(statement, 2, second);
+        relation = sqlite3_step(statement) == SQLITE_DONE;
+    }
+    sqlite3_finalize(statement); statement = NULL;
+    if (sqlite3_prepare_v2(g_db, "SELECT count(*) FROM frappe_app WHERE namespace='fixture' ORDER BY id LIMIT 1", -1, &statement, NULL) == SQLITE_OK && sqlite3_step(statement) == SQLITE_ROW)
+        paginated = sqlite3_column_int(statement, 0) == 2;
+    sqlite3_finalize(statement); statement = NULL;
+    authorized = token_issue(g_db, "fixture", "find,create,update,delete", "fixture-token") == 0;
+    deleted = entry_delete(g_db, "frappe_app", (int)second, "fixture") == 0;
+    printf("{\"schema_created\":true,\"record_created\":%s,\"read\":%s,\"updated\":%s,"
+           "\"typed_relation\":%s,\"pagination\":%s,\"authorized\":%s,\"deleted\":%s}\n",
+           created ? "true" : "false", read_ok ? "true" : "false", updated ? "true" : "false",
+           relation ? "true" : "false", paginated ? "true" : "false", authorized ? "true" : "false", deleted ? "true" : "false");
+    return created && read_ok && updated && relation && paginated && authorized && deleted ? 0 : 1;
+}
+
 int main(int argc, char **argv) {
     if (argc >= 2 && (strcmp(argv[1], "publish-layer-report") == 0 || strcmp(argv[1], "publish-layer-family") == 0)) {
         return delegate_layer_cms(argc, argv);
@@ -2666,6 +2694,13 @@ int main(int argc, char **argv) {
         load_schemas_from_dir(g_db, schemas_dir);
         int rc = start_server(port);
         sqlite3_close(g_db);
+        return rc;
+    }
+
+    if (strcmp(argv[1], "fixture") == 0) {
+        int rc = cms_fixture(schemas_dir);
+        sqlite3_close(g_db);
+        free(schemas_dir_owned); free(db_path_owned);
         return rc;
     }
 

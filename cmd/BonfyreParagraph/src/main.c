@@ -23,33 +23,7 @@ typedef struct {
 
 static int ensure_dir(const char *path) { return bf_ensure_dir(path); }
 static char *read_file(const char *path) {
-    FILE *in = fopen(path, "rb");
-    char *buffer;
-    long size;
-    if (!in) return NULL;
-    if (fseek(in, 0, SEEK_END) != 0) {
-        fclose(in);
-        return NULL;
-    }
-    size = ftell(in);
-    if (size < 0) {
-        fclose(in);
-        return NULL;
-    }
-    rewind(in);
-    buffer = malloc((size_t)size + 1);
-    if (!buffer) {
-        fclose(in);
-        return NULL;
-    }
-    if (size > 0 && fread(buffer, 1, (size_t)size, in) != (size_t)size) {
-        free(buffer);
-        fclose(in);
-        return NULL;
-    }
-    buffer[size] = '\0';
-    fclose(in);
-    return buffer;
+    return bf_read_file(path, NULL);
 }
 
 static char *trim_copy(const char *src) {

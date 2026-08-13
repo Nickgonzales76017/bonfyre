@@ -1,0 +1,19 @@
+#!/bin/sh
+# Atomically authors a .effect file for bonfyre-fs-effects-watch: writes to a
+# hidden temp file in the same directory (so the rename is on one filesystem)
+# and renames into place, so the watcher never observes a partial write.
+set -eu
+
+target=${1:?usage: bonfyre-fs-write-effect <projection-dir>/effects/pending/<name>.effect <json-on-stdin-or-as-arg2>}
+json=${2:-}
+
+dir=$(dirname -- "$target")
+name=$(basename -- "$target")
+tmp="$dir/.$name.$$.tmp"
+
+if [ -n "$json" ]; then
+    printf '%s' "$json" >"$tmp"
+else
+    cat >"$tmp"
+fi
+mv "$tmp" "$target"

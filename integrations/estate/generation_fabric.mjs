@@ -3,8 +3,24 @@ import { spawn } from 'node:child_process';
 import { createReadStream } from 'node:fs';
 import { readdir, stat, readFile } from 'node:fs/promises';
 import { join, basename, dirname, isAbsolute, resolve, relative } from 'node:path';
+import { homedir } from 'node:os';
 import { createNativeGenerationClient } from '../wordpress/native_generation.mjs';
-import { createLlamaGenerationClient } from './llama_generation.mjs';
+import { createLlamaGenerationClient, createLlamaServerGenerationClient } from './llama_generation.mjs';
+
+/* macOS hangs a freshly-launched process indefinitely at dyld_start (unkillable,
+ * even with SIGKILL) when its binary lives under a TCC-protected folder like
+ * ~/Documents -- exec never completes. `make install-bin` also copies the
+ * built binary to this path specifically so real generation requests don't
+ * spawn from inside the repo. Falls back to the repo-relative path when the
+ * stable copy isn't there yet (fresh checkout, CI, non-macOS). */
+const STABLE_QWEN_FPQ_BINARY = join(homedir(), '.bonfyre', 'bin', 'bonfyre-qwen-fpq');
+
+async function resolveQwenFpqBinary(explicitBinary) {
+  if (explicitBinary) return explicitBinary;
+  if (process.env.BONFYRE_QWEN_FPQ_BINARY) return process.env.BONFYRE_QWEN_FPQ_BINARY;
+  if (await executable(STABLE_QWEN_FPQ_BINARY)) return STABLE_QWEN_FPQ_BINARY;
+  return join(process.cwd(), 'bin', 'bonfyre-qwen-fpq');
+}
 
 export const TOOL_RECEIPT_SCHEMA = 'bonfyre.native.tool.receipt.v1';
 export const BATCH_RECEIPT_SCHEMA = 'bonfyre.native.generation.batch.v1';
@@ -94,10 +110,10 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
    * native-tool inventory is not available. Resolve Bonfyre's built Qwen
    * runtime here so verified .fpq sidecars become executable profiles rather
    * than inert catalog entries. */
-  const nativeBinary = binary || process.env.BONFYRE_QWEN_FPQ_BINARY
-    || join(process.cwd(), 'bin', 'bonfyre-qwen-fpq');
+  const nativeBinary = await resolveQwenFpqBinary(binary);
   const packRoot = join(modelRoot, 'fpq');
   const llamaCpuOnly = ['1', 'true', 'yes'].includes(String(process.env.BONFYRE_LLAMA_CPU_ONLY || '').toLowerCase());
+  const moeServerUrl = text(process.env.BONFYRE_MOE_SERVER_URL) || 'http://127.0.0.1:7000';
   const tokenizerBase = tokenizerRoot || join(modelRoot, 'tokenizers');
   let entries = [];
   try { entries = await readdir(packRoot, { withFileTypes: true }); } catch { entries = []; }
@@ -182,6 +198,18 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
     if (!tokenizer) missing.push('tokenizer');
     if (!modelReady) missing.push('model-pack');
     if (qualityGate !== 'passed') missing.push(`quality-gate:${qualityGate}`);
+    const tiedEmbeddings = manifest.tie_word_embeddings === true || manifest.tie_word_embeddings === 1 || manifest.tie_word_embeddings === '1';
+    const runtimeEnv = {
+      ...(manifest.runtime_env && typeof manifest.runtime_env === 'object' ? manifest.runtime_env : {}),
+      ...(tiedEmbeddings ? {
+        /* Qwen's tied FP16 vocabulary matrix is exact but large.  Keep KV
+         * bounded and preload it once so each generated token uses the native
+         * Accelerate matvec rather than a file-backed row scan. */
+        BONFYRE_QWEN_MAX_SEQ_LEN: '512',
+        BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS: '1',
+        BONFYRE_QWEN_PRELOAD_TIED_EMBEDDINGS_MAX_BYTES: '1073741824',
+      } : {}),
+    };
     profiles.push({
       id: `${model}--${basename(modelPack, '.fpq')}`,
       model,
@@ -191,7 +219,7 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
       backend: 'cpu_neon',
       runtime: 'fpq-native',
       compression: text(manifest.compression) || 'fpq-native',
-      runtimeEnv: manifest.runtime_env && typeof manifest.runtime_env === 'object' ? manifest.runtime_env : {},
+      runtimeEnv,
       defaultTimeoutMs: Number(manifest.default_timeout_ms) || 900_000,
       quality_gate: qualityGate,
       generation_quality: text(manifest.generation_quality) || null,
@@ -239,6 +267,10 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
         modelPath,
         runtime: 'llama-cpp',
         backend: llamaCpuOnly ? 'cpu' : 'metal',
+        ...( /(?:^|[-_.])moe(?:[-_.]|$)/i.test(candidate.name) ? {
+          serverUrl: moeServerUrl,
+          transport: 'openai-compatible-http',
+        } : {}),
         ...(llamaCpuOnly ? { device: 'none', gpuLayers: 0, opOffload: false, fit: false } : {}),
         available: llamaAvailable,
         missing: llamaAvailable ? [] : ['llama-cli'],
@@ -249,9 +281,12 @@ export async function discoverLocalModelProfiles({ modelRoot = '/Users/nickgonza
 }
 
 function createGenerationClient(profile, spawnImpl) {
-  return profile.runtime === 'llama-cpp'
-    ? createLlamaGenerationClient({ ...profile, spawnImpl })
-    : createNativeGenerationClient({ ...profile, spawnImpl });
+  if (profile.runtime === 'llama-cpp') {
+    return text(profile.serverUrl)
+      ? createLlamaServerGenerationClient({ ...profile })
+      : createLlamaGenerationClient({ ...profile, spawnImpl });
+  }
+  return createNativeGenerationClient({ ...profile, spawnImpl });
 }
 
 function fileSha256(path) {
@@ -464,6 +499,8 @@ export function createEstateGenerationFabric({ root = process.cwd(), modelRoot, 
       tool_id: profile.tool_id || basename(profile.binary),
       backend: profile.backend || 'cpu_neon',
       runtime: profile.runtime || 'fpq-native',
+      transport: profile.transport || (profile.serverUrl ? 'openai-compatible-http' : 'native-cli'),
+      server_url: profile.serverUrl || null,
       compression: profile.compression || null,
       runtime_env: profile.runtimeEnv || {},
       default_timeout_ms: profile.defaultTimeoutMs || 120_000,

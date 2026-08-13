@@ -1,0 +1,3 @@
+stash@{0}: On site-updates/2026-04-17: wip: shelve remaining workspace changes
+stash@{1}: On site-updates/2026-04-17: wip: shelve workspace before mcp agent wordpress repairs
+stash@{2}: WIP on site-updates/2026-04-17: 740ace2 feat: libbonfyre, FPQx v9-v12, SLI, E8 native training, new binaries, leapfrog/violence BVH test

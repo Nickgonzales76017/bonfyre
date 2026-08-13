@@ -1,0 +1,7 @@
+lock Bonfyre
+generation bootstrap-1
+schema fabric-1
+runtime bonfyre-fabric-0.1.0
+hash sha256
+sqlite system
+source lib/libbonfyre/src/bf_sha256.c

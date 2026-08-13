@@ -1,0 +1,11 @@
+#!/bin/sh
+set -eu
+root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cd "$root"
+zig build
+set +e
+sh tests/unified_fabric_acceptance.sh
+acceptance_rc=$?
+set -e
+scripts/bonfyre-completion-next || true
+exit "$acceptance_rc"
