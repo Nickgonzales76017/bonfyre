@@ -92,10 +92,23 @@ def compile_map(scene):
 
     markers = []
     labels = []
+    decay_of = {d["target"]: d["decay_state"] for d in scene.get("decay", [])}
     blocked = [[0] * GRID_W for _ in range(GRID_H)]
 
-    def stamp_at(stamp, ox, oy):
-        """Blit a real captured room (all of its layers) at ox,oy."""
+    def stamp_at(stamp, ox, oy, seed=0, decay=None):
+        """Blit a real captured room at ox,oy.
+
+        `seed` deterministically thins and shifts the furniture layer so
+        two rooms compiled from the same template but a DIFFERENT record
+        are not pixel-identical -- the previous version made every study
+        in the district an exact copy.
+
+        `decay` is the room's real decay_state; a weathered room loses
+        more of its decoration than a fresh one, so age is visible in the
+        world rather than only in an inspector field.
+        """
+        keep = {"fresh": 1.0, "settling": 0.9, "dusty": 0.72,
+                "weathered": 0.5, "untouched": 0.62}.get(decay, 1.0)
         src = stamp["layers"]
         for name, key in (
             ("floors", "interior_floors"),
@@ -108,6 +121,12 @@ def compile_map(scene):
                 for i, gid in enumerate(row):
                     if not gid:
                         continue
+                    # deterministic per-record thinning of the movable
+                    # layers only -- walls and floors are never touched
+                    if key in ("interior_objects", "interior_decorations"):
+                        h = (i * 73856093) ^ (j * 19349663) ^ (seed * 83492791)
+                        if ((h >> 7) & 1023) / 1023.0 > keep:
+                            continue
                     x, y = ox + i, oy + j
                     if 0 <= x < GRID_W and 0 <= y < GRID_H:
                         layers[name][y][x] = gid
@@ -186,8 +205,13 @@ def compile_map(scene):
                 row_h = 0
             if row_y + st["h"] >= GRID_H:
                 break
+            # civic entries arrive as tuples, everything else as dicts
+            ident = (item.get("id") or item.get("app") or item.get("label")
+                     or i) if isinstance(item, dict) else str(item[:3])
+            seed = abs(hash(str(ident))) % 100000
+            dec = decay_of.get(item.get("id")) if isinstance(item, dict) else None
             for k in range(halls):
-                stamp_at(st, cursor_x + k * (st["w"] + 1), row_y)
+                stamp_at(st, cursor_x + k * (st["w"] + 1), row_y, seed + k, dec)
             on_place(item, cursor_x, row_y, st, halls)
             cursor_x += width + 3
             row_h = max(row_h, st["h"])
@@ -276,10 +300,108 @@ def compile_map(scene):
             markers.append({"x": gx, "y": gy, "kind": "civic", "civic": "gate",
                             "glyph": "🚧" if (g.get("status") or "").lower() == "open" else "⛔",
                             "label": g["label"], "data": g})
-            if (g.get("status") or "").lower() != "open":
-                for dy in (-1, 0, 1):
+            # a blocked gate is a real barrier across the road, built from
+            # the wall vocabulary -- you cannot walk through it, and you can
+            # see that you cannot. An open gate leaves posts and a clear span.
+            wall_gid = vocab["walls_common"][0]
+            post_gid = vocab["walls_common"][1]
+            is_open = (g.get("status") or "").lower() == "open"
+            for dy in (-3, 3):
+                if 0 <= gy + dy < GRID_H:
+                    layers["walls"][gy + dy][gx] = post_gid
+                    blocked[gy + dy][gx] = 1
+            if not is_open:
+                for dy in range(-2, 3):
                     if 0 <= gy + dy < GRID_H:
+                        layers["walls"][gy + dy][gx] = wall_gid
                         blocked[gy + dy][gx] = 1
+
+    # ------------------------------------------------------------------
+    # Latent compositions get spatial consequence: a composition that has
+    # already become valid in the graph opens a REAL doorway in the wall
+    # beside the room it belongs to, and lays a short path through it.
+    # Nothing is invented -- if the graph has no valid composition, no
+    # door appears.
+    # ------------------------------------------------------------------
+    latent_doors = []
+    for i, lat in enumerate(scene.get("latent_compositions", [])):
+        home = next((mk for mk in markers
+                     if mk["kind"] == "room" and lat.get("room") == mk["data"]["id"]), None)
+        base = (home["x"], home["y"] + 4) if home else (MARGIN + 20 + i * 14, ROW_Y.get("research", 8) + 24)
+        dx, dy = base
+        for k in range(3):
+            yy = dy + k
+            if 0 <= yy < GRID_H and 0 <= dx < GRID_W:
+                layers["walls"][yy][dx] = 0
+                blocked[yy][dx] = 0
+                layers["ground"][yy][dx] = path_gids[k % len(path_gids)]
+        latent_doors.append({"x": dx, "y": dy})
+        markers.append({"x": dx, "y": dy + 3,
+                        "glyph": "🚪" if lat["kind"] == "door" else "🧭",
+                        "kind": "civic", "civic": "latent",
+                        "label": lat["label"], "data": lat})
+
+    # ------------------------------------------------------------------
+    # Landmarks: importance decides physical prominence. A permanent
+    # landmark is a built structure standing in the open; a shelf-tier
+    # memory is a single object. "The world remembers" made visible.
+    # ------------------------------------------------------------------
+    for i, lm in enumerate(scene.get("landmarks", [])):
+        lx = MARGIN + 24 + i * 22
+        ly = ROW_Y.get("civic", 92) - 8
+        if lm["tier"] == "landmark":
+            for dy in range(3):
+                for dx in range(3):
+                    if 0 <= ly + dy < GRID_H and 0 <= lx + dx < GRID_W:
+                        layers["walls"][ly + dy][lx + dx] = vocab["walls_common"][2]
+                        blocked[ly + dy][lx + dx] = 1
+        elif lm["tier"] == "wall":
+            for dx in range(2):
+                if 0 <= lx + dx < GRID_W:
+                    layers["walls"][ly][lx + dx] = vocab["walls_common"][2]
+                    blocked[ly][lx + dx] = 1
+        markers.append({"x": lx, "y": ly + 4, "glyph": "🗿",
+                        "kind": "civic", "civic": "landmark",
+                        "label": lm["label"], "data": lm})
+
+    # ------------------------------------------------------------------
+    # Zones become enclosed PLACES, not stripes. A zone whose real
+    # FederationBoundary says visitors cannot see it is physically fenced;
+    # a public zone is left open. The fence is drawn from the same wall
+    # vocabulary, with gaps so the zone stays walkable.
+    # ------------------------------------------------------------------
+    ZONE_FOR = {"research": "zone-work", "market": "zone-public",
+                "civic": "zone-shared", "foundation": "zone-private"}
+    zones_by_id = {z["id"]: z for z in scene.get("zones", [])}
+    zone_regions = []
+    # bands must not overlap, or standing in one zone reports another --
+    # each region ends where the next district begins
+    next_start = {}
+    for idx, dd in enumerate(present):
+        nxt = present[idx + 1] if idx + 1 < len(present) else None
+        # must match the -5 backoff used for y0 below, or bands overlap
+        next_start[dd] = (ROW_Y[nxt] - 5) if nxt else GRID_H - 2
+    for d in present:
+        z = zones_by_id.get(ZONE_FOR.get(d))
+        if not z:
+            continue
+        y0 = max(1, ROW_Y[d] - 5)
+        y1 = min(GRID_H - 2, next_start[d],
+                 ROW_Y[d] + int(usable_h * gravity[d]["share"] / total_share) + 2)
+        if y1 <= y0:
+            y1 = y0 + 4
+        zone_regions.append({"id": z["id"], "class": z["class"], "label": z["label"],
+                             "y0": y0, "y1": y1, "district": d})
+        if "visitor" in z["federation_boundary"]["visible_to"]:
+            continue  # public/shared zones stay open
+        fence = vocab["walls_common"][3]
+        for x in range(MARGIN - 2, GRID_W - MARGIN + 2):
+            if (x % 9) in (4, 5):
+                continue  # gaps keep the zone walkable
+            for yy in (y0, y1):
+                if 0 <= yy < GRID_H and 0 <= x < GRID_W and not layers["floors"][yy][x]:
+                    layers["walls"][yy][x] = fence
+                    blocked[yy][x] = 1
 
     # connecting roads between district rows
     for d in present:
@@ -318,6 +440,8 @@ def compile_map(scene):
         "districts": {d: district_span[d] for d in district_span},
         "layers": {k: v for k, v in layers.items()},
         "blocked": blocked,
+        "zone_regions": zone_regions,
+        "latent_doors": latent_doors,
         "markers": markers,
         "labels": labels,
         "actors": actors,
