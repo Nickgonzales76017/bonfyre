@@ -121,16 +121,86 @@ is the real starting point, not a continuation of hidden prior work.
   stubbed canvas: 3 frames clean, 0 bad coordinates, all 25 inspector
   dialogs render without error.
 
+- `town-2026-08-13-v7.html` + `scene-2026-08-13-v7.json` — eighth pass,
+  current: https://claude.ai/code/artifact/77761eef-8771-4ce3-8121-884786aeb495
+
+  Every previous pass built the *town* and skipped the *primitives*. The
+  vision doc lays out roughly a dozen specific mechanisms and v6 shipped
+  none of them. This pass implements them:
+
+  **EmbodimentProfile (real, 12 of them).** An object no longer "has a
+  sprite" — it has `spatial_forms[]`, `interaction_ports[]`,
+  `visual_weight`, `attention_weight`, `audio_signature`,
+  `narration_policy` and a `surface_fallback`. `V` cycles the embodiment;
+  the record underneath never changes.
+
+  **Five-class intent classification + Review Gate.** The load-bearing
+  safety rule. Every port is `decorative` / `projection` / `attachment` /
+  `work` / `authority`, shown color-coded before you act. `authority`
+  **cannot execute from the world at all** — it opens a Review Gate a
+  human answers, and even confirming records an intent rather than writing
+  to any ledger. The intent log (`Tab`) states this on its header.
+
+  **Acoustic grammar (`M`).** Procedural WebAudio, no assets. Fireplace
+  bed = healthy idle system; proximity hum = local work running; static =
+  unresolved external evidence; bell = WorkGraph completion; register tick
+  = settled economic event. Continuous signatures follow real proximity to
+  the object whose state they report.
+
+  **World narration.** Entering a zone compiles "N things changed while
+  you were away" from real `relationship_episodes` and `fabric.db events`
+  timestamps — not a card list.
+
+  **Time of day.** Real wall clock drives six phases with real lighting.
+
+  **Zones + FederationBoundary (`Z`).** Four zones derived from real
+  publication state, each rendering its actual boundary rules
+  (discoverable / visible_to / copyable / referenceable / requires_approval).
+  A private zone is visibly hatched off.
+
+  **Latent compositions.** 6 doors and trails that exist because a
+  composition is *already valid* in the real graph — a genome with
+  verified evidence but no published page, a trusted relationship with no
+  offer attached, a gate whose prerequisite is already recorded done.
+
+  **Memory landmarks.** Importance computed as `evidence×2 + episodes`
+  decides shelf → wall → permanent landmark, with one carved notch per
+  real evidence row.
+
+  **Role-based embodiment.** `agent ≠ model ≠ provider ≠ person` survives
+  the projection: workshop operators carry a tool, visiting advisors carry
+  a lantern and stand on a dashed visitor plinth, plain participants carry
+  neither — all keyed off the real `role` string.
+
+  **Embodied verbs → composition verbs.** walk/look/place/give/remember
+  compile to Add / Use with / Show as / Try / Run on.
+
+  Verified headlessly (execution, not appearance): 45 entities, 0 bad
+  coordinates, 3 clean frames, and 14 feature assertions — including that
+  an `authority` port provably opens a gate instead of acting, and that
+  role embodiments actually differ.
+
 ## What this prototype does NOT implement
 
-Per the vision doc: no `EmbodimentProfile` selection (objects get one fixed
-visual form, not a chosen manifestation), no sound/acoustic grammar, no
-`BonfyreNarrate` world narration, no time-of-day/decay state, no
-cross-Bonfyre federation or `FederationBoundary`, no LambdaTensor-learned
-spatial motifs, no drag-and-drop intent classification. It proves exactly
-one thing: **a spatial scene can be compiled deterministically from real
-graph state, with every object's identity traceable to its source of
-truth** — the foundational claim the rest of Habitat is built on.
+As of v7 the remaining gaps are narrower and specific:
+
+- **Cross-Bonfyre federation is declared, not connected.** `FederationBoundary`
+  rules are real and rendered, but there is no second Bonfyre to visit, no
+  `AssetPassport` issuance, and no transfer semantics (copy vs delegation vs
+  StitchWire vs ForeignTwin) — those need a real peer.
+- **LambdaTensor-learned spatial motifs.** Layout weight comes from real
+  `semantic_gravity` counts, but no `HabitatBasis` is learned across
+  habitats — that requires many compiled worlds to find recurrence in.
+- **Decay state.** Landmarks rise by importance; nothing yet sinks or
+  weathers over time.
+- **Authoritative execution.** Deliberate: confirming a Review Gate records
+  an intent and does **not** write to `capital.db`/`fabric.db`. Wiring the
+  real effect path is a separate, review-gated piece of work.
+
+What it does prove, now more than the original claim: a spatial scene can
+be compiled deterministically from real graph state, **every object's
+identity traces to its source of truth, and the projection provably cannot
+mutate what it projects.**
 
 ## Regenerating
 

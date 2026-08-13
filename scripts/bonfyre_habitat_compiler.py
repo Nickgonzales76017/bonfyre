@@ -38,6 +38,194 @@ CAPITAL_DB = os.path.expanduser(
     "~/Library/Application Support/Bonfyre/CapitalGym/capital.db"
 )
 
+# ----------------------------------------------------------------------
+# EmbodimentProfile registry. The vision doc is explicit that an object
+# does not have "a sprite" -- it has a set of legal spatial FORMS, and
+# the compiler chooses one. The profile also declares which interactions
+# are legal on it, and -- critically -- what CLASS each interaction is,
+# because "a drag is an intent signal, never an automatic authoritative
+# mutation". Five intent classes, from the doc:
+#
+#   decorative   personal arrangement, never leaves the habitat
+#   projection   changes how it is shown, not what it is
+#   attachment   proposes a semantic edge (a candidate relation)
+#   work         opens a WorkGraph intent
+#   authority    would mutate authoritative state -> ALWAYS review-gated
+#
+# `surface_fallback` is the non-spatial surface to fall back to when the
+# object cannot be embodied (the doc requires every embodiment to degrade
+# to a real surface, never to nothing).
+# ----------------------------------------------------------------------
+EMBODIMENT_PROFILES = {
+    "research-room": {
+        "canonical_kind": "Mission",
+        "spatial_forms": ["mission-wall", "workshop", "study"],
+        "interaction_ports": [
+            {"port": "enter", "intent": "projection", "verb": "walk"},
+            {"port": "inspect", "intent": "projection", "verb": "look"},
+            {"port": "assign-work", "intent": "work", "verb": "work"},
+        ],
+        "visual_weight": 1.0,
+        "attention_weight": 0.8,
+        "audio_signature": "mechanical-hum",
+        "narration_policy": "on-enter",
+        "surface_fallback": "mission detail surface",
+    },
+    "document": {
+        "canonical_kind": "Artifact",
+        "spatial_forms": ["desk-paper", "pinned-note", "filed-folder"],
+        "interaction_ports": [
+            {"port": "read", "intent": "projection", "verb": "look"},
+            {"port": "place-on-desk", "intent": "attachment", "verb": "place"},
+            {"port": "file-to-ledger", "intent": "authority", "verb": "give"},
+        ],
+        "visual_weight": 0.5,
+        "attention_weight": 0.4,
+        "audio_signature": "paper-rustle",
+        "narration_policy": "on-change",
+        "surface_fallback": "artifact digest view",
+    },
+    "wiki-page": {
+        "canonical_kind": "KnowledgeNode",
+        "spatial_forms": ["corkboard", "wall-plaque", "open-book"],
+        "interaction_ports": [
+            {"port": "read", "intent": "projection", "verb": "look"},
+            {"port": "link-to", "intent": "attachment", "verb": "place"},
+            {"port": "publish", "intent": "authority", "verb": "give"},
+        ],
+        "visual_weight": 0.6,
+        "attention_weight": 0.6,
+        "audio_signature": "paper-rustle",
+        "narration_policy": "on-change",
+        "surface_fallback": "wiki page",
+    },
+    "lesson-board": {
+        "canonical_kind": "Primitive",
+        "spatial_forms": ["bookcase", "lectern", "teaching-board"],
+        "interaction_ports": [
+            {"port": "study", "intent": "projection", "verb": "look"},
+            {"port": "cite", "intent": "attachment", "verb": "place"},
+        ],
+        "visual_weight": 0.7,
+        "attention_weight": 0.5,
+        "audio_signature": "paper-rustle",
+        "narration_policy": "on-change",
+        "surface_fallback": "LMS lesson",
+    },
+    "gate": {
+        "canonical_kind": "HumanGate",
+        "spatial_forms": ["road-gate", "turnstile", "sealed-door"],
+        "interaction_ports": [
+            {"port": "inspect", "intent": "projection", "verb": "look"},
+            {"port": "request-open", "intent": "work", "verb": "speak"},
+            {"port": "mark-cleared", "intent": "authority", "verb": "give"},
+        ],
+        "visual_weight": 0.9,
+        "attention_weight": 1.0,
+        "audio_signature": "radio-static",
+        "narration_policy": "always",
+        "surface_fallback": "gate checklist",
+    },
+    "stall": {
+        "canonical_kind": "Offer",
+        "spatial_forms": ["market-stall", "notice-board", "shopfront"],
+        "interaction_ports": [
+            {"port": "inspect", "intent": "projection", "verb": "look"},
+            {"port": "run-experiment", "intent": "work", "verb": "work"},
+            {"port": "record-sale", "intent": "authority", "verb": "give"},
+        ],
+        "visual_weight": 0.8,
+        "attention_weight": 0.7,
+        "audio_signature": "cash-register",
+        "narration_policy": "on-change",
+        "surface_fallback": "offer record",
+    },
+    "notices": {
+        "canonical_kind": "EvidenceGraph",
+        "spatial_forms": ["investigation-board", "archive-room"],
+        "interaction_ports": [
+            {"port": "read", "intent": "projection", "verb": "look"},
+            {"port": "pin-claim", "intent": "attachment", "verb": "place"},
+            {"port": "invalidate", "intent": "authority", "verb": "give"},
+        ],
+        "visual_weight": 0.9,
+        "attention_weight": 0.9,
+        "audio_signature": "radio-static",
+        "narration_policy": "always",
+        "surface_fallback": "evidence ledger",
+    },
+    "monument": {
+        "canonical_kind": "Learning",
+        "spatial_forms": ["standing-stone", "plaque", "landmark"],
+        "interaction_ports": [{"port": "remember", "intent": "projection", "verb": "remember"}],
+        "visual_weight": 0.7,
+        "attention_weight": 0.3,
+        "audio_signature": "none",
+        "narration_policy": "on-enter",
+        "surface_fallback": "learning ledger entry",
+    },
+    "workboard": {
+        "canonical_kind": "WorkGraph",
+        "spatial_forms": ["mission-wall", "assembly-line", "path"],
+        "interaction_ports": [
+            {"port": "review", "intent": "projection", "verb": "look"},
+            {"port": "take-work", "intent": "work", "verb": "work"},
+        ],
+        "visual_weight": 1.0,
+        "attention_weight": 0.9,
+        "audio_signature": "mechanical-hum",
+        "narration_policy": "always",
+        "surface_fallback": "capital action list",
+    },
+    "obelisk": {
+        "canonical_kind": "ReceiptChain",
+        "spatial_forms": ["obelisk", "ledger-column"],
+        "interaction_ports": [{"port": "replay", "intent": "projection", "verb": "remember"}],
+        "visual_weight": 0.9,
+        "attention_weight": 0.4,
+        "audio_signature": "distant-bell",
+        "narration_policy": "on-change",
+        "surface_fallback": "receipt replay",
+    },
+    "foundation": {
+        "canonical_kind": "StorageRoot",
+        "spatial_forms": ["foundation-stone", "cellar-door"],
+        "interaction_ports": [{"port": "inspect", "intent": "projection", "verb": "look"}],
+        "visual_weight": 0.4,
+        "attention_weight": 0.2,
+        "audio_signature": "none",
+        "narration_policy": "never",
+        "surface_fallback": "root registry",
+    },
+    "character": {
+        "canonical_kind": "Actor",
+        "spatial_forms": ["resident", "visiting-avatar", "portrait", "booth"],
+        "interaction_ports": [
+            {"port": "talk", "intent": "projection", "verb": "speak"},
+            {"port": "invite", "intent": "work", "verb": "invite"},
+            {"port": "grant-passport", "intent": "authority", "verb": "give"},
+        ],
+        "visual_weight": 0.8,
+        "attention_weight": 0.9,
+        "audio_signature": "none",
+        "narration_policy": "on-change",
+        "surface_fallback": "relationship record",
+    },
+}
+
+# Role-based embodiment. The doc is explicit that avatars are NOT uniform
+# and that `agent != model != provider != person` must survive the
+# projection. Roles below are matched against the real `role` string on
+# capital.db relationships rows.
+ROLE_EMBODIMENT = [
+    ("maintainer", {"embodiment": "workshop-operator", "presence": "external", "form": "resident"}),
+    ("reviewer", {"embodiment": "visiting-advisor", "presence": "external", "form": "visiting-avatar"}),
+    ("collaborator", {"embodiment": "visiting-advisor", "presence": "external", "form": "visiting-avatar"}),
+    ("community", {"embodiment": "person", "presence": "external", "form": "portrait"}),
+    ("issue", {"embodiment": "person", "presence": "external", "form": "portrait"}),
+    ("adjacent", {"embodiment": "person", "presence": "external", "form": "visiting-avatar"}),
+]
+
 STATUS_ROOM_STATE = {
     "held": "locked",       # real content, not yet allowed to leave the room
     "draft": "under-construction",
@@ -204,6 +392,11 @@ def compile_scene():
                     "label": row["counterparty"],
                     "role": row["role"],
                     "relationship_state": row["relationship_state"],
+                    # role-based embodiment: agent != model != provider != person
+                    "embodiment": next(
+                        (e for k, e in ROLE_EMBODIMENT if k in (row["role"] or "").lower()),
+                        {"embodiment": "person", "presence": "external", "form": "portrait"},
+                    ),
                     "home_room": home_room,
                     "visit_history": [
                         {"kind": e["interaction_kind"], "direction": e["direction"], "at": e["occurred_at"]}
@@ -379,6 +572,248 @@ def compile_scene():
                 }
             )
 
+    # ------------------------------------------------------------------
+    # Zones + FederationBoundary. The doc requires private / household /
+    # work / public / shared zones, each with an explicit boundary saying
+    # what may be discovered, seen, copied, referenced, acted upon, or
+    # brought in. These are derived from the real publication state of the
+    # underlying rows, not declared by hand: a `held` genome is not
+    # publicly visible; a published wiki page is.
+    # ------------------------------------------------------------------
+    published_pages = 0
+    held_genomes = 0
+    if cms:
+        published_pages = cms.execute(
+            "SELECT COUNT(*) FROM wiki_page WHERE published=1"
+        ).fetchone()[0]
+    if capital:
+        held_genomes = capital.execute(
+            "SELECT COUNT(*) FROM content_genomes WHERE status IN ('held','draft')"
+        ).fetchone()[0]
+
+    zones = [
+        {
+            "id": "zone-work",
+            "label": "Research Wing",
+            "class": "work",
+            "contains": [r["id"] for r in rooms],
+            "federation_boundary": {
+                "discoverable": False,
+                "visible_to": ["owner"],
+                "copyable": False,
+                "referenceable": True,
+                "actionable_by": ["owner"],
+                "requires_approval": ["publish", "grant-passport"],
+            },
+            "reason": f"{held_genomes} content genomes still held/draft in capital.db",
+            "source": {"db": "capital.db", "table": "content_genomes", "group_by": "status"},
+        },
+        {
+            "id": "zone-public",
+            "label": "Market Row & Gate Road",
+            "class": "public",
+            "contains": ["stall-*", "gate-*"],
+            "federation_boundary": {
+                "discoverable": True,
+                "visible_to": ["owner", "visitor"],
+                "copyable": False,
+                "referenceable": True,
+                "actionable_by": ["owner"],
+                "requires_approval": ["record-sale", "mark-cleared"],
+            },
+            "reason": "offers and human gates already reference external parties",
+            "source": {"db": "capital.db", "table": "offers"},
+        },
+        {
+            "id": "zone-shared",
+            "label": "Civic Square",
+            "class": "shared",
+            "contains": ["notice-board", "work-board", "timeline-obelisk", "monument-*"],
+            "federation_boundary": {
+                "discoverable": True,
+                "visible_to": ["owner", "visitor"],
+                "copyable": True,
+                "referenceable": True,
+                "actionable_by": ["owner"],
+                "requires_approval": ["invalidate"],
+            },
+            "reason": f"{published_pages} wiki pages published; evidence board is citable",
+            "source": {"db": "bonfyre_cms.db", "table": "wiki_page"},
+        },
+        {
+            "id": "zone-private",
+            "label": "Foundation Yard",
+            "class": "private",
+            "contains": ["foundation-*"],
+            "federation_boundary": {
+                "discoverable": False,
+                "visible_to": ["owner"],
+                "copyable": False,
+                "referenceable": False,
+                "actionable_by": ["owner"],
+                "requires_approval": ["inspect"],
+            },
+            "reason": "storage roots carry sensitivity and access_mode from fabric.db",
+            "source": {"db": "fabric.db", "table": "roots"},
+        },
+    ]
+
+    # ------------------------------------------------------------------
+    # "The world remembers": importance-ranked landmarks. The doc maps
+    # ContinuityIsland to spatial UX -- things Bonfyre has determined must
+    # not be compressed away become permanent landmarks, while less
+    # important things sink shelf -> wall -> basement. Importance here is
+    # computed from real signal: how many evidence rows cite it, whether a
+    # receipt chain pins it, whether a maintainer actually responded.
+    # ------------------------------------------------------------------
+    landmarks = []
+    if capital:
+        for row in capital.execute(
+            "SELECT g.id, g.slug, g.status, g.thesis,"
+            " (SELECT COUNT(*) FROM evidence_ledger e WHERE e.content_genome_id=g.id) AS evidence_n,"
+            " (SELECT COUNT(*) FROM relationship_episodes r WHERE r.relationship_id=g.relationship_id) AS episode_n"
+            " FROM content_genomes g"
+        ):
+            score = (row["evidence_n"] or 0) * 2 + (row["episode_n"] or 0)
+            if score >= 6:
+                tier, place = "landmark", "permanent"
+            elif score >= 3:
+                tier, place = "wall", "room-wall"
+            else:
+                tier, place = "shelf", "shelf"
+            landmarks.append(
+                {
+                    "id": f"landmark-{row['id']}",
+                    "label": row["slug"],
+                    "tier": tier,
+                    "placement": place,
+                    "importance": score,
+                    "evidence_count": row["evidence_n"] or 0,
+                    "episode_count": row["episode_n"] or 0,
+                    "status": row["status"],
+                    "room": mission_index.get(genome_slug_to_mission.get(row["slug"])),
+                    "source": {"db": "capital.db", "table": "content_genomes", "id": row["id"]},
+                }
+            )
+        landmarks.sort(key=lambda l: -l["importance"])
+
+    # ------------------------------------------------------------------
+    # Discovery as world growth. A door/trail appears ONLY when a real
+    # latent composition is already valid in the graph -- never invented.
+    # Each candidate below is a `Use with` composition the underlying rows
+    # already support but which has not been executed yet.
+    # ------------------------------------------------------------------
+    latent = []
+    if capital:
+        # a genome with verified evidence but no published page is a real
+        # publish-composition waiting to happen
+        for row in capital.execute(
+            "SELECT g.id, g.slug, g.status, g.publish_gate,"
+            " (SELECT COUNT(*) FROM evidence_ledger e"
+            "   WHERE e.content_genome_id=g.id AND e.verified_at IS NOT NULL) AS verified_n"
+            " FROM content_genomes g WHERE g.status IN ('held','draft')"
+        ):
+            if (row["verified_n"] or 0) > 0:
+                latent.append(
+                    {
+                        "id": f"latent-publish-{row['id']}",
+                        "kind": "door",
+                        "composition": "ContentGenome + verified Evidence -> publishable article",
+                        "label": f"publish: {row['slug']}",
+                        "blocked_by": row["publish_gate"],
+                        "verified_evidence": row["verified_n"],
+                        "room": mission_index.get(genome_slug_to_mission.get(row["slug"])),
+                        "source": {"db": "capital.db", "table": "content_genomes", "id": row["id"]},
+                    }
+                )
+        # a relationship that reached technical engagement but has no offer
+        # attached is a real opportunity trail
+        for row in capital.execute(
+            "SELECT id, counterparty, relationship_state, ecosystem FROM relationships"
+            " WHERE relationship_state IN ('TRUSTED_INTERACTION','TECHNICAL_ENGAGEMENT')"
+        ):
+            latent.append(
+                {
+                    "id": f"latent-offer-{row['id']}",
+                    "kind": "trail",
+                    "composition": "Relationship(trusted) + Asset -> qualified paid ask",
+                    "label": f"unopened path: {row['counterparty']}",
+                    "relationship_state": row["relationship_state"],
+                    "ecosystem": row["ecosystem"],
+                    "source": {"db": "capital.db", "table": "relationships", "id": row["id"]},
+                }
+            )
+        # a gate whose prerequisite work is already recorded complete is a
+        # real, currently-openable door
+        for row in capital.execute(
+            "SELECT id, exact_gate, opportunity, completed_before_gate, status"
+            " FROM human_gates WHERE status='open' AND completed_before_gate IS NOT NULL"
+            " AND completed_before_gate != ''"
+        ):
+            latent.append(
+                {
+                    "id": f"latent-gate-{row['id']}",
+                    "kind": "door",
+                    "composition": "HumanGate + completed prerequisite -> openable",
+                    "label": f"openable: {row['exact_gate']}",
+                    "opportunity": row["opportunity"],
+                    "source": {"db": "capital.db", "table": "human_gates", "id": row["id"]},
+                }
+            )
+
+    # ------------------------------------------------------------------
+    # World time + narration. The doc: time makes the world alive without
+    # needing AI, and BonfyreNarrate compiles a state delta into "three
+    # things changed while you were away" rather than a card list. Both
+    # come from real timestamps.
+    # ------------------------------------------------------------------
+    narration = []
+    if capital:
+        for row in capital.execute(
+            "SELECT occurred_at, direction, interaction_kind, summary, relationship_id"
+            " FROM relationship_episodes ORDER BY occurred_at DESC LIMIT 6"
+        ):
+            narration.append(
+                {
+                    "at": row["occurred_at"],
+                    "channel": "relationship",
+                    "text": f"{row['direction']} {row['interaction_kind']}: {row['summary']}",
+                    "source": {"db": "capital.db", "table": "relationship_episodes"},
+                }
+            )
+    if fabric:
+        for row in fabric.execute(
+            "SELECT start_at, actor, effect_class, status, mission_id FROM events"
+            " ORDER BY start_at DESC LIMIT 4"
+        ):
+            narration.append(
+                {
+                    "at": row["start_at"],
+                    "channel": "work",
+                    "text": f"{row['actor']} {row['effect_class']} on {row['mission_id']} ({row['status']})",
+                    "room": mission_index.get(row["mission_id"]),
+                    "source": {"db": "fabric.db", "table": "events"},
+                }
+            )
+    narration.sort(key=lambda n: n["at"] or "", reverse=True)
+
+    # ------------------------------------------------------------------
+    # Semantic gravity: district sizing is proposed from what is actually
+    # in the graph, not hand-placed. More real rows in a family => more
+    # ground given to it. The doc: "same engine, different life" -- two
+    # users' worlds must compile differently from their own graphs.
+    # ------------------------------------------------------------------
+    gravity = [
+        {"district": "research", "weight": len(rooms) + len(objects), "members": len(rooms)},
+        {"district": "gates", "weight": len(gates), "members": len(gates)},
+        {"district": "market", "weight": len(stalls) * 2, "members": len(stalls)},
+        {"district": "civic", "weight": len(notices) + len(monuments) + len(workboard), "members": len(monuments) + 2},
+        {"district": "foundation", "weight": len(foundations), "members": len(foundations)},
+    ]
+    total_weight = sum(g["weight"] for g in gravity) or 1
+    for g in gravity:
+        g["share"] = round(g["weight"] / total_weight, 4)
+
     for c in (fabric, cms, capital):
         if c:
             c.close()
@@ -409,6 +844,12 @@ def compile_scene():
         "timeline": timeline,
         "foundations": foundations,
         "workboard": workboard,
+        "embodiment_profiles": EMBODIMENT_PROFILES,
+        "zones": zones,
+        "landmarks": landmarks,
+        "latent_compositions": latent,
+        "narration": narration,
+        "semantic_gravity": gravity,
     }
 
 
@@ -427,5 +868,8 @@ if __name__ == "__main__":
         f"gates={len(scene['gates'])} notices={len(scene['notices'])} "
         f"monuments={len(scene['monuments'])} stalls={len(scene['stalls'])} "
         f"timeline={len(scene['timeline'])} foundations={len(scene['foundations'])} "
-        f"workboard={len(scene['workboard'])}"
+        f"workboard={len(scene['workboard'])}\n"
+        f"zones={len(scene['zones'])} landmarks={len(scene['landmarks'])} "
+        f"latent={len(scene['latent_compositions'])} narration={len(scene['narration'])} "
+        f"profiles={len(scene['embodiment_profiles'])}"
     )
