@@ -77,6 +77,50 @@ is the real starting point, not a continuation of hidden prior work.
   the door at the near/open side (unchanged gameplay collision). Published
   live at the same URL.
 
+- `town-2026-08-13-v6.html` + `scene-2026-08-13-v6.json` — seventh pass,
+  current, published as a **new** artifact:
+  https://claude.ai/code/artifact/0d5dda12-fdbc-4d1d-8eea-ab5bda81b457
+
+  Two real problems fixed and one real expansion.
+
+  **1. The dimetric fix finally landed.** v6's `WALL_H` was 30px against a
+  230px-deep room -- structurally correct, visually a hairline, which is
+  why it kept reading as a floor plan with a roof over it no matter how
+  correct the math was. Wall is now 88px with a 64px roof rise (~40% of
+  building depth, the proportion 16-bit dimetric top-down actually uses),
+  and at that size the face needed real material: horizontal siding
+  courses, vertical stud shadows, a light-catch under the eave, a dark
+  baseboard at the wall/floor junction, and lit/shaded corner-post
+  returns. Windows became a properly-sized pair set into the wall face
+  instead of one stretched to fill it. `TOP` moved to 230 so the taller
+  structure clears world Y=0 instead of being clipped by the camera clamp.
+
+  **2. Roof and wall can no longer desync.** They were two functions
+  (`drawBuildingBack`/`drawBuildingFront`) run as two separate passes over
+  all rooms. Now one `drawBuilding(room)` computes `wallTopY`/`peakY`/
+  `baseY` once and every draw call uses those same locals, with the eave
+  shadow drawn last directly over the seam.
+
+  **3. The compiler now reads the rest of Bonfyre**, per the vision doc's
+  "REAL BONFYRE STATE" list -- not just missions and content. Each table
+  gets the built form its semantics already imply:
+
+  | Real source | Rows | Spatial form |
+  |---|---|---|
+  | `capital.db human_gates` | 6 | Gates on Gate Road — open ones stand open, blocked ones are barred |
+  | `capital.db offers` + `assets` + `commercial_experiments` | 4 | Market Row stalls — one crate per experiment actually run |
+  | `capital.db evidence_ledger` | 8 | Evidence Board — verified claims pinned green |
+  | `capital.db learning_ledger` | 3 | Standing-stone monuments — adopted ones lit |
+  | `capital.db capital_actions` | 93 → 9 groups | Work Board — stacked bar by real status |
+  | `fabric.db receipts` + `events` | 6 | Receipt-chain obelisk, one lit ring per chained entry |
+  | `fabric.db roots` | 9 | Foundation Yard stones — height by durability, seal by trust level |
+
+  25 new interactive entities, all real rows, each with its `source` in
+  the inspector panel. Empty tables produce empty lists, never placeholder
+  scenery. Verified by executing the render path headlessly against a
+  stubbed canvas: 3 frames clean, 0 bad coordinates, all 25 inspector
+  dialogs render without error.
+
 ## What this prototype does NOT implement
 
 Per the vision doc: no `EmbodimentProfile` selection (objects get one fixed

@@ -213,6 +213,172 @@ def compile_scene():
                 }
             )
 
+    # ------------------------------------------------------------------
+    # Town-level features beyond the research wing. The vision doc's
+    # "REAL BONFYRE STATE" list names more graphs than missions/content:
+    # gates, evidence, learning, money/opportunity, timeline, roots. Each
+    # of those is a real populated table, and each gets the spatial form
+    # its semantics actually imply -- a blocking gate is a gate, an
+    # append-only evidence chain is a notice board, a durable storage root
+    # is a foundation stone. Nothing here is invented; empty tables
+    # produce empty lists rather than placeholder scenery.
+    # ------------------------------------------------------------------
+    gates, notices, monuments, stalls, timeline, foundations = [], [], [], [], [], []
+
+    if capital:
+        for row in capital.execute(
+            "SELECT * FROM human_gates ORDER BY value_at_stake DESC, id"
+        ):
+            gates.append(
+                {
+                    "id": f"gate-{row['id']}",
+                    "label": row["exact_gate"],
+                    "opportunity": row["opportunity"],
+                    "gate_class": row["gate_class"],
+                    "status": row["status"],
+                    "value_at_stake": row["value_at_stake"],
+                    "external_ref": row["external_ref"],
+                    "blocks": row["completed_before_gate"],
+                    "source": {"db": "capital.db", "table": "human_gates", "id": row["id"]},
+                }
+            )
+
+        for row in capital.execute("SELECT * FROM evidence_ledger ORDER BY id"):
+            notices.append(
+                {
+                    "id": f"notice-{row['id']}",
+                    "claim": row["claim"],
+                    "evidence_type": row["evidence_type"],
+                    "ref": row["ref"],
+                    "verified": bool(row["verified_at"]),
+                    "verification_method": row["verification_method"],
+                    "room": mission_index.get(
+                        genome_slug_to_mission.get(
+                            next(
+                                (
+                                    s
+                                    for s, g in genome_by_slug.items()
+                                    if g["id"] == row["content_genome_id"]
+                                ),
+                                None,
+                            )
+                        )
+                    ),
+                    "source": {"db": "capital.db", "table": "evidence_ledger", "id": row["id"]},
+                }
+            )
+
+        for row in capital.execute("SELECT * FROM learning_ledger ORDER BY occurred_at"):
+            monuments.append(
+                {
+                    "id": f"monument-{row['id']}",
+                    "learning_type": row["learning_type"],
+                    "description": row["description"],
+                    "occurred_at": row["occurred_at"],
+                    "adopted": bool(row["adopted"]),
+                    "source_ref": row["source_ref"],
+                    "source": {"db": "capital.db", "table": "learning_ledger", "id": row["id"]},
+                }
+            )
+
+        asset_by_id = {
+            r["id"]: dict(r) for r in capital.execute("SELECT * FROM assets")
+        }
+        for row in capital.execute("SELECT * FROM offers ORDER BY id"):
+            asset = asset_by_id.get(row["asset_id"])
+            experiments = capital.execute(
+                "SELECT COUNT(*) AS n, SUM(response_signal IS NOT NULL AND response_signal != '') AS answered"
+                " FROM commercial_experiments WHERE offer_id = ?",
+                (row["id"],),
+            ).fetchone()
+            stalls.append(
+                {
+                    "id": f"stall-{row['id']}",
+                    "label": row["name"],
+                    "offer_class": row["offer_class"],
+                    "status": row["status"],
+                    "asking_price": row["asking_price"],
+                    "currency": row["currency"],
+                    "target_customer": row["target_customer"],
+                    "backing_asset": asset["name"] if asset else None,
+                    "backing_asset_status": asset["status"] if asset else None,
+                    "experiments_run": experiments["n"] or 0,
+                    "experiments_answered": experiments["answered"] or 0,
+                    "source": {"db": "capital.db", "table": "offers", "id": row["id"]},
+                }
+            )
+
+    if fabric:
+        # receipts form a real hash chain (previous_receipt_id/chain_hash);
+        # walking it in order gives the town an actual chronology to display
+        for row in fabric.execute(
+            "SELECT * FROM receipts ORDER BY created_at, id"
+        ):
+            timeline.append(
+                {
+                    "id": row["id"],
+                    "kind": "receipt",
+                    "subject_kind": row["subject_kind"],
+                    "subject_id": row["subject_id"],
+                    "content_hash": row["content_hash"],
+                    "chained_to": row["previous_receipt_id"],
+                    "at": row["created_at"],
+                    "source": {"db": "fabric.db", "table": "receipts", "id": row["id"]},
+                }
+            )
+        for row in fabric.execute(
+            "SELECT * FROM events ORDER BY start_at, id"
+        ):
+            timeline.append(
+                {
+                    "id": row["id"],
+                    "kind": "event",
+                    "actor": row["actor"],
+                    "effect_class": row["effect_class"],
+                    "status": row["status"],
+                    "mission": row["mission_id"],
+                    "room": mission_index.get(row["mission_id"]),
+                    "at": row["start_at"],
+                    "source": {"db": "fabric.db", "table": "events", "id": row["id"]},
+                }
+            )
+        timeline.sort(key=lambda e: (e["at"] or "", e["id"]))
+
+        for row in fabric.execute("SELECT * FROM roots ORDER BY id"):
+            foundations.append(
+                {
+                    "id": f"foundation-{row['id']}",
+                    "label": row["id"],
+                    "kind": row["kind"],
+                    "locator": row["locator"],
+                    "authority_class": row["authority_class"],
+                    "durability": row["durability"],
+                    "trust_level": row["trust_level"],
+                    "sensitivity": row["sensitivity"],
+                    "access_mode": row["access_mode"],
+                    "source": {"db": "fabric.db", "table": "roots", "id": row["id"]},
+                }
+            )
+
+    # WorkGraph rollup: real capital_actions, grouped by status, so the
+    # town can show what the system is actually working on right now
+    workboard = []
+    if capital:
+        for row in capital.execute(
+            "SELECT status, COUNT(*) AS n, SUM(face_value) AS face,"
+            " SUM(realized_value) AS realized FROM capital_actions"
+            " GROUP BY status ORDER BY n DESC"
+        ):
+            workboard.append(
+                {
+                    "status": row["status"],
+                    "count": row["n"],
+                    "face_value": row["face"] or 0,
+                    "realized_value": row["realized"] or 0,
+                    "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"},
+                }
+            )
+
     for c in (fabric, cms, capital):
         if c:
             c.close()
@@ -236,6 +402,13 @@ def compile_scene():
         "objects": objects,
         "paths": paths,
         "characters": characters,
+        "gates": gates,
+        "notices": notices,
+        "monuments": monuments,
+        "stalls": stalls,
+        "timeline": timeline,
+        "foundations": foundations,
+        "workboard": workboard,
     }
 
 
@@ -250,5 +423,9 @@ if __name__ == "__main__":
     print(f"scene written: {out_path}")
     print(
         f"rooms={len(scene['rooms'])} objects={len(scene['objects'])} "
-        f"paths={len(scene['paths'])} characters={len(scene['characters'])}"
+        f"paths={len(scene['paths'])} characters={len(scene['characters'])} "
+        f"gates={len(scene['gates'])} notices={len(scene['notices'])} "
+        f"monuments={len(scene['monuments'])} stalls={len(scene['stalls'])} "
+        f"timeline={len(scene['timeline'])} foundations={len(scene['foundations'])} "
+        f"workboard={len(scene['workboard'])}"
     )
