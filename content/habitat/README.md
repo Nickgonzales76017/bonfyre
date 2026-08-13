@@ -16,15 +16,26 @@ is the real starting point, not a continuation of hidden prior work.
 - `floor-plan-viewer-2026-08-13.html` — first pass: a static blueprint-style
   floor plan, click a room/object/character to see its source. Superseded
   by the version below same day, kept for the iteration history.
-- `town-2026-08-13.html` — second pass, current: a walkable 2D top-down
-  town in the Smallville / Generative-Agents interaction style
-  (github.com/nmatter1/smallville) — controllable avatar (arrow keys/WASD),
-  residents with an ambient name+status tag who idle near their real home
-  room, proximity-triggered dialog boxes with the real record. All sprites
-  and tiles are drawn procedurally in Canvas, not the source repo's
-  LimeZu tileset (that's licensed art, not reused here) — same interaction
-  paradigm, original graphics. This is the version published live at:
-  https://claude.ai/code/artifact/a0580535-e11c-4c1d-8696-e51d869be659
+- `town-2026-08-13.html` — second pass: a walkable 2D top-down town in the
+  Smallville / Generative-Agents interaction style, static single-screen
+  diorama, flat rectangle sprites. Correct interaction model, too thin a
+  world and too plain a render -- superseded same day.
+- `town-2026-08-13-v2.html` — third pass, current: rebuilt after actually
+  reading `game-scene.ts`/`player.ts`/`agents.ts` in
+  github.com/nmatter1/smallville rather than just the mechanics doc. Real
+  differences this pass adds: a world larger than the viewport with a
+  camera that follows the player (their `Player.update()` does exactly
+  this via a camera dolly), Y-sorted draw order so sprites overlap
+  correctly by vertical position (their `setDepth(this.y)`), chibi
+  characters with distinct hair/shirt palettes and a directional
+  walk-cycle instead of flat rectangles, peaked-roof cottage buildings
+  with a window/door/sign/status pennant instead of bare rooms, seeded
+  ground decoration (trees/bushes/flowers/lamps) so the world reads as a
+  town instead of three boxes on grass, and a speech-bubble ambient tag
+  instead of a translucent label. Their LimeZu tileset is still licensed
+  art and still isn't reused -- everything is drawn procedurally. Same
+  real data, same source-of-truth discipline throughout. Published live
+  at: https://claude.ai/code/artifact/a0580535-e11c-4c1d-8696-e51d869be659
 
 ## What this prototype does NOT implement
 
