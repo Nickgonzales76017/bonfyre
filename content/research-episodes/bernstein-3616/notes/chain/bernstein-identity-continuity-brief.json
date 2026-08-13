@@ -1,0 +1,34 @@
+{
+  "schema_version": "aurekai.brief.v1",
+  "generated_at": "2026-08-13T05:17:25.267Z",
+  "title": "Brief: case-study-source.md",
+  "source": "/Users/nickgonzales/Documents/Bonfyre/content/research-episodes/bernstein-3616/notes/case-study-source.md",
+  "source_bytes": 2557,
+  "source_hash": "sha256:eb405af09a3a5d75d98fecd59d354f0e297f79b0843e41fbf27c4ce4109923e0",
+  "input_type": "markdown",
+  "structure": {
+    "line_count": 43,
+    "word_count": 381,
+    "char_count": 2557,
+    "heading_count": 8,
+    "headings": [
+      "# A security finding's identity should survive irrelevant textual change (line-ending, Unicode normal form, path separator) -- because the thing it identifies has not changed, only its incidental encoding has.",
+      "## Supporting claims",
+      "## Evidence packet",
+      "## People and projects",
+      "## Quotable facts",
+      "## Bonfyre primitives",
+      "## Nontechnical framing",
+      "## Attribution requirements"
+    ],
+    "list_item_count": 11,
+    "code_block_count": 0
+  },
+  "summary": {
+    "line_count": 43,
+    "word_count": 381,
+    "char_count": 2557,
+    "heading_count": 8,
+    "top_keys": null
+  }
+}

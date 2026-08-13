@@ -1,0 +1,16 @@
+# Brief: case-study-source.md
+
+**Generated:** 2026-08-13T05:17:25.312Z  
+**Source hash:** `sha256:67e99d1465684a03c0fe225ebf44b09ee7058244274c5e36e27ad728f1ce0b39`
+
+## Content
+
+```json
+{
+  "schema_version": "aurekai.narration.v1",
+  "narrated_at": "2026-08-13T05:17:25.311Z",
+  "source": "/Users/nickgonzales/Documents/Bonfyre/content/research-episodes/bernstein-3616/notes/chain/bernstein-identity-continuity-brief.json",
+  "title": "Brief: case-study-source.md",
+  "narration": "This is a brief for \"Brief: case-study-source.md\", generated on 2026-08-13T05:17:25.267Z. The source document is 2,557 bytes. Its integrity hash is sha256:eb405af09a3a5d75d98fecd59d354f0e297f79b0843e41fbf27c4ce4109923e0. Content type: markdown. It contains 381 words across 43 lines. There are 8 headings."
+}
+```

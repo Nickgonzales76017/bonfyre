@@ -1,0 +1,32 @@
+{
+  "schema_version": "aurekai.brief.v1",
+  "generated_at": "2026-08-13T05:17:58.515Z",
+  "title": "Brief: case-study-source.md",
+  "source": "/Users/nickgonzales/Documents/Bonfyre/content/research-episodes/hqq-claim-invalidation/notes/case-study-source.md",
+  "source_bytes": 1459,
+  "source_hash": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a",
+  "input_type": "markdown",
+  "structure": {
+    "line_count": 29,
+    "word_count": 198,
+    "char_count": 1459,
+    "heading_count": 6,
+    "headings": [
+      "# A research system needs the ability to invalidate its own published claims when new evidence contradicts them -- not just to publish new results.",
+      "## Supporting claims",
+      "## Evidence packet",
+      "## People and projects",
+      "## Bonfyre primitives",
+      "## Nontechnical framing"
+    ],
+    "list_item_count": 7,
+    "code_block_count": 0
+  },
+  "summary": {
+    "line_count": 29,
+    "word_count": 198,
+    "char_count": 1459,
+    "heading_count": 6,
+    "top_keys": null
+  }
+}

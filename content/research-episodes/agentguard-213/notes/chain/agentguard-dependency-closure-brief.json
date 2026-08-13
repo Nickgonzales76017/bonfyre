@@ -1,0 +1,32 @@
+{
+  "schema_version": "aurekai.brief.v1",
+  "generated_at": "2026-08-13T05:17:58.391Z",
+  "title": "Brief: case-study-source.md",
+  "source": "/Users/nickgonzales/Documents/Bonfyre/content/research-episodes/agentguard-213/notes/case-study-source.md",
+  "source_bytes": 1543,
+  "source_hash": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6",
+  "input_type": "markdown",
+  "structure": {
+    "line_count": 29,
+    "word_count": 223,
+    "char_count": 1543,
+    "heading_count": 6,
+    "headings": [
+      "# A single scoped contribution can turn out to be blocked by a chain of smaller problems the maintainer didn't ask for -- and closing that chain, not the original patch, becomes the actual work.",
+      "## Supporting claims",
+      "## Evidence packet",
+      "## People and projects",
+      "## Bonfyre primitives",
+      "## Nontechnical framing"
+    ],
+    "list_item_count": 7,
+    "code_block_count": 0
+  },
+  "summary": {
+    "line_count": 29,
+    "word_count": 223,
+    "char_count": 1543,
+    "heading_count": 6,
+    "top_keys": null
+  }
+}
