@@ -45,8 +45,39 @@ def load(path):
         return json.load(f)
 
 
+# Room templates typed by what is ACTUALLY IN THEM (measured from the
+# tileset composition of each captured stamp), so spatial form can follow
+# semantic meaning instead of being handed out round-robin. That was the
+# core incoherence: erpnext rendered as a grocery store because template
+# choice ignored what the record meant.
+#
+#   0  dwelling     Room_Builder + Kitchen + Bedroom     private life
+#   1  institution  Room_Builder + Classroom/Library     large domain estate
+#   2  store        Room_Builder + Grocery               market, inventory
+#   3  study        Room_Builder + Classroom (small)     focused research
+#   4  shop         Room_Builder + Ice Cream Shop        small offer counter
+STAMP_KIND = {0: "dwelling", 1: "institution", 2: "store", 3: "study", 4: "shop"}
+FORM_FOR = {
+    "AppPack": "institution",
+    "Mission": "study",
+    "Offer": "store",
+    "StorageRoot": "dwelling",
+    "EvidenceGraph": "institution",
+    "WorkGraph": "institution",
+    "Learning": "study",
+    "ReceiptChain": "study",
+}
+
+
 def compile_map(scene):
     stamps = load(os.path.join(ASSETS, "room_stamps.json"))["rooms"]
+    by_kind = {}
+    for i, st in enumerate(stamps):
+        by_kind.setdefault(STAMP_KIND.get(i, "study"), []).append(st)
+
+    def stamp_for(canonical_kind, size_rank=0):
+        pool = by_kind.get(FORM_FOR.get(canonical_kind, "study")) or stamps
+        return pool[size_rank % len(pool)]
     vocab = load(os.path.join(ASSETS, "vocab.json"))
     ground_gid = vocab["ground"][0]
     path_gids = vocab["ground"][1:3]
@@ -90,6 +121,18 @@ def compile_map(scene):
                     if 0 <= x < GRID_W and 0 <= y < GRID_H and not layers["walls"][y][x]:
                         blocked[y][x] = 0
 
+    def on_furniture(ox, oy, st, nth=0):
+        """Pick the nth furnished tile inside a placed stamp, so a marker
+        stands on real furniture rather than floating over bare floor."""
+        spots = []
+        for j, row in enumerate(st["layers"].get("interior_objects") or []):
+            for i, gid in enumerate(row):
+                if gid:
+                    spots.append((ox + i, oy + j))
+        if not spots:
+            return (ox + st["w"] // 2, oy + st["h"] // 2)
+        return spots[(nth * 7) % len(spots)]
+
     def road(x0, x1, y, half=2):
         for x in range(max(0, x0), min(GRID_W, x1)):
             for dy in range(-half, half + 1):
@@ -123,7 +166,9 @@ def compile_map(scene):
         cy += band + 2
     ROW_Y.setdefault("gates", max(4, ROW_Y.get("research", 8) - 6))
 
-    def place_row(district, items, stamp_idx, on_place):
+    def place_row(district, items, canonical_kind, on_place, repeat=None):
+        """Lay a district out left-to-right. `repeat(item)` may return >1 so
+        that a genuinely larger record occupies genuinely more ground."""
         if district not in district_span:
             return
         x0, x1 = district_span[district]
@@ -132,53 +177,62 @@ def compile_map(scene):
         row_y = y
         row_h = 0
         for i, item in enumerate(items):
-            st = stamps[(stamp_idx + i) % len(stamps)]
-            if cursor_x + st["w"] > x1:
+            st = stamp_for(canonical_kind, i)
+            halls = repeat(item) if repeat else 1
+            width = st["w"] * halls + (halls - 1)
+            if cursor_x + width > x1:
                 cursor_x = x0
                 row_y += row_h + 3
                 row_h = 0
             if row_y + st["h"] >= GRID_H:
                 break
-            stamp_at(st, cursor_x, row_y)
-            on_place(item, cursor_x, row_y, st)
-            cursor_x += st["w"] + 3
+            for k in range(halls):
+                stamp_at(st, cursor_x + k * (st["w"] + 1), row_y)
+            on_place(item, cursor_x, row_y, st, halls)
+            cursor_x += width + 3
             row_h = max(row_h, st["h"])
 
     # --- app district: one building per real compiled Frappe app. The
     # room template is chosen by scale, so erpnext (502 doctypes) gets a
     # bigger structure than drive (12) -- the estate's real shape shows.
-    def on_app(a, ox, oy, st):
-        labels.append({"x": ox + st["w"] // 2, "y": oy - 1,
-                       "text": a["app"], "sub": f"{a['doctypes']} doctypes · {a['audit']}"})
-        markers.append({"x": ox + st["w"] // 2, "y": oy + st["h"] // 2,
+    def on_app(a, ox, oy, st, halls=1):
+        labels.append({"x": ox + (st["w"] * halls) // 2, "y": oy - 1,
+                       "text": a["app"],
+                       "sub": f"{a['doctypes']} doctypes · {halls} hall(s) · {a['audit']}"})
+        mx, my = on_furniture(ox, oy, st, 1)
+        markers.append({"x": mx, "y": my,
                         "glyph": "🏛️" if a["status"] == "compiled" else "⚠️",
                         "kind": "civic", "civic": "app", "label": a["app"], "data": a})
 
     apps_sorted = sorted(scene.get("apps", []), key=lambda a: -a["doctypes"])
-    place_row("apps", apps_sorted, 1, on_app)
+    place_row("apps", apps_sorted, "AppPack", on_app,
+              repeat=lambda a: max(1, min(6, -(-a["doctypes"] // 100))))
 
     # --- research district: one real room per real fabric.db mission
-    def on_mission(m, ox, oy, st):
+    def on_mission(m, ox, oy, st, halls=1):
         labels.append({"x": ox + st["w"] // 2, "y": oy - 1,
                        "text": m["label"], "sub": m["workgraph_cursor"]})
-        markers.append({"x": ox + 3, "y": oy + st["h"] // 2, "glyph": "📋",
+        mx, my = on_furniture(ox, oy, st, 0)
+        markers.append({"x": mx, "y": my, "glyph": "📋",
                         "kind": "room", "label": m["label"], "data": m})
         mine = [o for o in scene["objects"] if o.get("room") == m["id"]]
         for k, obj in enumerate(mine):
+            ax, ay = on_furniture(ox, oy, st, k + 2)
             markers.append({
-                "x": ox + 6 + k * 3, "y": oy + st["h"] // 2 + 2,
+                "x": ax, "y": ay,
                 "glyph": {"wiki-page": "📄", "lesson-board": "📚"}.get(obj["kind"], "🗎"),
                 "kind": "object", "label": obj["label"], "data": obj})
 
-    place_row("research", scene["rooms"], 0, on_mission)
+    place_row("research", scene["rooms"], "Mission", on_mission)
 
     # --- market: one shop per real offer
-    def on_offer(s, ox, oy, st):
+    def on_offer(s, ox, oy, st, halls=1):
         labels.append({"x": ox + st["w"] // 2, "y": oy - 1,
                        "text": s["label"], "sub": s["status"]})
-        markers.append({"x": ox + st["w"] // 2, "y": oy + st["h"] // 2, "glyph": "🏷️",
+        sx, sy = on_furniture(ox, oy, st, 1)
+        markers.append({"x": sx, "y": sy, "glyph": "🏷️",
                         "kind": "civic", "civic": "stall", "label": s["label"], "data": s})
-    place_row("market", scene.get("stalls", []), 2, on_offer)
+    place_row("market", scene.get("stalls", []), "Offer", on_offer)
 
     # --- civic: evidence board, work board, receipt chain, monuments
     civic_items = []
@@ -197,18 +251,19 @@ def compile_map(scene):
     for m in scene.get("monuments", []):
         civic_items.append(("🗿", "monument", m["learning_type"], m))
 
-    def on_civic(item, ox, oy, st):
+    def on_civic(item, ox, oy, st, halls=1):
         glyph, civic, label, data = item
-        markers.append({"x": ox + st["w"] // 2, "y": oy + st["h"] // 2, "glyph": glyph,
+        cx, cy = on_furniture(ox, oy, st, 1)
+        markers.append({"x": cx, "y": cy, "glyph": glyph,
                         "kind": "civic", "civic": civic, "label": label, "data": data})
-        labels.append({"x": ox + st["w"] // 2, "y": oy - 1, "text": label, "sub": ""})
-    place_row("civic", civic_items, 3, on_civic)
+    place_row("civic", civic_items, "EvidenceGraph", on_civic)
 
     # --- foundation yard: one vault per real fabric.db storage root
-    def on_root(f, ox, oy, st):
-        markers.append({"x": ox + st["w"] // 2, "y": oy + st["h"] // 2, "glyph": "🧱",
+    def on_root(f, ox, oy, st, halls=1):
+        fx, fy = on_furniture(ox, oy, st, 2)
+        markers.append({"x": fx, "y": fy, "glyph": "🧱",
                         "kind": "civic", "civic": "foundation", "label": f["kind"], "data": f})
-    place_row("foundation", scene.get("foundations", []), 4, on_root)
+    place_row("foundation", scene.get("foundations", []), "StorageRoot", on_root)
 
     # --- gates sit on the road between districts, not in a building
     gates = scene.get("gates", [])
@@ -229,6 +284,22 @@ def compile_map(scene):
     # connecting roads between district rows
     for d in present:
         road(MARGIN, GRID_W - MARGIN, max(2, ROW_Y[d] - 2), 1)
+
+
+    # District headers: the town needs to be legible at a glance, so each
+    # band says what it is and which real tables produced it.
+    DISTRICT_TITLE = {
+        "apps": ("THE ESTATE", "nine Frappe apps · BonfyreFrappeCompiler"),
+        "research": ("RESEARCH", "fabric.db missions · bonfyre_cms pages"),
+        "market": ("MARKET", "capital.db offers · experiments"),
+        "civic": ("CIVIC", "evidence · work · receipts · learning"),
+        "foundation": ("FOUNDATIONS", "fabric.db storage roots"),
+    }
+    for d in present:
+        t = DISTRICT_TITLE.get(d)
+        if t:
+            labels.append({"x": MARGIN + 16, "y": max(2, ROW_Y[d] - 4),
+                           "text": t[0], "sub": t[1], "header": True})
 
     # residents stand in the room compiled from their own relationship
     actors = []
