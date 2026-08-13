@@ -1,8 +1,9 @@
 # Research episode: Bernstein #3616 / #3695 / #3699
 
-Filesystem stand-in for the Drive vault the Aurekai institution vision
-describes — see [`content/README.md`](../../README.md) for why, and what
-this stands in for.
+Source material for the real `wiki_page` entry (id 1, namespace `aurekai`)
+in Bonfyre's native CMS (`bonfyre-zig/bonfyre_cms.db`) — see
+[`content/README.md`](../../README.md) for how that entry was written and
+why this directory isn't a stand-in for it.
 
 ## What this is
 

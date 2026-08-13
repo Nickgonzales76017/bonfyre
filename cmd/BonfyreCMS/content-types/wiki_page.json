@@ -1,0 +1,13 @@
+{
+  "name": "wiki_page",
+  "displayName": "Wiki Page",
+  "description": "Native content type derived from the real Wiki app doctype (integrations/frappe-bench/apps/wiki/wiki/wiki/doctype/wiki_page/wiki_page.json).",
+  "attributes": {
+    "title": {"type": "string", "required": true},
+    "route": {"type": "string", "required": true, "uniqueWithinNamespace": true},
+    "content": {"type": "text", "required": true},
+    "published": {"type": "boolean"},
+    "allow_guest": {"type": "boolean"},
+    "meta_description": {"type": "text"}
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "course_lesson",
+  "displayName": "Course Lesson",
+  "description": "Native content type derived from the real LMS app doctype (integrations/frappe-bench/apps/lms/lms/lms/doctype/course_lesson/course_lesson.json).",
+  "attributes": {
+    "title": {"type": "string", "required": true},
+    "body": {"type": "text", "required": true},
+    "content": {"type": "text"},
+    "instructor_notes": {"type": "text"}
+  }
+}
