@@ -72,6 +72,15 @@ def classify(path):
     return "unknown"
 
 
+def _axis(size, stride):
+    """Tile count along one axis, tolerating a present or trimmed gutter."""
+    if size % stride == 0:
+        return size // stride
+    if (size + stride - (stride - 1)) % stride == 0 and (size + 1) % stride == 0:
+        return (size + 1) // stride
+    return None
+
+
 def grid_for(w, h):
     """Best (tile, spacing) that explains both dimensions.
 
@@ -85,10 +94,17 @@ def grid_for(w, h):
         if w % t == 0 and h % t == 0 and (w // t) * (h // t) >= 12:
             return t, 0
         for sp in (1, 2):
-            if (w + sp) % (t + sp) == 0 and (h + sp) % (t + sp) == 0:
-                cols, rows = (w + sp) // (t + sp), (h + sp) // (t + sp)
-                if cols * rows >= 12:
-                    return t, sp
+            stride = t + sp
+            # Kenney is not internally consistent: some sheets end on a
+            # trailing gutter (w == cols*stride) and some trim it
+            # (w == cols*stride - sp), and a single sheet can use one
+            # convention horizontally and the other vertically --
+            # roguelike-characters is 918x203, which is 54*17 wide but
+            # 12*17-1 tall. Accept either on each axis independently.
+            cols = _axis(w, stride)
+            rows = _axis(h, stride)
+            if cols and rows and cols * rows >= 12:
+                return t, sp
     return None
 
 
@@ -117,9 +133,10 @@ def scan(root):
                 "w": w, "h": h,
                 "tile": tile,
                 "spacing": spacing,
-                "cols": (w + spacing) // (tile + spacing),
-                "rows": (h + spacing) // (tile + spacing),
-                "tiles": ((w + spacing) // (tile + spacing)) * ((h + spacing) // (tile + spacing)),
+                "cols": _axis(w, tile + spacing) if spacing else w // tile,
+                "rows": _axis(h, tile + spacing) if spacing else h // tile,
+                "tiles": ((_axis(w, tile + spacing) if spacing else w // tile)
+                          * (_axis(h, tile + spacing) if spacing else h // tile)),
                 # Kenney's packed variants have no gutters; prefer them
                 "packed": "_packed" in name.lower(),
                 "bytes": os.path.getsize(full),
