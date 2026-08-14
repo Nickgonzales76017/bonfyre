@@ -26,7 +26,7 @@ BIN_ROOT = Path.home() / ".bonfyre" / "bin"
 MANIFEST = BIN_ROOT / ".capabilities.json"
 FAMILIES = BIN_ROOT / ".families.json"
 
-TIMEOUT_SECONDS = 5
+TIMEOUT_SECONDS = 4
 
 # Commands that ignore --help and start working instead. Probing them costs a
 # full timeout per flag and tells us nothing, so they are recorded as
@@ -83,19 +83,32 @@ def run_bounded(argv: list[str], *, cwd: Path) -> str:
         return ""
 
 
-def advertised_subcommands(binary: Path) -> list[str]:
-    """Subcommands the binary names in its own usage text.
+def advertised_surface(binary: Path) -> tuple[list[str], str]:
+    """What the binary says about itself: its verbs, and its usage synopsis.
+
+    Two different shapes exist and conflating them loses information. A
+    dispatcher advertises verbs (`enqueue`, `claim-next`). A single-purpose
+    tool advertises none, but does have a synopsis --
+    `bonfyre-brief <transcript-file> <output-dir>` is a real capability
+    statement. Recording only verbs made 22 of 91 commands look empty when
+    they were merely not dispatchers.
 
     Both streams are read: several commands print usage to stderr, which is how
     an earlier attempt to consume this output silently got nothing.
     """
     if binary.name in IGNORES_HELP:
-        return []
+        return [], ""
     text = ""
     # Never invoke with no arguments. A watcher or server started bare will
     # simply run, and the probe hangs until its timeout -- which is what a
     # first pass across 88 binaries did.
-    for flag in (["--help"], ["-h"]):
+    # Bare invocation is last and was previously refused outright: a watcher or
+    # server started with no arguments simply runs. It is admissible now only
+    # because run_bounded can reclaim the whole process group -- several
+    # commands take positional arguments and print usage on bare invocation
+    # while ignoring --help entirely, and they are not discoverable any other
+    # way.
+    for flag in (["--help"], ["-h"], []):
         try:
             text = run_bounded([str(binary), *flag], cwd=binary.parent)
         except OSError:
@@ -103,7 +116,7 @@ def advertised_subcommands(binary: Path) -> list[str]:
         if text.strip():
             break
     if not text.strip():
-        return []
+        return [], ""
 
     name = re.escape(binary.name)
     found: list[str] = []
@@ -124,7 +137,19 @@ def advertised_subcommands(binary: Path) -> list[str]:
             continue
         if item not in ordered:
             ordered.append(item)
-    return ordered
+
+    synopsis = ""
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.lower().startswith("usage") or binary.name in stripped:
+            synopsis = stripped[:200]
+            break
+    if not synopsis:
+        synopsis = text.strip().splitlines()[0][:200]
+
+    return ordered, synopsis
 
 
 def main() -> None:
@@ -141,12 +166,13 @@ def main() -> None:
             continue
         if not os.access(binary, os.X_OK):
             continue
-        subcommands = advertised_subcommands(binary)
+        subcommands, synopsis = advertised_surface(binary)
         family = families.get(binary.name, "")
         if binary.name in IGNORES_HELP:
             manifest[binary.name] = {
                 "family": family,
                 "subcommands": [],
+                "synopsis": "",
                 "probed": False,
                 "reason": "ignores --help and runs; probing it would block",
             }
@@ -157,9 +183,11 @@ def main() -> None:
         manifest[binary.name] = {
             "family": family,
             "subcommands": subcommands,
+            "synopsis": synopsis,
+            "shape": "dispatcher" if subcommands else ("tool" if synopsis else "silent"),
             "probed": True,
         }
-        if subcommands:
+        if subcommands or synopsis:
             probed += 1
         else:
             silent += 1
