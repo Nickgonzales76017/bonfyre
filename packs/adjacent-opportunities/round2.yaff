@@ -35,10 +35,20 @@ work map_dependency_chains_before_claiming
   priority 7.0
   reason Reading PR bodies for stated merge dependencies found more than scanning issue titles did. Before claiming anything new, map what our open work already blocks or is blocked by. Claiming a fresh issue while a four-PR chain of ours stalls is the wrong allocation
 
-work agentguard_218_validation_ordering
+work agentguard_218_portable_path_regression
   target_plane run2_relationship_adoption
-  priority 8.5
-  reason Rebasing 218 onto 93140726 surfaced a real interaction with 229. The new malformed-docker-identity test expects "fields are invalid" but the repository-evidence check now trips first. Validation ordering in _result_from_report changed, nothing was lost. Two resolutions offered to the maintainer; the branch is deliberately unpushed until they choose
+  priority 9.0
+  reason CORRECTED diagnosis. Not validation ordering -- _result_from_report is byte-identical on main and the branch. 218 portabilises repo_dir in the run report and the reader cannot rehydrate it, so any consumer reading the report from outside the original run directory fails. 229's test found it first. Two options given to the maintainer; branch unpushed until they pick
+
+work agentguard_portable_paths_has_no_inverse
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason provenance/portable_paths.py exposes portable_reference, portable_text and portable_value and nothing resolves back. A portable reference is a one-way sanitiser, not a round trip, so anything persisted through it becomes unreadable to a relocated consumer. Offered to open this as its own issue and take it
+
+work diagnosis_depth_discipline
+  target_plane run5_recursive_external
+  priority 7.0
+  reason The first 218 diagnosis -- validation ordering -- was wrong and was posted to a maintainer before being checked against main. Diffing the function against main took one command and showed it unchanged. Compare the suspected code against the base before naming a cause
 
 work proactive_rebase_as_courtesy
   target_plane run5_recursive_external
