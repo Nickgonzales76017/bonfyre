@@ -1,0 +1,51 @@
+pack system-upgrade-work
+generation control-1
+source_plane run5_recursive_external
+item_kind system_upgrade
+source_ref campaign:internal-dogfood
+note Internal defects found by using Bonfyre rather than by reading it. Every one was invisible to unit tests and surfaced only under real invocation, which is the point.
+
+work fix_probe_process_group_kill
+  target_plane run5_recursive_external
+  priority 9.0
+  reason probe_native_capabilities cannot finish because subprocess.run(timeout=) does not reclaim children that spawn grandchildren -- capture_output leaves the pipe held. Same pipe-deadlock class that hung Run 6's supervisor. Needs start_new_session plus killpg
+
+work native_commands_must_answer_help
+  target_plane run5_recursive_external
+  priority 8.0
+  reason bonfyre-watch and bonfyre-qwen-fpq ignore --help and start working. A command that cannot be asked what it does is hostile to any inventory, and qwen-fpq can wedge in an uninterruptible exit path
+
+work mcp_capabilities_from_probe
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason native_capabilities is a ten-keyword substring table, so 80 of 90 families report empty. Empty reads as no capability when it means nobody wrote a hint. Should come from the probe manifest, like families does
+
+work canon_structural_hash_scope
+  target_plane run5_recursive_external
+  priority 6.0
+  reason BonfyreCanon structural hash ignores literal values, so a changed JSON string yields an identical hash. Correct for code shape, unusable for data-file classification. Either document the boundary or add a values-inclusive mode
+
+work canon_language_dispatch
+  target_plane run5_recursive_external
+  priority 5.0
+  reason BonfyreCanon advertises Tree-sitter canonicalization and links it, but dispatches only .json. Either wire more grammars or narrow what the help text claims
+
+work native_ci_baseline
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason The native-commands CI job reports build counts without gating because no green baseline exists. Establish one, then make regressions fail
+
+work capability_ladder_promotion_evidence
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason 88 commands sit at health_probed and 0 at workload_proven. Promotion needs recorded ordinary-workload evidence, not another probe. BonfyreQueue and BonfyreFS both have real usage now and are the first candidates
+
+work occurrence_spine_native_port
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason external_events and actors have no native equivalent, so step 12 of the absorption cannot proceed and the Python reference is still the only implementation of those semantics
+
+work workgraph_family_registry
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason BfWorkgraphNodeSpec.family is a free string with no registry, so the unroutable coordinator item Run 6 accepted would still be accepted natively. Needs validation in bf_workgraph_add_node

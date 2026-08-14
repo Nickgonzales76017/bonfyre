@@ -1,0 +1,86 @@
+pack tarbell-actors
+generation control-1
+provenance research-brief:2026-08-14 (unverified against tarbellcenter.org)
+authority asserted
+note nothing here was checked by the process that wrote it; confirm before contacting
+
+actor org:tarbell-center
+  node_kind organization
+  display_name Tarbell Center for AI Journalism
+  detail Funds and trains AI accountability journalism; fellowship, grants programme, Transformer
+
+actor person:cillian-crosson
+  node_kind person
+  display_name Cillian Crosson
+  role Executive Director and President
+  org_id org:tarbell-center
+  owns_branch research_source_relationship
+
+actor person:vincent-manancourt
+  node_kind person
+  display_name Vincent Manancourt
+  role Program Director, Grants
+  org_id org:tarbell-center
+  owns_branch grant_pitches
+
+actor person:shakeel-hashim
+  node_kind person
+  display_name Shakeel Hashim
+  role Editor, Transformer
+  org_id org:tarbell-center
+  owns_branch evidence_packets
+
+actor person:libby-nelson
+  node_kind person
+  display_name Libby Nelson
+  role Program Director, Fellowship
+  org_id org:tarbell-center
+  owns_branch journalist_workbench
+
+actor person:jasper-jackson
+  node_kind person
+  display_name Jasper Jackson
+  role Managing Editor, Transformer
+  org_id org:tarbell-center
+
+actor org:coefficient-giving
+  node_kind organization
+  display_name Coefficient Giving
+
+actor org:survival-and-flourishing-fund
+  node_kind organization
+  display_name Survival and Flourishing Fund
+
+actor org:longview-philanthropy
+  node_kind organization
+  display_name Longview Philanthropy
+
+actor org:future-of-life-institute
+  node_kind organization
+  display_name Future of Life Institute
+
+actor org:ought
+  node_kind organization
+  display_name Ought
+
+actor org:manifund
+  node_kind organization
+  display_name Manifund
+
+edge org:tarbell-center employs person:cillian-crosson
+edge org:tarbell-center employs person:vincent-manancourt
+edge org:tarbell-center employs person:shakeel-hashim
+edge org:tarbell-center employs person:libby-nelson
+edge org:tarbell-center employs person:jasper-jackson
+
+edge person:vincent-manancourt authority_over org:tarbell-center
+  detail grants programme
+edge person:cillian-crosson authority_over org:tarbell-center
+  detail institutional partnership
+
+edge org:coefficient-giving funds org:tarbell-center
+edge org:survival-and-flourishing-fund funds org:tarbell-center
+edge org:longview-philanthropy funds org:tarbell-center
+edge org:future-of-life-institute funds org:tarbell-center
+edge org:ought funds org:tarbell-center
+edge org:manifund funds org:tarbell-center

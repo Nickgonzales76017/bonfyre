@@ -1,0 +1,20 @@
+pack acm-queue-work
+generation control-1
+source_plane run3_four_economies_campaign
+item_kind acm_queue
+source_ref campaign:acm-queue
+
+work acm_outline_identity_continuity
+  target_plane run3_four_economies_campaign
+  priority 9.0
+  reason Draft the detailed outline the editor asked for. Build it from the evidence estate -- Bernstein finding-identity work, celld measurements, BonfyreProof, the SARIF fingerprint findings -- rather than as generic commentary
+
+work acm_evidence_inventory
+  target_plane run5_recursive_external
+  priority 7.0
+  reason Inventory what identity-continuity evidence already exists and is citable, so the outline claims only what can be reproduced
+
+work acm_confirm_editor_identity
+  target_plane run2_relationship_adoption
+  priority 6.0
+  reason Confirm editor name spelling and role from the ACM Queue masthead before any outbound use; the record is currently asserted from one email

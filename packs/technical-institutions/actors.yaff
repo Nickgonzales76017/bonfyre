@@ -1,0 +1,79 @@
+pack technical-institution-actors
+generation control-1
+provenance github-api:2026-08-14 (comments read directly from the issue and PR threads named below)
+authority verified
+note Confidence is `verified` because each person was observed acting in a thread that was fetched and read, not inferred from a summary. Where nothing was observed, the edge is absent rather than guessed.
+
+actor org:sipyourdrink-ltd
+  node_kind organization
+  display_name sipyourdrink-ltd
+  detail Owns bernstein. Strongest current technical relationship: merged work, follow-on assignment, and a contributor corrected away from work assigned to us.
+
+actor person:chernistry
+  node_kind person
+  display_name chernistry
+  role Collaborator, bernstein
+  org_id org:sipyourdrink-ltd
+  detail Merged #3734. Accepted the #3701 architecture, assigned it, and sequenced it into two PRs. Corrected our #3778 analysis on two points and was right on both.
+
+actor org:richinmrudul
+  node_kind organization
+  display_name richinmrudul/agentguard
+  detail Security guard for AI agents. Four open PRs from us; one under final review.
+
+actor person:richinmrudul
+  node_kind person
+  display_name richinmrudul
+  role Owner, agentguard
+  org_id org:richinmrudul
+  detail Reviews against exact head SHAs and states required changes precisely. Requested the hostile-input matrix, then a rebase onto 93140726 before final review.
+
+actor org:temporalio
+  node_kind organization
+  display_name temporalio
+  detail Owns deputy. Relationship is currently design dialogue rather than merged code.
+
+actor person:picatz
+  node_kind person
+  display_name picatz
+  role Collaborator, deputy
+  org_id org:temporalio
+  detail Corrected the #283 issue body to three producers, framed the fingerprint decision, and on #228 preferred defining Deputy's own profile over recognising foreign ones. Those two positions converge.
+
+actor org:confident-ai
+  node_kind organization
+  display_name confident-ai
+  detail Owns deepeval. PR #3056 open, draft, no human response yet.
+
+actor org:denoland
+  node_kind organization
+  display_name denoland
+  detail Owns celld. Contribution policy disables PRs and requires an emailed format-patch, which is also the IP-assignment act.
+
+actor org:rajudandigam
+  node_kind organization
+  display_name rajudandigam
+  detail Owns agent-inspect. PR #229 open, mergeable, no human response yet.
+
+edge org:sipyourdrink-ltd employs person:chernistry
+edge org:richinmrudul employs person:richinmrudul
+edge org:temporalio employs person:picatz
+
+edge person:chernistry authority_over org:sipyourdrink-ltd
+  detail assigns issues, sequences PRs, merges
+edge person:richinmrudul authority_over org:richinmrudul
+  detail sole reviewer and merge authority observed
+edge person:picatz authority_over org:temporalio
+  detail settles design questions on the SARIF/assessment surface
+
+edge person:chernistry contact_of person:chernistry
+  detail sustained multi-issue technical dialogue: 3695, 3699, 3700, 3701, 3734, 3778
+edge person:richinmrudul contact_of person:richinmrudul
+  detail review dialogue across 213, 214, 216, 217, 218
+edge person:picatz contact_of person:picatz
+  detail design dialogue across 228 and 283
+
+edge org:sipyourdrink-ltd opportunity_unlock org:sipyourdrink-ltd
+  detail follow-on ownership offered: 3701 PR2 and 3702 both named by the maintainer
+edge org:temporalio opportunity_unlock org:temporalio
+  detail bounded output-side patch offered and awaiting confirmation
