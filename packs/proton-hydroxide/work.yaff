@@ -44,3 +44,23 @@ work terminal_states_make_wrong_triage_irreversible
   target_plane run4_institutional_fabric
   priority 8.0
   reason invalidated is terminal by design, so a mistaken closure cannot be undone -- these items had to be recreated instead. The design is right for honesty and wrong for recovery. A reopened item should be able to cite what it supersedes, or triage needs a reversible provisional state distinct from invalidated
+
+work proton_hydroxide_built_installed
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason DONE. hydroxide v0.2.32 built from source and installed at ~/.bonfyre/bin/hydroxide, 13.8 MB. Go toolchain installed, used, and removed; build caches were pointed at /tmp and deleted. Net disk went from 576 MB free to 11 GB free, so the transport cost nothing and the cleanup paid for itself
+
+work proton_hydroxide_auth_next
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason Next action is `hydroxide auth <username>` using the credentials under the secrets directory, which were deliberately not opened here. Auth writes a bridge password that the IMAP and SMTP servers then require. Nothing else can proceed until this is done by someone willing to handle the secret
+
+work proton_hydroxide_serve_under_launchd
+  target_plane run1_capital_conversion
+  priority 8.0
+  reason After auth, `hydroxide serve` runs IMAP on 1143 and SMTP on 1025, which is exactly what run5_external_io already expects with PROTON_TRANSPORT_MODE=hydroxide. Should run as a launchd agent alongside the other Bonfyre daemons rather than a foreground process
+
+work hydroxide_is_a_dependency_not_a_command
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Registering hydroxide in the family manifest was wrong and the MCP guard rejected it -- native_tool_invoke requires a Bonfyre family. That guard enforced the no-command-proliferation law correctly. Vendored dependencies live in the managed bin directory without entering the capability constitution, and the manifest should probably distinguish the two rather than relying on a name prefix
