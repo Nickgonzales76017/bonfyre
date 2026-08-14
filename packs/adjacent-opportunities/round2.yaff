@@ -79,3 +79,13 @@ work agentguard_230_portable_inverse
   target_plane run2_relationship_adoption
   priority 7.5
   reason Opened as agentguard#230 with the round-trip properties a fix must assert, including failing closed when a root is absent rather than resolving to a wrong path. Offered to take it; unclaimed until the maintainer responds
+
+work bernstein_3701_complete_both_prs
+  target_plane run2_relationship_adoption
+  priority 7.0
+  reason Both halves are in review: 3840 (admission service + FileUpgradeExecutor) and 3843 (reviewer auto-execute bypass, stacked). The sequencing chernistry set out is fully delivered. Remaining decision is the observe-versus-enforce default, which applies to both
+
+work admission_protocol_generalization
+  target_plane run5_recursive_external
+  priority 6.0
+  reason PR2 generalized AdmissionPolicy.evaluate to a structural protocol rather than a concrete type, so two unrelated lineages share one service without a base class. Same shape as the pack loader knowing about actors and work without knowing about any campaign. Worth reusing wherever a second caller appears
