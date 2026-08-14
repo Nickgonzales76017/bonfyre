@@ -44,3 +44,18 @@ work evidence_estate_as_content_source
   target_plane run3_four_economies_campaign
   priority 7.0
   reason The ACM outline should be built from the mounted evidence estate rather than written from memory. celld patches, control contracts and conformance vectors are now addressable by content digest, which is itself the article's subject
+
+work backlog_triage_remaining_59
+  target_plane run5_recursive_external
+  priority 7.0
+  reason 185 receipt_recursion items collapsed to 59 open: 114 superseded as fan-out duplicates, 12 invalidated against known terminal outcomes. The remaining 59 are distinct consequences with no recorded resolution and need reading individually rather than pattern-matching
+
+work fanout_compiler_is_the_root_cause
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason The triage quantified it: 71 real consequences became 185 queue items, roughly 2.6x, because the Run 6 compiler copied each consequence into 2-4 plane queues with no dedup by subject. Any future fan-out must key on subject and supersede rather than duplicate
+
+work triage_needs_evidence_not_patterns
+  target_plane run5_recursive_external
+  priority 6.0
+  reason Only 12 of 71 could be closed against evidence -- a merged PR verified via API, a counterparty-paused application, a route already substituted. The other 59 look stale but saying so without evidence would be exactly the overclaiming the evidence discipline exists to prevent
