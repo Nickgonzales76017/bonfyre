@@ -34,3 +34,28 @@ work map_dependency_chains_before_claiming
   target_plane run5_recursive_external
   priority 7.0
   reason Reading PR bodies for stated merge dependencies found more than scanning issue titles did. Before claiming anything new, map what our open work already blocks or is blocked by. Claiming a fresh issue while a four-PR chain of ours stalls is the wrong allocation
+
+work agentguard_218_validation_ordering
+  target_plane run2_relationship_adoption
+  priority 8.5
+  reason Rebasing 218 onto 93140726 surfaced a real interaction with 229. The new malformed-docker-identity test expects "fields are invalid" but the repository-evidence check now trips first. Validation ordering in _result_from_report changed, nothing was lost. Two resolutions offered to the maintainer; the branch is deliberately unpushed until they choose
+
+work proactive_rebase_as_courtesy
+  target_plane run5_recursive_external
+  priority 6.0
+  reason The maintainer asked for a rebase on 214 before reviewing. Applying that unasked to 216 and 217 removed the same friction from two more PRs and cost nothing. It also found the 218 conflict early, before a reviewer hit it. Worth making standard when a maintainer signals they review against current main
+
+work deepeval_3056_placement_decision
+  target_plane run2_relationship_adoption
+  priority 7.5
+  reason 3056 is draft for a stated reason, not neglect: the alignment layer is finished and reviewable, only the wrapper placement question (ArenaTestCase versus community metric) is open. Split into two independent unblocks and handed back. lostmartian is a named collaborator on the agreed split and is not yet in the actor graph
+
+work draft_status_hides_ready_work
+  target_plane run5_recursive_external
+  priority 6.5
+  reason A draft PR does not enter a review queue, so completed work can sit indefinitely behind a flag set for an unrelated reason. Two hypotheses about 3056 were wrong before reading the body -- it was neither an oversight nor bot noise. Check why a PR is draft before assuming it is unfinished
+
+work add_lostmartian_to_actor_graph
+  target_plane run2_relationship_adoption
+  priority 5.5
+  reason Named collaborator on the deepeval 3019/3056 split, with an agreed division of work. That is a real working relationship and it is absent from the actor graph entirely
