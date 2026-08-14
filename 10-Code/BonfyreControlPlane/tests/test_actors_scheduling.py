@@ -151,19 +151,25 @@ class PackLoaderTests(unittest.TestCase):
         )
 
     def test_the_pack_loads_actors_edges_work_and_watches(self):
-        self.assertEqual(self.report["actors"], 12)
-        self.assertEqual(self.report["edges"], 13)
-        self.assertEqual(self.report["queued"], 6)
+        self.assertEqual(self.report["actors"], 36)
+        self.assertEqual(self.report["edges"], 30)
+        self.assertEqual(self.report["queued"], 12)
         self.assertEqual(self.report["watches"], 3)
 
-    def test_every_person_is_recorded_unverified(self):
-        """Nothing in the brief was checked against tarbellcenter.org by this
-        process, so nothing may claim to have been."""
+    def test_confidence_reflects_how_each_actor_was_sourced(self):
+        """The Tarbell pack now mixes two provenances: five people originally
+        guessed from a brief, and the full team later read from the live
+        directory. A person read from tarbellcenter.org is verified; one still
+        only guessed is asserted. The graph must keep them distinguishable --
+        that distinction is the whole point of the confidence field."""
         people = actors.people_at(self.db, TARBELL_ORG)
-        self.assertEqual(len(people), 5)
-        for person in people:
-            self.assertEqual(person.confidence, actors.ASSERTED)
-        self.assertEqual(len(actors.unverified(self.db)), self.report["actors"])
+        self.assertEqual(len(people), 16)
+        verified = [p for p in people if p.confidence == actors.VERIFIED]
+        # The directory read verified the roster, so most are verified now.
+        self.assertTrue(verified, "a live directory read should verify people")
+        # Every verified person carries a provenance that is not the brief.
+        for person in verified:
+            self.assertIn("tarbellcenter.org", person.provenance)
 
     def test_staff_carry_distinct_authority_not_just_employment(self):
         self.assertTrue(
@@ -187,8 +193,8 @@ class PackLoaderTests(unittest.TestCase):
     def test_loading_a_pack_twice_changes_nothing(self):
         again = pack_loader.load_directory(self.db, PACKS / "tarbell", now=AUG14)
         self.assertEqual(again["queued"], 0)
-        self.assertEqual(again["already_present"], 6)
-        self.assertEqual(len(actors.people_at(self.db, TARBELL_ORG)), 5)
+        self.assertEqual(again["already_present"], 12)
+        self.assertEqual(len(actors.people_at(self.db, TARBELL_ORG)), 16)
 
     def test_an_actor_pack_without_provenance_is_refused(self):
         pack = pack_loader.parse_pack("pack p\ngeneration 1\n\nactor org:x\n  display_name X\n")
