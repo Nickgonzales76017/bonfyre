@@ -64,3 +64,33 @@ work hydroxide_is_a_dependency_not_a_command
   target_plane run4_institutional_fabric
   priority 6.0
   reason Registering hydroxide in the family manifest was wrong and the MCP guard rejected it -- native_tool_invoke requires a Bonfyre family. That guard enforced the no-command-proliferation law correctly. Vendored dependencies live in the managed bin directory without entering the capability constitution, and the manifest should probably distinguish the two rather than relying on a name prefix
+
+work proton_captcha_blocks_headless_auth
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason hydroxide auth reached Proton and got [9001] "please complete CAPTCHA". Credentials are valid enough to hit the auth endpoint; Proton is challenging the login. This is a human browser step, not a code problem. Known hydroxide behaviour for new or unusual clients -- commonly clears after a successful web login from the same IP, then a retry. Precise blocker, unlike the Run 6 "transport never obtained"
+
+work proton_auth_retry_after_web_login
+  target_plane run1_capital_conversion
+  priority 8.5
+  reason Next attempt: log into mail.proton.me in a browser from this machine, complete the CAPTCHA there, then rerun hydroxide auth. hydroxide auth also requires a real TTY -- it opens /dev/tty directly and ignores piped stdin, so it needs script -q or an interactive shell
+
+work proton_captcha_exhausted_code_paths
+  target_plane run1_capital_conversion
+  priority 9.5
+  reason Three attempts all returned [9001]: plain auth, an immediate retry, and -app-version web-mail@5.0.124.7. hydroxide contains no CAPTCHA handling at all -- strings shows nothing. Upstream PR 354 tried exactly the app-version approach and emersion rejected it, noting it only helps lower-risk accounts. This account is flagged. No code change on our side clears it
+
+work proton_needs_one_browser_verification
+  target_plane run1_capital_conversion
+  priority 9.5
+  reason The remaining path is a human step: sign in at mail.proton.me in a browser from this machine, complete the CAPTCHA there, then rerun hydroxide auth from a real terminal. Proton is asking for human verification of a flagged account, which is what the challenge is for. If it still fails, the appeal link in the error is the sanctioned route
+
+work hydroxide_is_archived_upstream
+  target_plane run2_relationship_adoption
+  priority 8.5
+  reason emersion archived hydroxide on 2026-08-02. It is read-only and unmaintained, so there is no upstream to contribute a fix to and no releases coming. Maintaining it ourselves is now a fork decision rather than a contribution one -- and it makes the free-account Proton path dependent on software nobody is maintaining
+
+work proton_transport_alternatives_if_fork_rejected
+  target_plane run1_capital_conversion
+  priority 7.0
+  reason If forking an archived client is unattractive, the alternatives are worth pricing before committing: a paid Proton account with official Bridge, a different provider for outbound business mail, or Gmail which already has working authenticated transport. The requirement is reliable mail, not Proton specifically
