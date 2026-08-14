@@ -1,0 +1,46 @@
+pack system-upgrade-round2
+generation control-1
+source_plane run5_recursive_external
+item_kind system_upgrade
+source_ref campaign:internal-dogfood-2
+note Opened by using the system rather than reading it. The probe fix closed one item and immediately exposed several more.
+
+work promote_bonfyrefs_workload_proven
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason BonfyreFS now holds the real evidence estate -- 23 artifacts, content-addressed, digest round-trip verified through the mount. That is ordinary-workload evidence, the first genuine candidate to move off health_probed
+
+work promote_bonfyrequeue_workload_proven
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason BonfyreQueue has carried every occurrence projection and side-issue this session, with real leases and receipts. Same argument
+
+work qwen_fpq_uninterruptible_exit
+  target_plane run5_recursive_external
+  priority 8.5
+  reason bonfyre-qwen-fpq wedges in an uninterruptible kernel exit path -- STAT UE, survives SIGKILL, RSS 16KB. Process-group kill bounds the wait but does not reclaim it. Something in its startup or teardown blocks in the kernel
+
+work capability_manifest_staleness
+  target_plane run4_institutional_fabric
+  priority 6.5
+  reason capabilities.json and families.json are written once and read forever. A rebuilt or removed binary leaves them wrong with no detection. Needs a digest or mtime check, the same staleness guard the conformance vectors already have in CI
+
+work twenty_four_silent_commands
+  target_plane run5_recursive_external
+  priority 6.0
+  reason 24 of 91 binaries advertised no surface under --help or -h. Some are genuinely flagless, some print usage only on error. Each needs classifying; a command that cannot describe itself cannot be routed to
+
+work fs_artifact_scoping_by_mission
+  target_plane run4_institutional_fabric
+  priority 5.5
+  reason Unscoped BonfyreFS lists every artifact in the fabric; --mission scopes to artifacts appearing in that mission's events. The evidence estate ingest attaches artifacts to no mission, so mission scoping currently shows nothing. Ingest should optionally bind to a mission
+
+work picatz_static_analysis_adjacency
+  target_plane run2_relationship_adoption
+  priority 6.5
+  reason picatz maintains taint, static taint analysis for Go with 85 stars, alongside a large security-tooling estate. That is why they want Deputy owning its assessment model rather than borrowing foreign fingerprints -- they build the tools that emit findings. Sharpens how to frame the 283 patch and what else would land
+
+work evidence_estate_as_content_source
+  target_plane run3_four_economies_campaign
+  priority 7.0
+  reason The ACM outline should be built from the mounted evidence estate rather than written from memory. celld patches, control contracts and conformance vectors are now addressable by content digest, which is itself the article's subject
