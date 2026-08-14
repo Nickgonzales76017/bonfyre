@@ -69,3 +69,13 @@ work add_lostmartian_to_actor_graph
   target_plane run2_relationship_adoption
   priority 5.5
   reason Named collaborator on the deepeval 3019/3056 split, with an agreed division of work. That is a real working relationship and it is absent from the actor graph entirely
+
+work bernstein_3701_pr2_upgrade_executor
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason PR1 is up as 3840 with the observe default. PR2 wires the same admission service into core.config.UpgradeExecutor, closing the reviewer-approval auto-execute bypass at upgrade_executor.py:322-326 -- the path that being ungated is the exact bypass 3701 exists to close
+
+work agentguard_230_portable_inverse
+  target_plane run2_relationship_adoption
+  priority 7.5
+  reason Opened as agentguard#230 with the round-trip properties a fix must assert, including failing closed when a root is absent rather than resolving to a wrong path. Offered to take it; unclaimed until the maintainer responds
