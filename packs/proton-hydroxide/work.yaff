@@ -1,0 +1,46 @@
+pack proton-hydroxide-work
+generation control-1
+source_plane run1_capital_conversion
+item_kind proton_transport
+source_ref campaign:proton-hydroxide
+note Reopens a path I closed wrongly. The invalidated receipt_recursion items said "transport never obtained", which was true of official Proton Bridge and says nothing about hydroxide. Those items stay invalidated because that state is terminal; these supersede them in practice.
+
+work proton_correct_the_wrong_closure
+  target_plane run5_recursive_external
+  priority 9.0
+  reason I invalidated the Proton items on the Run 6 narrative rather than on technical state, one message after warning against exactly that. Bridge requires a paid account we do not have, so it was never the available path. Hydroxide is, it is open source, and it can be maintained by us. The closure was wrong and the reasoning was the failure
+
+work proton_docker_vm_deleted_during_cleanup
+  target_plane run5_recursive_external
+  priority 9.0
+  reason The Docker VM disk was deleted during disk cleanup this session and took the headless hydroxide container with it. It was approved, but described only as "wipes local images/containers" -- the link to the Proton deficit was not made despite that deficit having been read the same morning. Docker Data is freshly recreated with only log dirs and no compose file survives anywhere on disk
+
+work proton_reinstall_docker_runtime
+  target_plane run1_capital_conversion
+  priority 8.5
+  reason Docker is not running and its VM is gone. Reinstalling is the prerequisite for everything below. No Go toolchain is present either, so a source build is a second prerequisite if the container route is abandoned
+
+work proton_rebuild_headless_hydroxide
+  target_plane run1_capital_conversion
+  priority 8.5
+  reason Rebuild the headless hydroxide container. The exact previous invocation was not recoverable from the Codex transcripts or from disk, so this needs reconstructing from the hydroxide project rather than restored
+
+work proton_client_already_supports_hydroxide
+  target_plane run1_capital_conversion
+  priority 7.0
+  reason bonfyre_run5_external_io.py already branches on PROTON_TRANSPORT_MODE, using plain IMAP and SMTP on localhost for hydroxide and STARTTLS only for Bridge. The client side is done; only the transport is missing. Ports 1143 and 1025 are the expected endpoints and neither is listening
+
+work proton_credentials_present_unread
+  target_plane run1_capital_conversion
+  priority 6.0
+  reason Proton account credentials exist. Files are present under the secrets directory and were deliberately not opened. Whoever wires the transport needs them; nothing here should copy them into a pack or a log
+
+work proton_maintain_hydroxide_ourselves
+  target_plane run2_relationship_adoption
+  priority 5.5
+  reason The stated intent is to maintain hydroxide once our end is fixed. That converts a blocked capability into an upstream relationship of the same kind as bernstein and agentguard -- a dependency we contribute to rather than merely consume
+
+work terminal_states_make_wrong_triage_irreversible
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason invalidated is terminal by design, so a mistaken closure cannot be undone -- these items had to be recreated instead. The design is right for honesty and wrong for recovery. A reopened item should be able to cite what it supersedes, or triage needs a reversible provisional state distinct from invalidated
