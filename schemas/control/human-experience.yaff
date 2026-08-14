@@ -1,0 +1,79 @@
+schema HumanExperienceObservation
+generation control-1
+authority native-kernel
+fiber HumanExperienceGraph
+note A graph fiber over the same Resource identity as Work and Relationship. Records measured human outcomes of an inhabited computational workplace, so that criticism from researchers becomes computable evidence rather than remembered advice.
+
+field id
+  type u64
+  role identity
+  generated true
+
+field actor
+  type text
+  required true
+  role actor-resource-id
+
+field scope
+  type text
+  note run, room, session or institution the observation belongs to
+
+field activity
+  type text
+  note what the person was doing; an observation without a task is hard to interpret
+
+field measure
+  type enum
+  values social_connection belonging loneliness attention interruption cognitive_load stress agency autonomy control trust trust_calibration anthropomorphism felt_understanding flow engagement meaning affect task_satisfaction human_human_contact human_ai_contact productivity_self_report productivity_observed
+  required true
+
+field instrument
+  type text
+  required true
+  note the validated scale or observable used. An observation with no instrument is an opinion
+
+field value
+  type real
+  required true
+
+field temporal_window
+  type text
+  required true
+  note observations without a window cannot be compared
+
+field intervention
+  type text
+  note which condition produced this, e.g. habitat-spatial, habitat-social-agents, conventional-surface
+
+field comparison
+  type text
+  note the condition this is measured against
+
+field evidence_ref
+  type text
+  required true
+
+invariant no-composite-score
+  statement measures are never summed or averaged into a single wellbeing number
+  derived-from the same law that keeps realized cash separate from pipeline
+
+invariant no-inferred-affect
+  statement emotional state is never inferred from behaviour; only instrumented self-report or an observable counts
+  note "19 context transitions in 22 minutes" is an observation. "seems stressed" is not
+
+invariant instrument-required
+  statement a measure without a named instrument is not admissible as evidence
+
+invariant intervention-needs-comparison
+  statement a value attributed to an intervention carries the condition it is compared against
+
+principle human-connection-preservation
+  statement AI-mediated social presence must not silently substitute for human connection where human connection is materially valuable
+  applies-to ProviderGraph selection
+  example answer a factual question -> AI is appropriate
+  example resolve an ambiguous conflict with a coworker -> facilitate human contact
+
+axis cognitive-cooling
+  statement a cooled subject must also be visually, socially and cognitively quiet
+  note cooling previously meant only computational quiet; in an inhabited surface it must also mean not glowing, pulsing, moving or holding central attention
+  reheat same condition as the computational axis

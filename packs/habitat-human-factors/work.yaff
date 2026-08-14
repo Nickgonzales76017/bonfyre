@@ -1,0 +1,76 @@
+pack habitat-human-factors-work
+generation control-1
+source_plane run2_relationship_adoption
+item_kind habitat_human_factors
+source_ref campaign:habitat-human-factors
+note Sequenced deliberately: the UTA path can produce real criticism and introductions first, which is what gives the cold outreach something behind it. Priorities encode that order. Nothing is sent until the identity-verification item clears.
+
+work hhf_verify_all_identities
+  target_plane run2_relationship_adoption
+  priority 9.5
+  reason Every actor in this pack is asserted from an unverified brief. Confirm names, titles, departments and current affiliation from each institution's own directory. A wrong title in a cold academic email is disqualifying, and Mel Sellick's non-IEEE affiliation is not recorded at all
+
+work hhf_define_narrow_question_per_scholar
+  target_plane run2_relationship_adoption
+  priority 9.0
+  reason Each person gets one aspect to criticize, not a product tour. Epley on whether mediated presence increases or substitutes for human connection; Mark on interruption cost; Hancock on AI-mediated communication asymmetry; Schroeder on felt-understanding across modality; Waytz on over-attribution to spatialized agents; Sellick on organizational relational readiness
+
+work hhf_contact_wetz
+  target_plane run2_relationship_adoption
+  priority 8.5
+  reason First contact. Former EE/PPEL student returning for research criticism, asking for perspective and introductions rather than endorsement. As Associate Chair he is positioned to route to the right people
+
+work hhf_contact_tjuatja
+  target_plane run2_relationship_adoption
+  priority 7.0
+  reason Second existing EE relationship, same framing. Only if there was genuine personal contact -- otherwise this is a cold email wearing a warm one's clothes
+
+work hhf_contact_sellick
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason Closest single match: UTA already hosted her on exactly this question and P7023 overlaps organizational Habitat design. Needs her current affiliation resolved first
+
+work hhf_contact_uta_hci
+  target_plane run2_relationship_adoption
+  priority 7.5
+  reason Torres, Gieser and Makedon can criticize the spatial interaction itself. Gieser is the closest on VR/XR and human-robot interaction
+
+work hhf_contact_uta_io_psych
+  target_plane run2_relationship_adoption
+  priority 6.5
+  reason Kenworthy and Watts for workplace measurement and design. The I-O lens is what turns opinions into instruments
+
+work hhf_external_scholar_outreach
+  target_plane run2_relationship_adoption
+  priority 5.0
+  reason Epley, Mark, Hancock, Schroeder, Waytz. Deliberately last: cold outreach lands far better carrying prior criticism and a real measurement plan. Schroeder co-authors with Epley, so one warm path may serve two
+
+work hhf_pilot_protocol_three_conditions
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason Build the A/B/C protocol -- conventional surface, Habitat spatial state, Habitat plus resident social agents -- over one realistic multi-stage work episode. Feasible without IRB for early design criticism, and gives every scholar something concrete to attack
+
+work hhf_instrument_selection
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Choose validated instruments rather than inventing scales. Cognitive load, loneliness, belonging, trust calibration and affect all have established measures; using homemade ones would make any result unciteable
+
+work hhf_human_connection_preservation_principle
+  target_plane run4_institutional_fabric
+  priority 7.5
+  reason Encode the named principle: AI-mediated social presence must not silently substitute for human connection where human connection is materially valuable. ProviderGraph would need to distinguish answer-a-factual-question from resolve-an-ambiguous-conflict-with-a-coworker
+
+work hhf_attention_budget_observables
+  target_plane run4_institutional_fabric
+  priority 6.5
+  reason Model an attention budget from observables only -- context transitions, interruption counts, room reheats, AI-initiated versus human-initiated contacts. Never infer emotional state. "19 context transitions in 22 minutes" is defensible; "Nick seems stressed" is not
+
+work hhf_cooling_gets_cognitive_axis
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Structural cooling currently means computational quiet. It should also mean visual, social and cognitive quiet: a cooled item must not glow, pulse, move or hold central spatial attention either. Same reheat condition governs all four
+
+work hhf_habitat_thesis_writeup
+  target_plane run3_four_economies_campaign
+  priority 5.5
+  reason Habitat's stated reason to exist becomes a research thesis rather than a UI theme. That framing is also what makes it legible to Tarbell and to ACM
