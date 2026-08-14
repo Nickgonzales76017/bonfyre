@@ -1,0 +1,36 @@
+pack adjacent-opportunity-round2
+generation control-1
+source_plane run2_relationship_adoption
+item_kind adjacent_opportunity
+source_ref research:2026-08-14-dependency-scan
+note Found by reading PR bodies rather than issue titles. The useful structure was not a list of unclaimed issues but a critical path we are already standing on.
+
+work agentguard_213_critical_path
+  target_plane run2_relationship_adoption
+  priority 9.0
+  reason PR 213, the deterministic external-verifier projection, names four merge dependencies: 214, 216, 217, 218. All four are ours. 214 is rebased onto 93140726 and awaiting final review, so it is the nearest domino. Merging it does not just close 203 -- it advances a chain that ends in the largest piece of work we have open there
+
+work agentguard_216_217_218_status_sweep
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason 216, 217 and 218 have had no attention this session while 214 consumed it. Each closes a named dependency of 213. Check whether any is waiting on us rather than on the maintainer -- an unanswered review comment on any of them stalls the whole chain
+
+work agentguard_209_attested_toolchain
+  target_plane run2_relationship_adoption
+  priority 6.0
+  reason Build releases with a locked and attested toolchain. Unassigned, supply-chain provenance, adjacent to the evidence work already merged there. Not claimed while the 213 chain is live
+
+work agentguard_184_bound_static_summaries
+  target_plane run2_relationship_adoption
+  priority 5.5
+  reason Stream and bound static-site trace summaries. Same bounding discipline as 214, applied to a different surface
+
+work verify_pr_issue_linkage_habit
+  target_plane run5_recursive_external
+  priority 4.0
+  reason A hypothesis that our PRs were not linked to their issues turned out false -- every one carries Closes. Worth keeping as a check rather than an assumption, since an unlinked PR is invisible to a maintainer triaging by issue
+
+work map_dependency_chains_before_claiming
+  target_plane run5_recursive_external
+  priority 7.0
+  reason Reading PR bodies for stated merge dependencies found more than scanning issue titles did. Before claiming anything new, map what our open work already blocks or is blocked by. Claiming a fresh issue while a four-PR chain of ours stalls is the wrong allocation
