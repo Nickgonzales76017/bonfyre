@@ -7,12 +7,16 @@ architecture blocker-graph
   layer opportunity
   semantic_question What is currently preventing this opportunity from being reachable?
   purpose Missing identity verification, evidence, authority, budget, service, qualification, relationship, field; external wait; human approval.
-  maturity architectural
+  maturity implemented
   node_types Blocker
   edge_types blocks
+  state_types resolved
+  state_types open
+  invariant a blocker with no substrate to decide it is open, never assumed satisfied
   forbidden_inference blocker removed -> opportunity won
   source_lineage SEED-A recursive organ document
-  known_gap not implemented
+  source_path 10-Code/BonfyreControlPlane/opportunity.py
+  witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
 
 architecture unlock-graph
   canonical_name UnlockGraph
@@ -21,13 +25,24 @@ architecture unlock-graph
   layer opportunity
   semantic_question What reachable action would unlock institutional capacity that is currently out of reach?
   purpose Models reachable institutional capacity: relationship -> reviewer access, grant -> equipment, training -> human capability, evidence -> eligibility, service activation -> executable capacity. May be conditional and non-monotonic.
-  maturity architectural
+  maturity implemented
   node_types Unlock
+  node_types Opportunity
   edge_types unlocks
+  edge_types requires
+  state_types reachable_now
+  state_types unlockable
+  state_types blocked
+  internal_calculus reachability fixpoint over blockers and opportunity dependencies
   invariant unlock may be conditional and non-monotonic
+  invariant an unauthorized unlock does not remove its blocker
+  invariant reachability stops at the human/external commit line; reachable is not won
   forbidden_inference an unlock exists -> the unlock is authorized or free
+  forbidden_inference all blockers resolved -> opportunity won
   source_lineage SEED-A recursive organ document
-  known_gap not implemented; the highest-value opportunity architecture to build next
+  source_path 10-Code/BonfyreControlPlane/opportunity.py
+  witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
+  known_gap opportunities are constructed in code; a YaFF opportunity pack loader is the next step
 
 architecture resource-activation
   canonical_name ResourceActivationGraph

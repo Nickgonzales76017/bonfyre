@@ -124,3 +124,46 @@ interaction unlock-activates-resource
   drops nothing
   forbidden_inference an unlock exists -> the resource is free or authorized
   witness ActivationMechanism
+
+interaction verification-resolves-identity-blocker
+  source actor-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves verified_for(profile)
+  drops asserted-only identity
+  forbidden_inference asserted actor -> resolved identity blocker
+  invalidates_on the actor's confidence drops below verified
+  witness actor_nodes.confidence
+  binding 10-Code/BonfyreControlPlane/opportunity.py
+
+interaction proof-resolves-layer-blocker
+  source proof-frontier
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the proven layer identity
+  drops non-proven layers
+  forbidden_inference an open layer -> a resolved proof_layer blocker
+  invalidates_on the frontier layer is reheated
+  witness frontier_layers.status
+  binding 10-Code/BonfyreControlPlane/opportunity.py
+
+interaction work-resolves-dependency-blocker
+  source work-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the satisfied work item identity
+  drops unsatisfied or failed items
+  forbidden_inference an open work item -> a resolved work_done blocker
+  witness work_items.state
+  binding 10-Code/BonfyreControlPlane/opportunity.py
+
+interaction service-bind-is-an-unlock
+  source unlock-graph
+  destination service-lifecycle
+  relation activation_mechanism
+  preserves the service_bound blocker subject
+  drops nothing
+  forbidden_inference service catalogued -> service_bound blocker resolved
+  authority binding a service requires the bind right
+  witness ServiceProfile.state
+  binding 10-Code/BonfyreControlPlane/service_lifecycle.py

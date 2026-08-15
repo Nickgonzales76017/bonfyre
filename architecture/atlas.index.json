@@ -134,22 +134,26 @@
         "blocker removed -> opportunity won"
       ],
       "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [
-        "not implemented"
+      "invariants": [
+        "a blocker with no substrate to decide it is open, never assumed satisfied"
       ],
+      "known_gaps": [],
       "layer": "opportunity",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "Blocker"
       ],
       "semantic_question": "What is currently preventing this opportunity from being reachable?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/opportunity.py"
+      ],
       "views": [
         "OpportunityView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_opportunity.py"
+      ]
     },
     "capability-closure": {
       "canonical_name": "CapabilityClosureGraph",
@@ -1013,31 +1017,42 @@
       "commands": [],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
-        "unlocks"
+        "unlocks",
+        "requires"
       ],
       "family": "opportunity",
       "forbidden_inferences": [
-        "an unlock exists -> the unlock is authorized or free"
+        "an unlock exists -> the unlock is authorized or free",
+        "all blockers resolved -> opportunity won"
       ],
-      "internal_calculi": [],
+      "internal_calculi": [
+        "reachability fixpoint over blockers and opportunity dependencies"
+      ],
       "invariants": [
-        "unlock may be conditional and non-monotonic"
+        "unlock may be conditional and non-monotonic",
+        "an unauthorized unlock does not remove its blocker",
+        "reachability stops at the human/external commit line; reachable is not won"
       ],
       "known_gaps": [
-        "not implemented; the highest-value opportunity architecture to build next"
+        "opportunities are constructed in code; a YaFF opportunity pack loader is the next step"
       ],
       "layer": "opportunity",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
-        "Unlock"
+        "Unlock",
+        "Opportunity"
       ],
       "semantic_question": "What reachable action would unlock institutional capacity that is currently out of reach?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/opportunity.py"
+      ],
       "views": [
         "OpportunityView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_opportunity.py"
+      ]
     },
     "work-graph": {
       "canonical_name": "WorkGraph",
@@ -1177,6 +1192,23 @@
       "relation": "binding_source",
       "source": "capability-lattice"
     },
+    "proof-resolves-layer-blocker": {
+      "destination": "unlock-graph",
+      "drops": [
+        "non-proven layers"
+      ],
+      "forbidden_inferences": [
+        "an open layer -> a resolved proof_layer blocker"
+      ],
+      "invalidates_on": [
+        "the frontier layer is reheated"
+      ],
+      "preserves": [
+        "the proven layer identity"
+      ],
+      "relation": "blocker_resolution",
+      "source": "proof-frontier"
+    },
     "representation-feeds-sli": {
       "destination": "sli-execution",
       "drops": [
@@ -1208,6 +1240,21 @@
       ],
       "relation": "service_binding",
       "source": "service-lifecycle"
+    },
+    "service-bind-is-an-unlock": {
+      "destination": "service-lifecycle",
+      "drops": [
+        "nothing"
+      ],
+      "forbidden_inferences": [
+        "service catalogued -> service_bound blocker resolved"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the service_bound blocker subject"
+      ],
+      "relation": "activation_mechanism",
+      "source": "unlock-graph"
     },
     "transport-carries-hop": {
       "destination": "capability-closure",
@@ -1255,6 +1302,38 @@
       ],
       "relation": "capacity_unlock",
       "source": "unlock-graph"
+    },
+    "verification-resolves-identity-blocker": {
+      "destination": "unlock-graph",
+      "drops": [
+        "asserted-only identity"
+      ],
+      "forbidden_inferences": [
+        "asserted actor -> resolved identity blocker"
+      ],
+      "invalidates_on": [
+        "the actor's confidence drops below verified"
+      ],
+      "preserves": [
+        "verified_for(profile)"
+      ],
+      "relation": "blocker_resolution",
+      "source": "actor-graph"
+    },
+    "work-resolves-dependency-blocker": {
+      "destination": "unlock-graph",
+      "drops": [
+        "unsatisfied or failed items"
+      ],
+      "forbidden_inferences": [
+        "an open work item -> a resolved work_done blocker"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the satisfied work item identity"
+      ],
+      "relation": "blocker_resolution",
+      "source": "work-graph"
     }
   },
   "views": {
