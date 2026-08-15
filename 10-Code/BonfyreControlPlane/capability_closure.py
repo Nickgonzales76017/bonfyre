@@ -32,6 +32,7 @@ from typing import Optional
 import command_laws as cl
 import estate_catalog as ec
 import proof_frontier as pf
+import capability_catalog as cccat
 import transport as tp
 
 DISCIPL = Path.home() / ".bonfyre" / "bin" / "bonfyre-discipl"
@@ -301,6 +302,28 @@ def submit(
     )
 
 
+def _promote_ran_commands(db, hops, receipt_ref: str) -> int:
+    """A command that just ran a real workload earns workload_proven.
+
+    This closes the loop the manual step opened: execution is evidence, so a
+    completed organism promotes the commands it ran and cites the receipt. No
+    hand promotion, no claim without a run behind it."""
+    import datetime as _dt
+    cccat.ensure_schema(db)
+    promoted = 0
+    for hop in hops:
+        if not hop.binary:
+            continue
+        base = Path(hop.binary).name  # bonfyre-hash
+        family = "Bonfyre" + "".join(p.capitalize() for p in base.replace("bonfyre-", "").split("-"))
+        row = db.execute("SELECT location FROM capability_identities WHERE public_name=?", (family,)).fetchone()
+        if row:
+            cccat.declare(db, cccat.Capability(public_name=family, maturity="workload_proven",
+                          location=row[0], proof_ref=receipt_ref), now=_dt.datetime.now(_dt.timezone.utc))
+            promoted += 1
+    return promoted
+
+
 # ----------------------------------------------------------- form selection
 
 PIPELINE = Path.home() / ".bonfyre" / "bin" / "bonfyre-pipeline"
@@ -355,6 +378,7 @@ def dispatch(
     organism: ExecutionOrganism,
     queue_db: Path,
     transport: str = tp.DIRECT,
+    db=None,
 ) -> dict:
     """Select the form and route to the matching substrate.
 
@@ -376,10 +400,14 @@ def dispatch(
 
     if selection.form == FORM_DURABLE:
         submitted = submit(organism, queue_db)
+        promoted = 0
+        if submitted.submitted and submitted.missions:
+            promoted = _promote_ran_commands(db, organism.hops, f"mission:{submitted.missions[0]}")
         return {
             "form": selection.form, "substrate": selection.substrate,
             "rationale": selection.rationale, "dispatched": submitted.submitted,
             "missions": list(submitted.missions), "transport": carrier,
+            "promoted_commands": promoted,
         }
 
     # Non-durable forms: route to their substrate. The exact invocation is
