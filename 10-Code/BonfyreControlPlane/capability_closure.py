@@ -211,3 +211,61 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# --------------------------------------------------------------- execution
+
+QUEUE = Path.home() / ".bonfyre" / "bin" / "bonfyre-queue"
+
+
+@dataclass(frozen=True)
+class SubmittedOrganism:
+    goal: str
+    submitted: bool
+    missions: tuple[str, ...]
+    reason: str
+
+
+def submit(
+    organism: ExecutionOrganism,
+    queue_db: Path,
+) -> SubmittedOrganism:
+    """Submit an authorized organism to the native WorkGraph-backed queue.
+
+    This is the execution boundary. A blocked organism refuses here -- the gate
+    is not advisory, it stops real durable work from being created. An
+    authorized organism becomes one native mission per bound hop, each carrying
+    its real binary and confidence, so the queue holds runnable work, not a
+    description of work.
+    """
+    if not organism.authorized:
+        return SubmittedOrganism(
+            goal=organism.goal, submitted=False, missions=(),
+            reason=f"refused at execution boundary: {organism.verdict_reason}",
+        )
+    if not QUEUE.exists():
+        return SubmittedOrganism(
+            goal=organism.goal, submitted=False, missions=(),
+            reason="bonfyre-queue not installed",
+        )
+
+    missions: list[str] = []
+    for index, hop in enumerate(organism.hops):
+        if not hop.binary:
+            continue
+        subject = f"organism:{organism.goal}|hop{index}:{hop.family}:{hop.binary}"
+        result = subprocess.run(
+            [str(QUEUE), "enqueue", f"organism-hop:{hop.law}", subject,
+             "--db", str(queue_db), "--retries", "2"],
+            capture_output=True, text=True, timeout=60,
+        )
+        if result.returncode == 0:
+            try:
+                missions.append(json.loads(result.stdout)["mission_id"])
+            except (ValueError, KeyError):
+                pass
+    return SubmittedOrganism(
+        goal=organism.goal, submitted=bool(missions),
+        missions=tuple(missions),
+        reason=f"{len(missions)} hops submitted as native durable work",
+    )
