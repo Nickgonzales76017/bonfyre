@@ -242,6 +242,67 @@ def reachable_capacity(
     return evals
 
 
+def load_pack(text: str) -> tuple[list[Opportunity], list[Unlock]]:
+    """Parse an opportunities pack into Opportunity and Unlock objects.
+
+    A campaign is data, not code: an opportunity is a scope and a body of
+    blockers. Grammar is the estate YaFF -- ``opportunity``/``blocker``/``unlock``
+    blocks with indented fields; a blocker names its parent ``opportunity``.
+    """
+    opp_meta: dict[str, dict[str, str]] = {}
+    blockers: dict[str, list[Blocker]] = {}
+    unlocks: list[Unlock] = []
+    current_kind = current_id = ""
+    fields: dict[str, str] = {}
+    reqs: list[tuple[str, ...]] = []
+
+    def flush() -> None:
+        if current_kind == "opportunity":
+            opp_meta[current_id] = dict(fields)
+        elif current_kind == "blocker":
+            parent = fields.get("opportunity", "")
+            blockers.setdefault(parent, []).append(Blocker(
+                kind=fields.get("kind", ""), subject=fields.get("subject", ""),
+                detail=fields.get("detail", ""), profile=fields.get("profile", ""),
+                layer=fields.get("layer", ""),
+            ))
+        elif current_kind == "unlock":
+            unlocks.append(Unlock(
+                unlock_id=current_id, removes_kind=fields.get("removes_kind", ""),
+                removes_subject=fields.get("removes_subject", ""),
+                action=fields.get("action", ""),
+                authorized=fields.get("authorized", "false").lower() == "true",
+                requires=tuple(reqs),
+            ))
+
+    for raw in text.splitlines():
+        if not raw.strip() or raw.lstrip().startswith("#"):
+            continue
+        key, _, value = raw.strip().partition(" ")
+        value = value.strip()
+        if raw[0].isspace():
+            if key == "requires":
+                reqs.append(tuple(value.split()))
+            else:
+                fields[key] = value
+            continue
+        if key in ("opportunity", "blocker", "unlock"):
+            flush()
+            current_kind, current_id = key, value
+            fields, reqs = {}, []
+    flush()
+
+    opportunities = [
+        Opportunity(
+            opp_id=oid, title=meta.get("title", oid),
+            blockers=tuple(blockers.get(oid, ())),
+            eligibility=tuple(),
+        )
+        for oid, meta in opp_meta.items()
+    ]
+    return opportunities, unlocks
+
+
 def capacity_summary(evals: dict[str, OppEval]) -> dict[str, list[str]]:
     out: dict[str, list[str]] = {REACHABLE_NOW: [], UNLOCKABLE: [], BLOCKED: []}
     for opp_id, ev in evals.items():

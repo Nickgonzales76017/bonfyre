@@ -111,6 +111,59 @@ def test_opportunity_depends_on_another_reachable_opportunity():
     assert summary[opp.REACHABLE_NOW] == ["A"] and summary[opp.UNLOCKABLE] == ["B"]
 
 
+def test_load_pack_parses_opportunities_and_unlocks():
+    text = """pack test
+source_ref x
+
+opportunity o1
+  title first
+
+blocker o1-id
+  opportunity o1
+  kind identity_verification
+  subject actor-a
+
+opportunity o2
+  title second
+
+blocker o2-proof
+  opportunity o2
+  kind proof_layer
+  subject model:z
+  profile p
+  layer reconstruction
+
+unlock u1
+  removes_kind identity_verification
+  removes_subject actor-a
+  action verify
+  authorized true
+  requires blocker work_done thing
+"""
+    opps, unlocks = opp.load_pack(text)
+    assert {o.opp_id for o in opps} == {"o1", "o2"}
+    o1 = next(o for o in opps if o.opp_id == "o1")
+    assert o1.blockers[0].kind == opp.IDENTITY_VERIFICATION
+    o2 = next(o for o in opps if o.opp_id == "o2")
+    assert o2.blockers[0].layer == "reconstruction"
+    assert len(unlocks) == 1 and unlocks[0].authorized is True
+    assert unlocks[0].requires == (("blocker", "work_done", "thing"),)
+
+
+def test_real_pack_fpq_opportunity_is_reachable_when_layer_proven():
+    # the fpq-reconstruction-evidence opportunity becomes reachable exactly when
+    # the reconstruction layer is proven -- the same discipline as the live db.
+    db = _db()
+    pack = Path(__file__).resolve().parents[3] / "packs" / "institutional-opportunities" / "opportunities.yaff"
+    opps, unlocks = opp.load_pack(pack.read_text())
+    before = opp.reachable_capacity(db, opps, unlocks)["fpq-reconstruction-evidence"]
+    assert before.status == opp.BLOCKED  # layer not proven in a fresh db
+    pf.set_layer(db, "model:fpq-fixture-tiny-f16", 2, "reconstruction", "proven",
+                 subject_profile="fpq-v3-coord-qjl")
+    after = opp.reachable_capacity(db, opps, unlocks)["fpq-reconstruction-evidence"]
+    assert after.status == opp.REACHABLE_NOW
+
+
 def test_capacity_summary_partitions_all():
     db = _db()
     _actor(db, "v", actors.VERIFIED)

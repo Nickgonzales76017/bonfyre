@@ -42,7 +42,9 @@ architecture unlock-graph
   source_lineage SEED-A recursive organ document
   source_path 10-Code/BonfyreControlPlane/opportunity.py
   witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
-  known_gap opportunities are constructed in code; a YaFF opportunity pack loader is the next step
+  witness packs/institutional-opportunities/opportunities.yaff
+  native_format graf
+  known_gap unlockable opportunities do not yet auto-drive the AtomicForm submit-ready pipeline
 
 architecture resource-activation
   canonical_name ResourceActivationGraph

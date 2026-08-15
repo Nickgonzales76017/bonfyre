@@ -1034,11 +1034,13 @@
         "reachability stops at the human/external commit line; reachable is not won"
       ],
       "known_gaps": [
-        "opportunities are constructed in code; a YaFF opportunity pack loader is the next step"
+        "unlockable opportunities do not yet auto-drive the AtomicForm submit-ready pipeline"
       ],
       "layer": "opportunity",
       "maturity": "implemented",
-      "native_formats": [],
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "Unlock",
         "Opportunity"
@@ -1051,7 +1053,8 @@
         "OpportunityView"
       ],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_opportunity.py"
+        "10-Code/BonfyreControlPlane/tests/test_opportunity.py",
+        "packs/institutional-opportunities/opportunities.yaff"
       ]
     },
     "work-graph": {
