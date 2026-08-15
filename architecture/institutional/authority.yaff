@@ -10,16 +10,25 @@ architecture authority-graph
   layer institutional
   semantic_question Who may do what, to what, for what purpose, under what evidence, until when?
   purpose Typed authority edges (observe/reference/bind/activate/act/review/approve/commit/delegate/revoke/publish/spend/share/disclose) with scope, expiry, delegation, revocation, evidence.
-  maturity architectural
+  maturity implemented
   node_types AuthorityEdge
   node_types Permission
   edge_types delegates
   edge_types revokes
+  state_types granted
+  state_types expired
+  state_types revoked
+  internal_calculus in-window non-revoked edge lookup
+  internal_calculus scope-constrained delegation
   invariant delegation may compose only under constrained scope
+  invariant an edge outside its window or revoked grants nothing
   forbidden_inference affiliation -> authority
   forbidden_inference available -> authorized
+  forbidden_inference presence -> authority
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/authority.py
+  witness 10-Code/BonfyreControlPlane/tests/test_authority.py
   source_lineage SEED-A recursive organ document
-  known_gap not implemented; authority is currently implicit in actor confidence + rights enums
 
 architecture relationship-graph
   canonical_name RelationshipGraph

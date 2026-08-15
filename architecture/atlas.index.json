@@ -99,28 +99,37 @@
       "family": "institutional",
       "forbidden_inferences": [
         "affiliation -> authority",
-        "available -> authorized"
+        "available -> authorized",
+        "presence -> authority"
       ],
-      "internal_calculi": [],
+      "internal_calculi": [
+        "in-window non-revoked edge lookup",
+        "scope-constrained delegation"
+      ],
       "invariants": [
-        "delegation may compose only under constrained scope"
+        "delegation may compose only under constrained scope",
+        "an edge outside its window or revoked grants nothing"
       ],
-      "known_gaps": [
-        "not implemented; authority is currently implicit in actor confidence + rights enums"
-      ],
+      "known_gaps": [],
       "layer": "institutional",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "AuthorityEdge",
         "Permission"
       ],
       "semantic_question": "Who may do what, to what, for what purpose, under what evidence, until when?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/authority.py"
+      ],
       "views": [
         "InstitutionalView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_authority.py"
+      ]
     },
     "blocker-graph": {
       "canonical_name": "BlockerGraph",
@@ -1112,6 +1121,23 @@
       ],
       "relation": "verified_autofill",
       "source": "actor-graph"
+    },
+    "authority-resolves-authority-blocker": {
+      "destination": "unlock-graph",
+      "drops": [
+        "expired and revoked edges"
+      ],
+      "forbidden_inferences": [
+        "an unlock exists -> authority to take it"
+      ],
+      "invalidates_on": [
+        "the granting edge expires or is revoked"
+      ],
+      "preserves": [
+        "the granting edge (actor, permission, subject, purpose)"
+      ],
+      "relation": "blocker_resolution",
+      "source": "authority-graph"
     },
     "closure-gated-by-frontier": {
       "destination": "proof-frontier",

@@ -40,6 +40,8 @@ import sqlite3
 from dataclasses import dataclass, field
 from typing import Optional
 
+import authority
+
 # ------------------------------------------------------------------ blockers
 
 IDENTITY_VERIFICATION = "identity_verification"  # an actor must be VERIFIED
@@ -53,7 +55,7 @@ FIELD = "field"                                     # a form field must be fille
 
 # Kinds this engine can decide against real substrate today. Everything else is
 # honestly unknown until its architecture is built.
-_RESOLVABLE = {IDENTITY_VERIFICATION, PROOF_LAYER, WORK_DONE, SERVICE_BOUND}
+_RESOLVABLE = {IDENTITY_VERIFICATION, PROOF_LAYER, WORK_DONE, SERVICE_BOUND, AUTHORITY}
 
 REACHABLE_NOW = "reachable_now"
 UNLOCKABLE = "unlockable"
@@ -68,6 +70,9 @@ class Blocker:
     # for proof_layer: subject is the resource; these pin the exact layer.
     profile: str = ""
     layer: str = ""
+    # for authority: which actor must hold which permission over the subject.
+    actor: str = ""
+    permission: str = ""
 
     @property
     def ref(self) -> tuple[str, str]:
@@ -160,7 +165,12 @@ def blocker_resolved(
         return _work_satisfied(db, blocker.subject)
     if blocker.kind == SERVICE_BOUND:
         return blocker.subject in bound_services
-    return None  # authority / budget / human_approval / field: no substrate yet
+    if blocker.kind == AUTHORITY:
+        return authority.has_authority(
+            db, blocker.actor, blocker.permission or authority.ACT, blocker.subject,
+            purpose=blocker.detail or None,
+        )
+    return None  # budget / human_approval / field: no substrate yet
 
 
 # ------------------------------------------------------------------ fixpoint

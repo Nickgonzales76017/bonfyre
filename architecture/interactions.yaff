@@ -157,6 +157,17 @@ interaction work-resolves-dependency-blocker
   witness work_items.state
   binding 10-Code/BonfyreControlPlane/opportunity.py
 
+interaction authority-resolves-authority-blocker
+  source authority-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the granting edge (actor, permission, subject, purpose)
+  drops expired and revoked edges
+  forbidden_inference an unlock exists -> authority to take it
+  invalidates_on the granting edge expires or is revoked
+  witness has_authority
+  binding 10-Code/BonfyreControlPlane/opportunity.py
+
 interaction reachability-gates-form-pipeline
   source unlock-graph
   destination atomic-form
