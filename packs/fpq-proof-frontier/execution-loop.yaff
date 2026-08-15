@@ -1,0 +1,26 @@
+pack execution-loop-closed
+generation control-1
+source_plane run4_institutional_fabric
+item_kind proof_frontier
+source_ref campaign:anti-amnesia
+note The arc is closed to executed-with-evidence. A composed organism was selected into the fused form and actually ran: bonfyre-pipeline gate->ingest->meter->stitch->ledger->compress->COMPLETE on a real text input, producing a receipt (hash 0358c569fc4afe6b...), a ledger entry, and telemetry. Seven commands earned workload_proven from that run; proven on the ladder went 2 to 9. The invariant is MEASURED, not proven -- one run, not a formal proof.
+
+work execution_loop_promote_on_evidence
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason The system now accrues proof from running, not just from probing. Every completed organism execution should promote the commands it ran and record a MEASURED invariant with the receipt. Wire dispatch() to do this automatically rather than by hand
+
+work execution_loop_fill_remaining_forms
+  target_plane run4_institutional_fabric
+  priority 7.5
+  reason fused_pipeline runs end-to-end. reason_trajectory and coupled_circuit are selected and routed but need their substrate inputs -- a session for bonfyre-reason, a .bfnet circuit for bonfyre-net -- to run to completion. Fill those so all four forms execute, not just durable and fused
+
+work execution_loop_remaining_command_kinds
+  target_plane run4_institutional_fabric
+  priority 6.5
+  reason 27 of 88 commands have kind contracts and compose. The surface, distributed, governance and context commands are in the estate/law catalogs but not the composition graph. Fill their kinds so the closure spans the whole fabric, not just the artifact/media/model/economic core
+
+work execution_loop_measured_not_proven
+  target_plane run5_recursive_external
+  priority 6.0
+  reason The pipeline invariant is at MEASURED from one run. Promoting it to PROVEN needs a repeatable fixture -- same input, same receipt hash across runs -- which is the reheat condition the invariant already names. Build that fixture before any invariant here claims proven
