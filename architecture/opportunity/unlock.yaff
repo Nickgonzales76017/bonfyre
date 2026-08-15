@@ -43,8 +43,9 @@ architecture unlock-graph
   source_path 10-Code/BonfyreControlPlane/opportunity.py
   witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
   witness packs/institutional-opportunities/opportunities.yaff
+  witness 10-Code/BonfyreControlPlane/tests/test_loop_reachability.py
   native_format graf
-  known_gap unlockable opportunities do not yet auto-drive the AtomicForm submit-ready pipeline
+  known_gap unlockable (not yet reachable) opportunities are refused; auto-executing their unlocks is the next step
 
 architecture resource-activation
   canonical_name ResourceActivationGraph

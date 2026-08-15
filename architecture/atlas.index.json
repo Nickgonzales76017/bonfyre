@@ -1034,7 +1034,7 @@
         "reachability stops at the human/external commit line; reachable is not won"
       ],
       "known_gaps": [
-        "unlockable opportunities do not yet auto-drive the AtomicForm submit-ready pipeline"
+        "unlockable (not yet reachable) opportunities are refused; auto-executing their unlocks is the next step"
       ],
       "layer": "opportunity",
       "maturity": "implemented",
@@ -1054,7 +1054,8 @@
       ],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_opportunity.py",
-        "packs/institutional-opportunities/opportunities.yaff"
+        "packs/institutional-opportunities/opportunities.yaff",
+        "10-Code/BonfyreControlPlane/tests/test_loop_reachability.py"
       ]
     },
     "work-graph": {
@@ -1211,6 +1212,23 @@
       ],
       "relation": "blocker_resolution",
       "source": "proof-frontier"
+    },
+    "reachability-gates-form-pipeline": {
+      "destination": "atomic-form",
+      "drops": [
+        "blocked and merely-unlockable opportunities"
+      ],
+      "forbidden_inferences": [
+        "all blockers resolved -> submit the form (loop stops at a draft)"
+      ],
+      "invalidates_on": [
+        "any blocker reopens"
+      ],
+      "preserves": [
+        "the opportunity's reachable_now status"
+      ],
+      "relation": "reachability_gate",
+      "source": "unlock-graph"
     },
     "representation-feeds-sli": {
       "destination": "sli-execution",

@@ -157,6 +157,18 @@ interaction work-resolves-dependency-blocker
   witness work_items.state
   binding 10-Code/BonfyreControlPlane/opportunity.py
 
+interaction reachability-gates-form-pipeline
+  source unlock-graph
+  destination atomic-form
+  relation reachability_gate
+  preserves the opportunity's reachable_now status
+  drops blocked and merely-unlockable opportunities
+  forbidden_inference all blockers resolved -> submit the form (loop stops at a draft)
+  authority only a reachable_now opportunity may drive the submit-ready loop
+  invalidates_on any blocker reopens
+  witness OpportunityLoopResult
+  binding 10-Code/BonfyreControlPlane/institution_loop.py
+
 interaction service-bind-is-an-unlock
   source unlock-graph
   destination service-lifecycle

@@ -28,6 +28,7 @@ from typing import Optional
 
 import actors
 import atomic_forms as af
+import opportunity as opp
 
 CMS = Path.home() / ".bonfyre" / "bin" / "bonfyre-cms"
 CMS_SCHEMAS = Path("/Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCMS/content-types")
@@ -112,3 +113,53 @@ def run(
         form.form_id, True, (), entry_id,
         f"published as cms_article entry {entry_id}" if entry_id else "ready but publish failed",
     )
+
+
+@dataclass(frozen=True)
+class OpportunityLoopResult:
+    opp_id: str
+    status: str
+    drove: bool
+    loop: Optional[LoopResult]
+    reason: str
+
+
+def drive_reachable(
+    opportunities: list,
+    unlocks: list,
+    forms: dict,
+    *,
+    control_db: Path,
+    fabric_db: Path,
+    cms_db: Path,
+) -> list[OpportunityLoopResult]:
+    """Let reachability decide what the pipeline pursues.
+
+    The opportunity engine computes, over real state, which opportunities are
+    reachable now. Only those drive the AtomicForm -> submit-ready -> CMS-draft
+    loop. A blocked or merely-unlockable opportunity is refused with its hard
+    blockers named -- so the celld IP authority, the ACM verification, the
+    maintainer merge each hold the line exactly where they should. The loop still
+    stops at a draft; reachable capacity is pursued, never auto-committed past the
+    human boundary.
+    """
+    con = sqlite3.connect(str(control_db))
+    evals = opp.reachable_capacity(con, opportunities, unlocks)
+    con.close()
+
+    out: list[OpportunityLoopResult] = []
+    for o in opportunities:
+        ev = evals[o.opp_id]
+        if ev.status != opp.REACHABLE_NOW:
+            hard = ", ".join(b.kind for b in ev.hard_blockers) or ev.status
+            out.append(OpportunityLoopResult(o.opp_id, ev.status, False, None,
+                                             f"not driven ({ev.status}): {hard}"))
+            continue
+        form = forms.get(o.opp_id)
+        if form is None:
+            out.append(OpportunityLoopResult(o.opp_id, ev.status, False, None,
+                                             "reachable but no form bound"))
+            continue
+        lr = run(form, control_db=control_db, fabric_db=fabric_db, cms_db=cms_db)
+        out.append(OpportunityLoopResult(o.opp_id, ev.status, True, lr, lr.detail))
+    return out
