@@ -33,6 +33,7 @@ import command_laws as cl
 import estate_catalog as ec
 import proof_frontier as pf
 import capability_catalog as cccat
+import fpq_evidence as fq
 import transport as tp
 
 DISCIPL = Path.home() / ".bonfyre" / "bin" / "bonfyre-discipl"
@@ -324,6 +325,41 @@ def _promote_ran_commands(db, hops, receipt_ref: str) -> int:
     return promoted
 
 
+def execute_representation_workload(db) -> dict:
+    """Run real FPQ compute as the concrete workload of a representation organism.
+
+    Composition and gating were already real; this makes execution real for the
+    model estate. When a fused representation chain reaches dispatch and the FPQ
+    binary and golden fixture are present, the thing it actually computes is an
+    FPQ roundtrip: real polar-quantization math, a real reconstruction error, a
+    measured frontier update, and -- because execution is evidence -- a
+    workload_proven promotion of BonfyreFPQ cited by the digest of the report the
+    command emitted. No fixture, no binary, no claim: it reports honestly that no
+    workload ran rather than inventing one.
+    """
+    import datetime as _dt
+    if not (fq.FPQ.exists() and fq.FIXTURE.exists()):
+        return {"executed": False, "reason": "bonfyre-fpq or fixture unavailable"}
+    ev = fq.record_measured_evidence(db)  # invokes the real command
+    receipt = f"report:sha256:{ev['report_sha256']}"
+    cccat.ensure_schema(db)
+    row = db.execute(
+        "SELECT location FROM capability_identities WHERE public_name=?", ("BonfyreFPQ",)
+    ).fetchone()
+    promoted = False
+    if row:
+        cccat.declare(db, cccat.Capability(
+            public_name="BonfyreFPQ", maturity="workload_proven",
+            location=row[0], proof_ref=receipt,
+        ), now=_dt.datetime.now(_dt.timezone.utc))
+        promoted = True
+    return {
+        "executed": True, "worst_mse": ev["worst_mse"], "all_good": ev["all_good"],
+        "receipt": receipt, "invariant": ev["invariant"],
+        "promoted_BonfyreFPQ": promoted,
+    }
+
+
 # ----------------------------------------------------------- form selection
 
 PIPELINE = Path.home() / ".bonfyre" / "bin" / "bonfyre-pipeline"
@@ -410,16 +446,28 @@ def dispatch(
             "promoted_commands": promoted,
         }
 
-    # Non-durable forms: route to their substrate. The exact invocation is
+    # A fused representation chain has a concrete workload the system can run
+    # right now: FPQ. Rather than only routing it, execute real FPQ compute,
+    # which measures the frontier and promotes BonfyreFPQ from its own receipt.
+    fpq_run = None
+    if selection.form == FORM_FUSED and db is not None and any(
+        h.law == "representation" for h in organism.hops
+    ):
+        fpq_run = execute_representation_workload(db)
+
+    # Other non-durable forms: route to their substrate. The exact invocation is
     # constructed from the bound hops; running it needs the substrate's input
     # (a circuit file for Net, a session for Reason, an input artifact for
     # Pipeline), so this records the routed command rather than forcing the
     # organism into the wrong runtime.
     binaries = [h.binary for h in organism.hops if h.binary]
-    return {
+    result = {
         "form": selection.form,
         "substrate": selection.substrate,
         "rationale": selection.rationale,
         "dispatched": selection.substrate is not None,
         "routed_stages": binaries, "transport": carrier,
     }
+    if fpq_run is not None:
+        result["fpq_workload"] = fpq_run
+    return result
