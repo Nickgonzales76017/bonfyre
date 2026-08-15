@@ -112,12 +112,41 @@ _FAMILY_LAW = {
 }
 
 
-def _bind_family(db: sqlite3.Connection, family: str) -> tuple[Optional[str], str, str]:
-    """Bind a DisCIPL family to a real callable binary via the law catalog.
+DISCIPL_DB = Path("/tmp/discipl-root/discipl.db")
 
-    The law that would execute this family selects the estate; the first
-    callable binary in that estate is the binding. Returns (binary, estate, law).
+
+def _command_binding(family: str) -> Optional[str]:
+    """Precise binding: a command family binds to the exact binary its DisCIPL
+    actor names in source_ref, not the first binary in its estate."""
+    if not DISCIPL_DB.exists():
+        return None
+    con = sqlite3.connect(str(DISCIPL_DB))
+    row = con.execute(
+        "SELECT source_ref FROM discipl_actors WHERE family=? AND domain='command'",
+        (family,),
+    ).fetchone()
+    con.close()
+    if row and row[0] and Path(row[0]).exists():
+        return row[0]
+    return None
+
+
+def _bind_family(db: sqlite3.Connection, family: str) -> tuple[Optional[str], str, str]:
+    """Bind a DisCIPL family to its real callable binary.
+
+    A command family binds precisely to the binary its actor names. A
+    model-internal family falls back to law -> estate -> first callable, which
+    is coarser but is all the model families expose.
     """
+    precise = _command_binding(family)
+    if precise is not None:
+        bare = Path(precise).name.replace("bonfyre-", "").replace("-", "")
+        row = db.execute(
+            "SELECT estate,law FROM command_laws cl JOIN estate_catalog ec"
+            " ON cl.family=ec.family WHERE lower(replace(ec.family,'Bonfyre',''))=?",
+            (bare,),
+        ).fetchone()
+        return precise, (row[0] if row else "command"), (row[1] if row else "command")
     law = _FAMILY_LAW.get(family, "representation")
     families = cl.by_law(db, law)
     for fam in families:
