@@ -32,6 +32,7 @@ from typing import Optional
 import command_laws as cl
 import estate_catalog as ec
 import proof_frontier as pf
+import transport as tp
 
 DISCIPL = Path.home() / ".bonfyre" / "bin" / "bonfyre-discipl"
 DISCIPL_ROOT = Path("/tmp/discipl-root")
@@ -353,6 +354,7 @@ def select_form(organism: ExecutionOrganism) -> FormSelection:
 def dispatch(
     organism: ExecutionOrganism,
     queue_db: Path,
+    transport: str = tp.DIRECT,
 ) -> dict:
     """Select the form and route to the matching substrate.
 
@@ -367,13 +369,17 @@ def dispatch(
                 "reason": f"refused: {organism.verdict_reason}"}
 
     selection = select_form(organism)
+    # Transport is orthogonal to form: whichever substrate runs the hop, it can
+    # run it by direct subprocess or through the MCP server, and the MCP carrier
+    # adds a receipt. The organism records which carrier it will use.
+    carrier = transport if tp.mcp_available() or transport == tp.DIRECT else tp.DIRECT
 
     if selection.form == FORM_DURABLE:
         submitted = submit(organism, queue_db)
         return {
             "form": selection.form, "substrate": selection.substrate,
             "rationale": selection.rationale, "dispatched": submitted.submitted,
-            "missions": list(submitted.missions),
+            "missions": list(submitted.missions), "transport": carrier,
         }
 
     # Non-durable forms: route to their substrate. The exact invocation is
@@ -387,5 +393,5 @@ def dispatch(
         "substrate": selection.substrate,
         "rationale": selection.rationale,
         "dispatched": selection.substrate is not None,
-        "routed_stages": binaries,
+        "routed_stages": binaries, "transport": carrier,
     }
