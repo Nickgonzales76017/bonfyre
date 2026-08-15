@@ -81,3 +81,15 @@ def test_export_is_stable_and_complete():
     assert set(export["architectures"]) == set(a.architectures)
     # a measured architecture exports its witnesses
     assert export["architectures"]["fpq-transform"]["witnesses"]
+
+
+def test_fs_projection_is_inspectable(tmp_path):
+    a = _load()
+    written = atlas.build_fs(a, tmp_path)
+    assert written == len(a.architectures)
+    # the FPQ lesson is a readable file, not buried metadata
+    ci = tmp_path / "Graphs" / "model" / "FPQTransformationGraph" / "cannot-infer.txt"
+    assert ci.exists() and "reconstruction" in ci.read_text()
+    # the unbuilt architectures are a walkable query directory
+    unbuilt = (tmp_path / "Queries" / "Architecture" / "Unbuilt.txt").read_text().split()
+    assert "authority-graph" in unbuilt

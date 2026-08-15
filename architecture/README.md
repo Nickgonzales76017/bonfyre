@@ -35,6 +35,7 @@ python3 atlas.py maturity        # honest maturity rollup by family
 python3 atlas.py expand <View>   # reversible expansion (zoom)
 python3 atlas.py view <View>     # render a collapsed, expandable diagram
 python3 atlas.py export          # write atlas.index.json for MCP / BonfyreFS
+python3 atlas.py fs [dir]        # generate the /Bonfyre/Actual/Graphs introspection tree
 ```
 
 ## Consumers

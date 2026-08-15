@@ -338,6 +338,61 @@ def _cmd_export(atlas: Atlas) -> int:
     return 0
 
 
+def build_fs(atlas: Atlas, out: Path) -> int:
+    """Write the BonfyreFS introspection tree: the architecture, inspectable.
+
+    Mirrors the /Bonfyre/Actual/Graphs/ namespace -- one directory per
+    architecture with plain-text views a human (or `cat`) can read, plus
+    Queries/ directories computed from loss() so architecture gaps are walkable,
+    not buried. The FUSE mount serves the same generator; this makes it real on
+    disk today.
+    """
+    import shutil
+    graphs = out / "Graphs"
+    if graphs.exists():
+        shutil.rmtree(graphs)
+    written = 0
+    for aid, a in atlas.architectures.items():
+        fam = a.get("family", "unfiled")
+        d = graphs / fam / (a.get("canonical_name") or aid)
+        d.mkdir(parents=True, exist_ok=True)
+        (d / "spec.md").write_text(
+            f"# {a.get('canonical_name')}  [{a.get('maturity')}]\n\n"
+            f"- id: {aid}\n- domain: {a.get('domain')}\n- layer: {a.get('layer')}\n\n"
+            f"**Question:** {a.get('semantic_question')}\n\n{a.get('purpose', '')}\n"
+        )
+        (d / "cannot-infer.txt").write_text("\n".join(a.lst("forbidden_inference")) + "\n")
+        (d / "witnesses.txt").write_text("\n".join(a.lst("witness")) + "\n")
+        (d / "sources.txt").write_text("\n".join(a.lst("source_path")) + "\n")
+        (d / "views.txt").write_text("\n".join(atlas.views_of(aid)) + "\n")
+        written += 1
+
+    # Query directories: the atlas's knowledge of its own gaps, as folders.
+    q = out / "Queries" / "Architecture"
+    q.mkdir(parents=True, exist_ok=True)
+    loss = atlas.loss()
+    buckets = {
+        "Unwitnessed": loss["unwitnessed"],
+        "No-Cannot-Infer": loss["no_cannot_infer"],
+        "No-Interaction-Contract": loss["no_interaction_contract"],
+        "No-Native-Format": loss["no_native_format"],
+        "No-Lineage": loss["no_lineage"],
+        "Unbuilt": sorted(a for a, blk in atlas.architectures.items() if blk.get("maturity") == "architectural"),
+        "Superseded-But-Present": loss["superseded_but_present"],
+    }
+    for name, items in buckets.items():
+        (q / f"{name}.txt").write_text("\n".join(sorted(items)) + "\n")
+    return written
+
+
+def _cmd_fs(atlas: Atlas, out_dir: str) -> int:
+    out = Path(out_dir)
+    written = build_fs(atlas, out)
+    print(f"✓ wrote introspection tree to {out}/Graphs ({written} architectures) "
+          f"and {out}/Queries/Architecture")
+    return 0
+
+
 def main(argv: list[str]) -> int:
     cmd = argv[1] if len(argv) > 1 else "validate"
     atlas = Atlas.load()
@@ -353,6 +408,8 @@ def main(argv: list[str]) -> int:
         return _cmd_view(atlas, argv[2]) if len(argv) > 2 else 1
     if cmd == "export":
         return _cmd_export(atlas)
+    if cmd == "fs":
+        return _cmd_fs(atlas, argv[2] if len(argv) > 2 else str(ROOT / "fs"))
     print(f"unknown command: {cmd}")
     return 1
 
