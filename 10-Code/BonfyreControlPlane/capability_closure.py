@@ -298,3 +298,94 @@ def submit(
         missions=tuple(missions),
         reason=f"{len(missions)} hops submitted as native durable work",
     )
+
+
+# ----------------------------------------------------------- form selection
+
+PIPELINE = Path.home() / ".bonfyre" / "bin" / "bonfyre-pipeline"
+REASON = Path.home() / ".bonfyre" / "bin" / "bonfyre-reason"
+NET = Path.home() / ".bonfyre" / "bin" / "bonfyre-net"
+
+# Which computational form an organism takes, from the laws of its hops. The
+# essay's point: not everything is durable queue work. A coupled-dynamics chain
+# wants a trajectory runtime; a stable deterministic artifact chain wants a
+# fused pipeline; a mixed or externally-waiting chain wants the durable
+# WorkGraph.
+FORM_DURABLE = "durable_workgraph"
+FORM_FUSED = "fused_pipeline"
+FORM_TRAJECTORY = "reason_trajectory"
+FORM_COUPLED = "coupled_circuit"
+
+
+@dataclass(frozen=True)
+class FormSelection:
+    form: str
+    substrate: Optional[str]
+    rationale: str
+
+
+def select_form(organism: ExecutionOrganism) -> FormSelection:
+    laws = [h.law for h in organism.hops]
+    if not laws:
+        return FormSelection(FORM_DURABLE, str(QUEUE), "empty organism defaults to durable")
+
+    coupled = {"coupled_dynamics"}
+    fused = {"artifact_derivation", "media_transform", "representation", "retrieval_observability"}
+
+    if any(law in coupled for law in laws):
+        return FormSelection(
+            FORM_TRAJECTORY, str(REASON) if REASON.exists() else None,
+            "a coupled-dynamics hop means branchable state, not a DAG -- trajectory runtime",
+        )
+    if all(law in fused for law in laws):
+        return FormSelection(
+            FORM_FUSED, str(PIPELINE) if PIPELINE.exists() else None,
+            "a stable deterministic artifact/model chain fuses into one process",
+        )
+    # Mixed laws, or anything with governance/economic/boundary hops, needs
+    # durable causal execution with receipts.
+    return FormSelection(
+        FORM_DURABLE, str(QUEUE) if QUEUE.exists() else None,
+        "mixed or externally-dependent laws need durable work with receipts",
+    )
+
+
+def dispatch(
+    organism: ExecutionOrganism,
+    queue_db: Path,
+) -> dict:
+    """Select the form and route to the matching substrate.
+
+    Durable organisms become real queue missions (proven path). Other forms
+    resolve to the exact substrate invocation their hops require -- routed, not
+    forced through the queue. This is the branch the essay asks for: form is
+    chosen before execution, so a trajectory chain does not get flattened into
+    a DAG.
+    """
+    if not organism.authorized:
+        return {"form": None, "dispatched": False,
+                "reason": f"refused: {organism.verdict_reason}"}
+
+    selection = select_form(organism)
+
+    if selection.form == FORM_DURABLE:
+        submitted = submit(organism, queue_db)
+        return {
+            "form": selection.form, "substrate": selection.substrate,
+            "rationale": selection.rationale, "dispatched": submitted.submitted,
+            "missions": list(submitted.missions),
+        }
+
+    # Non-durable forms: route to their substrate. The exact invocation is
+    # constructed from the bound hops; running it needs the substrate's input
+    # (a circuit file for Net, a session for Reason, an input artifact for
+    # Pipeline), so this records the routed command rather than forcing the
+    # organism into the wrong runtime.
+    binaries = [h.binary for h in organism.hops if h.binary]
+    return {
+        "form": selection.form,
+        "substrate": selection.substrate,
+        "rationale": selection.rationale,
+        "dispatched": selection.substrate is not None,
+        "routed_stages": binaries,
+    }
