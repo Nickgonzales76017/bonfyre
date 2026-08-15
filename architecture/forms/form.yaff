@@ -1,0 +1,43 @@
+atlas forms
+
+architecture form-graph
+  canonical_name FormGraph
+  family forms
+  domain Forms
+  layer forms
+  semantic_question What is the structure of this human-boundary form, independent of any one submission?
+  purpose The form as a graph -- fields, dependencies, evidence slots, attachments, approvals -- distinct from AtomicForm, which compiles it against state.
+  maturity architectural
+  node_types FormNode
+  node_types FieldNode
+  child form-attachment
+  child field-dynamics
+  edge_types field_depends_on
+  forbidden_inference AtomicForm == FormGraph
+  source_lineage SEED-A recursive organ document
+  known_gap FormGraph decomposition not yet built; AtomicForm exists standalone
+
+architecture atomic-form
+  canonical_name AtomicForm
+  family forms
+  domain Forms
+  layer forms/compile
+  semantic_question Is this form submit-ready, and if not, exactly what blocks it?
+  purpose compile(FormGraph, institutional/actor/evidence/capability/economic/authority state, purpose) -> obligation machine. Fields autofill only from VERIFIED actors; never self-submits.
+  maturity implemented
+  node_types Field
+  node_types EvidenceSlot
+  node_types SubmitReadiness
+  edge_types autofills_from
+  edge_types backed_by
+  invariant a field autofills only from a VERIFIED actor
+  invariant submit_ready returns exact blockers; never a false green
+  invariant the form never crosses the human submit line
+  forbidden_inference asserted-via-email actor -> verified_for(profile) autofill
+  forbidden_inference evidence slot filled by position -> evidence requirement satisfied
+  command BonfyreBrief
+  source_path 10-Code/BonfyreControlPlane/atomic_forms.py
+  source_path 10-Code/BonfyreControlPlane/institution_loop.py
+  witness 10-Code/BonfyreControlPlane/tests/test_atomic_forms.py
+  witness 10-Code/BonfyreControlPlane/tests/test_institution_loop.py
+  source_lineage AtomicForm human-boundary compiler

@@ -1,0 +1,74 @@
+atlas capability
+
+architecture capability-lattice
+  canonical_name CapabilityLattice
+  family capability
+  domain Capability
+  layer capability
+  semantic_question What does the system actually have, by estate and law, as real callable binaries?
+  purpose The one anti-amnesia mechanism the architecture blesses as non-universal: classify every probed binary into its primary estate and the computational law it preserves.
+  maturity implemented
+  node_types Capability
+  node_types Estate
+  node_types Law
+  edge_types classified_into
+  edge_types preserves_law
+  state_types defined
+  state_types resolvable
+  state_types callable
+  state_types health_probed
+  state_types workload_proven
+  forbidden_inference a family name -> the estate is only that (BonfyreNet is not only networking)
+  forbidden_inference classified into an estate -> cannot span estates
+  command BonfyreCapability
+  source_path 10-Code/BonfyreControlPlane/estate_catalog.py
+  source_path 10-Code/BonfyreControlPlane/capability_catalog.py
+  witness 10-Code/BonfyreControlPlane/tests/test_capability_catalog.py
+  source_lineage bonfyre operating model plural-fabric
+
+architecture discipl-composition
+  canonical_name DisCIPLCompositionGraph
+  family capability
+  domain Capability / Composition
+  layer capability/composition
+  semantic_question What typed chain of transforms bridges this source family to this destination family, and at what cost?
+  purpose The native composition calculus: contracts with success_prior, transform_cost, semantic_loss. Never reimplemented in Python -- the engine is called.
+  maturity implemented
+  node_types ContractRow
+  node_types Family
+  edge_types transforms
+  edge_types bridges
+  forbidden_inference a proposed chain -> a runnable chain (binding is separate)
+  computational_form fused
+  command BonfyreDiscipl
+  source_path 10-Code/BonfyreControlPlane/capability_closure.py
+  witness 10-Code/BonfyreControlPlane/tests/test_capability_closure.py
+  source_lineage capability closure essay
+
+architecture capability-closure
+  canonical_name CapabilityClosureGraph
+  family capability
+  domain Capability / Execution
+  layer capability/execution
+  semantic_question Can this composed chain be bound to real binaries, gated by the frontier, and run?
+  purpose Compose (DisCIPL) -> bind to real binaries (estate/law) -> gate (proof frontier) -> select form -> execute. Execution is evidence: a hop that ran a real workload earns workload_proven.
+  maturity measured
+  node_types ExecutionOrganism
+  node_types Hop
+  node_types FormSelection
+  edge_types binds_to
+  edge_types gated_by
+  edge_types promotes
+  internal_calculus form selection (durable|fused|trajectory|coupled) by hop laws
+  invariant a blocked organism refuses at the execution boundary; the gate is not advisory
+  invariant a command that ran a real workload earns workload_proven, cited by a receipt
+  forbidden_inference composition allowed -> touching a proven layer allowed
+  forbidden_inference bound to a binary -> executes to completion (needs substrate inputs)
+  computational_form fused
+  computational_form durable
+  command BonfyreDiscipl
+  command BonfyreFPQ
+  source_path 10-Code/BonfyreControlPlane/capability_closure.py
+  witness 10-Code/BonfyreControlPlane/tests/test_fpq_closure.py
+  witness 10-Code/BonfyreControlPlane/tests/test_capability_closure.py
+  source_lineage capability closure essay

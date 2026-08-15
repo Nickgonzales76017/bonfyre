@@ -1,0 +1,59 @@
+atlas execution
+
+architecture work-graph
+  canonical_name WorkGraph
+  family execution
+  domain Execution
+  layer execution
+  semantic_question What durable work exists, with what dependencies and lifecycle?
+  purpose WorkGraph-backed durable missions with causal dependency semantics; distinct from queue scheduling.
+  maturity implemented
+  node_types WorkItem
+  node_types Mission
+  edge_types depends_on
+  state_types queued
+  state_types running
+  state_types done
+  state_types failed
+  invariant dependency carries causal execution semantics, not mere ordering
+  forbidden_inference queue priority -> durability guarantee
+  command BonfyreQueue
+  source_path 10-Code/BonfyreControlPlane/work_graph.py
+  witness 10-Code/BonfyreControlPlane/tests/test_work_graph.py
+  source_lineage run6 control-plane retrospective
+
+architecture occurrence-spine
+  canonical_name OccurrenceSpine
+  family execution
+  domain Execution / Causal Time
+  layer execution
+  semantic_question What actually happened, when, as an ordered causal spine?
+  purpose External events and occurrences folded into an ordered spine; the backbone the control plane reasons over.
+  maturity implemented
+  node_types Occurrence
+  node_types ExternalEvent
+  edge_types precedes
+  forbidden_inference retrieval time -> event time (timestamps must not collapse)
+  source_path 10-Code/BonfyreControlPlane/external_events.py
+  witness 10-Code/BonfyreControlPlane/tests/test_external_events.py
+  source_lineage run6 control-plane retrospective
+
+architecture transport-phenotype
+  canonical_name TransportPhenotypeGraph
+  family execution
+  domain Execution / Transport
+  layer execution/transport
+  semantic_question By which carrier does a hop run, and what does each carrier add?
+  purpose Direct subprocess, MCP (adds a signed receipt), external HTTP (ForeignTwin, rights-gated). Transport is orthogonal to computational form.
+  maturity measured
+  node_types Transport
+  node_types Hop
+  edge_types carries
+  internal_calculus direct|mcp|external carrier selection
+  invariant the same hop yields a byte-identical digest across direct and MCP; MCP adds a receipt
+  forbidden_inference MCP receipt present -> different computation occurred
+  computational_form durable
+  command BonfyreProject
+  source_path 10-Code/BonfyreControlPlane/transport.py
+  witness 10-Code/BonfyreControlPlane/tests/test_transport.py
+  source_lineage MCP native_tool_invoke work

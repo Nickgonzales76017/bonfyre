@@ -1,0 +1,49 @@
+atlas identity
+
+architecture actor-graph
+  canonical_name ActorGraph
+  family identity
+  domain Identity / Institutional Capacity
+  layer identity
+  semantic_question Who is this real-world actor, and for which profile is that identity verified?
+  purpose Real actors with identifier assertions, observations, corroboration, and per-profile verification. The verified-for law is the point.
+  maturity implemented
+  node_types Actor
+  node_types IdentifierAssertion
+  node_types Corroboration
+  node_types VerificationProfile
+  edge_types asserts
+  edge_types corroborates
+  edge_types affiliated_with
+  state_types asserted
+  state_types observed
+  state_types corroborated
+  state_types verified_for
+  state_types contradicted
+  invariant asserted_via_email is not verified_for(ACM.editor)
+  forbidden_inference email sender -> verified institutional role
+  forbidden_inference affiliation -> authority
+  forbidden_inference identity similarity -> same actor
+  native_format graf
+  command BonfyreEntity
+  source_path 10-Code/BonfyreControlPlane/actors.py
+  source_path 10-Code/BonfyreControlPlane/pack_loader.py
+  witness 10-Code/BonfyreControlPlane/tests/test_actors.py
+  source_lineage capitalgym crm relationships
+
+architecture hash-identity
+  canonical_name HashIdentityGraph
+  family identity
+  domain Identity
+  layer identity
+  semantic_question Are these byte/content objects identical?
+  purpose Content-addressed identity: bytes -> digest -> Merkle membership. Used by artifacts, packs, model weights, receipts.
+  maturity implemented
+  node_types ContentObject
+  edge_types hashes_to
+  edge_types merkle_member_of
+  forbidden_inference same bytes -> same derivational meaning
+  native_format graf
+  command BonfyreHash
+  source_path cmd/BonfyreHash
+  source_lineage identity federation seed

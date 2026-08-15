@@ -1,0 +1,126 @@
+atlas interactions
+# Cross-architecture contracts. Often more important than architecture interiors:
+# the hardest bugs live in the bridges. Each names what it preserves, what it
+# drops, and what it must NOT promote.
+
+interaction closure-gated-by-frontier
+  source capability-closure
+  destination proof-frontier
+  relation mutation_gate
+  preserves target layer identity
+  preserves observed failure
+  drops unrelated composition state
+  forbidden_inference a high-layer symptom -> authorization to touch a proven low layer
+  authority the fence decision is binding, not advisory
+  invalidates_on a named reheat signal satisfies a cooled invariant
+  witness FenceDecision
+  binding 10-Code/BonfyreControlPlane/capability_closure.py
+
+interaction lattice-feeds-discipl
+  source capability-lattice
+  destination discipl-composition
+  relation binding_source
+  preserves family identity
+  preserves estate and law
+  drops maturity claims of unrelated commands
+  forbidden_inference classified estate -> single-estate binding
+  witness command binding source_ref
+  binding 10-Code/BonfyreControlPlane/capability_closure.py
+
+interaction discipl-composes-into-closure
+  source discipl-composition
+  destination capability-closure
+  relation composition
+  preserves per-hop confidence and semantic loss
+  drops nothing
+  forbidden_inference proposed chain -> runnable chain
+  witness ExecutionOrganism
+  binding 10-Code/BonfyreControlPlane/capability_closure.py
+
+interaction fpq-run-feeds-frontier
+  source fpq-transform
+  destination proof-frontier
+  relation execution_is_evidence
+  preserves fixture identity (gguf sha256)
+  preserves report digest
+  drops nothing
+  forbidden_inference reconstruction within tolerance -> semantic behaviour proven
+  authority a real run may only cool the reconstruction layer, never semantic_behavior
+  invalidates_on fixture mse exceeds ceiling
+  invalidates_on fixture gguf hash changes
+  witness fpq.reconstruction.fixture.tiny_f16
+  binding 10-Code/BonfyreControlPlane/fpq_evidence.py
+
+interaction representation-feeds-sli
+  source fpq-transform
+  destination sli-execution
+  relation representation_to_execution
+  preserves model representation identity
+  drops reconstruction-layer proof
+  forbidden_inference reconstruction proven -> SLI execution proven
+  witness SLIExecutionWitness
+  binding packs/fpq-proof-frontier/work.yaff
+
+interaction actor-autofills-form
+  source actor-graph
+  destination atomic-form
+  relation verified_autofill
+  preserves actor identity for the named profile
+  drops asserted-only identity
+  forbidden_inference asserted-via-email actor -> autofilled verified field
+  authority only a verified_for(profile) actor may fill a field
+  invalidates_on the actor's identifier profile changes
+  witness Field.autofill_actor
+  binding 10-Code/BonfyreControlPlane/atomic_forms.py
+
+interaction twin-materializes-into-evidence
+  source foreign-twin
+  destination atomic-form
+  relation evidence_materialization
+  preserves content-addressed artifact identity
+  drops remote authority
+  forbidden_inference cached projection -> remote truth
+  authority materialize requires at least the reference right
+  invalidates_on the foreign projection changes
+  witness EvidenceSlot.artifact_digest
+  binding 10-Code/BonfyreControlPlane/foreign.py
+
+interaction closure-submits-work
+  source capability-closure
+  destination work-graph
+  relation durable_submission
+  preserves organism goal and per-hop binding
+  drops non-durable form routing
+  forbidden_inference blocked organism -> submitted work
+  witness native mission id
+  binding 10-Code/BonfyreControlPlane/capability_closure.py
+
+interaction transport-carries-hop
+  source transport-phenotype
+  destination capability-closure
+  relation carrier
+  preserves the hop's computed digest
+  drops nothing
+  forbidden_inference MCP receipt -> a different computation ran
+  witness signed receipt
+  binding 10-Code/BonfyreControlPlane/transport.py
+
+interaction service-backs-work
+  source service-lifecycle
+  destination work-graph
+  relation service_binding
+  preserves service instance identity
+  drops released instances
+  forbidden_inference service active -> bind authority
+  invalidates_on the service lease goes stale
+  witness ProvisionBinding
+  binding 10-Code/BonfyreControlPlane/service_lifecycle.py
+
+interaction unlock-activates-resource
+  source unlock-graph
+  destination resource-activation
+  relation capacity_unlock
+  preserves the unlock condition
+  drops nothing
+  forbidden_inference an unlock exists -> the resource is free or authorized
+  witness ActivationMechanism

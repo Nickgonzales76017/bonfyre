@@ -1,0 +1,58 @@
+atlas schema
+# The meta-schema: what an atlas entry is. Human-facing contract; atlas.py is the
+# machine enforcer. Three levels are mandatory -- never stop at a domain label:
+#   DOMAIN          broad semantic territory
+#   ARCHITECTURE    an independent calculus / state machine (one atlas entry)
+#   INTERNAL CALCULI its actual node types, edges, transitions, invariants
+#
+# An architecture block accepts these keys (repeatable keys become lists):
+#
+#   architecture <id>
+#     canonical_name       PascalCase name (required)
+#     family               registry family/dir (required)
+#     domain               broad semantic territory (required)
+#     layer                where it sits in the stack
+#     semantic_question    the one question it answers (required)
+#     purpose              why it exists
+#     maturity             architectural|declared|implemented|measured|proven (required)
+#     node_types  ...      its own node ontology (repeat)
+#     edge_types  ...      its own edge ontology (repeat)
+#     state_types ...      its state machine states (repeat)
+#     internal_calculus .. named sub-structures / algorithms (repeat)
+#     child       ...      child architecture ids (repeat)
+#     invariant   ...      laws that hold (repeat)
+#     forbidden_inference  what may NOT be inferred -- the highest-value field (repeat)
+#     interacts   ...      architecture ids it bridges to (repeat)
+#     computational_form.. durable|fused|trajectory|coupled|... (repeat)
+#     native_format ...    graf|flux|delta|crux|helix|axon|kore|fuse|bfp (repeat)
+#     command     ...      public command identities that own/participate (repeat)
+#     source_path ...      real implementation paths (repeat)
+#     witness     ...      real tests/fixtures/receipts proving maturity (repeat)
+#     source_lineage ...   originating documents/prior names (repeat)
+#     historical_name ...  prior identities (repeat)
+#     supersedes / superseded_by
+#     known_gap   ...      honest gaps (repeat)
+#     cooling_path / reheat_condition
+#
+# CONSTITUTIONAL RULES enforced by atlas.py validate:
+#   1. maturity measured|proven REQUIRES a witness (no laundering by parent label).
+#   2. a view must expand to >=2 real architectures (collapse is reversible zoom,
+#      never a replacement).
+#   3. an interaction must connect two real registered architectures.
+#
+# A view block:
+#   view <ViewName>
+#     expands_to <architecture-id>   (repeat; >=2)
+#
+# An interaction block:
+#   interaction <id>
+#     source <architecture-id>
+#     destination <architecture-id>
+#     relation <name>
+#     preserves ...            semantics carried across (repeat)
+#     drops ...                semantics intentionally dropped (repeat)
+#     forbidden_inference ...  what the bridge must NOT promote (repeat)
+#     authority ...            authority required (repeat)
+#     invalidates_on ...       when the projection goes stale (repeat)
+#     witness <type>
+#     binding <impl path> (repeat)

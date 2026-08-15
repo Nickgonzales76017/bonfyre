@@ -1,0 +1,73 @@
+atlas evidence
+
+architecture proof-frontier
+  canonical_name ProofFrontierGraph
+  family evidence
+  domain Evidence / Anti-Amnesia
+  layer governance/proof
+  semantic_question Given what is already settled, may this mutation touch this layer?
+  purpose Orders a subject's correctness layers so the first open one is unambiguous; cools proven layers against reheat conditions. Governs FPQ, Bernstein adapters, Habitat equally.
+  maturity measured
+  node_types SolvedInvariant
+  node_types KnownNonCause
+  node_types FrontierLayer
+  edge_types cools
+  edge_types reheats
+  edge_types below_frontier
+  state_types cooled
+  state_types challenged
+  state_types invalidated
+  internal_calculus RegressionFence decision
+  internal_calculus first-open-layer derivation
+  invariant a cooled invariant must name what reheats it or it is settled forever against reality
+  invariant only a signal matching a named reheat condition may challenge a cooled invariant
+  invariant a layer below the first open layer is proven ground and off-limits
+  forbidden_inference a garbage symptom at a high layer -> authorization to reopen a low proven layer
+  forbidden_inference measured cosine -> proof of behavioural equivalence
+  forbidden_inference a docstring claiming isomorphism -> a proof of one
+  native_format crux
+  command BonfyreProof
+  source_path 10-Code/BonfyreControlPlane/proof_frontier.py
+  source_path 10-Code/BonfyreControlPlane/seed_fpq_frontier.py
+  source_path schemas/control/proof-frontier.yaff
+  witness 10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness packs/fpq-proof-frontier/measured-witness.yaff
+  source_lineage run4_institutional_fabric anti-amnesia campaign
+  reheat_condition a named reheat signal satisfies a cooled invariant on a proven layer
+
+architecture evidence-binding
+  canonical_name EvidenceBindingGraph
+  family evidence
+  domain Evidence
+  layer evidence
+  semantic_question Does this candidate artifact actually satisfy this evidence requirement?
+  purpose The binding relation is itself an object: requirement -> candidate retrieval -> semantic test -> binding -> witness.
+  maturity architectural
+  node_types EvidenceRequirement
+  node_types EvidenceCandidate
+  node_types EvidenceBinding
+  node_types EvidenceBindingWitness
+  edge_types retrieves
+  edge_types binds
+  forbidden_inference artifact exists -> supports the claim
+  forbidden_inference positional slot fill -> semantic evidence match
+  source_lineage SEED-A recursive organ document
+  known_gap no implementation; AtomicForm evidence slots are the closest real shape
+
+architecture serm
+  canonical_name SERMReductionGraph
+  family evidence
+  domain Evidence / Measurement
+  layer evidence
+  semantic_question What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?
+  purpose Measurement contract -> plan -> provider contract -> reduction -> sufficiency + honesty audit -> ledger. Produces EvidenceGraph/ProofFrontier consequences; is not those structures.
+  maturity architectural
+  node_types MeasurementContract
+  node_types ReductionPlan
+  node_types SufficiencyAudit
+  node_types ProviderHonestyAudit
+  edge_types reduces
+  edge_types audits
+  forbidden_inference provider confidence -> evidence
+  source_lineage SEED-A recursive organ document
+  known_gap not implemented; distinct from EvidenceGraph, must not be folded into it

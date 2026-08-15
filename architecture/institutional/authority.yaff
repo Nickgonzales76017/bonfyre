@@ -1,0 +1,62 @@
+atlas institutional
+# Honest architectural stubs: named, lineage-tracked, but not yet built. The
+# atlas surfaces them via `loss` as no_interaction_contract / unwitnessed rather
+# than pretending they exist. They are the next mining targets, not claims.
+
+architecture authority-graph
+  canonical_name AuthorityGraph
+  family institutional
+  domain Institutional / Authority
+  layer institutional
+  semantic_question Who may do what, to what, for what purpose, under what evidence, until when?
+  purpose Typed authority edges (observe/reference/bind/activate/act/review/approve/commit/delegate/revoke/publish/spend/share/disclose) with scope, expiry, delegation, revocation, evidence.
+  maturity architectural
+  node_types AuthorityEdge
+  node_types Permission
+  edge_types delegates
+  edge_types revokes
+  invariant delegation may compose only under constrained scope
+  forbidden_inference affiliation -> authority
+  forbidden_inference available -> authorized
+  source_lineage SEED-A recursive organ document
+  known_gap not implemented; authority is currently implicit in actor confidence + rights enums
+
+architecture relationship-graph
+  canonical_name RelationshipGraph
+  family institutional
+  domain Institutional / Relationship
+  layer institutional
+  semantic_question Where along the discovery-to-adoption trajectory is this real relationship?
+  purpose Not a CRM pipeline: discovered -> observed -> contacted -> replied -> engaged -> assigned -> reviewed -> corrected -> collaborated -> committed -> adopted -> converted. Bernstein/AgentGuard/DeepEval/ACM each get an independent trajectory.
+  maturity architectural
+  node_types Relationship
+  node_types RelationshipEpisode
+  edge_types advances_to
+  state_types discovered
+  state_types engaged
+  state_types collaborated
+  state_types adopted
+  forbidden_inference contact -> relationship
+  forbidden_inference relationship -> contract
+  source_lineage capitalgym crm relationships
+  known_gap trajectory states not yet a distinct graph; relationships table is the closest real shape
+
+architecture shadow-institution
+  canonical_name ShadowInstitutionGraph
+  family institutional
+  domain Institutional / Epistemic
+  layer institutional
+  semantic_question What do we know about an institution before any relationship or authority is established?
+  purpose Epistemic knowledge of an institution pre-relationship: observed hierarchy, claim paths, public attachments, activation plan. NOT ForeignTwin (which models an externally-owned resource projection).
+  maturity architectural
+  node_types ShadowInstitutionNode
+  node_types ObservedHierarchy
+  node_types ActivationPacket
+  edge_types observed_from
+  state_types ObservedInstitution
+  state_types ShadowInstitution
+  state_types RelationshipEstablished
+  state_types Active
+  forbidden_inference observed hierarchy -> established authority
+  source_lineage SEED-A recursive organ document
+  known_gap not implemented

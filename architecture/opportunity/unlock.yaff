@@ -1,0 +1,47 @@
+atlas opportunity
+
+architecture blocker-graph
+  canonical_name BlockerGraph
+  family opportunity
+  domain Opportunity / Institutional Capacity
+  layer opportunity
+  semantic_question What is currently preventing this opportunity from being reachable?
+  purpose Missing identity verification, evidence, authority, budget, service, qualification, relationship, field; external wait; human approval.
+  maturity architectural
+  node_types Blocker
+  edge_types blocks
+  forbidden_inference blocker removed -> opportunity won
+  source_lineage SEED-A recursive organ document
+  known_gap not implemented
+
+architecture unlock-graph
+  canonical_name UnlockGraph
+  family opportunity
+  domain Opportunity / Institutional Capacity
+  layer opportunity
+  semantic_question What reachable action would unlock institutional capacity that is currently out of reach?
+  purpose Models reachable institutional capacity: relationship -> reviewer access, grant -> equipment, training -> human capability, evidence -> eligibility, service activation -> executable capacity. May be conditional and non-monotonic.
+  maturity architectural
+  node_types Unlock
+  edge_types unlocks
+  invariant unlock may be conditional and non-monotonic
+  forbidden_inference an unlock exists -> the unlock is authorized or free
+  source_lineage SEED-A recursive organ document
+  known_gap not implemented; the highest-value opportunity architecture to build next
+
+architecture resource-activation
+  canonical_name ResourceActivationGraph
+  family opportunity
+  domain Opportunity / Resource
+  layer opportunity
+  semantic_question How does a currently-unavailable resource become reachable and usable?
+  purpose World-expansion: capability gap -> candidate -> qualification -> eligibility -> authority -> activation mechanism (service lease, GPU, human commitment, voucher, credential). Only after activation does ProviderGraph see a usable resource.
+  maturity architectural
+  node_types CapabilityGap
+  node_types ResourceCandidate
+  node_types ActivationMechanism
+  edge_types qualifies
+  edge_types activates
+  forbidden_inference provider available -> resource activation bypassed
+  source_lineage SEED-A recursive organ document
+  known_gap not implemented; ServiceLifecycleGraph is one activation mechanism already real

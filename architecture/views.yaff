@@ -1,0 +1,57 @@
+atlas views
+# Collapsed names are legal ONLY here, as reversible views. Each expands to >=2
+# real architectures; the view never replaces its children. atlas.py enforces
+# that every child resolves, so a view can never silently swallow a system.
+
+view ModelView
+  expands_to fpq-transform
+  expands_to fpq-seed
+  expands_to fpq-mode-select
+  expands_to sli-execution
+  expands_to kv-temporal
+
+view EvidenceView
+  expands_to proof-frontier
+  expands_to evidence-binding
+  expands_to serm
+
+view CapabilityView
+  expands_to capability-lattice
+  expands_to discipl-composition
+  expands_to capability-closure
+
+view ProviderResourceView
+  expands_to provider-state
+  expands_to resource-admission
+  expands_to service-lifecycle
+  expands_to foreign-twin
+  expands_to resource-activation
+
+view ExecutionView
+  expands_to work-graph
+  expands_to occurrence-spine
+  expands_to transport-phenotype
+  expands_to capability-closure
+
+view IdentityView
+  expands_to actor-graph
+  expands_to hash-identity
+
+view InstitutionalView
+  expands_to authority-graph
+  expands_to relationship-graph
+  expands_to shadow-institution
+
+view OpportunityView
+  expands_to blocker-graph
+  expands_to unlock-graph
+  expands_to resource-activation
+
+view FormsView
+  expands_to form-graph
+  expands_to atomic-form
+
+view ExternalView
+  expands_to foreign-twin
+  expands_to service-lifecycle
+  expands_to result-receipt-bundle

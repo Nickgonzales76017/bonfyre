@@ -1,0 +1,72 @@
+atlas external
+
+architecture foreign-twin
+  canonical_name ForeignTwinGraph
+  family external
+  domain External
+  layer external
+  semantic_question What is the current cached projection of an externally-owned resource, and what rights do we hold over it?
+  purpose Remote stays remote. A content-addressed cached projection with rights observe/reference/bind/act. Materialize ingests the projection into the fabric.
+  maturity measured
+  node_types ForeignTwin
+  node_types Projection
+  edge_types projects
+  edge_types materializes_to
+  state_types observe
+  state_types reference
+  state_types bind
+  state_types act
+  invariant a cached projection is not remote truth
+  forbidden_inference foreign twin cache -> remote authority
+  forbidden_inference observe right -> bind or act right
+  computational_form durable
+  native_format graf
+  command BonfyreProject
+  source_path 10-Code/BonfyreControlPlane/foreign.py
+  witness 10-Code/BonfyreControlPlane/tests/test_foreign.py
+  source_lineage external boundary architecture
+
+architecture service-lifecycle
+  canonical_name ServiceLifecycleGraph
+  family external
+  domain External / Service
+  layer external/service
+  semantic_question Where is a provisionable service in its lifecycle, and what may we do with it now?
+  purpose OSB-shaped catalog -> provision -> bind -> execute -> release over the real BonfyreAPI. Shared lifecycle mechanics do not erase concrete protocols (OSB, GPU lease, human assignment).
+  maturity implemented
+  node_types ServiceProfile
+  node_types ServiceInstance
+  edge_types provisions
+  edge_types binds
+  state_types cataloged
+  state_types provisioned
+  state_types bound
+  state_types released
+  invariant bind requires the bind right; release is idempotent
+  forbidden_inference service active -> bind authority
+  computational_form durable
+  command BonfyreAPI
+  source_path 10-Code/BonfyreControlPlane/service_lifecycle.py
+  witness 10-Code/BonfyreControlPlane/tests/test_service_lifecycle.py
+  source_lineage OSB / ServiceLifecycle architecture
+
+architecture result-receipt-bundle
+  canonical_name ResultReceiptBundleGraph
+  family external
+  domain External / Attestation
+  layer external/attestation
+  semantic_question Does this worker submission's portable bundle verify offline, byte for byte?
+  purpose The portable unit of trust: patch, gate results, task ref, sandbox selection, worker key, DSSE-signed attestation, chain-linked. Offline field-level verify. Contributed upstream (bernstein #3870).
+  maturity measured
+  node_types ResultBundle
+  node_types GateResult
+  node_types ChainLink
+  edge_types attests
+  edge_types chains_to
+  invariant tampering any byte of the patch or a gate log fails verification with a field-level error
+  invariant verification is offline and side-effect free
+  forbidden_inference embedded worker key -> pinned provenance (requires an out-of-band roster)
+  native_format crux
+  source_path external:sipyourdrink-ltd/bernstein/src/bernstein/core/security/result_receipt_bundle.py
+  witness external:bernstein tests/unit/security/test_result_receipt_bundle.py (9 tests)
+  source_lineage bernstein volunteer umbrella #3863 issue #3870
