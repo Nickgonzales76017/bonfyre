@@ -44,6 +44,16 @@ interaction hvm4-reduces-fpq-seed
   witness a bounded reduction result
   binding architecture/substrate/foundry.yaff
 
+interaction address-plane-feeds-closure
+  source address-plane
+  destination capability-closure
+  relation eligibility_prefilter
+  preserves the surviving eligible command families
+  drops candidates rejected by capability, authority, or proof masks
+  forbidden_inference a survivor -> a runnable or authorized binding (it is only eligible)
+  witness RouteResult
+  binding 10-Code/BonfyreControlPlane/address_plane.py
+
 interaction authority-compiles-to-mask
   source authority-graph
   destination address-plane

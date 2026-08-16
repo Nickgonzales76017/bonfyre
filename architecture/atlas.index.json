@@ -62,7 +62,8 @@
       "internal_calculi": [
         "bitwise eligibility (have & need)==need",
         "ternary proof vector (+1 proven / 0 unresolved / -1 KnownNonCause)",
-        "authority mask compiled from non-revoked in-window grants"
+        "authority mask compiled from non-revoked in-window grants",
+        "route funnel: capability -> authority -> proof rejection over the real estate"
       ],
       "invariants": [
         "bits are a compiled machine index, not meaning",
@@ -1839,6 +1840,21 @@
       ],
       "relation": "verified_autofill",
       "source": "actor-graph"
+    },
+    "address-plane-feeds-closure": {
+      "destination": "capability-closure",
+      "drops": [
+        "candidates rejected by capability, authority, or proof masks"
+      ],
+      "forbidden_inferences": [
+        "a survivor -> a runnable or authorized binding (it is only eligible)"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the surviving eligible command families"
+      ],
+      "relation": "eligibility_prefilter",
+      "source": "address-plane"
     },
     "authority-compiles-to-mask": {
       "destination": "address-plane",

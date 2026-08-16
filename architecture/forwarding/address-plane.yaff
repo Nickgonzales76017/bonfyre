@@ -26,8 +26,10 @@ architecture address-plane
   native_format graf
   source_path 10-Code/BonfyreControlPlane/address_plane.py
   witness 10-Code/BonfyreControlPlane/tests/test_address_plane.py
+  internal_calculus route funnel: capability -> authority -> proof rejection over the real estate
   interacts authority-graph
   interacts proof-frontier
   interacts capability-lattice
+  interacts capability-closure
   source_lineage AddressPlane / institutional packet-switching vision
   known_gap CID/SID prefix routing (content-address placement, semantic-neighborhood locality via Lance/HDC) and route advertise/withdraw over the DBSP delta engine are the next layers

@@ -143,3 +143,86 @@ def capability_registry(db: sqlite3.Connection) -> BitRegistry:
 
 def capability_mask(registry: BitRegistry, families: Iterable[str]) -> int:
     return registry.mask(families)
+
+
+# ------------------------------------------------------------------ routing
+
+@dataclass(frozen=True)
+class RouteDemand:
+    """What an operation needs, compiled to forwarding checks."""
+    estates: tuple[str, ...] = ()               # which estates may participate
+    capabilities: tuple[str, ...] = ()          # specific command families demanded
+    actor: str = ""
+    subject: str = ""
+    subject_profile: str = ""
+    required_permissions: tuple[str, ...] = ()  # actor must hold these over subject
+    required_proven_layers: tuple[str, ...] = ()
+    forbidden_hypotheses: tuple[str, ...] = ()  # rejected if any is blackholed
+
+
+@dataclass(frozen=True)
+class RouteResult:
+    survivors: tuple[str, ...]
+    considered: int
+    rejected_by_capability: int
+    rejected_by_authority: int
+    rejected_by_proof: int
+
+    def to_dict(self) -> dict:
+        return {
+            "survivors": list(self.survivors), "considered": self.considered,
+            "rejected_by_capability": self.rejected_by_capability,
+            "rejected_by_authority": self.rejected_by_authority,
+            "rejected_by_proof": self.rejected_by_proof,
+        }
+
+
+def route(db: sqlite3.Connection, demand: RouteDemand) -> RouteResult:
+    """The forwarding funnel over the real command estate: reject by capability,
+    then authority, then proof -- each a cheap machine check -- so the exact
+    semantic closure runs only on the survivors.
+
+    Nothing here is authorization or proof: a survivor is merely *eligible*. The
+    proof stage rejects a demand whose required layer is unproven or whose
+    forbidden hypothesis is a KnownNonCause blackhole."""
+    try:
+        rows = [r for r in db.execute("SELECT family, estate FROM estate_catalog")]
+    except sqlite3.Error:
+        rows = []
+    considered = len(rows)
+
+    # stage 1: capability / estate eligibility
+    if demand.capabilities:
+        s1 = [f for (f, _e) in rows if f in demand.capabilities]
+    elif demand.estates:
+        s1 = [f for (f, e) in rows if e in demand.estates]
+    else:
+        s1 = [f for (f, _e) in rows]
+    rej_cap = considered - len(s1)
+
+    # stage 2: authority (all-or-nothing gate over the surviving set)
+    if demand.actor and demand.required_permissions:
+        admitted = authority_admits(db, demand.actor, demand.subject, demand.required_permissions)
+        s2 = s1 if admitted else []
+    else:
+        s2 = s1
+    rej_auth = len(s1) - len(s2)
+
+    # stage 3: proof ternary -- reject unproven required layers or blackholed hypotheses
+    proof_ok = True
+    if demand.subject and (demand.required_proven_layers or demand.forbidden_hypotheses):
+        tern = proof_ternary(db, demand.subject, demand.subject_profile)
+        for layer in demand.required_proven_layers:
+            if tern.get(layer, UNRESOLVED) != PROVEN:
+                proof_ok = False
+        for hyp in demand.forbidden_hypotheses:
+            if is_blackholed(db, demand.subject, hyp):
+                proof_ok = False
+    s3 = s2 if proof_ok else []
+    rej_proof = len(s2) - len(s3)
+
+    return RouteResult(
+        survivors=tuple(sorted(s3)), considered=considered,
+        rejected_by_capability=rej_cap, rejected_by_authority=rej_auth,
+        rejected_by_proof=rej_proof,
+    )

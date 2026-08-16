@@ -69,3 +69,52 @@ def test_capability_mask_from_estate():
     have_partial = ap.capability_mask(reg, ["BonfyreFPQ"])
     assert ap.eligible(have_all, need) is True
     assert ap.eligible(have_partial, need) is False
+
+
+def _estate_and_auth_and_proof(tmp_path):
+    db = sqlite3.connect(":memory:")
+    db.execute("CREATE TABLE estate_catalog(family TEXT, estate TEXT)")
+    db.executemany("INSERT INTO estate_catalog VALUES(?,?)", [
+        ("BonfyreFPQ", "model"), ("BonfyreSLI", "model"), ("BonfyreKVCache", "model"),
+        ("BonfyreHash", "artifact"), ("BonfyreNet", "distributed_device"),
+        ("BonfyreCMS", "surface_human"),
+    ])
+    db.commit()
+    au.ensure_schema(db)
+    pf.ensure_schema(db)
+    return db
+
+
+def test_route_funnels_by_capability_then_authority_then_proof(tmp_path):
+    db = _estate_and_auth_and_proof(tmp_path)
+    # demand: a model-estate operation on model:x, actor nick needs ACT, recon proven
+    au.grant(db, au.AuthorityEdge("e", actor="nick", permission=au.ACT, subject="model:x"))
+    pf.set_layer(db, "model:x", 2, "reconstruction", "proven", subject_profile="p")
+
+    d = ap.RouteDemand(estates=("model",), actor="nick", subject="model:x",
+                       subject_profile="p", required_permissions=(au.ACT,),
+                       required_proven_layers=("reconstruction",))
+    r = ap.route(db, d)
+    assert r.considered == 6
+    assert r.rejected_by_capability == 3          # 3 non-model commands rejected
+    assert set(r.survivors) == {"BonfyreFPQ", "BonfyreSLI", "BonfyreKVCache"}
+    assert r.rejected_by_authority == 0 and r.rejected_by_proof == 0
+
+
+def test_route_rejects_on_missing_authority():
+    db = _estate_and_auth_and_proof(None)
+    d = ap.RouteDemand(estates=("model",), actor="nobody", subject="model:x",
+                       required_permissions=(au.ACT,))
+    r = ap.route(db, d)
+    assert r.survivors == () and r.rejected_by_authority == 3   # 3 model cmds gated out
+
+
+def test_route_rejects_on_blackholed_hypothesis():
+    db = _estate_and_auth_and_proof(None)
+    pf.record_noncause(db, pf.KnownNonCause(
+        noncause_id="nc", hypothesis="quantization", subject_scope="model:x",
+        experiment="fp16 passthrough"))
+    d = ap.RouteDemand(estates=("model",), subject="model:x",
+                       forbidden_hypotheses=("quantization corruption",))
+    r = ap.route(db, d)
+    assert r.survivors == () and r.rejected_by_proof == 3   # blackhole rejects the route
