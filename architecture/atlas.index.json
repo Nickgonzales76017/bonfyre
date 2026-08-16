@@ -2336,9 +2336,12 @@
       ],
       "internal_calculi": [],
       "invariants": [
-        "dependency carries causal execution semantics, not mere ordering"
+        "dependency carries causal execution semantics, not mere ordering",
+        "a node's family must be registered as routable, or it is rejected (native + python parity)"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "native WorkGraph is mature and now family-routing-checked; native Occurrence and Resource/Actor persistence, plane replay, and supervisor call-site replacement are the open native-absorption items (Python authority not yet retired)"
+      ],
       "layer": "execution",
       "maturity": "implemented",
       "native_formats": [],
@@ -2348,12 +2351,15 @@
       ],
       "semantic_question": "What durable work exists, with what dependencies and lifecycle?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/work_graph.py"
+        "10-Code/BonfyreControlPlane/work_graph.py",
+        "engine/core/src/workgraph.c",
+        "engine/core/include/bf_workgraph.h"
       ],
       "views": [
         "ExecutionView"
       ],
       "witnesses": [
+        "engine/core/tests/routable_family_test.c",
         "10-Code/BonfyreControlPlane/tests/test_work_graph.py"
       ]
     },

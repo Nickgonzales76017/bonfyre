@@ -16,9 +16,14 @@ architecture work-graph
   state_types done
   state_types failed
   invariant dependency carries causal execution semantics, not mere ordering
+  invariant a node's family must be registered as routable, or it is rejected (native + python parity)
   forbidden_inference queue priority -> durability guarantee
   command BonfyreQueue
   source_path 10-Code/BonfyreControlPlane/work_graph.py
+  source_path engine/core/src/workgraph.c
+  source_path engine/core/include/bf_workgraph.h
+  witness engine/core/tests/routable_family_test.c
+  known_gap native WorkGraph is mature and now family-routing-checked; native Occurrence and Resource/Actor persistence, plane replay, and supervisor call-site replacement are the open native-absorption items (Python authority not yet retired)
   witness 10-Code/BonfyreControlPlane/tests/test_work_graph.py
   source_lineage run6 control-plane retrospective
 
