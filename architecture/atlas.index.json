@@ -526,7 +526,7 @@
         "a conclusion survives losing any single ground iff it has at least two independent supports"
       ],
       "known_gaps": [
-        "runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions); extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step"
+        "runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions). Self-applied to the atlas's own maturity claims (atlas_collapse.py): 21 measured/proven claims audited, zero laundered against the real witness files, 13 single-witness fragile. Extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step"
       ],
       "layer": "opportunity",
       "maturity": "measured",
@@ -537,11 +537,13 @@
       ],
       "semantic_question": "If this fact is withdrawn, which conclusions lose all support -- and which single facts is a given conclusion load-bearing on?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/support_lattice.py"
+        "10-Code/BonfyreControlPlane/support_lattice.py",
+        "architecture/atlas_collapse.py"
       ],
       "views": [],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_support_lattice.py"
+        "10-Code/BonfyreControlPlane/tests/test_support_lattice.py",
+        "architecture/tests/test_atlas_collapse.py"
       ]
     },
     "command-law": {

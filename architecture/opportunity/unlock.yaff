@@ -71,9 +71,11 @@ architecture collapse-front
   forbidden_inference absent from every collapse front -> the conclusion is true (robust support is not truth; it may also be already unsupported)
   interacts actor-graph
   source_path 10-Code/BonfyreControlPlane/support_lattice.py
+  source_path architecture/atlas_collapse.py
   witness 10-Code/BonfyreControlPlane/tests/test_support_lattice.py
+  witness architecture/tests/test_atlas_collapse.py
   source_lineage retraction dual harvested from run6/run7 DBSP retraction algebra
-  known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions); extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
+  known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions). Self-applied to the atlas's own maturity claims (atlas_collapse.py): 21 measured/proven claims audited, zero laundered against the real witness files, 13 single-witness fragile. Extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
 
 architecture resource-activation
   canonical_name ResourceActivationGraph
