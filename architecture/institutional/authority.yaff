@@ -64,15 +64,21 @@ architecture shadow-institution
   layer institutional
   semantic_question What do we know about an institution before any relationship or authority is established?
   purpose Epistemic knowledge of an institution pre-relationship: observed hierarchy, claim paths, public attachments, activation plan. NOT ForeignTwin (which models an externally-owned resource projection).
-  maturity architectural
+  maturity implemented
   node_types ShadowInstitutionNode
   node_types ObservedHierarchy
-  node_types ActivationPacket
+  node_types PublicAttachment
   edge_types observed_from
-  state_types ObservedInstitution
-  state_types ShadowInstitution
-  state_types RelationshipEstablished
-  state_types Active
+  edge_types converts_via
+  state_types observed
+  state_types shadow
+  state_types relationship_established
+  state_types active
+  internal_calculus conversion staged by real relationship progress
+  invariant conversion to active requires a relationship at >= collaborated, not a richer public picture
   forbidden_inference observed hierarchy -> established authority
+  forbidden_inference public structure mapped -> relationship established
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/shadow_institution.py
+  witness 10-Code/BonfyreControlPlane/tests/test_shadow_institution.py
   source_lineage SEED-A recursive organ document
-  known_gap not implemented

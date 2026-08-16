@@ -966,31 +966,41 @@
       "commands": [],
       "domain": "Institutional / Epistemic",
       "edge_types": [
-        "observed_from"
+        "observed_from",
+        "converts_via"
       ],
       "family": "institutional",
       "forbidden_inferences": [
-        "observed hierarchy -> established authority"
+        "observed hierarchy -> established authority",
+        "public structure mapped -> relationship established"
       ],
-      "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [
-        "not implemented"
+      "internal_calculi": [
+        "conversion staged by real relationship progress"
       ],
+      "invariants": [
+        "conversion to active requires a relationship at >= collaborated, not a richer public picture"
+      ],
+      "known_gaps": [],
       "layer": "institutional",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "ShadowInstitutionNode",
         "ObservedHierarchy",
-        "ActivationPacket"
+        "PublicAttachment"
       ],
       "semantic_question": "What do we know about an institution before any relationship or authority is established?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/shadow_institution.py"
+      ],
       "views": [
         "InstitutionalView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_shadow_institution.py"
+      ]
     },
     "sli-execution": {
       "canonical_name": "SLIExecutionGraph",
@@ -1460,6 +1470,23 @@
       ],
       "relation": "mechanism_binding",
       "source": "service-lifecycle"
+    },
+    "shadow-converts-via-relationship": {
+      "destination": "shadow-institution",
+      "drops": [
+        "observation detail that no relationship backs"
+      ],
+      "forbidden_inferences": [
+        "public structure mapped -> shadow institution active"
+      ],
+      "invalidates_on": [
+        "the relationship is corrected below engaged"
+      ],
+      "preserves": [
+        "the contact and profile the relationship advanced under"
+      ],
+      "relation": "conversion_gate",
+      "source": "relationship-graph"
     },
     "transport-carries-hop": {
       "destination": "capability-closure",

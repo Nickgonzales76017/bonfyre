@@ -222,6 +222,17 @@ interaction relationship-resolves-stage-blocker
   witness stage_at_least
   binding 10-Code/BonfyreControlPlane/opportunity.py
 
+interaction shadow-converts-via-relationship
+  source relationship-graph
+  destination shadow-institution
+  relation conversion_gate
+  preserves the contact and profile the relationship advanced under
+  drops observation detail that no relationship backs
+  forbidden_inference public structure mapped -> shadow institution active
+  invalidates_on the relationship is corrected below engaged
+  witness conversion_stage
+  binding 10-Code/BonfyreControlPlane/shadow_institution.py
+
 interaction relationship-earns-verification
   source relationship-graph
   destination actor-graph
