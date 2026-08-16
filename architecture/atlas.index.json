@@ -492,7 +492,9 @@
     },
     "feldera": {
       "canonical_name": "Feldera",
-      "commands": [],
+      "commands": [
+        "BonfyreProof"
+      ],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -501,26 +503,33 @@
       ],
       "internal_calculi": [
         "incremental view maintenance",
-        "probe: dbsp-five-transaction-integral"
+        "probe: dbsp-five-transaction-integral",
+        "reachability view: fpq-sli-kv organism route under insert+retract"
       ],
       "invariants": [
-        "owns incremental recomputation, not the semantics of the views maintained"
+        "owns incremental recomputation, not the semantics of the views maintained",
+        "a retraction propagates; an independent proven fact survives a dependent one's withdrawal"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "the maintained relation is a proof/organism cardinality; wiring live fabric relations (workgraph_nodes, frontier_layers, authority) as DBSP source relations is the next step"
+      ],
       "layer": "substrate",
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?",
       "source_paths": [
-        "~/.bonfyre/substrates/v6.1/feldera/source"
+        "~/.bonfyre/substrates/v6.1/feldera/source",
+        "10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs",
+        "10-Code/BonfyreControlPlane/substrate_feldera.py"
       ],
       "views": [
         "SubstrateView"
       ],
       "witnesses": [
         "~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json",
-        "~/.bonfyre/substrates/v6.1/feldera/target/release/bonfyre-feldera-dbsp-probe"
+        "~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json",
+        "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py"
       ]
     },
     "foreign-twin": {
@@ -1761,6 +1770,23 @@
       ],
       "relation": "composition",
       "source": "discipl-composition"
+    },
+    "feldera-maintains-reachability": {
+      "destination": "proof-frontier",
+      "drops": [
+        "the need to recompute the whole answer on a change"
+      ],
+      "forbidden_inferences": [
+        "an organism route withdrawn -> its independent members retracted"
+      ],
+      "invalidates_on": [
+        "a proof fact is inserted or retracted (reheat)"
+      ],
+      "preserves": [
+        "the proven-layer set and its retractions"
+      ],
+      "relation": "incremental_maintenance",
+      "source": "feldera"
     },
     "formgraph-compiles-to-atomicform": {
       "destination": "atomic-form",

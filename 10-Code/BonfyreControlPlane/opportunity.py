@@ -194,10 +194,10 @@ def blocker_resolved(
     if blocker.kind == PROOF_LAYER:
         return _layer_proven(db, blocker.subject, blocker.profile, blocker.layer)
     if blocker.kind == WORK_DONE:
-        if fabric_db is not None:
-            from_fabric = _work_satisfied_fabric(fabric_db, blocker.subject)
-            if from_fabric is not None:
-                return from_fabric
+        if fabric_db is not None and _table_exists(fabric_db, "workgraph_nodes"):
+            # workgraph_nodes is canonical: the shadow work_items never decides
+            # reachability once the real fabric WorkGraph is in play.
+            return _work_satisfied_fabric(fabric_db, blocker.subject)
         return _work_satisfied(db, blocker.subject)
     if blocker.kind == SERVICE_BOUND:
         return blocker.subject in bound_services

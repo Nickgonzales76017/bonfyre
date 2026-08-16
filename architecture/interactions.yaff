@@ -3,6 +3,17 @@ atlas interactions
 # the hardest bugs live in the bridges. Each names what it preserves, what it
 # drops, and what it must NOT promote.
 
+interaction feldera-maintains-reachability
+  source feldera
+  destination proof-frontier
+  relation incremental_maintenance
+  preserves the proven-layer set and its retractions
+  drops the need to recompute the whole answer on a change
+  forbidden_inference an organism route withdrawn -> its independent members retracted
+  invalidates_on a proof fact is inserted or retracted (reheat)
+  witness reachability-proof.json (organism 1,2,3,2; fpq_present 1,1,1,1)
+  binding 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+
 interaction verus-verifies-frontier-invariant
   source verus
   destination proof-frontier

@@ -1,0 +1,25 @@
+"""The real DBSP reachability circuit: retraction propagates, and an independent
+proven fact survives the retraction of a dependent one. Skips if not built."""
+
+import sys
+from pathlib import Path
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import substrate_feldera as sf
+
+pytestmark = pytest.mark.skipif(
+    not sf.available(), reason="requires the built feldera reachability circuit")
+
+
+def test_organism_route_withdraws_on_reheat_and_fpq_survives():
+    v = sf.run_incremental_view()
+    assert v.ok
+    # the FPQ->SLI->KV organism builds to 3, then the SLI reheat withdraws it
+    assert v.organism_route == (1, 2, 3, 2)
+    assert v.organism_withdrew_on_reheat is True
+    # the decisive anti-amnesia property: FPQ is not erased by the SLI retraction
+    assert v.fpq_present == (1, 1, 1, 1)
+    assert v.fpq_survived is True
