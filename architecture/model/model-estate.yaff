@@ -1,0 +1,51 @@
+atlas model
+# Harvested run6/run7 model estate above FPQ/SLI/KV: representation, topology,
+# prepared execution. Registered architectural until built.
+
+architecture model-representation-graph
+  canonical_name ModelRepresentationGraph
+  family model
+  domain Model / Representation
+  layer model/representation
+  semantic_question What representation profile is this model in, and what invalidates it?
+  purpose Binds model identity, representation profile, prepared state, execution phenotype, runtime capability with separate invalidation domains, so changing one does not silently invalidate another. FPQ is representation, never identity.
+  maturity architectural
+  node_types ModelPassport
+  edge_types represented_as
+  forbidden_inference low reconstruction error -> good semantic generation
+  forbidden_inference representation -> model identity
+  interacts fpq-transform
+  source_lineage run6/run7 model estate
+  known_gap not built; FPQTransformation is one representation already measured
+
+architecture model-topology-graph
+  canonical_name ModelTopologyGraph
+  family model
+  domain Model / Topology
+  layer model/representation
+  semantic_question What is this model's architecture, layers, and tensor namespace?
+  purpose The structural identity of a model -- architecture, layer graph, tensor namespace -- separate from its representation and its execution.
+  maturity architectural
+  node_types Layer
+  edge_types feeds
+  forbidden_inference same topology -> same weights or same representation
+  source_lineage run6/run7 model estate
+  known_gap not built
+
+architecture prepared-execution-graph
+  canonical_name PreparedExecutionGraph
+  family model
+  domain Model / Execution
+  layer model/execution
+  semantic_question Given this representation and hardware, what prepared executable artifact and lease exists?
+  purpose Source model -> representation -> preparation params -> hardware feature set -> prepared artifact -> resident resource -> runtime lease -> session, with invalidation edges. The chain that turns a representation into something running.
+  maturity architectural
+  node_types PreparedExecutionArtifact
+  node_types RuntimeLease
+  edge_types prepares
+  edge_types invalidates
+  forbidden_inference prepared -> authorized to run
+  interacts model-representation-graph
+  interacts tract
+  source_lineage run6/run7 model estate
+  known_gap not built

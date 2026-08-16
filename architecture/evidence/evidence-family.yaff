@@ -1,0 +1,80 @@
+atlas evidence
+# Harvested from the run6/run7 histories: the evidence estate the vision detailed
+# as distinct calculi (do not fold into one EvidenceGraph). Registered honestly at
+# architectural -- named and lineage-tracked, not yet built -- so loss() surfaces
+# them as mining targets rather than losing them.
+
+architecture artifact-graph
+  canonical_name ArtifactGraph
+  family evidence
+  domain Evidence / Artifacts
+  layer evidence
+  semantic_question What operator transformed this source artifact into that derived one?
+  purpose Transformation semantics: source -> operator -> derived -> packet -> export. Distinct from lineage (ancestry) and provenance (who/what/when).
+  maturity architectural
+  node_types SourceArtifact
+  node_types DerivedArtifact
+  edge_types transformed_by
+  forbidden_inference an artifact exists -> it supports a claim
+  source_lineage run6/run7 evidence estate
+  known_gap not built; content-addressing (HashIdentity) and fabric artifacts are the nearest real shapes
+
+architecture provenance-graph
+  canonical_name ProvenanceGraph
+  family evidence
+  domain Evidence / Provenance
+  layer evidence
+  semantic_question Through what source, observer, actor, runtime, model, provider, transport did this arrive?
+  purpose The full path an artifact took to exist -- the cheap path-vector checks (untrusted provider, missing authority provenance, loops) ride on this.
+  maturity architectural
+  node_types ProvenanceNode
+  edge_types produced_by
+  forbidden_inference a provenance path -> authority over the artifact
+  source_lineage run6/run7 evidence estate
+  known_gap not built; ResultReceiptBundle chain is a partial real shape
+
+architecture evidence-graph
+  canonical_name EvidenceGraph
+  family evidence
+  domain Evidence / Claims
+  layer evidence
+  semantic_question Does this support, contradict, reproduce, or falsify that claim?
+  purpose The claim-support relation itself (supports / contradicts / reproduces / falsifies / contextualizes / witnesses). SERM produces its consequences; it is not this.
+  maturity architectural
+  node_types Claim
+  edge_types supports
+  edge_types contradicts
+  forbidden_inference correlation -> causation
+  forbidden_inference supports(A,B) -> supports(B,A)
+  source_lineage run6/run7 evidence estate
+  known_gap not built; EvidenceBindingGraph binds candidates, does not maintain the claim relation
+
+architecture temporal-evidence-graph
+  canonical_name TemporalEvidenceGraph
+  family evidence
+  domain Evidence / Time
+  layer evidence
+  semantic_question Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?
+  purpose Timestamps must not collapse. Stale-for-decision does not mean delete the historical evidence.
+  maturity architectural
+  node_types TimedFact
+  edge_types supersedes
+  forbidden_inference retrieval time -> event time
+  forbidden_inference stale for a decision -> delete the historical evidence
+  source_lineage run6/run7 evidence estate
+  known_gap not built; the occurrence spine keeps one ordering, not the eight time planes
+
+architecture claim-graph
+  canonical_name ClaimGraph
+  family evidence
+  domain Evidence / Claims
+  layer evidence
+  semantic_question What does this claim depend on, assume, and what is its current vs historical proof state?
+  purpose A claim with its definition/evidence dependencies, counterclaims, caveats, assumptions, and current vs historical proof state.
+  maturity architectural
+  node_types Claim
+  node_types Counterclaim
+  edge_types depends_on
+  forbidden_inference a claim stated -> a claim proven
+  source_lineage run6/run7 evidence estate
+  known_gap not built

@@ -82,3 +82,32 @@ architecture shadow-institution
   source_path 10-Code/BonfyreControlPlane/shadow_institution.py
   witness 10-Code/BonfyreControlPlane/tests/test_shadow_institution.py
   source_lineage SEED-A recursive organ document
+
+architecture institution-graph
+  canonical_name InstitutionGraph
+  family institutional
+  domain Institutional / Structure
+  layer institutional
+  semantic_question What is this institution's real structure -- units, roles, resources, authority domains, protocols?
+  purpose An established institution (units, departments, programs, memberships, role assignments, workcells, resources, facilities, authority domains, protocols). Distinct from ShadowInstitution (pre-relationship, epistemic).
+  maturity architectural
+  node_types Institution
+  node_types Unit
+  edge_types member_of
+  forbidden_inference observed structure -> established authority
+  source_lineage run6/run7 institutional estate
+  known_gap not built; ShadowInstitution models the pre-relationship view already
+
+architecture social-presence-graph
+  canonical_name SocialPresenceGraph
+  family institutional
+  domain Institutional / Presence
+  layer institutional
+  semantic_question Who is present, on what surface, with what disclosure state, availability, and attention?
+  purpose Presence sessions over surfaces/rooms with disclosure state, interaction rights, availability, attention. Habitat, chat, live work and events depend on it.
+  maturity architectural
+  node_types PresenceSession
+  edge_types present_on
+  forbidden_inference presence -> authority
+  source_lineage run6/run7 institutional estate
+  known_gap not built

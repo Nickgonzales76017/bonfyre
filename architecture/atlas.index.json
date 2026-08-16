@@ -104,6 +104,34 @@
         "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py"
       ]
     },
+    "artifact-graph": {
+      "canonical_name": "ArtifactGraph",
+      "commands": [],
+      "domain": "Evidence / Artifacts",
+      "edge_types": [
+        "transformed_by"
+      ],
+      "family": "evidence",
+      "forbidden_inferences": [
+        "an artifact exists -> it supports a claim"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; content-addressing (HashIdentity) and fabric artifacts are the nearest real shapes"
+      ],
+      "layer": "evidence",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "SourceArtifact",
+        "DerivedArtifact"
+      ],
+      "semantic_question": "What operator transformed this source artifact into that derived one?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "atomic-form": {
       "canonical_name": "AtomicForm",
       "commands": [
@@ -367,6 +395,34 @@
         "10-Code/BonfyreControlPlane/tests/test_capability_closure.py"
       ]
     },
+    "capability-genome": {
+      "canonical_name": "CapabilityGenome",
+      "commands": [],
+      "domain": "Learning / Promotion",
+      "edge_types": [
+        "promotes_to"
+      ],
+      "family": "learning",
+      "forbidden_inferences": [
+        "a learned candidate -> a promoted primitive (proof and validation gate promotion)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built"
+      ],
+      "layer": "learning",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "LambdaTensor",
+        "CandidatePrimitive"
+      ],
+      "semantic_question": "What structural change to the graph does this pattern justify, and has it been proven?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "capability-lattice": {
       "canonical_name": "CapabilityLattice",
       "commands": [
@@ -407,6 +463,34 @@
         "10-Code/BonfyreControlPlane/tests/test_capability_catalog.py"
       ]
     },
+    "claim-graph": {
+      "canonical_name": "ClaimGraph",
+      "commands": [],
+      "domain": "Evidence / Claims",
+      "edge_types": [
+        "depends_on"
+      ],
+      "family": "evidence",
+      "forbidden_inferences": [
+        "a claim stated -> a claim proven"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built"
+      ],
+      "layer": "evidence",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "Claim",
+        "Counterclaim"
+      ],
+      "semantic_question": "What does this claim depend on, assume, and what is its current vs historical proof state?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "command-law": {
       "canonical_name": "CommandLawGraph",
       "commands": [
@@ -439,6 +523,33 @@
       "source_paths": [
         "10-Code/BonfyreControlPlane/command_laws.py"
       ],
+      "views": [],
+      "witnesses": []
+    },
+    "commitment-graph": {
+      "canonical_name": "CommitmentGraph",
+      "commands": [],
+      "domain": "Economic / Commitment",
+      "edge_types": [
+        "commits"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "a commitment -> the resource delivered"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; AuthorityGraph + ResourceActivation are the nearest real shapes"
+      ],
+      "layer": "economic",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "ResourceCommitment"
+      ],
+      "semantic_question": "Who committed what resource to whom, under what conditions, until when?",
+      "source_paths": [],
       "views": [],
       "witnesses": []
     },
@@ -620,6 +731,35 @@
         "10-Code/BonfyreControlPlane/tests/test_evidence_binding.py",
         "10-Code/BonfyreControlPlane/tests/test_loop_evidence_binding.py"
       ]
+    },
+    "evidence-graph": {
+      "canonical_name": "EvidenceGraph",
+      "commands": [],
+      "domain": "Evidence / Claims",
+      "edge_types": [
+        "supports",
+        "contradicts"
+      ],
+      "family": "evidence",
+      "forbidden_inferences": [
+        "correlation -> causation",
+        "supports(A,B) -> supports(B,A)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; EvidenceBindingGraph binds candidates, does not maintain the claim relation"
+      ],
+      "layer": "evidence",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "Claim"
+      ],
+      "semantic_question": "Does this support, contradict, reproduce, or falsify that claim?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
     },
     "feldera": {
       "canonical_name": "Feldera",
@@ -1026,6 +1166,61 @@
         "~/.bonfyre/substrates/v6.1/hydro/semantic-proof.json"
       ]
     },
+    "institution-graph": {
+      "canonical_name": "InstitutionGraph",
+      "commands": [],
+      "domain": "Institutional / Structure",
+      "edge_types": [
+        "member_of"
+      ],
+      "family": "institutional",
+      "forbidden_inferences": [
+        "observed structure -> established authority"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; ShadowInstitution models the pre-relationship view already"
+      ],
+      "layer": "institutional",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "Institution",
+        "Unit"
+      ],
+      "semantic_question": "What is this institution's real structure -- units, roles, resources, authority domains, protocols?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "institutional-cost-graph": {
+      "canonical_name": "InstitutionalCostGraph",
+      "commands": [],
+      "domain": "Economic / Cost",
+      "edge_types": [
+        "allocates"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "a projected cost -> a booked accounting entry"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built"
+      ],
+      "layer": "economic",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "CostEnvelope"
+      ],
+      "semantic_question": "What does this mission actually cost across compute, model, storage, provider, human, facility?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "kv-temporal": {
       "canonical_name": "KVTemporalGraph",
       "commands": [
@@ -1093,6 +1288,89 @@
         "~/.bonfyre/substrates/v6.1/lance/semantic-proof.json"
       ]
     },
+    "model-representation-graph": {
+      "canonical_name": "ModelRepresentationGraph",
+      "commands": [],
+      "domain": "Model / Representation",
+      "edge_types": [
+        "represented_as"
+      ],
+      "family": "model",
+      "forbidden_inferences": [
+        "low reconstruction error -> good semantic generation",
+        "representation -> model identity"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; FPQTransformation is one representation already measured"
+      ],
+      "layer": "model/representation",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "ModelPassport"
+      ],
+      "semantic_question": "What representation profile is this model in, and what invalidates it?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "model-topology-graph": {
+      "canonical_name": "ModelTopologyGraph",
+      "commands": [],
+      "domain": "Model / Topology",
+      "edge_types": [
+        "feeds"
+      ],
+      "family": "model",
+      "forbidden_inferences": [
+        "same topology -> same weights or same representation"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built"
+      ],
+      "layer": "model/representation",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "Layer"
+      ],
+      "semantic_question": "What is this model's architecture, layers, and tensor namespace?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "money-graph": {
+      "canonical_name": "MoneyGraph",
+      "commands": [],
+      "domain": "Economic / Money",
+      "edge_types": [
+        "funds",
+        "owes"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "projected value -> realized money"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; ERPNext accounting is the intended projection target"
+      ],
+      "layer": "economic",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "Party"
+      ],
+      "semantic_question": "What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "occurrence-spine": {
       "canonical_name": "OccurrenceSpine",
       "commands": [],
@@ -1126,6 +1404,90 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_external_events.py"
       ]
+    },
+    "pattern-graph": {
+      "canonical_name": "PatternGraph",
+      "commands": [],
+      "domain": "Learning / Patterns",
+      "edge_types": [
+        "clusters_into"
+      ],
+      "family": "learning",
+      "forbidden_inferences": [
+        "a pattern observed -> a validated primitive"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; the route-ranker learns route ordering, a first learned organ"
+      ],
+      "layer": "learning",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "ActionTrace",
+        "PatternCluster"
+      ],
+      "semantic_question": "What recurring pattern do these action traces and residuals cluster into?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "placement-graph": {
+      "canonical_name": "PlacementGraph",
+      "commands": [],
+      "domain": "Provider / Placement",
+      "edge_types": [
+        "placed_on"
+      ],
+      "family": "provider",
+      "forbidden_inferences": [
+        "placeable -> authorized to execute there"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; CID prefix routing gives placement partitions over content digests"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "PlacementNode"
+      ],
+      "semantic_question": "Where does this run or reside, given locality and resource constraints?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "prepared-execution-graph": {
+      "canonical_name": "PreparedExecutionGraph",
+      "commands": [],
+      "domain": "Model / Execution",
+      "edge_types": [
+        "prepares",
+        "invalidates"
+      ],
+      "family": "model",
+      "forbidden_inferences": [
+        "prepared -> authorized to run"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built"
+      ],
+      "layer": "model/execution",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "PreparedExecutionArtifact",
+        "RuntimeLease"
+      ],
+      "semantic_question": "Given this representation and hardware, what prepared executable artifact and lease exists?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
     },
     "proof-frontier": {
       "canonical_name": "ProofFrontierGraph",
@@ -1178,6 +1540,63 @@
         "packs/fpq-proof-frontier/measured-witness.yaff"
       ]
     },
+    "provenance-graph": {
+      "canonical_name": "ProvenanceGraph",
+      "commands": [],
+      "domain": "Evidence / Provenance",
+      "edge_types": [
+        "produced_by"
+      ],
+      "family": "evidence",
+      "forbidden_inferences": [
+        "a provenance path -> authority over the artifact"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; ResultReceiptBundle chain is a partial real shape"
+      ],
+      "layer": "evidence",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "ProvenanceNode"
+      ],
+      "semantic_question": "Through what source, observer, actor, runtime, model, provider, transport did this arrive?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "provider-graph": {
+      "canonical_name": "ProviderGraph",
+      "commands": [],
+      "domain": "Provider / Resolution",
+      "edge_types": [
+        "realizes",
+        "falls_back_to"
+      ],
+      "family": "provider",
+      "forbidden_inferences": [
+        "available -> authorized",
+        "cheapest -> valid"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; ProviderStateFold folds events, the route-set daemon advertises/withdraws routes"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "CapabilityBid",
+        "ProviderTournament"
+      ],
+      "semantic_question": "Which providers can realize this capability, at what multidimensional metric?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "provider-state": {
       "canonical_name": "ProviderStateFold",
       "commands": [],
@@ -1211,6 +1630,33 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_provider_state.py"
       ]
+    },
+    "recursive-value-graph": {
+      "canonical_name": "RecursiveValueGraph",
+      "commands": [],
+      "domain": "Economic / Value",
+      "edge_types": [
+        "unlocks_value"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "a value edge -> a cash amount"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; UnlockGraph is the causal-reachability cousin already real"
+      ],
+      "layer": "economic",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "ValueEdge"
+      ],
+      "semantic_question": "What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
     },
     "relationship-graph": {
       "canonical_name": "RelationshipGraph",
@@ -1439,6 +1885,33 @@
         "10-Code/BonfyreControlPlane/tests/test_route_ranker.py"
       ]
     },
+    "runtime-parity-graph": {
+      "canonical_name": "RuntimeParityGraph",
+      "commands": [],
+      "domain": "Provider / Parity",
+      "edge_types": [
+        "parity_with"
+      ],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a carrier ran -> semantic parity with the others"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; TransportPhenotype proved identical digest across direct/MCP already"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "Carrier"
+      ],
+      "semantic_question": "Do direct, MCP, and HTTP carriers produce the same semantic result?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
     "serm": {
       "canonical_name": "SERMReductionGraph",
       "commands": [],
@@ -1594,6 +2067,61 @@
       "views": [
         "ModelView"
       ],
+      "witnesses": []
+    },
+    "social-presence-graph": {
+      "canonical_name": "SocialPresenceGraph",
+      "commands": [],
+      "domain": "Institutional / Presence",
+      "edge_types": [
+        "present_on"
+      ],
+      "family": "institutional",
+      "forbidden_inferences": [
+        "presence -> authority"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built"
+      ],
+      "layer": "institutional",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "PresenceSession"
+      ],
+      "semantic_question": "Who is present, on what surface, with what disclosure state, availability, and attention?",
+      "source_paths": [],
+      "views": [],
+      "witnesses": []
+    },
+    "temporal-evidence-graph": {
+      "canonical_name": "TemporalEvidenceGraph",
+      "commands": [],
+      "domain": "Evidence / Time",
+      "edge_types": [
+        "supersedes"
+      ],
+      "family": "evidence",
+      "forbidden_inferences": [
+        "retrieval time -> event time",
+        "stale for a decision -> delete the historical evidence"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "not built; the occurrence spine keeps one ordering, not the eight time planes"
+      ],
+      "layer": "evidence",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [
+        "TimedFact"
+      ],
+      "semantic_question": "Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?",
+      "source_paths": [],
+      "views": [],
       "witnesses": []
     },
     "tract": {

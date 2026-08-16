@@ -1,0 +1,52 @@
+atlas provider
+# Harvested run6/run7 provider topology. ProviderStateFold already folds provider
+# events; these are the resolution/placement/parity graphs above it, still to build.
+
+architecture provider-graph
+  canonical_name ProviderGraph
+  family provider
+  domain Provider / Resolution
+  layer provider
+  semantic_question Which providers can realize this capability, at what multidimensional metric?
+  purpose Capability bids, tournament, fallback tree -- native/frappe/replicated/signal/sidecar/external/commercial/capacity/model/device/human bids scored on a vector (cost/quality/latency/trust/authority/locality/semantic-loss/availability), no scalar collapse. Anycast over equivalent realizations.
+  maturity architectural
+  node_types CapabilityBid
+  node_types ProviderTournament
+  edge_types realizes
+  edge_types falls_back_to
+  forbidden_inference available -> authorized
+  forbidden_inference cheapest -> valid
+  interacts provider-state
+  interacts address-plane
+  source_lineage run6/run7 provider topology
+  known_gap not built; ProviderStateFold folds events, the route-set daemon advertises/withdraws routes
+
+architecture placement-graph
+  canonical_name PlacementGraph
+  family provider
+  domain Provider / Placement
+  layer provider
+  semantic_question Where does this run or reside, given locality and resource constraints?
+  purpose The material placement of a selected realization across Mac fabric, LAN, GPU, device, remote. Distinct from ProviderGraph (who can) and RuntimeMesh (what instances exist).
+  maturity architectural
+  node_types PlacementNode
+  edge_types placed_on
+  forbidden_inference placeable -> authorized to execute there
+  interacts address-plane
+  source_lineage run6/run7 provider topology
+  known_gap not built; CID prefix routing gives placement partitions over content digests
+
+architecture runtime-parity-graph
+  canonical_name RuntimeParityGraph
+  family provider
+  domain Provider / Parity
+  layer provider
+  semantic_question Do direct, MCP, and HTTP carriers produce the same semantic result?
+  purpose Proven semantic equivalence across execution carriers, so route selection can treat them as an equal-cost multipath group.
+  maturity architectural
+  node_types Carrier
+  edge_types parity_with
+  forbidden_inference a carrier ran -> semantic parity with the others
+  interacts transport-phenotype
+  source_lineage run6/run7 provider topology
+  known_gap not built; TransportPhenotype proved identical digest across direct/MCP already
