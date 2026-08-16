@@ -69,13 +69,19 @@ architecture serm
   layer evidence
   semantic_question What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?
   purpose Measurement contract -> plan -> provider contract -> reduction -> sufficiency + honesty audit -> ledger. Produces EvidenceGraph/ProofFrontier consequences; is not those structures.
-  maturity architectural
+  maturity implemented
   node_types MeasurementContract
-  node_types ReductionPlan
+  node_types Measurement
   node_types SufficiencyAudit
   node_types ProviderHonestyAudit
   edge_types reduces
   edge_types audits
+  internal_calculus reduction over recorded frontier measurements (no re-running mature substrate)
+  invariant a required layer counts as covered only by a witness-backed measurement
+  invariant a measured/proven claim with no witness fails the honesty audit (laundering)
   forbidden_inference provider confidence -> evidence
+  forbidden_inference a claimed plane -> a witnessed measurement
+  source_path 10-Code/BonfyreControlPlane/serm.py
+  witness 10-Code/BonfyreControlPlane/tests/test_serm.py
   source_lineage SEED-A recursive organ document
-  known_gap not implemented; distinct from EvidenceGraph, must not be folded into it
+  known_gap consumes proof-frontier measurements; the full measurement-plan / HVM-reduction front-end is future

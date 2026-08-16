@@ -38,9 +38,12 @@ architecture fpq-transform
   witness packs/fpq-proof-frontier/fixtures/tiny-f16.gguf
   witness packs/fpq-proof-frontier/measured-witness.yaff
   witness 10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness 10-Code/BonfyreControlPlane/fpq_pack_evidence.py
+  witness ~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)
   source_lineage run4_institutional_fabric FPQ archive
+  source_lineage mature fpqqwen substrate (HuggingFace, cmd/BonfyreQwenFPQ, ~/BonfyreModels/fpq)
   known_gap real qwen2.5-0.5b tensor fixture (current fixture is synthetic-but-structured)
-  known_gap FP16-passthrough and Q/K/V-bypass experiments not yet golden fixtures
+  known_gap recorded fpqqwen packs show semantic_behavior OPEN (generation parity failed) -- honest, not laundered
   reheat_condition reconstruction fixture mse exceeds ceiling
   reheat_condition fixture gguf hash changes
 

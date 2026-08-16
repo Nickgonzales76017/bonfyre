@@ -518,7 +518,7 @@
       ],
       "known_gaps": [
         "real qwen2.5-0.5b tensor fixture (current fixture is synthetic-but-structured)",
-        "FP16-passthrough and Q/K/V-bypass experiments not yet golden fixtures"
+        "recorded fpqqwen packs show semantic_behavior OPEN (generation parity failed) -- honest, not laundered"
       ],
       "layer": "model/representation",
       "maturity": "measured",
@@ -544,7 +544,9 @@
       "witnesses": [
         "packs/fpq-proof-frontier/fixtures/tiny-f16.gguf",
         "packs/fpq-proof-frontier/measured-witness.yaff",
-        "10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py"
+        "10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py",
+        "10-Code/BonfyreControlPlane/fpq_pack_evidence.py",
+        "~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)"
       ]
     },
     "hash-identity": {
@@ -900,28 +902,38 @@
       ],
       "family": "evidence",
       "forbidden_inferences": [
-        "provider confidence -> evidence"
+        "provider confidence -> evidence",
+        "a claimed plane -> a witnessed measurement"
       ],
-      "internal_calculi": [],
-      "invariants": [],
+      "internal_calculi": [
+        "reduction over recorded frontier measurements (no re-running mature substrate)"
+      ],
+      "invariants": [
+        "a required layer counts as covered only by a witness-backed measurement",
+        "a measured/proven claim with no witness fails the honesty audit (laundering)"
+      ],
       "known_gaps": [
-        "not implemented; distinct from EvidenceGraph, must not be folded into it"
+        "consumes proof-frontier measurements; the full measurement-plan / HVM-reduction front-end is future"
       ],
       "layer": "evidence",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "MeasurementContract",
-        "ReductionPlan",
+        "Measurement",
         "SufficiencyAudit",
         "ProviderHonestyAudit"
       ],
       "semantic_question": "What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/serm.py"
+      ],
       "views": [
         "EvidenceView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_serm.py"
+      ]
     },
     "service-lifecycle": {
       "canonical_name": "ServiceLifecycleGraph",
@@ -1421,6 +1433,23 @@
       ],
       "relation": "representation_to_execution",
       "source": "fpq-transform"
+    },
+    "serm-reduces-to-sufficiency": {
+      "destination": "proof-frontier",
+      "drops": [
+        "measurements with no witness (they fail the honesty audit)"
+      ],
+      "forbidden_inferences": [
+        "a required layer named -> a required layer proven"
+      ],
+      "invalidates_on": [
+        "a covered layer is reheated"
+      ],
+      "preserves": [
+        "the covered layers and their witnesses"
+      ],
+      "relation": "sufficiency_consequence",
+      "source": "serm"
     },
     "service-backs-work": {
       "destination": "work-graph",

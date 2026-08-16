@@ -37,6 +37,17 @@ interaction discipl-composes-into-closure
   witness ExecutionOrganism
   binding 10-Code/BonfyreControlPlane/capability_closure.py
 
+interaction serm-reduces-to-sufficiency
+  source serm
+  destination proof-frontier
+  relation sufficiency_consequence
+  preserves the covered layers and their witnesses
+  drops measurements with no witness (they fail the honesty audit)
+  forbidden_inference a required layer named -> a required layer proven
+  invalidates_on a covered layer is reheated
+  witness serm.sufficiency invariant
+  binding 10-Code/BonfyreControlPlane/serm.py
+
 interaction fpq-run-feeds-frontier
   source fpq-transform
   destination proof-frontier
