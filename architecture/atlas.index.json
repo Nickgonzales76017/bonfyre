@@ -147,6 +147,40 @@
         "10-Code/BonfyreControlPlane/tests/test_institution_loop.py"
       ]
     },
+    "attention-cooling": {
+      "canonical_name": "AttentionCoolingGraph",
+      "commands": [],
+      "domain": "Context / Attention",
+      "edge_types": [
+        "cools",
+        "reheats"
+      ],
+      "family": "context",
+      "forbidden_inferences": [
+        "a symptom -> attention (only a named reheat signal warms a cooled subject)"
+      ],
+      "internal_calculi": [
+        "temperature with named reheat conditions"
+      ],
+      "invariants": [
+        "a cooled subject must name what reheats it, or it consumes attention forever",
+        "only a signal matching a named reheat condition may reheat a cooled subject"
+      ],
+      "known_gaps": [],
+      "layer": "context",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "Subject",
+        "Temperature"
+      ],
+      "semantic_question": "What deserves attention now, and what has cooled until a named signal reheats it?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/scheduling.py"
+      ],
+      "views": [],
+      "witnesses": []
+    },
     "authority-graph": {
       "canonical_name": "AuthorityGraph",
       "commands": [],
@@ -362,7 +396,9 @@
       "semantic_question": "What does the system actually have, by estate and law, as real callable binaries?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/estate_catalog.py",
-        "10-Code/BonfyreControlPlane/capability_catalog.py"
+        "10-Code/BonfyreControlPlane/capability_catalog.py",
+        "10-Code/BonfyreControlPlane/probe_native_capabilities.py",
+        "10-Code/BonfyreControlPlane/probe_native_commands.py"
       ],
       "views": [
         "CapabilityView"
@@ -370,6 +406,41 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_capability_catalog.py"
       ]
+    },
+    "command-law": {
+      "canonical_name": "CommandLawGraph",
+      "commands": [
+        "BonfyreDiscipl"
+      ],
+      "domain": "Capability / Computational Law",
+      "edge_types": [
+        "preserves_law"
+      ],
+      "family": "capability",
+      "forbidden_inferences": [
+        "same domain -> same law",
+        "a law label -> a proof the algebra holds"
+      ],
+      "internal_calculi": [
+        "law classification (composition / causal / coupled / evidence-evolution / representation / retrieval / media / governance)"
+      ],
+      "invariants": [
+        "a command's law is what a composed hop must preserve; the estate is what it belongs to"
+      ],
+      "known_gaps": [],
+      "layer": "capability",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "Command",
+        "Law"
+      ],
+      "semantic_question": "What computational law does this command preserve, beneath its domain?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/command_laws.py"
+      ],
+      "views": [],
+      "witnesses": []
     },
     "cubecl": {
       "canonical_name": "CubeCL",
@@ -461,7 +532,8 @@
       ],
       "semantic_question": "What typed chain of transforms bridges this source family to this destination family, and at what cost?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/capability_closure.py"
+        "10-Code/BonfyreControlPlane/capability_closure.py",
+        "10-Code/BonfyreControlPlane/command_pipeline_seed.py"
       ],
       "views": [
         "CapabilityView"
@@ -629,14 +701,16 @@
       ],
       "semantic_question": "What is the current cached projection of an externally-owned resource, and what rights do we hold over it?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/foreign.py"
+        "10-Code/BonfyreControlPlane/foreign.py",
+        "10-Code/BonfyreControlPlane/fabric_publish.py"
       ],
       "views": [
         "ExternalView",
         "ProviderResourceView"
       ],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_foreign.py"
+        "10-Code/BonfyreControlPlane/tests/test_foreign.py",
+        "10-Code/BonfyreControlPlane/tests/test_fabric_publish.py"
       ]
     },
     "form-graph": {
@@ -805,7 +879,8 @@
       "source_paths": [
         "cmd/BonfyreFPQ/src/fpq_native.c",
         "cmd/BonfyreFPQ/src/ggml_reader.c",
-        "10-Code/BonfyreControlPlane/fpq_evidence.py"
+        "10-Code/BonfyreControlPlane/fpq_evidence.py",
+        "10-Code/BonfyreControlPlane/fpq_pack_evidence.py"
       ],
       "views": [
         "ModelView"
@@ -1041,7 +1116,9 @@
       ],
       "semantic_question": "What actually happened, when, as an ordered causal spine?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/external_events.py"
+        "10-Code/BonfyreControlPlane/external_events.py",
+        "10-Code/BonfyreControlPlane/ingest_github_notifications.py",
+        "10-Code/BonfyreControlPlane/migrate_run6.py"
       ],
       "views": [
         "ExecutionView"
@@ -1624,7 +1701,10 @@
       ],
       "semantic_question": "What reachable action would unlock institutional capacity that is currently out of reach?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/opportunity.py"
+        "10-Code/BonfyreControlPlane/opportunity.py",
+        "10-Code/BonfyreControlPlane/reachability_publish.py",
+        "10-Code/BonfyreControlPlane/reachability_watch.py",
+        "10-Code/BonfyreControlPlane/reachability_bridge.py"
       ],
       "views": [
         "OpportunityView"
@@ -1731,6 +1811,7 @@
       "semantic_question": "What is the semantic contract for a trial's artifacts, effects, and expected witnesses?",
       "source_paths": [
         "architecture/atlas.py",
+        "10-Code/BonfyreControlPlane/substrate_evidence.py",
         "~/.bonfyre/substrates/v6.1/yaff/source"
       ],
       "views": [

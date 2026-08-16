@@ -1,0 +1,22 @@
+atlas capability
+
+architecture command-law
+  canonical_name CommandLawGraph
+  family capability
+  domain Capability / Computational Law
+  layer capability
+  semantic_question What computational law does this command preserve, beneath its domain?
+  purpose The second axis of the estate, from the run6/run7 deep read: the 91 commands are faces of a few deep calculi -- composition, causal execution, coupled dynamics, evidence/evolution -- plus the multi-identity laws (hash/canon/graph/family/entity). Domain says what estate; law says what algebra a hop preserves, which is what makes composition sound.
+  maturity implemented
+  node_types Command
+  node_types Law
+  edge_types preserves_law
+  internal_calculus law classification (composition / causal / coupled / evidence-evolution / representation / retrieval / media / governance)
+  invariant a command's law is what a composed hop must preserve; the estate is what it belongs to
+  forbidden_inference same domain -> same law
+  forbidden_inference a law label -> a proof the algebra holds
+  command BonfyreDiscipl
+  source_path 10-Code/BonfyreControlPlane/command_laws.py
+  interacts capability-lattice
+  interacts discipl-composition
+  source_lineage run6/run7 second deep read -- 91 commands as deep calculi

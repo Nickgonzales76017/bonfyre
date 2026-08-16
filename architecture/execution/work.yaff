@@ -35,6 +35,8 @@ architecture occurrence-spine
   edge_types precedes
   forbidden_inference retrieval time -> event time (timestamps must not collapse)
   source_path 10-Code/BonfyreControlPlane/external_events.py
+  source_path 10-Code/BonfyreControlPlane/ingest_github_notifications.py
+  source_path 10-Code/BonfyreControlPlane/migrate_run6.py
   witness 10-Code/BonfyreControlPlane/tests/test_external_events.py
   source_lineage run6 control-plane retrospective
 

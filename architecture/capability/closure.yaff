@@ -23,6 +23,8 @@ architecture capability-lattice
   command BonfyreCapability
   source_path 10-Code/BonfyreControlPlane/estate_catalog.py
   source_path 10-Code/BonfyreControlPlane/capability_catalog.py
+  source_path 10-Code/BonfyreControlPlane/probe_native_capabilities.py
+  source_path 10-Code/BonfyreControlPlane/probe_native_commands.py
   witness 10-Code/BonfyreControlPlane/tests/test_capability_catalog.py
   source_lineage bonfyre operating model plural-fabric
 
@@ -42,6 +44,7 @@ architecture discipl-composition
   computational_form fused
   command BonfyreDiscipl
   source_path 10-Code/BonfyreControlPlane/capability_closure.py
+  source_path 10-Code/BonfyreControlPlane/command_pipeline_seed.py
   witness 10-Code/BonfyreControlPlane/tests/test_capability_closure.py
   source_lineage capability closure essay
 

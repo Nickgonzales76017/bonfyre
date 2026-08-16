@@ -23,7 +23,9 @@ architecture foreign-twin
   native_format graf
   command BonfyreProject
   source_path 10-Code/BonfyreControlPlane/foreign.py
+  source_path 10-Code/BonfyreControlPlane/fabric_publish.py
   witness 10-Code/BonfyreControlPlane/tests/test_foreign.py
+  witness 10-Code/BonfyreControlPlane/tests/test_fabric_publish.py
   source_lineage external boundary architecture
 
 architecture service-lifecycle

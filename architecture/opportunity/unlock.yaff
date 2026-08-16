@@ -41,6 +41,9 @@ architecture unlock-graph
   forbidden_inference all blockers resolved -> opportunity won
   source_lineage SEED-A recursive organ document
   source_path 10-Code/BonfyreControlPlane/opportunity.py
+  source_path 10-Code/BonfyreControlPlane/reachability_publish.py
+  source_path 10-Code/BonfyreControlPlane/reachability_watch.py
+  source_path 10-Code/BonfyreControlPlane/reachability_bridge.py
   witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
   witness packs/institutional-opportunities/opportunities.yaff
   witness 10-Code/BonfyreControlPlane/tests/test_loop_reachability.py

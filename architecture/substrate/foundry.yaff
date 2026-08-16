@@ -24,6 +24,7 @@ architecture yaff
   forbidden_inference two architectures sharing YaFF -> the same semantics
   native_format yaff
   source_path architecture/atlas.py
+  source_path 10-Code/BonfyreControlPlane/substrate_evidence.py
   source_path ~/.bonfyre/substrates/v6.1/yaff/source
   witness architecture/tests/test_atlas.py
   witness ~/.bonfyre/substrates/v6.1/yaff/semantic-proof.json

@@ -35,6 +35,7 @@ architecture fpq-transform
   source_path cmd/BonfyreFPQ/src/fpq_native.c
   source_path cmd/BonfyreFPQ/src/ggml_reader.c
   source_path 10-Code/BonfyreControlPlane/fpq_evidence.py
+  source_path 10-Code/BonfyreControlPlane/fpq_pack_evidence.py
   witness packs/fpq-proof-frontier/fixtures/tiny-f16.gguf
   witness packs/fpq-proof-frontier/measured-witness.yaff
   witness 10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py
