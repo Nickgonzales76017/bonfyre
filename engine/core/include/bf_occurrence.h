@@ -74,6 +74,24 @@ int64_t bf_occurrence_unprojected_count(BfOccurrenceSpine *spine);
 BfOccurrenceStatus bf_occurrence_mark_projected(BfOccurrenceSpine *spine, int64_t event_id,
                                                 const char *now);
 
+/*
+ * The campaign status one occurrence kind projects to (declined -> "declined",
+ * inbound_reply -> "replied", outbound_sent -> "sent", ...). Returns NULL for an
+ * undeclared kind. Every declared kind maps; bf_occurrence_projection_is_total()
+ * verifies that, so a kind can never be silently dropped by the fold.
+ */
+const char *bf_occurrence_status_for_kind(const char *event_kind);
+int bf_occurrence_projection_is_total(void);
+
+/*
+ * Fold every pending occurrence into the shared occurrence_projection table --
+ * one durable (actor, kind, status) row per occurrence -- then mark it
+ * projected. Re-runnable: a row is marked projected only after its projection
+ * write, so a crash mid-fold replays rather than skips. Returns the count folded
+ * (>=0), or -1 on storage error. now may be NULL.
+ */
+int64_t bf_occurrence_project(BfOccurrenceSpine *spine, const char *now);
+
 const char *bf_occurrence_status_name(BfOccurrenceStatus status);
 
 #endif

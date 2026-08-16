@@ -1413,7 +1413,7 @@
         "observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store"
       ],
       "known_gaps": [
-        "native writer records + dedups on the shared store with byte-identical digest (proven vs python), and enforces the two-clock + kind gate; native projection-fold interpretation and native watchers are the remaining native-absorption items (python still owns projection semantics)"
+        "native writer records + dedups on the shared store (byte-identical digest), enforces the two-clock + kind gate, AND folds pending occurrences via a total kind->status projection into the shared occurrence_projection table; run6 replay over the real 9 recorded occurrences matches the python fold row-for-row (RUN6 REPLAY PARITY: MATCH). Remaining native-absorption item: native watchers (the observe side is driven by python ingest)"
       ],
       "layer": "execution",
       "maturity": "implemented",
@@ -1435,7 +1435,8 @@
       ],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_external_events.py",
-        "engine/core/tests/occurrence_spine_test.c"
+        "engine/core/tests/occurrence_spine_test.c",
+        "engine/core/tests/run6_replay.sh"
       ]
     },
     "pattern-graph": {

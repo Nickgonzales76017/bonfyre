@@ -37,7 +37,14 @@ static const char *OCCURRENCE_SCHEMA =
     "CREATE INDEX IF NOT EXISTS idx_external_event_unprojected"
     "  ON external_event_log(projected_at, id);"
     "CREATE INDEX IF NOT EXISTS idx_external_event_actor"
-    "  ON external_event_log(actor, id);";
+    "  ON external_event_log(actor, id);"
+    "CREATE TABLE IF NOT EXISTS occurrence_projection("
+    "  event_id INTEGER PRIMARY KEY REFERENCES external_event_log(id),"
+    "  actor TEXT NOT NULL,"
+    "  event_kind TEXT NOT NULL,"
+    "  status TEXT NOT NULL,"
+    "  projected_at TEXT NOT NULL"
+    ");";
 
 /* The declared occurrence kinds, mirroring EVENT_KINDS in external_events.py.
  * An unknown kind is rejected here rather than folded, matching the reference's
@@ -55,6 +62,51 @@ static int kind_is_declared(const char *kind) {
         }
     }
     return 0;
+}
+
+/* The status each occurrence kind projects to. Mirrors _STATUS_PROJECTION in
+ * external_events.py. Every declared kind MUST appear here -- an unmapped kind
+ * used to be marked projected while doing nothing, a silent drop. */
+static const struct {
+    const char *kind;
+    const char *status;
+} OCCURRENCE_PROJECTION[] = {
+    {"declined", "declined"},
+    {"accepted", "accepted"},
+    {"acknowledged", "acknowledged"},
+    {"redirected", "redirected"},
+    {"inbound_reply", "replied"},
+    {"state_changed", "state_changed"},
+    {"outbound_sent", "sent"},
+    {NULL, NULL},
+};
+
+const char *bf_occurrence_status_for_kind(const char *event_kind) {
+    if (!event_kind) {
+        return NULL;
+    }
+    for (size_t i = 0; OCCURRENCE_PROJECTION[i].kind != NULL; i++) {
+        if (strcmp(OCCURRENCE_PROJECTION[i].kind, event_kind) == 0) {
+            return OCCURRENCE_PROJECTION[i].status;
+        }
+    }
+    return NULL;
+}
+
+int bf_occurrence_projection_is_total(void) {
+    /* Every declared kind must project, and every projection must be a declared
+     * kind -- the two sets are identical or the fold could silently drop. */
+    for (size_t i = 0; OCCURRENCE_KINDS[i] != NULL; i++) {
+        if (bf_occurrence_status_for_kind(OCCURRENCE_KINDS[i]) == NULL) {
+            return 0;
+        }
+    }
+    for (size_t i = 0; OCCURRENCE_PROJECTION[i].kind != NULL; i++) {
+        if (!kind_is_declared(OCCURRENCE_PROJECTION[i].kind)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 void bf_occurrence_now_iso(char out[40]) {
@@ -289,6 +341,74 @@ BfOccurrenceStatus bf_occurrence_mark_projected(BfOccurrenceSpine *spine, int64_
         return BF_OCCURRENCE_STORAGE_ERROR;
     }
     return changed > 0 ? BF_OCCURRENCE_OK : BF_OCCURRENCE_INVALID;
+}
+
+int64_t bf_occurrence_project(BfOccurrenceSpine *spine, const char *now) {
+    if (!spine) {
+        return -1;
+    }
+    char stamp[40];
+    if (!now || now[0] == '\0') {
+        bf_occurrence_now_iso(stamp);
+        now = stamp;
+    }
+
+    /* Snapshot the pending ids first, then fold each in its own step so the
+     * projection write and the mark-projected are ordered per occurrence. */
+    sqlite3_stmt *scan = NULL;
+    if (sqlite3_prepare_v2(
+            spine->db,
+            "SELECT id,actor,event_kind FROM external_event_log"
+            " WHERE projected_at IS NULL ORDER BY id",
+            -1, &scan, NULL) != SQLITE_OK) {
+        return -1;
+    }
+
+    int64_t folded = 0;
+    int failed = 0;
+    while (sqlite3_step(scan) == SQLITE_ROW) {
+        int64_t id = sqlite3_column_int64(scan, 0);
+        const char *actor = (const char *)sqlite3_column_text(scan, 1);
+        const char *kind = (const char *)sqlite3_column_text(scan, 2);
+        const char *status = bf_occurrence_status_for_kind(kind);
+        if (status == NULL) {
+            /* A declared kind with no projection would be a silent drop -- refuse
+             * to fold rather than mark it projected while doing nothing. */
+            failed = 1;
+            break;
+        }
+        sqlite3_stmt *ins = NULL;
+        if (sqlite3_prepare_v2(
+                spine->db,
+                "INSERT INTO occurrence_projection"
+                "(event_id,actor,event_kind,status,projected_at) VALUES(?,?,?,?,?)"
+                " ON CONFLICT(event_id) DO UPDATE SET"
+                "  actor=excluded.actor, event_kind=excluded.event_kind,"
+                "  status=excluded.status, projected_at=excluded.projected_at",
+                -1, &ins, NULL) != SQLITE_OK) {
+            failed = 1;
+            break;
+        }
+        sqlite3_bind_int64(ins, 1, id);
+        sqlite3_bind_text(ins, 2, actor ? actor : "", -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(ins, 3, kind ? kind : "", -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(ins, 4, status, -1, SQLITE_TRANSIENT);
+        sqlite3_bind_text(ins, 5, now, -1, SQLITE_TRANSIENT);
+        int irc = sqlite3_step(ins);
+        sqlite3_finalize(ins);
+        if (irc != SQLITE_DONE) {
+            failed = 1;
+            break;
+        }
+        /* Mark projected only after the projection write succeeds. */
+        if (bf_occurrence_mark_projected(spine, id, now) != BF_OCCURRENCE_OK) {
+            failed = 1;
+            break;
+        }
+        folded++;
+    }
+    sqlite3_finalize(scan);
+    return failed ? -1 : folded;
 }
 
 const char *bf_occurrence_status_name(BfOccurrenceStatus status) {

@@ -94,6 +94,29 @@ int main(void) {
         return fail("projecting a missing id should be invalid");
     }
 
+    /* Projection-fold: every declared kind maps (no silent drop), and folding
+     * writes one durable (actor, kind, status) row per pending occurrence. */
+    if (bf_occurrence_projection_is_total() != 1) {
+        return fail("projection must cover every declared kind");
+    }
+    if (strcmp(bf_occurrence_status_for_kind("inbound_reply"), "replied") != 0) {
+        return fail("inbound_reply must project to 'replied'");
+    }
+    if (bf_occurrence_status_for_kind("coordinator_assigned") != NULL) {
+        return fail("an undeclared kind must not project");
+    }
+    /* id1 was marked projected above; id2 remains pending. */
+    int64_t folded = bf_occurrence_project(spine, "2026-08-16T12:00:10+00:00");
+    if (folded != 1) {
+        return fail("project should fold exactly the one remaining pending occurrence");
+    }
+    if (bf_occurrence_unprojected_count(spine) != 0) {
+        return fail("nothing should remain pending after project");
+    }
+    if (bf_occurrence_project(spine, NULL) != 0) {
+        return fail("re-project should fold nothing (re-runnable)");
+    }
+
     bf_occurrence_close(spine);
     unlink(db_path);
 
