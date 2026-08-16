@@ -76,7 +76,7 @@
         "a blackholed hypothesis is negative forwarding state, not a permanent truth"
       ],
       "known_gaps": [
-        "SID ANN via bonfyre-vec awaits the sqlite-vec extension; BitNet route ranking after deterministic pruning is the learned-optimizer layer"
+        "SID ANN via bonfyre-vec awaits the sqlite-vec extension; the learned-optimizer layer is built (see route-ranker)"
       ],
       "layer": "forwarding",
       "maturity": "implemented",
@@ -1324,6 +1324,44 @@
         "external:bernstein tests/unit/security/test_result_receipt_bundle.py (9 tests)"
       ]
     },
+    "route-ranker": {
+      "canonical_name": "RouteRanker",
+      "commands": [],
+      "domain": "Forwarding / Learned Optimization",
+      "edge_types": [
+        "ranks"
+      ],
+      "family": "forwarding",
+      "forbidden_inferences": [
+        "a high rank -> a correct or authorized route (the exact closure still verifies the top choice)",
+        "a learned weight -> a large training set (currently ~10 real workload_proven successes)"
+      ],
+      "internal_calculi": [
+        "ternary linear score; weights = correlation sign thresholded to {-1,0,+1}"
+      ],
+      "invariants": [
+        "the ranker only reorders eligible survivors; it never changes eligibility, grants authority, or proves anything",
+        "a feature's weak signal collapses to 0 rather than pretending to matter"
+      ],
+      "known_gaps": [
+        "richer structural features (SID / masks / cost buckets / prior similar-route outcomes) and more routing-outcome records; a real BitNet backend when one exists in Bonfyre"
+      ],
+      "layer": "forwarding",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "TernaryRanker",
+        "RouteRecord"
+      ],
+      "semantic_question": "Of the eligible survivors, which few are most likely to succeed?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/route_ranker.py"
+      ],
+      "views": [],
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_route_ranker.py"
+      ]
+    },
     "serm": {
       "canonical_name": "SERMReductionGraph",
       "commands": [],
@@ -1865,6 +1903,21 @@
         "the surviving eligible command families"
       ],
       "relation": "eligibility_prefilter",
+      "source": "address-plane"
+    },
+    "address-plane-ranks-survivors": {
+      "destination": "route-ranker",
+      "drops": [
+        "nothing (ranking never removes an eligible candidate)"
+      ],
+      "forbidden_inferences": [
+        "a top rank -> a correct, authorized, or runnable route (the fence and closure still run)"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the eligible survivor set (only its order changes)"
+      ],
+      "relation": "learned_ranking",
       "source": "address-plane"
     },
     "authority-compiles-to-mask": {

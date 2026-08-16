@@ -370,3 +370,13 @@ interaction service-bind-is-an-unlock
   authority binding a service requires the bind right
   witness ServiceProfile.state
   binding 10-Code/BonfyreControlPlane/service_lifecycle.py
+
+interaction address-plane-ranks-survivors
+  source address-plane
+  destination route-ranker
+  relation learned_ranking
+  preserves the eligible survivor set (only its order changes)
+  drops nothing (ranking never removes an eligible candidate)
+  forbidden_inference a top rank -> a correct, authorized, or runnable route (the fence and closure still run)
+  witness rank_commands
+  binding 10-Code/BonfyreControlPlane/route_ranker.py
