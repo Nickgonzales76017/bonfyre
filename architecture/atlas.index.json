@@ -1804,8 +1804,13 @@
         "resource exists -> resource is reachable (activation is separate)"
       ],
       "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [],
+      "invariants": [
+        "three verdicts admit/defer/reject never collapse; a request that cannot fit even if every grant were released is reject (never), not defer (not now)",
+        "committed grant bytes are subtracted from free space, so concurrent planes cannot each be admitted against the same bytes (native + python parity on the shared resource_grants ledger)"
+      ],
+      "known_gaps": [
+        "native decide() kernel returns verdicts byte-for-byte matching the python decide() across the case battery, and the native grant ledger writes the shared resource_grants store python counts (proven); binding native admission to a live disk probe at real supervisor call sites is the remaining native-absorption item"
+      ],
       "layer": "provider",
       "maturity": "implemented",
       "native_formats": [],
@@ -1816,13 +1821,16 @@
       "semantic_question": "May this work be admitted, given resource and provider constraints right now?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/resource_admission.py",
-        "engine/core/src/control_admission.c"
+        "engine/core/src/control_admission.c",
+        "engine/core/src/admission.c",
+        "engine/core/include/bf_admission.h"
       ],
       "views": [
         "ProviderResourceView"
       ],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_resource_admission.py"
+        "10-Code/BonfyreControlPlane/tests/test_resource_admission.py",
+        "engine/core/tests/admission_test.c"
       ]
     },
     "restate": {
