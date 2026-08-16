@@ -118,19 +118,23 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; content-addressing (HashIdentity) and fabric artifacts are the nearest real shapes"
+        "content-addressing (HashIdentity) and fabric artifacts are the nearest real shapes"
       ],
       "layer": "evidence",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "SourceArtifact",
         "DerivedArtifact"
       ],
       "semantic_question": "What operator transformed this source artifact into that derived one?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/evidence_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
+      ]
     },
     "atomic-form": {
       "canonical_name": "AtomicForm",
@@ -476,20 +480,22 @@
       ],
       "internal_calculi": [],
       "invariants": [],
-      "known_gaps": [
-        "not built"
-      ],
+      "known_gaps": [],
       "layer": "evidence",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "Claim",
         "Counterclaim"
       ],
       "semantic_question": "What does this claim depend on, assume, and what is its current vs historical proof state?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/evidence_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
+      ]
     },
     "command-law": {
       "canonical_name": "CommandLawGraph",
@@ -540,18 +546,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; AuthorityGraph + ResourceActivation are the nearest real shapes"
+        "AuthorityGraph + ResourceActivation are the nearest real shapes"
       ],
       "layer": "economic",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "ResourceCommitment"
       ],
       "semantic_question": "Who committed what resource to whom, under what conditions, until when?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/economic_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
+      ]
     },
     "cubecl": {
       "canonical_name": "CubeCL",
@@ -748,18 +758,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; EvidenceBindingGraph binds candidates, does not maintain the claim relation"
+        "EvidenceBindingGraph binds candidates, does not maintain the claim relation"
       ],
       "layer": "evidence",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "Claim"
       ],
       "semantic_question": "Does this support, contradict, reproduce, or falsify that claim?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/evidence_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
+      ]
     },
     "feldera": {
       "canonical_name": "Feldera",
@@ -1207,19 +1221,21 @@
       ],
       "internal_calculi": [],
       "invariants": [],
-      "known_gaps": [
-        "not built"
-      ],
+      "known_gaps": [],
       "layer": "economic",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "CostEnvelope"
       ],
       "semantic_question": "What does this mission actually cost across compute, model, storage, provider, human, facility?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/economic_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
+      ]
     },
     "kv-temporal": {
       "canonical_name": "KVTemporalGraph",
@@ -1358,18 +1374,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; ERPNext accounting is the intended projection target"
+        "ERPNext accounting is the intended projection target"
       ],
       "layer": "economic",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "Party"
       ],
       "semantic_question": "What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/economic_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
+      ]
     },
     "occurrence-spine": {
       "canonical_name": "OccurrenceSpine",
@@ -1447,18 +1467,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; CID prefix routing gives placement partitions over content digests"
+        "CID prefix routing gives placement partitions over content digests"
       ],
       "layer": "provider",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "PlacementNode"
       ],
       "semantic_question": "Where does this run or reside, given locality and resource constraints?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/provider_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_provider_graphs.py"
+      ]
     },
     "prepared-execution-graph": {
       "canonical_name": "PreparedExecutionGraph",
@@ -1554,18 +1578,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; ResultReceiptBundle chain is a partial real shape"
+        "ResultReceiptBundle chain is a partial real shape"
       ],
       "layer": "evidence",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "ProvenanceNode"
       ],
       "semantic_question": "Through what source, observer, actor, runtime, model, provider, transport did this arrive?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/evidence_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
+      ]
     },
     "provider-graph": {
       "canonical_name": "ProviderGraph",
@@ -1583,19 +1611,23 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; ProviderStateFold folds events, the route-set daemon advertises/withdraws routes"
+        "ProviderStateFold folds events, the route-set daemon advertises/withdraws routes"
       ],
       "layer": "provider",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "CapabilityBid",
         "ProviderTournament"
       ],
       "semantic_question": "Which providers can realize this capability, at what multidimensional metric?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/provider_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_provider_graphs.py"
+      ]
     },
     "provider-state": {
       "canonical_name": "ProviderStateFold",
@@ -1645,18 +1677,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; UnlockGraph is the causal-reachability cousin already real"
+        "UnlockGraph is the causal-reachability cousin already real"
       ],
       "layer": "economic",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "ValueEdge"
       ],
       "semantic_question": "What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/economic_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
+      ]
     },
     "relationship-graph": {
       "canonical_name": "RelationshipGraph",
@@ -1899,18 +1935,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; TransportPhenotype proved identical digest across direct/MCP already"
+        "TransportPhenotype proved identical digest across direct/MCP already"
       ],
       "layer": "provider",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "Carrier"
       ],
       "semantic_question": "Do direct, MCP, and HTTP carriers produce the same semantic result?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/provider_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_provider_graphs.py"
+      ]
     },
     "serm": {
       "canonical_name": "SERMReductionGraph",
@@ -2111,18 +2151,22 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; the occurrence spine keeps one ordering, not the eight time planes"
+        "the occurrence spine keeps one ordering, not the eight time planes"
       ],
       "layer": "evidence",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [
         "TimedFact"
       ],
       "semantic_question": "Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/evidence_graphs.py"
+      ],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
+      ]
     },
     "tract": {
       "canonical_name": "Tract",

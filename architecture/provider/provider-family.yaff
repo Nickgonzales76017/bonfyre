@@ -9,7 +9,9 @@ architecture provider-graph
   layer provider
   semantic_question Which providers can realize this capability, at what multidimensional metric?
   purpose Capability bids, tournament, fallback tree -- native/frappe/replicated/signal/sidecar/external/commercial/capacity/model/device/human bids scored on a vector (cost/quality/latency/trust/authority/locality/semantic-loss/availability), no scalar collapse. Anycast over equivalent realizations.
-  maturity architectural
+  maturity implemented
+  source_path 10-Code/BonfyreControlPlane/provider_graphs.py
+  witness 10-Code/BonfyreControlPlane/tests/test_provider_graphs.py
   node_types CapabilityBid
   node_types ProviderTournament
   edge_types realizes
@@ -19,7 +21,7 @@ architecture provider-graph
   interacts provider-state
   interacts address-plane
   source_lineage run6/run7 provider topology
-  known_gap not built; ProviderStateFold folds events, the route-set daemon advertises/withdraws routes
+  known_gap ProviderStateFold folds events, the route-set daemon advertises/withdraws routes
 
 architecture placement-graph
   canonical_name PlacementGraph
@@ -28,13 +30,15 @@ architecture placement-graph
   layer provider
   semantic_question Where does this run or reside, given locality and resource constraints?
   purpose The material placement of a selected realization across Mac fabric, LAN, GPU, device, remote. Distinct from ProviderGraph (who can) and RuntimeMesh (what instances exist).
-  maturity architectural
+  maturity implemented
+  source_path 10-Code/BonfyreControlPlane/provider_graphs.py
+  witness 10-Code/BonfyreControlPlane/tests/test_provider_graphs.py
   node_types PlacementNode
   edge_types placed_on
   forbidden_inference placeable -> authorized to execute there
   interacts address-plane
   source_lineage run6/run7 provider topology
-  known_gap not built; CID prefix routing gives placement partitions over content digests
+  known_gap CID prefix routing gives placement partitions over content digests
 
 architecture runtime-parity-graph
   canonical_name RuntimeParityGraph
@@ -43,10 +47,12 @@ architecture runtime-parity-graph
   layer provider
   semantic_question Do direct, MCP, and HTTP carriers produce the same semantic result?
   purpose Proven semantic equivalence across execution carriers, so route selection can treat them as an equal-cost multipath group.
-  maturity architectural
+  maturity implemented
+  source_path 10-Code/BonfyreControlPlane/provider_graphs.py
+  witness 10-Code/BonfyreControlPlane/tests/test_provider_graphs.py
   node_types Carrier
   edge_types parity_with
   forbidden_inference a carrier ran -> semantic parity with the others
   interacts transport-phenotype
   source_lineage run6/run7 provider topology
-  known_gap not built; TransportPhenotype proved identical digest across direct/MCP already
+  known_gap TransportPhenotype proved identical digest across direct/MCP already
