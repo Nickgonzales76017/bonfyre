@@ -49,3 +49,16 @@ def test_persistent_circuit_maintains_across_deltas():
     assert by_step[5] == ["organism"]   # all resolved -> reachable
     assert by_step[6] == []             # sli retracted -> withdrawn (one -1)
     assert by_step[7] == ["organism"]   # re-resolved -> restored
+
+
+@pytest.mark.skipif(not sf.route_daemon_available(),
+                    reason="requires the built route-set daemon")
+def test_route_withdraws_on_provider_down_with_failover():
+    steps = sf.run_route_stream([
+        "A\tT_FPQ\tfpq-resident-01", "A\tT_FPQ\tBonfyreAPI",
+        "+\tfpq-resident-01", "+\tBonfyreAPI", "-\tfpq-resident-01",
+    ])
+    by_step = {s["step"]: s["routes"] for s in steps}
+    assert by_step[3] == ["T_FPQ@BonfyreAPI", "T_FPQ@fpq-resident-01"]  # both up (anycast)
+    # provider down -> its route withdrawn, the alternate survives (failover)
+    assert by_step[4] == ["T_FPQ@BonfyreAPI"]

@@ -67,7 +67,8 @@
         "authority mask compiled from non-revoked in-window grants",
         "route funnel: capability -> authority -> proof rejection over the real estate",
         "CID prefix routing: longest-prefix placement partitions over content digests",
-        "SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)"
+        "SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)",
+        "route advertise/withdraw: routes maintained by DBSP; a provider-down -1 withdraws its routes, alternates survive (anycast failover)"
       ],
       "invariants": [
         "bits are a compiled machine index, not meaning",
@@ -75,7 +76,7 @@
         "a blackholed hypothesis is negative forwarding state, not a permanent truth"
       ],
       "known_gaps": [
-        "route advertise/withdraw over the DBSP delta engine (the -1 that withdraws a route is the daemon's primitive) is the last forwarding layer; SID ANN via bonfyre-vec awaits the sqlite-vec extension"
+        "SID ANN via bonfyre-vec awaits the sqlite-vec extension; BitNet route ranking after deterministic pruning is the learned-optimizer layer"
       ],
       "layer": "forwarding",
       "maturity": "implemented",
@@ -92,12 +93,15 @@
       "semantic_question": "Of all the state available, what is even eligible to participate in this operation?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/address_plane.py",
-        "10-Code/BonfyreControlPlane/bonfyre_sid.py"
+        "10-Code/BonfyreControlPlane/bonfyre_sid.py",
+        "10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs"
       ],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_address_plane.py",
-        "10-Code/BonfyreControlPlane/tests/test_cid_sid.py"
+        "10-Code/BonfyreControlPlane/tests/test_cid_sid.py",
+        "~/.bonfyre/substrates/v6.1/feldera/route-set-proof.jsonl",
+        "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py"
       ]
     },
     "atomic-form": {

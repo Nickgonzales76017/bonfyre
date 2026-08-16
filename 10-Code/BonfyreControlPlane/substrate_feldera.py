@@ -24,6 +24,7 @@ _FELDERA_REL = Path.home() / ".bonfyre" / "substrates" / "v6.1" / "feldera" / "p
 FELDERA_BIN = _FELDERA_REL / "reachability_incremental"
 REACHABLE_BIN = _FELDERA_REL / "reachable_capacity"
 DAEMON_BIN = _FELDERA_REL / "reachable_capacity_daemon"
+ROUTE_BIN = _FELDERA_REL / "route_set_daemon"
 
 
 def available() -> bool:
@@ -36,6 +37,21 @@ def reachable_capacity_available() -> bool:
 
 def daemon_available() -> bool:
     return DAEMON_BIN.exists()
+
+
+def route_daemon_available() -> bool:
+    return ROUTE_BIN.exists()
+
+
+def run_route_stream(deltas: list[str], timeout: int = 30) -> list[dict]:
+    """Feed advertise/up/down deltas to the persistent route-set circuit and read
+    the current route set after each. A provider going down withdraws its routes
+    while alternates survive -- anycast failover over the delta engine."""
+    if not ROUTE_BIN.exists():
+        raise RuntimeError("route_set_daemon not built")
+    feed = "\n".join(deltas) + "\n"
+    proc = subprocess.run([str(ROUTE_BIN)], input=feed, capture_output=True, text=True, timeout=timeout)
+    return [json.loads(l) for l in proc.stdout.splitlines() if l.strip().startswith("{")]
 
 
 def run_delta_stream(deltas: list[str], timeout: int = 30) -> list[dict]:

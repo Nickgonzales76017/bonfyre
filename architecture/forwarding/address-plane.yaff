@@ -29,6 +29,7 @@ architecture address-plane
   internal_calculus route funnel: capability -> authority -> proof rejection over the real estate
   internal_calculus CID prefix routing: longest-prefix placement partitions over content digests
   internal_calculus SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)
+  internal_calculus route advertise/withdraw: routes maintained by DBSP; a provider-down -1 withdraws its routes, alternates survive (anycast failover)
   forbidden_inference a CID prefix -> a semantic category (hashes are random w.r.t. meaning)
   forbidden_inference a small SID Hamming distance -> identity or evidence (locality suggests, never establishes)
   native_format graf
@@ -39,6 +40,9 @@ architecture address-plane
   interacts lance
   interacts hash-identity
   source_path 10-Code/BonfyreControlPlane/bonfyre_sid.py
+  source_path 10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
   witness 10-Code/BonfyreControlPlane/tests/test_cid_sid.py
+  witness ~/.bonfyre/substrates/v6.1/feldera/route-set-proof.jsonl
+  witness 10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py
   source_lineage AddressPlane / institutional packet-switching vision
-  known_gap route advertise/withdraw over the DBSP delta engine (the -1 that withdraws a route is the daemon's primitive) is the last forwarding layer; SID ANN via bonfyre-vec awaits the sqlite-vec extension
+  known_gap SID ANN via bonfyre-vec awaits the sqlite-vec extension; BitNet route ranking after deterministic pruning is the learned-optimizer layer
