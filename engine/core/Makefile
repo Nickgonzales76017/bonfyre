@@ -12,9 +12,20 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 	$(OBJDIR)/occurrence.o $(OBJDIR)/actor.o \
 	$(OBJDIR)/bf_catalog_generation.o
 
-.PHONY: all clean
+.PHONY: all clean test
 
 all: $(TARGET)
+
+# Native conformance tests (self-contained C; no Python needed to pass).
+TEST_SRCS := tests/routable_family_test.c tests/occurrence_spine_test.c tests/actor_graph_test.c
+TEST_BINS := $(patsubst tests/%.c,$(OBJDIR)/%,$(TEST_SRCS))
+
+$(OBJDIR)/%: tests/%.c $(TARGET) | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) $< $(TARGET) -lsqlite3 -o $@
+
+test: $(TEST_BINS)
+	@set -e; for t in $(TEST_BINS); do echo "== $$t"; $$t; done
+	@echo "native conformance: all passed"
 
 $(OBJDIR):
 	mkdir -p $@
