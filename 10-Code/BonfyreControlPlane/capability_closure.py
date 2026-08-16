@@ -225,6 +225,42 @@ def close(
     )
 
 
+def route_then_close(
+    db: sqlite3.Connection,
+    demand,
+    *,
+    src_family: str,
+    dst_family: str,
+    depth: int = 4,
+    subject_resource: str = "model:qwen2.5-0.5b",
+    subject_profile: str = "fpq-bwa-multiscale-v9",
+    observed_failure: str = "",
+) -> ExecutionOrganism:
+    """Reject at the forwarding plane before DisCIPL composes anything.
+
+    The AddressPlane runs the cheap funnel first -- capability, authority, proof
+    ternary. If nothing survives (an unauthorized actor, a blackholed hypothesis,
+    an unproven required layer), the organism is refused here, before the
+    expensive composition engine is even called. Only a demand with eligible
+    survivors proceeds to close(). Eligibility is not authorization; the fence
+    still runs inside close()."""
+    import address_plane as ap
+    rr = ap.route(db, demand)
+    if not rr.survivors:
+        return ExecutionOrganism(
+            goal=f"{src_family} -> {dst_family}", global_confidence=0.0,
+            accumulated_cost=0.0, semantic_drift=0.0, hops=(), authorized=False,
+            verdict_reason=(
+                "forwarding plane rejected before composition "
+                f"(capability={rr.rejected_by_capability}, authority={rr.rejected_by_authority}, "
+                f"proof={rr.rejected_by_proof})"
+            ),
+        )
+    return close(db, src_family=src_family, dst_family=dst_family, depth=depth,
+                 subject_resource=subject_resource, subject_profile=subject_profile,
+                 observed_failure=observed_failure)
+
+
 def main() -> None:
     import argparse
     p = argparse.ArgumentParser()
