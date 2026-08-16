@@ -145,6 +145,33 @@ def capability_mask(registry: BitRegistry, families: Iterable[str]) -> int:
     return registry.mask(families)
 
 
+# ------------------------------------------------------------- CID prefix routing
+
+def cid_prefix(digest_hex: str, nbits: int) -> int:
+    """The top ``nbits`` of a content digest, as an integer -- a placement
+    partition, CIDR-style. Cryptographic hashes are random with respect to
+    meaning, so prefixes are placement only, never semantic categories."""
+    total = len(digest_hex) * 4
+    full = int(digest_hex, 16)
+    return full >> (total - nbits) if nbits < total else full
+
+
+@dataclass(frozen=True)
+class PrefixRoute:
+    prefix: int
+    nbits: int
+    route: str
+
+
+def route_cid(digest_hex: str, table: Iterable[PrefixRoute], default: str = "fabric-primary") -> str:
+    """Longest-prefix match a content digest to a placement route. More specific
+    (longer) prefixes win, exactly like CIDR forwarding."""
+    for pr in sorted(table, key=lambda r: -r.nbits):
+        if cid_prefix(digest_hex, pr.nbits) == pr.prefix:
+            return pr.route
+    return default
+
+
 # ------------------------------------------------------------------ routing
 
 @dataclass(frozen=True)

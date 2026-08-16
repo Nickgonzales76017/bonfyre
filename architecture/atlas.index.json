@@ -57,13 +57,17 @@
       "forbidden_inferences": [
         "eligible -> authorized",
         "a mask match -> a semantic match",
-        "a blackholed hypothesis -> permanently false (a reheat reopens it)"
+        "a blackholed hypothesis -> permanently false (a reheat reopens it)",
+        "a CID prefix -> a semantic category (hashes are random w.r.t. meaning)",
+        "a small SID Hamming distance -> identity or evidence (locality suggests, never establishes)"
       ],
       "internal_calculi": [
         "bitwise eligibility (have & need)==need",
         "ternary proof vector (+1 proven / 0 unresolved / -1 KnownNonCause)",
         "authority mask compiled from non-revoked in-window grants",
-        "route funnel: capability -> authority -> proof rejection over the real estate"
+        "route funnel: capability -> authority -> proof rejection over the real estate",
+        "CID prefix routing: longest-prefix placement partitions over content digests",
+        "SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)"
       ],
       "invariants": [
         "bits are a compiled machine index, not meaning",
@@ -71,11 +75,12 @@
         "a blackholed hypothesis is negative forwarding state, not a permanent truth"
       ],
       "known_gaps": [
-        "CID/SID prefix routing (content-address placement, semantic-neighborhood locality via Lance/HDC) and route advertise/withdraw over the DBSP delta engine are the next layers"
+        "route advertise/withdraw over the DBSP delta engine (the -1 that withdraws a route is the daemon's primitive) is the last forwarding layer; SID ANN via bonfyre-vec awaits the sqlite-vec extension"
       ],
       "layer": "forwarding",
       "maturity": "implemented",
       "native_formats": [
+        "graf",
         "graf"
       ],
       "node_types": [
@@ -86,11 +91,13 @@
       ],
       "semantic_question": "Of all the state available, what is even eligible to participate in this operation?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/address_plane.py"
+        "10-Code/BonfyreControlPlane/address_plane.py",
+        "10-Code/BonfyreControlPlane/bonfyre_sid.py"
       ],
       "views": [],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_address_plane.py"
+        "10-Code/BonfyreControlPlane/tests/test_address_plane.py",
+        "10-Code/BonfyreControlPlane/tests/test_cid_sid.py"
       ]
     },
     "atomic-form": {

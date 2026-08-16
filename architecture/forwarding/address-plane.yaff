@@ -27,9 +27,18 @@ architecture address-plane
   source_path 10-Code/BonfyreControlPlane/address_plane.py
   witness 10-Code/BonfyreControlPlane/tests/test_address_plane.py
   internal_calculus route funnel: capability -> authority -> proof rejection over the real estate
+  internal_calculus CID prefix routing: longest-prefix placement partitions over content digests
+  internal_calculus SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)
+  forbidden_inference a CID prefix -> a semantic category (hashes are random w.r.t. meaning)
+  forbidden_inference a small SID Hamming distance -> identity or evidence (locality suggests, never establishes)
+  native_format graf
   interacts authority-graph
   interacts proof-frontier
   interacts capability-lattice
   interacts capability-closure
+  interacts lance
+  interacts hash-identity
+  source_path 10-Code/BonfyreControlPlane/bonfyre_sid.py
+  witness 10-Code/BonfyreControlPlane/tests/test_cid_sid.py
   source_lineage AddressPlane / institutional packet-switching vision
-  known_gap CID/SID prefix routing (content-address placement, semantic-neighborhood locality via Lance/HDC) and route advertise/withdraw over the DBSP delta engine are the next layers
+  known_gap route advertise/withdraw over the DBSP delta engine (the -1 that withdraws a route is the daemon's primitive) is the last forwarding layer; SID ANN via bonfyre-vec awaits the sqlite-vec extension
