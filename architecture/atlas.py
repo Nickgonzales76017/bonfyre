@@ -453,8 +453,28 @@ def main(argv: list[str]) -> int:
         return _cmd_export(atlas)
     if cmd == "fs":
         return _cmd_fs(atlas, argv[2] if len(argv) > 2 else str(ROOT / "fs"))
+    if cmd == "wiring":
+        return _cmd_wiring()
     print(f"unknown command: {cmd}")
     return 1
+
+
+def _cmd_wiring() -> int:
+    """Graph analysis over the atlas's own interactions: feedback loops vs one-way
+    flows, and the highest-value loops still to close."""
+    import wiring
+    r = wiring.report()
+    print(f"wiring: {r['wired_nodes']} wired architectures, {r['interactions']} interactions")
+    print(f"feedback loops closed: {len(r['feedback_loops'])} "
+          f"| one-way flows: {len(r['one_way_edges'])}")
+    for loop in r["feedback_loops"]:
+        print(f"  loop: {' -> '.join(loop)} ->")
+    print(f"pure sources (emit, nothing returns): {', '.join(r['pure_sources']) or 'none'}")
+    print(f"pure sinks (dead ends): {', '.join(r['pure_sinks']) or 'none'}")
+    print("highest-value loops to close (by destination influence):")
+    for c in r["top_loop_closures"]:
+        print(f"  {c['one_way']}  [infl {c['destination_influence']}] -- {c['suggestion']}")
+    return 0
 
 
 if __name__ == "__main__":
