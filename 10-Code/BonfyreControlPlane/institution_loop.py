@@ -28,6 +28,7 @@ from typing import Optional
 
 import actors
 import atomic_forms as af
+import evidence_binding as eb
 import opportunity as opp
 
 CMS = Path.home() / ".bonfyre" / "bin" / "bonfyre-cms"
@@ -50,6 +51,32 @@ def _fabric_digests(fabric_db: Path, n: int) -> list[str]:
     rows = [r[0] for r in con.execute("SELECT digest FROM artifacts LIMIT ?", (n,))]
     con.close()
     return rows
+
+
+def _fabric_candidates(fabric_db: Path, limit: int = 500) -> list[eb.EvidenceCandidate]:
+    """Read fabric artifacts as binding candidates, tolerant of the schema.
+
+    The fabric's artifact table carries a digest and, in richer builds, a kind
+    and a name/path; this reads whatever is present so a slot can be matched to
+    the right artifact instead of the first one."""
+    if not fabric_db.exists():
+        return []
+    con = sqlite3.connect(str(fabric_db))
+    try:
+        cols = {r[1] for r in con.execute("PRAGMA table_info(artifacts)")}
+        if "digest" not in cols:
+            return []
+        name_col = next((c for c in ("name", "path", "source", "title") if c in cols), None)
+        kind_col = next((c for c in ("kind", "type", "content_type") if c in cols), None)
+        select = ["digest"]
+        select.append(name_col or "''")
+        select.append(kind_col or "''")
+        rows = con.execute(f"SELECT {', '.join(select)} FROM artifacts LIMIT ?", (limit,)).fetchall()
+    except sqlite3.Error:
+        return []
+    finally:
+        con.close()
+    return [eb.EvidenceCandidate(digest=r[0], name=r[1] or "", kind=r[2] or "") for r in rows]
 
 
 def _publish_cms(article: dict, cms_db: Path) -> Optional[int]:
@@ -91,9 +118,25 @@ def run(
 
     if evidence_from_fabric:
         needed = [s for s in form.evidence if not (s.artifact_digest or s.from_twin)]
-        digests = _fabric_digests(fabric_db, len(needed))
-        for slot, digest in zip(needed, digests):
-            slot.artifact_digest = digest
+        # Slots with matchers are bound to the RIGHT artifact by EvidenceBindingGraph,
+        # a semantic test with a witness -- not by position. Matcher-less slots keep
+        # the legacy positional fill for backward compatibility.
+        matched = [s for s in needed if s.has_matcher]
+        legacy = [s for s in needed if not s.has_matcher]
+        if matched:
+            candidates = _fabric_candidates(fabric_db)
+            reqs = [eb.EvidenceRequirement(
+                req_id=s.name, kind=s.match_kind,
+                name_contains=tuple(s.match_name), tags=tuple(s.match_tags),
+            ) for s in matched]
+            result = eb.bind_all(reqs, candidates)
+            by_name = {s.name: s for s in matched}
+            for req_id, binding in result.bound.items():
+                by_name[req_id].artifact_digest = binding.digest
+        if legacy:
+            digests = _fabric_digests(fabric_db, len(legacy))
+            for slot, digest in zip(legacy, digests):
+                slot.artifact_digest = digest
 
     readiness = af.submit_ready(form)
     if not readiness.ready:

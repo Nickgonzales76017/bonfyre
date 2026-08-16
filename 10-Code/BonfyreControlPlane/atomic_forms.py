@@ -45,6 +45,15 @@ class EvidenceSlot:
     required: bool = True
     artifact_digest: Optional[str] = None  # a fabric artifact
     from_twin: Optional[str] = None         # or a ForeignTwin projection
+    # matchers: when set, the slot is filled by EvidenceBindingGraph (the right
+    # artifact by a semantic test) rather than by position.
+    match_kind: str = ""
+    match_name: tuple = ()
+    match_tags: tuple = ()
+
+    @property
+    def has_matcher(self) -> bool:
+        return bool(self.match_kind or self.match_name or self.match_tags)
 
 
 @dataclass

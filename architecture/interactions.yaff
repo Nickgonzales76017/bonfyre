@@ -73,6 +73,18 @@ interaction actor-autofills-form
   witness Field.autofill_actor
   binding 10-Code/BonfyreControlPlane/atomic_forms.py
 
+interaction binding-fills-form-evidence
+  source evidence-binding
+  destination atomic-form
+  relation evidence_fill
+  preserves the requirement -> candidate match and its witness
+  drops candidates that fail the semantic test
+  forbidden_inference an artifact in a slot -> the requirement satisfied
+  forbidden_inference positional order -> a valid binding
+  invalidates_on the bound artifact's digest changes
+  witness EvidenceBinding.witness
+  binding 10-Code/BonfyreControlPlane/institution_loop.py
+
 interaction twin-materializes-into-evidence
   source foreign-twin
   destination atomic-form

@@ -42,17 +42,25 @@ architecture evidence-binding
   layer evidence
   semantic_question Does this candidate artifact actually satisfy this evidence requirement?
   purpose The binding relation is itself an object: requirement -> candidate retrieval -> semantic test -> binding -> witness.
-  maturity architectural
+  maturity implemented
   node_types EvidenceRequirement
   node_types EvidenceCandidate
   node_types EvidenceBinding
   node_types EvidenceBindingWitness
   edge_types retrieves
   edge_types binds
+  internal_calculus semantic-test matching, most-constrained-first, unique
+  invariant a requirement with no matcher binds nothing; position is never a reason to bind
+  invariant a candidate binds at most one requirement (a matching, not a broadcast)
+  invariant every binding carries a witness saying why it matched
   forbidden_inference artifact exists -> supports the claim
   forbidden_inference positional slot fill -> semantic evidence match
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/evidence_binding.py
+  source_path 10-Code/BonfyreControlPlane/institution_loop.py
+  witness 10-Code/BonfyreControlPlane/tests/test_evidence_binding.py
+  witness 10-Code/BonfyreControlPlane/tests/test_loop_evidence_binding.py
   source_lineage SEED-A recursive organ document
-  known_gap no implementation; AtomicForm evidence slots are the closest real shape
 
 architecture serm
   canonical_name SERMReductionGraph

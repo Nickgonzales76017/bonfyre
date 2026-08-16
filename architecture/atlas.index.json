@@ -296,14 +296,20 @@
         "artifact exists -> supports the claim",
         "positional slot fill -> semantic evidence match"
       ],
-      "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [
-        "no implementation; AtomicForm evidence slots are the closest real shape"
+      "internal_calculi": [
+        "semantic-test matching, most-constrained-first, unique"
       ],
+      "invariants": [
+        "a requirement with no matcher binds nothing; position is never a reason to bind",
+        "a candidate binds at most one requirement (a matching, not a broadcast)",
+        "every binding carries a witness saying why it matched"
+      ],
+      "known_gaps": [],
       "layer": "evidence",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "EvidenceRequirement",
         "EvidenceCandidate",
@@ -311,11 +317,17 @@
         "EvidenceBindingWitness"
       ],
       "semantic_question": "Does this candidate artifact actually satisfy this evidence requirement?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/evidence_binding.py",
+        "10-Code/BonfyreControlPlane/institution_loop.py"
+      ],
       "views": [
         "EvidenceView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_evidence_binding.py",
+        "10-Code/BonfyreControlPlane/tests/test_loop_evidence_binding.py"
+      ]
     },
     "foreign-twin": {
       "canonical_name": "ForeignTwinGraph",
@@ -1190,6 +1202,24 @@
       ],
       "relation": "blocker_resolution",
       "source": "authority-graph"
+    },
+    "binding-fills-form-evidence": {
+      "destination": "atomic-form",
+      "drops": [
+        "candidates that fail the semantic test"
+      ],
+      "forbidden_inferences": [
+        "an artifact in a slot -> the requirement satisfied",
+        "positional order -> a valid binding"
+      ],
+      "invalidates_on": [
+        "the bound artifact's digest changes"
+      ],
+      "preserves": [
+        "the requirement -> candidate match and its witness"
+      ],
+      "relation": "evidence_fill",
+      "source": "evidence-binding"
     },
     "closure-gated-by-frontier": {
       "destination": "proof-frontier",
