@@ -23,6 +23,7 @@ from typing import Optional
 _FELDERA_REL = Path.home() / ".bonfyre" / "substrates" / "v6.1" / "feldera" / "probe" / "target" / "release"
 FELDERA_BIN = _FELDERA_REL / "reachability_incremental"
 REACHABLE_BIN = _FELDERA_REL / "reachable_capacity"
+DAEMON_BIN = _FELDERA_REL / "reachable_capacity_daemon"
 
 
 def available() -> bool:
@@ -31,6 +32,24 @@ def available() -> bool:
 
 def reachable_capacity_available() -> bool:
     return REACHABLE_BIN.exists()
+
+
+def daemon_available() -> bool:
+    return DAEMON_BIN.exists()
+
+
+def run_delta_stream(deltas: list[str], timeout: int = 30) -> list[dict]:
+    """Feed a stream of change-deltas to the persistent DBSP circuit and read the
+    reachable set after each. Each delta is a line: 'B\\topp\\tblocker',
+    '+\\tblocker' (resolve), '-\\tblocker' (retract). Returns one dict per step.
+
+    This is the standing convergence loop: one transaction per delta, state
+    maintained in memory, a retraction contracting the set with no recompute."""
+    if not DAEMON_BIN.exists():
+        raise RuntimeError("reachable_capacity_daemon not built")
+    feed = "\n".join(deltas) + "\n"
+    proc = subprocess.run([str(DAEMON_BIN)], input=feed, capture_output=True, text=True, timeout=timeout)
+    return [json.loads(l) for l in proc.stdout.splitlines() if l.strip().startswith("{")]
 
 
 @dataclass(frozen=True)

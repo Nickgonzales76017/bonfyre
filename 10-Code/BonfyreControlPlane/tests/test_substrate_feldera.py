@@ -34,3 +34,18 @@ def test_reachable_capacity_is_maintained_with_withdrawal():
     # withdraws it incrementally -- maintained, not recomputed.
     assert r.organism_reachable == (0, 0, 0, 1, 1, 0)
     assert r.withdrawn_on_reheat is True
+
+
+@pytest.mark.skipif(not sf.daemon_available(),
+                    reason="requires the built persistent daemon circuit")
+def test_persistent_circuit_maintains_across_deltas():
+    # a standing circuit: resolve organism, reheat sli (withdrawn by one -1),
+    # re-resolve (restored). Each step is one transaction, no reseed.
+    steps = sf.run_delta_stream([
+        "B\torganism\tfpq", "B\torganism\tsli", "B\torganism\tkv",
+        "+\tfpq", "+\tsli", "+\tkv", "-\tsli", "+\tsli",
+    ])
+    by_step = {s["step"]: s["reachable"] for s in steps}
+    assert by_step[5] == ["organism"]   # all resolved -> reachable
+    assert by_step[6] == []             # sli retracted -> withdrawn (one -1)
+    assert by_step[7] == ["organism"]   # re-resolved -> restored
