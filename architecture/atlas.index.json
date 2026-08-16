@@ -503,6 +503,47 @@
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
       ]
     },
+    "collapse-front": {
+      "canonical_name": "CollapseFront",
+      "commands": [],
+      "domain": "Opportunity / Provenance Structure",
+      "edge_types": [
+        "supported_by",
+        "collapses"
+      ],
+      "family": "opportunity",
+      "forbidden_inferences": [
+        "collapses under retraction -> the conclusion was false (it means no surviving independent support, not incorrectness)",
+        "single-retraction collapse -> that fact is the sole cause (co-critical grounds may each be independently solo-critical)",
+        "absent from every collapse front -> the conclusion is true (robust support is not truth; it may also be already unsupported)"
+      ],
+      "internal_calculi": [
+        "monotone AND/OR support fixpoint; single-retraction propagation over the collapse matrix"
+      ],
+      "invariants": [
+        "collapse_front and critical_support are exact transposes of one boolean matrix M[conclusion][ground]",
+        "support is monotone (support only, no negation): adding a fact never removes a conclusion, so the fixpoint is order-independent",
+        "a conclusion survives losing any single ground iff it has at least two independent supports"
+      ],
+      "known_gaps": [
+        "runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions); extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step"
+      ],
+      "layer": "opportunity",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "Ground",
+        "Conclusion"
+      ],
+      "semantic_question": "If this fact is withdrawn, which conclusions lose all support -- and which single facts is a given conclusion load-bearing on?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/support_lattice.py"
+      ],
+      "views": [],
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_support_lattice.py"
+      ]
+    },
     "command-law": {
       "canonical_name": "CommandLawGraph",
       "commands": [

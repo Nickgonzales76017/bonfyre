@@ -50,6 +50,31 @@ architecture unlock-graph
   native_format graf
   known_gap unlockable (not yet reachable) opportunities are refused; auto-executing their unlocks is the next step
 
+architecture collapse-front
+  canonical_name CollapseFront
+  family opportunity
+  domain Opportunity / Provenance Structure
+  layer opportunity
+  semantic_question If this fact is withdrawn, which conclusions lose all support -- and which single facts is a given conclusion load-bearing on?
+  purpose The retraction dual of reachability. UnlockGraph computes what is reachable forward; CollapseFront computes the inverse over a monotone AND/OR support lattice: collapse_front(fact) = conclusions that go dark if that fact alone is retracted; critical_support(conclusion) = the facts whose solo retraction collapses it. The two are exact transposes of one boolean collapse matrix. This makes the constitution's no-maturity-laundering rule a runtime query: retract a witness and CollapseFront names every claim that had no independent support.
+  maturity measured
+  node_types Ground
+  node_types Conclusion
+  edge_types supported_by
+  edge_types collapses
+  internal_calculus monotone AND/OR support fixpoint; single-retraction propagation over the collapse matrix
+  invariant collapse_front and critical_support are exact transposes of one boolean matrix M[conclusion][ground]
+  invariant support is monotone (support only, no negation): adding a fact never removes a conclusion, so the fixpoint is order-independent
+  invariant a conclusion survives losing any single ground iff it has at least two independent supports
+  forbidden_inference collapses under retraction -> the conclusion was false (it means no surviving independent support, not incorrectness)
+  forbidden_inference single-retraction collapse -> that fact is the sole cause (co-critical grounds may each be independently solo-critical)
+  forbidden_inference absent from every collapse front -> the conclusion is true (robust support is not truth; it may also be already unsupported)
+  interacts actor-graph
+  source_path 10-Code/BonfyreControlPlane/support_lattice.py
+  witness 10-Code/BonfyreControlPlane/tests/test_support_lattice.py
+  source_lineage retraction dual harvested from run6/run7 DBSP retraction algebra
+  known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions); extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
+
 architecture resource-activation
   canonical_name ResourceActivationGraph
   family opportunity
