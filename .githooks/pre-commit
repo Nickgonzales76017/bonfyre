@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Bonfyre pre-commit: keep the Architecture Atlas valid and its index fresh, on
+# every commit, for whoever is committing (Claude, Codex, a human). Installed via
+#   git config core.hooksPath .githooks   (or bash scripts/install-hooks.sh)
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+atlas="$repo_root/architecture/atlas.py"
+[ -f "$atlas" ] || exit 0                      # no atlas in this tree: nothing to do
+command -v python3 >/dev/null 2>&1 || exit 0   # no python3: skip rather than block
+
+# 1. The constitution must hold. A laundering claim, a view that swallows its
+#    children, or a dangling interaction fails the commit here, before CI.
+if ! python3 "$atlas" validate; then
+  echo "pre-commit: architecture atlas is invalid (see above). Commit aborted." >&2
+  exit 1
+fi
+
+# 2. Keep the consumable index (MCP / BonfyreFS read it) in sync with the .yaff
+#    sources. If it changed, stage it so the commit carries a fresh index.
+python3 "$atlas" export >/dev/null
+index="$repo_root/architecture/atlas.index.json"
+if [ -f "$index" ] && ! git diff --quiet -- "$index" 2>/dev/null; then
+  git add "$index"
+  echo "pre-commit: refreshed architecture/atlas.index.json"
+fi
+
+exit 0

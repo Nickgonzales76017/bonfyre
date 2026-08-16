@@ -760,28 +760,38 @@
       ],
       "family": "opportunity",
       "forbidden_inferences": [
-        "provider available -> resource activation bypassed"
+        "provider available -> resource activation bypassed",
+        "resource eligible -> resource authorized"
       ],
-      "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [
-        "not implemented; ServiceLifecycleGraph is one activation mechanism already real"
+      "internal_calculi": [
+        "ordered activation state machine, authority-gated"
       ],
+      "invariants": [
+        "only a resource at activated is usable; available is not activated",
+        "activate authority is never short-circuited by qualification or binding"
+      ],
+      "known_gaps": [],
       "layer": "opportunity",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "CapabilityGap",
         "ResourceCandidate",
         "ActivationMechanism"
       ],
       "semantic_question": "How does a currently-unavailable resource become reachable and usable?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/resource_activation.py"
+      ],
       "views": [
         "OpportunityView",
         "ProviderResourceView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_resource_activation.py"
+      ]
     },
     "resource-admission": {
       "canonical_name": "ResourceAdmissionGraph",
@@ -1115,6 +1125,21 @@
     }
   },
   "interactions": {
+    "activation-resolves-resource-blocker": {
+      "destination": "unlock-graph",
+      "drops": [
+        "resources short of activated"
+      ],
+      "forbidden_inferences": [
+        "a candidate resource -> a resolved resource_active blocker"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the activated resource identity"
+      ],
+      "relation": "blocker_resolution",
+      "source": "resource-activation"
+    },
     "actor-autofills-form": {
       "destination": "atomic-form",
       "drops": [
@@ -1131,6 +1156,23 @@
       ],
       "relation": "verified_autofill",
       "source": "actor-graph"
+    },
+    "authority-gates-activation": {
+      "destination": "resource-activation",
+      "drops": [
+        "eligibility that lacks authority"
+      ],
+      "forbidden_inferences": [
+        "resource eligible -> resource activated"
+      ],
+      "invalidates_on": [
+        "the activate grant is revoked or expires"
+      ],
+      "preserves": [
+        "the activate grant over the resource"
+      ],
+      "relation": "activation_gate",
+      "source": "authority-graph"
     },
     "authority-resolves-authority-blocker": {
       "destination": "unlock-graph",
@@ -1344,6 +1386,23 @@
       ],
       "relation": "activation_mechanism",
       "source": "unlock-graph"
+    },
+    "service-binding-activates-resource": {
+      "destination": "resource-activation",
+      "drops": [
+        "unbound or released instances"
+      ],
+      "forbidden_inferences": [
+        "service provisioned -> resource activated"
+      ],
+      "invalidates_on": [
+        "the service is released"
+      ],
+      "preserves": [
+        "the bound service instance identity"
+      ],
+      "relation": "mechanism_binding",
+      "source": "service-lifecycle"
     },
     "transport-carries-hop": {
       "destination": "capability-closure",

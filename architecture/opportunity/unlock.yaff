@@ -54,12 +54,24 @@ architecture resource-activation
   layer opportunity
   semantic_question How does a currently-unavailable resource become reachable and usable?
   purpose World-expansion: capability gap -> candidate -> qualification -> eligibility -> authority -> activation mechanism (service lease, GPU, human commitment, voucher, credential). Only after activation does ProviderGraph see a usable resource.
-  maturity architectural
+  maturity implemented
   node_types CapabilityGap
   node_types ResourceCandidate
   node_types ActivationMechanism
   edge_types qualifies
   edge_types activates
+  state_types gap
+  state_types candidate
+  state_types qualified
+  state_types eligible
+  state_types authorized
+  state_types activated
+  internal_calculus ordered activation state machine, authority-gated
+  invariant only a resource at activated is usable; available is not activated
+  invariant activate authority is never short-circuited by qualification or binding
   forbidden_inference provider available -> resource activation bypassed
+  forbidden_inference resource eligible -> resource authorized
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/resource_activation.py
+  witness 10-Code/BonfyreControlPlane/tests/test_resource_activation.py
   source_lineage SEED-A recursive organ document
-  known_gap not implemented; ServiceLifecycleGraph is one activation mechanism already real

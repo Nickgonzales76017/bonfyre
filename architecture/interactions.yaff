@@ -157,6 +157,38 @@ interaction work-resolves-dependency-blocker
   witness work_items.state
   binding 10-Code/BonfyreControlPlane/opportunity.py
 
+interaction authority-gates-activation
+  source authority-graph
+  destination resource-activation
+  relation activation_gate
+  preserves the activate grant over the resource
+  drops eligibility that lacks authority
+  forbidden_inference resource eligible -> resource activated
+  invalidates_on the activate grant is revoked or expires
+  witness has_authority(ACTIVATE)
+  binding 10-Code/BonfyreControlPlane/resource_activation.py
+
+interaction service-binding-activates-resource
+  source service-lifecycle
+  destination resource-activation
+  relation mechanism_binding
+  preserves the bound service instance identity
+  drops unbound or released instances
+  forbidden_inference service provisioned -> resource activated
+  invalidates_on the service is released
+  witness bound_services
+  binding 10-Code/BonfyreControlPlane/resource_activation.py
+
+interaction activation-resolves-resource-blocker
+  source resource-activation
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the activated resource identity
+  drops resources short of activated
+  forbidden_inference a candidate resource -> a resolved resource_active blocker
+  witness is_activated
+  binding 10-Code/BonfyreControlPlane/opportunity.py
+
 interaction relationship-resolves-stage-blocker
   source relationship-graph
   destination unlock-graph

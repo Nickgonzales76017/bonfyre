@@ -42,6 +42,7 @@ from typing import Optional
 
 import authority
 import relationship
+import resource_activation
 
 # ------------------------------------------------------------------ blockers
 
@@ -51,6 +52,7 @@ WORK_DONE = "work_done"                            # a work item must be satisfi
 SERVICE_BOUND = "service_bound"                     # a service must be bound
 AUTHORITY = "authority"                             # an authority edge must exist
 RELATIONSHIP_STAGE = "relationship_stage"           # a relationship must have advanced
+RESOURCE_ACTIVE = "resource_active"                 # a resource must be activated
 BUDGET = "budget"                                   # a budget/commitment must exist
 HUMAN_APPROVAL = "human_approval"                   # a human must approve
 FIELD = "field"                                     # a form field must be filled
@@ -58,7 +60,7 @@ FIELD = "field"                                     # a form field must be fille
 # Kinds this engine can decide against real substrate today. Everything else is
 # honestly unknown until its architecture is built.
 _RESOLVABLE = {IDENTITY_VERIFICATION, PROOF_LAYER, WORK_DONE, SERVICE_BOUND,
-               AUTHORITY, RELATIONSHIP_STAGE}
+               AUTHORITY, RELATIONSHIP_STAGE, RESOURCE_ACTIVE}
 
 REACHABLE_NOW = "reachable_now"
 UNLOCKABLE = "unlockable"
@@ -176,6 +178,10 @@ def blocker_resolved(
     if blocker.kind == RELATIONSHIP_STAGE:
         # subject = profile, actor = the counterpart, layer = required stage.
         return relationship.stage_at_least(db, blocker.actor, blocker.subject, blocker.layer)
+    if blocker.kind == RESOURCE_ACTIVE:
+        if not resource_activation._table_exists(db, "resource_candidates"):
+            return None
+        return resource_activation.is_activated(db, blocker.subject, bound_services=bound_services)
     return None  # budget / human_approval / field: no substrate yet
 
 
