@@ -19,9 +19,12 @@
       ],
       "internal_calculi": [],
       "invariants": [
-        "asserted_via_email is not verified_for(ACM.editor)"
+        "asserted_via_email is not verified_for(ACM.editor)",
+        "provenance is mandatory on every actor and edge; confidence tier {verified,asserted,inferred} never collapses (native + python parity on the shared actor_nodes/actor_edges store)"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "native writer records actors/edges on the shared store with the declared-kind, mandatory-provenance and non-collapsing-confidence gates (python reads native-written rows, tier preserved -- proven); native corroboration/verification-profile promotion logic is the remaining native-absorption item"
+      ],
       "layer": "identity",
       "maturity": "implemented",
       "native_formats": [
@@ -36,13 +39,16 @@
       "semantic_question": "Who is this real-world actor, and for which profile is that identity verified?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/actors.py",
-        "10-Code/BonfyreControlPlane/pack_loader.py"
+        "10-Code/BonfyreControlPlane/pack_loader.py",
+        "engine/core/src/actor.c",
+        "engine/core/include/bf_actor.h"
       ],
       "views": [
         "IdentityView"
       ],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_actors.py"
+        "10-Code/BonfyreControlPlane/tests/test_actors.py",
+        "engine/core/tests/actor_graph_test.c"
       ]
     },
     "address-plane": {

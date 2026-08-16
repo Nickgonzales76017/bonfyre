@@ -9,7 +9,7 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 	$(OBJDIR)/workgraph_scheduler.o $(OBJDIR)/workgraph_effects.o \
 	$(OBJDIR)/filesystem_projection.o \
 	$(OBJDIR)/process_operator.o $(OBJDIR)/operator_contract.o $(OBJDIR)/bf_sha256.o \
-	$(OBJDIR)/occurrence.o \
+	$(OBJDIR)/occurrence.o $(OBJDIR)/actor.o \
 	$(OBJDIR)/bf_catalog_generation.o
 
 .PHONY: all clean
@@ -53,6 +53,9 @@ $(OBJDIR)/bf_sha256.o: $(ROOT)/lib/libbonfyre/src/bf_sha256.c | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/occurrence.o: src/occurrence.c include/bf_occurrence.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/actor.o: src/actor.c include/bf_actor.h | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/bf_catalog_generation.o: $(ROOT)/lib/libbonfyre/src/bf_catalog_generation.c | $(OBJDIR)

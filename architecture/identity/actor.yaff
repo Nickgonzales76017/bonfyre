@@ -24,12 +24,17 @@ architecture actor-graph
   forbidden_inference email sender -> verified institutional role
   forbidden_inference affiliation -> authority
   forbidden_inference identity similarity -> same actor
+  invariant provenance is mandatory on every actor and edge; confidence tier {verified,asserted,inferred} never collapses (native + python parity on the shared actor_nodes/actor_edges store)
   native_format graf
   command BonfyreEntity
   source_path 10-Code/BonfyreControlPlane/actors.py
   source_path 10-Code/BonfyreControlPlane/pack_loader.py
+  source_path engine/core/src/actor.c
+  source_path engine/core/include/bf_actor.h
   witness 10-Code/BonfyreControlPlane/tests/test_actors.py
+  witness engine/core/tests/actor_graph_test.c
   source_lineage capitalgym crm relationships
+  known_gap native writer records actors/edges on the shared store with the declared-kind, mandatory-provenance and non-collapsing-confidence gates (python reads native-written rows, tier preserved -- proven); native corroboration/verification-profile promotion logic is the remaining native-absorption item
 
 architecture hash-identity
   canonical_name HashIdentityGraph
