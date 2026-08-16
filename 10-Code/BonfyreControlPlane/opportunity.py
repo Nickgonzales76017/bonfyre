@@ -41,6 +41,7 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 import authority
+import relationship
 
 # ------------------------------------------------------------------ blockers
 
@@ -49,13 +50,15 @@ PROOF_LAYER = "proof_layer"                       # a frontier layer must be pro
 WORK_DONE = "work_done"                            # a work item must be satisfied
 SERVICE_BOUND = "service_bound"                     # a service must be bound
 AUTHORITY = "authority"                             # an authority edge must exist
+RELATIONSHIP_STAGE = "relationship_stage"           # a relationship must have advanced
 BUDGET = "budget"                                   # a budget/commitment must exist
 HUMAN_APPROVAL = "human_approval"                   # a human must approve
 FIELD = "field"                                     # a form field must be filled
 
 # Kinds this engine can decide against real substrate today. Everything else is
 # honestly unknown until its architecture is built.
-_RESOLVABLE = {IDENTITY_VERIFICATION, PROOF_LAYER, WORK_DONE, SERVICE_BOUND, AUTHORITY}
+_RESOLVABLE = {IDENTITY_VERIFICATION, PROOF_LAYER, WORK_DONE, SERVICE_BOUND,
+               AUTHORITY, RELATIONSHIP_STAGE}
 
 REACHABLE_NOW = "reachable_now"
 UNLOCKABLE = "unlockable"
@@ -170,6 +173,9 @@ def blocker_resolved(
             db, blocker.actor, blocker.permission or authority.ACT, blocker.subject,
             purpose=blocker.detail or None,
         )
+    if blocker.kind == RELATIONSHIP_STAGE:
+        # subject = profile, actor = the counterpart, layer = required stage.
+        return relationship.stage_at_least(db, blocker.actor, blocker.subject, blocker.layer)
     return None  # budget / human_approval / field: no substrate yet
 
 

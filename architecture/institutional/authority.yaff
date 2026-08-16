@@ -37,18 +37,25 @@ architecture relationship-graph
   layer institutional
   semantic_question Where along the discovery-to-adoption trajectory is this real relationship?
   purpose Not a CRM pipeline: discovered -> observed -> contacted -> replied -> engaged -> assigned -> reviewed -> corrected -> collaborated -> committed -> adopted -> converted. Bernstein/AgentGuard/DeepEval/ACM each get an independent trajectory.
-  maturity architectural
+  maturity implemented
   node_types Relationship
-  node_types RelationshipEpisode
+  node_types RelationshipTransition
   edge_types advances_to
   state_types discovered
   state_types engaged
   state_types collaborated
   state_types adopted
+  state_types converted
+  internal_calculus ordered-stage monotone trajectory, per profile
+  invariant a stage is reached only when recorded, with evidence; no silent regress
+  invariant two relationships to one actor under different profiles are independent
   forbidden_inference contact -> relationship
   forbidden_inference relationship -> contract
+  forbidden_inference collaboration on one profile -> standing on another
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/relationship.py
+  witness 10-Code/BonfyreControlPlane/tests/test_relationship.py
   source_lineage capitalgym crm relationships
-  known_gap trajectory states not yet a distinct graph; relationships table is the closest real shape
 
 architecture shadow-institution
   canonical_name ShadowInstitutionGraph

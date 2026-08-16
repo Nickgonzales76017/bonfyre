@@ -157,6 +157,27 @@ interaction work-resolves-dependency-blocker
   witness work_items.state
   binding 10-Code/BonfyreControlPlane/opportunity.py
 
+interaction relationship-resolves-stage-blocker
+  source relationship-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the relationship stage and its evidence, per profile
+  drops relationships under other profiles
+  forbidden_inference collaboration on one profile -> a resolved stage blocker on another
+  invalidates_on the relationship is corrected below the required stage
+  witness stage_at_least
+  binding 10-Code/BonfyreControlPlane/opportunity.py
+
+interaction relationship-earns-verification
+  source relationship-graph
+  destination actor-graph
+  relation verification_basis
+  preserves the profile the relationship advanced under
+  drops asserted-only identity
+  forbidden_inference relationship engaged -> actor automatically verified (verification is a deliberate act)
+  witness relationship trajectory
+  binding 10-Code/BonfyreControlPlane/relationship.py
+
 interaction authority-resolves-authority-blocker
   source authority-graph
   destination unlock-graph

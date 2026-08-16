@@ -719,26 +719,36 @@
       "family": "institutional",
       "forbidden_inferences": [
         "contact -> relationship",
-        "relationship -> contract"
+        "relationship -> contract",
+        "collaboration on one profile -> standing on another"
       ],
-      "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [
-        "trajectory states not yet a distinct graph; relationships table is the closest real shape"
+      "internal_calculi": [
+        "ordered-stage monotone trajectory, per profile"
       ],
+      "invariants": [
+        "a stage is reached only when recorded, with evidence; no silent regress",
+        "two relationships to one actor under different profiles are independent"
+      ],
+      "known_gaps": [],
       "layer": "institutional",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "Relationship",
-        "RelationshipEpisode"
+        "RelationshipTransition"
       ],
       "semantic_question": "Where along the discovery-to-adoption trajectory is this real relationship?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/relationship.py"
+      ],
       "views": [
         "InstitutionalView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_relationship.py"
+      ]
     },
     "resource-activation": {
       "canonical_name": "ResourceActivationGraph",
@@ -1255,6 +1265,38 @@
       ],
       "relation": "reachability_gate",
       "source": "unlock-graph"
+    },
+    "relationship-earns-verification": {
+      "destination": "actor-graph",
+      "drops": [
+        "asserted-only identity"
+      ],
+      "forbidden_inferences": [
+        "relationship engaged -> actor automatically verified (verification is a deliberate act)"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the profile the relationship advanced under"
+      ],
+      "relation": "verification_basis",
+      "source": "relationship-graph"
+    },
+    "relationship-resolves-stage-blocker": {
+      "destination": "unlock-graph",
+      "drops": [
+        "relationships under other profiles"
+      ],
+      "forbidden_inferences": [
+        "collaboration on one profile -> a resolved stage blocker on another"
+      ],
+      "invalidates_on": [
+        "the relationship is corrected below the required stage"
+      ],
+      "preserves": [
+        "the relationship stage and its evidence, per profile"
+      ],
+      "relation": "blocker_resolution",
+      "source": "relationship-graph"
     },
     "representation-feeds-sli": {
       "destination": "sli-execution",
