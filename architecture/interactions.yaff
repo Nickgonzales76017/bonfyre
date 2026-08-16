@@ -3,6 +3,36 @@ atlas interactions
 # the hardest bugs live in the bridges. Each names what it preserves, what it
 # drops, and what it must NOT promote.
 
+interaction verus-verifies-frontier-invariant
+  source verus
+  destination proof-frontier
+  relation formal_verification
+  preserves the exact invariant stated
+  drops invariants not stated to the verifier
+  forbidden_inference one invariant proven -> the layer or system is correct
+  witness a bounded proof artifact
+  binding architecture/substrate/foundry.yaff
+
+interaction restate-durably-runs-work
+  source restate
+  destination work-graph
+  relation durable_execution
+  preserves the work item identity across long waits
+  drops the meaning of the work (Restate owns durability, not semantics)
+  forbidden_inference durably waiting -> the external event will occur
+  witness a journaled durable handle
+  binding architecture/substrate/foundry.yaff
+
+interaction hvm4-reduces-fpq-seed
+  source hvm4
+  destination fpq-seed
+  relation bounded_reduction
+  preserves the seed program structure
+  drops nothing
+  forbidden_inference a reduction completes -> the seed reconstructs the tensor
+  witness a bounded reduction result
+  binding architecture/substrate/foundry.yaff
+
 interaction closure-gated-by-frontier
   source capability-closure
   destination proof-frontier

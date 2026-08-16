@@ -90,6 +90,8 @@ def test_fs_projection_is_inspectable(tmp_path):
     # the FPQ lesson is a readable file, not buried metadata
     ci = tmp_path / "Graphs" / "model" / "FPQTransformationGraph" / "cannot-infer.txt"
     assert ci.exists() and "reconstruction" in ci.read_text()
-    # the unbuilt architectures are a walkable query directory
-    unbuilt = (tmp_path / "Queries" / "Architecture" / "Unbuilt.txt").read_text().split()
-    assert "authority-graph" in unbuilt
+    # the loss buckets are walkable query directories (contents shift as
+    # architectures graduate; the files themselves are always generated)
+    q = tmp_path / "Queries" / "Architecture"
+    for bucket in ("Unbuilt.txt", "No-Interaction-Contract.txt", "Unwitnessed.txt"):
+        assert (q / bucket).exists()

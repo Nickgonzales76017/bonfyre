@@ -131,6 +131,33 @@
         "10-Code/BonfyreControlPlane/tests/test_authority.py"
       ]
     },
+    "automerge": {
+      "canonical_name": "Automerge",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "a candidate merged in Possible -> a change to Actual"
+      ],
+      "internal_calculi": [
+        "CRDT merge mechanics"
+      ],
+      "invariants": [
+        "owns conflict-free merge, not the meaning of any candidate it holds"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "How do many agents and humans mutate candidate state without contaminating Actual?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
     "blocker-graph": {
       "canonical_name": "BlockerGraph",
       "commands": [],
@@ -163,6 +190,33 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_opportunity.py"
       ]
+    },
+    "burn": {
+      "canonical_name": "Burn",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "trained -> generation quality good (the FPQ lesson generalizes)"
+      ],
+      "internal_calculi": [
+        "autodiff training runtime"
+      ],
+      "invariants": [
+        "a training phenotype, not the identity of the model trained"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "What is the trainable tensor/model phenotype?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
     },
     "capability-closure": {
       "canonical_name": "CapabilityClosureGraph",
@@ -248,6 +302,60 @@
         "10-Code/BonfyreControlPlane/tests/test_capability_catalog.py"
       ]
     },
+    "cubecl": {
+      "canonical_name": "CubeCL",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "a generated kernel is fast -> the fused operation is valid"
+      ],
+      "internal_calculi": [
+        "generated GPU kernels"
+      ],
+      "invariants": [
+        "owns kernel generation, not the correctness of the fused operation"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
+    "daft": {
+      "canonical_name": "Daft",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "a transformed corpus -> provenance preserved without a witness"
+      ],
+      "internal_calculi": [
+        "distributed dataframe execution"
+      ],
+      "invariants": [
+        "owns bulk transformation, not the provenance of its inputs or outputs"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "How are large mixed-data transformations run across these corpora?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
     "discipl-composition": {
       "canonical_name": "DisCIPLCompositionGraph",
       "commands": [
@@ -282,6 +390,33 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_capability_closure.py"
       ]
+    },
+    "egglog": {
+      "canonical_name": "egglog",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "two forms found equivalent by search -> equivalent under every architecture's algebra"
+      ],
+      "internal_calculi": [
+        "e-graph equality saturation"
+      ],
+      "invariants": [
+        "owns equivalence-search machinery, not the correctness of a chosen alternative"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "What are the equivalent alternatives to this plan, rewrite, representation, or composition?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
     },
     "evidence-binding": {
       "canonical_name": "EvidenceBindingGraph",
@@ -328,6 +463,33 @@
         "10-Code/BonfyreControlPlane/tests/test_evidence_binding.py",
         "10-Code/BonfyreControlPlane/tests/test_loop_evidence_binding.py"
       ]
+    },
+    "feldera": {
+      "canonical_name": "Feldera",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "a maintained view -> authority over what it summarizes"
+      ],
+      "internal_calculi": [
+        "incremental view maintenance"
+      ],
+      "invariants": [
+        "owns incremental recomputation, not the semantics of the views maintained"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
     },
     "foreign-twin": {
       "canonical_name": "ForeignTwinGraph",
@@ -549,6 +711,33 @@
         "~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)"
       ]
     },
+    "gigatoken": {
+      "canonical_name": "GigaToken",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "a compiled context -> all evidence the mission needs is present"
+      ],
+      "internal_calculi": [
+        "high-throughput token substrate + context compilation"
+      ],
+      "invariants": [
+        "owns context compilation, not the sufficiency of a compiled cut"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "From the giant source, what purpose-specific mission context should be compiled?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
     "hash-identity": {
       "canonical_name": "HashIdentityGraph",
       "commands": [
@@ -580,6 +769,62 @@
       ],
       "views": [
         "IdentityView"
+      ],
+      "witnesses": []
+    },
+    "hvm4": {
+      "canonical_name": "HVM4",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "a reduction completing -> the reduced structure is correct"
+      ],
+      "internal_calculi": [
+        "interaction-net reduction"
+      ],
+      "invariants": [
+        "owns reduction mechanics, not the meaning of the structure reduced"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [
+        "helix"
+      ],
+      "node_types": [],
+      "semantic_question": "What is the bounded reduction of this selected symbolic or computational structure?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
+    "hydro": {
+      "canonical_name": "Hydro",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "placeable -> authorized to execute there"
+      ],
+      "internal_calculi": [
+        "distributed dataflow placement"
+      ],
+      "invariants": [
+        "a placement phenotype, not the authority to run what it places"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "What is the distributed placement/dataflow phenotype for this work?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
       ],
       "witnesses": []
     },
@@ -615,6 +860,33 @@
       ],
       "views": [
         "ModelView"
+      ],
+      "witnesses": []
+    },
+    "lance": {
+      "canonical_name": "Lance",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "vector similarity -> same actor or same claim"
+      ],
+      "internal_calculi": [
+        "columnar vector storage + ANN index"
+      ],
+      "invariants": [
+        "owns vector storage, not the identity or authority of what is embedded"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
       ],
       "witnesses": []
     },
@@ -853,6 +1125,33 @@
         "10-Code/BonfyreControlPlane/tests/test_resource_admission.py"
       ]
     },
+    "restate": {
+      "canonical_name": "Restate",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "durably waiting -> the external event will occur"
+      ],
+      "internal_calculi": [
+        "durable execution + journaling"
+      ],
+      "invariants": [
+        "owns durability, not the meaning of the work it keeps alive"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "How does the trial durably wait hours or days on external reality?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
     "result-receipt-bundle": {
       "canonical_name": "ResultReceiptBundleGraph",
       "commands": [],
@@ -1049,6 +1348,33 @@
       ],
       "witnesses": []
     },
+    "tract": {
+      "canonical_name": "Tract",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "runs locally -> the representation it runs is authorized or correct"
+      ],
+      "internal_calculi": [
+        "local inference runtime"
+      ],
+      "invariants": [
+        "an execution phenotype, not a model identity or representation"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "semantic_question": "What is the lightweight local model execution phenotype?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
     "transport-phenotype": {
       "canonical_name": "TransportPhenotypeGraph",
       "commands": [
@@ -1133,6 +1459,35 @@
         "10-Code/BonfyreControlPlane/tests/test_loop_reachability.py"
       ]
     },
+    "verus": {
+      "canonical_name": "Verus",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "one invariant proven -> the system is correct"
+      ],
+      "internal_calculi": [
+        "bounded SMT verification"
+      ],
+      "invariants": [
+        "a proof of a stated invariant is not a proof of an unstated one"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "declared",
+      "native_formats": [
+        "crux"
+      ],
+      "node_types": [],
+      "semantic_question": "Which invariants are worth proving, and does the proof hold within bounds?",
+      "source_paths": [],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": []
+    },
     "work-graph": {
       "canonical_name": "WorkGraph",
       "commands": [
@@ -1167,6 +1522,41 @@
       ],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_work_graph.py"
+      ]
+    },
+    "yaff": {
+      "canonical_name": "YaFF",
+      "commands": [],
+      "domain": "Reality Foundry",
+      "edge_types": [],
+      "family": "substrate",
+      "forbidden_inferences": [
+        "two architectures sharing YaFF -> the same semantics"
+      ],
+      "internal_calculi": [
+        "block-and-field contract representation"
+      ],
+      "invariants": [
+        "a contract representation owns encoding, not the meaning of what it encodes"
+      ],
+      "known_gaps": [],
+      "layer": "substrate",
+      "maturity": "implemented",
+      "native_formats": [
+        "yaff"
+      ],
+      "node_types": [],
+      "semantic_question": "What is the semantic contract for a trial's artifacts, effects, and expected witnesses?",
+      "source_paths": [
+        "architecture/atlas.py",
+        "schemas/control"
+      ],
+      "views": [
+        "SubstrateView"
+      ],
+      "witnesses": [
+        "architecture/tests/test_atlas.py",
+        "packs"
       ]
     }
   },
@@ -1337,6 +1727,21 @@
       "relation": "execution_is_evidence",
       "source": "fpq-transform"
     },
+    "hvm4-reduces-fpq-seed": {
+      "destination": "fpq-seed",
+      "drops": [
+        "nothing"
+      ],
+      "forbidden_inferences": [
+        "a reduction completes -> the seed reconstructs the tensor"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the seed program structure"
+      ],
+      "relation": "bounded_reduction",
+      "source": "hvm4"
+    },
     "lattice-feeds-discipl": {
       "destination": "discipl-composition",
       "drops": [
@@ -1433,6 +1838,21 @@
       ],
       "relation": "representation_to_execution",
       "source": "fpq-transform"
+    },
+    "restate-durably-runs-work": {
+      "destination": "work-graph",
+      "drops": [
+        "the meaning of the work (Restate owns durability, not semantics)"
+      ],
+      "forbidden_inferences": [
+        "durably waiting -> the external event will occur"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the work item identity across long waits"
+      ],
+      "relation": "durable_execution",
+      "source": "restate"
     },
     "serm-reduces-to-sufficiency": {
       "destination": "proof-frontier",
@@ -1581,6 +2001,21 @@
       "relation": "blocker_resolution",
       "source": "actor-graph"
     },
+    "verus-verifies-frontier-invariant": {
+      "destination": "proof-frontier",
+      "drops": [
+        "invariants not stated to the verifier"
+      ],
+      "forbidden_inferences": [
+        "one invariant proven -> the layer or system is correct"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the exact invariant stated"
+      ],
+      "relation": "formal_verification",
+      "source": "verus"
+    },
     "work-resolves-dependency-blocker": {
       "destination": "unlock-graph",
       "drops": [
@@ -1679,6 +2114,25 @@
         "service-lifecycle",
         "foreign-twin",
         "resource-activation"
+      ]
+    },
+    "SubstrateView": {
+      "collapsed_count": 14,
+      "expands_to": [
+        "yaff",
+        "automerge",
+        "feldera",
+        "egglog",
+        "hvm4",
+        "gigatoken",
+        "lance",
+        "daft",
+        "tract",
+        "burn",
+        "cubecl",
+        "hydro",
+        "restate",
+        "verus"
       ]
     }
   }

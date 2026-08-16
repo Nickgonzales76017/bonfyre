@@ -55,3 +55,19 @@ view ExternalView
   expands_to foreign-twin
   expands_to service-lifecycle
   expands_to result-receipt-bundle
+
+view SubstrateView
+  expands_to yaff
+  expands_to automerge
+  expands_to feldera
+  expands_to egglog
+  expands_to hvm4
+  expands_to gigatoken
+  expands_to lance
+  expands_to daft
+  expands_to tract
+  expands_to burn
+  expands_to cubecl
+  expands_to hydro
+  expands_to restate
+  expands_to verus

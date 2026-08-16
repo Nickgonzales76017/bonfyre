@@ -1,0 +1,203 @@
+atlas substrate
+# The 14 Reality Foundry substrates. Constitutional restriction (atlas README):
+# a substrate OWNS MECHANICS. It may not inherit the semantics of the
+# architectures that ride it. AuthorityGraph and WorkGraph may both serialize
+# through the same store; their algebras stay distinct. Every entry states that
+# as a forbidden_inference. Maturity is honest: YaFF is witnessed by this atlas
+# and the packs; the rest are declared -- their Reality Foundry role is a
+# contract, their in-repo integration is not yet witnessed here, so none claims
+# measured/proven without a witness.
+
+architecture yaff
+  canonical_name YaFF
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the semantic contract for a trial's artifacts, effects, and expected witnesses?
+  purpose Semantic contract / IR for the trial: artifacts, effects, expected witnesses.
+  maturity implemented
+  internal_calculus block-and-field contract representation
+  invariant a contract representation owns encoding, not the meaning of what it encodes
+  forbidden_inference two architectures sharing YaFF -> the same semantics
+  native_format yaff
+  source_path architecture/atlas.py
+  source_path schemas/control
+  witness architecture/tests/test_atlas.py
+  witness packs
+  source_lineage Reality Foundry 14-substrate
+
+architecture automerge
+  canonical_name Automerge
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question How do many agents and humans mutate candidate state without contaminating Actual?
+  purpose Collaborative candidate state; Possible may be mutated freely without touching Actual.
+  maturity declared
+  internal_calculus CRDT merge mechanics
+  invariant owns conflict-free merge, not the meaning of any candidate it holds
+  forbidden_inference a candidate merged in Possible -> a change to Actual
+  source_lineage Reality Foundry 14-substrate
+
+architecture feldera
+  canonical_name Feldera
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?
+  purpose Incremental maintenance of consequences over GitHub events, test results, CMS changes, ledger updates, form readiness, live queries.
+  maturity declared
+  internal_calculus incremental view maintenance
+  invariant owns incremental recomputation, not the semantics of the views maintained
+  forbidden_inference a maintained view -> authority over what it summarizes
+  source_lineage Reality Foundry 14-substrate
+
+architecture egglog
+  canonical_name egglog
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What are the equivalent alternatives to this plan, rewrite, representation, or composition?
+  purpose Equivalence search over execution plans, rewrites, data representations, API compositions, patch transformations.
+  maturity declared
+  internal_calculus e-graph equality saturation
+  invariant owns equivalence-search machinery, not the correctness of a chosen alternative
+  forbidden_inference two forms found equivalent by search -> equivalent under every architecture's algebra
+  source_lineage Reality Foundry 14-substrate
+
+architecture hvm4
+  canonical_name HVM4
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the bounded reduction of this selected symbolic or computational structure?
+  purpose Bounded recursive reduction of selected symbolic/computational structures.
+  maturity declared
+  internal_calculus interaction-net reduction
+  invariant owns reduction mechanics, not the meaning of the structure reduced
+  forbidden_inference a reduction completing -> the reduced structure is correct
+  native_format helix
+  interacts fpq-seed
+  source_lineage Reality Foundry 14-substrate
+
+architecture gigatoken
+  canonical_name GigaToken
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question From the giant source, what purpose-specific mission context should be compiled?
+  purpose Giant-source/context substrate from which purpose-specific mission contexts are compiled. The token/context-reduction engine.
+  maturity declared
+  internal_calculus high-throughput token substrate + context compilation
+  invariant owns context compilation, not the sufficiency of a compiled cut
+  forbidden_inference a compiled context -> all evidence the mission needs is present
+  source_lineage Reality Foundry 14-substrate
+
+architecture lance
+  canonical_name Lance
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?
+  purpose Multimodal / vector body for code, traces, docs, images, transcripts, review artifacts.
+  maturity declared
+  internal_calculus columnar vector storage + ANN index
+  invariant owns vector storage, not the identity or authority of what is embedded
+  forbidden_inference vector similarity -> same actor or same claim
+  source_lineage Reality Foundry 14-substrate
+
+architecture daft
+  canonical_name Daft
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question How are large mixed-data transformations run across these corpora?
+  purpose Large mixed-data transformations across the corpora.
+  maturity declared
+  internal_calculus distributed dataframe execution
+  invariant owns bulk transformation, not the provenance of its inputs or outputs
+  forbidden_inference a transformed corpus -> provenance preserved without a witness
+  source_lineage Reality Foundry 14-substrate
+
+architecture tract
+  canonical_name Tract
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the lightweight local model execution phenotype?
+  purpose Lightweight local model execution phenotype.
+  maturity declared
+  internal_calculus local inference runtime
+  invariant an execution phenotype, not a model identity or representation
+  forbidden_inference runs locally -> the representation it runs is authorized or correct
+  interacts prepared-execution
+  source_lineage Reality Foundry 14-substrate
+
+architecture burn
+  canonical_name Burn
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the trainable tensor/model phenotype?
+  purpose Trainable tensor/model phenotype.
+  maturity declared
+  internal_calculus autodiff training runtime
+  invariant a training phenotype, not the identity of the model trained
+  forbidden_inference trained -> generation quality good (the FPQ lesson generalizes)
+  source_lineage Reality Foundry 14-substrate
+
+architecture cubecl
+  canonical_name CubeCL
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?
+  purpose Accelerated generated-kernel phenotype where a learned/fused operation warrants it.
+  maturity declared
+  internal_calculus generated GPU kernels
+  invariant owns kernel generation, not the correctness of the fused operation
+  forbidden_inference a generated kernel is fast -> the fused operation is valid
+  source_lineage Reality Foundry 14-substrate
+
+architecture hydro
+  canonical_name Hydro
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the distributed placement/dataflow phenotype for this work?
+  purpose Distributed placement / dataflow phenotype.
+  maturity declared
+  internal_calculus distributed dataflow placement
+  invariant a placement phenotype, not the authority to run what it places
+  forbidden_inference placeable -> authorized to execute there
+  interacts placement
+  source_lineage Reality Foundry 14-substrate
+
+architecture restate
+  canonical_name Restate
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question How does the trial durably wait hours or days on external reality?
+  purpose Durable long-lived execution when the trial waits on external reality.
+  maturity declared
+  internal_calculus durable execution + journaling
+  invariant owns durability, not the meaning of the work it keeps alive
+  forbidden_inference durably waiting -> the external event will occur
+  interacts work-graph
+  source_lineage Reality Foundry 14-substrate
+
+architecture verus
+  canonical_name Verus
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question Which invariants are worth proving, and does the proof hold within bounds?
+  purpose Bounded formal verification for invariants worth proving.
+  maturity declared
+  internal_calculus bounded SMT verification
+  invariant a proof of a stated invariant is not a proof of an unstated one
+  forbidden_inference one invariant proven -> the system is correct
+  native_format crux
+  interacts proof-frontier
+  source_lineage Reality Foundry 14-substrate
