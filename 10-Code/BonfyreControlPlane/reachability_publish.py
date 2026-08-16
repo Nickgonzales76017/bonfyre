@@ -69,7 +69,7 @@ def publish_reachability(
     fabric: Path = fp.FABRIC, control_db: Path = CONTROL_DB, pack: Path = PACK
 ) -> fp.Published:
     """Build the current reachability and publish it into the fabric."""
-    path = write_reachability_file(control_db, pack)
+    path = write_reachability_file(control_db, pack, fabric=fabric)
     db = sqlite3.connect(str(fabric), timeout=60)
     db.execute("PRAGMA busy_timeout=60000")
     fp.ensure_schema(db)
