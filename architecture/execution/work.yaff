@@ -39,11 +39,16 @@ architecture occurrence-spine
   node_types ExternalEvent
   edge_types precedes
   forbidden_inference retrieval time -> event time (timestamps must not collapse)
+  invariant observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store
   source_path 10-Code/BonfyreControlPlane/external_events.py
   source_path 10-Code/BonfyreControlPlane/ingest_github_notifications.py
   source_path 10-Code/BonfyreControlPlane/migrate_run6.py
+  source_path engine/core/src/occurrence.c
+  source_path engine/core/include/bf_occurrence.h
   witness 10-Code/BonfyreControlPlane/tests/test_external_events.py
+  witness engine/core/tests/occurrence_spine_test.c
   source_lineage run6 control-plane retrospective
+  known_gap native writer records + dedups on the shared store with byte-identical digest (proven vs python), and enforces the two-clock + kind gate; native projection-fold interpretation and native watchers are the remaining native-absorption items (python still owns projection semantics)
 
 architecture transport-phenotype
   canonical_name TransportPhenotypeGraph

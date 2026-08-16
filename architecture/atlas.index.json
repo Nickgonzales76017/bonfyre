@@ -1403,8 +1403,12 @@
         "retrieval time -> event time (timestamps must not collapse)"
       ],
       "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [],
+      "invariants": [
+        "observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store"
+      ],
+      "known_gaps": [
+        "native writer records + dedups on the shared store with byte-identical digest (proven vs python), and enforces the two-clock + kind gate; native projection-fold interpretation and native watchers are the remaining native-absorption items (python still owns projection semantics)"
+      ],
       "layer": "execution",
       "maturity": "implemented",
       "native_formats": [],
@@ -1416,13 +1420,16 @@
       "source_paths": [
         "10-Code/BonfyreControlPlane/external_events.py",
         "10-Code/BonfyreControlPlane/ingest_github_notifications.py",
-        "10-Code/BonfyreControlPlane/migrate_run6.py"
+        "10-Code/BonfyreControlPlane/migrate_run6.py",
+        "engine/core/src/occurrence.c",
+        "engine/core/include/bf_occurrence.h"
       ],
       "views": [
         "ExecutionView"
       ],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_external_events.py"
+        "10-Code/BonfyreControlPlane/tests/test_external_events.py",
+        "engine/core/tests/occurrence_spine_test.c"
       ]
     },
     "pattern-graph": {
