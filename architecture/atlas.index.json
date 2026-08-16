@@ -146,7 +146,9 @@
       "invariants": [
         "owns conflict-free merge, not the meaning of any candidate it holds"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Automerge CRDT merge runs on candidate state in-repo with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -206,7 +208,9 @@
       "invariants": [
         "a training phenotype, not the identity of the model trained"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Burn training/inference step runs with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -317,7 +321,9 @@
       "invariants": [
         "owns kernel generation, not the correctness of the fused operation"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real generated CubeCL kernel executes with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -344,7 +350,9 @@
       "invariants": [
         "owns bulk transformation, not the provenance of its inputs or outputs"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Daft transformation runs over a corpus with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -406,7 +414,9 @@
       "invariants": [
         "owns equivalence-search machinery, not the correctness of a chosen alternative"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real egglog rewrite runs in the composition path with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -479,7 +489,9 @@
       "invariants": [
         "owns incremental recomputation, not the semantics of the views maintained"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Feldera/DBSP incremental view runs over live events with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -726,7 +738,9 @@
       "invariants": [
         "owns context compilation, not the sufficiency of a compiled cut"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when GigaToken compiles a real mission context with a witness"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -787,19 +801,25 @@
       "invariants": [
         "owns reduction mechanics, not the meaning of the structure reduced"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending"
+      ],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "implemented",
       "native_formats": [
         "helix"
       ],
       "node_types": [],
       "semantic_question": "What is the bounded reduction of this selected symbolic or computational structure?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/substrate_hvm.py"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_substrate_hvm.py"
+      ]
     },
     "hydro": {
       "canonical_name": "Hydro",
@@ -816,7 +836,9 @@
       "invariants": [
         "a placement phenotype, not the authority to run what it places"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Hydro dataflow places and runs work with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -878,7 +900,9 @@
       "invariants": [
         "owns vector storage, not the identity or authority of what is embedded"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Lance vector store is written and queried in-repo with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -1140,7 +1164,9 @@
       "invariants": [
         "owns durability, not the meaning of the work it keeps alive"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Restate durable execution journals a long wait with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -1363,7 +1389,9 @@
       "invariants": [
         "an execution phenotype, not a model identity or representation"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when Tract runs a real local model inference with a test"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [],
@@ -1474,7 +1502,9 @@
       "invariants": [
         "a proof of a stated invariant is not a proof of an unstated one"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "graduates when a real Verus proof of a named invariant passes with the proof artifact as witness"
+      ],
       "layer": "substrate",
       "maturity": "declared",
       "native_formats": [

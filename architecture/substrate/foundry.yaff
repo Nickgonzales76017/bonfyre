@@ -3,10 +3,10 @@ atlas substrate
 # a substrate OWNS MECHANICS. It may not inherit the semantics of the
 # architectures that ride it. AuthorityGraph and WorkGraph may both serialize
 # through the same store; their algebras stay distinct. Every entry states that
-# as a forbidden_inference. Maturity is honest: YaFF is witnessed by this atlas
-# and the packs; the rest are declared -- their Reality Foundry role is a
-# contract, their in-repo integration is not yet witnessed here, so none claims
-# measured/proven without a witness.
+# as a forbidden_inference. Maturity is honest: HVM4 and YaFF are witnessed by
+# real runs/tests in this repo; the other 12 are declared -- their Reality
+# Foundry role is a contract, and each names the exact witness that graduates it
+# to implemented. None is laundered to measured without that witness.
 
 architecture yaff
   canonical_name YaFF
@@ -26,6 +26,24 @@ architecture yaff
   witness packs
   source_lineage Reality Foundry 14-substrate
 
+architecture hvm4
+  canonical_name HVM4
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the bounded reduction of this selected symbolic or computational structure?
+  purpose Bounded recursive reduction of selected symbolic/computational structures.
+  maturity implemented
+  internal_calculus interaction-net reduction
+  invariant owns reduction mechanics, not the meaning of the structure reduced
+  forbidden_inference a reduction completing -> the reduced structure is correct
+  native_format helix
+  interacts fpq-seed
+  source_path 10-Code/BonfyreControlPlane/substrate_hvm.py
+  witness 10-Code/BonfyreControlPlane/tests/test_substrate_hvm.py
+  source_lineage Reality Foundry 14-substrate
+  known_gap installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending
+
 architecture automerge
   canonical_name Automerge
   family substrate
@@ -38,6 +56,7 @@ architecture automerge
   invariant owns conflict-free merge, not the meaning of any candidate it holds
   forbidden_inference a candidate merged in Possible -> a change to Actual
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Automerge CRDT merge runs on candidate state in-repo with a test
 
 architecture feldera
   canonical_name Feldera
@@ -51,6 +70,7 @@ architecture feldera
   invariant owns incremental recomputation, not the semantics of the views maintained
   forbidden_inference a maintained view -> authority over what it summarizes
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Feldera/DBSP incremental view runs over live events with a test
 
 architecture egglog
   canonical_name egglog
@@ -64,21 +84,7 @@ architecture egglog
   invariant owns equivalence-search machinery, not the correctness of a chosen alternative
   forbidden_inference two forms found equivalent by search -> equivalent under every architecture's algebra
   source_lineage Reality Foundry 14-substrate
-
-architecture hvm4
-  canonical_name HVM4
-  family substrate
-  domain Reality Foundry
-  layer substrate
-  semantic_question What is the bounded reduction of this selected symbolic or computational structure?
-  purpose Bounded recursive reduction of selected symbolic/computational structures.
-  maturity declared
-  internal_calculus interaction-net reduction
-  invariant owns reduction mechanics, not the meaning of the structure reduced
-  forbidden_inference a reduction completing -> the reduced structure is correct
-  native_format helix
-  interacts fpq-seed
-  source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real egglog rewrite runs in the composition path with a test
 
 architecture gigatoken
   canonical_name GigaToken
@@ -92,6 +98,7 @@ architecture gigatoken
   invariant owns context compilation, not the sufficiency of a compiled cut
   forbidden_inference a compiled context -> all evidence the mission needs is present
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when GigaToken compiles a real mission context with a witness
 
 architecture lance
   canonical_name Lance
@@ -105,6 +112,7 @@ architecture lance
   invariant owns vector storage, not the identity or authority of what is embedded
   forbidden_inference vector similarity -> same actor or same claim
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Lance vector store is written and queried in-repo with a test
 
 architecture daft
   canonical_name Daft
@@ -118,6 +126,7 @@ architecture daft
   invariant owns bulk transformation, not the provenance of its inputs or outputs
   forbidden_inference a transformed corpus -> provenance preserved without a witness
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Daft transformation runs over a corpus with a test
 
 architecture tract
   canonical_name Tract
@@ -130,8 +139,9 @@ architecture tract
   internal_calculus local inference runtime
   invariant an execution phenotype, not a model identity or representation
   forbidden_inference runs locally -> the representation it runs is authorized or correct
-  interacts prepared-execution
+  interacts kv-temporal
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when Tract runs a real local model inference with a test
 
 architecture burn
   canonical_name Burn
@@ -145,6 +155,7 @@ architecture burn
   invariant a training phenotype, not the identity of the model trained
   forbidden_inference trained -> generation quality good (the FPQ lesson generalizes)
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Burn training/inference step runs with a test
 
 architecture cubecl
   canonical_name CubeCL
@@ -158,6 +169,7 @@ architecture cubecl
   invariant owns kernel generation, not the correctness of the fused operation
   forbidden_inference a generated kernel is fast -> the fused operation is valid
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real generated CubeCL kernel executes with a test
 
 architecture hydro
   canonical_name Hydro
@@ -170,8 +182,9 @@ architecture hydro
   internal_calculus distributed dataflow placement
   invariant a placement phenotype, not the authority to run what it places
   forbidden_inference placeable -> authorized to execute there
-  interacts placement
+  interacts service-lifecycle
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Hydro dataflow places and runs work with a test
 
 architecture restate
   canonical_name Restate
@@ -186,6 +199,7 @@ architecture restate
   forbidden_inference durably waiting -> the external event will occur
   interacts work-graph
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Restate durable execution journals a long wait with a test
 
 architecture verus
   canonical_name Verus
@@ -201,3 +215,4 @@ architecture verus
   native_format crux
   interacts proof-frontier
   source_lineage Reality Foundry 14-substrate
+  known_gap graduates when a real Verus proof of a named invariant passes with the proof artifact as witness
