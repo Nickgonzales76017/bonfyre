@@ -380,3 +380,14 @@ interaction address-plane-ranks-survivors
   forbidden_inference a top rank -> a correct, authorized, or runnable route (the fence and closure still run)
   witness rank_commands
   binding 10-Code/BonfyreControlPlane/route_ranker.py
+
+interaction proof-frontier-reheats-feldera
+  source proof-frontier
+  destination feldera
+  relation change_notification
+  preserves the identity of the proof facts that changed (inserted or retracted)
+  drops the conclusions that did not change -- only the delta reheats
+  forbidden_inference a reheat occurred -> the maintained answer changed (a reheat may reconfirm the same set)
+  invalidates_on the maintained relation is read while a proof fact write is in flight
+  witness reachability-proof.json (the retraction that withdrew organism 2 and reheated the fold)
+  binding 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs

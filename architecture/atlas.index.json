@@ -2949,6 +2949,23 @@
       "relation": "binding_source",
       "source": "capability-lattice"
     },
+    "proof-frontier-reheats-feldera": {
+      "destination": "feldera",
+      "drops": [
+        "the conclusions that did not change -- only the delta reheats"
+      ],
+      "forbidden_inferences": [
+        "a reheat occurred -> the maintained answer changed (a reheat may reconfirm the same set)"
+      ],
+      "invalidates_on": [
+        "the maintained relation is read while a proof fact write is in flight"
+      ],
+      "preserves": [
+        "the identity of the proof facts that changed (inserted or retracted)"
+      ],
+      "relation": "change_notification",
+      "source": "proof-frontier"
+    },
     "proof-resolves-layer-blocker": {
       "destination": "unlock-graph",
       "drops": [
