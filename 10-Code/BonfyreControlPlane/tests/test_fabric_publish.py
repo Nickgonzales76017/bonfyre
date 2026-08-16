@@ -41,6 +41,21 @@ def test_publish_is_idempotent(tmp_path):
     assert db.execute("SELECT count(*) FROM artifacts").fetchone()[0] == 1
 
 
+def test_dedupe_keeps_only_the_latest_version(tmp_path):
+    db = sqlite3.connect(":memory:")
+    fp.ensure_schema(db)
+    content = tmp_path / "reach.json"
+    content.write_text('{"generated_at": "t1"}')
+    fp.publish_file(db, name="reachable-capacity", content_path=content, dedupe=True)
+    content.write_text('{"generated_at": "t2"}')  # new content -> new digest
+    pub2 = fp.publish_file(db, name="reachable-capacity", content_path=content, dedupe=True)
+    # only the latest reachable-capacity survives
+    rows = db.execute(
+        "SELECT digest FROM namespace_objects n JOIN artifacts a USING(uri)"
+        " WHERE native_id='reachable-capacity'").fetchall()
+    assert len(rows) == 1 and rows[0][0] == pub2.digest
+
+
 def test_only_our_source_authority_is_written(tmp_path):
     # additive: a pre-existing fabric-core row is never touched.
     db = sqlite3.connect(":memory:")

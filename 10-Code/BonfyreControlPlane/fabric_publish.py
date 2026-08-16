@@ -91,12 +91,18 @@ def publish_file(
     content_path: Path,
     media_type: str = "application/json",
     content_contract: str = "control-plane-projection.v1",
+    dedupe: bool = False,
 ) -> Published:
     """Publish a real file as a fabric artifact + its namespace object.
 
     The artifact is a zero-copy reference to the file on disk (the fabric's own
     representation), content-addressed by sha256, discoverable by ``name`` via
-    the namespace object's native_id. Idempotent on the digest."""
+    the namespace object's native_id. Idempotent on the digest.
+
+    With ``dedupe``, prior control-plane artifacts sharing this ``name`` but a
+    different digest are removed after the new one lands -- so a versioned
+    projection (reachable-capacity, whose timestamp changes its digest each
+    republish) keeps only its latest, rather than accumulating history."""
     data = content_path.read_bytes()
     digest = hashlib.sha256(data).hexdigest()
     uri = f"bonfyre://artifact/{digest}"
@@ -119,6 +125,14 @@ def publish_file(
         (digest, uri, media_type, str(content_path), str(content_path), len(data),
          "zero-copy-reference", now),
     )
+    if dedupe:
+        stale = [r[0] for r in db.execute(
+            "SELECT uri FROM namespace_objects"
+            " WHERE native_id=? AND source_authority=? AND uri!=?",
+            (name, SOURCE_AUTHORITY, uri))]
+        for ou in stale:
+            db.execute("DELETE FROM artifacts WHERE uri=?", (ou,))
+            db.execute("DELETE FROM namespace_objects WHERE uri=?", (ou,))
     _commit_retry(db)
     return Published(name=name, digest=digest, uri=uri, bytes=len(data))
 

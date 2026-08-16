@@ -76,6 +76,6 @@ def publish_reachability(
     try:
         return fp.publish_file(
             db, name="reachable-capacity", content_path=path,
-            content_contract="reachable-capacity.v1")
+            content_contract="reachable-capacity.v1", dedupe=True)
     finally:
         db.close()
