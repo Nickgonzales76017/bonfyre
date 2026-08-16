@@ -85,13 +85,16 @@ architecture feldera
   source_path ~/.bonfyre/substrates/v6.1/feldera/source
   source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
   source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
+  source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs
   source_path 10-Code/BonfyreControlPlane/substrate_feldera.py
+  source_path 10-Code/BonfyreControlPlane/reachability_bridge.py
   witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json
   witness 10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py
+  witness 10-Code/BonfyreControlPlane/tests/test_reachability_bridge.py
   source_lineage Reality Foundry 14-substrate
-  known_gap ReachableCapacity is maintained over synthetic blocker/resolved deltas; feeding the LIVE fabric relations (workgraph_nodes, frontier_layers, authority_edges) as the source deltas -- so publish_reachability becomes pure export -- is the remaining wire
+  known_gap live-fabric relations now feed the DBSP engine via reachability_bridge (backfilled from real state, DBSP reproduces the Python answer exactly); remaining is a persistent long-lived circuit fed by fabric change-deltas rather than a per-tick reseed
 
 architecture egglog
   canonical_name egglog

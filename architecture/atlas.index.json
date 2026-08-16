@@ -513,7 +513,7 @@
         "an opportunity is withdrawn from reachable the instant a resolving fact retracts"
       ],
       "known_gaps": [
-        "ReachableCapacity is maintained over synthetic blocker/resolved deltas; feeding the LIVE fabric relations (workgraph_nodes, frontier_layers, authority_edges) as the source deltas -- so publish_reachability becomes pure export -- is the remaining wire"
+        "live-fabric relations now feed the DBSP engine via reachability_bridge (backfilled from real state, DBSP reproduces the Python answer exactly); remaining is a persistent long-lived circuit fed by fabric change-deltas rather than a per-tick reseed"
       ],
       "layer": "substrate",
       "maturity": "measured",
@@ -524,7 +524,9 @@
         "~/.bonfyre/substrates/v6.1/feldera/source",
         "10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs",
         "10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs",
-        "10-Code/BonfyreControlPlane/substrate_feldera.py"
+        "10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs",
+        "10-Code/BonfyreControlPlane/substrate_feldera.py",
+        "10-Code/BonfyreControlPlane/reachability_bridge.py"
       ],
       "views": [
         "SubstrateView"
@@ -533,7 +535,8 @@
         "~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json",
         "~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json",
         "~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json",
-        "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py"
+        "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py",
+        "10-Code/BonfyreControlPlane/tests/test_reachability_bridge.py"
       ]
     },
     "foreign-twin": {

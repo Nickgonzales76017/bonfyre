@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Optional
 
 import fabric_publish as fp
+import reachability_bridge as rbridge
 import reachability_publish as rp
 
 # The tables a reachability answer actually depends on. Missing ones are skipped
@@ -93,7 +94,12 @@ def tick(
     prev = state_file.read_text().strip() if state_file.exists() else ""
     if sig == prev:
         return TickResult(changed=False, signature=sig)
-    published = rp.publish_reachability(fabric=fabric, control_db=control_db)
+    # prefer the DBSP-maintained relation as the source of truth; fall back to the
+    # Python computation only when the engine is not built.
+    if rbridge.engine_available():
+        published = rbridge.publish_maintained(fabric=fabric, control_db=control_db)
+    else:
+        published = rp.publish_reachability(fabric=fabric, control_db=control_db)
     state_file.parent.mkdir(parents=True, exist_ok=True)
     state_file.write_text(sig)
     return TickResult(changed=True, signature=sig, published_digest=published.digest)

@@ -130,6 +130,8 @@ class OppEval:
 
 
 def _actor_verified(db: sqlite3.Connection, actor_id: str) -> Optional[bool]:
+    if not _table_exists(db, "actor_nodes"):
+        return None
     row = db.execute("SELECT confidence FROM actor_nodes WHERE actor_id=?", (actor_id,)).fetchone()
     if row is None:
         return None
@@ -137,6 +139,8 @@ def _actor_verified(db: sqlite3.Connection, actor_id: str) -> Optional[bool]:
 
 
 def _layer_proven(db: sqlite3.Connection, resource: str, profile: str, layer: str) -> Optional[bool]:
+    if not _table_exists(db, "frontier_layers"):
+        return None
     row = db.execute(
         "SELECT status FROM frontier_layers"
         " WHERE subject_resource=? AND subject_profile=? AND layer=?",
