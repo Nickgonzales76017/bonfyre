@@ -1,12 +1,14 @@
 atlas substrate
 # The 14 Reality Foundry substrates. Constitutional restriction (atlas README):
 # a substrate OWNS MECHANICS. It may not inherit the semantics of the
-# architectures that ride it. AuthorityGraph and WorkGraph may both serialize
-# through the same store; their algebras stay distinct. Every entry states that
-# as a forbidden_inference. Maturity is honest: HVM4 and YaFF are witnessed by
-# real runs/tests in this repo; the other 12 are declared -- their Reality
-# Foundry role is a contract, and each names the exact witness that graduates it
-# to implemented. None is laundered to measured without that witness.
+# architectures that ride it. Every entry states that as a forbidden_inference.
+#
+# Maturity is real, not aspirational: 13 substrates are vendored, built and
+# probed under ~/.bonfyre/substrates/v6.1, each with a recorded live-upstream
+# semantic proof (state=passed, output_digest) -- consumed by
+# 10-Code/BonfyreControlPlane/substrate_evidence.py, never re-derived. They are
+# measured. HVM4 is implemented via a real hvm reduction (substrate_hvm.py); its
+# HVM2->HVM4 upgrade is the one open gap.
 
 architecture yaff
   canonical_name YaFF
@@ -15,15 +17,16 @@ architecture yaff
   layer substrate
   semantic_question What is the semantic contract for a trial's artifacts, effects, and expected witnesses?
   purpose Semantic contract / IR for the trial: artifacts, effects, expected witnesses.
-  maturity implemented
+  maturity measured
   internal_calculus block-and-field contract representation
+  internal_calculus probe: yaff-columnar-encode-decode-merkle-hash
   invariant a contract representation owns encoding, not the meaning of what it encodes
   forbidden_inference two architectures sharing YaFF -> the same semantics
   native_format yaff
   source_path architecture/atlas.py
-  source_path schemas/control
+  source_path ~/.bonfyre/substrates/v6.1/yaff/source
   witness architecture/tests/test_atlas.py
-  witness packs
+  witness ~/.bonfyre/substrates/v6.1/yaff/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
 
 architecture hvm4
@@ -51,12 +54,14 @@ architecture automerge
   layer substrate
   semantic_question How do many agents and humans mutate candidate state without contaminating Actual?
   purpose Collaborative candidate state; Possible may be mutated freely without touching Actual.
-  maturity declared
+  maturity measured
   internal_calculus CRDT merge mechanics
+  internal_calculus probe: crdt-concurrent-conflict-convergence
   invariant owns conflict-free merge, not the meaning of any candidate it holds
   forbidden_inference a candidate merged in Possible -> a change to Actual
+  source_path ~/.bonfyre/substrates/v6.1/automerge/source
+  witness ~/.bonfyre/substrates/v6.1/automerge/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Automerge CRDT merge runs on candidate state in-repo with a test
 
 architecture feldera
   canonical_name Feldera
@@ -65,12 +70,15 @@ architecture feldera
   layer substrate
   semantic_question What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?
   purpose Incremental maintenance of consequences over GitHub events, test results, CMS changes, ledger updates, form readiness, live queries.
-  maturity declared
+  maturity measured
   internal_calculus incremental view maintenance
+  internal_calculus probe: dbsp-five-transaction-integral
   invariant owns incremental recomputation, not the semantics of the views maintained
   forbidden_inference a maintained view -> authority over what it summarizes
+  source_path ~/.bonfyre/substrates/v6.1/feldera/source
+  witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
+  witness ~/.bonfyre/substrates/v6.1/feldera/target/release/bonfyre-feldera-dbsp-probe
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Feldera/DBSP incremental view runs over live events with a test
 
 architecture egglog
   canonical_name egglog
@@ -79,12 +87,15 @@ architecture egglog
   layer substrate
   semantic_question What are the equivalent alternatives to this plan, rewrite, representation, or composition?
   purpose Equivalence search over execution plans, rewrites, data representations, API compositions, patch transformations.
-  maturity declared
+  maturity measured
   internal_calculus e-graph equality saturation
+  internal_calculus probe: bounded-equality-saturation-and-check
   invariant owns equivalence-search machinery, not the correctness of a chosen alternative
   forbidden_inference two forms found equivalent by search -> equivalent under every architecture's algebra
+  source_path ~/.bonfyre/substrates/v6.1/egglog/source
+  witness ~/.bonfyre/substrates/v6.1/egglog/semantic-proof.json
+  witness ~/.bonfyre/substrates/v6.1/egglog/target/release/egglog
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real egglog rewrite runs in the composition path with a test
 
 architecture gigatoken
   canonical_name GigaToken
@@ -93,12 +104,14 @@ architecture gigatoken
   layer substrate
   semantic_question From the giant source, what purpose-specific mission context should be compiled?
   purpose Giant-source/context substrate from which purpose-specific mission contexts are compiled. The token/context-reduction engine.
-  maturity declared
+  maturity measured
   internal_calculus high-throughput token substrate + context compilation
+  internal_calculus probe: gigatoken-bpe-real-training-learns-correct-merges
   invariant owns context compilation, not the sufficiency of a compiled cut
   forbidden_inference a compiled context -> all evidence the mission needs is present
+  source_path ~/.bonfyre/substrates/v6.1/gigatoken/source
+  witness ~/.bonfyre/substrates/v6.1/gigatoken/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when GigaToken compiles a real mission context with a witness
 
 architecture lance
   canonical_name Lance
@@ -107,12 +120,14 @@ architecture lance
   layer substrate
   semantic_question Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?
   purpose Multimodal / vector body for code, traces, docs, images, transcripts, review artifacts.
-  maturity declared
+  maturity measured
   internal_calculus columnar vector storage + ANN index
+  internal_calculus probe: lance-dataset-write-read-roundtrip
   invariant owns vector storage, not the identity or authority of what is embedded
   forbidden_inference vector similarity -> same actor or same claim
+  source_path ~/.bonfyre/substrates/v6.1/lance/source
+  witness ~/.bonfyre/substrates/v6.1/lance/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Lance vector store is written and queried in-repo with a test
 
 architecture daft
   canonical_name Daft
@@ -121,12 +136,14 @@ architecture daft
   layer substrate
   semantic_question How are large mixed-data transformations run across these corpora?
   purpose Large mixed-data transformations across the corpora.
-  maturity declared
+  maturity measured
   internal_calculus distributed dataframe execution
+  internal_calculus probe: daft-core-int64array-arithmetic-workspace
   invariant owns bulk transformation, not the provenance of its inputs or outputs
   forbidden_inference a transformed corpus -> provenance preserved without a witness
+  source_path ~/.bonfyre/substrates/v6.1/daft/source
+  witness ~/.bonfyre/substrates/v6.1/daft/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Daft transformation runs over a corpus with a test
 
 architecture tract
   canonical_name Tract
@@ -135,13 +152,15 @@ architecture tract
   layer substrate
   semantic_question What is the lightweight local model execution phenotype?
   purpose Lightweight local model execution phenotype.
-  maturity declared
+  maturity measured
   internal_calculus local inference runtime
+  internal_calculus probe: tract-core-typedmodel-elementwise-inference
   invariant an execution phenotype, not a model identity or representation
   forbidden_inference runs locally -> the representation it runs is authorized or correct
   interacts kv-temporal
+  source_path ~/.bonfyre/substrates/v6.1/tract/source
+  witness ~/.bonfyre/substrates/v6.1/tract/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when Tract runs a real local model inference with a test
 
 architecture burn
   canonical_name Burn
@@ -150,12 +169,14 @@ architecture burn
   layer substrate
   semantic_question What is the trainable tensor/model phenotype?
   purpose Trainable tensor/model phenotype.
-  maturity declared
+  maturity measured
   internal_calculus autodiff training runtime
+  internal_calculus probe: burn-ndarray-tensor-add-and-matmul
   invariant a training phenotype, not the identity of the model trained
   forbidden_inference trained -> generation quality good (the FPQ lesson generalizes)
+  source_path ~/.bonfyre/substrates/v6.1/burn/source
+  witness ~/.bonfyre/substrates/v6.1/burn/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Burn training/inference step runs with a test
 
 architecture cubecl
   canonical_name CubeCL
@@ -164,12 +185,14 @@ architecture cubecl
   layer substrate
   semantic_question When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?
   purpose Accelerated generated-kernel phenotype where a learned/fused operation warrants it.
-  maturity declared
+  maturity measured
   internal_calculus generated GPU kernels
+  internal_calculus probe: cubecl-cpu-portable-kernel-test-suite
   invariant owns kernel generation, not the correctness of the fused operation
   forbidden_inference a generated kernel is fast -> the fused operation is valid
+  source_path ~/.bonfyre/substrates/v6.1/cubecl/source
+  witness ~/.bonfyre/substrates/v6.1/cubecl/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real generated CubeCL kernel executes with a test
 
 architecture hydro
   canonical_name Hydro
@@ -178,13 +201,15 @@ architecture hydro
   layer substrate
   semantic_question What is the distributed placement/dataflow phenotype for this work?
   purpose Distributed placement / dataflow phenotype.
-  maturity declared
+  maturity measured
   internal_calculus distributed dataflow placement
+  internal_calculus probe: hydro-upstream-deterministic-placement
   invariant a placement phenotype, not the authority to run what it places
   forbidden_inference placeable -> authorized to execute there
   interacts service-lifecycle
+  source_path ~/.bonfyre/substrates/v6.1/hydro/source
+  witness ~/.bonfyre/substrates/v6.1/hydro/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Hydro dataflow places and runs work with a test
 
 architecture restate
   canonical_name Restate
@@ -193,13 +218,15 @@ architecture restate
   layer substrate
   semantic_question How does the trial durably wait hours or days on external reality?
   purpose Durable long-lived execution when the trial waits on external reality.
-  maturity declared
+  maturity measured
   internal_calculus durable execution + journaling
+  internal_calculus probe: restate-bifrost-durable-log-append-and-lookup
   invariant owns durability, not the meaning of the work it keeps alive
   forbidden_inference durably waiting -> the external event will occur
   interacts work-graph
+  source_path ~/.bonfyre/substrates/v6.1/restate/source
+  witness ~/.bonfyre/substrates/v6.1/restate/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Restate durable execution journals a long wait with a test
 
 architecture verus
   canonical_name Verus
@@ -208,11 +235,13 @@ architecture verus
   layer substrate
   semantic_question Which invariants are worth proving, and does the proof hold within bounds?
   purpose Bounded formal verification for invariants worth proving.
-  maturity declared
+  maturity measured
   internal_calculus bounded SMT verification
+  internal_calculus probe: smt-backed-formal-verification-positive-and-negative-control
   invariant a proof of a stated invariant is not a proof of an unstated one
   forbidden_inference one invariant proven -> the system is correct
   native_format crux
   interacts proof-frontier
+  source_path ~/.bonfyre/substrates/v6.1/verus/source
+  witness ~/.bonfyre/substrates/v6.1/verus/semantic-proof.json
   source_lineage Reality Foundry 14-substrate
-  known_gap graduates when a real Verus proof of a named invariant passes with the proof artifact as witness

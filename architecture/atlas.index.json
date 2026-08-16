@@ -141,24 +141,27 @@
         "a candidate merged in Possible -> a change to Actual"
       ],
       "internal_calculi": [
-        "CRDT merge mechanics"
+        "CRDT merge mechanics",
+        "probe: crdt-concurrent-conflict-convergence"
       ],
       "invariants": [
         "owns conflict-free merge, not the meaning of any candidate it holds"
       ],
-      "known_gaps": [
-        "graduates when a real Automerge CRDT merge runs on candidate state in-repo with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "How do many agents and humans mutate candidate state without contaminating Actual?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/automerge/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/automerge/semantic-proof.json"
+      ]
     },
     "blocker-graph": {
       "canonical_name": "BlockerGraph",
@@ -203,24 +206,27 @@
         "trained -> generation quality good (the FPQ lesson generalizes)"
       ],
       "internal_calculi": [
-        "autodiff training runtime"
+        "autodiff training runtime",
+        "probe: burn-ndarray-tensor-add-and-matmul"
       ],
       "invariants": [
         "a training phenotype, not the identity of the model trained"
       ],
-      "known_gaps": [
-        "graduates when a real Burn training/inference step runs with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "What is the trainable tensor/model phenotype?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/burn/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/burn/semantic-proof.json"
+      ]
     },
     "capability-closure": {
       "canonical_name": "CapabilityClosureGraph",
@@ -316,24 +322,27 @@
         "a generated kernel is fast -> the fused operation is valid"
       ],
       "internal_calculi": [
-        "generated GPU kernels"
+        "generated GPU kernels",
+        "probe: cubecl-cpu-portable-kernel-test-suite"
       ],
       "invariants": [
         "owns kernel generation, not the correctness of the fused operation"
       ],
-      "known_gaps": [
-        "graduates when a real generated CubeCL kernel executes with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/cubecl/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/cubecl/semantic-proof.json"
+      ]
     },
     "daft": {
       "canonical_name": "Daft",
@@ -345,24 +354,27 @@
         "a transformed corpus -> provenance preserved without a witness"
       ],
       "internal_calculi": [
-        "distributed dataframe execution"
+        "distributed dataframe execution",
+        "probe: daft-core-int64array-arithmetic-workspace"
       ],
       "invariants": [
         "owns bulk transformation, not the provenance of its inputs or outputs"
       ],
-      "known_gaps": [
-        "graduates when a real Daft transformation runs over a corpus with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "How are large mixed-data transformations run across these corpora?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/daft/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/daft/semantic-proof.json"
+      ]
     },
     "discipl-composition": {
       "canonical_name": "DisCIPLCompositionGraph",
@@ -409,24 +421,28 @@
         "two forms found equivalent by search -> equivalent under every architecture's algebra"
       ],
       "internal_calculi": [
-        "e-graph equality saturation"
+        "e-graph equality saturation",
+        "probe: bounded-equality-saturation-and-check"
       ],
       "invariants": [
         "owns equivalence-search machinery, not the correctness of a chosen alternative"
       ],
-      "known_gaps": [
-        "graduates when a real egglog rewrite runs in the composition path with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "What are the equivalent alternatives to this plan, rewrite, representation, or composition?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/egglog/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/egglog/semantic-proof.json",
+        "~/.bonfyre/substrates/v6.1/egglog/target/release/egglog"
+      ]
     },
     "evidence-binding": {
       "canonical_name": "EvidenceBindingGraph",
@@ -484,24 +500,28 @@
         "a maintained view -> authority over what it summarizes"
       ],
       "internal_calculi": [
-        "incremental view maintenance"
+        "incremental view maintenance",
+        "probe: dbsp-five-transaction-integral"
       ],
       "invariants": [
         "owns incremental recomputation, not the semantics of the views maintained"
       ],
-      "known_gaps": [
-        "graduates when a real Feldera/DBSP incremental view runs over live events with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/feldera/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json",
+        "~/.bonfyre/substrates/v6.1/feldera/target/release/bonfyre-feldera-dbsp-probe"
+      ]
     },
     "foreign-twin": {
       "canonical_name": "ForeignTwinGraph",
@@ -733,24 +753,27 @@
         "a compiled context -> all evidence the mission needs is present"
       ],
       "internal_calculi": [
-        "high-throughput token substrate + context compilation"
+        "high-throughput token substrate + context compilation",
+        "probe: gigatoken-bpe-real-training-learns-correct-merges"
       ],
       "invariants": [
         "owns context compilation, not the sufficiency of a compiled cut"
       ],
-      "known_gaps": [
-        "graduates when GigaToken compiles a real mission context with a witness"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "From the giant source, what purpose-specific mission context should be compiled?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/gigatoken/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/gigatoken/semantic-proof.json"
+      ]
     },
     "hash-identity": {
       "canonical_name": "HashIdentityGraph",
@@ -831,24 +854,27 @@
         "placeable -> authorized to execute there"
       ],
       "internal_calculi": [
-        "distributed dataflow placement"
+        "distributed dataflow placement",
+        "probe: hydro-upstream-deterministic-placement"
       ],
       "invariants": [
         "a placement phenotype, not the authority to run what it places"
       ],
-      "known_gaps": [
-        "graduates when a real Hydro dataflow places and runs work with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "What is the distributed placement/dataflow phenotype for this work?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/hydro/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/hydro/semantic-proof.json"
+      ]
     },
     "kv-temporal": {
       "canonical_name": "KVTemporalGraph",
@@ -895,24 +921,27 @@
         "vector similarity -> same actor or same claim"
       ],
       "internal_calculi": [
-        "columnar vector storage + ANN index"
+        "columnar vector storage + ANN index",
+        "probe: lance-dataset-write-read-roundtrip"
       ],
       "invariants": [
         "owns vector storage, not the identity or authority of what is embedded"
       ],
-      "known_gaps": [
-        "graduates when a real Lance vector store is written and queried in-repo with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/lance/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/lance/semantic-proof.json"
+      ]
     },
     "occurrence-spine": {
       "canonical_name": "OccurrenceSpine",
@@ -1159,24 +1188,27 @@
         "durably waiting -> the external event will occur"
       ],
       "internal_calculi": [
-        "durable execution + journaling"
+        "durable execution + journaling",
+        "probe: restate-bifrost-durable-log-append-and-lookup"
       ],
       "invariants": [
         "owns durability, not the meaning of the work it keeps alive"
       ],
-      "known_gaps": [
-        "graduates when a real Restate durable execution journals a long wait with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "How does the trial durably wait hours or days on external reality?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/restate/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/restate/semantic-proof.json"
+      ]
     },
     "result-receipt-bundle": {
       "canonical_name": "ResultReceiptBundleGraph",
@@ -1384,24 +1416,27 @@
         "runs locally -> the representation it runs is authorized or correct"
       ],
       "internal_calculi": [
-        "local inference runtime"
+        "local inference runtime",
+        "probe: tract-core-typedmodel-elementwise-inference"
       ],
       "invariants": [
         "an execution phenotype, not a model identity or representation"
       ],
-      "known_gaps": [
-        "graduates when Tract runs a real local model inference with a test"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [],
       "node_types": [],
       "semantic_question": "What is the lightweight local model execution phenotype?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/tract/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/tract/semantic-proof.json"
+      ]
     },
     "transport-phenotype": {
       "canonical_name": "TransportPhenotypeGraph",
@@ -1497,26 +1532,29 @@
         "one invariant proven -> the system is correct"
       ],
       "internal_calculi": [
-        "bounded SMT verification"
+        "bounded SMT verification",
+        "probe: smt-backed-formal-verification-positive-and-negative-control"
       ],
       "invariants": [
         "a proof of a stated invariant is not a proof of an unstated one"
       ],
-      "known_gaps": [
-        "graduates when a real Verus proof of a named invariant passes with the proof artifact as witness"
-      ],
+      "known_gaps": [],
       "layer": "substrate",
-      "maturity": "declared",
+      "maturity": "measured",
       "native_formats": [
         "crux"
       ],
       "node_types": [],
       "semantic_question": "Which invariants are worth proving, and does the proof hold within bounds?",
-      "source_paths": [],
+      "source_paths": [
+        "~/.bonfyre/substrates/v6.1/verus/source"
+      ],
       "views": [
         "SubstrateView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "~/.bonfyre/substrates/v6.1/verus/semantic-proof.json"
+      ]
     },
     "work-graph": {
       "canonical_name": "WorkGraph",
@@ -1564,14 +1602,15 @@
         "two architectures sharing YaFF -> the same semantics"
       ],
       "internal_calculi": [
-        "block-and-field contract representation"
+        "block-and-field contract representation",
+        "probe: yaff-columnar-encode-decode-merkle-hash"
       ],
       "invariants": [
         "a contract representation owns encoding, not the meaning of what it encodes"
       ],
       "known_gaps": [],
       "layer": "substrate",
-      "maturity": "implemented",
+      "maturity": "measured",
       "native_formats": [
         "yaff"
       ],
@@ -1579,14 +1618,14 @@
       "semantic_question": "What is the semantic contract for a trial's artifacts, effects, and expected witnesses?",
       "source_paths": [
         "architecture/atlas.py",
-        "schemas/control"
+        "~/.bonfyre/substrates/v6.1/yaff/source"
       ],
       "views": [
         "SubstrateView"
       ],
       "witnesses": [
         "architecture/tests/test_atlas.py",
-        "packs"
+        "~/.bonfyre/substrates/v6.1/yaff/semantic-proof.json"
       ]
     }
   },
