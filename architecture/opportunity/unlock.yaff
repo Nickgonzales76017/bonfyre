@@ -77,6 +77,32 @@ architecture collapse-front
   source_lineage retraction dual harvested from run6/run7 DBSP retraction algebra
   known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions). Self-applied to the atlas's own maturity claims (atlas_collapse.py): 21 measured/proven claims audited, zero laundered against the real witness files, 13 single-witness fragile. Extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
 
+architecture fortification-plan
+  canonical_name FortificationPlan
+  family opportunity
+  domain Opportunity / Institutional Capacity
+  layer opportunity
+  semantic_question Which single real-world action most increases robust reachable capacity right now?
+  purpose Composes CollapseFront with reachability into ranked action over the real relationship graph. VERIFY: an asserted actor many live conclusions rest on (leverage = its CollapseFront) -- confirm the assumption before acting on it. DIVERSIFY: a high-value conclusion (funding/authority/opportunity) standing on a single actor -- add a second independent path. Emits the next moves ranked by leverage and publishes the plan into the live fabric, so the loop and a human read the priorities BonfyreFS serves. Not an audit; an action list.
+  maturity measured
+  node_types Action
+  edge_types prioritizes
+  state_types verify
+  state_types diversify
+  internal_calculus leverage rank over the CollapseFront collapse matrix, split by actor confidence
+  invariant a verified actor is never a verification target; leverage counts only value-bearing conclusions
+  invariant the plan ranks moves, never executes them; reachability stops at the human/external commit line
+  forbidden_inference high leverage -> the action is authorized or free
+  forbidden_inference fragile support -> the relationship is false (fragility is structural, not truth)
+  forbidden_inference published plan -> the action was taken
+  interacts collapse-front
+  interacts actor-graph
+  interacts unlock-graph
+  source_path 10-Code/BonfyreControlPlane/fortification.py
+  witness 10-Code/BonfyreControlPlane/tests/test_fortification.py
+  source_lineage CollapseFront applied to real institutional prioritization
+  known_gap measured on the live 68-actor graph: Tarbell Center is the top verify target (279 live conclusions rest on an only-asserted actor), then the funder set at 15 each; plan published to the live fabric as fortification-plan.v1. Feeding the leverage signal back into reachable_capacity so the loop pursues fragile-but-reachable capacity before it collapses is the next step
+
 architecture resource-activation
   canonical_name ResourceActivationGraph
   family opportunity

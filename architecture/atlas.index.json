@@ -958,6 +958,44 @@
         "10-Code/BonfyreControlPlane/tests/test_form_graph.py"
       ]
     },
+    "fortification-plan": {
+      "canonical_name": "FortificationPlan",
+      "commands": [],
+      "domain": "Opportunity / Institutional Capacity",
+      "edge_types": [
+        "prioritizes"
+      ],
+      "family": "opportunity",
+      "forbidden_inferences": [
+        "high leverage -> the action is authorized or free",
+        "fragile support -> the relationship is false (fragility is structural, not truth)",
+        "published plan -> the action was taken"
+      ],
+      "internal_calculi": [
+        "leverage rank over the CollapseFront collapse matrix, split by actor confidence"
+      ],
+      "invariants": [
+        "a verified actor is never a verification target; leverage counts only value-bearing conclusions",
+        "the plan ranks moves, never executes them; reachability stops at the human/external commit line"
+      ],
+      "known_gaps": [
+        "measured on the live 68-actor graph: Tarbell Center is the top verify target (279 live conclusions rest on an only-asserted actor), then the funder set at 15 each; plan published to the live fabric as fortification-plan.v1. Feeding the leverage signal back into reachable_capacity so the loop pursues fragile-but-reachable capacity before it collapses is the next step"
+      ],
+      "layer": "opportunity",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "Action"
+      ],
+      "semantic_question": "Which single real-world action most increases robust reachable capacity right now?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/fortification.py"
+      ],
+      "views": [],
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_fortification.py"
+      ]
+    },
     "fpq-mode-select": {
       "canonical_name": "FPQModeSelectionGraph",
       "commands": [
