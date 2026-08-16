@@ -20,12 +20,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
 
-FELDERA_BIN = (Path.home() / ".bonfyre" / "substrates" / "v6.1" / "feldera"
-               / "probe" / "target" / "release" / "reachability_incremental")
+_FELDERA_REL = Path.home() / ".bonfyre" / "substrates" / "v6.1" / "feldera" / "probe" / "target" / "release"
+FELDERA_BIN = _FELDERA_REL / "reachability_incremental"
+REACHABLE_BIN = _FELDERA_REL / "reachable_capacity"
 
 
 def available() -> bool:
     return FELDERA_BIN.exists()
+
+
+def reachable_capacity_available() -> bool:
+    return REACHABLE_BIN.exists()
 
 
 @dataclass(frozen=True)
@@ -75,4 +80,43 @@ def run_incremental_view(timeout: int = 30) -> IncrementalView:
         cascade=d.get("cascade", ""),
         state=d.get("state", ""),
         raw=raw,
+    )
+
+
+@dataclass(frozen=True)
+class ReachableCapacity:
+    reachable_count: tuple[int, ...]
+    organism_reachable: tuple[int, ...]
+    maintained: str
+    state: str
+
+    @property
+    def ok(self) -> bool:
+        return self.state == "passed"
+
+    @property
+    def withdrawn_on_reheat(self) -> bool:
+        """The organism was reachable, then a resolution retraction withdrew it."""
+        seq = self.organism_reachable
+        return bool(seq) and max(seq) == 1 and seq[-1] == 0
+
+
+def run_reachable_capacity(timeout: int = 30) -> ReachableCapacity:
+    """Run the maintained ReachableCapacity DBSP relation.
+
+    Opportunities become reachable when all their blockers resolve, and are
+    withdrawn incrementally when a resolution retracts (a proof reheat, an
+    authority revoke) -- via antijoin over delta streams, not recompute. This is
+    reachability maintained, not computed."""
+    if not REACHABLE_BIN.exists():
+        raise RuntimeError("feldera ReachableCapacity relation not built")
+    proc = subprocess.run([str(REACHABLE_BIN)], capture_output=True, text=True, timeout=timeout)
+    raw = (proc.stdout + proc.stderr).strip()
+    line = next((l for l in raw.splitlines() if l.strip().startswith("{")), "{}")
+    d = json.loads(line)
+    return ReachableCapacity(
+        reachable_count=tuple(d.get("reachable_count", [])),
+        organism_reachable=tuple(d.get("organism_reachable", [])),
+        maintained=d.get("maintained", ""),
+        state=d.get("state", ""),
     )

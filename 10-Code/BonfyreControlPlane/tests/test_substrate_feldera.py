@@ -23,3 +23,14 @@ def test_organism_route_withdraws_on_reheat_and_fpq_survives():
     # the decisive anti-amnesia property: FPQ is not erased by the SLI retraction
     assert v.fpq_present == (1, 1, 1, 1)
     assert v.fpq_survived is True
+
+
+@pytest.mark.skipif(not sf.reachable_capacity_available(),
+                    reason="requires the built ReachableCapacity relation")
+def test_reachable_capacity_is_maintained_with_withdrawal():
+    r = sf.run_reachable_capacity()
+    assert r.ok
+    # organism becomes reachable when all blockers resolve, then the SLI reheat
+    # withdraws it incrementally -- maintained, not recomputed.
+    assert r.organism_reachable == (0, 0, 0, 1, 1, 0)
+    assert r.withdrawn_on_reheat is True

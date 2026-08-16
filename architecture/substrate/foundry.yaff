@@ -74,20 +74,24 @@ architecture feldera
   internal_calculus incremental view maintenance
   internal_calculus probe: dbsp-five-transaction-integral
   internal_calculus reachability view: fpq-sli-kv organism route under insert+retract
+  internal_calculus ReachableCapacity relation: opportunities antijoin resolved-blocker facts
   invariant owns incremental recomputation, not the semantics of the views maintained
   invariant a retraction propagates; an independent proven fact survives a dependent one's withdrawal
+  invariant an opportunity is withdrawn from reachable the instant a resolving fact retracts
   forbidden_inference a maintained view -> authority over what it summarizes
   interacts proof-frontier
   interacts unlock-graph
   command BonfyreProof
   source_path ~/.bonfyre/substrates/v6.1/feldera/source
   source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+  source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
   source_path 10-Code/BonfyreControlPlane/substrate_feldera.py
   witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json
+  witness ~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json
   witness 10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py
   source_lineage Reality Foundry 14-substrate
-  known_gap the maintained relation is a proof/organism cardinality; wiring live fabric relations (workgraph_nodes, frontier_layers, authority) as DBSP source relations is the next step
+  known_gap ReachableCapacity is maintained over synthetic blocker/resolved deltas; feeding the LIVE fabric relations (workgraph_nodes, frontier_layers, authority_edges) as the source deltas -- so publish_reachability becomes pure export -- is the remaining wire
 
 architecture egglog
   canonical_name egglog

@@ -68,7 +68,14 @@ def write_reachability_file(
 def publish_reachability(
     fabric: Path = fp.FABRIC, control_db: Path = CONTROL_DB, pack: Path = PACK
 ) -> fp.Published:
-    """Build the current reachability and publish it into the fabric."""
+    """Snapshot-and-export the current reachability into the fabric.
+
+    The maintained model is the Feldera/DBSP ReachableCapacity relation
+    (substrate/feldera_reachable_capacity.rs), which withdraws an opportunity the
+    instant a resolving fact retracts. This function is the export side: it takes
+    a snapshot of the current answer and writes it as a content-addressed fabric
+    artifact for BonfyreFS. Once the DBSP relation is fed the live fabric deltas,
+    this stops computing and becomes pure export of the maintained relation."""
     path = write_reachability_file(control_db, pack, fabric=fabric)
     db = sqlite3.connect(str(fabric), timeout=60)
     db.execute("PRAGMA busy_timeout=60000")

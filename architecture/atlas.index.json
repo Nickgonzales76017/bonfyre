@@ -504,14 +504,16 @@
       "internal_calculi": [
         "incremental view maintenance",
         "probe: dbsp-five-transaction-integral",
-        "reachability view: fpq-sli-kv organism route under insert+retract"
+        "reachability view: fpq-sli-kv organism route under insert+retract",
+        "ReachableCapacity relation: opportunities antijoin resolved-blocker facts"
       ],
       "invariants": [
         "owns incremental recomputation, not the semantics of the views maintained",
-        "a retraction propagates; an independent proven fact survives a dependent one's withdrawal"
+        "a retraction propagates; an independent proven fact survives a dependent one's withdrawal",
+        "an opportunity is withdrawn from reachable the instant a resolving fact retracts"
       ],
       "known_gaps": [
-        "the maintained relation is a proof/organism cardinality; wiring live fabric relations (workgraph_nodes, frontier_layers, authority) as DBSP source relations is the next step"
+        "ReachableCapacity is maintained over synthetic blocker/resolved deltas; feeding the LIVE fabric relations (workgraph_nodes, frontier_layers, authority_edges) as the source deltas -- so publish_reachability becomes pure export -- is the remaining wire"
       ],
       "layer": "substrate",
       "maturity": "measured",
@@ -521,6 +523,7 @@
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/feldera/source",
         "10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs",
+        "10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs",
         "10-Code/BonfyreControlPlane/substrate_feldera.py"
       ],
       "views": [
@@ -529,6 +532,7 @@
       "witnesses": [
         "~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json",
         "~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json",
+        "~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json",
         "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py"
       ]
     },
