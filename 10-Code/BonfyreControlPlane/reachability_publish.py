@@ -29,14 +29,23 @@ PACK = (Path(__file__).resolve().parent.parent.parent
 PROJECTIONS = Path.home() / ".bonfyre" / "estate-fabric" / "projections"
 
 
-def build_reachability(control_db: Path = CONTROL_DB, pack: Path = PACK) -> dict:
-    """Compute the current reachable capacity from the opportunities pack."""
+def build_reachability(
+    control_db: Path = CONTROL_DB, pack: Path = PACK, fabric: Path = fp.FABRIC
+) -> dict:
+    """Compute the current reachable capacity from the opportunities pack.
+
+    work_done blockers are decided against the real fabric WorkGraph when the
+    fabric is present, so reachability reflects the system's own work, not a
+    shadow copy."""
     opps, unlocks = opp.load_pack(pack.read_text())
     db = sqlite3.connect(str(control_db))
+    fabric_con = sqlite3.connect(str(fabric)) if fabric.exists() else None
     try:
-        evals = opp.reachable_capacity(db, opps, unlocks)
+        evals = opp.reachable_capacity(db, opps, unlocks, fabric_db=fabric_con)
     finally:
         db.close()
+        if fabric_con is not None:
+            fabric_con.close()
     return {
         "generated_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0)
                         .isoformat().replace("+00:00", "Z"),
@@ -46,10 +55,11 @@ def build_reachability(control_db: Path = CONTROL_DB, pack: Path = PACK) -> dict
 
 
 def write_reachability_file(
-    control_db: Path = CONTROL_DB, pack: Path = PACK, out_dir: Path = PROJECTIONS
+    control_db: Path = CONTROL_DB, pack: Path = PACK, out_dir: Path = PROJECTIONS,
+    fabric: Path = fp.FABRIC,
 ) -> Path:
     out_dir.mkdir(parents=True, exist_ok=True)
-    data = build_reachability(control_db, pack)
+    data = build_reachability(control_db, pack, fabric)
     path = out_dir / "reachable-capacity.json"
     path.write_text(json.dumps(data, indent=2, sort_keys=True))
     return path

@@ -148,6 +148,8 @@ def _layer_proven(db: sqlite3.Connection, resource: str, profile: str, layer: st
 
 
 def _work_satisfied(db: sqlite3.Connection, subject: str) -> Optional[bool]:
+    if not _table_exists(db, "work_items"):
+        return None
     row = db.execute(
         "SELECT state FROM work_items WHERE subject_ref=? ORDER BY id DESC LIMIT 1",
         (subject,),
@@ -157,16 +159,45 @@ def _work_satisfied(db: sqlite3.Connection, subject: str) -> Optional[bool]:
     return row[0] in ("satisfied", "effected")
 
 
+def _work_satisfied_fabric(fabric_db: sqlite3.Connection, subject: str) -> Optional[bool]:
+    """Is a real fabric WorkGraph node for this subject complete?
+
+    Matches the blocker subject against a node's id or its operator, and treats
+    the fabric's terminal-success status ('complete') as done. Returns None when
+    no such node exists -- unknown, never assumed."""
+    if not _table_exists(fabric_db, "workgraph_nodes"):
+        return None
+    row = fabric_db.execute(
+        "SELECT status FROM workgraph_nodes WHERE node_id=? OR operator_id=?"
+        " ORDER BY updated_at_ms DESC LIMIT 1",
+        (subject, subject),
+    ).fetchone()
+    if row is None:
+        return None
+    return row[0] == "complete"
+
+
 def blocker_resolved(
-    db: sqlite3.Connection, blocker: Blocker, *, bound_services: frozenset[str] = frozenset()
+    db: sqlite3.Connection, blocker: Blocker, *,
+    bound_services: frozenset[str] = frozenset(),
+    fabric_db: Optional[sqlite3.Connection] = None,
 ) -> Optional[bool]:
     """Is this blocker currently resolved? True/False, or None when the substrate
-    to decide it does not exist yet (never assumed satisfied)."""
+    to decide it does not exist yet (never assumed satisfied).
+
+    When ``fabric_db`` is given, a work_done blocker is decided against the real
+    fabric WorkGraph first -- reachability reflects the system's own work, not the
+    control plane's shadow copy -- falling back to the local work_items only when
+    the fabric has no node for it."""
     if blocker.kind == IDENTITY_VERIFICATION:
         return _actor_verified(db, blocker.subject)
     if blocker.kind == PROOF_LAYER:
         return _layer_proven(db, blocker.subject, blocker.profile, blocker.layer)
     if blocker.kind == WORK_DONE:
+        if fabric_db is not None:
+            from_fabric = _work_satisfied_fabric(fabric_db, blocker.subject)
+            if from_fabric is not None:
+                return from_fabric
         return _work_satisfied(db, blocker.subject)
     if blocker.kind == SERVICE_BOUND:
         return blocker.subject in bound_services
@@ -200,6 +231,7 @@ def reachable_capacity(
     unlocks: list[Unlock],
     *,
     bound_services: frozenset[str] = frozenset(),
+    fabric_db: Optional[sqlite3.Connection] = None,
 ) -> dict[str, OppEval]:
     """Compute each opportunity's reachability status to a fixpoint.
 
@@ -212,7 +244,8 @@ def reachable_capacity(
     resolved: dict[tuple[str, str], bool] = {}
     for opp in opportunities:
         for b in opp.blockers:
-            resolved[b.ref] = blocker_resolved(db, b, bound_services=bound_services) is True
+            resolved[b.ref] = blocker_resolved(
+                db, b, bound_services=bound_services, fabric_db=fabric_db) is True
 
     unlock_by_target: dict[tuple[str, str], list[Unlock]] = {}
     for u in unlocks:
