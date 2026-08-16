@@ -58,6 +58,10 @@ _LIST_FIELDS = {
     "preserves", "drops", "authority", "evidence", "invalidates_on", "binding",
     # view-block lists
     "expands_to",
+    # phenotype-block lists
+    "consumes", "produces", "placement_constraint",
+    # meta-edge-class lists
+    "specialized_by",
 }
 
 
@@ -104,7 +108,7 @@ def parse_file(path: Path) -> list[Block]:
         if not header_seen and key == "atlas":
             header_seen = True
             continue
-        if key in ("architecture", "view", "interaction"):
+        if key in ("architecture", "view", "interaction", "phenotype", "edge_class"):
             current = Block(kind=key, ident=value, source_file=path.name)
             blocks.append(current)
         else:
@@ -117,6 +121,8 @@ class Atlas:
     architectures: dict[str, Block] = field(default_factory=dict)
     views: dict[str, Block] = field(default_factory=dict)
     interactions: dict[str, Block] = field(default_factory=dict)
+    phenotypes: dict[str, Block] = field(default_factory=dict)
+    edge_classes: dict[str, Block] = field(default_factory=dict)
 
     @classmethod
     def load(cls, root: Path = ROOT) -> "Atlas":
@@ -129,6 +135,10 @@ class Atlas:
                     atlas.views[block.ident] = block
                 elif block.kind == "interaction":
                     atlas.interactions[block.ident] = block
+                elif block.kind == "phenotype":
+                    atlas.phenotypes[block.ident] = block
+                elif block.kind == "edge_class":
+                    atlas.edge_classes[block.ident] = block
         return atlas
 
     # -- reversible views ---------------------------------------------------
@@ -185,6 +195,16 @@ class Atlas:
                     errors.append(f"interaction {iid}: missing '{end}'")
                 elif ref not in self.architectures:
                     errors.append(f"interaction {iid}: {end} '{ref}' is not a registered architecture")
+
+        # a phenotype must describe a real architecture and name what it produces.
+        for pid, ph in self.phenotypes.items():
+            ref = ph.get("architecture")
+            if not ref:
+                errors.append(f"phenotype {pid}: missing 'architecture'")
+            elif ref not in self.architectures:
+                errors.append(f"phenotype {pid}: architecture '{ref}' is not registered")
+            if not ph.lst("produces"):
+                errors.append(f"phenotype {pid}: must name what it produces")
         return errors
 
     # -- loss queries: what the atlas knows it is missing --------------------
@@ -193,6 +213,7 @@ class Atlas:
         endpoints: set[str] = set()
         for it in self.interactions.values():
             endpoints.update({it.get("source"), it.get("destination")})
+        phenotyped = {ph.get("architecture") for ph in self.phenotypes.values()}
         report: dict[str, list[str]] = {
             "no_cannot_infer": [],
             "no_interaction_contract": [],
@@ -200,6 +221,7 @@ class Atlas:
             "no_native_format": [],
             "unwitnessed": [],
             "superseded_but_present": [],
+            "substrate_without_phenotype": [],
         }
         for aid, a in self.architectures.items():
             if not a.lst("forbidden_inference"):
@@ -214,6 +236,8 @@ class Atlas:
                 report["unwitnessed"].append(aid)
             if a.get("superseded_by"):
                 report["superseded_but_present"].append(aid)
+            if a.get("family") == "substrate" and aid not in phenotyped:
+                report["substrate_without_phenotype"].append(aid)
         return report
 
     def maturity_rollup(self) -> dict[str, dict[str, int]]:
@@ -264,6 +288,24 @@ class Atlas:
                 }
                 for iid, it in sorted(self.interactions.items())
             },
+            "phenotypes": {
+                pid: {
+                    "architecture": ph.get("architecture"),
+                    "consumes": ph.lst("consumes"),
+                    "produces": ph.lst("produces"),
+                    "deterministic": ph.get("deterministic"),
+                    "incremental": ph.get("incremental"),
+                    "distributed": ph.get("distributed"),
+                    "supports_retraction": ph.get("supports_retraction"),
+                    "proof_class": ph.get("proof_class"),
+                    "effect_class": ph.get("effect_class"),
+                }
+                for pid, ph in sorted(self.phenotypes.items())
+            },
+            "edge_classes": {
+                eid: {"meaning": ec.get("meaning"), "specialized_by": ec.lst("specialized_by")}
+                for eid, ec in sorted(self.edge_classes.items())
+            },
         }
 
 
@@ -280,7 +322,8 @@ def _cmd_validate(atlas: Atlas) -> int:
             print(f"    {e}")
         return 1
     print(f"✓ atlas valid: {len(atlas.architectures)} architectures, "
-          f"{len(atlas.views)} views, {len(atlas.interactions)} interactions")
+          f"{len(atlas.views)} views, {len(atlas.interactions)} interactions, "
+          f"{len(atlas.phenotypes)} phenotypes, {len(atlas.edge_classes)} edge-classes")
     return 0
 
 

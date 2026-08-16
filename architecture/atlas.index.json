@@ -1645,6 +1645,121 @@
       ]
     }
   },
+  "edge_classes": {
+    "AUTHORITY": {
+      "meaning": "who may do what, to what, for what purpose, until when?",
+      "specialized_by": [
+        "may_approve",
+        "delegates",
+        "revokes"
+      ]
+    },
+    "CAPABILITY": {
+      "meaning": "does this require / provide that capability?",
+      "specialized_by": [
+        "requires_capability",
+        "provides_capability"
+      ]
+    },
+    "CAUSAL": {
+      "meaning": "does this cause / enable / unlock that (possibly non-monotonic)?",
+      "specialized_by": [
+        "unlocks",
+        "triggers"
+      ]
+    },
+    "DEPENDENCY": {
+      "meaning": "does this require that to proceed?",
+      "specialized_by": [
+        "depends_on",
+        "blocked_by"
+      ]
+    },
+    "ECONOMIC": {
+      "meaning": "what value / cost / commitment flows here (no implicit cash conversion)?",
+      "specialized_by": [
+        "funds",
+        "commits"
+      ]
+    },
+    "EVIDENCE": {
+      "meaning": "does this support / contradict / reproduce that claim?",
+      "specialized_by": [
+        "supports_claim",
+        "contradicts"
+      ]
+    },
+    "EXECUTION": {
+      "meaning": "what actually ran this, producing what witness?",
+      "specialized_by": [
+        "executed_by",
+        "carried_by"
+      ]
+    },
+    "IDENTITY": {
+      "meaning": "are these the same object (byte / structural / derivational / real-world)?",
+      "specialized_by": [
+        "hashes_to",
+        "canon_equivalent",
+        "same_actor"
+      ]
+    },
+    "INSTITUTIONAL": {
+      "meaning": "what institutional membership / scope / delegation holds?",
+      "specialized_by": [
+        "member_of",
+        "scoped_to"
+      ]
+    },
+    "LEARNING": {
+      "meaning": "what pattern / promotion / structural change does this feed?",
+      "specialized_by": [
+        "clusters_into",
+        "promotes_to"
+      ]
+    },
+    "PLACEMENT": {
+      "meaning": "where does this run / reside?",
+      "specialized_by": [
+        "placed_on",
+        "resident_in"
+      ]
+    },
+    "PROJECTION": {
+      "meaning": "how does this project into another estate / app without becoming it?",
+      "specialized_by": [
+        "projects_to"
+      ]
+    },
+    "PROVENANCE": {
+      "meaning": "where did this come from, through what path?",
+      "specialized_by": [
+        "derived_from",
+        "produced_by"
+      ]
+    },
+    "PROVIDER": {
+      "meaning": "can this realize that capability, at what metric?",
+      "specialized_by": [
+        "realizes",
+        "falls_back_to"
+      ]
+    },
+    "SEMANTIC": {
+      "meaning": "what does this mean in relation to that (typed, not transitive by default)?",
+      "specialized_by": [
+        "is_a",
+        "part_of"
+      ]
+    },
+    "TEMPORAL": {
+      "meaning": "how do these order in time (event / effective / retrieval / supersession)?",
+      "specialized_by": [
+        "precedes",
+        "supersedes"
+      ]
+    }
+  },
   "interactions": {
     "activation-resolves-resource-blocker": {
       "destination": "unlock-graph",
@@ -2132,6 +2247,217 @@
       ],
       "relation": "blocker_resolution",
       "source": "work-graph"
+    }
+  },
+  "phenotypes": {
+    "automerge-phenotype": {
+      "architecture": "automerge",
+      "consumes": [],
+      "deterministic": "no",
+      "distributed": "yes",
+      "effect_class": "possible-only",
+      "incremental": "yes",
+      "produces": [
+        "CandidateState"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "yes"
+    },
+    "burn-phenotype": {
+      "architecture": "burn",
+      "consumes": [
+        "TensorDataset"
+      ],
+      "deterministic": "no",
+      "distributed": "yes",
+      "effect_class": "compute-only",
+      "incremental": "yes",
+      "produces": [
+        "TrainedModel"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
+    },
+    "cubecl-phenotype": {
+      "architecture": "cubecl",
+      "consumes": [
+        "FusedOperation"
+      ],
+      "deterministic": "yes",
+      "distributed": "no",
+      "effect_class": "compute-only",
+      "incremental": "no",
+      "produces": [
+        "GeneratedKernel"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
+    },
+    "daft-phenotype": {
+      "architecture": "daft",
+      "consumes": [
+        "Corpus"
+      ],
+      "deterministic": "yes",
+      "distributed": "yes",
+      "effect_class": "none",
+      "incremental": "no",
+      "produces": [
+        "TransformedCorpus"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
+    },
+    "egglog-phenotype": {
+      "architecture": "egglog",
+      "consumes": [
+        "PlanOrRewrite"
+      ],
+      "deterministic": "yes",
+      "distributed": "no",
+      "effect_class": "none",
+      "incremental": "no",
+      "produces": [
+        "EquivalentForm"
+      ],
+      "proof_class": "equivalence-search",
+      "supports_retraction": "no"
+    },
+    "feldera-phenotype": {
+      "architecture": "feldera",
+      "consumes": [
+        "SourceRelation"
+      ],
+      "deterministic": "yes",
+      "distributed": "yes",
+      "effect_class": "none",
+      "incremental": "yes",
+      "produces": [
+        "DerivedRelation",
+        "Delta"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "yes"
+    },
+    "gigatoken-phenotype": {
+      "architecture": "gigatoken",
+      "consumes": [
+        "SourceUniverse"
+      ],
+      "deterministic": "no",
+      "distributed": "yes",
+      "effect_class": "none",
+      "incremental": "no",
+      "produces": [
+        "MissionContext"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
+    },
+    "hvm4-phenotype": {
+      "architecture": "hvm4",
+      "consumes": [
+        "SymbolicStructure"
+      ],
+      "deterministic": "yes",
+      "distributed": "yes",
+      "effect_class": "none",
+      "incremental": "no",
+      "produces": [
+        "ReducedStructure"
+      ],
+      "proof_class": "bounded-reduction",
+      "supports_retraction": "no"
+    },
+    "hydro-phenotype": {
+      "architecture": "hydro",
+      "consumes": [
+        "Dataflow"
+      ],
+      "deterministic": "yes",
+      "distributed": "yes",
+      "effect_class": "placement-only",
+      "incremental": "yes",
+      "produces": [
+        "DistributedPlacement"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "yes"
+    },
+    "lance-phenotype": {
+      "architecture": "lance",
+      "consumes": [
+        "MultimodalArtifact"
+      ],
+      "deterministic": "yes",
+      "distributed": "yes",
+      "effect_class": "none",
+      "incremental": "yes",
+      "produces": [
+        "VectorBody"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "yes"
+    },
+    "restate-phenotype": {
+      "architecture": "restate",
+      "consumes": [
+        "DurableInvocation"
+      ],
+      "deterministic": "yes",
+      "distributed": "yes",
+      "effect_class": "durable-external",
+      "incremental": "no",
+      "produces": [
+        "ContinuationReceipt"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
+    },
+    "tract-phenotype": {
+      "architecture": "tract",
+      "consumes": [
+        "PreparedModel"
+      ],
+      "deterministic": "yes",
+      "distributed": "no",
+      "effect_class": "compute-only",
+      "incremental": "no",
+      "produces": [
+        "Inference"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
+    },
+    "verus-phenotype": {
+      "architecture": "verus",
+      "consumes": [
+        "StatedInvariant"
+      ],
+      "deterministic": "yes",
+      "distributed": "no",
+      "effect_class": "none",
+      "incremental": "no",
+      "produces": [
+        "FormalWitness"
+      ],
+      "proof_class": "formal",
+      "supports_retraction": "no"
+    },
+    "yaff-phenotype": {
+      "architecture": "yaff",
+      "consumes": [
+        "TypedCut"
+      ],
+      "deterministic": "yes",
+      "distributed": "no",
+      "effect_class": "none",
+      "incremental": "no",
+      "produces": [
+        "SemanticContract"
+      ],
+      "proof_class": "none",
+      "supports_retraction": "no"
     }
   },
   "views": {
