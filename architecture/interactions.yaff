@@ -44,6 +44,38 @@ interaction hvm4-reduces-fpq-seed
   witness a bounded reduction result
   binding architecture/substrate/foundry.yaff
 
+interaction authority-compiles-to-mask
+  source authority-graph
+  destination address-plane
+  relation mask_compilation
+  preserves the current permission cut for an actor over a subject
+  drops revoked and expired grants
+  forbidden_inference a mask bit set -> authority to act (the mask is a compiled cut, not the grant)
+  invalidates_on a grant is revoked or expires
+  witness authority_have_mask
+  binding 10-Code/BonfyreControlPlane/address_plane.py
+
+interaction frontier-compiles-to-ternary
+  source proof-frontier
+  destination address-plane
+  relation ternary_compilation
+  preserves proven layers as +1 and KnownNonCauses as -1 blackholes
+  drops nothing
+  forbidden_inference a -1 blackhole -> a permanent truth (a reheat signal reopens it)
+  invalidates_on a reheat signal satisfies a cooled invariant
+  witness proof_ternary
+  binding 10-Code/BonfyreControlPlane/address_plane.py
+
+interaction capability-compiles-to-mask
+  source capability-lattice
+  destination address-plane
+  relation mask_compilation
+  preserves the estate's real capability families as bit positions
+  drops nothing
+  forbidden_inference a capability mask match -> a runnable binding
+  witness capability_mask
+  binding 10-Code/BonfyreControlPlane/address_plane.py
+
 interaction closure-gated-by-frontier
   source capability-closure
   destination proof-frontier

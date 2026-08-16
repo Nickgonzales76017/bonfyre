@@ -1,0 +1,33 @@
+atlas forwarding
+
+architecture address-plane
+  canonical_name AddressPlane
+  family forwarding
+  domain Forwarding / Eligibility
+  layer forwarding
+  semantic_question Of all the state available, what is even eligible to participate in this operation?
+  purpose A compiled bit-mask and ternary forwarding plane under the plural semantic estate. Rejects vast populations with (have & need)==need before any graph is walked, so semantic richness never becomes slow.
+  maturity implemented
+  node_types BitRegistry
+  node_types Mask
+  node_types TernaryState
+  node_types Route
+  edge_types eligible_for
+  edge_types blackholes
+  internal_calculus bitwise eligibility (have & need)==need
+  internal_calculus ternary proof vector (+1 proven / 0 unresolved / -1 KnownNonCause)
+  internal_calculus authority mask compiled from non-revoked in-window grants
+  invariant bits are a compiled machine index, not meaning
+  invariant eligibility rejects the impossible; it never grants authority or proves anything
+  invariant a blackholed hypothesis is negative forwarding state, not a permanent truth
+  forbidden_inference eligible -> authorized
+  forbidden_inference a mask match -> a semantic match
+  forbidden_inference a blackholed hypothesis -> permanently false (a reheat reopens it)
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/address_plane.py
+  witness 10-Code/BonfyreControlPlane/tests/test_address_plane.py
+  interacts authority-graph
+  interacts proof-frontier
+  interacts capability-lattice
+  source_lineage AddressPlane / institutional packet-switching vision
+  known_gap CID/SID prefix routing (content-address placement, semantic-neighborhood locality via Lance/HDC) and route advertise/withdraw over the DBSP delta engine are the next layers

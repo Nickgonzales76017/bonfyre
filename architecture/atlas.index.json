@@ -45,6 +45,53 @@
         "10-Code/BonfyreControlPlane/tests/test_actors.py"
       ]
     },
+    "address-plane": {
+      "canonical_name": "AddressPlane",
+      "commands": [],
+      "domain": "Forwarding / Eligibility",
+      "edge_types": [
+        "eligible_for",
+        "blackholes"
+      ],
+      "family": "forwarding",
+      "forbidden_inferences": [
+        "eligible -> authorized",
+        "a mask match -> a semantic match",
+        "a blackholed hypothesis -> permanently false (a reheat reopens it)"
+      ],
+      "internal_calculi": [
+        "bitwise eligibility (have & need)==need",
+        "ternary proof vector (+1 proven / 0 unresolved / -1 KnownNonCause)",
+        "authority mask compiled from non-revoked in-window grants"
+      ],
+      "invariants": [
+        "bits are a compiled machine index, not meaning",
+        "eligibility rejects the impossible; it never grants authority or proves anything",
+        "a blackholed hypothesis is negative forwarding state, not a permanent truth"
+      ],
+      "known_gaps": [
+        "CID/SID prefix routing (content-address placement, semantic-neighborhood locality via Lance/HDC) and route advertise/withdraw over the DBSP delta engine are the next layers"
+      ],
+      "layer": "forwarding",
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
+      "node_types": [
+        "BitRegistry",
+        "Mask",
+        "TernaryState",
+        "Route"
+      ],
+      "semantic_question": "Of all the state available, what is even eligible to participate in this operation?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/address_plane.py"
+      ],
+      "views": [],
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_address_plane.py"
+      ]
+    },
     "atomic-form": {
       "canonical_name": "AtomicForm",
       "commands": [
@@ -1793,6 +1840,23 @@
       "relation": "verified_autofill",
       "source": "actor-graph"
     },
+    "authority-compiles-to-mask": {
+      "destination": "address-plane",
+      "drops": [
+        "revoked and expired grants"
+      ],
+      "forbidden_inferences": [
+        "a mask bit set -> authority to act (the mask is a compiled cut, not the grant)"
+      ],
+      "invalidates_on": [
+        "a grant is revoked or expires"
+      ],
+      "preserves": [
+        "the current permission cut for an actor over a subject"
+      ],
+      "relation": "mask_compilation",
+      "source": "authority-graph"
+    },
     "authority-gates-activation": {
       "destination": "resource-activation",
       "drops": [
@@ -1844,6 +1908,21 @@
       ],
       "relation": "evidence_fill",
       "source": "evidence-binding"
+    },
+    "capability-compiles-to-mask": {
+      "destination": "address-plane",
+      "drops": [
+        "nothing"
+      ],
+      "forbidden_inferences": [
+        "a capability mask match -> a runnable binding"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the estate's real capability families as bit positions"
+      ],
+      "relation": "mask_compilation",
+      "source": "capability-lattice"
     },
     "closure-gated-by-frontier": {
       "destination": "proof-frontier",
@@ -1943,6 +2022,23 @@
       ],
       "relation": "execution_is_evidence",
       "source": "fpq-transform"
+    },
+    "frontier-compiles-to-ternary": {
+      "destination": "address-plane",
+      "drops": [
+        "nothing"
+      ],
+      "forbidden_inferences": [
+        "a -1 blackhole -> a permanent truth (a reheat signal reopens it)"
+      ],
+      "invalidates_on": [
+        "a reheat signal satisfies a cooled invariant"
+      ],
+      "preserves": [
+        "proven layers as +1 and KnownNonCauses as -1 blackholes"
+      ],
+      "relation": "ternary_compilation",
+      "source": "proof-frontier"
     },
     "hvm4-reduces-fpq-seed": {
       "destination": "fpq-seed",
