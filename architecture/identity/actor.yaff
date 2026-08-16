@@ -36,6 +36,31 @@ architecture actor-graph
   source_lineage capitalgym crm relationships
   known_gap native writer records actors/edges on the shared store with the declared-kind, mandatory-provenance and non-collapsing-confidence gates (python reads native-written rows, tier preserved -- proven); native corroboration/verification-profile promotion logic is the remaining native-absorption item
 
+architecture verification-ledger
+  canonical_name VerificationLedger
+  family identity
+  domain Identity / Institutional Capacity
+  layer identity
+  semantic_question Is this actor independently corroborated enough to promote asserted -> verified?
+  purpose The gated mechanism a fortification "verify" action executes against. Records corroborations (actor, source, evidence) and promotes asserted -> verified only at a threshold of INDEPENDENT sources, never on the actor's own say-so. Closes the feedback loop: a load-bearing asserted actor is a fortification target; once independently corroborated and promoted, it drops off the CollapseFront verify plan -- risk actually retired, not merely noted.
+  maturity measured
+  node_types Corroboration
+  edge_types corroborates
+  state_types asserted
+  state_types verified
+  internal_calculus distinct-source count gate; monotone promotion at threshold k (default 2)
+  invariant independence is by distinct source; a repeated source is one corroboration, so an actor cannot bootstrap its own verification
+  invariant promotion is monotone -- never demotes, never promotes below threshold
+  invariant promotion writes back through actors.upsert_actor, so the confidence change is a normal graph write, not a side channel
+  forbidden_inference a corroboration was recorded -> the actor is verified (below threshold it stays asserted)
+  forbidden_inference promoted to verified -> the claim is true (independently attested is not proven)
+  interacts actor-graph
+  interacts collapse-front
+  interacts fortification-plan
+  source_path 10-Code/BonfyreControlPlane/verification.py
+  witness 10-Code/BonfyreControlPlane/tests/test_verification.py
+  source_lineage fortification verify action needs a real gated mechanism
+
 architecture hash-identity
   canonical_name HashIdentityGraph
   family identity

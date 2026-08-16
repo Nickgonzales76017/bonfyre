@@ -27,6 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import support_lattice as sl
+import verification as verif
 
 # Conclusion kinds that carry institutional value worth protecting.
 VALUE_EDGE_KINDS = ("funds", "authority_over", "opportunity_unlock", "employs")
@@ -41,6 +42,8 @@ class Action:
     confidence: str
     rationale: str
     protects: list[str] = field(default_factory=list)
+    corroborations: int = 0  # independent sources recorded so far
+    gap: int = 0             # more independent sources needed to promote
 
 
 @dataclass
@@ -82,12 +85,19 @@ def verification_priorities(db: sqlite3.Connection, lat: sl.Lattice,
         value_front = [c for c in front if _is_value(c, lat.labels)]
         if not value_front:
             continue
+        try:
+            vs = verif.verification_state(db, aid)
+            corr, gap = vs.independent_sources, vs.gap
+        except sqlite3.Error:
+            corr, gap = 0, verif.DEFAULT_THRESHOLD
         actions.append(Action(
             kind="verify", target=aid, display=m["display"], leverage=len(value_front),
             confidence=m["confidence"],
             rationale=(f"{len(value_front)} live conclusions rest on {aid!r}, which is "
-                       f"only {m['confidence']}. Confirming it removes that latent risk."),
+                       f"only {m['confidence']}. {corr} independent corroboration(s) on "
+                       f"file; {gap} more promotes it to verified."),
             protects=[lat.labels[c] for c in value_front[:6]],
+            corroborations=corr, gap=gap,
         ))
     actions.sort(key=lambda a: a.leverage, reverse=True)
     return actions[:limit]
@@ -192,7 +202,8 @@ def plan_json(plan: Plan) -> str:
         "actions": [
             {"kind": a.kind, "target": a.target, "display": a.display,
              "leverage": a.leverage, "confidence": a.confidence,
-             "rationale": a.rationale, "protects": a.protects}
+             "rationale": a.rationale, "protects": a.protects,
+             "corroborations": a.corroborations, "gap": a.gap}
             for a in plan.actions
         ],
     }, indent=2, sort_keys=True)

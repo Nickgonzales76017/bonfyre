@@ -2390,6 +2390,42 @@
         "10-Code/BonfyreControlPlane/tests/test_loop_reachability.py"
       ]
     },
+    "verification-ledger": {
+      "canonical_name": "VerificationLedger",
+      "commands": [],
+      "domain": "Identity / Institutional Capacity",
+      "edge_types": [
+        "corroborates"
+      ],
+      "family": "identity",
+      "forbidden_inferences": [
+        "a corroboration was recorded -> the actor is verified (below threshold it stays asserted)",
+        "promoted to verified -> the claim is true (independently attested is not proven)"
+      ],
+      "internal_calculi": [
+        "distinct-source count gate; monotone promotion at threshold k (default 2)"
+      ],
+      "invariants": [
+        "independence is by distinct source; a repeated source is one corroboration, so an actor cannot bootstrap its own verification",
+        "promotion is monotone -- never demotes, never promotes below threshold",
+        "promotion writes back through actors.upsert_actor, so the confidence change is a normal graph write, not a side channel"
+      ],
+      "known_gaps": [],
+      "layer": "identity",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "Corroboration"
+      ],
+      "semantic_question": "Is this actor independently corroborated enough to promote asserted -> verified?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/verification.py"
+      ],
+      "views": [],
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_verification.py"
+      ]
+    },
     "verus": {
       "canonical_name": "Verus",
       "commands": [],
