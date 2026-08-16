@@ -73,6 +73,16 @@ interaction actor-autofills-form
   witness Field.autofill_actor
   binding 10-Code/BonfyreControlPlane/atomic_forms.py
 
+interaction formgraph-compiles-to-atomicform
+  source form-graph
+  destination atomic-form
+  relation compile
+  preserves field structure, evidence matchers, authority requirements
+  drops conditional fields whose condition does not hold for this submission
+  forbidden_inference a field in the graph -> a required field in the compiled form
+  witness compile(FormGraph, values)
+  binding 10-Code/BonfyreControlPlane/form_graph.py
+
 interaction binding-fills-form-evidence
   source evidence-binding
   destination atomic-form

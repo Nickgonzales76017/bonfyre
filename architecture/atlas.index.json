@@ -375,30 +375,42 @@
       "commands": [],
       "domain": "Forms",
       "edge_types": [
-        "field_depends_on"
+        "field_depends_on",
+        "required_when"
       ],
       "family": "forms",
       "forbidden_inferences": [
-        "AtomicForm == FormGraph"
+        "AtomicForm == FormGraph",
+        "a field in the graph -> a field required for this submission"
       ],
-      "internal_calculi": [],
-      "invariants": [],
-      "known_gaps": [
-        "FormGraph decomposition not yet built; AtomicForm exists standalone"
+      "internal_calculi": [
+        "conditional-requirement resolution against values"
       ],
+      "invariants": [
+        "AtomicForm = compile(FormGraph, state), never AtomicForm == FormGraph",
+        "a conditionally-required field is a blocker only when its condition holds"
+      ],
+      "known_gaps": [],
       "layer": "forms",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "graf"
+      ],
       "node_types": [
         "FormNode",
-        "FieldNode"
+        "FieldNode",
+        "FieldDependency"
       ],
       "semantic_question": "What is the structure of this human-boundary form, independent of any one submission?",
-      "source_paths": [],
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/form_graph.py"
+      ],
       "views": [
         "FormsView"
       ],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_form_graph.py"
+      ]
     },
     "fpq-mode-select": {
       "canonical_name": "FPQModeSelectionGraph",
@@ -1268,6 +1280,21 @@
       ],
       "relation": "composition",
       "source": "discipl-composition"
+    },
+    "formgraph-compiles-to-atomicform": {
+      "destination": "atomic-form",
+      "drops": [
+        "conditional fields whose condition does not hold for this submission"
+      ],
+      "forbidden_inferences": [
+        "a field in the graph -> a required field in the compiled form"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "field structure, evidence matchers, authority requirements"
+      ],
+      "relation": "compile",
+      "source": "form-graph"
     },
     "fpq-run-feeds-frontier": {
       "destination": "proof-frontier",

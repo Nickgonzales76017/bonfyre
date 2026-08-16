@@ -7,15 +7,21 @@ architecture form-graph
   layer forms
   semantic_question What is the structure of this human-boundary form, independent of any one submission?
   purpose The form as a graph -- fields, dependencies, evidence slots, attachments, approvals -- distinct from AtomicForm, which compiles it against state.
-  maturity architectural
+  maturity implemented
   node_types FormNode
   node_types FieldNode
-  child form-attachment
-  child field-dynamics
+  node_types FieldDependency
   edge_types field_depends_on
+  edge_types required_when
+  internal_calculus conditional-requirement resolution against values
+  invariant AtomicForm = compile(FormGraph, state), never AtomicForm == FormGraph
+  invariant a conditionally-required field is a blocker only when its condition holds
   forbidden_inference AtomicForm == FormGraph
+  forbidden_inference a field in the graph -> a field required for this submission
+  native_format graf
+  source_path 10-Code/BonfyreControlPlane/form_graph.py
+  witness 10-Code/BonfyreControlPlane/tests/test_form_graph.py
   source_lineage SEED-A recursive organ document
-  known_gap FormGraph decomposition not yet built; AtomicForm exists standalone
 
 architecture atomic-form
   canonical_name AtomicForm
