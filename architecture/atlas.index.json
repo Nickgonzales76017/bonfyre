@@ -1123,8 +1123,11 @@
         "supports(A,B) -> supports(B,A)"
       ],
       "internal_calculi": [],
-      "invariants": [],
+      "invariants": [
+        "an evidence relation is directional: supports(A,B) never implies supports(B,A) (native + python parity on the shared evidence_relations store)"
+      ],
       "known_gaps": [
+        "native peer records directional supports/contradicts/reproduces/falsifies relations on the shared store with kind gating (python reads native-written rows, directionality preserved -- parity proven)",
         "EvidenceBindingGraph binds candidates, does not maintain the claim relation"
       ],
       "layer": "evidence",
@@ -1141,12 +1144,15 @@
       ],
       "semantic_question": "Does this support, contradict, reproduce, or falsify that claim?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/evidence_graphs.py"
+        "10-Code/BonfyreControlPlane/evidence_graphs.py",
+        "engine/core/src/evidence.c",
+        "engine/core/include/bf_evidence.h"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
+        "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py",
+        "engine/core/tests/evidence_test.c"
       ]
     },
     "feldera": {

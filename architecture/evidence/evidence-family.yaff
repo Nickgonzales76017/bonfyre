@@ -53,11 +53,16 @@ architecture evidence-graph
   purpose The claim-support relation itself (supports / contradicts / reproduces / falsifies / contextualizes / witnesses). SERM produces its consequences; it is not this.
   maturity implemented
   source_path 10-Code/BonfyreControlPlane/evidence_graphs.py
+  source_path engine/core/src/evidence.c
+  source_path engine/core/include/bf_evidence.h
   witness 10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py
+  witness engine/core/tests/evidence_test.c
   node_types Claim
   edge_types supports
   edge_types contradicts
   forbidden_inference correlation -> causation
+  invariant an evidence relation is directional: supports(A,B) never implies supports(B,A) (native + python parity on the shared evidence_relations store)
+  known_gap native peer records directional supports/contradicts/reproduces/falsifies relations on the shared store with kind gating (python reads native-written rows, directionality preserved -- parity proven)
   forbidden_inference supports(A,B) -> supports(B,A)
   source_lineage run6/run7 evidence estate
   known_gap EvidenceBindingGraph binds candidates, does not maintain the claim relation
