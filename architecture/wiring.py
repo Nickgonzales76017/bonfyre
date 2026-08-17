@@ -295,6 +295,113 @@ def report(index_path: str | None = None) -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# P8: the self-audit. The atlas run over its own WiringSpec + provenance to
+# detect the gaps every phase (P0..P7) targets, so the whole roadmap becomes one
+# measurable checklist the system runs on itself.
+# ---------------------------------------------------------------------------
+
+def _load_orgs(index_path: str | None = None) -> dict:
+    index_path = index_path or os.path.join(HERE, "atlas.index.json")
+    with open(index_path) as fh:
+        index = json.load(fh)
+    archs = index["architectures"]
+    items = archs.items() if isinstance(archs, dict) else [(a.get("canonical_name"), a) for a in archs]
+    orgs = {}
+    for aid, a in items:
+        orgs[aid] = {
+            "family": a.get("family"),
+            "maturity": a.get("maturity"),
+            "source_paths": a.get("source_paths", []),
+            "witnesses": a.get("witnesses", []),
+            "owns": a.get("owns", []),
+            "consumes": a.get("consumes", []),
+            "publishes": a.get("publishes", []),
+            "subscribes": a.get("subscribes", []),
+        }
+    return orgs
+
+
+def _is_native(paths: list[str]) -> bool:
+    return any(p.startswith("engine/core/") or p.startswith("lib/") for p in paths)
+
+
+def _is_python(paths: list[str]) -> bool:
+    return any(p.startswith("10-Code/") or p.endswith(".py") for p in paths)
+
+
+def audit(index_path: str | None = None) -> dict:
+    """The P8 detector suite over the atlas's own WiringSpec + provenance."""
+    orgs = _load_orgs(index_path)
+    fw = load_fact_wiring(index_path)
+    ff = fact_flow(fw)
+
+    # P0/P7: Python-only authority -- a fact whose owning organ has a Python source
+    # but no native (engine/core) source. The native ring is not closed for it.
+    python_only_authority = []
+    for aid, o in orgs.items():
+        if not o["owns"]:
+            continue
+        if _is_python(o["source_paths"]) and not _is_native(o["source_paths"]):
+            for fact in o["owns"]:
+                python_only_authority.append((fact, aid))
+
+    # P1: non-differential facts -- a fact many organs consume but nobody declares
+    # it maintained (subscribes marks a maintained/differential dependency). These
+    # are candidates for Feldera maintenance instead of recomputation.
+    subscribed = set()
+    for o in orgs.values():
+        subscribed.update(o["subscribes"])
+    non_differential = sorted(
+        f for f, cons in fw.consumers.items()
+        if len(cons) >= 2 and f not in subscribed and f in fw.producers
+    )
+
+    # P3/P5: surface islands -- an apps/surface organ that publishes only facts no
+    # other organ consumes (its outputs reach a human, never another organ).
+    surface_islands = []
+    for aid, o in orgs.items():
+        if o["family"] not in ("apps", "surface", "fabric"):
+            continue
+        pub = set(o["owns"]) | set(o["publishes"])
+        if pub and all(f not in fw.consumers for f in pub):
+            surface_islands.append(aid)
+
+    # P0 finish line: missing feedback -- a wired organ that only produces or only
+    # consumes at the fact level (never both), so no loop can run through it.
+    only_produce, only_consume = [], []
+    for aid, o in orgs.items():
+        p = bool(set(o["owns"]) | set(o["publishes"]))
+        c = bool(set(o["consumes"]) | set(o["subscribes"]))
+        if p and not c:
+            only_produce.append(aid)
+        elif c and not p:
+            only_consume.append(aid)
+
+    # P6: proof gaps -- measured/proven maturity without a witness (also validate-
+    # enforced; surfaced here as a wiring-health line).
+    proof_gaps = sorted(
+        aid for aid, o in orgs.items()
+        if o["maturity"] in ("measured", "proven") and not o["witnesses"]
+    )
+
+    loops = [sorted(c) for c in _sccs(ff.nodes, ff.out) if len(c) > 1]
+    return {
+        "wired_organs": len(fw.owns),
+        "facts": len(set(fw.producers) | set(fw.consumers)),
+        "feedback_core": max((len(L) for L in loops), default=0),
+        "python_only_authority": sorted(python_only_authority),
+        "non_differential_recompute": non_differential,
+        "surface_islands": sorted(surface_islands),
+        "only_produce": sorted(only_produce),
+        "only_consume": sorted(only_consume),
+        "orphan_consumers": [f for f, _ in orphan_consumers(fw)],
+        "orphan_producers": [f for f, _ in orphan_producers(fw)],
+        "duplicate_ownership": [f for f, _ in duplicate_ownership(fw)],
+        "proof_gaps": proof_gaps,
+    }
+
+
 def fact_report(index_path: str | None = None) -> dict:
     fw = load_fact_wiring(index_path)
     ff = fact_flow(fw)

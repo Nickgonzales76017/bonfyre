@@ -89,6 +89,23 @@ def test_real_atlas_fact_loops_and_no_duplicate_ownership():
     assert fr["duplicate_ownership"] == [], fr["duplicate_ownership"]
 
 
+def test_p8_audit_shape_and_native_progress():
+    a = wiring.audit()
+    # the audit reports the roadmap detectors
+    for key in ("python_only_authority", "non_differential_recompute", "surface_islands",
+                "orphan_consumers", "orphan_producers", "duplicate_ownership", "proof_gaps"):
+        assert key in a
+    # constitution invariants hold
+    assert a["duplicate_ownership"] == []
+    assert a["proof_gaps"] == []  # validate enforces witnesses
+    # native absorption shows: facts with a native owner are NOT python-only
+    poa = {fact for fact, _ in a["python_only_authority"]}
+    assert "Occurrence" not in poa, "occurrence-spine has native source; not python-only"
+    assert "WorkState" not in poa, "work-graph has native source; not python-only"
+    # ... but un-absorbed facts still are (a real, honest P0 gap)
+    assert "SupportStructure" in poa
+
+
 if __name__ == "__main__":
     import pytest
     raise SystemExit(pytest.main([__file__, "-q"]))

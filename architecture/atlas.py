@@ -495,8 +495,35 @@ def main(argv: list[str]) -> int:
         (ROOT / "WIRING.md").write_text(wiring.to_markdown())
         print("wrote architecture/WIRING.md")
         return 0
+    if cmd == "audit":
+        return _cmd_audit()
     print(f"unknown command: {cmd}")
     return 1
+
+
+def _cmd_audit() -> int:
+    """P8 self-audit: the gaps every roadmap phase targets, measured over the atlas."""
+    import wiring
+    a = wiring.audit()
+    print(f"audit: {a['wired_organs']} wired organs, {a['facts']} facts, "
+          f"feedback core {a['feedback_core']} organs")
+
+    def line(label, items, fmt=lambda x: x):
+        vals = [fmt(x) for x in items]
+        mark = "ok" if not vals else f"{len(vals)}"
+        print(f"  [{mark:>3}] {label}: {', '.join(vals) if vals else '-'}")
+
+    line("P0/P7 python-only authority", a["python_only_authority"],
+         lambda t: f"{t[0]}({t[1]})")
+    line("P1 non-differential recompute", a["non_differential_recompute"])
+    line("P3/P5 surface islands", a["surface_islands"])
+    line("orphan consumers (nobody provides)", a["orphan_consumers"])
+    line("orphan producers (nobody consumes)", a["orphan_producers"])
+    line("duplicate ownership", a["duplicate_ownership"])
+    line("P6 proof gaps (measured w/o witness)", a["proof_gaps"])
+    line("only-produce organs", a["only_produce"])
+    line("only-consume organs", a["only_consume"])
+    return 0
 
 
 def _cmd_wiring() -> int:
