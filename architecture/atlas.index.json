@@ -757,6 +757,3353 @@
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
       ]
     },
+    "cmd-a-p-i": {
+      "canonical_name": "BonfyreAPI",
+      "commands": [
+        "BonfyreAPI"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / API",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-api binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes APICapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreAPI capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreAPI/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-auth": {
+      "canonical_name": "BonfyreAuth",
+      "commands": [
+        "BonfyreAuth"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Authority / Access",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-auth binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Authority; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreAuth capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreAuth/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-brief": {
+      "canonical_name": "BonfyreBrief",
+      "commands": [
+        "BonfyreBrief"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Brief",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-brief binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes BriefCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreBrief capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreBrief/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-c-l-i": {
+      "canonical_name": "BonfyreCLI",
+      "commands": [
+        "BonfyreCLI"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / CLI",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes CLICapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreCLI capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreCLI/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "cmd-c-m-s": {
+      "canonical_name": "BonfyreCMS",
+      "commands": [
+        "BonfyreCMS"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Surface / CMS",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-cms binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Publication; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreCMS capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreCMS/src/ann_index.c",
+        "cmd/BonfyreCMS/src/ann_index.h",
+        "cmd/BonfyreCMS/src/bench_metrics.c",
+        "cmd/BonfyreCMS/src/bench_metrics.h"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-canon": {
+      "canonical_name": "BonfyreCanon",
+      "commands": [
+        "BonfyreCanon"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Canon",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-canon binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes CanonCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreCanon capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreCanon/src/main.c",
+        "cmd/BonfyreCanon/src/ts_json_parser.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-capability": {
+      "canonical_name": "BonfyreCapability",
+      "commands": [
+        "BonfyreCapability"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Capability / Inventory",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-capability binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreCapability capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreCapability/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-clips": {
+      "canonical_name": "BonfyreClips",
+      "commands": [
+        "BonfyreClips"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Clips",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-clips binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ClipsCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreClips capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreClips/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-compete": {
+      "canonical_name": "BonfyreCompete",
+      "commands": [
+        "BonfyreCompete"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Compete",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-compete binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes CompeteCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreCompete capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreCompete/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-compress": {
+      "canonical_name": "BonfyreCompress",
+      "commands": [
+        "BonfyreCompress"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / Compression",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-compress binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Representation; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreCompress capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreCompress/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-control": {
+      "canonical_name": "BonfyreControl",
+      "commands": [
+        "BonfyreControl"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Control",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-control binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ControlCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreControl capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreControl/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-detect-objects": {
+      "canonical_name": "BonfyreDetectObjects",
+      "commands": [
+        "BonfyreDetectObjects"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / DetectObjects",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes DetectObjectsCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreDetectObjects capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreDetectObjects/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "cmd-discipl": {
+      "canonical_name": "BonfyreDiscipl",
+      "commands": [
+        "BonfyreDiscipl"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Capability / Composition",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-discipl binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreDiscipl capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreDiscipl/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-distribute": {
+      "canonical_name": "BonfyreDistribute",
+      "commands": [
+        "BonfyreDistribute"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Distribute",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-distribute binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes DistributeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreDistribute capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreDistribute/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-economy": {
+      "canonical_name": "BonfyreEconomy",
+      "commands": [
+        "BonfyreEconomy"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Economic / Economy",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-economy binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreEconomy capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreEconomy/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-embed": {
+      "canonical_name": "BonfyreEmbed",
+      "commands": [
+        "BonfyreEmbed"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / Embedding",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-embed binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SID; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreEmbed capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreEmbed/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-emit": {
+      "canonical_name": "BonfyreEmit",
+      "commands": [
+        "BonfyreEmit"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Execution / Emit",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-emit binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Occurrence; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreEmit capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreEmit/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-entity": {
+      "canonical_name": "BonfyreEntity",
+      "commands": [
+        "BonfyreEntity"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Identity / Entity",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-entity binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Actor; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreEntity capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreEntity/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-f-p-q": {
+      "canonical_name": "BonfyreFPQ",
+      "commands": [
+        "BonfyreFPQ"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / FPQ",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-fpq binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes FPQRepresentation; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFPQ capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFPQ/src/debruijn.c",
+        "cmd/BonfyreFPQ/src/fpq_codec.c",
+        "cmd/BonfyreFPQ/src/fpq_codec_v2.c",
+        "cmd/BonfyreFPQ/src/fpq_native.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-f-p-qx": {
+      "canonical_name": "BonfyreFPQx",
+      "commands": [
+        "BonfyreFPQx"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / FPQ",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-fpqx binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes FPQRepresentation; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFPQx capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFPQx/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-family": {
+      "canonical_name": "BonfyreFamily",
+      "commands": [
+        "BonfyreFamily"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Family",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes FamilyCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFamily capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFamily/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "cmd-finance": {
+      "canonical_name": "BonfyreFinance",
+      "commands": [
+        "BonfyreFinance"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Economic / Finance",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-finance binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFinance capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFinance/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-flash-q-l-a": {
+      "canonical_name": "BonfyreFlashQLA",
+      "commands": [
+        "BonfyreFlashQLA"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / FlashQLA",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-flashqla binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes FlashQLACapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFlashQLA capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFlashQLA/src/gdn_backend.h",
+        "cmd/BonfyreFlashQLA/src/gdn_ref.c",
+        "cmd/BonfyreFlashQLA/src/gdn_ref.h",
+        "cmd/BonfyreFlashQLA/src/gdn_tile.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-flow": {
+      "canonical_name": "BonfyreFlow",
+      "commands": [
+        "BonfyreFlow"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Flow",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-flow binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes FlowCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFlow capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFlow/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-fragment": {
+      "canonical_name": "BonfyreFragment",
+      "commands": [
+        "BonfyreFragment"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Fragment",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes FragmentCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFragment capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFragment/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "cmd-frame-extract": {
+      "canonical_name": "BonfyreFrameExtract",
+      "commands": [
+        "BonfyreFrameExtract"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / FrameExtract",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-frame-extract binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes FrameExtractCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFrameExtract capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFrameExtract/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-frappe-compiler": {
+      "canonical_name": "BonfyreFrappeCompiler",
+      "commands": [
+        "BonfyreFrappeCompiler"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / FrappeCompiler",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-frappe-compiler binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes FrappeCompilerCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreFrappeCompiler capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreFrappeCompiler/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-gate": {
+      "canonical_name": "BonfyreGate",
+      "commands": [
+        "BonfyreGate"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Authority / Gate",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-gate binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Authority; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreGate capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreGate/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-gen": {
+      "canonical_name": "BonfyreGen",
+      "commands": [
+        "BonfyreGen"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / Generation",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-gen binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ExecutionReceipt; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreGen capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreGen/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-graph": {
+      "canonical_name": "BonfyreGraph",
+      "commands": [
+        "BonfyreGraph"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Identity / Graph",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-graph binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Relation; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreGraph capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreGraph/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-hash": {
+      "canonical_name": "BonfyreHash",
+      "commands": [
+        "BonfyreHash"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Identity / Content",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-hash binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Artifact; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreHash capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreHash/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-index": {
+      "canonical_name": "BonfyreIndex",
+      "commands": [
+        "BonfyreIndex"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Forwarding / Index",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-index binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes AddressAdvertisement; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreIndex capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreIndex/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-infer": {
+      "canonical_name": "BonfyreInfer",
+      "commands": [
+        "BonfyreInfer"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / Inference",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-infer binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ExecutionReceipt; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreInfer capability organ realize, and by what contract?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-ingest": {
+      "canonical_name": "BonfyreIngest",
+      "commands": [
+        "BonfyreIngest"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Execution / Ingest",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-ingest binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ExternalEvent; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreIngest capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreIngest/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-k-v-cache": {
+      "canonical_name": "BonfyreKVCache",
+      "commands": [
+        "BonfyreKVCache"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / KV",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-kvcache binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes KVPassport; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreKVCache capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreKVCache/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-layer": {
+      "canonical_name": "BonfyreLayer",
+      "commands": [
+        "BonfyreLayer"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Layer",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-layer binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes LayerCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreLayer capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreLayer/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-leapfrog": {
+      "canonical_name": "BonfyreLeapfrog",
+      "commands": [
+        "BonfyreLeapfrog"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Leapfrog",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-leapfrog binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes LeapfrogCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreLeapfrog capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreLeapfrog/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-learn": {
+      "canonical_name": "BonfyreLearn",
+      "commands": [
+        "BonfyreLearn"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Capability / Acquisition",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-learn binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Capability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreLearn capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreLearn/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-ledger": {
+      "canonical_name": "BonfyreLedger",
+      "commands": [
+        "BonfyreLedger"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Economic / Ledger",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-ledger binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes Value; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreLedger capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreLedger/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-m-f-a-dict": {
+      "canonical_name": "BonfyreMFADict",
+      "commands": [
+        "BonfyreMFADict"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / MFADict",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-mfa-dict binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes MFADictCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreMFADict capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreMFADict/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-media-prep": {
+      "canonical_name": "BonfyreMediaPrep",
+      "commands": [
+        "BonfyreMediaPrep"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / MediaPrep",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-media-prep binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes MediaPrepCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreMediaPrep capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreMediaPrep/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-meter": {
+      "canonical_name": "BonfyreMeter",
+      "commands": [
+        "BonfyreMeter"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Meter",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-meter binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes MeterCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreMeter capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreMeter/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-mo-e": {
+      "canonical_name": "BonfyreMoE",
+      "commands": [
+        "BonfyreMoE"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / MoE",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-moe binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes MoECapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreMoE capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreMoE/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-mo-q": {
+      "canonical_name": "BonfyreMoQ",
+      "commands": [
+        "BonfyreMoQ"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / MoQ",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-moq binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes MoQCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreMoQ capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreMoQ/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-model": {
+      "canonical_name": "BonfyreModel",
+      "commands": [
+        "BonfyreModel"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Model",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-model binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ModelCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreModel capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreModel/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-narrate": {
+      "canonical_name": "BonfyreNarrate",
+      "commands": [
+        "BonfyreNarrate"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Narrate",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-narrate binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes NarrateCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreNarrate capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreNarrate/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-net": {
+      "canonical_name": "BonfyreNet",
+      "commands": [
+        "BonfyreNet"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Net",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-net binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes NetCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreNet capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreNet/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-offer": {
+      "canonical_name": "BonfyreOffer",
+      "commands": [
+        "BonfyreOffer"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Offer",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-offer binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes OfferCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreOffer capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreOffer/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-orchestrate": {
+      "canonical_name": "BonfyreOrchestrate",
+      "commands": [
+        "BonfyreOrchestrate"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Orchestrate",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-orchestrate binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes OrchestrateCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreOrchestrate capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreOrchestrate/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-outreach": {
+      "canonical_name": "BonfyreOutreach",
+      "commands": [
+        "BonfyreOutreach"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Outreach",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-outreach binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes OutreachCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreOutreach capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreOutreach/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-pack": {
+      "canonical_name": "BonfyrePack",
+      "commands": [
+        "BonfyrePack"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Pack",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-pack binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes PackCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyrePack capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyrePack/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-paragraph": {
+      "canonical_name": "BonfyreParagraph",
+      "commands": [
+        "BonfyreParagraph"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Paragraph",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-paragraph binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ParagraphCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreParagraph capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreParagraph/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-pay": {
+      "canonical_name": "BonfyrePay",
+      "commands": [
+        "BonfyrePay"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Pay",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-pay binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes PayCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyrePay capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyrePay/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-physics": {
+      "canonical_name": "BonfyrePhysics",
+      "commands": [
+        "BonfyrePhysics"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Physics",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-physics binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes PhysicsCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyrePhysics capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyrePhysics/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-pipeline": {
+      "canonical_name": "BonfyrePipeline",
+      "commands": [
+        "BonfyrePipeline"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Pipeline",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-pipeline binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes PipelineCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyrePipeline capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyrePipeline/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-project": {
+      "canonical_name": "BonfyreProject",
+      "commands": [
+        "BonfyreProject"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Execution / Project",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-project binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreProject capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreProject/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-proof": {
+      "canonical_name": "BonfyreProof",
+      "commands": [
+        "BonfyreProof"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Evidence / Proof",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-proof binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ProofFrontier; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreProof capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreProof/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-proxy": {
+      "canonical_name": "BonfyreProxy",
+      "commands": [
+        "BonfyreProxy"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Proxy",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-proxy binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ProxyCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreProxy capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreProxy/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-quant": {
+      "canonical_name": "BonfyreQuant",
+      "commands": [
+        "BonfyreQuant"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Quant",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-quant binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes QuantCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreQuant capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreQuant/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-query": {
+      "canonical_name": "BonfyreQuery",
+      "commands": [
+        "BonfyreQuery"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Query",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-query binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes QueryCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreQuery capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreQuery/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-queue": {
+      "canonical_name": "BonfyreQueue",
+      "commands": [
+        "BonfyreQueue"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Execution / Queue",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-queue binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes WorkState; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreQueue capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreQueue/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-qwen-f-p-q": {
+      "canonical_name": "BonfyreQwenFPQ",
+      "commands": [
+        "BonfyreQwenFPQ"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / QwenFPQ",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-qwen-fpq binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes QwenFPQCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreQwenFPQ capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreQwenFPQ/src/fpq_active_cache.c",
+        "cmd/BonfyreQwenFPQ/src/fpq_active_cache.h",
+        "cmd/BonfyreQwenFPQ/src/fpq_compat_shim.c",
+        "cmd/BonfyreQwenFPQ/src/fpq_kernels_neon.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-reason": {
+      "canonical_name": "BonfyreReason",
+      "commands": [
+        "BonfyreReason"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Reason",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-reason binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ReasonCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreReason capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreReason/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-recipe": {
+      "canonical_name": "BonfyreRecipe",
+      "commands": [
+        "BonfyreRecipe"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Recipe",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes RecipeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreRecipe capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreRecipe/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "cmd-render": {
+      "canonical_name": "BonfyreRender",
+      "commands": [
+        "BonfyreRender"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Render",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-render binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes RenderCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreRender capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreRender/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-repurpose": {
+      "canonical_name": "BonfyreRepurpose",
+      "commands": [
+        "BonfyreRepurpose"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Repurpose",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-repurpose binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes RepurposeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreRepurpose capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreRepurpose/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-run": {
+      "canonical_name": "BonfyreRun",
+      "commands": [
+        "BonfyreRun"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Run",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes RunCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreRun capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreRun/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "cmd-runtime": {
+      "canonical_name": "BonfyreRuntime",
+      "commands": [
+        "BonfyreRuntime"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Runtime",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-runtime binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes RuntimeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreRuntime capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreRuntime/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-s-a-e": {
+      "canonical_name": "BonfyreSAE",
+      "commands": [
+        "BonfyreSAE"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / SAE",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-sae binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SAECapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSAE capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSAE/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-s-l-i": {
+      "canonical_name": "BonfyreSLI",
+      "commands": [
+        "BonfyreSLI"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / SLI",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-sli binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SLICapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSLI capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSLI/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-scene-detect": {
+      "canonical_name": "BonfyreSceneDetect",
+      "commands": [
+        "BonfyreSceneDetect"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / SceneDetect",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-scene-detect binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SceneDetectCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSceneDetect capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSceneDetect/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-segment": {
+      "canonical_name": "BonfyreSegment",
+      "commands": [
+        "BonfyreSegment"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Segment",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-segment binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SegmentCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSegment capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSegment/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-space": {
+      "canonical_name": "BonfyreSpace",
+      "commands": [
+        "BonfyreSpace"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Space",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-space binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SpaceCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSpace capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSpace/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-speech-loop": {
+      "canonical_name": "BonfyreSpeechLoop",
+      "commands": [
+        "BonfyreSpeechLoop"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / SpeechLoop",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-speechloop binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SpeechLoopCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSpeechLoop capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSpeechLoop/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-stitch": {
+      "canonical_name": "BonfyreStitch",
+      "commands": [
+        "BonfyreStitch"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Stitch",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-stitch binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes StitchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreStitch capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreStitch/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-surface": {
+      "canonical_name": "BonfyreSurface",
+      "commands": [
+        "BonfyreSurface"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Surface",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-surface binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SurfaceCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSurface capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSurface/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-swarm": {
+      "canonical_name": "BonfyreSwarm",
+      "commands": [
+        "BonfyreSwarm"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Swarm",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-swarm binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SwarmCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSwarm capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSwarm/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-sync": {
+      "canonical_name": "BonfyreSync",
+      "commands": [
+        "BonfyreSync"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Sync",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (Authority gates the commit)"
+      ],
+      "internal_calculi": [
+        "bonfyre-sync binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SyncCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreSync capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreSync/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-tag": {
+      "canonical_name": "BonfyreTag",
+      "commands": [
+        "BonfyreTag"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Tag",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-tag binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TagCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTag capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTag/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-tel": {
+      "canonical_name": "BonfyreTel",
+      "commands": [
+        "BonfyreTel"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Tel",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-tel binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TelCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTel capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTel/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-tier": {
+      "canonical_name": "BonfyreTier",
+      "commands": [
+        "BonfyreTier"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Tier",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-tier binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TierCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTier capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTier/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-time": {
+      "canonical_name": "BonfyreTime",
+      "commands": [
+        "BonfyreTime"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Time",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-time binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TimeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTime capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTime/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-tone": {
+      "canonical_name": "BonfyreTone",
+      "commands": [
+        "BonfyreTone"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Tone",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-tone binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ToneCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTone capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTone/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-transcribe": {
+      "canonical_name": "BonfyreTranscribe",
+      "commands": [
+        "BonfyreTranscribe"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Transcribe",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-transcribe binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TranscribeCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTranscribe capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTranscribe/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-transcript-clean": {
+      "canonical_name": "BonfyreTranscriptClean",
+      "commands": [
+        "BonfyreTranscriptClean"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / TranscriptClean",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-transcript-clean binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TranscriptCleanCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTranscriptClean capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTranscriptClean/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-transcript-family": {
+      "canonical_name": "BonfyreTranscriptFamily",
+      "commands": [
+        "BonfyreTranscriptFamily"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / TranscriptFamily",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-transcript-family binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes TranscriptFamilyCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreTranscriptFamily capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreTranscriptFamily/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-vec": {
+      "canonical_name": "BonfyreVec",
+      "commands": [
+        "BonfyreVec"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Model / Vector",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-vec binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes SID; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreVec capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreVec/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-video-demux": {
+      "canonical_name": "BonfyreVideoDemux",
+      "commands": [
+        "BonfyreVideoDemux"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / VideoDemux",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-video-demux binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes VideoDemuxCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreVideoDemux capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreVideoDemux/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-violence": {
+      "canonical_name": "BonfyreViolence",
+      "commands": [
+        "BonfyreViolence"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Violence",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-violence binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes ViolenceCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreViolence capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreViolence/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-watch": {
+      "canonical_name": "BonfyreWatch",
+      "commands": [
+        "BonfyreWatch"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Watch",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-watch binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes WatchCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreWatch capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreWatch/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-weaviate-index": {
+      "canonical_name": "BonfyreWeaviateIndex",
+      "commands": [
+        "BonfyreWeaviateIndex"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / WeaviateIndex",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-weaviate-index binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes WeaviateIndexCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreWeaviateIndex capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreWeaviateIndex/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-wire": {
+      "canonical_name": "BonfyreWire",
+      "commands": [
+        "BonfyreWire"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Wire",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "bonfyre-wire binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "responds to --help (live); realizes WireCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreWire capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreWire/src/main.c",
+        "cmd/BonfyreWire/src/wire.c",
+        "cmd/BonfyreWire/src/wire.h"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "cmd/command_smoke.py"
+      ]
+    },
+    "cmd-workflow": {
+      "canonical_name": "BonfyreWorkflow",
+      "commands": [
+        "BonfyreWorkflow"
+      ],
+      "consumes": [],
+      "derived": [],
+      "domain": "Command / Workflow",
+      "edge_types": [],
+      "family": "command",
+      "forbidden_inferences": [
+        "the command exists -> its effect is authorized (read-only, but scope still applies)"
+      ],
+      "internal_calculi": [
+        "binary"
+      ],
+      "invariants": [],
+      "known_gaps": [
+        "source-only, not built; realizes WorkflowCapability; deeper development toward the BonfyreFS level (WiringSpec consumes/produces, full contract) is ongoing"
+      ],
+      "layer": "",
+      "maturity": "declared",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "What does the BonfyreWorkflow capability organ realize, and by what contract?",
+      "source_paths": [
+        "cmd/BonfyreWorkflow/src/main.c"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "collapse-front": {
       "canonical_name": "CollapseFront",
       "commands": [],
