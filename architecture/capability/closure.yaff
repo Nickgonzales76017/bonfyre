@@ -30,6 +30,7 @@ architecture capability-lattice
 
 architecture discipl-composition
   canonical_name DisCIPLCompositionGraph
+  consumes CommandAdvertisement
   family capability
   domain Capability / Composition
   layer capability/composition

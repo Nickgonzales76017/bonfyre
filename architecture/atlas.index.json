@@ -836,7 +836,9 @@
       "invariants": [
         "a command's law is what a composed hop must preserve; the estate is what it belongs to"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "the whole 91-cmd surface (94 dirs, 87 built) is advertised as CommandAdvertisements mapped to the capability each provides (BonfyreAuth->Authority, BonfyreLedger->Value, BonfyreFPQ->FPQRepresentation, ...) and served in the fabric; binding each advertisement's consumes/produces into DisCIPL composition is the next step"
+      ],
       "layer": "capability",
       "maturity": "implemented",
       "native_formats": [],
@@ -845,14 +847,19 @@
         "Law"
       ],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "CommandAdvertisement"
+      ],
       "semantic_question": "What computational law does this command preserve, beneath its domain?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/command_laws.py"
+        "10-Code/BonfyreControlPlane/command_laws.py",
+        "10-Code/BonfyreControlPlane/command_advertisements.py"
       ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_command_advertisements.py"
+      ]
     },
     "commitment-graph": {
       "canonical_name": "CommitmentGraph",
@@ -1009,7 +1016,9 @@
       "commands": [
         "BonfyreDiscipl"
       ],
-      "consumes": [],
+      "consumes": [
+        "CommandAdvertisement"
+      ],
       "derived": [],
       "domain": "Capability / Composition",
       "edge_types": [
