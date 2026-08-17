@@ -163,6 +163,21 @@ def q_fragile_capacity(control_db: str) -> list[dict]:
     return out
 
 
+def q_reachable(control_db: str) -> list[dict]:
+    """The reachable opportunity set, maintained by the live DBSP circuit -- a
+    Feldera query projection, not a stored folder (riff SS38). Empty if the engine
+    is not built."""
+    try:
+        import reachability_bridge as rb
+        from pathlib import Path
+        if not rb.engine_available():
+            return []
+        res = rb.run_bridge(Path(control_db))
+    except Exception:
+        return []
+    return [{"id": o, "label": o, "maintained_by": "feldera-dbsp"} for o in res.reachable]
+
+
 def q_wiring_gaps(_control_db: str) -> list[dict]:
     if not os.path.exists(ATLAS_INDEX):
         return []
@@ -189,6 +204,7 @@ REGISTRY: list[tuple[str, str, Callable[[str], list[dict]]]] = [
     ("Pending-Occurrences", "Observed occurrences not yet folded into campaign state.", q_pending_occurrences),
     ("Fragile-Capacity", "Value conclusions standing on a single point of failure.", q_fragile_capacity),
     ("Wiring-Gaps", "Orphan producers/consumers from the atlas wiring analysis.", q_wiring_gaps),
+    ("Reachable", "Opportunities currently reachable -- maintained live by the DBSP circuit, not stored.", q_reachable),
 ]
 
 
