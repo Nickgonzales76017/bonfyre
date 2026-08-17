@@ -70,8 +70,6 @@
       "canonical_name": "AddressPlane",
       "commands": [],
       "consumes": [
-        "EligibleProviders",
-        "ReachableCapacity",
         "Authority",
         "ProviderState",
         "SurfaceCandidate",
@@ -132,7 +130,10 @@
         "10-Code/BonfyreControlPlane/bonfyre_sid.py",
         "10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs"
       ],
-      "subscribes": [],
+      "subscribes": [
+        "EligibleProviders",
+        "ReachableCapacity"
+      ],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_address_plane.py",
@@ -1237,6 +1238,8 @@
         "10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs",
         "10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs",
         "10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs",
+        "10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs",
+        "10-Code/BonfyreControlPlane/substrate/feldera_maintained_relations.rs",
         "10-Code/BonfyreControlPlane/substrate_feldera.py",
         "10-Code/BonfyreControlPlane/reachability_bridge.py"
       ],
@@ -1247,6 +1250,8 @@
         "SubstrateView"
       ],
       "witnesses": [
+        "10-Code/BonfyreControlPlane/substrate/full_retraction_cascade.sh",
+        "10-Code/BonfyreControlPlane/substrate/maintained_relations_witness.sh",
         "~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json",
         "~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json",
         "~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json",

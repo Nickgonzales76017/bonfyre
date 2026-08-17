@@ -1,8 +1,8 @@
 atlas forwarding
 
 architecture address-plane
-  consumes EligibleProviders
-  consumes ReachableCapacity
+  subscribes EligibleProviders
+  subscribes ReachableCapacity
   consumes Authority
   consumes ProviderState
   consumes SurfaceCandidate

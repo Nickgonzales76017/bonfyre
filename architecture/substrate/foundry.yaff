@@ -91,6 +91,10 @@ architecture feldera
   source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
   source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
   source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs
+  source_path 10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
+  source_path 10-Code/BonfyreControlPlane/substrate/feldera_maintained_relations.rs
+  witness 10-Code/BonfyreControlPlane/substrate/full_retraction_cascade.sh
+  witness 10-Code/BonfyreControlPlane/substrate/maintained_relations_witness.sh
   source_path 10-Code/BonfyreControlPlane/substrate_feldera.py
   source_path 10-Code/BonfyreControlPlane/reachability_bridge.py
   witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
