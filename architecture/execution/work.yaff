@@ -57,6 +57,9 @@ architecture occurrence-spine
   witness 10-Code/BonfyreControlPlane/tests/test_external_events.py
   witness engine/core/tests/occurrence_spine_test.c
   witness engine/core/tests/run6_replay.sh
+  witness engine/core/tests/occurrence_correction_test.c
+  witness engine/core/tests/p0_loop_test.c
+  invariant a correction supersedes a prior occurrence (the -1 retraction): the fold withdraws the stale status while the correction's stands; append-only and auditable (nothing deleted)
   source_lineage run6 control-plane retrospective
   known_gap native writer records + dedups on the shared store (byte-identical digest), enforces the two-clock + kind gate, AND folds pending occurrences via a total kind->status projection into the shared occurrence_projection table; run6 replay over the real 9 recorded occurrences matches the python fold row-for-row (RUN6 REPLAY PARITY: MATCH). Remaining native-absorption item: native watchers (the observe side is driven by python ingest)
 

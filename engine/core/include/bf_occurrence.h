@@ -67,6 +67,21 @@ void bf_occurrence_digest(const char *source, const char *actor, const char *eve
 /* Canonical UTC now in the Python-parity form YYYY-MM-DDTHH:MM:SS+00:00. */
 void bf_occurrence_now_iso(char out[40]);
 
+/*
+ * Correct/retract a prior occurrence. Records `correction` as a new observation
+ * and links it as superseding `original_event_id` -- the -1 retraction: the
+ * original's stale projection is withdrawn and the correction's stands instead.
+ * append-only and auditable (nothing is deleted; the supersession is recorded).
+ * On success sets *out_correction_id to the correction's id. Returns OK, or
+ * INVALID if the original does not exist / the correction is malformed.
+ */
+BfOccurrenceStatus bf_occurrence_correct(BfOccurrenceSpine *spine, int64_t original_event_id,
+                                         const BfOccurrenceSpec *correction,
+                                         const char *reason, int64_t *out_correction_id);
+
+/* Has this occurrence been superseded by a correction? 1 / 0 / -1. */
+int bf_occurrence_is_superseded(BfOccurrenceSpine *spine, int64_t event_id);
+
 /* Count of occurrences not yet folded into downstream state (projected_at IS NULL). */
 int64_t bf_occurrence_unprojected_count(BfOccurrenceSpine *spine);
 

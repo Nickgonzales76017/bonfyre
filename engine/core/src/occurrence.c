@@ -44,6 +44,13 @@ static const char *OCCURRENCE_SCHEMA =
     "  event_kind TEXT NOT NULL,"
     "  status TEXT NOT NULL,"
     "  projected_at TEXT NOT NULL"
+    ");"
+    "CREATE TABLE IF NOT EXISTS occurrence_corrections("
+    "  original_event_id INTEGER NOT NULL REFERENCES external_event_log(id),"
+    "  correction_event_id INTEGER NOT NULL REFERENCES external_event_log(id),"
+    "  reason TEXT NOT NULL DEFAULT '',"
+    "  corrected_at TEXT NOT NULL,"
+    "  PRIMARY KEY(original_event_id)"
     ");";
 
 /* The declared occurrence kinds, mirroring EVENT_KINDS in external_events.py.
@@ -343,6 +350,80 @@ BfOccurrenceStatus bf_occurrence_mark_projected(BfOccurrenceSpine *spine, int64_
     return changed > 0 ? BF_OCCURRENCE_OK : BF_OCCURRENCE_INVALID;
 }
 
+int bf_occurrence_is_superseded(BfOccurrenceSpine *spine, int64_t event_id) {
+    if (!spine) {
+        return -1;
+    }
+    sqlite3_stmt *stmt = NULL;
+    int superseded = 0;
+    if (sqlite3_prepare_v2(spine->db,
+                           "SELECT 1 FROM occurrence_corrections WHERE original_event_id=?",
+                           -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, event_id);
+        superseded = (sqlite3_step(stmt) == SQLITE_ROW) ? 1 : 0;
+    }
+    sqlite3_finalize(stmt);
+    return superseded;
+}
+
+BfOccurrenceStatus bf_occurrence_correct(BfOccurrenceSpine *spine, int64_t original_event_id,
+                                         const BfOccurrenceSpec *correction,
+                                         const char *reason, int64_t *out_correction_id) {
+    if (out_correction_id) {
+        *out_correction_id = 0;
+    }
+    if (!spine || !correction) {
+        return BF_OCCURRENCE_INVALID;
+    }
+    /* the original must exist */
+    sqlite3_stmt *chk = NULL;
+    int exists = 0;
+    if (sqlite3_prepare_v2(spine->db, "SELECT 1 FROM external_event_log WHERE id=?",
+                           -1, &chk, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(chk, 1, original_event_id);
+        exists = (sqlite3_step(chk) == SQLITE_ROW);
+    }
+    sqlite3_finalize(chk);
+    if (!exists) {
+        return BF_OCCURRENCE_INVALID;
+    }
+
+    /* record the correction as its own observation */
+    int64_t correction_id = 0;
+    BfOccurrenceStatus st = bf_occurrence_observe(spine, correction, &correction_id);
+    if (st != BF_OCCURRENCE_OK) {
+        return st;
+    }
+
+    /* link it as superseding the original (the -1 retraction, audit-preserving) */
+    char stamp[40];
+    bf_occurrence_now_iso(stamp);
+    sqlite3_stmt *ins = NULL;
+    if (sqlite3_prepare_v2(
+            spine->db,
+            "INSERT INTO occurrence_corrections"
+            "(original_event_id,correction_event_id,reason,corrected_at) VALUES(?,?,?,?)"
+            " ON CONFLICT(original_event_id) DO UPDATE SET"
+            "  correction_event_id=excluded.correction_event_id, reason=excluded.reason,"
+            "  corrected_at=excluded.corrected_at",
+            -1, &ins, NULL) != SQLITE_OK) {
+        return BF_OCCURRENCE_STORAGE_ERROR;
+    }
+    sqlite3_bind_int64(ins, 1, original_event_id);
+    sqlite3_bind_int64(ins, 2, correction_id);
+    sqlite3_bind_text(ins, 3, reason ? reason : "", -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(ins, 4, stamp, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(ins);
+    sqlite3_finalize(ins);
+    if (rc != SQLITE_DONE) {
+        return BF_OCCURRENCE_STORAGE_ERROR;
+    }
+    if (out_correction_id) {
+        *out_correction_id = correction_id;
+    }
+    return BF_OCCURRENCE_OK;
+}
+
 int64_t bf_occurrence_project(BfOccurrenceSpine *spine, const char *now) {
     if (!spine) {
         return -1;
@@ -370,6 +451,17 @@ int64_t bf_occurrence_project(BfOccurrenceSpine *spine, const char *now) {
         int64_t id = sqlite3_column_int64(scan, 0);
         const char *actor = (const char *)sqlite3_column_text(scan, 1);
         const char *kind = (const char *)sqlite3_column_text(scan, 2);
+        /* a superseded occurrence is retracted: its stale status is withdrawn, so
+         * it folds out of the pending set without writing a projection. The
+         * correction (a separate pending occurrence) folds its status instead. */
+        if (bf_occurrence_is_superseded(spine, id)) {
+            if (bf_occurrence_mark_projected(spine, id, now) != BF_OCCURRENCE_OK) {
+                failed = 1;
+                break;
+            }
+            folded++;
+            continue;
+        }
         const char *status = bf_occurrence_status_for_kind(kind);
         if (status == NULL) {
             /* A declared kind with no projection would be a silent drop -- refuse

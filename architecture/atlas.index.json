@@ -2161,7 +2161,8 @@
       ],
       "internal_calculi": [],
       "invariants": [
-        "observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store"
+        "observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store",
+        "a correction supersedes a prior occurrence (the -1 retraction): the fold withdraws the stale status while the correction's stands; append-only and auditable (nothing deleted)"
       ],
       "known_gaps": [
         "native writer records + dedups on the shared store (byte-identical digest), enforces the two-clock + kind gate, AND folds pending occurrences via a total kind->status projection into the shared occurrence_projection table; run6 replay over the real 9 recorded occurrences matches the python fold row-for-row (RUN6 REPLAY PARITY: MATCH). Remaining native-absorption item: native watchers (the observe side is driven by python ingest)"
@@ -2195,7 +2196,9 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_external_events.py",
         "engine/core/tests/occurrence_spine_test.c",
-        "engine/core/tests/run6_replay.sh"
+        "engine/core/tests/run6_replay.sh",
+        "engine/core/tests/occurrence_correction_test.c",
+        "engine/core/tests/p0_loop_test.c"
       ]
     },
     "pattern-graph": {
