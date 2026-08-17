@@ -2533,7 +2533,9 @@
         "only a resource at activated is usable; available is not activated",
         "activate authority is never short-circuited by qualification or binding"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "native state machine derives gap<candidate<qualified<eligible<authorized<activated on the shared resource_candidates store; the activate-authority gate is un-short-circuitable (authority result is an input -- authority stays its own fact); python reads native-written candidates -- parity proven"
+      ],
       "layer": "opportunity",
       "maturity": "implemented",
       "native_formats": [
@@ -2552,7 +2554,9 @@
       ],
       "semantic_question": "How does a currently-unavailable resource become reachable and usable?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/resource_activation.py"
+        "10-Code/BonfyreControlPlane/resource_activation.py",
+        "engine/core/src/activation.c",
+        "engine/core/include/bf_activation.h"
       ],
       "subscribes": [],
       "views": [
@@ -2560,7 +2564,8 @@
         "ProviderResourceView"
       ],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_resource_activation.py"
+        "10-Code/BonfyreControlPlane/tests/test_resource_activation.py",
+        "engine/core/tests/activation_test.c"
       ]
     },
     "resource-admission": {

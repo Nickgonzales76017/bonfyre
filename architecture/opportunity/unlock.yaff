@@ -149,5 +149,9 @@ architecture resource-activation
   forbidden_inference resource eligible -> resource authorized
   native_format graf
   source_path 10-Code/BonfyreControlPlane/resource_activation.py
+  source_path engine/core/src/activation.c
+  source_path engine/core/include/bf_activation.h
   witness 10-Code/BonfyreControlPlane/tests/test_resource_activation.py
+  witness engine/core/tests/activation_test.c
   source_lineage SEED-A recursive organ document
+  known_gap native state machine derives gap<candidate<qualified<eligible<authorized<activated on the shared resource_candidates store; the activate-authority gate is un-short-circuitable (authority result is an input -- authority stays its own fact); python reads native-written candidates -- parity proven

@@ -10,7 +10,7 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 	$(OBJDIR)/filesystem_projection.o \
 	$(OBJDIR)/process_operator.o $(OBJDIR)/operator_contract.o $(OBJDIR)/bf_sha256.o \
 	$(OBJDIR)/occurrence.o $(OBJDIR)/actor.o $(OBJDIR)/admission.o $(OBJDIR)/corroboration.o \
-	$(OBJDIR)/evidence.o \
+	$(OBJDIR)/evidence.o $(OBJDIR)/activation.o \
 	$(OBJDIR)/bf_catalog_generation.o
 
 .PHONY: all clean test
@@ -18,7 +18,7 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 all: $(TARGET)
 
 # Native conformance tests (self-contained C; no Python needed to pass).
-TEST_SRCS := tests/routable_family_test.c tests/occurrence_spine_test.c tests/actor_graph_test.c tests/admission_test.c tests/control_compose_test.c tests/corroboration_test.c tests/evidence_test.c
+TEST_SRCS := tests/routable_family_test.c tests/occurrence_spine_test.c tests/actor_graph_test.c tests/admission_test.c tests/control_compose_test.c tests/corroboration_test.c tests/evidence_test.c tests/activation_test.c
 TEST_BINS := $(patsubst tests/%.c,$(OBJDIR)/%,$(TEST_SRCS))
 
 $(OBJDIR)/%: tests/%.c $(TARGET) | $(OBJDIR)
@@ -77,6 +77,9 @@ $(OBJDIR)/corroboration.o: src/corroboration.c include/bf_corroboration.h | $(OB
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/evidence.o: src/evidence.c include/bf_evidence.h | $(OBJDIR)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+
+$(OBJDIR)/activation.o: src/activation.c include/bf_activation.h | $(OBJDIR)
 	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
 $(OBJDIR)/bf_catalog_generation.o: $(ROOT)/lib/libbonfyre/src/bf_catalog_generation.c | $(OBJDIR)
