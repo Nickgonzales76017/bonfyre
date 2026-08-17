@@ -207,6 +207,20 @@ class Atlas:
                 errors.append(f"phenotype {pid}: architecture '{ref}' is not registered")
             if not ph.lst("produces"):
                 errors.append(f"phenotype {pid}: must name what it produces")
+
+        # WiringSpec: a semantic fact has at most one authoritative owner. Two
+        # organs claiming to own one fact is duplicate ownership -- two sources of
+        # truth for the same thing, the exact wiring bug the constitution forbids.
+        fact_owners: dict[str, list[str]] = {}
+        for aid, a in self.architectures.items():
+            for fact in a.lst("owns"):
+                fact_owners.setdefault(fact, []).append(aid)
+        for fact, owners in sorted(fact_owners.items()):
+            if len(owners) > 1:
+                errors.append(
+                    f"WiringSpec: fact '{fact}' is owned by {len(owners)} "
+                    f"architectures ({', '.join(sorted(owners))}) -- duplicate ownership"
+                )
         return errors
 
     # -- loss queries: what the atlas knows it is missing --------------------
@@ -224,6 +238,8 @@ class Atlas:
             "unwitnessed": [],
             "superseded_but_present": [],
             "substrate_without_phenotype": [],
+            "fact_orphan_produced": [],
+            "fact_orphan_consumed": [],
         }
         for aid, a in self.architectures.items():
             if not a.lst("forbidden_inference"):
@@ -240,6 +256,19 @@ class Atlas:
                 report["superseded_but_present"].append(aid)
             if a.get("family") == "substrate" and aid not in phenotyped:
                 report["substrate_without_phenotype"].append(aid)
+
+        # WiringSpec gaps: a produced fact nobody consumes, or a consumed fact
+        # nobody provides. These are the orphan producer/consumer edges the wiring
+        # constitution wants closed.
+        producers: set[str] = set()
+        consumers: set[str] = set()
+        for a in self.architectures.values():
+            producers.update(a.lst("owns"))
+            producers.update(a.lst("publishes"))
+            consumers.update(a.lst("consumes"))
+            consumers.update(a.lst("subscribes"))
+        report["fact_orphan_produced"] = sorted(producers - consumers)
+        report["fact_orphan_consumed"] = sorted(consumers - producers)
         return report
 
     def maturity_rollup(self) -> dict[str, dict[str, int]]:
