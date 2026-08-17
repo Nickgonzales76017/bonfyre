@@ -64,6 +64,11 @@ BfActorStatus bf_actor_upsert(BfActorGraph *graph, const BfActorNodeSpec *spec, 
  * endpoints must already exist, or BF_ACTOR_UNKNOWN_ENDPOINT. now may be NULL. */
 BfActorStatus bf_actor_add_edge(BfActorGraph *graph, const BfActorEdgeSpec *spec, const char *now);
 
+/* Withdraw a typed edge (the -1: a relationship that has ended). Idempotent --
+ * returns OK whether or not the edge existed. Keyed (from_id, edge_kind, to_id). */
+BfActorStatus bf_actor_unrelate(BfActorGraph *graph, const char *from_id,
+                                const char *edge_kind, const char *to_id);
+
 /* Count of actors a human has not confirmed (confidence != 'verified'). */
 int64_t bf_actor_unverified_count(BfActorGraph *graph);
 

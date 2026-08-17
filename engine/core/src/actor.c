@@ -261,6 +261,27 @@ BfActorStatus bf_actor_add_edge(BfActorGraph *graph, const BfActorEdgeSpec *spec
     return BF_ACTOR_STORAGE_ERROR;
 }
 
+BfActorStatus bf_actor_unrelate(BfActorGraph *graph, const char *from_id,
+                                const char *edge_kind, const char *to_id) {
+    if (!graph || !from_id || from_id[0] == '\0' || !to_id || to_id[0] == '\0' ||
+        !edge_kind || edge_kind[0] == '\0') {
+        return BF_ACTOR_INVALID;
+    }
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(
+            graph->db,
+            "DELETE FROM actor_edges WHERE from_id=? AND edge_kind=? AND to_id=?",
+            -1, &stmt, NULL) != SQLITE_OK) {
+        return BF_ACTOR_STORAGE_ERROR;
+    }
+    sqlite3_bind_text(stmt, 1, from_id, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, edge_kind, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, to_id, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_DONE ? BF_ACTOR_OK : BF_ACTOR_STORAGE_ERROR;
+}
+
 int64_t bf_actor_unverified_count(BfActorGraph *graph) {
     if (!graph) {
         return -1;

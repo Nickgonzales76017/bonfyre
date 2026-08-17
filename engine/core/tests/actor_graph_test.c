@@ -115,6 +115,22 @@ int main(int argc, char **argv) {
         return fail("alex should have 0 funds edges");
     }
 
+    /* a relationship ends: withdraw the edge (the -1) */
+    if (bf_actor_unrelate(graph, "org:githubfund", "employs", "person:alex") != BF_ACTOR_OK) {
+        return fail("unrelate employs");
+    }
+    if (bf_actor_neighbour_count(graph, "person:alex", NULL) != 0) {
+        return fail("edge should be gone after unrelate");
+    }
+    /* idempotent: withdrawing an absent edge is still OK */
+    if (bf_actor_unrelate(graph, "org:githubfund", "employs", "person:alex") != BF_ACTOR_OK) {
+        return fail("idempotent unrelate");
+    }
+    /* re-relate so the rest of the test's expectations hold */
+    if (bf_actor_add_edge(graph, &employs, NULL) != BF_ACTOR_OK) {
+        return fail("re-add employs");
+    }
+
     /* confirming a person promotes asserted -> verified (upsert), not a new row */
     person.confidence = "verified";
     person.provenance = "confirmed on call";
