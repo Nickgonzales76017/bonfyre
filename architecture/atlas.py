@@ -490,6 +490,11 @@ def main(argv: list[str]) -> int:
         return _cmd_fs(atlas, argv[2] if len(argv) > 2 else str(ROOT / "fs"))
     if cmd == "wiring":
         return _cmd_wiring()
+    if cmd == "wiring-doc":
+        import wiring
+        (ROOT / "WIRING.md").write_text(wiring.to_markdown())
+        print("wrote architecture/WIRING.md")
+        return 0
     print(f"unknown command: {cmd}")
     return 1
 
