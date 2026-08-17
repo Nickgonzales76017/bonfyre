@@ -142,7 +142,9 @@
     "artifact-graph": {
       "canonical_name": "ArtifactGraph",
       "commands": [],
-      "consumes": [],
+      "consumes": [
+        "ExecutionReceipt"
+      ],
       "domain": "Evidence / Artifacts",
       "edge_types": [
         "transformed_by"
@@ -1449,7 +1451,9 @@
       "commands": [
         "BonfyreFPQ"
       ],
-      "consumes": [],
+      "consumes": [
+        "ResourcePressure"
+      ],
       "domain": "Model Representation",
       "edge_types": [
         "decomposes_into",
@@ -3143,7 +3147,6 @@
       "consumes": [
         "ProofFrontier",
         "Actor",
-        "ReachableCapacity",
         "ResourceActivation",
         "Credential"
       ],
@@ -3190,7 +3193,9 @@
         "10-Code/BonfyreControlPlane/reachability_watch.py",
         "10-Code/BonfyreControlPlane/reachability_bridge.py"
       ],
-      "subscribes": [],
+      "subscribes": [
+        "ReachableCapacity"
+      ],
       "views": [
         "OpportunityView"
       ],

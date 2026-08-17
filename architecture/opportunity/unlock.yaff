@@ -23,7 +23,7 @@ architecture unlock-graph
   owns OpportunityEligibility
   consumes ProofFrontier
   consumes Actor
-  consumes ReachableCapacity
+  subscribes ReachableCapacity
   consumes ResourceActivation
   consumes Credential
   publishes OpportunityEligibility

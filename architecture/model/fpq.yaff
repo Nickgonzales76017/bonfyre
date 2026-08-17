@@ -6,6 +6,7 @@ atlas model
 
 architecture fpq-transform
   owns FPQRepresentation
+  consumes ResourcePressure
   publishes FPQRepresentation
   canonical_name FPQTransformationGraph
   family model
