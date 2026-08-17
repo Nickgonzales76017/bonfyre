@@ -72,7 +72,8 @@
         "EligibleProviders",
         "ReachableCapacity",
         "Authority",
-        "ProviderState"
+        "ProviderState",
+        "SurfaceCandidate"
       ],
       "domain": "Forwarding / Eligibility",
       "edge_types": [
@@ -256,6 +257,38 @@
       "source_paths": [
         "10-Code/BonfyreControlPlane/scheduling.py"
       ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "aurekai": {
+      "canonical_name": "Aurekai",
+      "commands": [],
+      "consumes": [
+        "ActionTrace"
+      ],
+      "domain": "Surface / Learning",
+      "edge_types": [],
+      "family": "surface",
+      "forbidden_inferences": [
+        "a learned pattern -> changed semantic truth (Aurekai proposes; the fabric stays authoritative)",
+        "a frequent motif -> a correct or authorized one (frequency is not correctness; the fence and Authority still run)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "the learning organ is architectural; the trace->candidate loop is specified, not yet trained"
+      ],
+      "layer": "learning",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "SurfaceCandidate"
+      ],
+      "semantic_question": "Which presentation and adjacency motifs recur, and what better candidates should be proposed?",
+      "source_paths": [],
       "subscribes": [],
       "views": [],
       "witnesses": []
@@ -2848,6 +2881,52 @@
       "owns": [],
       "publishes": [],
       "semantic_question": "Who is present, on what surface, with what disclosure state, availability, and attention?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "surface-ir": {
+      "canonical_name": "SurfaceIR",
+      "commands": [],
+      "consumes": [
+        "DocType",
+        "SurfaceGrammar",
+        "DealState",
+        "TicketState",
+        "DerivedView",
+        "KnowledgeClaim",
+        "ShareGrant",
+        "RepresentationHistory",
+        "OpportunityEligibility",
+        "FortificationPlan",
+        "RouteAdvertisement",
+        "Authority"
+      ],
+      "domain": "Surface / Compilation",
+      "edge_types": [],
+      "family": "surface",
+      "forbidden_inferences": [
+        "a surface renders an action -> the action is authorized (Authority gates at effect time; the surface only shows affordances)",
+        "a fact is off-surface -> the fact does not exist (a surface is a projection, not the fabric)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "the surface compiler is architectural; it names the grammars it fuses, not yet a running renderer"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "SurfaceIR"
+      ],
+      "publishes": [
+        "ActionTrace",
+        "SurfaceDelta"
+      ],
+      "semantic_question": "What should this actor see and be able to do, compiled from all relevant state?",
       "source_paths": [],
       "subscribes": [],
       "views": [],

@@ -5,6 +5,7 @@ architecture address-plane
   consumes ReachableCapacity
   consumes Authority
   consumes ProviderState
+  consumes SurfaceCandidate
   publishes RouteAdvertisement
   canonical_name AddressPlane
   family forwarding
