@@ -5,6 +5,7 @@ architecture provider-state
   consumes ResourcePressure
   consumes Receipt
   consumes ExecutionReceipt
+  consumes TransportReceipt
   publishes ProviderState
   publishes EligibleProviders
   canonical_name ProviderStateFold

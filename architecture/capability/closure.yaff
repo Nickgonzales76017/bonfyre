@@ -49,6 +49,10 @@ architecture discipl-composition
   source_lineage capability closure essay
 
 architecture capability-closure
+  owns Capability
+  consumes ExecutionReceipt
+  consumes Credential
+  publishes Capability
   canonical_name CapabilityClosureGraph
   family capability
   domain Capability / Execution

@@ -62,6 +62,10 @@ architecture occurrence-spine
 
 architecture transport-phenotype
   canonical_name TransportPhenotypeGraph
+  consumes RouteAdvertisement
+  consumes ExecutionReceipt
+  consumes Authority
+  publishes TransportReceipt
   family execution
   domain Execution / Transport
   layer execution/transport

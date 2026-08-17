@@ -75,7 +75,8 @@
         "ProviderState",
         "SurfaceCandidate",
         "FPQRepresentation",
-        "KVPassport"
+        "KVPassport",
+        "Capability"
       ],
       "domain": "Forwarding / Eligibility",
       "edge_types": [
@@ -505,7 +506,10 @@
         "BonfyreDiscipl",
         "BonfyreFPQ"
       ],
-      "consumes": [],
+      "consumes": [
+        "ExecutionReceipt",
+        "Credential"
+      ],
       "domain": "Capability / Execution",
       "edge_types": [
         "binds_to",
@@ -533,8 +537,12 @@
         "Hop",
         "FormSelection"
       ],
-      "owns": [],
-      "publishes": [],
+      "owns": [
+        "Capability"
+      ],
+      "publishes": [
+        "Capability"
+      ],
       "semantic_question": "Can this composed chain be bound to real binaries, gated by the frontier, and run?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/capability_closure.py"
@@ -2363,7 +2371,8 @@
       "consumes": [
         "ResourcePressure",
         "Receipt",
-        "ExecutionReceipt"
+        "ExecutionReceipt",
+        "TransportReceipt"
       ],
       "domain": "Provider / Resource",
       "edge_types": [
@@ -3073,7 +3082,11 @@
       "commands": [
         "BonfyreProject"
       ],
-      "consumes": [],
+      "consumes": [
+        "RouteAdvertisement",
+        "ExecutionReceipt",
+        "Authority"
+      ],
       "domain": "Execution / Transport",
       "edge_types": [
         "carries"
@@ -3097,7 +3110,9 @@
         "Hop"
       ],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "TransportReceipt"
+      ],
       "semantic_question": "By which carrier does a hop run, and what does each carrier add?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/transport.py"

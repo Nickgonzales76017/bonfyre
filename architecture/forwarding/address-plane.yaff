@@ -8,6 +8,7 @@ architecture address-plane
   consumes SurfaceCandidate
   consumes FPQRepresentation
   consumes KVPassport
+  consumes Capability
   publishes RouteAdvertisement
   canonical_name AddressPlane
   family forwarding
