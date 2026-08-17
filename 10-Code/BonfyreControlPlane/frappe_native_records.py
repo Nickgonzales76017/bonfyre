@@ -117,9 +117,73 @@ def project_tickets(control_db: str) -> list[dict]:
     return out
 
 
+def project_payments(control_db: str) -> list[dict]:
+    """Commitment ledger entries -> ERPNext Payment Entry records (realized value in
+    the double-entry grammar), shaped by the real Payment Entry field schema."""
+    fields = doctype_fields("erpnext", "Payment Entry")
+    if not fields:
+        return []
+    db = sqlite3.connect(f"file:{control_db}?mode=ro", uri=True)
+    try:
+        if not db.execute("SELECT 1 FROM sqlite_master WHERE name='commitment_entries'").fetchone():
+            return []
+        rows = db.execute("SELECT id,actor,category,amount_usd,currency,occurred_at"
+                          " FROM commitment_entries ORDER BY id").fetchall()
+    finally:
+        db.close()
+    out = []
+    for cid, actor, cat, amount, currency, when in rows:
+        src = {
+            "payment_type": "Receive",
+            "party_type": "Customer",
+            "party": actor,
+            "party_name": actor,
+            "paid_amount": amount,
+            "received_amount": amount,
+            "posting_date": (when or "")[:10],
+            "paid_from_account_currency": currency or "USD",
+            "paid_to_account_currency": currency or "USD",
+            "mode_of_payment": cat,
+        }
+        rec = _shape(fields, src)
+        rec["_bonfyre_ref"] = f"commitment:{cid}"
+        out.append(rec)
+    return out
+
+
+def project_insights(control_db: str) -> list[dict]:
+    """The maintained query directories -> Insights Query records. Insights is the
+    grammar of Bonfyre's differential state; each maintained set is a query."""
+    fields = doctype_fields("insights", "Insights Query")
+    if not fields:
+        return []
+    import fabric_queries as fq
+    fq._CACHE.clear()
+    out = []
+    for name, desc, compute in fq.REGISTRY:
+        try:
+            n = len(compute(control_db))
+        except Exception:
+            n = 0
+        src = {
+            "title": name,
+            "status": "Maintained",
+            "data_source": "bonfyre-control-plane",
+            "is_native_query": 1,
+            "is_stored": 0,  # maintained, not stored -- the SS38 point
+        }
+        rec = _shape(fields, src)
+        rec["_bonfyre_ref"] = f"query:{name}"
+        rec["_count"] = n
+        out.append(rec)
+    return out
+
+
 PROJECTIONS = {
     "crm/CRM-Lead": ("crm", "CRM Lead", project_leads),
     "helpdesk/HD-Ticket": ("helpdesk", "HD Ticket", project_tickets),
+    "erpnext/Payment-Entry": ("erpnext", "Payment Entry", project_payments),
+    "insights/Insights-Query": ("insights", "Insights Query", project_insights),
 }
 
 
