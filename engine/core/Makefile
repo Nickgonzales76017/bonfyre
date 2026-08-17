@@ -18,7 +18,7 @@ OBJS := $(OBJDIR)/fabric.o $(OBJDIR)/fabric_exec.o $(OBJDIR)/workgraph.o \
 all: $(TARGET)
 
 # Native conformance tests (self-contained C; no Python needed to pass).
-TEST_SRCS := tests/routable_family_test.c tests/occurrence_spine_test.c tests/actor_graph_test.c tests/admission_test.c tests/control_compose_test.c tests/corroboration_test.c tests/evidence_test.c tests/activation_test.c tests/authority_test.c tests/proof_test.c
+TEST_SRCS := tests/routable_family_test.c tests/occurrence_spine_test.c tests/actor_graph_test.c tests/admission_test.c tests/control_compose_test.c tests/corroboration_test.c tests/evidence_test.c tests/activation_test.c tests/authority_test.c tests/proof_test.c tests/p0_loop_test.c
 TEST_BINS := $(patsubst tests/%.c,$(OBJDIR)/%,$(TEST_SRCS))
 
 $(OBJDIR)/%: tests/%.c $(TARGET) | $(OBJDIR)
