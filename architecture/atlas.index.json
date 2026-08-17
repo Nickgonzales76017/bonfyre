@@ -443,7 +443,7 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "serves the atlas index, substrate proofs and the fortification plan today; the virtual query directories (Waiting-On-Human, Broken-Evidence, Unproven-Capabilities, ...) are architectural"
+        "virtual query directories are implemented as maintained sets computed from live state (Unverified-Actors, Load-Bearing, Ready-To-Verify, Pending-Occurrences, Fragile-Capacity, Wiring-Gaps) and materialized as a browsable tree; fabric.db namespace registration is opt-in (the live daemon holds the db for writes, so register_in_fabric runs when it is idle -- never force-unmount)"
       ],
       "layer": "fabric",
       "maturity": "implemented",
@@ -453,16 +453,20 @@
         "NamespaceProjection"
       ],
       "publishes": [
-        "NamespaceProjection"
+        "NamespaceProjection",
+        "QueryDirectory"
       ],
       "semantic_question": "What is the universal namespace, and how is any addressable resource resolved and served?",
       "source_paths": [
         "engine/core/src/filesystem_projection.c",
-        "10-Code/BonfyreControlPlane/fabric_publish.py"
+        "10-Code/BonfyreControlPlane/fabric_publish.py",
+        "10-Code/BonfyreControlPlane/fabric_queries.py"
       ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_fabric_queries.py"
+      ]
     },
     "burn": {
       "canonical_name": "Burn",
@@ -948,7 +952,8 @@
         "Artifact",
         "Authority",
         "RouteAdvertisement",
-        "NamespaceProjection"
+        "NamespaceProjection",
+        "QueryDirectory"
       ],
       "domain": "Apps / Resource Navigation",
       "edge_types": [],
