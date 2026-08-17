@@ -2037,7 +2037,9 @@
     "kratos-provider": {
       "canonical_name": "KratosProvider",
       "commands": [],
-      "consumes": [],
+      "consumes": [
+        "DesignCandidate"
+      ],
       "derived": [],
       "domain": "Provider / Physics Simulation",
       "edge_types": [],
@@ -2512,7 +2514,13 @@
         "DeviceTelemetry",
         "ServoHealth",
         "StructuralEnvelopeProof",
-        "PartProvenance"
+        "ComponentFatigue",
+        "PartProvenance",
+        "MaterialBatch",
+        "RouteFeasibility",
+        "NetworkFault",
+        "ChaosEvent",
+        "ResponsePolicy"
       ],
       "derived": [
         "DerivedCapability"
@@ -3767,7 +3775,8 @@
       "consumes": [
         "Occurrence",
         "ResourceActivation",
-        "HumanCapacity"
+        "HumanCapacity",
+        "DerivedCapability"
       ],
       "derived": [],
       "domain": "Execution",

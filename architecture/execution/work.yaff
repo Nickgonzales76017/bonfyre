@@ -6,6 +6,7 @@ architecture work-graph
   consumes Occurrence
   consumes ResourceActivation
   consumes HumanCapacity
+  consumes DerivedCapability
   publishes WorkState
   family execution
   domain Execution

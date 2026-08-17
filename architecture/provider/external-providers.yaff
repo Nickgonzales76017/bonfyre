@@ -29,6 +29,7 @@ architecture kratos-provider
   semantic_question What does a high-fidelity multiphysics run predict for this configuration and load?
   purpose External capability organ (KratosMultiphysics, C++ structural/fluid/FSI/DEM, OpenMP/MPI, CoSimIO). Composed as a physics-simulation Provider that emits a Simulation Receipt gating physical capability; never ported.
   maturity architectural
+  consumes DesignCandidate
   publishes StructuralEnvelopeProof
   publishes ComponentFatigue
   forbidden_inference a simulation ran -> the physical asset is safe (a run predicts; a Receipt with its assumptions is the evidence)
@@ -121,7 +122,13 @@ architecture physical-asset
   consumes DeviceTelemetry
   consumes ServoHealth
   consumes StructuralEnvelopeProof
+  consumes ComponentFatigue
   consumes PartProvenance
+  consumes MaterialBatch
+  consumes RouteFeasibility
+  consumes NetworkFault
+  consumes ChaosEvent
+  consumes ResponsePolicy
   publishes DerivedCapability
   internal_calculus multi-gate conjunction maintained in DBSP (capability reachable while all gates hold)
   invariant capability is derived from live gates, never statically declared
