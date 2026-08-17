@@ -50,6 +50,7 @@ architecture discipl-composition
 
 architecture capability-closure
   owns Capability
+  derived Capability
   consumes ExecutionReceipt
   consumes Credential
   publishes Capability

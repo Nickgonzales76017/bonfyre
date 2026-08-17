@@ -318,12 +318,22 @@ def _load_orgs(index_path: str | None = None) -> dict:
             "consumes": a.get("consumes", []),
             "publishes": a.get("publishes", []),
             "subscribes": a.get("subscribes", []),
+            "derived": a.get("derived", []),
         }
     return orgs
 
 
+_NATIVE_EXT = (".c", ".h", ".rs", ".cpp", ".cc", ".hpp", ".zig")
+
+
 def _is_native(paths: list[str]) -> bool:
-    return any(p.startswith("engine/core/") or p.startswith("lib/") for p in paths)
+    # native = a compiled-language source (C/C++/Rust/Zig) or a substrate binding,
+    # wherever it lives. The compiled language is the signal, not the directory.
+    # Python (.py) is never native.
+    return any(
+        p.endswith(_NATIVE_EXT) or "/substrate/" in p or "substrates/" in p
+        for p in paths
+    )
 
 
 def _is_python(paths: list[str]) -> bool:
@@ -336,15 +346,23 @@ def audit(index_path: str | None = None) -> dict:
     fw = load_fact_wiring(index_path)
     ff = fact_flow(fw)
 
-    # P0/P7: Python-only authority -- a fact whose owning organ has a Python source
-    # but no native (engine/core) source. The native ring is not closed for it.
+    # a fact an organ marks `derived` is a computed view, not a stored authority --
+    # there is no store to absorb natively, so it is never a native-ring gap.
+    derived_facts = set()
+    for o in orgs.values():
+        derived_facts.update(o["derived"])
+
+    # P0/P7: Python-only authority -- a STORE-backed fact whose owning organ has a
+    # Python source but no compiled (native/Rust/substrate) source. Derived views
+    # are excluded: they are computed, not stored.
     python_only_authority = []
     for aid, o in orgs.items():
         if not o["owns"]:
             continue
         if _is_python(o["source_paths"]) and not _is_native(o["source_paths"]):
             for fact in o["owns"]:
-                python_only_authority.append((fact, aid))
+                if fact not in derived_facts:
+                    python_only_authority.append((fact, aid))
 
     # P1: non-differential facts -- a fact many organs consume but nobody declares
     # it maintained (subscribes marks a maintained/differential dependency). These
@@ -399,6 +417,7 @@ def audit(index_path: str | None = None) -> dict:
         "orphan_producers": [f for f, _ in orphan_producers(fw)],
         "duplicate_ownership": [f for f, _ in duplicate_ownership(fw)],
         "proof_gaps": proof_gaps,
+        "derived_views": sorted(derived_facts),
     }
 
 

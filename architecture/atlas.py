@@ -63,7 +63,7 @@ _LIST_FIELDS = {
     # meta-edge-class lists
     "specialized_by",
     # WiringSpec: typed semantic-fact flow between organs (the wiring constitution)
-    "owns", "publishes", "subscribes",
+    "owns", "publishes", "subscribes", "derived",
 }
 
 
@@ -304,6 +304,7 @@ class Atlas:
                     "consumes": a.lst("consumes"),
                     "publishes": a.lst("publishes"),
                     "subscribes": a.lst("subscribes"),
+                    "derived": a.lst("derived"),
                     "views": self.views_of(aid),
                 }
                 for aid, a in sorted(self.architectures.items())

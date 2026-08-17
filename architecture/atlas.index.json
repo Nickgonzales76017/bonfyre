@@ -10,6 +10,7 @@
         "Occurrence",
         "CommunicationEvent"
       ],
+      "derived": [],
       "domain": "Identity / Institutional Capacity",
       "edge_types": [
         "asserts",
@@ -78,6 +79,7 @@
         "KVPassport",
         "Capability"
       ],
+      "derived": [],
       "domain": "Forwarding / Eligibility",
       "edge_types": [
         "eligible_for",
@@ -145,6 +147,7 @@
       "consumes": [
         "ExecutionReceipt"
       ],
+      "derived": [],
       "domain": "Evidence / Artifacts",
       "edge_types": [
         "transformed_by"
@@ -188,6 +191,7 @@
         "BonfyreBrief"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Forms",
       "edge_types": [
         "autofills_from",
@@ -233,6 +237,7 @@
       "canonical_name": "AttentionCoolingGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Context / Attention",
       "edge_types": [
         "cools",
@@ -273,6 +278,7 @@
       "consumes": [
         "ActionTrace"
       ],
+      "derived": [],
       "domain": "Surface / Learning",
       "edge_types": [],
       "family": "surface",
@@ -306,6 +312,7 @@
         "Actor",
         "Policy"
       ],
+      "derived": [],
       "domain": "Institutional / Authority",
       "edge_types": [
         "delegates",
@@ -361,6 +368,7 @@
       "canonical_name": "Automerge",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -397,6 +405,7 @@
       "canonical_name": "BlockerGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
         "blocks"
@@ -440,6 +449,7 @@
         "RouteAdvertisement",
         "Authority"
       ],
+      "derived": [],
       "domain": "Fabric / Namespace",
       "edge_types": [],
       "family": "fabric",
@@ -479,6 +489,7 @@
       "canonical_name": "Burn",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -520,6 +531,9 @@
       "consumes": [
         "ExecutionReceipt",
         "Credential"
+      ],
+      "derived": [
+        "Capability"
       ],
       "domain": "Capability / Execution",
       "edge_types": [
@@ -572,6 +586,7 @@
       "canonical_name": "CapabilityGenome",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Learning / Promotion",
       "edge_types": [
         "promotes_to"
@@ -606,6 +621,7 @@
         "BonfyreCapability"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Capability",
       "edge_types": [
         "classified_into",
@@ -648,6 +664,7 @@
       "canonical_name": "ClaimGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Evidence / Claims",
       "edge_types": [
         "depends_on"
@@ -684,6 +701,9 @@
       "consumes": [
         "Actor",
         "Relation"
+      ],
+      "derived": [
+        "SupportStructure"
       ],
       "domain": "Opportunity / Provenance Structure",
       "edge_types": [
@@ -738,6 +758,7 @@
         "BonfyreDiscipl"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Capability / Computational Law",
       "edge_types": [
         "preserves_law"
@@ -775,6 +796,7 @@
       "canonical_name": "CommitmentGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Economic / Commitment",
       "edge_types": [
         "commits"
@@ -814,6 +836,7 @@
         "Relation",
         "OccurrenceProjection"
       ],
+      "derived": [],
       "domain": "Apps / Relationship",
       "edge_types": [],
       "family": "apps",
@@ -844,6 +867,7 @@
       "canonical_name": "CubeCL",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -880,6 +904,7 @@
       "canonical_name": "Daft",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -918,6 +943,7 @@
         "BonfyreDiscipl"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Capability / Composition",
       "edge_types": [
         "transforms",
@@ -962,6 +988,7 @@
         "NamespaceProjection",
         "QueryDirectory"
       ],
+      "derived": [],
       "domain": "Apps / Resource Navigation",
       "edge_types": [],
       "family": "apps",
@@ -992,6 +1019,7 @@
       "canonical_name": "egglog",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1032,6 +1060,7 @@
         "WorkState",
         "ProviderState"
       ],
+      "derived": [],
       "domain": "Apps / Economic Truth",
       "edge_types": [],
       "family": "apps",
@@ -1065,6 +1094,7 @@
       "canonical_name": "EvidenceBindingGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Evidence",
       "edge_types": [
         "retrieves",
@@ -1118,6 +1148,7 @@
         "Occurrence",
         "Artifact"
       ],
+      "derived": [],
       "domain": "Evidence / Claims",
       "edge_types": [
         "supports",
@@ -1169,6 +1200,7 @@
       "consumes": [
         "ProofFrontier"
       ],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1228,6 +1260,7 @@
         "BonfyreProject"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "External",
       "edge_types": [
         "projects",
@@ -1273,6 +1306,7 @@
       "canonical_name": "FormGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Forms",
       "edge_types": [
         "field_depends_on",
@@ -1323,6 +1357,9 @@
         "Actor",
         "Corroboration"
       ],
+      "derived": [
+        "FortificationPlan"
+      ],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
         "prioritizes"
@@ -1371,6 +1408,7 @@
         "BonfyreFPQ"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Model Representation",
       "edge_types": [
         "scored_by",
@@ -1412,6 +1450,7 @@
         "BonfyreFPQ"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Model Representation",
       "edge_types": [
         "recursive_dependency",
@@ -1458,6 +1497,7 @@
       "consumes": [
         "ResourcePressure"
       ],
+      "derived": [],
       "domain": "Model Representation",
       "edge_types": [
         "decomposes_into",
@@ -1527,6 +1567,7 @@
       "consumes": [
         "Authority"
       ],
+      "derived": [],
       "domain": "Apps / Platform",
       "edge_types": [],
       "family": "apps",
@@ -1559,6 +1600,7 @@
       "canonical_name": "GigaToken",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1597,6 +1639,7 @@
         "BonfyreHash"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Identity",
       "edge_types": [
         "hashes_to",
@@ -1637,6 +1680,7 @@
         "WorkState",
         "OccurrenceProjection"
       ],
+      "derived": [],
       "domain": "Apps / Issue Lifecycle",
       "edge_types": [],
       "family": "apps",
@@ -1671,6 +1715,7 @@
         "Actor",
         "WorkState"
       ],
+      "derived": [],
       "domain": "Apps / Human Capacity",
       "edge_types": [],
       "family": "apps",
@@ -1702,6 +1747,7 @@
       "canonical_name": "HVM4",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1741,6 +1787,7 @@
       "canonical_name": "Hydro",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1782,6 +1829,7 @@
         "OpportunityEligibility",
         "ResourcePressure"
       ],
+      "derived": [],
       "domain": "Apps / Differential Surface",
       "edge_types": [],
       "family": "apps",
@@ -1813,6 +1861,7 @@
       "canonical_name": "InstitutionGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Institutional / Structure",
       "edge_types": [
         "member_of"
@@ -1845,6 +1894,7 @@
       "canonical_name": "InstitutionalCostGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Economic / Cost",
       "edge_types": [
         "allocates"
@@ -1882,6 +1932,7 @@
       "consumes": [
         "ExecutionReceipt"
       ],
+      "derived": [],
       "domain": "Model Execution",
       "edge_types": [
         "depends_on",
@@ -1923,6 +1974,7 @@
       "canonical_name": "Lance",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1961,6 +2013,7 @@
       "consumes": [
         "Actor"
       ],
+      "derived": [],
       "domain": "Apps / Capability Acquisition",
       "edge_types": [],
       "family": "apps",
@@ -1993,6 +2046,7 @@
       "canonical_name": "ModelRepresentationGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Model / Representation",
       "edge_types": [
         "represented_as"
@@ -2025,6 +2079,7 @@
       "canonical_name": "ModelTopologyGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Model / Topology",
       "edge_types": [
         "feeds"
@@ -2056,6 +2111,7 @@
       "canonical_name": "MoneyGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Economic / Money",
       "edge_types": [
         "funds",
@@ -2094,6 +2150,7 @@
       "consumes": [
         "ExternalEvent"
       ],
+      "derived": [],
       "domain": "Execution / Causal Time",
       "edge_types": [
         "precedes"
@@ -2145,6 +2202,7 @@
       "canonical_name": "PatternGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Learning / Patterns",
       "edge_types": [
         "clusters_into"
@@ -2177,6 +2235,7 @@
       "canonical_name": "PlacementGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Provider / Placement",
       "edge_types": [
         "placed_on"
@@ -2217,6 +2276,7 @@
         "FPQRepresentation",
         "KVPassport"
       ],
+      "derived": [],
       "domain": "Model / Execution",
       "edge_types": [
         "prepares",
@@ -2259,6 +2319,7 @@
         "Evidence",
         "WorkState"
       ],
+      "derived": [],
       "domain": "Evidence / Anti-Amnesia",
       "edge_types": [
         "cools",
@@ -2321,6 +2382,7 @@
       "canonical_name": "ProvenanceGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Evidence / Provenance",
       "edge_types": [
         "produced_by"
@@ -2356,6 +2418,7 @@
       "canonical_name": "ProviderGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Provider / Resolution",
       "edge_types": [
         "realizes",
@@ -2399,6 +2462,7 @@
         "ExecutionReceipt",
         "TransportReceipt"
       ],
+      "derived": [],
       "domain": "Provider / Resource",
       "edge_types": [
         "folds_into"
@@ -2442,6 +2506,7 @@
       "canonical_name": "RecursiveValueGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Economic / Value",
       "edge_types": [
         "unlocks_value"
@@ -2477,6 +2542,7 @@
       "canonical_name": "RelationshipGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Institutional / Relationship",
       "edge_types": [
         "advances_to"
@@ -2525,6 +2591,7 @@
         "Authority",
         "ProviderState"
       ],
+      "derived": [],
       "domain": "Opportunity / Resource",
       "edge_types": [
         "qualifies",
@@ -2583,6 +2650,7 @@
       "consumes": [
         "WorkState"
       ],
+      "derived": [],
       "domain": "Provider / Resource",
       "edge_types": [
         "admits",
@@ -2633,6 +2701,7 @@
       "canonical_name": "Restate",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -2669,6 +2738,7 @@
       "canonical_name": "ResultReceiptBundleGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "External / Attestation",
       "edge_types": [
         "attests",
@@ -2712,6 +2782,7 @@
       "canonical_name": "RouteRanker",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Forwarding / Learned Optimization",
       "edge_types": [
         "ranks"
@@ -2754,6 +2825,7 @@
       "canonical_name": "RuntimeParityGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Provider / Parity",
       "edge_types": [
         "parity_with"
@@ -2789,6 +2861,7 @@
       "canonical_name": "SERMReductionGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Evidence / Measurement",
       "edge_types": [
         "reduces",
@@ -2838,6 +2911,7 @@
         "BonfyreAPI"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "External / Service",
       "edge_types": [
         "provisions",
@@ -2878,6 +2952,7 @@
       "canonical_name": "ShadowInstitutionGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Institutional / Epistemic",
       "edge_types": [
         "observed_from",
@@ -2925,6 +3000,7 @@
         "BonfyreSLI"
       ],
       "consumes": [],
+      "derived": [],
       "domain": "Model Execution",
       "edge_types": [
         "prepares",
@@ -2962,6 +3038,7 @@
       "canonical_name": "SocialPresenceGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Institutional / Presence",
       "edge_types": [
         "present_on"
@@ -3006,6 +3083,7 @@
         "RouteAdvertisement",
         "Authority"
       ],
+      "derived": [],
       "domain": "Surface / Compilation",
       "edge_types": [],
       "family": "surface",
@@ -3039,6 +3117,7 @@
       "canonical_name": "TemporalEvidenceGraph",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Evidence / Time",
       "edge_types": [
         "supersedes"
@@ -3075,6 +3154,7 @@
       "canonical_name": "Tract",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -3117,6 +3197,7 @@
         "ExecutionReceipt",
         "Authority"
       ],
+      "derived": [],
       "domain": "Execution / Transport",
       "edge_types": [
         "carries"
@@ -3163,6 +3244,9 @@
         "Actor",
         "ResourceActivation",
         "Credential"
+      ],
+      "derived": [
+        "OpportunityEligibility"
       ],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
@@ -3226,6 +3310,7 @@
         "Actor",
         "FortificationPlan"
       ],
+      "derived": [],
       "domain": "Identity / Institutional Capacity",
       "edge_types": [
         "corroborates"
@@ -3276,6 +3361,7 @@
       "canonical_name": "Verus",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -3317,6 +3403,7 @@
         "Evidence",
         "ProofFrontier"
       ],
+      "derived": [],
       "domain": "Apps / Knowledge",
       "edge_types": [],
       "family": "apps",
@@ -3354,6 +3441,7 @@
         "ResourceActivation",
         "HumanCapacity"
       ],
+      "derived": [],
       "domain": "Execution",
       "edge_types": [
         "depends_on"
@@ -3402,6 +3490,7 @@
       "canonical_name": "YaFF",
       "commands": [],
       "consumes": [],
+      "derived": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",

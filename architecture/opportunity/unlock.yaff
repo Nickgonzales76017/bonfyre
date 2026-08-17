@@ -21,6 +21,7 @@ architecture blocker-graph
 architecture unlock-graph
   canonical_name UnlockGraph
   owns OpportunityEligibility
+  derived OpportunityEligibility
   consumes ProofFrontier
   consumes Actor
   subscribes ReachableCapacity
@@ -60,6 +61,7 @@ architecture unlock-graph
 architecture collapse-front
   canonical_name CollapseFront
   owns SupportStructure
+  derived SupportStructure
   consumes Actor
   consumes Relation
   publishes SupportStructure
@@ -91,6 +93,7 @@ architecture collapse-front
 architecture fortification-plan
   canonical_name FortificationPlan
   owns FortificationPlan
+  derived FortificationPlan
   consumes SupportStructure
   consumes Actor
   consumes Corroboration

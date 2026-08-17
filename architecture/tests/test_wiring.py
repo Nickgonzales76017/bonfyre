@@ -98,12 +98,13 @@ def test_p8_audit_shape_and_native_progress():
     # constitution invariants hold
     assert a["duplicate_ownership"] == []
     assert a["proof_gaps"] == []  # validate enforces witnesses
-    # native absorption shows: facts with a native owner are NOT python-only
+    # native ring complete: every store-backed fact has a compiled owner, so no
+    # fact is python-only authority. Derived views (computed, not stored) are
+    # reported separately, never as native-ring gaps.
     poa = {fact for fact, _ in a["python_only_authority"]}
-    assert "Occurrence" not in poa, "occurrence-spine has native source; not python-only"
-    assert "WorkState" not in poa, "work-graph has native source; not python-only"
-    # ... but un-absorbed facts still are (a real, honest P0 gap)
-    assert "SupportStructure" in poa
+    assert poa == set(), f"a store-backed fact still lacks native authority: {poa}"
+    assert "SupportStructure" in a["derived_views"], "SupportStructure is a computed view"
+    assert "Occurrence" not in a["derived_views"], "Occurrence is a real store, not derived"
 
 
 if __name__ == "__main__":
