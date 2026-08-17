@@ -31,6 +31,14 @@ void bf_evidence_close(BfEvidence *graph);
 BfEvidenceStatus bf_evidence_relate(BfEvidence *graph, const char *evidence,
                                     const char *kind, const char *claim);
 
+/*
+ * Retract a relation (the -1): evidence that no longer stands stops supporting.
+ * Returns OK whether or not a row existed (idempotent withdrawal), INVALID on a
+ * malformed request. This is the retraction primitive the consequence plane needs.
+ */
+BfEvidenceStatus bf_evidence_retract(BfEvidence *graph, const char *evidence,
+                                     const char *kind, const char *claim);
+
 /* Does `evidence` SUPPORT `claim`? Directional. Returns 1 yes, 0 no, -1 error. */
 int bf_evidence_supports(BfEvidence *graph, const char *evidence, const char *claim);
 

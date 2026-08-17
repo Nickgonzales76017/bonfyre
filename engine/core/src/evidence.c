@@ -132,6 +132,27 @@ BfEvidenceStatus bf_evidence_relate(BfEvidence *graph, const char *evidence,
     return rc == SQLITE_DONE ? BF_EVIDENCE_OK : BF_EVIDENCE_STORAGE_ERROR;
 }
 
+BfEvidenceStatus bf_evidence_retract(BfEvidence *graph, const char *evidence,
+                                     const char *kind, const char *claim) {
+    if (!graph || !evidence || evidence[0] == '\0' || !claim || claim[0] == '\0' ||
+        !kind || kind[0] == '\0') {
+        return BF_EVIDENCE_INVALID;
+    }
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(
+            graph->db,
+            "DELETE FROM evidence_relations WHERE evidence=? AND kind=? AND claim=?",
+            -1, &stmt, NULL) != SQLITE_OK) {
+        return BF_EVIDENCE_STORAGE_ERROR;
+    }
+    sqlite3_bind_text(stmt, 1, evidence, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 2, kind, -1, SQLITE_TRANSIENT);
+    sqlite3_bind_text(stmt, 3, claim, -1, SQLITE_TRANSIENT);
+    int rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    return rc == SQLITE_DONE ? BF_EVIDENCE_OK : BF_EVIDENCE_STORAGE_ERROR;
+}
+
 int bf_evidence_supports(BfEvidence *graph, const char *evidence, const char *claim) {
     if (!graph || !evidence || !claim) {
         return -1;
