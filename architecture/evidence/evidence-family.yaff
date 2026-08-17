@@ -8,6 +8,7 @@ architecture artifact-graph
   canonical_name ArtifactGraph
   owns Artifact
   publishes Artifact
+  source_path engine/core/src/fabric.c
   family evidence
   domain Evidence / Artifacts
   layer evidence

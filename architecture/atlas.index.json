@@ -171,6 +171,7 @@
       ],
       "semantic_question": "What operator transformed this source artifact into that derived one?",
       "source_paths": [
+        "engine/core/src/fabric.c",
         "10-Code/BonfyreControlPlane/evidence_graphs.py"
       ],
       "subscribes": [],
@@ -3217,7 +3218,9 @@
         "promotion is monotone -- never demotes, never promotes below threshold",
         "promotion writes back through actors.upsert_actor, so the confidence change is a normal graph write, not a side channel"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "native ledger records corroborations on the shared actor_corroborations store with distinct-source independence (python reads native-written rows -- parity proven); the promotion gate stays python/human (native never promotes -- the human line)"
+      ],
       "layer": "identity",
       "maturity": "measured",
       "native_formats": [],
@@ -3233,12 +3236,15 @@
       ],
       "semantic_question": "Is this actor independently corroborated enough to promote asserted -> verified?",
       "source_paths": [
-        "10-Code/BonfyreControlPlane/verification.py"
+        "10-Code/BonfyreControlPlane/verification.py",
+        "engine/core/src/corroboration.c",
+        "engine/core/include/bf_corroboration.h"
       ],
       "subscribes": [],
       "views": [],
       "witnesses": [
-        "10-Code/BonfyreControlPlane/tests/test_verification.py"
+        "10-Code/BonfyreControlPlane/tests/test_verification.py",
+        "engine/core/tests/corroboration_test.c"
       ]
     },
     "verus": {

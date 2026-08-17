@@ -70,8 +70,12 @@ architecture verification-ledger
   interacts collapse-front
   interacts fortification-plan
   source_path 10-Code/BonfyreControlPlane/verification.py
+  source_path engine/core/src/corroboration.c
+  source_path engine/core/include/bf_corroboration.h
   witness 10-Code/BonfyreControlPlane/tests/test_verification.py
+  witness engine/core/tests/corroboration_test.c
   source_lineage fortification verify action needs a real gated mechanism
+  known_gap native ledger records corroborations on the shared actor_corroborations store with distinct-source independence (python reads native-written rows -- parity proven); the promotion gate stays python/human (native never promotes -- the human line)
 
 architecture hash-identity
   canonical_name HashIdentityGraph
