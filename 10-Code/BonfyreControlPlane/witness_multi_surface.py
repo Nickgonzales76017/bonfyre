@@ -40,6 +40,12 @@ def surfaces_of(actor_id: str) -> dict:
     uv = _members("queries", "Unverified-Actors")
     if any(m.get("id") == actor_id for m in uv):
         found["query:Unverified-Actors"] = "the unconfirmed-actors projection"
+    # the same identity as a real Frappe app record (CRM Lead), no bench, no copy
+    path = os.path.join(PROJ, "app-records", "crm", "CRM-Lead", "index.json")
+    if os.path.exists(path):
+        recs = json.load(open(path)).get("records", [])
+        if any(r.get("_bonfyre_ref") == actor_id for r in recs):
+            found["app-record:CRM-Lead"] = "the actor wearing CRM Lead's real DocType fields"
     return found
 
 
