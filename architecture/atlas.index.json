@@ -847,10 +847,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "CRM is real; wiring its communication events back into the actor/relationship graph is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -859,10 +859,15 @@
         "DealState"
       ],
       "semantic_question": "What is the current relationship, communication and deal state with an actor?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/crm",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "cubecl": {
       "canonical_name": "CubeCL",
@@ -999,10 +1004,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "Drive is real; resolving its folders through the AddressPlane/BonfyreFS namespace is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -1011,10 +1016,15 @@
         "RepresentationHistory"
       ],
       "semantic_question": "How does a human navigate, share, preview and version any addressable resource?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/drive",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "egglog": {
       "canonical_name": "egglog",
@@ -1071,10 +1081,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "ERPNext is real; the fabric wiring that feeds realized outcomes back into provider selection is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -1086,10 +1096,15 @@
         "Receipt"
       ],
       "semantic_question": "What value, receipt and stock movement actually occurred (realized, not forecast)?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/erpnext",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "evidence-binding": {
       "canonical_name": "EvidenceBindingGraph",
@@ -1582,10 +1597,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "the Frappe platform is real; this fabric WiringSpec is architectural, not yet implemented"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -1596,10 +1611,15 @@
         "Policy"
       ],
       "semantic_question": "What DocType, form, permission and workflow grammar does a record present?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/frappe",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "gigatoken": {
       "canonical_name": "GigaToken",
@@ -1695,10 +1715,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "Helpdesk is real; wiring occurrences into its ticket lifecycle is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -1708,10 +1728,15 @@
         "TicketState"
       ],
       "semantic_question": "What is the state of this requester's problem, and who owns resolving it?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/helpdesk",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "hrms": {
       "canonical_name": "HRMS",
@@ -1730,10 +1755,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "HRMS is real; wiring human capacity into work routing is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -1743,10 +1768,15 @@
         "HumanCapacity"
       ],
       "semantic_question": "Who is available, with what qualification and capacity, for what work?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/hrms",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "hvm4": {
       "canonical_name": "HVM4",
@@ -1844,10 +1874,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "Insights is real; wiring it to consume Feldera-maintained sets directly is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -1857,10 +1887,15 @@
         "DerivedView"
       ],
       "semantic_question": "What is the current derived state, charted for a human, deep-linkable to its objects?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/insights",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "institution-graph": {
       "canonical_name": "InstitutionGraph",
@@ -2028,10 +2063,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "LMS is real; wiring credentials into provider eligibility and work routing is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -2042,10 +2077,15 @@
         "Evidence"
       ],
       "semantic_question": "What capability has an actor acquired, and is it credentialed?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/lms",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "model-representation-graph": {
       "canonical_name": "ModelRepresentationGraph",
@@ -3421,10 +3461,10 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "Wiki is real; carrying claim/evidence/proof-frontier refs on knowledge is architectural"
+        "the Frappe app is real and installed (DocTypes extracted by BonfyreFrappeCompiler); the remaining wiring is the runtime write-back of its facts into fabric.db"
       ],
       "layer": "surface",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [
@@ -3434,10 +3474,15 @@
         "KnowledgeClaim"
       ],
       "semantic_question": "What does the institution claim to know, with what evidence and freshness?",
-      "source_paths": [],
+      "source_paths": [
+        "integrations/frappe-bench/apps/wiki",
+        "cmd/BonfyreFrappeCompiler/frappe_schema_parser.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
     },
     "work-graph": {
       "canonical_name": "WorkGraph",
