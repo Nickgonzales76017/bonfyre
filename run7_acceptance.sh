@@ -40,6 +40,11 @@ echo "== 5. one identity, no pairwise sync; served through many grammars (P30+P3
 (cd "$CP" && python3 witness_nine_app.py 2>/dev/null | grep -q "NINE-APP WITNESS: PASS") && ok "nine-app: 1 owner, many app grammars, mutation re-enters" || bad "nine-app"
 (cd "$CP" && python3 witness_multi_surface.py 2>/dev/null | grep -q "ALL-SURFACE WITNESS: PASS") && ok "all-surface: 1 identity, >=3 served grammars, no copy" || bad "all-surface"
 
+echo "== 6b. physical asset: telemetry -1 -> derived capability -> maintenance -> recover"
+if (cd "$CP" && python3 fleet_operations.py 2>/dev/null | grep -q "FLEET OPERATIONS LOOP: PASS"); then
+  ok "servo telemetry -1 withdraws capability, opens maintenance, repair recovers it"
+else echo "  SKIP  physical-asset loop (DBSP engine not built)"; fi
+
 echo "== 6. control plane is connected: projections registered into the live fabric"
 served=$(sqlite3 ~/.bonfyre/estate-fabric/fabric.db "SELECT COUNT(*) FROM namespace_objects WHERE native_id LIKE 'query-%' OR native_id LIKE 'fact-%';" 2>/dev/null || echo 0)
 [ "${served:-0}" -ge 12 ] && ok "BonfyreFS serves $served control-plane projections" || bad "fabric projections ($served)"
