@@ -5,6 +5,8 @@ atlas model
 # them may claim the others' evidence.
 
 architecture fpq-transform
+  owns FPQRepresentation
+  publishes FPQRepresentation
   canonical_name FPQTransformationGraph
   family model
   domain Model Representation
@@ -111,6 +113,9 @@ architecture sli-execution
   source_lineage packs/fpq-proof-frontier/work.yaff fpq_split_sli_identity
 
 architecture kv-temporal
+  owns KVPassport
+  consumes ExecutionReceipt
+  publishes KVPassport
   canonical_name KVTemporalGraph
   family model
   domain Model Execution

@@ -33,6 +33,12 @@ architecture model-topology-graph
   known_gap not built
 
 architecture prepared-execution-graph
+  owns ExecutionReceipt
+  consumes RouteAdvertisement
+  consumes ReachableCapacity
+  consumes FPQRepresentation
+  consumes KVPassport
+  publishes ExecutionReceipt
   canonical_name PreparedExecutionGraph
   family model
   domain Model / Execution

@@ -73,7 +73,9 @@
         "ReachableCapacity",
         "Authority",
         "ProviderState",
-        "SurfaceCandidate"
+        "SurfaceCandidate",
+        "FPQRepresentation",
+        "KVPassport"
       ],
       "domain": "Forwarding / Eligibility",
       "edge_types": [
@@ -1466,8 +1468,12 @@
         "ResidualField",
         "FPQRepresentation"
       ],
-      "owns": [],
-      "publishes": [],
+      "owns": [
+        "FPQRepresentation"
+      ],
+      "publishes": [
+        "FPQRepresentation"
+      ],
       "semantic_question": "Can these weights be reconstructed within tolerance from a compact functional representation?",
       "source_paths": [
         "cmd/BonfyreFPQ/src/fpq_native.c",
@@ -1845,7 +1851,9 @@
       "commands": [
         "BonfyreKVCache"
       ],
-      "consumes": [],
+      "consumes": [
+        "ExecutionReceipt"
+      ],
       "domain": "Model Execution",
       "edge_types": [
         "depends_on",
@@ -1867,8 +1875,12 @@
         "KVBlock",
         "RetentionClass"
       ],
-      "owns": [],
-      "publishes": [],
+      "owns": [
+        "KVPassport"
+      ],
+      "publishes": [
+        "KVPassport"
+      ],
       "semantic_question": "Which KV-cache blocks stay resident, and why, across turns?",
       "source_paths": [
         "cmd/BonfyreKVCache"
@@ -2171,7 +2183,12 @@
     "prepared-execution-graph": {
       "canonical_name": "PreparedExecutionGraph",
       "commands": [],
-      "consumes": [],
+      "consumes": [
+        "RouteAdvertisement",
+        "ReachableCapacity",
+        "FPQRepresentation",
+        "KVPassport"
+      ],
       "domain": "Model / Execution",
       "edge_types": [
         "prepares",
@@ -2193,8 +2210,12 @@
         "PreparedExecutionArtifact",
         "RuntimeLease"
       ],
-      "owns": [],
-      "publishes": [],
+      "owns": [
+        "ExecutionReceipt"
+      ],
+      "publishes": [
+        "ExecutionReceipt"
+      ],
       "semantic_question": "Given this representation and hardware, what prepared executable artifact and lease exists?",
       "source_paths": [],
       "subscribes": [],
@@ -2341,7 +2362,8 @@
       "commands": [],
       "consumes": [
         "ResourcePressure",
-        "Receipt"
+        "Receipt",
+        "ExecutionReceipt"
       ],
       "domain": "Provider / Resource",
       "edge_types": [
