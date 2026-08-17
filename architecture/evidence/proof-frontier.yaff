@@ -34,9 +34,13 @@ architecture proof-frontier
   source_path 10-Code/BonfyreControlPlane/proof_frontier.py
   source_path 10-Code/BonfyreControlPlane/seed_fpq_frontier.py
   source_path schemas/control/proof-frontier.yaff
+  source_path engine/core/src/proof.c
+  source_path engine/core/include/bf_proof.h
   witness 10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py
   witness packs/fpq-proof-frontier/measured-witness.yaff
+  witness engine/core/tests/proof_test.c
   source_lineage run4_institutional_fabric anti-amnesia campaign
+  known_gap native peer owns the frontier_layers / solved_invariants / known_noncauses stores; it preserves the FPQ discipline (a measured invariant is never proven -- proven requires truth_plane=proven and not challenged/invalidated), challenge retracts proof, and a KnownNonCause blackholes a hypothesis in scope. Python reads native-written rows with the discipline intact -- parity proven. The DBSP incremental maintenance of ReachableCapacity from this frontier stays in Feldera (P1).
   reheat_condition a named reheat signal satisfies a cooled invariant on a proven layer
 
 architecture evidence-binding

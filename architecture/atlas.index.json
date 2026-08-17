@@ -2280,7 +2280,9 @@
         "only a signal matching a named reheat condition may challenge a cooled invariant",
         "a layer below the first open layer is proven ground and off-limits"
       ],
-      "known_gaps": [],
+      "known_gaps": [
+        "native peer owns the frontier_layers / solved_invariants / known_noncauses stores; it preserves the FPQ discipline (a measured invariant is never proven -- proven requires truth_plane=proven and not challenged/invalidated), challenge retracts proof, and a KnownNonCause blackholes a hypothesis in scope. Python reads native-written rows with the discipline intact -- parity proven. The DBSP incremental maintenance of ReachableCapacity from this frontier stays in Feldera (P1)."
+      ],
       "layer": "governance/proof",
       "maturity": "measured",
       "native_formats": [
@@ -2301,7 +2303,9 @@
       "source_paths": [
         "10-Code/BonfyreControlPlane/proof_frontier.py",
         "10-Code/BonfyreControlPlane/seed_fpq_frontier.py",
-        "schemas/control/proof-frontier.yaff"
+        "schemas/control/proof-frontier.yaff",
+        "engine/core/src/proof.c",
+        "engine/core/include/bf_proof.h"
       ],
       "subscribes": [],
       "views": [
@@ -2309,7 +2313,8 @@
       ],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py",
-        "packs/fpq-proof-frontier/measured-witness.yaff"
+        "packs/fpq-proof-frontier/measured-witness.yaff",
+        "engine/core/tests/proof_test.c"
       ]
     },
     "provenance-graph": {
