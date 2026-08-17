@@ -322,6 +322,7 @@
         "scope-constrained delegation"
       ],
       "invariants": [
+        "authority is never inferred: it holds only from a matching non-revoked edge inside its time window with a general-or-matching purpose (native + python has_authority parity on the shared authority_edges store)",
         "delegation may compose only under constrained scope",
         "an edge outside its window or revoked grants nothing"
       ],
@@ -343,6 +344,8 @@
       ],
       "semantic_question": "Who may do what, to what, for what purpose, under what evidence, until when?",
       "source_paths": [
+        "engine/core/src/authority.c",
+        "engine/core/include/bf_authority.h",
         "10-Code/BonfyreControlPlane/authority.py"
       ],
       "subscribes": [],
@@ -350,6 +353,7 @@
         "InstitutionalView"
       ],
       "witnesses": [
+        "engine/core/tests/authority_test.c",
         "10-Code/BonfyreControlPlane/tests/test_authority.py"
       ]
     },

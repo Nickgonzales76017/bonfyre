@@ -8,6 +8,10 @@ architecture authority-graph
   consumes Actor
   consumes Policy
   publishes Authority
+  source_path engine/core/src/authority.c
+  source_path engine/core/include/bf_authority.h
+  witness engine/core/tests/authority_test.c
+  invariant authority is never inferred: it holds only from a matching non-revoked edge inside its time window with a general-or-matching purpose (native + python has_authority parity on the shared authority_edges store)
   canonical_name AuthorityGraph
   family institutional
   domain Institutional / Authority
