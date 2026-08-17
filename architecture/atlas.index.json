@@ -142,6 +142,37 @@
         "10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py"
       ]
     },
+    "apparatus-provider": {
+      "canonical_name": "ApparatusProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Provider / Cyber Range",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "an injected fault survived -> the system is robust (one scenario is not the space)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is HTTP/gRPC/SSE/WebSocket/CLI/metrics/PCAP; the range is real, the Bonfyre binding is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "NetworkFault",
+        "ChaosEvent"
+      ],
+      "semantic_question": "What cyber/network/chaos disturbance is being injected, and what fails under it?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "artifact-graph": {
       "canonical_name": "ArtifactGraph",
       "commands": [],
@@ -660,6 +691,36 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_capability_catalog.py"
       ]
+    },
+    "carla-provider": {
+      "canonical_name": "CARLAProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Provider / Vehicle Simulation",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a simulated success -> a real delivery (a counterfactual run informs dispatch; the Receipt is reality)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is the CARLA simulation API / ROS bridge; the simulator is real, the Bonfyre binding is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "RouteFeasibility"
+      ],
+      "semantic_question": "Under what sensors, weather and autonomy mode is a route/vehicle configuration feasible?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
     },
     "claim-graph": {
       "canonical_name": "ClaimGraph",
@@ -1964,6 +2025,38 @@
         "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
       ]
     },
+    "kratos-provider": {
+      "canonical_name": "KratosProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Provider / Physics Simulation",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a simulation ran -> the physical asset is safe (a run predicts; a Receipt with its assumptions is the evidence)",
+        "model inference -> evidence"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is C++/Python/MPI/CoSimIO; the framework is real, the Bonfyre Provider binding is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "StructuralEnvelopeProof",
+        "ComponentFatigue"
+      ],
+      "semantic_question": "What does a high-fidelity multiphysics run predict for this configuration and load?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "kv-temporal": {
       "canonical_name": "KVTemporalGraph",
       "commands": [
@@ -2086,6 +2179,37 @@
       "witnesses": [
         "10-Code/BonfyreControlPlane/witness_frappe_apps.py"
       ]
+    },
+    "mes-provider": {
+      "canonical_name": "MESProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Provider / Serialized Traceability",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a part is in inventory -> it is qualified for this assembly (compatibility + inspection still gate)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is a domain fixture / REST / schema comparison; the MES is real, the Bonfyre binding is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "PartProvenance",
+        "MaterialBatch"
+      ],
+      "semantic_question": "What is this serialized component's design, material batch, operations, inspection and disposition?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
     },
     "model-representation-graph": {
       "canonical_name": "ModelRepresentationGraph",
@@ -2246,6 +2370,99 @@
         "engine/core/tests/p0_loop_test.c"
       ]
     },
+    "opencat-provider": {
+      "canonical_name": "OpenCatProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Provider / Device IO",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a device is connected -> its components are healthy (telemetry proves health, not reachability)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is serial/ESP32/ROS device IO; the external firmware is real, the Bonfyre Provider binding is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "DeviceTelemetry",
+        "ServoHealth"
+      ],
+      "semantic_question": "By what serial/ESP32/ROS boundary does a quadruped produce physical state and accept commands?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "openmdao-provider": {
+      "canonical_name": "OpenMDAOProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Provider / Design Optimization",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a Pareto-optimal candidate -> a manufacturable or authorized one (feasibility/authority still gate)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is a native Python computational provider; the library is real, the Bonfyre binding is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "DesignCandidate"
+      ],
+      "semantic_question": "What design coordinates optimize a coupled multidisciplinary objective under constraints?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "pace-provider": {
+      "canonical_name": "PACEProvider",
+      "commands": [],
+      "consumes": [
+        "Authority"
+      ],
+      "derived": [],
+      "domain": "Provider / Policy Doctrine",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a doctrinal response is derived -> it is authorized to execute (the human gate and Authority still bind; reachability stops at the human line)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "boundary is Policy/Authority/simulation rules (doctrine, not runtime code); making it executable is architectural"
+      ],
+      "layer": "provider",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "ResponsePolicy"
+      ],
+      "semantic_question": "Given this event, what tiered rule of engagement, authority and escalation applies?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "pattern-graph": {
       "canonical_name": "PatternGraph",
       "commands": [],
@@ -2278,6 +2495,55 @@
       "subscribes": [],
       "views": [],
       "witnesses": []
+    },
+    "physical-asset": {
+      "canonical_name": "PhysicalAssetGraph",
+      "commands": [],
+      "consumes": [
+        "DeviceTelemetry",
+        "ServoHealth",
+        "StructuralEnvelopeProof",
+        "PartProvenance"
+      ],
+      "derived": [
+        "DerivedCapability"
+      ],
+      "domain": "Provider / Physical Asset",
+      "edge_types": [],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a device is connected -> the asset is capable (health/proof are derived, not assumed)",
+        "a capability advertised once -> still valid (it is maintained, and retracts on any gate -1)"
+      ],
+      "internal_calculi": [
+        "multi-gate conjunction maintained in DBSP (capability reachable while all gates hold)"
+      ],
+      "invariants": [
+        "capability is derived from live gates, never statically declared",
+        "a component telemetry -1 withdraws the derived capability incrementally, with no rebuild"
+      ],
+      "known_gaps": [
+        "proven for a robot climb capability through the live reachable_capacity DBSP circuit (telemetry -1 -> capability withdrawn); binding real OpenCat telemetry + Kratos proofs at the device boundary is the external-provider wiring"
+      ],
+      "layer": "provider",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "DerivedCapability"
+      ],
+      "publishes": [
+        "DerivedCapability"
+      ],
+      "semantic_question": "What can this physical asset actually do right now, derived from component health, proof, model and calibration?",
+      "source_paths": [
+        "10-Code/BonfyreControlPlane/physical_asset.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "10-Code/BonfyreControlPlane/tests/test_physical_asset.py"
+      ]
     },
     "placement-graph": {
       "canonical_name": "PlacementGraph",

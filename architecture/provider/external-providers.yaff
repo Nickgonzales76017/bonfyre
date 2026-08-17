@@ -1,0 +1,138 @@
+atlas provider
+# External low-level capability organs (the external-repo rule): each is composed
+# as a Bonfyre Provider via its LOWEST sensible boundary -- never ported in, never
+# rewritten. They publish the facts (gates) that a physical asset's DERIVED
+# capability depends on; a gate retracting (-1) withdraws the capability through
+# the same DBSP circuit that maintains ReachableCapacity. maturity architectural:
+# the repos are external and real, the Bonfyre boundary+wiring is the contract here.
+
+architecture opencat-provider
+  canonical_name OpenCatProvider
+  family provider
+  domain Provider / Device IO
+  layer provider
+  semantic_question By what serial/ESP32/ROS boundary does a quadruped produce physical state and accept commands?
+  purpose External capability organ (Petoi OpenCat, ESP32 branch): gait coordination, servo control, IMU/sensor, telemetry, fleet examples. Composed as a Provider of device IO and telemetry; never ported.
+  maturity architectural
+  publishes DeviceTelemetry
+  publishes ServoHealth
+  forbidden_inference a device is connected -> its components are healthy (telemetry proves health, not reachability)
+  interacts transport-phenotype
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is serial/ESP32/ROS device IO; the external firmware is real, the Bonfyre Provider binding is architectural
+
+architecture kratos-provider
+  canonical_name KratosProvider
+  family provider
+  domain Provider / Physics Simulation
+  layer provider
+  semantic_question What does a high-fidelity multiphysics run predict for this configuration and load?
+  purpose External capability organ (KratosMultiphysics, C++ structural/fluid/FSI/DEM, OpenMP/MPI, CoSimIO). Composed as a physics-simulation Provider that emits a Simulation Receipt gating physical capability; never ported.
+  maturity architectural
+  publishes StructuralEnvelopeProof
+  publishes ComponentFatigue
+  forbidden_inference a simulation ran -> the physical asset is safe (a run predicts; a Receipt with its assumptions is the evidence)
+  forbidden_inference model inference -> evidence
+  interacts proof-frontier
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is C++/Python/MPI/CoSimIO; the framework is real, the Bonfyre Provider binding is architectural
+
+architecture openmdao-provider
+  canonical_name OpenMDAOProvider
+  family provider
+  domain Provider / Design Optimization
+  layer provider
+  semantic_question What design coordinates optimize a coupled multidisciplinary objective under constraints?
+  purpose External capability organ (OpenMDAO, gradient-based coupled optimization over hundreds/thousands of design variables). Composed as a design-space Provider producing candidate coordinates; never ported.
+  maturity architectural
+  publishes DesignCandidate
+  forbidden_inference a Pareto-optimal candidate -> a manufacturable or authorized one (feasibility/authority still gate)
+  interacts kratos-provider
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is a native Python computational provider; the library is real, the Bonfyre binding is architectural
+
+architecture carla-provider
+  canonical_name CARLAProvider
+  family provider
+  domain Provider / Vehicle Simulation
+  layer provider
+  semantic_question Under what sensors, weather and autonomy mode is a route/vehicle configuration feasible?
+  purpose External capability organ (CARLA autonomous-driving simulation, configurable sensors/weather, scenario+ROS hooks). Composed as a counterfactual Provider gating fleet dispatch; never ported.
+  maturity architectural
+  publishes RouteFeasibility
+  forbidden_inference a simulated success -> a real delivery (a counterfactual run informs dispatch; the Receipt is reality)
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is the CARLA simulation API / ROS bridge; the simulator is real, the Bonfyre binding is architectural
+
+architecture apparatus-provider
+  canonical_name ApparatusProvider
+  family provider
+  domain Provider / Cyber Range
+  layer provider
+  semantic_question What cyber/network/chaos disturbance is being injected, and what fails under it?
+  purpose External capability organ (Apparatus: attack/defense scenarios, honeypots, moving-target defense, chaos, protocols, PCAP/HAR replay, metrics/streams). Composed as a disturbance Provider emitting fault Occurrences; never ported.
+  maturity architectural
+  publishes NetworkFault
+  publishes ChaosEvent
+  forbidden_inference an injected fault survived -> the system is robust (one scenario is not the space)
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is HTTP/gRPC/SSE/WebSocket/CLI/metrics/PCAP; the range is real, the Bonfyre binding is architectural
+
+architecture pace-provider
+  canonical_name PACEProvider
+  family provider
+  domain Provider / Policy Doctrine
+  layer provider
+  semantic_question Given this event, what tiered rule of engagement, authority and escalation applies?
+  purpose External capability organ (PACE doctrine: tiered ROE, cyber-physical mission dependencies, escalation-aware response). Composed as a Policy/Authority Provider making doctrine executable WITHOUT unrestricted autonomy; never ported.
+  maturity architectural
+  publishes ResponsePolicy
+  consumes Authority
+  forbidden_inference a doctrinal response is derived -> it is authorized to execute (the human gate and Authority still bind; reachability stops at the human line)
+  interacts authority-graph
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is Policy/Authority/simulation rules (doctrine, not runtime code); making it executable is architectural
+
+architecture mes-provider
+  canonical_name MESProvider
+  family provider
+  domain Provider / Serialized Traceability
+  layer provider
+  semantic_question What is this serialized component's design, material batch, operations, inspection and disposition?
+  purpose External capability organ (aerospace MES: serialized parts, assembly compatibility, FIFO allocation, roles, traceability, inventory). Composed as a digital-thread Provider of part provenance; never ported.
+  maturity architectural
+  publishes PartProvenance
+  publishes MaterialBatch
+  forbidden_inference a part is in inventory -> it is qualified for this assembly (compatibility + inspection still gate)
+  interacts provider-graph
+  source_lineage external low-level capability organ (external-repo rule)
+  known_gap boundary is a domain fixture / REST / schema comparison; the MES is real, the Bonfyre binding is architectural
+
+architecture physical-asset
+  canonical_name PhysicalAssetGraph
+  family provider
+  domain Provider / Physical Asset
+  layer provider
+  semantic_question What can this physical asset actually do right now, derived from component health, proof, model and calibration?
+  purpose A physical asset (robot, vehicle, cell) is a Bonfyre Resource whose capabilities are DERIVED, never statically declared: a capability is a conjunction of component-health / proof / model / calibration gates, maintained by the same DBSP circuit as ReachableCapacity. External Providers (OpenCat device IO, Kratos physics, CARLA, ...) supply the gates. A single telemetry -1 withdraws the capability incrementally, which is what stops WorkGraph assigning it and opens the maintenance cascade.
+  maturity measured
+  owns DerivedCapability
+  derived DerivedCapability
+  consumes DeviceTelemetry
+  consumes ServoHealth
+  consumes StructuralEnvelopeProof
+  consumes PartProvenance
+  publishes DerivedCapability
+  internal_calculus multi-gate conjunction maintained in DBSP (capability reachable while all gates hold)
+  invariant capability is derived from live gates, never statically declared
+  invariant a component telemetry -1 withdraws the derived capability incrementally, with no rebuild
+  forbidden_inference a device is connected -> the asset is capable (health/proof are derived, not assumed)
+  forbidden_inference a capability advertised once -> still valid (it is maintained, and retracts on any gate -1)
+  interacts opencat-provider
+  interacts kratos-provider
+  interacts feldera
+  interacts work-graph
+  source_path 10-Code/BonfyreControlPlane/physical_asset.py
+  witness 10-Code/BonfyreControlPlane/tests/test_physical_asset.py
+  source_lineage external-repo composition -- physical asset as derived-capability Resource
+  known_gap proven for a robot climb capability through the live reachable_capacity DBSP circuit (telemetry -1 -> capability withdrawn); binding real OpenCat telemetry + Kratos proofs at the device boundary is the external-provider wiring
