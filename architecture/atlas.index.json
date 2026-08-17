@@ -818,7 +818,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Authority"
+      ],
       "semantic_question": "What does the BonfyreAuth capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreAuth/src/main.c"
@@ -1000,7 +1002,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Capability"
+      ],
       "semantic_question": "What does the BonfyreCapability capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreCapability/src/main.c"
@@ -1214,7 +1218,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Capability"
+      ],
       "semantic_question": "What does the BonfyreDiscipl capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreDiscipl/src/main.c"
@@ -1286,7 +1292,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Value"
+      ],
       "semantic_question": "What does the BonfyreEconomy capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreEconomy/src/main.c"
@@ -1358,7 +1366,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Occurrence"
+      ],
       "semantic_question": "What does the BonfyreEmit capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreEmit/src/main.c"
@@ -1394,7 +1404,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Actor"
+      ],
       "semantic_question": "What does the BonfyreEntity capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreEntity/src/main.c"
@@ -1430,7 +1442,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "FPQRepresentation"
+      ],
       "semantic_question": "What does the BonfyreFPQ capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreFPQ/src/debruijn.c",
@@ -1469,7 +1483,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "FPQRepresentation"
+      ],
       "semantic_question": "What does the BonfyreFPQx capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreFPQx/src/main.c"
@@ -1539,7 +1555,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Value"
+      ],
       "semantic_question": "What does the BonfyreFinance capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreFinance/src/main.c"
@@ -1756,7 +1774,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Authority"
+      ],
       "semantic_question": "What does the BonfyreGate capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreGate/src/main.c"
@@ -1792,7 +1812,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "ExecutionReceipt"
+      ],
       "semantic_question": "What does the BonfyreGen capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreGen/src/main.c"
@@ -1828,7 +1850,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Relation"
+      ],
       "semantic_question": "What does the BonfyreGraph capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreGraph/src/main.c"
@@ -1864,7 +1888,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Artifact"
+      ],
       "semantic_question": "What does the BonfyreHash capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreHash/src/main.c"
@@ -1936,7 +1962,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "ExecutionReceipt"
+      ],
       "semantic_question": "What does the BonfyreInfer capability organ realize, and by what contract?",
       "source_paths": [],
       "subscribes": [],
@@ -1970,7 +1998,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "ExternalEvent"
+      ],
       "semantic_question": "What does the BonfyreIngest capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreIngest/src/main.c"
@@ -2006,7 +2036,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "KVPassport"
+      ],
       "semantic_question": "What does the BonfyreKVCache capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreKVCache/src/main.c"
@@ -2114,7 +2146,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Capability"
+      ],
       "semantic_question": "What does the BonfyreLearn capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreLearn/src/main.c"
@@ -2150,7 +2184,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "Value"
+      ],
       "semantic_question": "What does the BonfyreLedger capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreLedger/src/main.c"
@@ -2762,7 +2798,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "WorkState"
+      ],
       "semantic_question": "What does the BonfyreProject capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreProject/src/main.c"
@@ -2798,7 +2836,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "ProofFrontier"
+      ],
       "semantic_question": "What does the BonfyreProof capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreProof/src/main.c"
@@ -2942,7 +2982,9 @@
       "native_formats": [],
       "node_types": [],
       "owns": [],
-      "publishes": [],
+      "publishes": [
+        "WorkState"
+      ],
       "semantic_question": "What does the BonfyreQueue capability organ realize, and by what contract?",
       "source_paths": [
         "cmd/BonfyreQueue/src/main.c"

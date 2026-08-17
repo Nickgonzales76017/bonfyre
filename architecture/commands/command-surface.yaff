@@ -28,6 +28,7 @@ architecture cmd-auth
   purpose Command-surface organ realizing the Authority capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreAuth
+  publishes Authority
   internal_calculus bonfyre-auth binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreAuth/src/main.c
@@ -106,6 +107,7 @@ architecture cmd-capability
   purpose Command-surface organ realizing the Capability capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreCapability
+  publishes Capability
   internal_calculus bonfyre-capability binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreCapability/src/main.c
@@ -195,6 +197,7 @@ architecture cmd-discipl
   purpose Command-surface organ realizing the Capability capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreDiscipl
+  publishes Capability
   internal_calculus bonfyre-discipl binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreDiscipl/src/main.c
@@ -225,6 +228,7 @@ architecture cmd-economy
   purpose Command-surface organ realizing the Value capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreEconomy
+  publishes Value
   internal_calculus bonfyre-economy binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreEconomy/src/main.c
@@ -255,6 +259,7 @@ architecture cmd-emit
   purpose Command-surface organ realizing the Occurrence capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreEmit
+  publishes Occurrence
   internal_calculus bonfyre-emit binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreEmit/src/main.c
@@ -270,6 +275,7 @@ architecture cmd-entity
   purpose Command-surface organ realizing the Actor capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreEntity
+  publishes Actor
   internal_calculus bonfyre-entity binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreEntity/src/main.c
@@ -285,6 +291,7 @@ architecture cmd-f-p-q
   purpose Command-surface organ realizing the FPQRepresentation capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity measured
   command BonfyreFPQ
+  publishes FPQRepresentation
   internal_calculus bonfyre-fpq binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreFPQ/src/debruijn.c
@@ -303,6 +310,7 @@ architecture cmd-f-p-qx
   purpose Command-surface organ realizing the FPQRepresentation capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreFPQx
+  publishes FPQRepresentation
   internal_calculus bonfyre-fpqx binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreFPQx/src/main.c
@@ -332,6 +340,7 @@ architecture cmd-finance
   purpose Command-surface organ realizing the Value capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreFinance
+  publishes Value
   internal_calculus bonfyre-finance binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreFinance/src/main.c
@@ -424,6 +433,7 @@ architecture cmd-gate
   purpose Command-surface organ realizing the Authority capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreGate
+  publishes Authority
   internal_calculus bonfyre-gate binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreGate/src/main.c
@@ -439,6 +449,7 @@ architecture cmd-gen
   purpose Command-surface organ realizing the ExecutionReceipt capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreGen
+  publishes ExecutionReceipt
   internal_calculus bonfyre-gen binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreGen/src/main.c
@@ -454,6 +465,7 @@ architecture cmd-graph
   purpose Command-surface organ realizing the Relation capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreGraph
+  publishes Relation
   internal_calculus bonfyre-graph binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreGraph/src/main.c
@@ -469,6 +481,7 @@ architecture cmd-hash
   purpose Command-surface organ realizing the Artifact capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreHash
+  publishes Artifact
   internal_calculus bonfyre-hash binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreHash/src/main.c
@@ -499,6 +512,7 @@ architecture cmd-infer
   purpose Command-surface organ realizing the ExecutionReceipt capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreInfer
+  publishes ExecutionReceipt
   internal_calculus bonfyre-infer binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   witness cmd/command_smoke.py
@@ -513,6 +527,7 @@ architecture cmd-ingest
   purpose Command-surface organ realizing the ExternalEvent capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreIngest
+  publishes ExternalEvent
   internal_calculus bonfyre-ingest binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreIngest/src/main.c
@@ -528,6 +543,7 @@ architecture cmd-k-v-cache
   purpose Command-surface organ realizing the KVPassport capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreKVCache
+  publishes KVPassport
   internal_calculus bonfyre-kvcache binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreKVCache/src/main.c
@@ -573,6 +589,7 @@ architecture cmd-learn
   purpose Command-surface organ realizing the Capability capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreLearn
+  publishes Capability
   internal_calculus bonfyre-learn binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreLearn/src/main.c
@@ -588,6 +605,7 @@ architecture cmd-ledger
   purpose Command-surface organ realizing the Value capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreLedger
+  publishes Value
   internal_calculus bonfyre-ledger binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreLedger/src/main.c
@@ -843,6 +861,7 @@ architecture cmd-project
   purpose Command-surface organ realizing the WorkState capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreProject
+  publishes WorkState
   internal_calculus bonfyre-project binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreProject/src/main.c
@@ -858,6 +877,7 @@ architecture cmd-proof
   purpose Command-surface organ realizing the ProofFrontier capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreProof
+  publishes ProofFrontier
   internal_calculus bonfyre-proof binary
   forbidden_inference the command exists -> its effect is authorized (read-only, but scope still applies)
   source_path cmd/BonfyreProof/src/main.c
@@ -918,6 +938,7 @@ architecture cmd-queue
   purpose Command-surface organ realizing the WorkState capability. A first-class Bonfyre capability, advertised and composable, not a script.
   maturity implemented
   command BonfyreQueue
+  publishes WorkState
   internal_calculus bonfyre-queue binary
   forbidden_inference the command exists -> its effect is authorized (Authority gates the commit)
   source_path cmd/BonfyreQueue/src/main.c

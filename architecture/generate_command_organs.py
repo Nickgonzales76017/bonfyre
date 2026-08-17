@@ -117,6 +117,11 @@ def generate() -> str:
                      f"A first-class Bonfyre capability, advertised and composable, not a script.")
         lines.append(f"  maturity {maturity}")
         lines.append(f"  command {name}")
+        CONSUMED_FACTS = {"Authority","Value","WorkState","Occurrence","ExternalEvent",
+                         "ExecutionReceipt","Actor","Relation","Artifact","ProofFrontier",
+                         "FPQRepresentation","KVPassport","Capability"}
+        if name in CAPABILITY and cap in CONSUMED_FACTS:
+            lines.append(f"  publishes {cap}")
         lines.append(f"  internal_calculus {r.get('binary', name)} binary")
         lines.append(f"  forbidden_inference the command exists -> its effect is authorized "
                      f"({'Authority gates the commit' if mutating else 'read-only, but scope still applies'})")
