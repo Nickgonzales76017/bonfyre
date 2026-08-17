@@ -6,6 +6,7 @@ atlas institutional
 architecture authority-graph
   owns Authority
   consumes Actor
+  consumes Policy
   publishes Authority
   canonical_name AuthorityGraph
   family institutional

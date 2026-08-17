@@ -25,6 +25,7 @@ architecture unlock-graph
   consumes Actor
   consumes ReachableCapacity
   consumes ResourceActivation
+  consumes Credential
   publishes OpportunityEligibility
   family opportunity
   domain Opportunity / Institutional Capacity

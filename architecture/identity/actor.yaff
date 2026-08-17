@@ -6,6 +6,7 @@ architecture actor-graph
   owns Relation
   consumes Corroboration
   consumes Occurrence
+  consumes CommunicationEvent
   publishes Actor
   publishes Relation
   family identity

@@ -1,0 +1,160 @@
+atlas apps
+# The nine Frappe apps as first-class wired organs -- projections over shared
+# semantic objects, not separate destinations. Each declares the mature powers it
+# donates into the fabric (owns/publishes) and the fabric facts it reads
+# (consumes), per the wiring riff SS5. The Frappe apps are real; their fabric
+# wiring is architectural (a manifest), not yet implemented -- hence maturity
+# architectural and an honest known_gap on each. `atlas.py wiring` then shows which
+# app<->fabric feedback loops close (CRM<->actor, HRMS<->work, ERPNext<->provider)
+# and which app outputs are human surfaces (terminal producers).
+
+architecture frappe-core
+  canonical_name FrappeCore
+  family apps
+  domain Apps / Platform
+  layer surface
+  semantic_question What DocType, form, permission and workflow grammar does a record present?
+  purpose Donates DocType schemas, forms, permissions, workflows, reports. Shapes records; it never owns the authority that gates them.
+  maturity architectural
+  owns DocType
+  consumes Authority
+  publishes SurfaceGrammar
+  publishes Policy
+  forbidden_inference a DocType exists -> the record is authorized (Authority gates; a DocType only shapes)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap the Frappe platform is real; this fabric WiringSpec is architectural, not yet implemented
+
+architecture erpnext
+  canonical_name ERPNext
+  family apps
+  domain Apps / Economic Truth
+  layer surface
+  semantic_question What value, receipt and stock movement actually occurred (realized, not forecast)?
+  purpose Donates double-entry transaction truth, inventory, party economics. Authoritative for realized Value and Receipt; feeds provider evidence and Insights.
+  maturity architectural
+  owns Value
+  owns Receipt
+  consumes WorkState
+  consumes ProviderState
+  publishes Value
+  publishes Receipt
+  forbidden_inference a forecast -> realized money (Value here is booked/realized, never projected)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap ERPNext is real; the fabric wiring that feeds realized outcomes back into provider selection is architectural
+
+architecture crm
+  canonical_name CRM
+  family apps
+  domain Apps / Relationship
+  layer surface
+  semantic_question What is the current relationship, communication and deal state with an actor?
+  purpose Donates the relationship/timeline/deal grammar. A projection over actors it does not own -- actor-graph owns identity; CRM surfaces the relationship.
+  maturity architectural
+  consumes Actor
+  consumes Relation
+  consumes OccurrenceProjection
+  publishes CommunicationEvent
+  publishes DealState
+  forbidden_inference a CRM record -> a verified actor identity (CRM projects; actor-graph owns identity)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap CRM is real; wiring its communication events back into the actor/relationship graph is architectural
+
+architecture hrms
+  canonical_name HRMS
+  family apps
+  domain Apps / Human Capacity
+  layer surface
+  semantic_question Who is available, with what qualification and capacity, for what work?
+  purpose Donates availability, qualification, attendance, shift. Authoritative for HumanCapacity; feeds WorkGraph routing.
+  maturity architectural
+  owns HumanCapacity
+  consumes Actor
+  consumes WorkState
+  publishes HumanCapacity
+  forbidden_inference attendance present -> capability proven (availability is not demonstrated proficiency)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap HRMS is real; wiring human capacity into work routing is architectural
+
+architecture helpdesk
+  canonical_name Helpdesk
+  family apps
+  domain Apps / Issue Lifecycle
+  layer surface
+  semantic_question What is the state of this requester's problem, and who owns resolving it?
+  purpose Donates problem lifecycle, SLA, assignment, escalation. Folds inbound occurrences into structured tickets.
+  maturity architectural
+  owns TicketState
+  consumes Actor
+  consumes WorkState
+  consumes OccurrenceProjection
+  publishes TicketState
+  forbidden_inference a ticket resolved -> the underlying problem is gone (resolution is a claim, not proof)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap Helpdesk is real; wiring occurrences into its ticket lifecycle is architectural
+
+architecture lms
+  canonical_name LMS
+  family apps
+  domain Apps / Capability Acquisition
+  layer surface
+  semantic_question What capability has an actor acquired, and is it credentialed?
+  purpose Donates prerequisites, progression, assessment, credential. Feeds capability/opportunity eligibility and evidence of proficiency.
+  maturity architectural
+  owns Credential
+  consumes Actor
+  publishes Credential
+  publishes Evidence
+  forbidden_inference a course completed -> capability proven for work (completion is not demonstrated proficiency)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap LMS is real; wiring credentials into provider eligibility and work routing is architectural
+
+architecture wiki
+  canonical_name Wiki
+  family apps
+  domain Apps / Knowledge
+  layer surface
+  semantic_question What does the institution claim to know, with what evidence and freshness?
+  purpose Donates knowledge hierarchy, revision, citation. A knowledge claim carries its evidence and proof-frontier state; invalidated evidence marks the claim stale.
+  maturity architectural
+  owns KnowledgeClaim
+  consumes Evidence
+  consumes ProofFrontier
+  publishes KnowledgeClaim
+  forbidden_inference published knowledge -> current truth (a claim can be invalidated after publication)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap Wiki is real; carrying claim/evidence/proof-frontier refs on knowledge is architectural
+
+architecture drive
+  canonical_name Drive
+  family apps
+  domain Apps / Resource Navigation
+  layer surface
+  semantic_question How does a human navigate, share, preview and version any addressable resource?
+  purpose Donates the mature file/folder/share/version grammar to BonfyreFS -- the visual grammar of the universal namespace. A projection; Authority still gates effects.
+  maturity architectural
+  consumes Artifact
+  consumes Authority
+  consumes RouteAdvertisement
+  publishes ShareGrant
+  publishes RepresentationHistory
+  forbidden_inference a share grant -> authority to act (Drive shares a projection; Authority gates the effect)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap Drive is real; resolving its folders through the AddressPlane/BonfyreFS namespace is architectural
+
+architecture insights
+  canonical_name Insights
+  family apps
+  domain Apps / Differential Surface
+  layer surface
+  semantic_question What is the current derived state, charted for a human, deep-linkable to its objects?
+  purpose Donates query/metric/dashboard composition. The human grammar of Feldera's maintained derived state; charts differential truth, never commits.
+  maturity architectural
+  owns DerivedView
+  consumes ReachableCapacity
+  consumes Value
+  consumes OpportunityEligibility
+  consumes ResourcePressure
+  publishes DerivedView
+  forbidden_inference a dashboard number -> a committed fact (Insights charts derived state; it never commits)
+  source_lineage aurekai institution vision (9 Frappe apps as one institutional graph)
+  known_gap Insights is real; wiring it to consume Feldera-maintained sets directly is architectural

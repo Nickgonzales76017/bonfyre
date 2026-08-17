@@ -7,7 +7,8 @@
       ],
       "consumes": [
         "Corroboration",
-        "Occurrence"
+        "Occurrence",
+        "CommunicationEvent"
       ],
       "domain": "Identity / Institutional Capacity",
       "edge_types": [
@@ -263,7 +264,8 @@
       "canonical_name": "AuthorityGraph",
       "commands": [],
       "consumes": [
-        "Actor"
+        "Actor",
+        "Policy"
       ],
       "domain": "Institutional / Authority",
       "edge_types": [
@@ -709,6 +711,40 @@
         "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
       ]
     },
+    "crm": {
+      "canonical_name": "CRM",
+      "commands": [],
+      "consumes": [
+        "Actor",
+        "Relation",
+        "OccurrenceProjection"
+      ],
+      "domain": "Apps / Relationship",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a CRM record -> a verified actor identity (CRM projects; actor-graph owns identity)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "CRM is real; wiring its communication events back into the actor/relationship graph is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "CommunicationEvent",
+        "DealState"
+      ],
+      "semantic_question": "What is the current relationship, communication and deal state with an actor?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "cubecl": {
       "canonical_name": "CubeCL",
       "commands": [],
@@ -821,6 +857,40 @@
         "10-Code/BonfyreControlPlane/tests/test_capability_closure.py"
       ]
     },
+    "drive": {
+      "canonical_name": "Drive",
+      "commands": [],
+      "consumes": [
+        "Artifact",
+        "Authority",
+        "RouteAdvertisement"
+      ],
+      "domain": "Apps / Resource Navigation",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a share grant -> authority to act (Drive shares a projection; Authority gates the effect)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "Drive is real; resolving its folders through the AddressPlane/BonfyreFS namespace is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [],
+      "publishes": [
+        "ShareGrant",
+        "RepresentationHistory"
+      ],
+      "semantic_question": "How does a human navigate, share, preview and version any addressable resource?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "egglog": {
       "canonical_name": "egglog",
       "commands": [],
@@ -857,6 +927,42 @@
         "~/.bonfyre/substrates/v6.1/egglog/semantic-proof.json",
         "~/.bonfyre/substrates/v6.1/egglog/target/release/egglog"
       ]
+    },
+    "erpnext": {
+      "canonical_name": "ERPNext",
+      "commands": [],
+      "consumes": [
+        "WorkState",
+        "ProviderState"
+      ],
+      "domain": "Apps / Economic Truth",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a forecast -> realized money (Value here is booked/realized, never projected)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "ERPNext is real; the fabric wiring that feeds realized outcomes back into provider selection is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "Value",
+        "Receipt"
+      ],
+      "publishes": [
+        "Value",
+        "Receipt"
+      ],
+      "semantic_question": "What value, receipt and stock movement actually occurred (realized, not forecast)?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
     },
     "evidence-binding": {
       "canonical_name": "EvidenceBindingGraph",
@@ -1306,6 +1412,40 @@
         "~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)"
       ]
     },
+    "frappe-core": {
+      "canonical_name": "FrappeCore",
+      "commands": [],
+      "consumes": [
+        "Authority"
+      ],
+      "domain": "Apps / Platform",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a DocType exists -> the record is authorized (Authority gates; a DocType only shapes)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "the Frappe platform is real; this fabric WiringSpec is architectural, not yet implemented"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "DocType"
+      ],
+      "publishes": [
+        "SurfaceGrammar",
+        "Policy"
+      ],
+      "semantic_question": "What DocType, form, permission and workflow grammar does a record present?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "gigatoken": {
       "canonical_name": "GigaToken",
       "commands": [],
@@ -1378,6 +1518,75 @@
       "views": [
         "IdentityView"
       ],
+      "witnesses": []
+    },
+    "helpdesk": {
+      "canonical_name": "Helpdesk",
+      "commands": [],
+      "consumes": [
+        "Actor",
+        "WorkState",
+        "OccurrenceProjection"
+      ],
+      "domain": "Apps / Issue Lifecycle",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a ticket resolved -> the underlying problem is gone (resolution is a claim, not proof)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "Helpdesk is real; wiring occurrences into its ticket lifecycle is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "TicketState"
+      ],
+      "publishes": [
+        "TicketState"
+      ],
+      "semantic_question": "What is the state of this requester's problem, and who owns resolving it?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
+    "hrms": {
+      "canonical_name": "HRMS",
+      "commands": [],
+      "consumes": [
+        "Actor",
+        "WorkState"
+      ],
+      "domain": "Apps / Human Capacity",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "attendance present -> capability proven (availability is not demonstrated proficiency)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "HRMS is real; wiring human capacity into work routing is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "HumanCapacity"
+      ],
+      "publishes": [
+        "HumanCapacity"
+      ],
+      "semantic_question": "Who is available, with what qualification and capacity, for what work?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
       "witnesses": []
     },
     "hvm4": {
@@ -1454,6 +1663,42 @@
       "witnesses": [
         "~/.bonfyre/substrates/v6.1/hydro/semantic-proof.json"
       ]
+    },
+    "insights": {
+      "canonical_name": "Insights",
+      "commands": [],
+      "consumes": [
+        "ReachableCapacity",
+        "Value",
+        "OpportunityEligibility",
+        "ResourcePressure"
+      ],
+      "domain": "Apps / Differential Surface",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a dashboard number -> a committed fact (Insights charts derived state; it never commits)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "Insights is real; wiring it to consume Feldera-maintained sets directly is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "DerivedView"
+      ],
+      "publishes": [
+        "DerivedView"
+      ],
+      "semantic_question": "What is the current derived state, charted for a human, deep-linkable to its objects?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
     },
     "institution-graph": {
       "canonical_name": "InstitutionGraph",
@@ -1594,6 +1839,40 @@
       "witnesses": [
         "~/.bonfyre/substrates/v6.1/lance/semantic-proof.json"
       ]
+    },
+    "lms": {
+      "canonical_name": "LMS",
+      "commands": [],
+      "consumes": [
+        "Actor"
+      ],
+      "domain": "Apps / Capability Acquisition",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "a course completed -> capability proven for work (completion is not demonstrated proficiency)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "LMS is real; wiring credentials into provider eligibility and work routing is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "Credential"
+      ],
+      "publishes": [
+        "Credential",
+        "Evidence"
+      ],
+      "semantic_question": "What capability has an actor acquired, and is it credentialed?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
     },
     "model-representation-graph": {
       "canonical_name": "ModelRepresentationGraph",
@@ -1986,7 +2265,8 @@
       "canonical_name": "ProviderStateFold",
       "commands": [],
       "consumes": [
-        "ResourcePressure"
+        "ResourcePressure",
+        "Receipt"
       ],
       "domain": "Provider / Resource",
       "edge_types": [
@@ -2694,7 +2974,8 @@
         "ProofFrontier",
         "Actor",
         "ReachableCapacity",
-        "ResourceActivation"
+        "ResourceActivation",
+        "Credential"
       ],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
@@ -2835,6 +3116,40 @@
         "~/.bonfyre/substrates/v6.1/verus/semantic-proof.json"
       ]
     },
+    "wiki": {
+      "canonical_name": "Wiki",
+      "commands": [],
+      "consumes": [
+        "Evidence",
+        "ProofFrontier"
+      ],
+      "domain": "Apps / Knowledge",
+      "edge_types": [],
+      "family": "apps",
+      "forbidden_inferences": [
+        "published knowledge -> current truth (a claim can be invalidated after publication)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "Wiki is real; carrying claim/evidence/proof-frontier refs on knowledge is architectural"
+      ],
+      "layer": "surface",
+      "maturity": "architectural",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "KnowledgeClaim"
+      ],
+      "publishes": [
+        "KnowledgeClaim"
+      ],
+      "semantic_question": "What does the institution claim to know, with what evidence and freshness?",
+      "source_paths": [],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "work-graph": {
       "canonical_name": "WorkGraph",
       "commands": [
@@ -2842,7 +3157,8 @@
       ],
       "consumes": [
         "Occurrence",
-        "ResourceActivation"
+        "ResourceActivation",
+        "HumanCapacity"
       ],
       "domain": "Execution",
       "edge_types": [

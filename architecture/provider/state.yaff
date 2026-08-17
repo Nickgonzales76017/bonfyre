@@ -3,6 +3,7 @@ atlas provider
 architecture provider-state
   owns ProviderState
   consumes ResourcePressure
+  consumes Receipt
   publishes ProviderState
   publishes EligibleProviders
   canonical_name ProviderStateFold

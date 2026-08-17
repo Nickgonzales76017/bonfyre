@@ -5,6 +5,7 @@ architecture work-graph
   owns WorkState
   consumes Occurrence
   consumes ResourceActivation
+  consumes HumanCapacity
   publishes WorkState
   family execution
   domain Execution
