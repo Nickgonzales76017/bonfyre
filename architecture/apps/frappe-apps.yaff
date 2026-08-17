@@ -135,6 +135,7 @@ architecture drive
   consumes Artifact
   consumes Authority
   consumes RouteAdvertisement
+  consumes NamespaceProjection
   publishes ShareGrant
   publishes RepresentationHistory
   forbidden_inference a share grant -> authority to act (Drive shares a projection; Authority gates the effect)

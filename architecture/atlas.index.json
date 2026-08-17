@@ -420,6 +420,47 @@
         "10-Code/BonfyreControlPlane/tests/test_opportunity.py"
       ]
     },
+    "bonfyre-fs": {
+      "canonical_name": "BonfyreFS",
+      "commands": [],
+      "consumes": [
+        "Artifact",
+        "ReachableCapacity",
+        "OpportunityEligibility",
+        "RouteAdvertisement",
+        "Authority"
+      ],
+      "domain": "Fabric / Namespace",
+      "edge_types": [],
+      "family": "fabric",
+      "forbidden_inferences": [
+        "a path resolves -> the resource is authorized to read (Authority gates; the namespace only locates)",
+        "a virtual query directory -> stored state (it is a maintained set projected as folders, not a directory on disk)"
+      ],
+      "internal_calculi": [],
+      "invariants": [],
+      "known_gaps": [
+        "serves the atlas index, substrate proofs and the fortification plan today; the virtual query directories (Waiting-On-Human, Broken-Evidence, Unproven-Capabilities, ...) are architectural"
+      ],
+      "layer": "fabric",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [],
+      "owns": [
+        "NamespaceProjection"
+      ],
+      "publishes": [
+        "NamespaceProjection"
+      ],
+      "semantic_question": "What is the universal namespace, and how is any addressable resource resolved and served?",
+      "source_paths": [
+        "engine/core/src/filesystem_projection.c",
+        "10-Code/BonfyreControlPlane/fabric_publish.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": []
+    },
     "burn": {
       "canonical_name": "Burn",
       "commands": [],
@@ -896,7 +937,8 @@
       "consumes": [
         "Artifact",
         "Authority",
-        "RouteAdvertisement"
+        "RouteAdvertisement",
+        "NamespaceProjection"
       ],
       "domain": "Apps / Resource Navigation",
       "edge_types": [],
