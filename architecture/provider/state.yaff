@@ -1,6 +1,10 @@
 atlas provider
 
 architecture provider-state
+  owns ProviderState
+  consumes ResourcePressure
+  publishes ProviderState
+  publishes EligibleProviders
   canonical_name ProviderStateFold
   family provider
   domain Provider / Resource
@@ -22,6 +26,9 @@ architecture provider-state
   source_lineage run6 control-plane retrospective
 
 architecture resource-admission
+  owns ResourceGrant
+  consumes WorkState
+  publishes ResourcePressure
   canonical_name ResourceAdmissionGraph
   family provider
   domain Provider / Resource

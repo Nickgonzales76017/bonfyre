@@ -62,6 +62,8 @@ _LIST_FIELDS = {
     "consumes", "produces", "placement_constraint",
     # meta-edge-class lists
     "specialized_by",
+    # WiringSpec: typed semantic-fact flow between organs (the wiring constitution)
+    "owns", "publishes", "subscribes",
 }
 
 
@@ -269,6 +271,10 @@ class Atlas:
                     "commands": a.lst("command"),
                     "native_formats": a.lst("native_format"),
                     "known_gaps": a.lst("known_gap"),
+                    "owns": a.lst("owns"),
+                    "consumes": a.lst("consumes"),
+                    "publishes": a.lst("publishes"),
+                    "subscribes": a.lst("subscribes"),
                     "views": self.views_of(aid),
                 }
                 for aid, a in sorted(self.architectures.items())
@@ -474,6 +480,23 @@ def _cmd_wiring() -> int:
     print("highest-value loops to close (by destination influence):")
     for c in r["top_loop_closures"]:
         print(f"  {c['one_way']}  [infl {c['destination_influence']}] -- {c['suggestion']}")
+
+    fr = wiring.fact_report()
+    print()
+    print(f"-- WiringSpec fact flow: {fr['wired_organs']} organs, {len(fr['facts'])} facts --")
+    print("orphan consumers (organ expects a fact NOBODY provides -- wire these):")
+    for f, cons in fr["orphan_consumers"]:
+        print(f"  {f} <- expected by {', '.join(cons)}")
+    print("orphan producers (published, nobody consumes -- terminal surface or unwired):")
+    for f, prod in fr["orphan_producers"]:
+        print(f"  {f} -> from {', '.join(prod)}")
+    if fr["duplicate_ownership"]:
+        print("DUPLICATE OWNERSHIP (two organs claim one fact):")
+        for f, owners in fr["duplicate_ownership"]:
+            print(f"  {f}: {', '.join(owners)}")
+    print("fact feedback loops (closed producer/consumer cycles):")
+    for loop in fr["fact_feedback_loops"]:
+        print(f"  {' <-> '.join(loop)}")
     return 0
 
 

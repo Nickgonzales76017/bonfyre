@@ -65,6 +65,10 @@ architecture automerge
   source_lineage Reality Foundry 14-substrate
 
 architecture feldera
+  owns ReachableCapacity
+  consumes ProofFrontier
+  subscribes ProofFrontier
+  publishes ReachableCapacity
   canonical_name Feldera
   family substrate
   domain Reality Foundry

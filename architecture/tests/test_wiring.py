@@ -52,6 +52,43 @@ def test_real_atlas_has_feedback_cores():
     assert len(r["largest_feedback_core"]) >= 2
 
 
+def test_fact_wiring_orphans_and_duplicates():
+    fw = wiring.FactWiring(
+        owns={"A": {"X"}, "B": {"Y"}},
+        consumes={"B": {"X"}, "C": {"Z"}},
+        publishes={"A": {"X"}}, subscribes={},
+        producers={"X": {"A"}, "Y": {"B"}},
+        consumers={"X": {"B"}, "Z": {"C"}},
+    )
+    # Z is consumed by C but produced by nobody -> orphan consumer (a real gap)
+    assert ("Z", ["C"]) in wiring.orphan_consumers(fw)
+    # Y is produced by B but consumed by nobody -> orphan producer
+    assert ("Y", ["B"]) in wiring.orphan_producers(fw)
+    # X is produced and consumed -> not an orphan either way
+    assert "X" not in {f for f, _ in wiring.orphan_consumers(fw)}
+    assert "X" not in {f for f, _ in wiring.orphan_producers(fw)}
+
+
+def test_duplicate_ownership_detected():
+    fw = wiring.FactWiring(
+        owns={"A": {"X"}, "B": {"X"}}, consumes={}, publishes={}, subscribes={},
+        producers={"X": {"A", "B"}}, consumers={},
+    )
+    dups = dict(wiring.duplicate_ownership(fw))
+    assert dups.get("X") == ["A", "B"]
+
+
+def test_real_atlas_fact_loops_and_no_duplicate_ownership():
+    fr = wiring.fact_report()
+    assert fr["wired_organs"] >= 10
+    # the analysis -> action chain built this session must be a closed fact loop
+    loops = [set(L) for L in fr["fact_feedback_loops"]]
+    chain = {"actor-graph", "collapse-front", "fortification-plan", "verification-ledger"}
+    assert any(chain <= L for L in loops), "the fortify feedback chain must close at the fact level"
+    # no two organs may claim authority for the same fact
+    assert fr["duplicate_ownership"] == [], fr["duplicate_ownership"]
+
+
 if __name__ == "__main__":
     import pytest
     raise SystemExit(pytest.main([__file__, "-q"]))

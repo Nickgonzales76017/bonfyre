@@ -34,6 +34,18 @@ atlas schema
 #     known_gap   ...      honest gaps (repeat)
 #     cooling_path / reheat_condition
 #
+#   WiringSpec (the wiring constitution -- typed semantic-fact flow between organs):
+#     owns        ...      semantic facts this organ is authoritative for (repeat)
+#     consumes    ...      facts it reads (repeat)
+#     publishes   ...      facts/state/capabilities it exports (repeat)
+#     subscribes  ...      deltas it needs maintained (repeat)
+#   `atlas.py wiring` runs graph analysis over these: orphan producers (published,
+#   nobody consumes), orphan consumers (consumed, nobody provides -- the sharp gap
+#   to wire), duplicate ownership (two organs claim one fact), and fact feedback
+#   loops (closed producer/consumer cycles vs one-way flows). Fact names are a
+#   shared vocabulary (Actor, Occurrence, ProofFrontier, ReachableCapacity, ...);
+#   a producer and a consumer wire together only when they name the SAME fact.
+#
 # CONSTITUTIONAL RULES enforced by atlas.py validate:
 #   1. maturity measured|proven REQUIRES a witness (no laundering by parent label).
 #   2. a view must expand to >=2 real architectures (collapse is reversible zoom,

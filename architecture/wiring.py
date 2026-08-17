@@ -187,6 +187,99 @@ def loop_closures(w: Wiring) -> list[dict]:
     return ranked
 
 
+@dataclass
+class FactWiring:
+    owns: dict[str, set[str]]        # organ -> facts it is authoritative for
+    consumes: dict[str, set[str]]    # organ -> facts it reads
+    publishes: dict[str, set[str]]   # organ -> facts it exports
+    subscribes: dict[str, set[str]]  # organ -> deltas it needs
+    producers: dict[str, set[str]]   # fact -> organs that own/publish it
+    consumers: dict[str, set[str]]   # fact -> organs that consume/subscribe it
+
+
+def load_fact_wiring(index_path: str | None = None) -> FactWiring:
+    index_path = index_path or os.path.join(HERE, "atlas.index.json")
+    with open(index_path) as fh:
+        index = json.load(fh)
+    archs = index["architectures"]
+    items = archs.items() if isinstance(archs, dict) else [(a.get("canonical_name"), a) for a in archs]
+
+    owns: dict[str, set[str]] = {}
+    consumes: dict[str, set[str]] = {}
+    publishes: dict[str, set[str]] = {}
+    subscribes: dict[str, set[str]] = {}
+    producers: dict[str, set[str]] = defaultdict(set)
+    consumers: dict[str, set[str]] = defaultdict(set)
+    for aid, a in items:
+        o = set(a.get("owns", []))
+        c = set(a.get("consumes", []))
+        p = set(a.get("publishes", []))
+        s = set(a.get("subscribes", []))
+        if not (o or c or p or s):
+            continue
+        owns[aid], consumes[aid], publishes[aid], subscribes[aid] = o, c, p, s
+        for f in o | p:
+            producers[f].add(aid)
+        for f in c | s:
+            consumers[f].add(aid)
+    return FactWiring(owns, consumes, publishes, subscribes, dict(producers), dict(consumers))
+
+
+def orphan_producers(fw: FactWiring) -> list[tuple[str, list[str]]]:
+    """(fact, producing organs) for a fact published/owned but consumed by nobody --
+    published into the void. A terminal surface fact is a legitimate exception."""
+    out = []
+    for fact, prod in sorted(fw.producers.items()):
+        if fact not in fw.consumers:
+            out.append((fact, sorted(prod)))
+    return out
+
+
+def orphan_consumers(fw: FactWiring) -> list[tuple[str, list[str]]]:
+    """(fact, consuming organs) for a fact consumed but owned/published by nobody --
+    the sharp gap: an organ expects state no organ provides. Wire this."""
+    out = []
+    for fact, cons in sorted(fw.consumers.items()):
+        if fact not in fw.producers:
+            out.append((fact, sorted(cons)))
+    return out
+
+
+def duplicate_ownership(fw: FactWiring) -> list[tuple[str, list[str]]]:
+    """(fact, owners) where more than one organ claims authority for a fact."""
+    owners: dict[str, list[str]] = defaultdict(list)
+    for organ, facts in fw.owns.items():
+        for f in facts:
+            owners[f].append(organ)
+    return [(f, sorted(o)) for f, o in sorted(owners.items()) if len(o) > 1]
+
+
+def unowned_published(fw: FactWiring) -> list[tuple[str, list[str]]]:
+    """(fact, publishers) for a fact published but OWNED by nobody -- exported state
+    with no authoritative source, a weak edge waiting to drift."""
+    out = []
+    owned = {f for facts in fw.owns.values() for f in facts}
+    pub: dict[str, list[str]] = defaultdict(list)
+    for organ, facts in fw.publishes.items():
+        for f in facts:
+            pub[f].append(organ)
+    for f, publishers in sorted(pub.items()):
+        if f not in owned:
+            out.append((f, sorted(publishers)))
+    return out
+
+
+def fact_flow(fw: FactWiring) -> Wiring:
+    """Organ-to-organ graph: A -> B when A produces a fact B consumes."""
+    edges: list[tuple[str, str]] = []
+    for fact, prod in fw.producers.items():
+        for a in prod:
+            for b in fw.consumers.get(fact, ()):
+                if a != b:
+                    edges.append((a, b))
+    return wiring_from_edges(sorted(set(edges)))
+
+
 def report(index_path: str | None = None) -> dict:
     w = load_wiring(index_path)
     loops = feedback_loops(w)
@@ -199,6 +292,21 @@ def report(index_path: str | None = None) -> dict:
         "pure_sources": pure_sources(w),
         "pure_sinks": pure_sinks(w),
         "top_loop_closures": loop_closures(w)[:8],
+    }
+
+
+def fact_report(index_path: str | None = None) -> dict:
+    fw = load_fact_wiring(index_path)
+    ff = fact_flow(fw)
+    loops = [sorted(c) for c in _sccs(ff.nodes, ff.out) if len(c) > 1]
+    return {
+        "wired_organs": len(fw.owns),
+        "facts": sorted(set(fw.producers) | set(fw.consumers)),
+        "orphan_producers": orphan_producers(fw),
+        "orphan_consumers": orphan_consumers(fw),
+        "duplicate_ownership": duplicate_ownership(fw),
+        "unowned_published": unowned_published(fw),
+        "fact_feedback_loops": sorted(loops, key=len, reverse=True),
     }
 
 

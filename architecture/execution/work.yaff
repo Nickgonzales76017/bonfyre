@@ -2,6 +2,10 @@ atlas execution
 
 architecture work-graph
   canonical_name WorkGraph
+  owns WorkState
+  consumes Occurrence
+  consumes ResourceActivation
+  publishes WorkState
   family execution
   domain Execution
   layer execution
@@ -29,6 +33,10 @@ architecture work-graph
 
 architecture occurrence-spine
   canonical_name OccurrenceSpine
+  owns Occurrence
+  consumes ExternalEvent
+  publishes Occurrence
+  publishes OccurrenceProjection
   family execution
   domain Execution / Causal Time
   layer execution

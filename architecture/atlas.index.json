@@ -5,6 +5,10 @@
       "commands": [
         "BonfyreEntity"
       ],
+      "consumes": [
+        "Corroboration",
+        "Occurrence"
+      ],
       "domain": "Identity / Institutional Capacity",
       "edge_types": [
         "asserts",
@@ -36,6 +40,14 @@
         "Corroboration",
         "VerificationProfile"
       ],
+      "owns": [
+        "Actor",
+        "Relation"
+      ],
+      "publishes": [
+        "Actor",
+        "Relation"
+      ],
       "semantic_question": "Who is this real-world actor, and for which profile is that identity verified?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/actors.py",
@@ -43,6 +55,7 @@
         "engine/core/src/actor.c",
         "engine/core/include/bf_actor.h"
       ],
+      "subscribes": [],
       "views": [
         "IdentityView"
       ],
@@ -54,6 +67,12 @@
     "address-plane": {
       "canonical_name": "AddressPlane",
       "commands": [],
+      "consumes": [
+        "EligibleProviders",
+        "ReachableCapacity",
+        "Authority",
+        "ProviderState"
+      ],
       "domain": "Forwarding / Eligibility",
       "edge_types": [
         "eligible_for",
@@ -96,12 +115,17 @@
         "TernaryState",
         "Route"
       ],
+      "owns": [],
+      "publishes": [
+        "RouteAdvertisement"
+      ],
       "semantic_question": "Of all the state available, what is even eligible to participate in this operation?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/address_plane.py",
         "10-Code/BonfyreControlPlane/bonfyre_sid.py",
         "10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_address_plane.py",
@@ -113,6 +137,7 @@
     "artifact-graph": {
       "canonical_name": "ArtifactGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Evidence / Artifacts",
       "edge_types": [
         "transformed_by"
@@ -133,10 +158,17 @@
         "SourceArtifact",
         "DerivedArtifact"
       ],
+      "owns": [
+        "Artifact"
+      ],
+      "publishes": [
+        "Artifact"
+      ],
       "semantic_question": "What operator transformed this source artifact into that derived one?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/evidence_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
@@ -147,6 +179,7 @@
       "commands": [
         "BonfyreBrief"
       ],
+      "consumes": [],
       "domain": "Forms",
       "edge_types": [
         "autofills_from",
@@ -172,11 +205,14 @@
         "EvidenceSlot",
         "SubmitReadiness"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Is this form submit-ready, and if not, exactly what blocks it?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/atomic_forms.py",
         "10-Code/BonfyreControlPlane/institution_loop.py"
       ],
+      "subscribes": [],
       "views": [
         "FormsView"
       ],
@@ -188,6 +224,7 @@
     "attention-cooling": {
       "canonical_name": "AttentionCoolingGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Context / Attention",
       "edge_types": [
         "cools",
@@ -212,16 +249,22 @@
         "Subject",
         "Temperature"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What deserves attention now, and what has cooled until a named signal reheats it?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/scheduling.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "authority-graph": {
       "canonical_name": "AuthorityGraph",
       "commands": [],
+      "consumes": [
+        "Actor"
+      ],
       "domain": "Institutional / Authority",
       "edge_types": [
         "delegates",
@@ -251,10 +294,17 @@
         "AuthorityEdge",
         "Permission"
       ],
+      "owns": [
+        "Authority"
+      ],
+      "publishes": [
+        "Authority"
+      ],
       "semantic_question": "Who may do what, to what, for what purpose, under what evidence, until when?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/authority.py"
       ],
+      "subscribes": [],
       "views": [
         "InstitutionalView"
       ],
@@ -265,6 +315,7 @@
     "automerge": {
       "canonical_name": "Automerge",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -283,10 +334,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "How do many agents and humans mutate candidate state without contaminating Actual?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/automerge/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -297,6 +351,7 @@
     "blocker-graph": {
       "canonical_name": "BlockerGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
         "blocks"
@@ -316,10 +371,13 @@
       "node_types": [
         "Blocker"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is currently preventing this opportunity from being reachable?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/opportunity.py"
       ],
+      "subscribes": [],
       "views": [
         "OpportunityView"
       ],
@@ -330,6 +388,7 @@
     "burn": {
       "canonical_name": "Burn",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -348,10 +407,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the trainable tensor/model phenotype?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/burn/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -365,6 +427,7 @@
         "BonfyreDiscipl",
         "BonfyreFPQ"
       ],
+      "consumes": [],
       "domain": "Capability / Execution",
       "edge_types": [
         "binds_to",
@@ -392,10 +455,13 @@
         "Hop",
         "FormSelection"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Can this composed chain be bound to real binaries, gated by the frontier, and run?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/capability_closure.py"
       ],
+      "subscribes": [],
       "views": [
         "CapabilityView",
         "ExecutionView"
@@ -408,6 +474,7 @@
     "capability-genome": {
       "canonical_name": "CapabilityGenome",
       "commands": [],
+      "consumes": [],
       "domain": "Learning / Promotion",
       "edge_types": [
         "promotes_to"
@@ -428,8 +495,11 @@
         "LambdaTensor",
         "CandidatePrimitive"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What structural change to the graph does this pattern justify, and has it been proven?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
@@ -438,6 +508,7 @@
       "commands": [
         "BonfyreCapability"
       ],
+      "consumes": [],
       "domain": "Capability",
       "edge_types": [
         "classified_into",
@@ -459,6 +530,8 @@
         "Estate",
         "Law"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What does the system actually have, by estate and law, as real callable binaries?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/estate_catalog.py",
@@ -466,6 +539,7 @@
         "10-Code/BonfyreControlPlane/probe_native_capabilities.py",
         "10-Code/BonfyreControlPlane/probe_native_commands.py"
       ],
+      "subscribes": [],
       "views": [
         "CapabilityView"
       ],
@@ -476,6 +550,7 @@
     "claim-graph": {
       "canonical_name": "ClaimGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Evidence / Claims",
       "edge_types": [
         "depends_on"
@@ -494,10 +569,13 @@
         "Claim",
         "Counterclaim"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What does this claim depend on, assume, and what is its current vs historical proof state?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/evidence_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
@@ -506,6 +584,10 @@
     "collapse-front": {
       "canonical_name": "CollapseFront",
       "commands": [],
+      "consumes": [
+        "Actor",
+        "Relation"
+      ],
       "domain": "Opportunity / Provenance Structure",
       "edge_types": [
         "supported_by",
@@ -535,11 +617,18 @@
         "Ground",
         "Conclusion"
       ],
+      "owns": [
+        "SupportStructure"
+      ],
+      "publishes": [
+        "SupportStructure"
+      ],
       "semantic_question": "If this fact is withdrawn, which conclusions lose all support -- and which single facts is a given conclusion load-bearing on?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/support_lattice.py",
         "architecture/atlas_collapse.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_support_lattice.py",
@@ -551,6 +640,7 @@
       "commands": [
         "BonfyreDiscipl"
       ],
+      "consumes": [],
       "domain": "Capability / Computational Law",
       "edge_types": [
         "preserves_law"
@@ -574,16 +664,20 @@
         "Command",
         "Law"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What computational law does this command preserve, beneath its domain?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/command_laws.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "commitment-graph": {
       "canonical_name": "CommitmentGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Economic / Commitment",
       "edge_types": [
         "commits"
@@ -603,10 +697,13 @@
       "node_types": [
         "ResourceCommitment"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Who committed what resource to whom, under what conditions, until when?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/economic_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
@@ -615,6 +712,7 @@
     "cubecl": {
       "canonical_name": "CubeCL",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -633,10 +731,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/cubecl/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -647,6 +748,7 @@
     "daft": {
       "canonical_name": "Daft",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -665,10 +767,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "How are large mixed-data transformations run across these corpora?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/daft/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -681,6 +786,7 @@
       "commands": [
         "BonfyreDiscipl"
       ],
+      "consumes": [],
       "domain": "Capability / Composition",
       "edge_types": [
         "transforms",
@@ -700,11 +806,14 @@
         "ContractRow",
         "Family"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What typed chain of transforms bridges this source family to this destination family, and at what cost?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/capability_closure.py",
         "10-Code/BonfyreControlPlane/command_pipeline_seed.py"
       ],
+      "subscribes": [],
       "views": [
         "CapabilityView"
       ],
@@ -715,6 +824,7 @@
     "egglog": {
       "canonical_name": "egglog",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -733,10 +843,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What are the equivalent alternatives to this plan, rewrite, representation, or composition?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/egglog/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -748,6 +861,7 @@
     "evidence-binding": {
       "canonical_name": "EvidenceBindingGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Evidence",
       "edge_types": [
         "retrieves",
@@ -778,11 +892,14 @@
         "EvidenceBinding",
         "EvidenceBindingWitness"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Does this candidate artifact actually satisfy this evidence requirement?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/evidence_binding.py",
         "10-Code/BonfyreControlPlane/institution_loop.py"
       ],
+      "subscribes": [],
       "views": [
         "EvidenceView"
       ],
@@ -794,6 +911,10 @@
     "evidence-graph": {
       "canonical_name": "EvidenceGraph",
       "commands": [],
+      "consumes": [
+        "Occurrence",
+        "Artifact"
+      ],
       "domain": "Evidence / Claims",
       "edge_types": [
         "supports",
@@ -815,10 +936,17 @@
       "node_types": [
         "Claim"
       ],
+      "owns": [
+        "Evidence"
+      ],
+      "publishes": [
+        "Evidence"
+      ],
       "semantic_question": "Does this support, contradict, reproduce, or falsify that claim?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/evidence_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
@@ -828,6 +956,9 @@
       "canonical_name": "Feldera",
       "commands": [
         "BonfyreProof"
+      ],
+      "consumes": [
+        "ProofFrontier"
       ],
       "domain": "Reality Foundry",
       "edge_types": [],
@@ -853,6 +984,12 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [
+        "ReachableCapacity"
+      ],
+      "publishes": [
+        "ReachableCapacity"
+      ],
       "semantic_question": "What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/feldera/source",
@@ -861,6 +998,9 @@
         "10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs",
         "10-Code/BonfyreControlPlane/substrate_feldera.py",
         "10-Code/BonfyreControlPlane/reachability_bridge.py"
+      ],
+      "subscribes": [
+        "ProofFrontier"
       ],
       "views": [
         "SubstrateView"
@@ -878,6 +1018,7 @@
       "commands": [
         "BonfyreProject"
       ],
+      "consumes": [],
       "domain": "External",
       "edge_types": [
         "projects",
@@ -902,11 +1043,14 @@
         "ForeignTwin",
         "Projection"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the current cached projection of an externally-owned resource, and what rights do we hold over it?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/foreign.py",
         "10-Code/BonfyreControlPlane/fabric_publish.py"
       ],
+      "subscribes": [],
       "views": [
         "ExternalView",
         "ProviderResourceView"
@@ -919,6 +1063,7 @@
     "form-graph": {
       "canonical_name": "FormGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Forms",
       "edge_types": [
         "field_depends_on",
@@ -947,10 +1092,13 @@
         "FieldNode",
         "FieldDependency"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the structure of this human-boundary form, independent of any one submission?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/form_graph.py"
       ],
+      "subscribes": [],
       "views": [
         "FormsView"
       ],
@@ -961,6 +1109,11 @@
     "fortification-plan": {
       "canonical_name": "FortificationPlan",
       "commands": [],
+      "consumes": [
+        "SupportStructure",
+        "Actor",
+        "Corroboration"
+      ],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
         "prioritizes"
@@ -987,10 +1140,17 @@
       "node_types": [
         "Action"
       ],
+      "owns": [
+        "FortificationPlan"
+      ],
+      "publishes": [
+        "FortificationPlan"
+      ],
       "semantic_question": "Which single real-world action most increases robust reachable capacity right now?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/fortification.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_fortification.py"
@@ -1001,6 +1161,7 @@
       "commands": [
         "BonfyreFPQ"
       ],
+      "consumes": [],
       "domain": "Model Representation",
       "edge_types": [
         "scored_by",
@@ -1022,10 +1183,13 @@
         "FPQBlock",
         "ModeCandidate"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Which decomposition mode (FWHT / DIRECT / COORD) minimizes error-plus-cost for this block?",
       "source_paths": [
         "cmd/BonfyreFPQ/src/fpq_codec_v2.c"
       ],
+      "subscribes": [],
       "views": [
         "ModelView"
       ],
@@ -1038,6 +1202,7 @@
       "commands": [
         "BonfyreFPQ"
       ],
+      "consumes": [],
       "domain": "Model Representation",
       "edge_types": [
         "recursive_dependency",
@@ -1063,11 +1228,14 @@
         "SeedProgram",
         "Combinator"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What combinator program reproduces this weight block's angular structure?",
       "source_paths": [
         "cmd/BonfyreFPQ/src/seed.c",
         "cmd/BonfyreFPQ/src/seed_v1.c"
       ],
+      "subscribes": [],
       "views": [
         "ModelView"
       ],
@@ -1078,6 +1246,7 @@
       "commands": [
         "BonfyreFPQ"
       ],
+      "consumes": [],
       "domain": "Model Representation",
       "edge_types": [
         "decomposes_into",
@@ -1116,6 +1285,8 @@
         "ResidualField",
         "FPQRepresentation"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Can these weights be reconstructed within tolerance from a compact functional representation?",
       "source_paths": [
         "cmd/BonfyreFPQ/src/fpq_native.c",
@@ -1123,6 +1294,7 @@
         "10-Code/BonfyreControlPlane/fpq_evidence.py",
         "10-Code/BonfyreControlPlane/fpq_pack_evidence.py"
       ],
+      "subscribes": [],
       "views": [
         "ModelView"
       ],
@@ -1137,6 +1309,7 @@
     "gigatoken": {
       "canonical_name": "GigaToken",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1155,10 +1328,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "From the giant source, what purpose-specific mission context should be compiled?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/gigatoken/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -1171,6 +1347,7 @@
       "commands": [
         "BonfyreHash"
       ],
+      "consumes": [],
       "domain": "Identity",
       "edge_types": [
         "hashes_to",
@@ -1191,10 +1368,13 @@
       "node_types": [
         "ContentObject"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Are these byte/content objects identical?",
       "source_paths": [
         "cmd/BonfyreHash"
       ],
+      "subscribes": [],
       "views": [
         "IdentityView"
       ],
@@ -1203,6 +1383,7 @@
     "hvm4": {
       "canonical_name": "HVM4",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1224,10 +1405,13 @@
         "helix"
       ],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the bounded reduction of this selected symbolic or computational structure?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/substrate_hvm.py"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -1238,6 +1422,7 @@
     "hydro": {
       "canonical_name": "Hydro",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1256,10 +1441,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the distributed placement/dataflow phenotype for this work?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/hydro/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -1270,6 +1458,7 @@
     "institution-graph": {
       "canonical_name": "InstitutionGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Institutional / Structure",
       "edge_types": [
         "member_of"
@@ -1290,14 +1479,18 @@
         "Institution",
         "Unit"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is this institution's real structure -- units, roles, resources, authority domains, protocols?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "institutional-cost-graph": {
       "canonical_name": "InstitutionalCostGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Economic / Cost",
       "edge_types": [
         "allocates"
@@ -1315,10 +1508,13 @@
       "node_types": [
         "CostEnvelope"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What does this mission actually cost across compute, model, storage, provider, human, facility?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/economic_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
@@ -1329,6 +1525,7 @@
       "commands": [
         "BonfyreKVCache"
       ],
+      "consumes": [],
       "domain": "Model Execution",
       "edge_types": [
         "depends_on",
@@ -1350,10 +1547,13 @@
         "KVBlock",
         "RetentionClass"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Which KV-cache blocks stay resident, and why, across turns?",
       "source_paths": [
         "cmd/BonfyreKVCache"
       ],
+      "subscribes": [],
       "views": [
         "ModelView"
       ],
@@ -1362,6 +1562,7 @@
     "lance": {
       "canonical_name": "Lance",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1380,10 +1581,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/lance/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -1394,6 +1598,7 @@
     "model-representation-graph": {
       "canonical_name": "ModelRepresentationGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Model / Representation",
       "edge_types": [
         "represented_as"
@@ -1414,14 +1619,18 @@
       "node_types": [
         "ModelPassport"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What representation profile is this model in, and what invalidates it?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "model-topology-graph": {
       "canonical_name": "ModelTopologyGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Model / Topology",
       "edge_types": [
         "feeds"
@@ -1441,14 +1650,18 @@
       "node_types": [
         "Layer"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is this model's architecture, layers, and tensor namespace?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "money-graph": {
       "canonical_name": "MoneyGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Economic / Money",
       "edge_types": [
         "funds",
@@ -1469,10 +1682,13 @@
       "node_types": [
         "Party"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/economic_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
@@ -1481,6 +1697,9 @@
     "occurrence-spine": {
       "canonical_name": "OccurrenceSpine",
       "commands": [],
+      "consumes": [
+        "ExternalEvent"
+      ],
       "domain": "Execution / Causal Time",
       "edge_types": [
         "precedes"
@@ -1503,6 +1722,13 @@
         "Occurrence",
         "ExternalEvent"
       ],
+      "owns": [
+        "Occurrence"
+      ],
+      "publishes": [
+        "Occurrence",
+        "OccurrenceProjection"
+      ],
       "semantic_question": "What actually happened, when, as an ordered causal spine?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/external_events.py",
@@ -1511,6 +1737,7 @@
         "engine/core/src/occurrence.c",
         "engine/core/include/bf_occurrence.h"
       ],
+      "subscribes": [],
       "views": [
         "ExecutionView"
       ],
@@ -1523,6 +1750,7 @@
     "pattern-graph": {
       "canonical_name": "PatternGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Learning / Patterns",
       "edge_types": [
         "clusters_into"
@@ -1543,14 +1771,18 @@
         "ActionTrace",
         "PatternCluster"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What recurring pattern do these action traces and residuals cluster into?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "placement-graph": {
       "canonical_name": "PlacementGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Provider / Placement",
       "edge_types": [
         "placed_on"
@@ -1570,10 +1802,13 @@
       "node_types": [
         "PlacementNode"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Where does this run or reside, given locality and resource constraints?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/provider_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_provider_graphs.py"
@@ -1582,6 +1817,7 @@
     "prepared-execution-graph": {
       "canonical_name": "PreparedExecutionGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Model / Execution",
       "edge_types": [
         "prepares",
@@ -1603,8 +1839,11 @@
         "PreparedExecutionArtifact",
         "RuntimeLease"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Given this representation and hardware, what prepared executable artifact and lease exists?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
@@ -1612,6 +1851,10 @@
       "canonical_name": "ProofFrontierGraph",
       "commands": [
         "BonfyreProof"
+      ],
+      "consumes": [
+        "Evidence",
+        "WorkState"
       ],
       "domain": "Evidence / Anti-Amnesia",
       "edge_types": [
@@ -1645,12 +1888,19 @@
         "KnownNonCause",
         "FrontierLayer"
       ],
+      "owns": [
+        "ProofFrontier"
+      ],
+      "publishes": [
+        "ProofFrontier"
+      ],
       "semantic_question": "Given what is already settled, may this mutation touch this layer?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/proof_frontier.py",
         "10-Code/BonfyreControlPlane/seed_fpq_frontier.py",
         "schemas/control/proof-frontier.yaff"
       ],
+      "subscribes": [],
       "views": [
         "EvidenceView"
       ],
@@ -1662,6 +1912,7 @@
     "provenance-graph": {
       "canonical_name": "ProvenanceGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Evidence / Provenance",
       "edge_types": [
         "produced_by"
@@ -1681,10 +1932,13 @@
       "node_types": [
         "ProvenanceNode"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Through what source, observer, actor, runtime, model, provider, transport did this arrive?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/evidence_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
@@ -1693,6 +1947,7 @@
     "provider-graph": {
       "canonical_name": "ProviderGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Provider / Resolution",
       "edge_types": [
         "realizes",
@@ -1715,10 +1970,13 @@
         "CapabilityBid",
         "ProviderTournament"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Which providers can realize this capability, at what multidimensional metric?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/provider_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_provider_graphs.py"
@@ -1727,6 +1985,9 @@
     "provider-state": {
       "canonical_name": "ProviderStateFold",
       "commands": [],
+      "consumes": [
+        "ResourcePressure"
+      ],
       "domain": "Provider / Resource",
       "edge_types": [
         "folds_into"
@@ -1746,11 +2007,19 @@
         "Provider",
         "ProviderEvent"
       ],
+      "owns": [
+        "ProviderState"
+      ],
+      "publishes": [
+        "ProviderState",
+        "EligibleProviders"
+      ],
       "semantic_question": "What is a provider's current admissible state, folded from its event history?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/provider_state.py",
         "engine/core/src/control_provider.c"
       ],
+      "subscribes": [],
       "views": [
         "ProviderResourceView"
       ],
@@ -1761,6 +2030,7 @@
     "recursive-value-graph": {
       "canonical_name": "RecursiveValueGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Economic / Value",
       "edge_types": [
         "unlocks_value"
@@ -1780,10 +2050,13 @@
       "node_types": [
         "ValueEdge"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/economic_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_economic_graphs.py"
@@ -1792,6 +2065,7 @@
     "relationship-graph": {
       "canonical_name": "RelationshipGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Institutional / Relationship",
       "edge_types": [
         "advances_to"
@@ -1819,10 +2093,13 @@
         "Relationship",
         "RelationshipTransition"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Where along the discovery-to-adoption trajectory is this real relationship?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/relationship.py"
       ],
+      "subscribes": [],
       "views": [
         "InstitutionalView"
       ],
@@ -1833,6 +2110,10 @@
     "resource-activation": {
       "canonical_name": "ResourceActivationGraph",
       "commands": [],
+      "consumes": [
+        "Authority",
+        "ProviderState"
+      ],
       "domain": "Opportunity / Resource",
       "edge_types": [
         "qualifies",
@@ -1861,10 +2142,17 @@
         "ResourceCandidate",
         "ActivationMechanism"
       ],
+      "owns": [
+        "ResourceActivation"
+      ],
+      "publishes": [
+        "ResourceActivation"
+      ],
       "semantic_question": "How does a currently-unavailable resource become reachable and usable?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/resource_activation.py"
       ],
+      "subscribes": [],
       "views": [
         "OpportunityView",
         "ProviderResourceView"
@@ -1876,6 +2164,9 @@
     "resource-admission": {
       "canonical_name": "ResourceAdmissionGraph",
       "commands": [],
+      "consumes": [
+        "WorkState"
+      ],
       "domain": "Provider / Resource",
       "edge_types": [
         "admits",
@@ -1900,6 +2191,12 @@
         "AdmissionRequest",
         "ResourceClass"
       ],
+      "owns": [
+        "ResourceGrant"
+      ],
+      "publishes": [
+        "ResourcePressure"
+      ],
       "semantic_question": "May this work be admitted, given resource and provider constraints right now?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/resource_admission.py",
@@ -1907,6 +2204,7 @@
         "engine/core/src/admission.c",
         "engine/core/include/bf_admission.h"
       ],
+      "subscribes": [],
       "views": [
         "ProviderResourceView"
       ],
@@ -1918,6 +2216,7 @@
     "restate": {
       "canonical_name": "Restate",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -1936,10 +2235,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "How does the trial durably wait hours or days on external reality?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/restate/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -1950,6 +2252,7 @@
     "result-receipt-bundle": {
       "canonical_name": "ResultReceiptBundleGraph",
       "commands": [],
+      "consumes": [],
       "domain": "External / Attestation",
       "edge_types": [
         "attests",
@@ -1975,10 +2278,13 @@
         "GateResult",
         "ChainLink"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Does this worker submission's portable bundle verify offline, byte for byte?",
       "source_paths": [
         "external:sipyourdrink-ltd/bernstein/src/bernstein/core/security/result_receipt_bundle.py"
       ],
+      "subscribes": [],
       "views": [
         "ExternalView"
       ],
@@ -1989,6 +2295,7 @@
     "route-ranker": {
       "canonical_name": "RouteRanker",
       "commands": [],
+      "consumes": [],
       "domain": "Forwarding / Learned Optimization",
       "edge_types": [
         "ranks"
@@ -2015,10 +2322,13 @@
         "TernaryRanker",
         "RouteRecord"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Of the eligible survivors, which few are most likely to succeed?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/route_ranker.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_route_ranker.py"
@@ -2027,6 +2337,7 @@
     "runtime-parity-graph": {
       "canonical_name": "RuntimeParityGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Provider / Parity",
       "edge_types": [
         "parity_with"
@@ -2046,10 +2357,13 @@
       "node_types": [
         "Carrier"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Do direct, MCP, and HTTP carriers produce the same semantic result?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/provider_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_provider_graphs.py"
@@ -2058,6 +2372,7 @@
     "serm": {
       "canonical_name": "SERMReductionGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Evidence / Measurement",
       "edge_types": [
         "reduces",
@@ -2087,10 +2402,13 @@
         "SufficiencyAudit",
         "ProviderHonestyAudit"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/serm.py"
       ],
+      "subscribes": [],
       "views": [
         "EvidenceView"
       ],
@@ -2103,6 +2421,7 @@
       "commands": [
         "BonfyreAPI"
       ],
+      "consumes": [],
       "domain": "External / Service",
       "edge_types": [
         "provisions",
@@ -2124,10 +2443,13 @@
         "ServiceProfile",
         "ServiceInstance"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Where is a provisionable service in its lifecycle, and what may we do with it now?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/service_lifecycle.py"
       ],
+      "subscribes": [],
       "views": [
         "ExternalView",
         "ProviderResourceView"
@@ -2139,6 +2461,7 @@
     "shadow-institution": {
       "canonical_name": "ShadowInstitutionGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Institutional / Epistemic",
       "edge_types": [
         "observed_from",
@@ -2166,10 +2489,13 @@
         "ObservedHierarchy",
         "PublicAttachment"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What do we know about an institution before any relationship or authority is established?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/shadow_institution.py"
       ],
+      "subscribes": [],
       "views": [
         "InstitutionalView"
       ],
@@ -2182,6 +2508,7 @@
       "commands": [
         "BonfyreSLI"
       ],
+      "consumes": [],
       "domain": "Model Execution",
       "edge_types": [
         "prepares",
@@ -2205,8 +2532,11 @@
         "DivergenceMeasurement",
         "SLIExecutionWitness"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Does structured-layer inference over the representation match the reference within divergence bounds?",
       "source_paths": [],
+      "subscribes": [],
       "views": [
         "ModelView"
       ],
@@ -2215,6 +2545,7 @@
     "social-presence-graph": {
       "canonical_name": "SocialPresenceGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Institutional / Presence",
       "edge_types": [
         "present_on"
@@ -2234,14 +2565,18 @@
       "node_types": [
         "PresenceSession"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Who is present, on what surface, with what disclosure state, availability, and attention?",
       "source_paths": [],
+      "subscribes": [],
       "views": [],
       "witnesses": []
     },
     "temporal-evidence-graph": {
       "canonical_name": "TemporalEvidenceGraph",
       "commands": [],
+      "consumes": [],
       "domain": "Evidence / Time",
       "edge_types": [
         "supersedes"
@@ -2262,10 +2597,13 @@
       "node_types": [
         "TimedFact"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/evidence_graphs.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py"
@@ -2274,6 +2612,7 @@
     "tract": {
       "canonical_name": "Tract",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -2292,10 +2631,13 @@
       "maturity": "measured",
       "native_formats": [],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the lightweight local model execution phenotype?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/tract/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -2308,6 +2650,7 @@
       "commands": [
         "BonfyreProject"
       ],
+      "consumes": [],
       "domain": "Execution / Transport",
       "edge_types": [
         "carries"
@@ -2330,10 +2673,13 @@
         "Transport",
         "Hop"
       ],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "By which carrier does a hop run, and what does each carrier add?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/transport.py"
       ],
+      "subscribes": [],
       "views": [
         "ExecutionView"
       ],
@@ -2344,6 +2690,12 @@
     "unlock-graph": {
       "canonical_name": "UnlockGraph",
       "commands": [],
+      "consumes": [
+        "ProofFrontier",
+        "Actor",
+        "ReachableCapacity",
+        "ResourceActivation"
+      ],
       "domain": "Opportunity / Institutional Capacity",
       "edge_types": [
         "unlocks",
@@ -2374,6 +2726,12 @@
         "Unlock",
         "Opportunity"
       ],
+      "owns": [
+        "OpportunityEligibility"
+      ],
+      "publishes": [
+        "OpportunityEligibility"
+      ],
       "semantic_question": "What reachable action would unlock institutional capacity that is currently out of reach?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/opportunity.py",
@@ -2381,6 +2739,7 @@
         "10-Code/BonfyreControlPlane/reachability_watch.py",
         "10-Code/BonfyreControlPlane/reachability_bridge.py"
       ],
+      "subscribes": [],
       "views": [
         "OpportunityView"
       ],
@@ -2393,6 +2752,10 @@
     "verification-ledger": {
       "canonical_name": "VerificationLedger",
       "commands": [],
+      "consumes": [
+        "Actor",
+        "FortificationPlan"
+      ],
       "domain": "Identity / Institutional Capacity",
       "edge_types": [
         "corroborates"
@@ -2417,10 +2780,18 @@
       "node_types": [
         "Corroboration"
       ],
+      "owns": [
+        "Corroboration"
+      ],
+      "publishes": [
+        "Corroboration",
+        "Actor"
+      ],
       "semantic_question": "Is this actor independently corroborated enough to promote asserted -> verified?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/verification.py"
       ],
+      "subscribes": [],
       "views": [],
       "witnesses": [
         "10-Code/BonfyreControlPlane/tests/test_verification.py"
@@ -2429,6 +2800,7 @@
     "verus": {
       "canonical_name": "Verus",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -2449,10 +2821,13 @@
         "crux"
       ],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "Which invariants are worth proving, and does the proof hold within bounds?",
       "source_paths": [
         "~/.bonfyre/substrates/v6.1/verus/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],
@@ -2464,6 +2839,10 @@
       "canonical_name": "WorkGraph",
       "commands": [
         "BonfyreQueue"
+      ],
+      "consumes": [
+        "Occurrence",
+        "ResourceActivation"
       ],
       "domain": "Execution",
       "edge_types": [
@@ -2488,12 +2867,19 @@
         "WorkItem",
         "Mission"
       ],
+      "owns": [
+        "WorkState"
+      ],
+      "publishes": [
+        "WorkState"
+      ],
       "semantic_question": "What durable work exists, with what dependencies and lifecycle?",
       "source_paths": [
         "10-Code/BonfyreControlPlane/work_graph.py",
         "engine/core/src/workgraph.c",
         "engine/core/include/bf_workgraph.h"
       ],
+      "subscribes": [],
       "views": [
         "ExecutionView"
       ],
@@ -2505,6 +2891,7 @@
     "yaff": {
       "canonical_name": "YaFF",
       "commands": [],
+      "consumes": [],
       "domain": "Reality Foundry",
       "edge_types": [],
       "family": "substrate",
@@ -2525,12 +2912,15 @@
         "yaff"
       ],
       "node_types": [],
+      "owns": [],
+      "publishes": [],
       "semantic_question": "What is the semantic contract for a trial's artifacts, effects, and expected witnesses?",
       "source_paths": [
         "architecture/atlas.py",
         "10-Code/BonfyreControlPlane/substrate_evidence.py",
         "~/.bonfyre/substrates/v6.1/yaff/source"
       ],
+      "subscribes": [],
       "views": [
         "SubstrateView"
       ],

@@ -1,6 +1,10 @@
 atlas evidence
 
 architecture proof-frontier
+  owns ProofFrontier
+  consumes Evidence
+  consumes WorkState
+  publishes ProofFrontier
   canonical_name ProofFrontierGraph
   family evidence
   domain Evidence / Anti-Amnesia

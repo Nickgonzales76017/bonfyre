@@ -6,6 +6,8 @@ atlas evidence
 
 architecture artifact-graph
   canonical_name ArtifactGraph
+  owns Artifact
+  publishes Artifact
   family evidence
   domain Evidence / Artifacts
   layer evidence
@@ -38,6 +40,10 @@ architecture provenance-graph
   known_gap ResultReceiptBundle chain is a partial real shape
 
 architecture evidence-graph
+  owns Evidence
+  consumes Occurrence
+  consumes Artifact
+  publishes Evidence
   canonical_name EvidenceGraph
   family evidence
   domain Evidence / Claims

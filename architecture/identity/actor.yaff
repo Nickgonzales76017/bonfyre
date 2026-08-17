@@ -2,6 +2,12 @@ atlas identity
 
 architecture actor-graph
   canonical_name ActorGraph
+  owns Actor
+  owns Relation
+  consumes Corroboration
+  consumes Occurrence
+  publishes Actor
+  publishes Relation
   family identity
   domain Identity / Institutional Capacity
   layer identity
@@ -38,6 +44,11 @@ architecture actor-graph
 
 architecture verification-ledger
   canonical_name VerificationLedger
+  owns Corroboration
+  consumes Actor
+  consumes FortificationPlan
+  publishes Corroboration
+  publishes Actor
   family identity
   domain Identity / Institutional Capacity
   layer identity

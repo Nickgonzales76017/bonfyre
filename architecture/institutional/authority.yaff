@@ -4,6 +4,9 @@ atlas institutional
 # than pretending they exist. They are the next mining targets, not claims.
 
 architecture authority-graph
+  owns Authority
+  consumes Actor
+  publishes Authority
   canonical_name AuthorityGraph
   family institutional
   domain Institutional / Authority

@@ -1,6 +1,11 @@
 atlas forwarding
 
 architecture address-plane
+  consumes EligibleProviders
+  consumes ReachableCapacity
+  consumes Authority
+  consumes ProviderState
+  publishes RouteAdvertisement
   canonical_name AddressPlane
   family forwarding
   domain Forwarding / Eligibility
