@@ -79,12 +79,18 @@ def tick(control_db: str = CONTROL_DB) -> dict:
     except Exception as e:  # noqa: BLE001
         report["verify_targets"] = f"skip: {e}"
 
-    # 4. materialize the virtual query directories + fact projections
+    # 4. materialize the virtual query directories + fact projections, and
+    #    register them into the live fabric so BonfyreFS serves them (best-effort:
+    #    fails fast if the daemon holds the db for writes).
     try:
         import fabric_queries as fq
         import fabric_facts as ff
         report["queries"] = fq.publish(control_db)["sets"]
         report["facts"] = ff.publish(control_db)["facts"]
+        rq = fq.register_in_fabric(control_db, timeout_ms=4000)
+        rf = ff.register_in_fabric(control_db, timeout_ms=4000)
+        report["fabric_registered"] = len(rq["published"]) + len(rf["published"])
+        report["fabric_skipped"] = len(rq["skipped_fabric_busy"]) + len(rf["skipped_fabric_busy"])
     except Exception as e:  # noqa: BLE001
         report["queries"] = f"skip: {e}"
 
