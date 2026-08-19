@@ -1,5 +1,5 @@
-<p align="center">
-  <h1 align="center"><img width="105" height="108" alt="image" src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05" />
+<p align="center"><img width="105" height="108" alt="image" src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05" />
+  <h1 align="center">
  Bonfyre</h1>
   <p align="center">
     <strong>48 static C binaries. Pure C11. A complete backend platform.</strong>
