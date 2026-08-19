@@ -574,7 +574,7 @@ When adding a new native capability, prefer sharing existing runtime/compiler ma
 ## License
 
 Bonfÿre is source-available under the
-**PolyForm Shield License 1.0.0**.
+**Bonfÿre Shield License 1.0.0**.
 
 You may inspect, use, modify, and distribute the source subject to the
 license terms. The public license does not permit using Bonfÿre to provide
