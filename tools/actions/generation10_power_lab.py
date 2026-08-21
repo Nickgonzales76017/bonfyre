@@ -9,7 +9,8 @@ public Power estate.
 A Power's Makefile owns its command-specific CFLAGS. Hosted-runner portability
 must be additive and must never erase those private include paths, defines, or
 compile contracts. The swarm therefore removes workflow CFLAGS/OPTFLAGS for
-individual Powers and injects hosted-Linux feature visibility through CC.
+individual Powers and injects hosted-Linux feature visibility through a make
+command-line CC override, which works for both `CC = cc` and `CC ?= cc` estates.
 """
 from __future__ import annotations
 
@@ -113,10 +114,9 @@ def make_env(*, foundation_flags: str | None) -> dict[str, str]:
         # already defined and would lose the Power's own -I/-D contract.
         env.pop("CFLAGS", None)
         env.pop("OPTFLAGS", None)
-        # Hosted Linux feature-test visibility is additive through CC instead:
-        # command-local CFLAGS, LOCAL_CFLAGS, OPTFLAGS, include paths and
-        # linker contracts remain owned by the Power Makefile.
-        env["CC"] = additive_cc(env.get("CC", "cc"))
+        # Do not rely on an environment CC override: older Powers use `CC = cc`,
+        # which outranks the environment. run_make passes CC on make's command
+        # line so both `CC =` and `CC ?=` retain additive feature visibility.
     else:
         env["CFLAGS"] = foundation_flags
         env["OPTFLAGS"] = foundation_flags
@@ -126,9 +126,12 @@ def make_env(*, foundation_flags: str | None) -> dict[str, str]:
 def run_make(directory: Path, timeout: int, *, foundation_flags: str | None) -> dict[str, Any]:
     started = time.monotonic()
     env = make_env(foundation_flags=foundation_flags)
+    command = ["make", "-C", str(directory), "-j2"]
+    if foundation_flags is None:
+        command.append(f"CC={additive_cc(env.get('CC', 'cc'))}")
     try:
         proc = subprocess.run(
-            ["make", "-C", str(directory), "-j2"],
+            command,
             cwd=ROOT,
             text=True,
             capture_output=True,
@@ -167,7 +170,7 @@ def build_power(name: str, timeout: int) -> dict[str, Any]:
     directory = ROOT / "cmd" / name
     result = run_make(directory, timeout, foundation_flags=None)
     result["command"] = name
-    result["build_contract"] = "command_makefile_owned_with_additive_host_feature_visibility"
+    result["build_contract"] = "command_makefile_owned_with_additive_make_cli_cc"
     result["host_feature_flags"] = list(POWER_PORTABILITY_FLAGS)
     result["built_executables"] = sorted(
         p.name
@@ -260,12 +263,12 @@ def main() -> int:
         "inventory_observation": manifest_observation(command_dirs()),
         "commands_assigned": assigned,
         "core_foundation": foundation,
-        "power_build_contract": "preserve each command Makefile's CFLAGS/OPTFLAGS; inject hosted GNU/default feature visibility additively through CC only",
+        "power_build_contract": "preserve each command Makefile's CFLAGS/OPTFLAGS; inject hosted GNU/default feature visibility through make command-line CC only",
         "host_portability_penetration": {
-            "channel": "CC",
+            "channel": "make_command_line_CC",
             "flags": list(POWER_PORTABILITY_FLAGS),
             "status": "diagnostic_penetration",
-            "purpose": "remove strict-C hosted-Linux feature visibility noise without replacing command-owned build contracts",
+            "purpose": "remove strict-C hosted-Linux feature visibility noise without replacing command-owned build contracts, including Makefiles with hard-coded CC assignments",
         },
         "physical_fabric_split": {
             "libquic_transport": "separate Generation-10 physical-fabric lane",
