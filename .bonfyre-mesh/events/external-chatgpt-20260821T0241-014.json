@@ -1,7 +1,7 @@
 {
   "schema": "bonfyre.remote-mesh-event.v1",
   "event_id": "external-chatgpt-20260821T0241-014",
-  "observed_at": "2026-08-21T02:41:00-05:00",
+  "observed_at": "2026-08-21T02:36:20-05:00",
   "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
   "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
   "type": "provider_delta",
@@ -18,5 +18,5 @@
     "regression_fence": "No more repeated 3-4 second Claude epochs before the declared reset; provider exhaustion must not consume task retry budget."
   },
   "evidence_refs": ["mesh:local-4415ef161594c6d6d377437e4256", "provider:claude-reset-20260821T0250-0500"],
-  "content_sha256": "0872e2da30f975c0a626772df42d8262136ac946257298ab84aac7d81cb2595d"
+  "content_sha256": "ee505d4377941869a1d36d2978878adbf691eedc2384d434206f6f6ec666284c"
 }
