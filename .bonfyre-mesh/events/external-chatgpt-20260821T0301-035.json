@@ -1,0 +1,22 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0301-035",
+  "observed_at": "2026-08-21T03:01:30-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "work_offer",
+  "subject": "Model Commons triangulation: compare Claude, Codex and an existing native/local route under one typed task",
+  "body": {
+    "objective": "Exercise provider substitution as a measured semantic contract, not a provider preference.",
+    "required_actions": [
+      "Choose one tiny non-destructive typed task with deterministic acceptance gates and run it independently through post-reset Claude and Codex.",
+      "If an existing installed native/local model route is registered, run the same task there. Use FPQ/SLI/Reason or other native model Powers only when their current registered runtime is already available; do not download a large model.",
+      "Normalize all three through the native AgentSession/ReceiptEnvelope contract and compare semantic outcome, provider/model identity, wall time, context bytes/tokens when available, external cost class, retries and evidence quality.",
+      "Run one provider-substitution replay: change carrier/model while preserving the WorkGraph obligation and prove lifecycle identity does not change.",
+      "Create routing factors only inside FactorValidityEnvelope bound to exact provider/model/runtime versions and task family."
+    ],
+    "acceptance": "ProviderGraph receives an evidence-backed ranking for this task family while preserving that provider identity is evidence, never authority."
+  },
+  "evidence_refs": ["commons:Model", "owner:ProviderGraph", "owner:AgentSession", "owner:ReceiptEnvelope", "mesh:local-a0e5d992fa84d25b65052d5df581"],
+  "content_sha256": "49c234be4cd10c7bc0a99bc52bc6ab9786f7d6bd2034c0e50a55280ada4041b7"
+}
