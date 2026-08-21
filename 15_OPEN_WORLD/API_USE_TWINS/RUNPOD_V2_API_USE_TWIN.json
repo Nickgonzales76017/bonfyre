@@ -1,0 +1,140 @@
+{
+  "schema": "bonfyre.api-use-twin.v1",
+  "provider": "Runpod",
+  "surface": "REST API v2 + official MCP projection",
+  "base_url": "https://api.runpod.io/v2",
+  "openapi_path": "/openapi.json",
+  "authority": {
+    "semantic_owner": "Bonfyre ProviderGraph/APIUseTwin",
+    "foreign_execution_owner": "Runpod",
+    "agent_projection": "official Runpod MCP server",
+    "rule": "MCP/API tools expose foreign capabilities; they never become Bonfyre semantic owners. All writes/destructive calls remain EffectKernel authority decisions."
+  },
+  "resource_families": [
+    {
+      "family": "pods",
+      "capabilities": ["list", "get", "create", "update", "start", "stop", "delete"],
+      "effect_classes": {
+        "list": "read",
+        "get": "read",
+        "create": "resource_create",
+        "update": "resource_mutation",
+        "start": "resource_mutation",
+        "stop": "resource_mutation",
+        "delete": "destructive"
+      }
+    },
+    {
+      "family": "serverless_endpoints",
+      "capabilities": ["list", "get", "create", "update", "delete", "health"],
+      "effect_classes": {
+        "list": "read",
+        "get": "read",
+        "health": "observe",
+        "create": "resource_create",
+        "update": "resource_mutation",
+        "delete": "destructive"
+      }
+    },
+    {
+      "family": "endpoint_jobs",
+      "capabilities": ["run", "runsync", "status", "stream", "cancel", "retry", "purge_queue"],
+      "effect_classes": {
+        "status": "read",
+        "stream": "observe",
+        "run": "compute_spend",
+        "runsync": "compute_spend",
+        "cancel": "resource_mutation",
+        "retry": "compute_spend",
+        "purge_queue": "destructive"
+      }
+    },
+    {
+      "family": "templates",
+      "capabilities": ["list", "get", "create", "update", "delete"],
+      "effect_classes": {
+        "list": "read",
+        "get": "read",
+        "create": "resource_create",
+        "update": "resource_mutation",
+        "delete": "destructive"
+      }
+    },
+    {
+      "family": "network_volumes",
+      "capabilities": ["list", "get", "create", "update", "delete"],
+      "effect_classes": {
+        "list": "read",
+        "get": "read",
+        "create": "resource_create",
+        "update": "resource_mutation",
+        "delete": "destructive"
+      }
+    },
+    {
+      "family": "registry_credentials",
+      "capabilities": ["list", "get", "create", "update", "delete"],
+      "sensitivity": "credential_boundary",
+      "rule": "Never persist credential values into WorkGraph, receipts, prompts, traces, Blogger, or Partner Commons. Persist only foreign object identifiers, scope, status, and evidence digests."
+    },
+    {
+      "family": "catalog_capacity",
+      "capabilities": ["gpu_types", "cpu_types", "datacenters", "availability"],
+      "effect_classes": {
+        "gpu_types": "read",
+        "cpu_types": "read",
+        "datacenters": "read",
+        "availability": "observe"
+      },
+      "bonfyre_projection": "ResourceWeather"
+    },
+    {
+      "family": "billing_usage",
+      "capabilities": ["usage", "spend_history"],
+      "effect_classes": {
+        "usage": "read",
+        "spend_history": "read"
+      },
+      "bonfyre_projection": "MoneyGraph"
+    }
+  ],
+  "routing_policy": {
+    "read_only": "May be auto-admitted when ToolClosure and provider scope allow it.",
+    "resource_create": "Requires EffectKernel resource/spend admission.",
+    "compute_spend": "Requires MoneyGraph budget admission before foreign execution.",
+    "resource_mutation": "Requires current foreign-object state and idempotency/compensation plan where available.",
+    "destructive": "Requires explicit destructive authority; MCP annotation is a hint, not authority proof."
+  },
+  "freshness": {
+    "v2_state": "GA_BY_DIRECT_PROVIDER_NOTICE_2026-08-19",
+    "older_public_blog_state": "PUBLIC_BETA_2026-07-29",
+    "factor_validity_triggers": [
+      "OpenAPI digest changes",
+      "provider retirement/sunset header changes",
+      "price or quota changes",
+      "MCP tool-set changes",
+      "credential scope changes",
+      "resource-family schema changes"
+    ]
+  },
+  "migration": {
+    "from": ["REST v1", "GraphQL"],
+    "v1_rate_limit_staging": "2026-09-17",
+    "v1_operational_retirement_bound": "2026-11-15",
+    "v1_provider_subject_conflict": "Direct provider message subject says December 1 while message body says November 15; use November 15 operationally until resolved.",
+    "graphql_retirement": "early 2027",
+    "required_checks": [
+      "Inventory every v1/GraphQL route used by source, scripts, CI, MCP adapters, generated clients, and persisted task templates.",
+      "Resolve each route to a v2 resource family or mark it unsupported.",
+      "Regenerate/validate typed clients from a pinned OpenAPI digest.",
+      "Replay representative read/write/destructive requests in a bounded test account before promotion.",
+      "Capture typed 422 validation failures as contract evidence, not generic provider failures.",
+      "Invalidate old provider factors after migration because route shape, validation, resource visibility, and availability semantics changed."
+    ]
+  },
+  "public_evidence": [
+    "https://www.runpod.io/blog/runpods-rest-api-v2-is-here-one-api-for-your-entire-gpu-stack",
+    "https://www.runpod.io/blog/manage-your-runpod-infrastructure-from-any-ai-assistant-introducing-the-runpod-mcp-server",
+    "https://graphql-spec.runpod.io/"
+  ]
+}

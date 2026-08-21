@@ -1,0 +1,145 @@
+{
+  "schema": "bonfyre.foreign-twin-mapping.v1",
+  "foreign_system": {
+    "name": "Agent Trace",
+    "owner": "Cursor",
+    "version": "0.1.0",
+    "status": "RFC",
+    "mime_type": "application/vnd.agent-trace.record+json",
+    "source": "https://github.com/cursor/agent-trace"
+  },
+  "bonfyre_owners": [
+    "FormatCommons",
+    "ForeignTwin",
+    "AgentSession",
+    "ArtifactLineage",
+    "EvidenceGraph"
+  ],
+  "purpose": "Import/export AI-code attribution without upgrading attribution into unsupported execution, safety, authority, or quality claims.",
+  "field_projection": [
+    {
+      "foreign": "version",
+      "bonfyre": "ForeignTwin.schema_version",
+      "mode": "exact"
+    },
+    {
+      "foreign": "id",
+      "bonfyre": "ForeignOccurrence.foreign_id",
+      "mode": "preserve",
+      "note": "Foreign UUID is an external identifier, not Bonfyre content identity."
+    },
+    {
+      "foreign": "timestamp",
+      "bonfyre": "ForeignOccurrence.observed_time",
+      "mode": "preserve_rfc3339"
+    },
+    {
+      "foreign": "vcs.type + vcs.revision",
+      "bonfyre": "ArtifactLineage.source_revision",
+      "mode": "typed"
+    },
+    {
+      "foreign": "tool.name + tool.version",
+      "bonfyre": "AgentProfile.foreign_carrier",
+      "mode": "typed"
+    },
+    {
+      "foreign": "files[].path",
+      "bonfyre": "ArtifactRef.path_at_revision",
+      "mode": "revision_scoped"
+    },
+    {
+      "foreign": "files[].conversations[].url",
+      "bonfyre": "ForeignEvidenceRef.conversation_uri",
+      "mode": "reference_only",
+      "privacy": "Do not dereference into prompts/tool output automatically."
+    },
+    {
+      "foreign": "contributor.type",
+      "bonfyre": "ContributionAttribution.actor_class",
+      "mode": "enum_map",
+      "map": {
+        "human": "human",
+        "ai": "agent",
+        "mixed": "mixed",
+        "unknown": "unknown"
+      }
+    },
+    {
+      "foreign": "contributor.model_id",
+      "bonfyre": "ModelRef.foreign_model_id",
+      "mode": "preserve",
+      "note": "Provider/model identifier is attribution evidence; it is not proof the named provider served a particular turn."
+    },
+    {
+      "foreign": "ranges[].start_line/end_line",
+      "bonfyre": "ArtifactContribution.range",
+      "mode": "revision_relative"
+    },
+    {
+      "foreign": "ranges[].content_hash",
+      "bonfyre": "ForeignDigestRef",
+      "mode": "algorithm_labeled",
+      "note": "Never treat a Murmur3 attribution hash as a Bonfyre BLAKE3/SHA-256 security identity."
+    },
+    {
+      "foreign": "metadata",
+      "bonfyre": "ForeignTwin.extension_metadata",
+      "mode": "opaque_by_default",
+      "privacy": "Vendor metadata must pass redaction/authority policy before EvidenceGraph promotion."
+    }
+  ],
+  "claim_boundary": {
+    "supported_by_agent_trace": [
+      "which code ranges are attributed to human/AI/mixed/unknown contributors",
+      "which tool/model identifier was recorded for that contribution",
+      "which VCS revision and conversation reference the attribution belongs to",
+      "optional position-independent content hash supplied by the foreign trace"
+    ],
+    "not_supported_without_additional_bonfyre_evidence": [
+      "task success",
+      "semantic correctness",
+      "effect safety",
+      "authority compliance",
+      "provider fidelity",
+      "tool capability availability",
+      "context-management behavior",
+      "evidence sufficiency",
+      "cost correctness",
+      "replay success",
+      "quality assessment",
+      "legal ownership or copyright",
+      "training-data provenance"
+    ]
+  },
+  "import_rules": [
+    "Validate the foreign 0.1.0 schema before projection.",
+    "Bind all file/range attribution to the declared VCS revision; current working-tree line numbers are not equivalent.",
+    "Preserve foreign IDs and hashes with algorithm/type labels instead of recasting them as Bonfyre identities.",
+    "Conversation URLs remain references unless an authorized retrieval creates a separate evidence occurrence.",
+    "Do not infer provider fidelity from contributor.model_id; a model label is attribution metadata, not a provider receipt.",
+    "Do not infer an AgentSession merely because multiple ranges share one conversation URL; session continuity requires its own evidence."
+  ],
+  "export_rules": [
+    "Export only attribution claims that can be supported at the requested VCS revision.",
+    "If Bonfyre has richer authority/effect/receipt evidence, keep it in a namespaced extension or linked evidence object; do not overload Agent Trace core fields.",
+    "Never export secrets, prompt bodies, tool outputs, private local paths, or authority grants through vendor metadata by default.",
+    "When a Bonfyre artifact has mixed human/agent lineage, preserve mixed attribution rather than selecting one actor for convenience."
+  ],
+  "composition": {
+    "agent_trace_plus_bonfyre_receipt": "Attribution says who/what produced a code range; ReceiptEnvelope says what governed execution/evidence was observed. They may reference the same ArtifactRef but remain separate claims.",
+    "agent_trace_plus_trace_divergence": "Attribution is a projection input for comparing two generated code lineages; it does not determine divergence severity.",
+    "agent_trace_plus_aurekai": "Aurekai may learn correlations between carrier/model attribution and verified outcomes only after joining through explicit evidence keys, never by treating attribution metadata as an outcome."
+  },
+  "freshness": {
+    "observed_version": "0.1.0",
+    "observed_status": "RFC",
+    "factor_validity_triggers": [
+      "major/minor schema version change",
+      "content-hash algorithm semantics change",
+      "VCS/rebase semantics change",
+      "conversation identity semantics change",
+      "new standardized fields that overlap Bonfyre authority/evidence claims"
+    ]
+  }
+}

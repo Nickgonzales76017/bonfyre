@@ -1,0 +1,86 @@
+{
+  "schema": "bonfyre.external-provider-observation.v1",
+  "observed_at": "2026-08-20T21:44:00-05:00",
+  "authority_note": "Public/provider-announcement observations only. No credentials, account identifiers, private partner correspondence, or secret material are stored here.",
+  "semantic_owners": [
+    "ProviderGraph",
+    "ResourceGraph",
+    "ServiceLifecycle",
+    "APIUseTwin",
+    "FactorValidityEnvelope",
+    "TraceDivergence",
+    "EvidenceGraph"
+  ],
+  "observations": [
+    {
+      "provider": "Runpod",
+      "surface": "REST API",
+      "current_state": "MIGRATE_TO_V2",
+      "v2": {
+        "provider_direct_state": "GA",
+        "provider_direct_observed_at": "2026-08-19T00:39:18-04:00",
+        "older_public_state": "public beta",
+        "older_public_state_date": "2026-07-29",
+        "base_url": "https://api.runpod.io/v2",
+        "openapi": "https://api.runpod.io/v2/openapi.json",
+        "agent_surface": "official MCP server"
+      },
+      "v1": {
+        "rate_limit_staging_begins": "2026-09-17",
+        "body_retirement_claim": "2026-11-15",
+        "body_terminal_behavior": "410 Gone",
+        "subject_retirement_claim": "2026-12-01",
+        "date_confidence": "CONTESTED_WITHIN_PROVIDER_MESSAGE",
+        "operational_deadline": "2026-11-15",
+        "deadline_rule": "Use the earlier explicit body deadline until a newer authoritative provider source resolves the subject/body contradiction."
+      },
+      "graphql": {
+        "retirement_window": "early 2027",
+        "terminal_behavior": "410 Gone",
+        "sunset_header_active": true
+      },
+      "bonfyre_actions": [
+        "Promote REST v2 as the primary Runpod APIUseTwin.",
+        "Invalidate v1 request/response assumptions and generated clients under FactorValidityEnvelope.",
+        "Treat September 17 rate limits as ResourceWeather degradation before retirement.",
+        "Compile typed clients/tool closure from the v2 OpenAPI description rather than preserving hand-written v1 calls.",
+        "Use MCP as an agent-facing projection, not as semantic ownership of Runpod state."
+      ],
+      "public_evidence": [
+        "https://www.runpod.io/blog/runpods-rest-api-v2-is-here-one-api-for-your-entire-gpu-stack",
+        "https://www.runpod.io/blog/manage-your-runpod-infrastructure-from-any-ai-assistant-introducing-the-runpod-mcp-server"
+      ]
+    },
+    {
+      "provider": "Oracle Cloud Infrastructure",
+      "surface": "Free Trial / resource lifecycle",
+      "current_state": "TRIAL_EXPIRED_RETRIEVAL_WINDOW",
+      "trial_expired_at": "2026-08-19T01:17:00Z",
+      "retrieval_deadline": "2026-09-17T01:17:00Z",
+      "resource_classes": {
+        "always_free": "ACTIVE_CONSTRAINED",
+        "trial_paid_resources": "RECLAIM_PENDING_UNLESS_UPGRADED",
+        "trial_content": "RETRIEVABLE_UNTIL_DEADLINE"
+      },
+      "bonfyre_actions": [
+        "Mark trial promotional capacity unavailable in ResourceWeather immediately.",
+        "Prevent schedulers from treating former trial capacity as deployable production capacity.",
+        "Inventory any unique OCI-resident artifacts before the retrieval deadline and project them into ObjectFabric/EvidenceGraph or another active provider.",
+        "Do not convert to paid capacity implicitly; a billing upgrade is an authority-gated external effect."
+      ],
+      "public_evidence": [
+        "https://www.oracle.com/contracts/docs/ocloud_hosting_delivery_policies_3089853.pdf?download=false",
+        "https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier.htm"
+      ]
+    }
+  ],
+  "promotion_rules": {
+    "source_order": [
+      "newer direct provider operational notice",
+      "current official provider documentation",
+      "older provider blog/reference material"
+    ],
+    "contradiction_rule": "Never silently reconcile contradictory dates or states. Preserve both claims in TraceDivergence and choose the safer operational bound until a newer authoritative source resolves them.",
+    "external_system_rule": "Provider/MCP/API surfaces remain foreign systems represented through ProviderGraph/APIUseTwin; they do not become Bonfÿre semantic owners."
+  }
+}

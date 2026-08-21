@@ -1,0 +1,79 @@
+{
+  "schema": "bonfyre.trajectory-epoch-receipt.v1",
+  "trajectory_id": "third-external-evidence-2026-08-20",
+  "epoch": 2,
+  "state": "ACTIVE_VALIDATION",
+  "new_artifacts": [
+    {
+      "path": "scripts/agent_trace_0_1_import.py",
+      "semantic_owner": "FormatCommons/ForeignTwin",
+      "claim": "Strict Agent Trace 0.1.0 attribution import without authority/safety/provider-fidelity inference"
+    },
+    {
+      "path": "tests/test_agent_trace_0_1_import.py",
+      "semantic_owner": "EvidenceGraph/RegressionFence",
+      "claim": "Pins attribution-only boundary, foreign hash qualification, URI non-dereference, metadata non-promotion and revision/path validation"
+    },
+    {
+      "path": ".github/workflows/third-trajectory-validation.yml",
+      "semantic_owner": "Execution/Evidence",
+      "claim": "Branch-scoped syntax and contract validation for Runpod migration and Agent Trace import organs"
+    }
+  ],
+  "bernstein_3880_validation": {
+    "branch": "Nickgonzales76017/bernstein:feat/3880-project-side-receipt-check",
+    "validation_pr": "Nickgonzales76017/bernstein#1",
+    "current_head_before_epoch_receipt": "29c80479c44e3ee11f8da06f3911db8fff41099f",
+    "green_so_far": [
+      "ruff check",
+      "ruff format --check",
+      "import-linter architecture contracts",
+      "broad-except policy",
+      "workflow actionlint",
+      "zizmor",
+      "TruffleHog",
+      "lineage gate",
+      "spelling",
+      "proto drift",
+      "dead-code/vulture",
+      "package build/size",
+      "Bandit",
+      "Semgrep",
+      "pyright advisory",
+      "pyright strict curated security/cluster",
+      "mypy strict lineage substrate",
+      "mutation report",
+      "pip-audit production strict",
+      "snapshot tests",
+      "fake-CLI adapter integration",
+      "Windows adapter conformance/e2e",
+      "multiple Windows test shards"
+    ],
+    "still_running_at_receipt": [
+      "Linux test shards",
+      "remaining Windows shards",
+      "integration tests",
+      "property tests",
+      "Schemathesis smoke",
+      "repo hygiene final generated-surface checks"
+    ],
+    "validation_noncauses": [
+      "Validation-fork PR-policy failures on source pushes are caused by upstream-only autosync credential availability, not implementation behavior.",
+      "The volunteer receipt workflow is intentionally skipped on the validation-only PR because no receipt opt-in trailer is present."
+    ]
+  },
+  "agentguard_214": {
+    "state": "SURGICAL_LOCAL_HANDOFF",
+    "known_bug": "_normalized_path converts backslashes to slash before PurePosixPath absolute detection, so a Windows drive-root such as C:/... is not considered absolute on POSIX hosts.",
+    "required_fix": "Reject ^[A-Za-z]:[\\\\/] and UNC roots before normalization; preserve non-echoing diagnostic.",
+    "evidence_branch": "wip/214-review3-hostile-path-matrix",
+    "reason_not_applied_here": "GitHub connector exposes whole-file replacement for a large module; local gh/Run8 can apply the surgical patch with materially less bandwidth and risk."
+  },
+  "regression_fences_added": [
+    "Agent Trace imported model_id is attribution metadata and must never imply provider fidelity.",
+    "Foreign content_hash remains algorithm-qualified and never becomes Bonfyre security identity by relabeling.",
+    "Foreign metadata is bound by digest but not automatically promoted into EvidenceGraph fields.",
+    "Conversation/related URIs remain references unless a separately authorized retrieval creates evidence.",
+    "VCS line attribution is revision-relative; current working-tree line positions are not interchangeable."
+  ]
+}
