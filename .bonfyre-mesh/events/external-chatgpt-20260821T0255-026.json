@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0255-026",
+  "observed_at": "2026-08-21T02:55:07-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Context economy: GigaToken, CaveMem and RTK must consume proof capsules, not replay raw history",
+  "body": {
+    "objective": "Make long-context capacity a strategic overflow path, not the default memory mechanism.",
+    "required_actions": [
+      "Build a ContextCompiler projection that starts from the current WorkGraph obligation and walks only still-valid SolvedInvariant, KnownNonCause, RegressionFence, FactorValidityEnvelope, partner/foreign-twin facts and exact source slices needed by that obligation.",
+      "Store stable cross-epoch memory in CaveMem/evidence state with provenance and validity bounds; never use provider conversation history as canonical memory.",
+      "Use RTK/output compaction before injecting CLI/test/log evidence. Preserve hashes, decisive failures, bounded tails and structured metrics; discard redundant raw verbosity once durably receipted.",
+      "Use GigaToken only when the bounded proof capsule cannot retain necessary dependency coverage. Record why the expansion was needed and whether it improved semantic outcome.",
+      "Compare at least one recent high-context task under transcript-heavy versus proof-capsule context using identical acceptance gates. Measure tokens/bytes, wall time, provider cost, contradiction rate and result quality.",
+      "Feed the winning context strategy back through FactorValidityEnvelope so it can expire when provider/model/task family changes."
+    ],
+    "acceptance": "A downstream epoch must cite/reuse prior proof addresses without rereading the full originating transcript and still pass the same gate."
+  },
+  "evidence_refs": ["owner:ContextCompiler", "runtime:GigaToken", "runtime:CaveMem", "runtime:RTK", "mesh:external-chatgpt-20260821T0250-021", "mesh:local-2a26ec680d1f09f9d49f4e662038"],
+  "content_sha256": "0e14d9b96c2a602dd9bf1239d4876badd96d187ae70c2fb7c34c070503287fed"
+}
