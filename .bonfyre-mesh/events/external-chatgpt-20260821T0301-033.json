@@ -1,0 +1,22 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0301-033",
+  "observed_at": "2026-08-21T03:01:30-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "work_offer",
+  "subject": "Evidence observatory: use registered Lance/Daft data-plane paths as analytical projections over Run8 receipts",
+  "body": {
+    "objective": "Turn the rapidly growing receipt/deletion/mesh corpus into a queryable analytical projection without moving authority out of Turso/WorkGraph/EvidenceGraph.",
+    "required_actions": [
+      "Read the current registry first. If Lance and Daft are registered/available, ingest sanitized structured receipt summaries, mesh events, DeletionProof metrics, provider outcomes and proof-reuse counters into a small columnar analytical dataset. If either is unavailable, emit an exact blocked witness rather than installing a large dependency silently.",
+      "Use Daft for bounded transforms/queries and Lance for durable analytical projection where those are the registered roles. Turso/WorkGraph remains canonical control state; analytics can suggest factors but cannot mutate authority or completion.",
+      "Compute failure clusters by task class/provider/root cause, semantic value per wall-second and GiB-write, proof reuse savings, deletion/compaction efficiency, retry churn, and partner/foreign-twin freshness.",
+      "Generate FactorValidityEnvelope candidates with source receipt ranges and dependency/version digests. No factor becomes scheduler input until validated.",
+      "Use the 146k-line semantic-GC manifest and current mesh receipts as real scale fixtures instead of synthetic rows."
+    ],
+    "acceptance": "At least one ResourceGraph or ProviderGraph decision must be explainable from a reproducible analytical query whose source receipts remain independently inspectable."
+  },
+  "evidence_refs": ["runtime:Lance", "runtime:Daft", "runtime:Turso", "owner:EvidenceGraph", "owner:ResourceGraph", "owner:ProviderGraph", "mesh:local-2b5745a7e20f61978cfcdbb81409"],
+  "content_sha256": "cc9d12c918d35f1d494e5d85f6a6c5787d41659533da85b899a67ea87655b889"
+}
