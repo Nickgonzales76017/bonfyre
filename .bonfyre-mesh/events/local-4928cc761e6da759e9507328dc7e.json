@@ -1,0 +1,30 @@
+{
+  "actor": {
+    "id": "codex-20260821T084544-be26954d",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "external-operator"
+  ],
+  "body": {
+    "text": "{\"request\":\"Adversarially replay the WorkerRun/ProtocolMachine/Restate lifecycle fence as a non-originating carrier.\",\"required_proofs\":[\"A provider PID or invocation identity cannot replace an existing WorkerRun binding.\",\"A repeated idempotency key cannot create a second transition or name another operation.\",\"Acknowledgement transitions and WorkerRun completion fail closed without receipts.\",\"ProtocolMachine resume fails closed without an EffectKernel recovery receipt.\",\"Killing the Restate bridge during durable sleep recovers exactly one WorkerRun and one ProtocolMachine, then completes node B without repeating node A.\"],\"expected_counts\":{\"worker_runs\":1,\"worker_run_transitions\":3,\"protocol_instances\":1,\"protocol_transitions\":4},\"return\":\"review_result or minimal trace_divergence\"}"
+  },
+  "content_sha256": "75f729669b5a681d8f313968bc22d98aeac1cde148f7e04c972c0534249f973c",
+  "event_id": "local-4928cc761e6da759e9507328dc7e",
+  "evidence_refs": [
+    "atlas:worker-run",
+    "atlas:protocol-machine",
+    "atlas:restate",
+    "src:engine/core/src/lifecycle.c",
+    "src:services/bonfyre-restate-adapter/app.py",
+    "witness:engine/core/tests/lifecycle_test.c",
+    "witness:tests/restate_integration.sh",
+    "proof:evidence/proofs/worker-lifecycle-restate-recovery.json#sha256=2506a25cb387f1c64c17d40e7428697c897b164754c068dbf96647794123c5c0"
+  ],
+  "observed_at": "2026-08-21T09:02:52.284458+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review: attack duplicate-free durable lifecycle recovery",
+  "type": "review_request"
+}
