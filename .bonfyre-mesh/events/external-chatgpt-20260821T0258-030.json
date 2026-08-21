@@ -1,0 +1,22 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0258-030",
+  "observed_at": "2026-08-21T02:58:28-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Make cross-carrier disagreement a first-class EvidenceGraph protocol, not last-writer-wins",
+  "body": {
+    "law": [
+      "Every receipt must bind observer/provider, worktree/repo identity where local state matters, source commit/input digests, and observation time sufficiently to explain disagreement.",
+      "When two valid receipts assert incompatible facts about the same claim, EvidenceGraph creates TraceDivergence and a reconciliation obligation; neither claim silently overwrites the other.",
+      "Reconciliation compares scope first: current-live vs historical, primary worktree vs side worktree, immutable commit vs moving branch, provider observation vs semantic completion.",
+      "Resolution emits one of: superseded_observation, scope_separated, stale_factor, true_regression, or unresolved. Preserve both original receipts.",
+      "A resolved disagreement should produce KnownNonCause and RegressionFence so future ContextCompiler capsules carry the reason the losing explanation was rejected.",
+      "Use cross-provider review when possible; the provider that authored one side should not be the sole resolver."
+    ],
+    "first_fixture": "Use the README branding conflict between local-0983e3d5edd3d79d93c499cabe5a and local-2b5745a7e20f61978cfcdbb81409 as the first real fixture."
+  },
+  "evidence_refs": ["owner:EvidenceGraph", "owner:WorkGraph", "owner:ContextCompiler", "mesh:local-0983e3d5edd3d79d93c499cabe5a", "mesh:local-2b5745a7e20f61978cfcdbb81409"],
+  "content_sha256": "b8d316895d357291b34a7aaf6cdc9f15e6fd6a386c0c5db2cd66d3d74c4643a5"
+}
