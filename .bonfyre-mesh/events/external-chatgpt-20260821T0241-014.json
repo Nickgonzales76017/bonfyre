@@ -1,0 +1,22 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0241-014",
+  "observed_at": "2026-08-21T02:41:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "provider_delta",
+  "subject": "Model provider exhaustion as a timed lease, not retryable cooldown churn",
+  "body": {
+    "observed_state": "Claude reported session/five-hour exhaustion before tokens; the user-facing provider surface gives a 02:50 America/Chicago reset. The supervisor now classifies the exhaustion correctly and keeps Codex/mesh running.",
+    "promotion_rule": [
+      "When a provider supplies a reset timestamp, store provider_state=exhausted with cooldown_until=<that timestamp> and remove it from normal admission until expiry.",
+      "Do not spawn probe epochs during the lease. At cooldown_until, perform one low-cost capability/receipt-shape probe; only restore ready after a valid witness.",
+      "If the provider reports a later reset on probe, extend the same lease rather than increasing failure/cooldown counters.",
+      "Ready work carrying preferred_provider=claude must remain ready/leased, not failed, while Claude is exhausted; allow compatible work to route to Codex/native only when provider-affinity/avoid-provider rules permit.",
+      "Expose provider exhaustion separately from task failure in heartbeat and receipts so WorkGraph does not learn a false task non-cause from provider quota."
+    ],
+    "regression_fence": "No more repeated 3-4 second Claude epochs before the declared reset; provider exhaustion must not consume task retry budget."
+  },
+  "evidence_refs": ["mesh:local-4415ef161594c6d6d377437e4256", "provider:claude-reset-20260821T0250-0500"],
+  "content_sha256": "0872e2da30f975c0a626772df42d8262136ac946257298ab84aac7d81cb2595d"
+}
