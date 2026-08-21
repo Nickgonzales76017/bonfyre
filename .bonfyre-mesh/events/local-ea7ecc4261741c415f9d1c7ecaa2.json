@@ -1,0 +1,106 @@
+{
+  "actor": {
+    "id": "codex-20260821T080339-301834b7",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "10-Code/ -> components/",
+      "evidence/origins/notebook-era/runtime/",
+      "services/queue-dispatcher/",
+      ".bonfyre-runtime/models/piper/",
+      "components/LocalAITranscriptionService/",
+      "components/PersonalDataEngine/",
+      "components/PersonalMarketLayer/",
+      "components/ProductPipelines/",
+      "components/QuietDistributionEngine/",
+      "cmd/BonfyreFPQ/",
+      "architecture/**/*.yaff",
+      "architecture/atlas.index.json",
+      "bonfyre.workspace.yaff",
+      "docs/repository-layout.md",
+      "evidence/README.md",
+      "generated/projections/inventory/runtime-inventory.json",
+      "tests/test_repository_shape.py",
+      "tools/transitional_root_absorption.py",
+      "README.md",
+      "QUICKSTART.md",
+      "AGENTS.md",
+      "CLAUDE.md",
+      ".github/workflows/native-kernel.yml"
+    ],
+    "class": "product_surface",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "The historical 10-Code root is no longer present; independently buildable source now has the components owner.",
+      "NightlyBrainstorm source, profiles, completed queue, and run records are frozen with notebook-era evidence.",
+      "The dedicated NightlyBrainstorm and combined drain-all LaunchAgents are retired and absent from launchd.",
+      "The replacement transcription-only LaunchAgent is installed, scheduled, and exits 0.",
+      "Scheduler source lives under services while queue, cache, model, lock, and log state use operator-runtime owners.",
+      "Commercial and product-pipeline writers no longer recreate 04-Systems or 05-Monetization at repository root.",
+      "Piper behavior is preserved through the installed model under operator runtime state.",
+      "Every tracked top-level directory remains assigned exactly one Generation-10 owner."
+    ],
+    "summary": "Materially advanced Generation-10 repository convergence. The 566-file 10-Code estate was history-preservingly cut over to components, NightlyBrainstorm and notebook helpers were frozen under evidence, active scheduler source was separated from operator state, and transcription scheduling remains live. Remaining work is honestly bounded by the fresh capability ledger rather than hidden by the rename.",
+    "tests": [
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "PASS: 309 passed, 1 skipped."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "PASS: 193 architectures, 11 views, 54 interactions, 14 phenotypes, 16 edge-classes."
+      },
+      {
+        "command": "python3 -m pytest tests/test_repository_shape.py tests/test_estate_compiler_retirement.py tests/test_transitional_root_absorption.py -q",
+        "result": "PASS: 22 tests."
+      },
+      {
+        "command": "cd components/LocalAITranscriptionService && PYTHONPATH=src python3 -m pytest tests -q",
+        "result": "PASS: 34 tests."
+      },
+      {
+        "command": "cd components/PersonalMarketLayer && PYTHONPATH=src python3 -m pytest tests -q",
+        "result": "PASS: 3 tests."
+      },
+      {
+        "command": "perl -c services/queue-dispatcher/drain_transcription_queue.pl; status and dry-run checks; plutil and zsh syntax checks",
+        "result": "PASS: valid source and plist, zero queued jobs, no mutation."
+      },
+      {
+        "command": "launchctl print transcription-only service and retired legacy labels",
+        "result": "PASS: replacement runs=1 with last exit code 0; both legacy labels are absent."
+      },
+      {
+        "command": "Piper model resolution assertion",
+        "result": "PASS: LocalAITranscriptionService resolves the relocated installed model."
+      },
+      {
+        "command": "README branding assertion",
+        "result": "PASS: knight image is immediately above the centered Bonfÿre heading."
+      },
+      {
+        "command": "git diff --check",
+        "result": "PASS."
+      }
+    ],
+    "work_item": "phase0-repo-shape"
+  },
+  "content_sha256": "3d0859d3e23b52565d272a14051553d7f91d28cce85a2a0729b11a314ea8d2df",
+  "event_id": "local-ea7ecc4261741c415f9d1c7ecaa2",
+  "evidence_refs": [
+    "receipt:codex-20260821T080339-301834b7",
+    "work:phase0-repo-shape"
+  ],
+  "observed_at": "2026-08-21T08:25:13.763772+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-repo-shape advanced",
+  "type": "receipt_summary"
+}
