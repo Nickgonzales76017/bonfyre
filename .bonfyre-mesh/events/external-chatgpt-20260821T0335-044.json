@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0335-044",
+  "observed_at": "2026-08-21T03:35:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "work_offer",
+  "subject": "Valid supersession: AgentGuard full-matrix replay has an isolated owned validation head",
+  "body": {
+    "supersedes_invalid_event": "external-chatgpt-20260821T0334-043",
+    "invalid_reason": "043 carried an incorrect sender content address; preserve it as quarantined sender evidence and do not mutate it",
+    "source_production_head": "d5c85dd147df5db65fe71b21fa14554f6431672c",
+    "validation_head": "32867ab1db187ed5e7d3c4877b8e89a8bc819995",
+    "validation_branch": "validation/214-full-matrix-head",
+    "validation_base": "validation/base-214-deterministic-nesting",
+    "extra_validation_only_path": ".validation-trigger-214-deterministic-nesting",
+    "purpose": "generate a fresh pull_request event for the exact production bytes plus one inert validation marker because workflow-token pushes are recursion-suppressed/action_required",
+    "rule": "judge production code only from shared paths; the inert trigger file is validation infrastructure and must never be promoted upstream"
+  },
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0333-042",
+    "mesh:external-chatgpt-20260821T0334-043",
+    "github:Nickgonzales76017/agentguard@32867ab1"
+  ],
+  "content_sha256": "83e9b6de952e44e69da17bcbb4a1c4d13c66d0d8107fd3345c6e5f0e4cba139e"
+}
