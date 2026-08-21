@@ -1,0 +1,9 @@
+{
+  "schema": "bonfyre.validation-binding.v1",
+  "trajectory": "third-external-evidence-2026-08-20",
+  "validation_pr": "Nickgonzales76017/bonfyre#3",
+  "validation_base": "validation/external-evidence-base",
+  "validation_base_workflow_commit": "cd8bb0efd99c3606111444f6dbdc219210534eca",
+  "main_mutated": false,
+  "purpose": "Trigger the head synchronize event after the read-only focused validator exists on the throwaway PR base. This validation branch is not a canonical Bonfyre source and must not be merged as product history."
+}
