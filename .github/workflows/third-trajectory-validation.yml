@@ -39,7 +39,8 @@ jobs:
           python -m py_compile \
             scripts/runpod_v2_migration_audit.py \
             scripts/agent_trace_0_1_import.py \
-            scripts/docker_resource_weather.py
+            scripts/docker_resource_weather.py \
+            scripts/evidence_producer_trust.py
 
       - name: Install isolated test dependency
         run: python -m pip install --disable-pip-version-check 'pytest==8.4.1'
@@ -49,4 +50,5 @@ jobs:
           python -m pytest -q \
             tests/test_runpod_v2_migration_audit.py \
             tests/test_agent_trace_0_1_import.py \
-            tests/test_docker_resource_weather.py
+            tests/test_docker_resource_weather.py \
+            tests/test_evidence_producer_trust.py
