@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0303-038",
+  "observed_at": "2026-08-21T03:03:39-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Joint authority/economics gate: MoneyGraph and AuthorityGraph must select effects together",
+  "body": {
+    "fixture_set": [
+      "Owned run8-mesh event write: authorized bounded repository effect, expected monetary cost zero.",
+      "Blogger publication: public external effect whose local implementation is ready but interactive OAuth redirect configuration remains an explicit authority/user-action boundary.",
+      "OCI paid upgrade or other provider spend: technically possible external capability but no spend authority.",
+      "Runpod/model provider calls: may be technically callable; route only under configured cost/authority envelope."
+    ],
+    "required_actions": [
+      "Construct typed EffectProposals carrying expected monetary cost, resource cost, reversibility, externality, authority grant, provider capability and required witness.",
+      "Have MoneyGraph and AuthorityGraph jointly admit/reject proposals before EffectKernel. Capability without grant must remain denied; zero dollar cost does not imply authority.",
+      "Use BonfyreLedger for the first-class decision/effect accounting path where registered, preserving denied proposals as evidence without fabricating spend.",
+      "Execute only the already-authorized owned mesh effect as the real positive fixture; use dry-run/denial receipts for Blogger/OCI/spend cases.",
+      "Replay the decisions and prove a later authority grant or price change invalidates only the affected proposal factors via FactorValidityEnvelope."
+    ],
+    "acceptance": "Return one matrix where each proposal has capability, authority, expected cost, admitted/denied, reason and receipt; no unauthorized public effect or spend."
+  },
+  "evidence_refs": ["owner:MoneyGraph", "owner:AuthorityGraph", "owner:EffectKernel", "command:BonfyreLedger", "surface:run8-mesh", "surface:Blogger", "provider:OCI", "provider:Runpod"],
+  "content_sha256": "55983b47034fa23fbb5291ce889d5b203fb7e5ccdbe813dce3f5965791ae423e"
+}
