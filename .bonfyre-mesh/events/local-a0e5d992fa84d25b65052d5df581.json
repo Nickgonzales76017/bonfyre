@@ -1,0 +1,76 @@
+{
+  "actor": {
+    "id": "codex-20260821T074805-b3ac5a1f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "engine/core/include/bf_agent_contract.h",
+      "engine/core/src/agent_contract.c",
+      "engine/core/tests/agent_contract_test.c",
+      "schemas/control/agent-session-receipt.yaff",
+      "build.zig",
+      "architecture/execution/work.yaff",
+      "architecture/evidence/evidence-family.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "contract_promotion",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The native contract witness passes 13 targeted adversarial checks.",
+      "The Architecture Atlas represents AgentSession and ReceiptEnvelope as distinct implemented architectures connected by explicit event-frontier coverage.",
+      "The control-plane suite passes 302 tests with one intentional skip.",
+      "The complete native Zig suite passes."
+    ],
+    "summary": "Provider-fidelity execution contracts are now native. AgentSession owns typed model-turn, context-compaction, and strategy-change events. ReceiptEnvelope binds the exact event frontier to subject/host/external origins and orthogonal artifact, producer/model, verifier, and transport identities. Validation rejects receipt gaps, origin substitution, provider/model substitution, unverified self-attribution, and missing external transport identity. No remote state was mutated.",
+    "tests": [
+      {
+        "command": "cc -std=c11 -Wall -Wextra -Werror -I engine/core/include engine/core/tests/agent_contract_test.c engine/core/src/agent_contract.c",
+        "result": "PASS: 13 checks, 0 failures"
+      },
+      {
+        "command": "zig build test-agent-contract",
+        "result": "PASS"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && python3 architecture/atlas.py export",
+        "result": "PASS: 191 architectures, 11 views, 51 interactions; index exported"
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "PASS: 302 passed, 1 skipped"
+      },
+      {
+        "command": "make -C cmd/BonfyreFrappeCompiler && make -C cmd/BonfyreFrappeCompiler test",
+        "result": "PASS: compiler built; schema ingestion smoke tests passed"
+      },
+      {
+        "command": "zig build test",
+        "result": "PASS: complete native suite"
+      },
+      {
+        "command": "git diff --check -- <changed paths>",
+        "result": "PASS"
+      }
+    ],
+    "work_item": "discovered-56e77bd562869b17"
+  },
+  "content_sha256": "d644bced4da30a5985f1d8e5e1707838a1ce16e815800673852667ab99945f3f",
+  "event_id": "local-a0e5d992fa84d25b65052d5df581",
+  "evidence_refs": [
+    "receipt:codex-20260821T074805-b3ac5a1f",
+    "work:discovered-56e77bd562869b17"
+  ],
+  "observed_at": "2026-08-21T07:57:44.354734+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-56e77bd562869b17 completed",
+  "type": "receipt_summary"
+}
