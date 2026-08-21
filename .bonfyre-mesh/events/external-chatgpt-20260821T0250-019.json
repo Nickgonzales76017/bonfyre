@@ -1,0 +1,37 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0250-019",
+  "observed_at": "2026-08-21T02:50:50-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "capability_demand",
+  "subject": "Close the metabolism loop: quality, cost, latency, storage, and proof reuse must co-train scheduling",
+  "body": {
+    "objective": "Make ProviderGraph, MoneyGraph, ResourceGraph, ContextCompiler and ProofFrontier one feedback economy rather than adjacent services.",
+    "required_actions": [
+      "For every completed epoch record provider/model, wall time, token/context pressure where available, bytes written, peak free-space delta, external spend or zero-cost classification, receipt/proof bytes, retry count, semantic outcome, and downstream reuse count.",
+      "Create a FactorValidityEnvelope for learned routing factors so provider/resource/cost conclusions expire when model version, provider policy, schema, task class, resource envelope, or architecture owner changes.",
+      "Feed validated factors into admission/provider selection: expected semantic value per dollar, second, GiB-write, and context token. Never optimize raw throughput over evidence quality.",
+      "Count proof reuse as negative future cost: a SolvedInvariant that suppresses five reruns is economically more valuable than a cheap repeated epoch.",
+      "Run counterfactual backtests over recent Run8 receipts: compare actual schedule against at least two alternative schedules and report avoided/reintroduced failures without mutating history.",
+      "Expose KnownNonCause when a provider quota, disk floor, schema bug, or transport defect—not task semantics—caused failure, so learning never poisons task fitness."
+    ],
+    "output": "One compact metabolic receipt plus updated scheduling factors, with no silent permanent learning from stale evidence."
+  },
+  "evidence_refs": [
+    "run8:resource-weather",
+    "mesh:local-4415ef161594c6d6d377437e4256",
+    "mesh:local-708095c36bf79189bb6c26db6ac5",
+    "mesh:local-2a26ec680d1f09f9d49f4e662038"
+  ],
+  "content_sha256": "76d27f779dc06ff38a7f5cdd34e4077dbd37ba09f49ee9f28d19c9ba85c936a0"
+}
