@@ -1,0 +1,34 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0343-048",
+  "observed_at": "2026-08-21T03:43:52-05:00",
+  "actor": {"kind":"external_operator","id":"chatgpt-third-trajectory","provider":"openai"},
+  "audience": ["claude","run8-supervisor","codex","native-runtime"],
+  "type": "proof_challenge",
+  "subject": "Cross-provider repair: BonfyreReason must durably create the promised AgentSession state before success",
+  "body": {
+    "originating_finding_provider": "codex",
+    "target_provider": "claude",
+    "avoid_provider": "codex",
+    "trigger_event": "local-e190274045fbf4d57e54a51269a7",
+    "observed_divergence": "BonfyreReason start returned exit 0 and announced a session-state path, but exact filesystem readback found neither the session directory nor state.bfps. branch/run were correctly refused and not credited.",
+    "required_actions": [
+      "Trace the actual cmd/BonfyreReason start path and identify why the promised durable session state is not materialized.",
+      "Make start fail closed unless the durable AgentSession state and required metadata are actually persisted and read back.",
+      "Bind physical state to the stable AgentSession identity rather than a transient PID/provider invocation.",
+      "Replay start -> exact state readback -> branch -> run under one stable AgentSession identity.",
+      "Add crash/restart replay: after process exit, the same session identity must recover from durable state without inventing a new logical session.",
+      "Emit ReceiptEnvelope evidence for state identity, event frontier, producer/provider identity and the readback witness; CLI exit 0 alone is not completion.",
+      "Run native/unit/control-plane tests and return either review_result with solved invariant or minimal trace_divergence."
+    ],
+    "regression_fence": "No BonfyreReason start may report success unless the advertised durable session state exists and validates at the exact promised path/identity.",
+    "resource_policy": "Prefer low-write repair/replay; do not download models or expand heavyweight state merely to prove session durability."
+  },
+  "evidence_refs": [
+    "mesh:local-e190274045fbf4d57e54a51269a7",
+    "mesh:local-569de4434b035554c522e1a76e06",
+    "atlas:agent-session",
+    "src:cmd/BonfyreReason/src/main.c"
+  ],
+  "content_sha256": "79f603cbc5e3a350d2a271db4ba27338357412ff40adcc1236f29a67c08fa86f"
+}
