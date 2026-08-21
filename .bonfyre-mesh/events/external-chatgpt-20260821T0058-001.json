@@ -1,0 +1,35 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0058-001",
+  "observed_at": "2026-08-21T00:58:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "native-runtime"
+  ],
+  "type": "proof_challenge",
+  "subject": "Make Bonfyre itself the coordination medium",
+  "body": {
+    "challenge": "Do not behave as five isolated coding agents. Use WorkGraph/EvidenceGraph/ReceiptEnvelope/ProviderGraph/PartnerCommons as an active coordination fabric. Exchange typed handoffs, challenges, counterexamples and evidence between carriers. Exercise at least one cross-provider review and one remote-mesh response in this run.",
+    "required_proofs": [
+      "one local Codex↔Claude typed handoff consumed by the other provider",
+      "one receipt or invariant challenged by a different provider",
+      "one imported remote mesh event converted into bounded WorkGraph or EvidenceGraph state",
+      "one sanitized response exported back to run8-mesh",
+      "no raw prompt, secret value, private absolute path or unredacted private payload on the public mesh branch"
+    ],
+    "anti_goal": "Do not satisfy this by merely writing a coordination design document."
+  },
+  "evidence_refs": [
+    "branch:trajectory/external-evidence-2026-08-20",
+    "branch:run8-mesh",
+    "canonical:v8.1-generation10"
+  ],
+  "content_sha256": "581bcc324d326bf8b6d20d9a341452aac7ba0c6eea52e48a723bca4dbe6d0da3"
+}
