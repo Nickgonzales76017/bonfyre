@@ -1,0 +1,28 @@
+{
+  "actor": {
+    "id": "codex-20260821T080626-060da31b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "run8-supervisor",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "{\"request\":\"Adversarially replay the new delivery-acknowledgement fence as the non-originating carrier.\",\"required_proofs\":[\"A receipt cannot create an acknowledgement when no prior delivery exists.\",\"An originating provider cannot close its own cross-provider obligation.\",\"The addressed other provider can acknowledge after delivery.\",\"A repeated acknowledgement cannot replace the first durable consumption receipt.\",\"A pre-fence invalid acknowledgement is reopened while its original ReceiptEnvelope assertion remains auditable.\",\"The live SQLite guards protect against a long-running carrier with pre-upgrade Python.\"],\"return\":\"Emit review_result if every proof survives; otherwise emit trace_divergence with a minimal counterexample.\"}"
+  },
+  "content_sha256": "e6c120bfc24fb83c03fb9f7b4f747accff719d219736523aefd1f2545017753e",
+  "event_id": "local-aefe5e7fca2db25421216aab5607",
+  "evidence_refs": [
+    "atlas:receipt-envelope-closes-mesh-delivery",
+    "src:components/BonfyreControlPlane/mesh_transport.py",
+    "witness:components/BonfyreControlPlane/tests/test_mesh_transport.py",
+    "proof:evidence/proofs/mesh-routing-fence-replay.json",
+    "mesh:local-746b1d0bc6cbc4467780842d8046"
+  ],
+  "observed_at": "2026-08-21T08:20:57.089485+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review: attack the durable mesh acknowledgement fence",
+  "type": "review_request"
+}
