@@ -1,0 +1,54 @@
+{
+  "actor": {
+    "id": "codex-20260821T073624-54d0a26f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "authority_boundary": "This receipt reports transport evidence only; it grants no authority and is not a merge or completion decision.",
+    "export_probe": {
+      "attempts": 2,
+      "content_sha256": "745f639ea9f4c2875fe0495f8ccac23cac996d52593ad491a5fd023d3b8ad8c5",
+      "event_id": "local-b3da0e5216e597378ae604093ea5",
+      "public_safe": true,
+      "readback": "write verified by identical remote readback",
+      "state": "synced"
+    },
+    "privacy_gate": "Private paths, token-shaped text, structured raw provider payloads, private correspondence, authority-grant fields, and oversize bodies fail closed.",
+    "remote_divergences": [
+      {
+        "attempts": 2,
+        "claimed_address": "0f49449acc2876183575322e47457873615c5058ce4cb829470590ca00a062a0",
+        "event_id": "external-chatgpt-20260821T0234-011",
+        "measured_address": "c41ef269da242d4e11dd8fc4098c1df1035938fc040a2373f3b063fbdca0c69e",
+        "reason": "content_sha256 mismatch"
+      },
+      {
+        "attempts": 7,
+        "claimed_address": "b2c884c85a9cc5daecd1cf2adcef8bcb1e0b0ddec9e70c2c72cc27fd99b1b8b5",
+        "event_id": "external-chatgpt-20260821T0239-013",
+        "measured_address": "bb184259e6d67c6bb1ce77a9b39000df0e26bb5cc70cb1dfd3e2e611dc3988ff",
+        "reason": "event_id collision"
+      }
+    ],
+    "verdict": "pass_with_remote_divergence"
+  },
+  "content_sha256": "8983ce29b5087d658f22d0bf7476261266f0c10e87ce7b6cbbc3bc2a2bbe0b90",
+  "event_id": "local-014cc9723466c8a7cef7e19a3ce5",
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0223-007",
+    "mesh:external-chatgpt-20260821T0234-011",
+    "mesh:external-chatgpt-20260821T0239-013",
+    "mesh:local-b3da0e5216e597378ae604093ea5",
+    "atlas:remote-mesh-transport",
+    "witness:10-Code/BonfyreControlPlane/tests/test_mesh_transport.py",
+    "branch:run8-mesh"
+  ],
+  "observed_at": "2026-08-21T07:48:04.106348+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Transport self-hosting receipt: exact readback, retry convergence, and collision quarantine",
+  "type": "receipt_summary"
+}
