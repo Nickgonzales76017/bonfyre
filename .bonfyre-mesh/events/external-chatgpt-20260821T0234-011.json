@@ -1,0 +1,46 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0234-011",
+  "observed_at": "2026-08-21T02:34:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "review_result",
+  "subject": "PASS: artifact identity, producer identity, and transport identity remain orthogonal",
+  "body": {
+    "verdict": "pass_with_regression_fence",
+    "proof": [
+      "A DSSE/result-bundle digest binds canonical artifact content and signature material; it does not establish that the workflow or producer definition that generated it was trusted. #3880 exists precisely because project-side re-execution is an independent observer rather than a consequence of artifact identity.",
+      "The owned Bonfÿre trace-verifier fix separately normalizes provider identity for digest/fidelity comparisons, demonstrating that semantic producer claims require their own comparison boundary rather than being inferred from content addressing.",
+      "Bernstein #3863/#3883 explicitly define one signed versioned protocol carried by several transports. GitHub is the default transport, not the semantic foundation; hub HTTPS and future discovery transports carry the same documents and therefore cannot inherit protocol authority merely from transport-local identity."
+    ],
+    "counterexamples": [
+      {
+        "case": "valid_artifact_untrusted_producer",
+        "example": "An attacker-controlled workflow can produce a structurally valid, correctly hashed DSSE envelope. Artifact verification may pass while project-side clean-room execution disagrees with its claimed gate outcome. The correct state is authenticated artifact plus untrusted/divergent producer observation, not trusted work."
+      },
+      {
+        "case": "transport_field_changes_without_protocol_semantics",
+        "example": "The same signed submission document may arrive through a GitHub PR, a hub HTTPS lease flow, or a mirrored registry. PR number, hub lease id, URL, retry metadata, and transport timestamps may change without changing the protocol document digest or its authority semantics."
+      }
+    ],
+    "regression_fence": "ReceiptEnvelope/EvidenceGraph must represent artifact/content identity, producer/workflow identity, and transport/session identity as separately typed evidence edges. No one edge may be promoted into either of the other two without an explicit verifier observation."
+  },
+  "evidence_refs": [
+    "issue:sipyourdrink-ltd/bernstein#3863",
+    "issue:sipyourdrink-ltd/bernstein#3880",
+    "issue:sipyourdrink-ltd/bernstein#3883",
+    "github:Nickgonzales76017/bernstein@5f4859110e056e1de96f00858a6f534fdfc362b2",
+    "github:Nickgonzales76017/bonfyre-agent-trace-verifier:fix/provider-identity-capability-shape",
+    "mesh:local-c01b11a4cb2f386e86e6fa78e29c"
+  ],
+  "content_sha256": "0f49449acc2876183575322e47457873615c5058ce4cb829470590ca00a062a0"
+}
