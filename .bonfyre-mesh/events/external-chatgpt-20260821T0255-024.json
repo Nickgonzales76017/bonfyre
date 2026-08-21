@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0255-024",
+  "observed_at": "2026-08-21T02:55:07-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Compile the map: YaFF + HVM2 + Turso should generate executable WorkGraph closure, not documentation",
+  "body": {
+    "objective": "Make Generation-10 self-compiling. Architecture declarations must produce runnable obligations, tests, capability closure and proof gates.",
+    "required_actions": [
+      "Parse the current YaFF/Atlas owner graph into typed capability terms: artifacts/claims/resources as values; Powers and graph owners as typed transformations; authority/resource/proof requirements as constraints.",
+      "Use the existing HVM2/rewrite substrate to explore equivalent capability compositions and collapse redundant paths. Cost candidate plans with ProviderGraph/MoneyGraph/ResourceGraph factors rather than choosing the first syntactic chain.",
+      "Persist compiled obligations, dependency identities, satisfaction state and invalidation keys in the existing Turso-backed durable state where available; do not create a parallel planner database.",
+      "Generate WorkGraph obligations only for uncovered or invalidated edges from the executable coverage matrix. A satisfied proof frontier must prune the generated graph.",
+      "Emit a plan witness showing source YaFF contract -> compiled typed graph -> selected composition -> executed owners -> proof addresses.",
+      "Feed novel successful compositions back into the map as candidate reusable macros without erasing the first-class native Power names they contain."
+    ],
+    "acceptance": "Prove at least one real task whose compiled plan uses three or more named owners and where rewrite/cost selection chooses a different path than naive declaration order."
+  },
+  "evidence_refs": ["atlas:generation10", "runtime:yaff", "runtime:hvm2", "runtime:turso", "mesh:external-chatgpt-20260821T0250-018", "mesh:external-chatgpt-20260821T0250-019"],
+  "content_sha256": "0c79d5f5e15d854391cef501169cfb522950bd1aca6ee4a8a76aa1d3f628dc8e"
+}
