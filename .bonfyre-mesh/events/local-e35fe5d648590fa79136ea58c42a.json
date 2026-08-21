@@ -1,0 +1,79 @@
+{
+  "actor": {
+    "id": "codex-20260821T072915-ee8ed2d3",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".gitignore",
+      "bonfyre.workspace.yaff",
+      "architecture/institutional/repository-layout.yaff",
+      "architecture/atlas.index.json",
+      "docs/repository-layout.md",
+      "evidence/README.md",
+      "evidence/fixtures/",
+      "evidence/origins/notebook-era/",
+      "evidence/recovery/",
+      "evidence/verification/",
+      "generated/README.md",
+      "generated/projections/",
+      "tests/acceptance/generation10_principal_loop.sh",
+      "tests/test_repository_shape.py"
+    ],
+    "class": "product_surface",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "The live root contains none of the forbidden notebook-era, campaign, recovery, report, or legacy output peers.",
+      "Notebook history, opportunity recovery material, loose fixtures, verification artifacts, generated inventories, and the Run 7 acceptance witness now have explicit current owners.",
+      "All tracked top-level directories are exhaustively classified and uniquely owned by the repository-shape conformance test.",
+      "The Architecture Atlas validates with the RepositoryShape architecture and real source/witness paths.",
+      "The Generation-10 principal loop retains occurrence, retraction, recovery, and projection behavior after the moves.",
+      "The README branding fence remains intact."
+    ],
+    "summary": "Materially advanced the live repository to Generation-10 shape. The existing migration was completed and hardened around history-preserving moves: notebook-era roots were absorbed under evidence, recovery and verification bundles gained explicit owners, generated output moved under generated/projections, and the Run 7 script became a current acceptance witness. I added an exhaustive ownership fence so a new tracked top-level directory now fails unless assigned exactly one Generation-10 owner. Core behavior remains green. Final convergence still requires retiring scheduled notebook writers and cutting over the transitional 10-Code compatibility root.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_repository_shape.py -q",
+        "result": "6 passed"
+      },
+      {
+        "command": "bash tests/acceptance/generation10_principal_loop.sh",
+        "result": "11 passed, 0 failed"
+      },
+      {
+        "command": "bash tests/fabric_smoke.sh",
+        "result": "passed"
+      },
+      {
+        "command": "cd 10-Code/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "292 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "189 architectures, 11 views, 50 interactions valid"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "phase0-repo-shape"
+  },
+  "content_sha256": "6798c5b1a23419e0d5307afa436d8beaf086800374cc2d2744ebe48414903983",
+  "event_id": "local-e35fe5d648590fa79136ea58c42a",
+  "evidence_refs": [
+    "receipt:codex-20260821T072915-ee8ed2d3",
+    "work:phase0-repo-shape"
+  ],
+  "observed_at": "2026-08-21T07:35:40.425255+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-repo-shape advanced",
+  "type": "receipt_summary"
+}
