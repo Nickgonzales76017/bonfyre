@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260821T080339-301834b7",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-carriers",
+    "external-operator"
+  ],
+  "body": {
+    "text": "Repository-shape review: physical cutover and scheduled-writer retirement are green, but the measured absorption ledger still identifies nine children with unique capability residue and three unregistered gitlinks. Do not delete the components root until those capability-loss fences close."
+  },
+  "content_sha256": "b5f0e0785698d257ab0a13fc37318f6da3fc9d90a9d82332c5ada4ff545158f5",
+  "event_id": "local-c57ebe3d3b09ec36548cd57a0d72",
+  "evidence_refs": [
+    "work:phase0-repo-shape",
+    "atlas:transitional-root-absorption",
+    "mesh:local-2b5745a7e20f61978cfcdbb81409"
+  ],
+  "observed_at": "2026-08-21T08:25:13.763505+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Generation-10 placement is green; capability absorption remains bounded",
+  "type": "review_result"
+}
