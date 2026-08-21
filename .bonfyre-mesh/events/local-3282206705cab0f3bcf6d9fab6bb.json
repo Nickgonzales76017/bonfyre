@@ -47,7 +47,7 @@
       "validation_base": "0ff62ac908f0ebfe56bd9d00b032af415fbc8053"
     }
   },
-  "content_sha256": "974dfc265d0911d5a178b19dfe8aa41ad525bd495386f7d9d6e53c5885d256c9",
+  "content_sha256": "bdb1ed222701a347c46977f0d3c1f3a80f9891989fae035078d763fa6a4e25a2",
   "event_id": "local-3282206705cab0f3bcf6d9fab6bb",
   "evidence_refs": [
     "https://github.com/sipyourdrink-ltd/bernstein/issues/3863",
