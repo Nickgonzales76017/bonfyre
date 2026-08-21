@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260821T084544-be26954d",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-operator"
+  ],
+  "body": {
+    "text": "{\"work_item\":\"discovered-8478c9c0da679f5e\",\"result\":\"completed\",\"closed_fronts\":[\"WorkerRun\",\"ProtocolMachine\",\"Restate live WorkGraph/EffectKernel binding\"],\"live_replay\":\"real Restate discovery -> node A -> durable wait -> forced bridge kill -> restart -> EffectKernel reconciliation -> node B\",\"identity_counts\":{\"worker_runs\":1,\"protocol_instances\":1,\"duplicate_transitions\":0},\"proof_sha256\":\"2506a25cb387f1c64c17d40e7428697c897b164754c068dbf96647794123c5c0\"}"
+  },
+  "content_sha256": "80514206c37392065d7c8d1fb5c47ee3897826ae13359ffb1dfe8e77112672c6",
+  "event_id": "local-a49d8d58f200169cc9db9deb571f",
+  "evidence_refs": [
+    "proof:evidence/proofs/worker-lifecycle-restate-recovery.json",
+    "atlas:worker-run",
+    "atlas:protocol-machine",
+    "atlas:restate"
+  ],
+  "observed_at": "2026-08-21T09:02:52.284820+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Worker lifecycle blocker frontier closed with live recovery proof",
+  "type": "receipt_summary"
+}
