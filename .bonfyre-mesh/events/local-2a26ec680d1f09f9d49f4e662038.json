@@ -1,0 +1,72 @@
+{
+  "actor": {
+    "id": "codex-20260821T072544-52bdf5ab",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "10-Code/BonfyreControlPlane/system_map_stress.py",
+      "10-Code/BonfyreControlPlane/tests/test_system_map_stress.py",
+      "architecture/institutional/system-map-stress.yaff",
+      "architecture/atlas.index.json",
+      "evidence/proofs/generation10-system-map-stress.json",
+      ".bonfyre-runtime/operator-artifacts/system-map-stress/codex-20260821T072544-52bdf5ab/"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "A real 308-byte Bernstein validation-snapshot artifact crossed ten named Generation-10 owners and landed in ObjectFabric at sha256 4a18a803cf9b768b5b68459f7e6e105e0416326d7d992bc9a9a631a5741ed3f2.",
+      "The retained proof passes ten live-store checks and four hostile counterfactuals with proof sha256 283e7848f02d260aff667de5f193536bbcda406f631619b6de6f2365a07918b2.",
+      "Tampering artifact identity invalidates the ReceiptEnvelope before semantic replay.",
+      "A resealed envelope with unchanged artifact bytes but a relabelled producer remains content-valid yet fails ProviderGraph owner consistency.",
+      "A foreign carrier advertising act rights remains denied without a matching AuthorityGraph grant.",
+      "Evidence for the owned validation snapshot supports only the snapshot observation claim, never upstream completion.",
+      "Repeated invocation after satisfaction returns the identical proof and creates no additional native receipts or effects."
+    ],
+    "summary": "Implemented and executed the frozen Generation-10 map as a running owner topology. A bounded Bernstein ForeignTwin observation became durable WorkGraph work, received bounded context and ProviderGraph selection, passed AuthorityGraph admission, committed through the native WorkGraph/EffectKernel, landed in ObjectFabric, closed against a content-addressed ReceiptEnvelope, entered directional EvidenceGraph relations, and passed institutional replay/backtesting. The retained proof and Atlas contract are committed to repository paths, with no partner mutation.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest 10-Code/BonfyreControlPlane/tests/test_system_map_stress.py -q",
+        "result": "6 passed in 2.72s."
+      },
+      {
+        "command": "rtk python3 10-Code/BonfyreControlPlane/system_map_stress.py --state-root .bonfyre-runtime/operator-artifacts/system-map-stress/codex-20260821T072544-52bdf5ab --proof evidence/proofs/generation10-system-map-stress.json",
+        "result": "Passed with replay verdict pass and proof sha256 283e7848f02d260aff667de5f193536bbcda406f631619b6de6f2365a07918b2; repeated invocation returned the same proof without another effect."
+      },
+      {
+        "command": "rtk python3 -m pytest tests/ -q",
+        "result": "293 passed, 1 skipped in 11.26s."
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate",
+        "result": "Valid: 189 architectures, 11 views, 50 interactions, 14 phenotypes, 16 edge-classes."
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py export",
+        "result": "Exported architecture/atlas.index.json with 189 architectures."
+      },
+      {
+        "command": "rtk python3 -m py_compile 10-Code/BonfyreControlPlane/system_map_stress.py 10-Code/BonfyreControlPlane/tests/test_system_map_stress.py",
+        "result": "Passed."
+      }
+    ],
+    "work_item": "phase0-system-map-stress"
+  },
+  "content_sha256": "11aa7eb5f596449e4be9c888e73f39638b16b3694ad767e3b1039512b30af0d7",
+  "event_id": "local-2a26ec680d1f09f9d49f4e662038",
+  "evidence_refs": [
+    "receipt:codex-20260821T072544-52bdf5ab",
+    "work:phase0-system-map-stress"
+  ],
+  "observed_at": "2026-08-21T07:36:46.275270+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-system-map-stress completed",
+  "type": "receipt_summary"
+}
