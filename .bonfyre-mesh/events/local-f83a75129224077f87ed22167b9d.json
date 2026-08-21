@@ -1,0 +1,92 @@
+{
+  "actor": {
+    "id": "codex-20260821T072224-6c2fa61c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "10-Code/BonfyreControlPlane/mesh_transport.py",
+      "10-Code/BonfyreControlPlane/tests/test_mesh_transport.py",
+      "architecture/external/remote-mesh.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      "operator:bin/run8_mesh.py",
+      "operator:bin/run8_supervisor.py",
+      ".bonfyre/run8/state.sqlite3",
+      ".bonfyre/run8/mesh/last-import.json",
+      ".bonfyre/run8/mesh/last-export.json",
+      ".bonfyre/run8/mesh/last-sync.json"
+    ],
+    "class": "machine_execution",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Actionable local mesh events now materialize into bounded WorkGraph state through the repo-owned transport semantics and live supervisor carrier.",
+      "Event local-746b1d0bc6cbc4467780842d8046 and work mesh-local-746b1d0bc6cbc4467780842d8046 exist exactly once; the work excludes Codex and prefers Claude.",
+      "Bonfÿre autonomously assigned and delivered the challenge to Claude without Nick relaying text.",
+      "Both emitted envelopes are synchronized remotely, bind their declared SHA-256 addresses, and pass the public privacy gate.",
+      "The supervisor now recognizes Claude session_limit, five_hour, and out_of_credits exhaustion spellings.",
+      "Export bookkeeping no longer overwrites the state-directory parameter after a pending envelope is processed."
+    ],
+    "summary": "Bonfÿre now physically coordinates locally authored cross-provider proof requests through EventGraph, WorkGraph, ProviderGraph, and the public mesh without human relay. The challenge was published, autonomously assigned, and delivered to Claude. Completion remains advanced rather than completed because Claude exhausted before consuming it, so its acknowledgement correctly remains absent.",
+    "tests": [
+      {
+        "command": "python3 -m pytest 10-Code/BonfyreControlPlane/tests/test_mesh_transport.py -q",
+        "result": "20 passed"
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "287 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "188 architectures, 11 views, 43 interactions; valid"
+      },
+      {
+        "command": "python3 architecture/atlas.py export",
+        "result": "Wrote the 188-architecture generated index"
+      },
+      {
+        "command": "Live emitter isolated replay",
+        "result": "One event and one WorkGraph item after replay; avoid_provider=codex, preferred_provider=claude, public_safe=true"
+      },
+      {
+        "command": "Remote branch content-address replay",
+        "result": "Proof challenge and provider delta both recomputed to their declared local SHA-256 addresses and contained no private absolute path"
+      },
+      {
+        "command": "Claude scheduler observation",
+        "result": "Challenge claimed and delivered to Claude without relay; provider exhausted before tokens; acked_at remained null"
+      },
+      {
+        "command": "Claude exhaustion classifier samples",
+        "result": "Three terminal spellings matched; three transient/non-exhaustion samples rejected"
+      },
+      {
+        "command": "Operator Python compilation and export-state shadow check",
+        "result": "Passed; export_pending no longer assigns over its state Path parameter"
+      },
+      {
+        "command": "git diff --check on changed tracked paths",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "phase0-federated-mesh-live"
+  },
+  "content_sha256": "8c8596a688b1733e10197964df3f1452782d65420d043407af34ff66f3a6e6af",
+  "event_id": "local-f83a75129224077f87ed22167b9d",
+  "evidence_refs": [
+    "receipt:codex-20260821T072224-6c2fa61c",
+    "work:phase0-federated-mesh-live"
+  ],
+  "observed_at": "2026-08-21T07:36:23.856985+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-federated-mesh-live advanced",
+  "type": "receipt_summary"
+}
