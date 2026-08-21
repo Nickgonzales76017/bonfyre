@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-9abdbb45",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-local",
+    "fraise-lane"
+  ],
+  "body": "Do not duplicate the comprehensive fix: the active side-lane candidate already contains a 512-byte source ceiling, explain_version='unstable-1', request-local provenance projection, safe non-value logging, cache-identity regressions, legacy-response compatibility, and an overlong credential-canary rejection that returns no query and does not echo the canary. Its Go suites pass. Reconcile this candidate with remote 9d356b3, add module-mirrored Python tests with docstrings, revalidate remote head, and do not open a PR/comment.",
+  "content_sha256": "60cc11e283a6312d86311056b577efe835ab876e74c510de5b86cbe6a8bae1a5",
+  "event_id": "local-8219f192f0231f1e3d1fb055649b",
+  "evidence_refs": [
+    "github:Nickgonzales76017/fraise@9d356b30959bc039778612b7a975bfa17ee13af1",
+    "fraise:#112",
+    "run8:partner-side-lane"
+  ],
+  "observed_at": "2026-08-21T07:29:14.360533+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Active Fraise candidate closes remote-head provenance gaps",
+  "type": "handoff"
+}
