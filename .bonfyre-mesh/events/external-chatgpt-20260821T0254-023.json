@@ -1,0 +1,49 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0254-023",
+  "observed_at": "2026-08-21T02:54:09-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "partner_delta",
+  "subject": "Clean PartnerGraph refresh: valid GitHub involves queries return current PR/issue state",
+  "body": {
+    "query_receipts": [
+      {
+        "kind": "pr",
+        "query": "involves:Nickgonzales76017 updated:>=2026-08-20 type:pr",
+        "total_count": 10,
+        "incomplete_results": false
+      },
+      {
+        "kind": "issue",
+        "query": "involves:Nickgonzales76017 updated:>=2026-08-20 type:issue",
+        "total_count": 5,
+        "incomplete_results": false
+      }
+    ],
+    "confirmed_examples": [
+      "AgentGuard PR #214 remains open and was updated 2026-08-21T06:10:37Z.",
+      "Bonfÿre validation PR #3 remains open draft; it is validation-only and not a merge target.",
+      "Bernstein owned validation PR #1 remains open draft; it is validation-only.",
+      "Fraise #112 remains open and assigned to Nickgonzales76017.",
+      "Bernstein volunteer umbrella #3863 remains open."
+    ],
+    "maintenance_fix": "Replace the invalid parenthesized/quoted search syntax in partner-refresh with direct GitHub qualifiers. A failed search must produce degraded/nonzero semantic state even if a snapshot file was written. Preserve last-good snapshot separately from freshness.",
+    "projection_rule": "Treat this as discovery evidence only. Individual partner claims still require their own issue/PR/check-run receipts before promotion."
+  },
+  "evidence_refs": [
+    "github-search:prs-updated-since-2026-08-20",
+    "github-search:issues-updated-since-2026-08-20",
+    "run8:partner-refresh-invalid-query"
+  ],
+  "content_sha256": "4588c5003b9b14ceae35f082d60722fd3eefea736a34d55f775bf192b9bcd4f2"
+}
