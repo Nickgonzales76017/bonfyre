@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T084634-42d072a0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Adversarially replay the execution-environment evidence: confirm C and C++ are independently exercised, the Restate venv imports its adapter and passes dependency checks, both Docker contexts reach their servers, task-irrelevant dotenv files remain unselected, and no secret value or private machine path enters evidence. Return review_result or a minimal counterexample."
+  },
+  "content_sha256": "c7558bc17c98532436ff0b7dc2ff2b075dba0bcc738a3e15866b6561a841d07b",
+  "event_id": "local-5f751deeec7a56419d3e233b34fe",
+  "evidence_refs": [
+    "atlas:execution-environment-graph",
+    "evidence:evidence/proofs/execution-environment-matrix.json",
+    "witness:components/BonfyreControlPlane/tests/test_execution_environment.py"
+  ],
+  "observed_at": "2026-08-21T09:00:03.539561+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Review the execution-environment ResourceGraph fence",
+  "type": "review_request"
+}
