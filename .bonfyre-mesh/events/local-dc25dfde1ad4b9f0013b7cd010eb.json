@@ -1,0 +1,85 @@
+{
+  "actor": {
+    "id": "codex-20260821T080626-060da31b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/mesh_transport.py",
+      "components/BonfyreControlPlane/tests/test_mesh_transport.py",
+      "components/BonfyreControlPlane/mesh_routing_replay.py",
+      "evidence/proofs/mesh-routing-fence-replay.json",
+      "architecture/external/remote-mesh.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      "operator:bin/run8_mesh.py",
+      "operator:bin/run8_supervisor.py",
+      ".bonfyre/run8/state.sqlite3"
+    ],
+    "class": "machine_execution",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The seeded external event is content-addressed EventGraph state and bounded WorkGraph work, and its Codex acknowledgement remains valid after material consumption.",
+      "Bonfÿre autonomously routed event local-746b1d0bc6cbc4467780842d8046 with avoid_provider=codex and preferred_provider=claude.",
+      "Claude materially consumed the Codex-authored challenge and acknowledged it with a durable 14/14 replay proof; Codex remains unacknowledged.",
+      "Replay proved one EventGraph row, one WorkGraph row, exact address binding, exact public readback, privacy safety, structural validity, duplicate-free reprojection, duplicate admission, and routing variants.",
+      "The invalid historical Codex self-ack was reopened while its original receipt assertion was preserved as divergence evidence.",
+      "Repo-owned acknowledgement validation and live SQLite guards now protect both future and already-running carriers.",
+      "The complete control-plane suite passes 309 tests with one intentional skip.",
+      "The Architecture Atlas validates at 193 architectures, 11 views, and 54 interactions."
+    ],
+    "summary": "Completed the physical self-hosting proof. Bonfÿre imported and materially consumed the external challenge, projected it through EventGraph and WorkGraph, selected and delivered a Codex-authored challenge to Claude through ProviderGraph without Nick relaying text, and received Claude's independently generated 14/14 replay proof. The run exposed and fixed a real ReceiptEnvelope acknowledgement-integrity defect, retracted the false self-ack without erasing history, installed live durable-store guards, and prepared a new typed cross-provider review request for autonomous routing.",
+    "tests": [
+      {
+        "command": "python3 components/BonfyreControlPlane/mesh_routing_replay.py local-746b1d0bc6cbc4467780842d8046",
+        "result": "PASS: review_result with 14 passed and 0 failed; exact remote readback and public privacy gate passed."
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_mesh_transport.py -q",
+        "result": "PASS: 34 passed, covering delivery existence, origin exclusion, stale-carrier SQL upserts, first-receipt preservation, and retroactive reconciliation."
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "PASS: 309 passed, 1 skipped."
+      },
+      {
+        "command": "run8_supervisor.py --self-test",
+        "result": "PASS: canonical repo owner loaded and cross-provider acknowledgement boundary enforced."
+      },
+      {
+        "command": "Live state acknowledgement replay",
+        "result": "PASS: Claude is acknowledged with 14/14 evidence; Codex self-ack is null and retained only as an invalidated historical assertion."
+      },
+      {
+        "command": "Live SQLite guard inspection",
+        "result": "PASS: mesh_ack_insert_guard and mesh_ack_update_guard are installed; repeated acknowledgements preserve the first receipt."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "PASS: 193 architectures, 11 views, 54 interactions, 14 phenotypes, 16 edge classes."
+      },
+      {
+        "command": "git diff --check on scoped repo paths",
+        "result": "PASS."
+      }
+    ],
+    "work_item": "phase0-federated-mesh-live"
+  },
+  "content_sha256": "f96209570b123bfbfc72db42d0fcdb169c27fc8cde0265e3e3445bf22e8d933d",
+  "event_id": "local-dc25dfde1ad4b9f0013b7cd010eb",
+  "evidence_refs": [
+    "receipt:codex-20260821T080626-060da31b",
+    "work:phase0-federated-mesh-live"
+  ],
+  "observed_at": "2026-08-21T08:20:57.089729+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-federated-mesh-live completed",
+  "type": "receipt_summary"
+}
