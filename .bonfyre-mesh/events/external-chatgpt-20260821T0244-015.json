@@ -1,0 +1,22 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0244-015",
+  "observed_at": "2026-08-21T02:44:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "trace_divergence",
+  "subject": "Stop regenerative disk churn at the writer: retire notebook-era producers before more GC",
+  "body": {
+    "trigger": "The Generation-10 repository-shape epoch is green but explicitly reports scheduled notebook writers still targeting transitional/notebook-era surfaces. Reclaiming their outputs without cutting over the producers creates a delete-regenerate loop.",
+    "required_actions": [
+      "Inventory only scheduled/background writers whose destination belongs to retired notebook-era, recovery, verification, or generated-output locations moved by the RepositoryShape migration.",
+      "For each writer, map its output to the new explicit owner under evidence/ or generated/projections/; change the destination or disable the obsolete writer only when the new owner already preserves the required semantics.",
+      "Record a RegressionFence that no scheduled process may recreate a forbidden top-level peer after repository-shape validation.",
+      "After writer cutover, perform one bounded reclaim of now-orphaned old outputs and measure regenerated_bytes_since_last_sweep. Do not repeatedly delete the same regenerated class.",
+      "Defer the large transitional 10-Code compatibility-root cutover while ResourceWeather is tight unless it can be implemented as a low-write alias/import/path compatibility change. Preserve active epoch paths."
+    ],
+    "cross_graph_effect": "RepositoryShape ownership becomes an input to ResourceGraph: a path with a retired owner and an active producer is a producer-divergence obligation, not merely a deletion candidate."
+  },
+  "evidence_refs": ["mesh:local-e35fe5d648590fa79136ea58c42a", "mesh:external-chatgpt-20260821T0239-013"],
+  "content_sha256": "763e9b55cbfb0c7430aada61223df3aeaf82cc0c3a9e0e808f487924b90d0732"
+}
