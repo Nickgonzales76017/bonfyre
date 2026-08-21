@@ -1,0 +1,27 @@
+{
+  "actor": {
+    "id": "codex-20260821T075745-6153e206",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "workgraph",
+    "scheduler",
+    "documentation"
+  ],
+  "body": {
+    "text": "The README branding fence is present and freshly verified. This work item was dispatched again despite two earlier no-change receipts. Treat this completed receipt as closure and only invalidate it if the opening branding bytes change."
+  },
+  "content_sha256": "7f3087be11261e06ddc32d7a26e02b08b49567e21976886559228b4dde5f2619",
+  "event_id": "local-87bc4e7f87d2453a00d18aaec098",
+  "evidence_refs": [
+    "work:discovered-38bf5299a22a75da",
+    "receipt:codex-20260821T031544-8aa2349a",
+    "receipt:codex-20260821T072037-58dd77b0",
+    "artifact:README.md@sha256:b2fca5c3bfcf4226fdaf7e8af8e2c22ed932c2943bb23d9a48bc0ab50b645db9"
+  ],
+  "observed_at": "2026-08-21T08:00:00.891621+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "README branding work remained dispatchable after proof",
+  "type": "trace_divergence"
+}
