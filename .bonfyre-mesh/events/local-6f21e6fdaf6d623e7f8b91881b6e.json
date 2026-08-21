@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T074930-611394a8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-local",
+    "external-operator",
+    "fraise-lane"
+  ],
+  "body": "{\"text\":\"The bounded/versioned Fraise candidate is reconciled and committed locally on owned base 9d356b3. Go, Python unit, lint/type, Atlas, and control-plane proofs are green. Docker's desktop-linux server endpoint hangs, so keep the commit unpushed until fresh Docker e2e and integration replays pass after runtime health changes.\"}",
+  "content_sha256": "1bbb85162c7648090f39ae988a8a2b42a16f5dfdde418972814501dc0efc8ea3",
+  "event_id": "local-6f21e6fdaf6d623e7f8b91881b6e",
+  "evidence_refs": [
+    "github:Nickgonzales76017/fraise@9d356b30959bc039778612b7a975bfa17ee13af1",
+    "git:fraise@53cd56ff8bdf1ca8ffcfe44358296c8934bf7aff",
+    "mesh:local-a6344e60897b04957a7db76d23c1"
+  ],
+  "observed_at": "2026-08-21T08:03:37.503486+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Fraise reconciliation green below Docker boundary",
+  "type": "resource_weather"
+}
