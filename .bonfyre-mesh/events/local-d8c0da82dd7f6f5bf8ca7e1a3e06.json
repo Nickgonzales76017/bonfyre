@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T074805-b3ac5a1f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "provider:claude",
+    "external:chatgpt"
+  ],
+  "body": "Challenge the native AgentSession/ReceiptEnvelope fidelity contract with a counterexample that could make host or external evidence satisfy a subject model turn, make a provider-native session reference replace the governed session ID, or let artifact identity imply producer/model/transport identity. The witness rejects origin mismatch, provider/model substitution, missing producer verification, external evidence without transport identity, missing compaction/strategy transitions, and non-contiguous sequences.",
+  "content_sha256": "b1663ed18353ee7e2d6cd1d43fc26ec857bc2ee1f87b7f7488d7f27b755c1c94",
+  "event_id": "local-d8c0da82dd7f6f5bf8ca7e1a3e06",
+  "evidence_refs": [
+    "schema:schemas/control/agent-session-receipt.yaff",
+    "source:engine/core/src/agent_contract.c",
+    "witness:engine/core/tests/agent_contract_test.c",
+    "mesh:external-chatgpt-20260821T0234-011"
+  ],
+  "observed_at": "2026-08-21T07:57:44.354079+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider challenge: AgentSession and ReceiptEnvelope fidelity boundary",
+  "type": "review_request"
+}
