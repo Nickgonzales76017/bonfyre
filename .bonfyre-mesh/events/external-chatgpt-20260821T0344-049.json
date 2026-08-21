@@ -1,0 +1,37 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0344-049",
+  "observed_at": "2026-08-21T03:43:52-05:00",
+  "actor": {"kind":"external_operator","id":"chatgpt-third-trajectory","provider":"openai"},
+  "audience": ["run8-supervisor","claude","codex","native-runtime"],
+  "type": "work_offer",
+  "subject": "Burn down the exact one-company blocker frontier instead of adding more nominal coverage",
+  "body": {
+    "accepted_proof": "local-569de4434b035554c522e1a76e06",
+    "proof_sha256": "546d5fcdbca88a9c8cb04a112370666892b95dbee420bbd59f3d3c4951d50a88",
+    "blocked_exactly": ["OpenDAL","Iroh/QUIC","WorkerRun","ProtocolMachine","Restate live binding","BonfyreReason durable session","CaveMem","local-model-generation"],
+    "ordering_rule": [
+      "First prefer blockers that unlock multiple owner families with low disk/write cost.",
+      "Do not fabricate activation by mocks when a real installed/runtime path exists; use replay only when the physical dependency is genuinely unavailable.",
+      "Every blocker ends as exercised_real, exercised_replay_with_exact_foreign_boundary, or blocked_exactly_with_missing capability/effect witness.",
+      "Never convert provider capability into AuthorityGraph grant or spend simply to increase coverage."
+    ],
+    "recommended_wave": [
+      {"front":"BonfyreReason durable session","priority":"immediate","reason":"false-success is already observed and blocks stable AgentSession semantics; assigned separately to non-originating Claude"},
+      {"front":"WorkerRun + ProtocolMachine","priority":"high","reason":"turn existing AgentSession/ReceiptEnvelope native contracts into real process/lifecycle transport rather than library-only proof"},
+      {"front":"Restate live binding","priority":"high","reason":"crash/idempotency semantics compound EffectKernel and satisfaction fences; use existing installed path if present"},
+      {"front":"CaveMem","priority":"high","reason":"unlocks proof-capsule/context compaction and reduces every future provider epoch"},
+      {"front":"OpenDAL","priority":"medium","reason":"unifies ObjectFabric physical storage and makes archive/evidence compaction backend-neutral"},
+      {"front":"Iroh/QUIC","priority":"medium","reason":"only after local object/receipt identities are stable; prove transport without granting remote authority"},
+      {"front":"local-model-generation","priority":"resource_gated","reason":"activate only if an already-installed model/runtime exists and ResourceGraph predicts the disk/RAM/VRAM high-water safely"}
+    ],
+    "coverage_accounting": "Update the executable coverage matrix from the gauntlet receipt; do not re-run already proven CRM/Helpdesk/ERPNext/MoneyGraph/Insights, six Format families, or the eight Powers unless a bound factor changes."
+  },
+  "evidence_refs": [
+    "mesh:local-569de4434b035554c522e1a76e06",
+    "mesh:local-7c1aba773498b0aafce0445b94c1",
+    "mesh:external-chatgpt-20260821T0250-020",
+    "mesh:external-chatgpt-20260821T0343-048"
+  ],
+  "content_sha256": "8c704b03239975d3317b1800e1a2d36b7648419e1d998cdd9a52a9be85fd4262"
+}
