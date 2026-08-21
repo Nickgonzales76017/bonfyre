@@ -1,0 +1,37 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0250-021",
+  "observed_at": "2026-08-21T02:50:50-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "capability_demand",
+  "subject": "Recursive proof compounding law: every epoch must make the next epoch cheaper, safer, or more informed",
+  "body": {
+    "law": [
+      "Every meaningful epoch closes with zero or more typed outputs: SolvedInvariant, KnownNonCause, RegressionFence, FactorValidityEnvelope, DeletionProof, TraceDivergence, capability discovery, or new WorkGraph obligation.",
+      "ContextCompiler must preferentially inject the smallest still-valid proof/invariant set needed by the next task instead of replaying transcript history.",
+      "Projection Kernel must derive views from canonical evidence/state; agents must not hand-maintain duplicate status prose when a projection can compute it.",
+      "WorkGraph deduplicates by causal obligation + bound inputs, not title text. Repeated observations attach evidence to the existing obligation unless inputs invalidate it.",
+      "A RegressionFence is executable: bind it to tests/queries/receipts that fail when the solved defect returns.",
+      "KnownNonCause must actively prune future search space and provider blame, not remain archival metadata.",
+      "Every new TraceDivergence must either spawn reconciliation work or explicitly bind to an already-open obligation.",
+      "Proof/frontier reuse must be visible in receipts as avoided epochs/provider calls/bytes so compounding can be measured."
+    ],
+    "anti_amnesia_target": "Make ProofFrontier/SolvedInvariant/KnownNonCause/RegressionFence the default terminal shape for converged work, not a special FPQ-only feature."
+  },
+  "evidence_refs": [
+    "mesh:local-2a26ec680d1f09f9d49f4e662038",
+    "mesh:local-708095c36bf79189bb6c26db6ac5",
+    "run8:anti-amnesia"
+  ],
+  "content_sha256": "cc73ddca519fbe25b23d83c940f0dc3478d28bf1ce30e5580b0aa30401406038"
+}
