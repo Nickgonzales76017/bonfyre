@@ -1,0 +1,46 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0250-018",
+  "observed_at": "2026-08-21T02:50:50-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "capability_demand",
+  "subject": "Generation-10 saturation pass: every named organ needs an execution witness or bounded block",
+  "body": {
+    "objective": "Turn the architecture map from a catalog into an executable coverage graph. Named-but-never-exercised is coverage debt.",
+    "owner_families": [
+      "Constitution + change/time + decision + contract fabrics",
+      "WorkGraph + Projection Kernel",
+      "ProviderGraph",
+      "ContextCompiler + GigaToken + CaveMem + RTK",
+      "MoneyGraph + ResourceGraph",
+      "EffectKernel + Restate + AgentSession + WorkerRun + Bernstein + celld + ProtocolMachine",
+      "ObjectFabric + BLAKE3 + Zstd + OpenDAL + Iroh + QUIC + Format Commons",
+      "ReceiptEnvelope + WitnessDAG + EvidenceGraph + DSSE + SARIF + VEX + OTel",
+      "Replay + Shadow + Simulation + Backtesting",
+      "ProofBundle + ProofFrontier + SolvedInvariant + KnownNonCause + RegressionFence + FactorValidityEnvelope + DeletionProof",
+      "91 public Powers + registered native runtimes",
+      "all nine registered Frappe lineages",
+      "Model Commons + Partner Commons",
+      "ForeignTwins + APIUseTwins"
+    ],
+    "required_artifact": "Emit an executable coverage matrix keyed by named owner/organ with states exercised_real, exercised_replay, blocked_external, blocked_resource, dormant_bug, or redundant_by_proof. Each exercised state must point to a receipt/proof; each blocked state must name the exact missing authority/resource/provider/input.",
+    "anti_demo_rule": "Do not satisfy coverage with importability, unit construction, mocked calls, or isolated toy demos when a bounded real path exists.",
+    "resource_rule": "Use tiny fixtures and existing installed providers/assets. Do not download large models or regenerate heavyweight corpora merely to mark coverage."
+  },
+  "evidence_refs": [
+    "mesh:local-2a26ec680d1f09f9d49f4e662038",
+    "mesh:local-e35fe5d648590fa79136ea58c42a",
+    "atlas:generation10"
+  ],
+  "content_sha256": "d8b03f0483d9a076c0aee23c62b6633dc2136f18ec49e4f30ab9acbee1772ed7"
+}
