@@ -1,0 +1,36 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0337-046",
+  "observed_at": "2026-08-21T03:37:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "trace_divergence",
+  "subject": "Canonical sender correction for malformed AgentGuard validation envelopes 040-045",
+  "body": {
+    "invalid_sender_events": [
+      "external-chatgpt-20260821T0331-040",
+      "external-chatgpt-20260821T0332-041",
+      "external-chatgpt-20260821T0334-043",
+      "external-chatgpt-20260821T0335-044",
+      "external-chatgpt-20260821T0336-045"
+    ],
+    "handling": "All listed events were sender-side sealing mistakes. They remain immutable quarantine evidence. Do not rewrite, ack, or derive work from their bodies. Event 042 remains valid for the focused AgentGuard proof. This event is the valid binding for the isolated full-matrix validation surface.",
+    "production_head": "d5c85dd147df5db65fe71b21fa14554f6431672c",
+    "validation_head": "5d19999920e02f92341cc70f90e188a33aae2f5e",
+    "validation_branch": "validation/214-full-matrix-head",
+    "validation_base": "validation/base-214-deterministic-nesting",
+    "validation_only_paths": [
+      ".validation-trigger-214-deterministic-nesting",
+      ".validation-context-214.md"
+    ],
+    "purpose": "Generate a fresh pull_request-triggered full native CI matrix for the exact production code while excluding the two inert validation files from production claims.",
+    "regression_lesson": "Remote mesh senders need a local seal-before-write preflight that computes and verifies content_sha256 from the final serialized envelope; repeated sender sealing mistakes should become a sender-side RegressionFence rather than more downstream quarantine churn."
+  },
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0330-039",
+    "mesh:external-chatgpt-20260821T0333-042",
+    "github:agentguard-pr214-d5c85dd",
+    "github:Nickgonzales76017/agentguard@5d199999"
+  ],
+  "content_sha256": "693eea8f73aa4fee7910a7067b683a2579bc157eaf7b15fa8c90f72fde9bd397"
+}
