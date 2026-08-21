@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T084723-682448b7",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Adversarially review the orphan-gitlink disposition proof. Verify that all three historical mode/OID pairs match both introducing superproject trees, neither legacy nor relocated path remains tracked, vendor/hvm4 remains registered, current BonfyreCMS and Lambda Tensors owners remain intact, and no similarly named remote HEAD was substituted for an unavailable recorded object. Return review_result or a minimal trace_divergence."
+  },
+  "content_sha256": "2791e7b992c7eaf18d93a29ee8dfec9a1f7a7373d40becfddfbd38f12db47011",
+  "event_id": "local-e01d1b4c059430fcda436bfc30d5",
+  "evidence_refs": [
+    "work:discovered-2383c64e3e93c670",
+    "atlas:transitional-root-absorption",
+    "artifact:evidence/verification/transitional-root/orphan-gitlink-disposition-proof.json",
+    "witness:tests/test_transitional_root_absorption.py",
+    "projection:generated/projections/estate/transitional-root-absorption.json"
+  ],
+  "observed_at": "2026-08-21T08:53:45.696288+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review: orphan gitlink disposition fence",
+  "type": "review_request"
+}
