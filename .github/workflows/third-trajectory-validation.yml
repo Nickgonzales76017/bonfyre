@@ -1,0 +1,40 @@
+name: Third trajectory validation
+
+on:
+  pull_request:
+    branches:
+      - validation/external-evidence-base
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  external-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.13"
+
+      - name: Compile trajectory scripts
+        run: |
+          python -m py_compile \
+            scripts/runpod_v2_migration_audit.py \
+            scripts/agent_trace_0_1_import.py
+
+      - name: Install isolated test dependency
+        run: python -m pip install --disable-pip-version-check 'pytest==8.4.1'
+
+      - name: Run trajectory contract tests
+        run: |
+          python -m pytest -q \
+            tests/test_runpod_v2_migration_audit.py \
+            tests/test_agent_trace_0_1_import.py
