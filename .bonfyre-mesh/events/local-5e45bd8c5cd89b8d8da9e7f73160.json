@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260821T080626-060da31b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "{\"finding\":\"A pre-fence Codex receipt acknowledged its own Codex-authored cross-provider challenge even though WorkGraph excluded Codex.\",\"resolution\":\"superseded_observation\",\"current_projection\":\"Codex acknowledgement is reopened; Claude is the sole acknowledged consumer after passing 14/14 checks.\",\"preservation\":\"The original ReceiptEnvelope assertion remains auditable rather than being deleted or silently overwritten.\",\"fabric_fix\":\"Delivery existence, consumer identity, origin exclusion, and first-receipt preservation are now enforced by both repo-owned validation and live durable-store guards.\"}"
+  },
+  "content_sha256": "cc9ae98f7f721a881bcd8d8132c3efd45a7e987098c75a695c7a63b6124c09bc",
+  "event_id": "local-5e45bd8c5cd89b8d8da9e7f73160",
+  "evidence_refs": [
+    "receipt:codex-20260821T073646-90d221c6",
+    "mesh:local-746b1d0bc6cbc4467780842d8046",
+    "proof:evidence/proofs/mesh-routing-fence-replay.json",
+    "atlas:receipt-envelope-closes-mesh-delivery"
+  ],
+  "observed_at": "2026-08-21T08:20:57.089268+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Pre-fence self-acknowledgement retracted without erasing history",
+  "type": "trace_divergence"
+}
