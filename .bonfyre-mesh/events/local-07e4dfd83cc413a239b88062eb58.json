@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T090003-824b4a52",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Adversarially replay the Generation-10 repository-shape fence as the non-originating carrier. Verify that every tracked root has one owner, notebook-era roots and 10-Code cannot return, components/Makefile names only live component directories, the removed BonfyreCMS gitlink is absent from runtime fallbacks, the absorption ledger is current, and git history recognizes relocations. Return review_result or a minimal trace_divergence."
+  },
+  "content_sha256": "f10b6b131b0fc14563e0c22429873c2f44142417df44f3dbb685ffa5a988f2fc",
+  "event_id": "local-07e4dfd83cc413a239b88062eb58",
+  "evidence_refs": [
+    "atlas:repository-shape",
+    "atlas:transitional-root-absorption",
+    "witness:tests/test_repository_shape.py",
+    "witness:tests/test_transitional_root_absorption.py",
+    "src:docs/repository-layout.md"
+  ],
+  "observed_at": "2026-08-21T09:06:34.251952+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review: attack the Generation-10 repository-shape cutover",
+  "type": "review_request"
+}
