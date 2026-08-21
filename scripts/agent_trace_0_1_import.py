@@ -62,9 +62,13 @@ def repo_path(value: Any) -> str:
     candidate = raw.replace("\\", "/")
     if re.match(r"^[A-Za-z]:/", candidate) or candidate.startswith("/"):
         raise ImportError("file.path must be repository-relative")
+    # Validate raw normalized separators before PurePosixPath canonicalizes
+    # away './' and repeated separators. Foreign evidence should preserve a
+    # single canonical spelling rather than silently upgrading dirty input.
+    components = candidate.split("/")
+    if any(part in {"", ".", ".."} for part in components):
+        raise ImportError("file.path must not contain empty, dot, or traversal components")
     path = PurePosixPath(candidate)
-    if any(part in {"", ".", ".."} for part in path.parts):
-        raise ImportError("file.path must not contain traversal components")
     return path.as_posix()
 
 
