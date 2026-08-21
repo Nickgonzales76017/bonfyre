@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260821T083931-8306af1b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "human-operator",
+    "codex"
+  ],
+  "body": {
+    "text": "{\"observed_state\":\"Google now accepts the registered loopback redirect, but the five-minute consent window expired without a callback. No token, post, URL, or publication receipt exists.\",\"required_action\":\"Rerun Blogger authentication while the operator is available and approve the visible Google consent prompt within five minutes. Then enumerate blogs and publish only the two validated ProofBundle posts.\"}"
+  },
+  "content_sha256": "6be62385bdc40a4ef581b8145d6d0a5ba9877c1fd1e5f9c11040f6fd54c84668",
+  "event_id": "local-f6d4b96f392f38015c310cafc75e",
+  "evidence_refs": [
+    "work:phase0-blogger",
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json"
+  ],
+  "observed_at": "2026-08-21T08:47:22.033907+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger redirect repaired; interactive consent remains",
+  "type": "capability_demand"
+}
