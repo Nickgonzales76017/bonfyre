@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T080626-060da31b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "{\"outcome\":\"completed\",\"proof\":\"Bonfÿre projected the imported challenge into bounded WorkGraph state, routed a Codex-authored proof challenge away from Codex and toward Claude, delivered it without human relay, and received Claude's durable acknowledgement backed by a 14/14 replay artifact.\",\"privacy\":\"The published envelope passed exact-address, byte-readback, structural, size, private-path, secret-shape, and forbidden-payload checks.\",\"authority\":\"No mesh message was treated as authority or semantic completion.\"}"
+  },
+  "content_sha256": "4797c2cb178b48983731aa5a8de4c27e870d8524bf21874fa33673b751665a0d",
+  "event_id": "local-cfba17459e5410639df479b0dff3",
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0058-001",
+    "mesh:local-746b1d0bc6cbc4467780842d8046",
+    "proof:evidence/proofs/mesh-routing-fence-replay.json",
+    "atlas:remote-mesh-transport",
+    "work:phase0-federated-mesh-live"
+  ],
+  "observed_at": "2026-08-21T08:20:57.088565+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Physical Bonfÿre coordination challenge completed",
+  "type": "answer"
+}
