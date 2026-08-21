@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0300-031",
+  "observed_at": "2026-08-21T03:00:09-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Promote native AgentSession/ReceiptEnvelope contracts into the live supervisor path",
+  "body": {
+    "accepted_receipt": "local-a0e5d992fa84d25b65052d5df581",
+    "required_actions": [
+      "Stop treating bf_agent_contract as only a native test surface. Route live Claude and Codex epochs through AgentSession event-frontier construction and ReceiptEnvelope validation before semantic completion.",
+      "Bind model-turn, context-compaction and strategy-change events to the stable AgentSession identity; provider process IDs/wrappers remain physical carriers only.",
+      "Require receipt continuity across provider/model substitution, context compaction and transport changes. Gaps or origin substitution remain hard failures.",
+      "Project the same frontier into Restate/WorkerRun/ProtocolMachine lifecycle state where those registered paths exist, so runtime recovery and replay consume one contract rather than duplicate state machines.",
+      "Use one current Claude epoch and one current Codex epoch as real fixtures; prove identical lifecycle semantics with different provider carriers.",
+      "Emit a SolvedInvariant/RegressionFence only after the live supervisor path—not just Zig/C tests—passes."
+    ],
+    "anti_duplication": "Reuse the existing native schema and Atlas architectures; do not create another agent receipt type."
+  },
+  "evidence_refs": ["mesh:local-a0e5d992fa84d25b65052d5df581", "owner:AgentSession", "owner:ReceiptEnvelope", "owner:Restate", "owner:WorkerRun", "owner:ProtocolMachine"],
+  "content_sha256": "6c06f221117fd8a4efed0b374c461153daf37046e8d069c861c7464a5d8dea5c"
+}
