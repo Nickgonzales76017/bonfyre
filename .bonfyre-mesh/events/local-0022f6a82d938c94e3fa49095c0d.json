@@ -1,0 +1,80 @@
+{
+  "actor": {
+    "id": "codex-20260821T080002-12e9f7a1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "architecture/estate-compiler-retirement.json",
+      "architecture/institutional/repository-layout.yaff",
+      "architecture/atlas.index.json",
+      "scripts/check_estate_compiler_retirement.py",
+      "tests/test_estate_compiler_retirement.py",
+      ".bonfyre/run8/convergence/deletion-proofs/2a4f83cb814b6ccdf218.json",
+      ".bonfyre/run8/convergence/deletion-proofs/2a4f83cb814b6ccdf218.manifest.jsonl.gz",
+      ".bonfyre/run8/convergence/deletion-proofs/380213a543ecae7eeb22.json",
+      ".bonfyre/run8/convergence/deletion-proofs/380213a543ecae7eeb22.manifest.jsonl.gz",
+      "deleted: user LaunchAgent com.bonfyre.estate-compiler.plist",
+      "deleted: legacy user estate-compiler implementation directory"
+    ],
+    "class": "architecture_convergence",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The legacy LaunchAgent and implementation directory are physically absent.",
+      "The frozen V8.1 YaFF Scan prohibition is preserved in a machine-readable retirement contract.",
+      "Two full-manifest DeletionProofs account for 11,044,630 removed bytes across seven files; manifest counts exactly match proof counts.",
+      "RepositoryShape now owns the retirement boundary without inventing an architecture for the retired implementation.",
+      "The complete control-plane suite passes 302 tests with one intentional skip.",
+      "The Architecture Atlas validates at 191 architectures, 11 views, and 51 interactions."
+    ],
+    "summary": "Finished legacy estate-compiler retirement. Preserved the frozen V8.1 prohibition as an executable, fail-closed contract; extended RepositoryShape and exported the Atlas; wrote full DeletionProofs; removed the disabled launch artifact and remaining implementation; and verified the persistent disabled state and physical absence. No partner or remote state was mutated.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_estate_compiler_retirement.py -q",
+        "result": "PASS: 3 adversarial retirement-contract tests."
+      },
+      {
+        "command": "python3 -m pytest tests/test_estate_compiler_retirement.py tests/test_repository_shape.py -q",
+        "result": "PASS: 9 tests."
+      },
+      {
+        "command": "cd 10-Code/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "PASS: 302 passed, 1 skipped."
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "PASS: projection exported; 191 architectures, 11 views, 51 interactions, 14 phenotypes, 16 edge-classes."
+      },
+      {
+        "command": "python3 scripts/check_estate_compiler_retirement.py",
+        "result": "PASS: legacy estate compiler remains retired behind the frozen V8.1 fence."
+      },
+      {
+        "command": "DeletionProof manifest audit",
+        "result": "PASS: launch artifact 1/1 manifest entries; runtime directory 6/6; both proofs contain 64-character root digests."
+      },
+      {
+        "command": "launchctl and filesystem retirement audit",
+        "result": "PASS: label remains disabled, service is unloaded, and both retired runtime paths are absent."
+      }
+    ],
+    "work_item": "discovered-abed5d727471439a"
+  },
+  "content_sha256": "65001f444ac755f7e1cf49b50180e6350a81b475ecc2f37b028b2e2ae16f29c8",
+  "event_id": "local-0022f6a82d938c94e3fa49095c0d",
+  "evidence_refs": [
+    "receipt:codex-20260821T080002-12e9f7a1",
+    "work:discovered-abed5d727471439a"
+  ],
+  "observed_at": "2026-08-21T08:06:25.137981+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-abed5d727471439a completed",
+  "type": "receipt_summary"
+}
