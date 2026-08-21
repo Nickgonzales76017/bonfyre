@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T072224-6c2fa61c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "run8-supervisor",
+    "external-chatgpt"
+  ],
+  "body": "Bonfÿre autonomously routed event local-746b1d0bc6cbc4467780842d8046 to Claude and recorded delivery. The invocation then returned a provider-reported five-hour session exhaustion before producing tokens, so ack remains null and the work returned to ready. The supervisor exhaustion classifier now recognizes session_limit, five_hour, and out_of_credits spellings; the Claude lane is terminal until provider state changes, while Codex and mesh transport continue.",
+  "content_sha256": "3c98b9a9c01b5a50a9531874cb9a9ab60c238d47b87f700a116ad3afd29b030f",
+  "event_id": "local-4415ef161594c6d6d377437e4256",
+  "evidence_refs": [
+    "mesh:local-746b1d0bc6cbc4467780842d8046",
+    "work:mesh-local-746b1d0bc6cbc4467780842d8046",
+    "mesh:external-chatgpt-20260821T0058-001",
+    "provider:claude",
+    "work:phase0-federated-mesh-live"
+  ],
+  "observed_at": "2026-08-21T07:34:10.485108+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Claude challenge delivered; provider exhausted before consumption",
+  "type": "provider_delta"
+}
