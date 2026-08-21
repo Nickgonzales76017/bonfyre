@@ -1,0 +1,105 @@
+{
+  "actor": {
+    "id": "claude-20260821T025042-ffdff540",
+    "kind": "provider_epoch",
+    "provider": "claude"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8/convergence/absorb_run6_estate.py",
+      ".bonfyre/run8/convergence/verify_absorption.py",
+      ".bonfyre/run8/convergence/promote_plan.py",
+      ".bonfyre/run8/convergence/archive_subsumption.py",
+      ".bonfyre/run8/convergence/archive-subsumption.json",
+      ".bonfyre/run8/convergence/raw-archive-liveness.json",
+      ".bonfyre/run8/convergence/plan.json",
+      ".bonfyre/run8/convergence/last-apply.json",
+      ".bonfyre/run8/convergence/absorption/run6-workspaces.absorption.json",
+      ".bonfyre/run8/convergence/absorption/publication-staging.absorption.json",
+      ".bonfyre/run8/convergence/absorption/repo-dot-run6.absorption.json",
+      ".bonfyre/run8/convergence/absorption/library-logs-run6.absorption.json",
+      ".bonfyre/run8/convergence/deletion-proofs/29bd966385fa77b6c6bb.json",
+      ".bonfyre/run8/convergence/deletion-proofs/7f73f0aca5bea049850d.json",
+      ".bonfyre/run8/convergence/deletion-proofs/0f93ba2b00a3bca0d59b.json",
+      ".bonfyre/run8/convergence/deletion-proofs/9208a75342812610118b.json",
+      ".bonfyre/run8/convergence/deletion-proofs/b88ee2b0d472a4bfc725.json",
+      ".bonfyre/run8/convergence/deletion-proofs/3e14bba04bcc2e43f9ee.json",
+      ".bonfyre/run8/convergence/deletion-proofs/59f4a61c5a6a882abb4e.json",
+      ".bonfyre/run8/convergence/deletion-proofs/4fe078871404b038053f.json",
+      "refs/absorbed/run6/system-experiments-bonfyre/agent/readiness-capability-parity",
+      "refs/absorbed/run6/system-experiments-bonfyre/main",
+      "~/.bonfyre/freeze/run8 (27 content-addressed blobs, 4.4 MB)",
+      "DELETED: ~/Library/Application Support/Bonfyre/CapitalGym/run6/workspaces (3,024,660,072 B, 144,807 files)",
+      "DELETED: ~/Library/Application Support/Bonfyre/CapitalGym/publication-staging (90,648,270 B, 2,080 files)",
+      "DELETED: ~/Library/Logs/Bonfyre/Run6 (18,105,160 B, 117 files)",
+      "DELETED: ~/Downloads/Bonfyre_V3_Part13_Habitat_Advanced_Frontend_Semantic_Navigation.zip (703,826 B)",
+      "DELETED: ~/Downloads/bonfyre_cmd_options_inventory.md (125,788 B)",
+      "DELETED: ~/Downloads/Bonfyre_Aurekai_System_Textbook_RECONCILED_2026-08-19.zip (102,365 B)",
+      "DELETED: ~/Downloads/bonfyre_durable_state_patch (1).zip (7,774 B)"
+    ],
+    "class": "machine_execution",
+    "outcome": "completed",
+    "solved_invariants": [
+      "No non-reproducible path is deleted without a preservation_receipt that verifies at promotion time: promote_plan.py re-runs verify_absorption.py per receipt and refuses the promotion on a non-zero exit, so a stale or corrupted receipt cannot authorise a delete.",
+      "Every one of the 3,134,361,029 deleted bytes is recoverable: reachable from a live git remote (21 remotes confirmed resolvable via git ls-remote --exit-code), or present in the ~/.bonfyre/freeze/run8 content-addressed store, or held in the live repo object store as refs/absorbed/run6/*.",
+      "Deletion accounting is complete and self-checking: all 8 DeletionProofs carry a root_digest_sha256 and a gzip per-file manifest whose line count equals the recorded file_count, audited at 146,809 lines total.",
+      "Disk pressure now degrades gracefully rather than deadlocking: free space moved 2.8 -> 6.5 GiB through semantic GC, so the fixed-floor hard-stop that killed the previous run before its first epoch is no longer reachable from this state."
+    ],
+    "summary": "Built and ran a proof-gated semantic absorption pass over the Run1-7 estate, then executed converge_estate.py apply. Discovery: the 4.0 GB of CapitalGym/run6/workspaces is 18 git checkouts of live public/owned remotes plus 3 clean staging clones; it contains only 7.17 MB of non-reproducible content (local-only commits, stashes, uncommitted diffs, untracked files). absorb_run6_estate.py captured every such byte into a content-addressed gzip freeze store at ~/.bonfyre/freeze/run8 (27 blobs, 4.4 MB total) and the 3 unique commits from the live-repo clone were absorbed into real git refs under refs/absorbed/run6/system-experiments-bonfyre/ (b22e4ce5, 2019af57) so they live in the repo object store rather than only in a tarball. verify_absorption.py re-hashed every blob, required a captured patch for every local-only commit and stash, rejected any skipped untracked file, and confirmed all 21 git remotes still resolve; it is re-run at promotion time so a stale receipt cannot authorise a delete. Only then were 3 entries promoted BLOCK->DELETE in convergence/plan.json with preservation_receipt paths. apply deleted 8 entries totalling 3,134,361,029 bytes (2.919 GiB) with zero refusals, writing DeletionProof JSON plus gzip per-file manifests; all 146,809 manifest lines match their recorded file_count and each root_digest_sha256 is recorded. Free space went 2.8 -> 6.5 GiB, clearing the pressure that killed the previous run. Two deletions were deliberately NOT taken, with evidence: the 589 MB of Bonfyre_V3_Part06-12 raw archives are a forensic chat corpus and a 3-part split archive whose members have no live copy (0/112 sampled members byte-identical to anything under ~, ~/.codex or ~/.claude), so they are the only copy of unique evidence; and .run6 is held as the parallel Codex lane's live ABSORB input for 4 MB of zero disk relief, though its byte-exact freeze is already banked. Adjacent finding: the README knight/Bonfyre branding fence fails - asset 7785a8d6-6e28-4892-8958-3daf85414f05 has never existed in this repo's README.md history, and the intended replacement is the un-absorbed Downloads/README_BONFYRE_CURRENT.md, which passes the fence exactly as written.",
+    "tests": [
+      {
+        "command": "python3 .bonfyre/run8/convergence/absorb_run6_estate.py run6-workspaces=<CapitalGym>/run6/workspaces publication-staging=<CapitalGym>/publication-staging",
+        "result": "PASS after a fix. First run reported 492,552,017 unique raw bytes because capture_plain_tree recursed into git checkouts and froze their reproducible working trees; it would have stored 217 MB of public bytes as unique evidence. Patched to prune checkout paths, wiped the bad blobs, re-ran: 18 checkouts + 5 authored trees, 7,167,486 unique raw bytes -> 730,475 stored."
+      },
+      {
+        "command": "python3 .bonfyre/run8/convergence/verify_absorption.py <all 4 receipts>",
+        "result": "PASS, exit 0. 27 blobs re-hashed to their recorded sha256 with matching raw_bytes; every local-only commit and stash has a captured patch; zero skipped untracked files; all git remotes reachable via git ls-remote --exit-code."
+      },
+      {
+        "command": "git fetch --no-tags <run6 clone> '+refs/heads/*:refs/absorbed/run6/system-experiments-bonfyre/*'; git cat-file -t b22e4ce5",
+        "result": "PASS. 2 branches absorbed; commit b22e4ce5 'test: probe canonical JSON identity boundaries' resolves in the live repo after the workspace was deleted."
+      },
+      {
+        "command": "python3 .bonfyre/run8/convergence/archive_subsumption.py",
+        "result": "PASS. 72 Downloads archives indexed by (size, crc32) member sets, zero unreadable, no extraction. Only 3,860,427 B provably redundant. Notably the V8_1_FULL_LINEAGE_KERNEL_CONVERGENCE duplicate is content-identical to the protected canonical source, and converge_estate refuses it by name; the fence was respected, not worked around."
+      },
+      {
+        "command": "python3 bin/converge_estate.py apply (BONFYRE_REPO=/Users/nickgonzales/Documents/Bonfyre)",
+        "result": "PASS. 8 deleted, 0 refused, reclaimed_bytes=3134361029 (2.919 GiB), free_gib_after=6.552."
+      },
+      {
+        "command": "post-delete audit: retained-sibling existence, capital.db integrity, absorbed refs, proof/manifest line-count equality",
+        "result": "PASS. All 4 retained duplicate siblings present; capital.db intact with 10 relationships and all 40+ tables; both absorbed refs resolve; all 8 proofs have manifest_lines == file_count (146,809 total) and a recorded root_digest_sha256."
+      },
+      {
+        "command": "python3 -c raw-archive liveness probe over Bonfyre_V3_Part06-12",
+        "result": "NEGATIVE RESULT, deletion correctly refused. 0/112 sampled members had a byte-identical live copy under ~, ~/.codex or ~/.claude. 589.3 MB retained as sole-copy evidence."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "PASS. atlas valid: 182 architectures, 11 views, 36 interactions, 14 phenotypes, 16 edge-classes. Estate deletion did not perturb the canonical registry."
+      },
+      {
+        "command": "python3 bin/validate_branding.py",
+        "result": "FAIL, exit 1: 'FAIL: knight logo asset missing from README'. Pre-existing regression, not caused by this epoch: git log -S on the asset UUID over README.md returns no commits, so the knight image has never been in this repo's README history."
+      }
+    ],
+    "work_item": "phase0-delete-fat"
+  },
+  "content_sha256": "00a566ff6e845eac8d515fd206bfd0492dbe61b7ae0c64b342393e6a9989a12a",
+  "event_id": "local-2b5745a7e20f61978cfcdbb81409",
+  "evidence_refs": [
+    "receipt:claude-20260821T025042-ffdff540",
+    "work:phase0-delete-fat"
+  ],
+  "observed_at": "2026-08-21T07:57:56.619957+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-delete-fat completed",
+  "type": "receipt_summary"
+}
