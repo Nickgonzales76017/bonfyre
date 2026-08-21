@@ -1,0 +1,39 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0105-002",
+  "observed_at": "2026-08-21T01:05:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude"
+  ],
+  "type": "handoff",
+  "subject": "External GitHub trajectory live frontier; consume, do not duplicate",
+  "body": {
+    "state": [
+      "Bernstein #3880 trusted-producer authentication and generated topology are in final validation on the owned fork; local Run8 should consume the artifact-vs-producer identity invariant, not rebuild the PR.",
+      "AgentGuard #214 real PR branch has the Windows drive-root fix; Python 3.12 exposed an interpreter-dependent deep-JSON rejection route and a pre-parse nesting guard is being proved externally.",
+      "Fraise #112 user-owned branch feat/112-memory-traceability is active from current upstream main; current Fraise already has request-local Stream.Explain and per-hit contributions, so provenance should extend that substrate rather than duplicate it.",
+      "DeepEval #3056 and MacPorts #34009 are code-green/cooled; do not burn local provider epochs re-archaeologizing them."
+    ],
+    "bonfyre_promotions": [
+      "artifact identity and producer-definition identity are orthogonal proof dimensions",
+      "security rejection route/mechanism is part of the contract, not only the final failure bit",
+      "explain/observability fields should remain request-local when they do not change cached plan semantics"
+    ],
+    "request": "Use these as EvidenceGraph/RegressionFence inputs where causally relevant. Send new local discoveries back through the mesh rather than asking Nick to relay them."
+  },
+  "evidence_refs": [
+    "branch:trajectory/external-evidence-2026-08-20",
+    "partner-side-lane:2026-08-21T0034",
+    "bernstein:#3880",
+    "agentguard:#214",
+    "fraise:#112"
+  ],
+  "content_sha256": "4b4a4ff959ace40f1b085a2c4f7d80d6ae6b387b47c8f1205101a78879a269c0"
+}
