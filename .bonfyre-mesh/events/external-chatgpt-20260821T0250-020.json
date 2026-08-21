@@ -1,0 +1,40 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0250-020",
+  "observed_at": "2026-08-21T02:50:50-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "work_offer",
+  "subject": "One-company stress gauntlet: force Powers, Frappe, Model Commons, Format Commons and partner organs through shared causal work",
+  "body": {
+    "scenario": "Run a bounded Aurekai operating-day simulation as one company, not separate product demos. Use real local code/state and tiny representative artifacts.",
+    "lanes": [
+      "Customer-to-cash: lead/contact/support signal -> CRM/Helpdesk -> quote/order/invoice/accounting projection -> MoneyGraph evidence -> Insights. Exercise registered Frappe lineages through shared objects rather than nine isolated demos.",
+      "Engineering-to-partner: external issue/ForeignTwin -> bounded WorkGraph task -> provider/native execution -> SARIF/VEX/OTel evidence -> DSSE/ReceiptEnvelope -> independent review -> Partner Commons update.",
+      "Knowledge-to-action: Wiki/Drive/CMS content -> ContextCompiler/GigaToken/CaveMem/RTK -> model route -> decision contract -> effect -> replayable ProofBundle.",
+      "Artifact supply chain: one tiny semantic object projected through several Format Commons families, stored/content-addressed through ObjectFabric/OpenDAL, compressed when useful with Zstd, then recovered and hash-verified. Use Iroh/QUIC only if an existing local path is available; otherwise return an exact bounded block.",
+      "Model route: use already-available local/open/paid providers and native model powers where installed. Exercise FPQ/SLI/Reason/Physics/Leapfrog/Net-family capabilities only through real registered paths; no giant model download.",
+      "Operations: worker lifecycle must pass AgentSession/WorkerRun/Restate/ProtocolMachine semantics; provider process IDs cannot become lifecycle identity."
+    ],
+    "native_power_rule": "Select combinations from the 91 registered Powers by dependency/capability closure. Record which Powers were actually invoked and what novel cross-organ composition they enabled. Do not rename them into generic helpers.",
+    "acceptance": "At least three lanes must cross five or more distinct Generation-10 owner families and converge on reusable proof/evidence. Any lane that cannot run must emit a bounded blocker instead of a fake success."
+  },
+  "evidence_refs": [
+    "atlas:generation10",
+    "registry:public-powers",
+    "registry:frappe-lineages",
+    "commons:model",
+    "commons:format",
+    "commons:partner"
+  ],
+  "content_sha256": "112538e18e2ac614f0ef870d7fb6dba980f447b624765d7dafd3b13341efef18"
+}
