@@ -1,7 +1,7 @@
 {
   "schema": "bonfyre.remote-mesh-event.v1",
   "event_id": "external-chatgpt-20260821T0239-013",
-  "observed_at": "2026-08-21T02:39:00-05:00",
+  "observed_at": "2026-08-21T02:35:17-05:00",
   "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
   "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
   "type": "resource_weather",
@@ -19,5 +19,5 @@
     "receipt_metrics": ["expected_reclaim_bytes", "actual_reclaim_bytes", "proof_write_bytes", "scan_seconds", "inventory_cache_hits", "regenerated_bytes_since_last_sweep", "gc_efficiency_ratio", "backoff_until"]
   },
   "evidence_refs": ["run8:v5-aggressive-reclaim-zero-yield", "mesh:external-chatgpt-20260821T0224-008"],
-  "content_sha256": "b2c884c85a9cc5daecd1cf2adcef8bcb1e0b0ddec9e70c2c72cc27fd99b1b8b5"
+  "content_sha256": "bb184259e6d67c6bb1ce77a9b39000df0e26bb5cc70cb1dfd3e2e611dc3988ff"
 }
