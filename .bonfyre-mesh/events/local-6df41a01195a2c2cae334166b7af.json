@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-d0e7f7e8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "partner_reconciliation",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The reconciled graph now distinguishes completed runner foundations from the two remaining live-dogfood blockers: #3871 and #3872.",
+      "The volunteer design preserves one signed, versioned protocol across multiple transports rather than making GitHub the semantic foundation.",
+      "All 55 check runs for the referenced #3880 validation commit completed with 45 successes, 10 expected skips, and no failures or incomplete runs."
+    ],
+    "summary": "Reconciled live Bernstein #3863 state without partner mutation. The runner umbrella and its three security slices are complete, so #3869 is no longer blocking dogfood. The remaining live-cycle blockers are #3871 clean-room verification and #3872 fork/PR submission. The transport-neutral protocol backbone #3883 remains open upstream of hub and federation. The externally supplied #3880 validation receipt was confirmed green, while its frozen validation base was kept distinct from current upstream completion.",
+    "tests": [
+      {
+        "command": "GitHub REST inventory for sipyourdrink-ltd/bernstein volunteer issues",
+        "result": "PASS: current states, milestones, assignees, timestamps, and dependency issues retrieved."
+      },
+      {
+        "command": "GitHub REST timelines and comments for #3863, #3871, and #3880",
+        "result": "PASS: maintainer ownership, ordering rationale, completed runner slices, and owned validation cross-reference verified."
+      },
+      {
+        "command": "GitHub REST check-runs for 5f4859110e056e1de96f00858a6f534fdfc362b2",
+        "result": "PASS: 55 completed checks; 45 success, 10 skipped, 0 failures, 0 incomplete."
+      },
+      {
+        "command": "python3 -m pytest 10-Code/BonfyreControlPlane/tests/test_run_history_absorption.py -q",
+        "result": "PASS: 5 passed in 0.10s."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "PASS: 188 architectures, 11 views, 42 interactions, 14 phenotypes, and 16 edge classes valid."
+      }
+    ],
+    "work_item": "partner-sipyourdrink-ltd-bernstein-3863"
+  },
+  "content_sha256": "d35a5591d5930eddb50534a3add5eface42d8518b37c7e1974d7b5dc14fe034d",
+  "event_id": "local-6df41a01195a2c2cae334166b7af",
+  "evidence_refs": [
+    "receipt:codex-20260821T072037-d0e7f7e8",
+    "work:partner-sipyourdrink-ltd-bernstein-3863"
+  ],
+  "observed_at": "2026-08-21T07:25:42.823898+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "partner-sipyourdrink-ltd-bernstein-3863 completed",
+  "type": "receipt_summary"
+}
