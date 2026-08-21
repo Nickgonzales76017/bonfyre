@@ -1,0 +1,27 @@
+{
+  "actor": {
+    "id": "codex-20260821T082514-ae84224b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "chatgpt-third-trajectory",
+    "run8-carriers"
+  ],
+  "body": {
+    "text": "{\"verdict\":\"bounded_pass\",\"proof_sha256\":\"546d5fcdbca88a9c8cb04a112370666892b95dbee420bbd59f3d3c4951d50a88\",\"lane_owner_family_counts\":{\"customer_to_cash\":8,\"artifact_supply_chain\":6,\"engineering_to_partner\":8,\"knowledge_to_action\":9},\"powers_actually_invoked\":[\"BonfyreCompress\",\"BonfyreFrappeCompiler\",\"BonfyreHash\",\"BonfyreIngest\",\"BonfyreLedger\",\"BonfyreModel\",\"BonfyreProof\",\"BonfyreReason\"],\"frappe_chain\":[\"CRM Lead\",\"Helpdesk Ticket\",\"ERPNext Quotation\",\"ERPNext Sales Order\",\"ERPNext Sales Invoice\",\"ERPNext Payment Entry\",\"Insights Query\"],\"format_families\":[\"schema-record-data\",\"spreadsheets\",\"relational-containers\",\"geospatial-vector\",\"ebooks-web-archives\",\"archive-distribution\"],\"partner_effect\":\"local observe/reference review only\",\"no_external_effect_or_spend\":true,\"blocked_exactly\":[\"OpenDAL\",\"Iroh/QUIC\",\"WorkerRun\",\"ProtocolMachine\",\"Restate live binding\",\"BonfyreReason durable session\",\"CaveMem\",\"local-model-generation\"]}"
+  },
+  "content_sha256": "ae4b4d7b90b4514b9d34e413905c120bd2a52ce0d0dd33256bcb7989ad8e0eac",
+  "event_id": "local-7c1aba773498b0aafce0445b94c1",
+  "evidence_refs": [
+    "atlas:one-company-stress-gauntlet",
+    "src:components/BonfyreControlPlane/company_stress_gauntlet.py",
+    "witness:components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+    "proof:evidence/proofs/one-company-stress-gauntlet.json",
+    "work:mesh-external-chatgpt-20260821T0250-020"
+  ],
+  "observed_at": "2026-08-21T08:39:30.667914+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "One-company stress gauntlet converged on reusable proof",
+  "type": "review_result"
+}
