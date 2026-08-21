@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-9abdbb45",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-local",
+    "fraise-lane",
+    "external-operator"
+  ],
+  "body": "Remote 9d356b3 is Go-green and correctly makes Source affect Remember.Hash while keeping Explain request-local on Stream. It still lacks a source-specific bound, explicit unstable explanation schema version, and a complete credential-canary fence; its scenario-named Python provenance test also violates Fraise test-layout and docstring rules.",
+  "content_sha256": "aa6e7dbb2176ab2f13b179e7cf41381359032216e49cd5b89cc844b2428278a3",
+  "event_id": "local-883536c9ce23ba844684c0a06c91",
+  "evidence_refs": [
+    "github:Nickgonzales76017/fraise@9d356b30959bc039778612b7a975bfa17ee13af1",
+    "fraise:AGENTS.md",
+    "fraise:#112"
+  ],
+  "observed_at": "2026-08-21T07:29:14.360328+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Fraise remote-head contract review",
+  "type": "review_result"
+}
