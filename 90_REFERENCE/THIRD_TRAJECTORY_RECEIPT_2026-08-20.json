@@ -1,0 +1,177 @@
+{
+  "schema": "bonfyre.trajectory-receipt.v1",
+  "trajectory_id": "third-external-evidence-2026-08-20",
+  "purpose": "Independent external-evidence/operator lane running beside local Claude/Codex convergence. Convert GitHub, provider, standards and institutional state into code, evidence and bounded next actions without competing with local repo-main cleanup.",
+  "semantic_owners": [
+    "WorkGraph",
+    "ProviderGraph",
+    "APIUseTwin",
+    "PartnerCommons",
+    "ForeignTwin",
+    "ReceiptEnvelope",
+    "EvidenceGraph",
+    "TraceDivergence",
+    "Aurekai"
+  ],
+  "completed_or_advanced": [
+    {
+      "work": "Bonfyre Agent Trace Verifier provider/capability contract repair",
+      "repo": "Nickgonzales76017/bonfyre-agent-trace-verifier",
+      "branch": "fix/provider-identity-capability-shape",
+      "pull_request": 8,
+      "head": "d8be436030456a419e4b896f3b4f9a3d480969db",
+      "state": "READY_FOR_REVIEW",
+      "evidence": [
+        "GitHub Actions Verify run 34 succeeded",
+        "full receipt equality regression for NFC/NFD-equivalent provider identity",
+        "falsey non-array required_capabilities fail closed",
+        "explicit null adapter_capabilities fail closed"
+      ],
+      "authority_note": "Not merged automatically."
+    },
+    {
+      "work": "Bernstein #3880 project-side volunteer receipt verification",
+      "repo": "Nickgonzales76017/bernstein",
+      "branch": "feat/3880-project-side-receipt-check",
+      "base_upstream": "0ff62ac908f0ebfe56bd9d00b032af415fbc8053",
+      "state": "VALIDATING_IN_OWNED_FORK",
+      "artifacts": [
+        "src/bernstein/core/volunteer/project_verification.py",
+        "tests/unit/volunteer/test_project_verification.py",
+        "tests/unit/volunteer/test_project_verification_workflows.py",
+        ".github/workflows/volunteer-receipt-verify.yml",
+        ".github/workflows/volunteer-receipt-report.yml",
+        "docs/reference/volunteer-project-verification.md"
+      ],
+      "validation": {
+        "isolated_focused_tests": "8 passed before branch upload",
+        "zizmor": "PASS",
+        "trufflehog": "PASS",
+        "required_check_name_canary": "PASS",
+        "ci_gate_stub": "PASS",
+        "pr_policy": "ENVIRONMENT_BLOCKED: fork lacks upstream named autosync token after hygiene/trunk checks passed",
+        "receipt_workflow_initial_failure": "SELF_INTRODUCTION_TEST_ARTIFACT: validation PR prose accidentally contained the opt-in trailer token; trusted base correctly lacked the module being introduced. PR body corrected so the opt-in workflow remains dormant on validation-only PR."
+      },
+      "security_invariants": [
+        "fork-controlled execution has contents:read only and no project secrets",
+        "candidate checkout uses exact head SHA with persist-credentials false",
+        "gate commands execute as argv with no shell",
+        "gate process group terminated on timeout before verdict materialization",
+        "privileged checks:write workflow never checks out or executes PR code",
+        "only bounded typed verdict JSON crosses the privilege boundary",
+        "missing or malformed verdict becomes explicit failure with no verification claim",
+        "raw untrusted exception text is not rendered into trusted Check Run"
+      ],
+      "authority_note": "No upstream PR/comment created yet."
+    },
+    {
+      "work": "Runpod provider lifecycle assimilation",
+      "state": "PROMOTED_TO_API_USE_TWIN_AND_AUDIT",
+      "artifacts": [
+        "90_REFERENCE/THIRD_TRAJECTORY_PUBLIC_PROVIDER_STATE_2026-08-20.json",
+        "15_OPEN_WORLD/API_USE_TWINS/RUNPOD_V2_API_USE_TWIN.json",
+        "scripts/runpod_v2_migration_audit.py",
+        "tests/test_runpod_v2_migration_audit.py"
+      ],
+      "provider_state": {
+        "v2": "GA by direct provider notice 2026-08-19",
+        "v1_rate_limit_staging": "2026-09-17",
+        "v1_retirement_operational_bound": "2026-11-15",
+        "v1_subject_body_conflict": "subject says December 1; message body says November 15",
+        "graphql_retirement": "early 2027"
+      },
+      "note": "Direct contradiction preserved as TraceDivergence instead of silently reconciling dates."
+    },
+    {
+      "work": "OCI trial lifecycle assimilation",
+      "state": "RESOURCE_WEATHER_UPDATED_AS_EVIDENCE",
+      "provider_state": {
+        "trial_expired": "2026-08-19T01:17:00Z",
+        "retrieval_deadline": "2026-09-17T01:17:00Z",
+        "always_free": "accessible subject to provider limits",
+        "paid_trial_capacity": "not valid schedulable capacity unless explicitly upgraded"
+      },
+      "authority_note": "Paid upgrade remains billing/spend-gated; no upgrade attempted."
+    },
+    {
+      "work": "Cursor Agent Trace interoperability",
+      "state": "FOREIGN_TWIN_MAPPED",
+      "artifact": "15_OPEN_WORLD/FOREIGN_TWINS/CURSOR_AGENT_TRACE_0_1_0.mapping.json",
+      "invariant": "Attribution does not imply correctness, authority, effect safety, provider fidelity or evidence sufficiency."
+    },
+    {
+      "work": "VDC relationship follow-through",
+      "state": "THREADED_DRAFT_READY",
+      "action": "Created unsent follow-up draft with real calendar availability and design-partner objective.",
+      "authority_note": "Draft only; no email sent."
+    },
+    {
+      "work": "ACM Queue identity-continuity outline",
+      "state": "DRAFT_UPGRADED",
+      "action": "Added second implementation case showing canonical equivalence must govern downstream semantic decisions and complete receipts, not only digests.",
+      "authority_note": "Draft remains unsent."
+    }
+  ],
+  "partner_reconciliation": [
+    {
+      "partner": "DeepEval",
+      "item": "#3064 wrapper downstream of #3056",
+      "finding": "Two wrapper tests encode pre-fix recovery semantics. Corrected #3056 treats one changed OPEN step followed by matching SUMMARIZE/EMAIL suffix as resync_at=2, divergence_ratio=0.25, wrapper score=0.75. Retry case remains resync_at=2 ratio=0.2.",
+      "external_action": "GitHub App cannot post upstream review (403). Preserve as local-gh handoff rather than pretending it posted."
+    },
+    {
+      "partner": "md-semantic-search",
+      "item": "#56",
+      "state": "COOLED",
+      "reason": "Maintainer reports versioned golden-set harness/fixtures/CI smoke completed."
+    },
+    {
+      "partner": "ChainWeaver",
+      "item": "#376",
+      "state": "COOLED_TO_OBSERVE",
+      "reason": "Maintainer incorporated load-scoped redaction, persisted-byte canaries, redact-before-content-addressing, and raw/redacted invariant comparison into investigation."
+    },
+    {
+      "partner": "Fraise",
+      "item": "#112",
+      "state": "PROMOTED",
+      "reason": "Maintainer directly invited contribution; source seams pre-read. Fork creation unavailable through current GitHub connector, so local gh should create user-owned fork before implementation."
+    },
+    {
+      "partner": "W&B Weave",
+      "state": "COOLED",
+      "reason": "Direct provider response declined integration at this time."
+    }
+  ],
+  "next_best_actions": [
+    "Consume final Bernstein validation CI results and fix code/static failures; ignore upstream-secret-only fork validation failures.",
+    "After Bernstein validation is clean enough, prepare upstream #3880 PR but do not submit without explicit public-effect authority.",
+    "Merge verifier PR #8 only after deliberate approval; CI is green and PR is ready for review.",
+    "Use local authenticated gh to deliver the precise DeepEval #3064 recovery-semantics review and mark #3056 ready, because connector permissions block those upstream actions.",
+    "Use the Runpod migration auditor against the converged local repo and convert each finding into WorkGraph migration obligations before September 17 rate-limit staging.",
+    "Inventory unique OCI-resident artifacts before September 17 retrieval deadline without triggering paid upgrade.",
+    "Create a Fraise fork locally and implement provenance/cache-identity/explanation changes only after re-fetching #112 current state.",
+    "Keep publication draft held until project-side verification is upstream-reviewed; evidence precedes marketing."
+  ],
+  "anti_amnesia": {
+    "solved_invariants": [
+      "Agent Trace attribution is not a substitute for governed execution evidence.",
+      "Provider identity comparisons must use the same canonical equivalence relation as the trace digest and emitted receipt metrics.",
+      "Presence and truthiness are different schema semantics; malformed falsey values must not become omitted optional fields.",
+      "A signed donor receipt and a project rerun are separate evidence occurrences.",
+      "Fork code execution and trusted Check Run publication must not share one privilege context.",
+      "Provider subject/body lifecycle contradictions remain explicit TraceDivergence until resolved by newer authority."
+    ],
+    "known_noncauses": [
+      "Bernstein validation-fork PR-policy failure is not a source-code failure; it is caused by absent upstream autosync secret/token in the fork environment.",
+      "Initial Bernstein volunteer-receipt workflow failure on validation PR was caused by the validation prose containing the opt-in trailer token while the trusted base necessarily lacked the module being introduced."
+    ],
+    "regression_fences": [
+      "Do not collapse Bernstein fork execution into pull_request_target or any workflow with checks:write/secrets.",
+      "Do not echo untrusted bundle/body exception text into a privileged check.",
+      "Do not convert Agent Trace foreign hashes into Bonfyre security/content identities without algorithm-qualified semantics.",
+      "Do not treat Runpod MCP annotations as authority grants.",
+      "Do not silently choose the later Runpod v1 retirement date while provider sources conflict."
+    ]
+  }
+}
