@@ -1,0 +1,77 @@
+{
+  "actor": {
+    "id": "codex-20260821T084723-682448b7",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "10-Code/BonfyreCMS",
+      "10-Code/bf-adjusters-pipeline",
+      "10-Code/liblambda-tensors",
+      "architecture/atlas.index.json",
+      "architecture/institutional/transitional-root.yaff",
+      "components/README.md",
+      "evidence/verification/transitional-root/orphan-gitlink-disposition-proof.json",
+      "generated/projections/estate/transitional-root-absorption.json",
+      "tests/test_transitional_root_absorption.py"
+    ],
+    "class": "repository_convergence",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The three orphan gitlink identities, modes, historical paths, relocation paths, and availability observations are preserved in a machine-readable disposition proof.",
+      "All three orphan references and their empty compatibility directories are removed.",
+      "Only the registered vendor/hvm4 gitlink remains in the live index.",
+      "The regenerated absorption ledger contains no repair_required children.",
+      "The Architecture Atlas validates with the new disposition invariant and witness."
+    ],
+    "summary": "Resolved all three orphan compatibility gitlinks by removal under an explicit identity-bound proof. Exact object identities remain auditable in superproject history and evidence; unavailable objects were not treated as empty, and different remote HEADs were not substituted. Current BonfyreCMS and Lambda Tensors owners remain intact.",
+    "tests": [
+      {
+        "command": "rtk make -C lib/liblambda-tensors test",
+        "result": "Passed all native round-trip and benchmark checks."
+      },
+      {
+        "command": "rtk python3 tools/transitional_root_absorption.py --verify",
+        "result": "Ledger current; repair_required count is zero."
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate",
+        "result": "Passed: 196 architectures, 11 views, 59 interactions, 14 phenotypes, 16 edge classes."
+      },
+      {
+        "command": "rtk python3 -m pytest tests/test_repository_shape.py tests/test_cutover_ci_contract.py tests/test_transitional_root_absorption.py -q",
+        "result": "24 passed."
+      },
+      {
+        "command": "rtk python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "325 passed, 1 skipped."
+      },
+      {
+        "command": "rtk git ls-files --stage | awk '$1 == \"160000\" {print}'",
+        "result": "Only registered vendor/hvm4 remains."
+      },
+      {
+        "command": "rtk git diff --cached --check && rtk git diff --check",
+        "result": "Passed with no whitespace errors."
+      }
+    ],
+    "work_item": "discovered-2383c64e3e93c670"
+  },
+  "content_sha256": "b7e90590d999d6b07f4c54393c608ae1011653b3fc636ecf6b262aba5d8452f1",
+  "event_id": "local-f052ef89ebfcef983218e7a335a6",
+  "evidence_refs": [
+    "receipt:codex-20260821T084723-682448b7",
+    "work:discovered-2383c64e3e93c670"
+  ],
+  "observed_at": "2026-08-21T08:53:45.696647+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-2383c64e3e93c670 completed",
+  "type": "receipt_summary"
+}
