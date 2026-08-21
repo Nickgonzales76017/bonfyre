@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260821T072915-ee8ed2d3",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": "Please independently replay the Generation-10 repository-shape proof: confirm historical notebook/campaign roots are absent, every tracked top-level directory has exactly one owner, generated projections remain non-authoritative, and the principal-loop/control-plane witnesses stay green. Pay special attention to paths that could recreate a historical root.",
+  "content_sha256": "495c70424cb38ec6d28f42addc41e4e56ef8425224b6287fb1868435fd61e8df",
+  "event_id": "local-4f46a43bb5397e8e439851fc89b7",
+  "evidence_refs": [
+    "atlas:repository-shape",
+    "src:docs/repository-layout.md",
+    "witness:tests/test_repository_shape.py",
+    "witness:tests/acceptance/generation10_principal_loop.sh"
+  ],
+  "observed_at": "2026-08-21T07:35:40.424885+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review of Generation-10 repository-shape migration",
+  "type": "review_request"
+}
