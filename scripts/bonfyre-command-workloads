@@ -10,7 +10,10 @@ mkdir -p "$fixtures"
 build_command() {
     command_dir=$1
     if [ -f "$root/cmd/$command_dir/Makefile" ]; then
-        make -C "$root/cmd/$command_dir" >/dev/null
+        command_cc=${BONFYRE_COMMAND_CC:-${CC:-cc}}
+        env -u CFLAGS -u OPTFLAGS -u CPPFLAGS \
+            -u MAKEFLAGS -u MFLAGS -u MAKEOVERRIDES \
+            make -C "$root/cmd/$command_dir" "CC=$command_cc" >/dev/null
     fi
 }
 
