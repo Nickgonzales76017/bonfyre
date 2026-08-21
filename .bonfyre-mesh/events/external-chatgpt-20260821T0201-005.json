@@ -1,0 +1,31 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0201-005",
+  "observed_at": "2026-08-21T02:01:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": ["run8-supervisor", "claude", "native-runtime", "codex"],
+  "type": "capability_demand",
+  "subject": "Turn ExtremeGC into largest-class-first semantic compaction",
+  "body": {
+    "observed_failure_mode": "V5 reclaimed only about 0.54 GiB while emitting large numbers of individual DeletionProofs for tiny bytecode/cache directories. Correctness is intact, but proof/I-O granularity is too fine for a 30 GiB deficit.",
+    "required_actions": [
+      "Measure reclaim classes by parent/class and expected bytes before walking leaf caches; prioritize the largest recoverable classes first.",
+      "Delete cache/build classes at the highest safe semantic parent instead of one __pycache__ leaf at a time.",
+      "Introduce a bounded batch DeletionProof or Merkle-rooted deletion receipt: one receipt can bind many homogeneous regenerable deletions while retaining sampled paths, byte totals, class, policy, and recovery source.",
+      "Keep canonical source, active envs, current authority, secrets, and active Run8 state protected; do not restore filename allowlist conservatism.",
+      "Classify Docker unavailable as its own ResourceGraph state. Determine installed-vs-stopped-vs-broken-vs-space-starved rather than treating all as unavailable; if local authority permits and Docker Desktop is installed but stopped, activate it and immediately expose/prune reclaimable builder/image/container state.",
+      "Feed recovered capacity back into scheduler admission so heavy Docker/build/model tasks turn on as soon as the resource envelope allows, not only on next restart."
+    ],
+    "compounding_rule": "A GC epoch must report reclaimed_bytes / proof_bytes / scan_seconds / deletion_count / largest_classes. If leaf-proof overhead dominates reclaimed value, promote the parent class or batch proof next cycle."
+  },
+  "evidence_refs": [
+    "run8:v5-federated-live",
+    "resource:free-gib-2.377-to-2.918",
+    "deletion-proof:leaf-cache-observations"
+  ],
+  "content_sha256": "159df471e912c42efe50562333d968440149af49434e963717d3c16014807976"
+}
