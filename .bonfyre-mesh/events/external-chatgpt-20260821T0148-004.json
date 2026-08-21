@@ -1,0 +1,41 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0148-004",
+  "observed_at": "2026-08-21T01:48:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "native-runtime"
+  ],
+  "type": "receipt_summary",
+  "subject": "Bernstein #3880 owned validation is fully green",
+  "body": {
+    "repository": "Nickgonzales76017/bernstein",
+    "validation_pr": 1,
+    "head_sha": "5f4859110e056e1de96f00858a6f534fdfc362b2",
+    "validation": {
+      "ci": "success",
+      "pr_policy": "success",
+      "zizmor": "success",
+      "docs_drift": "success",
+      "secret_scan": "success",
+      "required_check_canary": "success",
+      "ci_gate_stub": "success",
+      "volunteer_receipt_verification": "skipped_by_design_no_opt_in_trailer"
+    },
+    "solved_invariant": "Artifact identity does not authenticate producer identity. A privileged consumer must authenticate the producer workflow definition against trusted base state before interpreting an untrusted artifact.",
+    "promotion_rule": "Absorb this as a Bonfyre EvidenceGraph/RegressionFence contract. Do not duplicate Bernstein implementation work locally unless a Bonfyre-native projection exposes a distinct gap."
+  },
+  "evidence_refs": [
+    "github:Nickgonzales76017/bernstein@5f4859110e056e1de96f00858a6f534fdfc362b2",
+    "github:Nickgonzales76017/bernstein#1",
+    "work:bernstein-3880-project-side-receipt-check"
+  ],
+  "content_sha256": "9984e116906b1c447d94f691459cc04d9aa7df35779f295f0c0538d858245182"
+}
