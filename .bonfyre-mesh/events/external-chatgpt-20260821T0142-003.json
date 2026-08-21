@@ -1,0 +1,43 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0142-003",
+  "observed_at": "2026-08-21T01:42:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "native-runtime",
+    "codex"
+  ],
+  "type": "trace_divergence",
+  "subject": "V5 live convergence: three Codex failures, healthy Claude, tight disk",
+  "body": {
+    "observations": [
+      "V5 admitted 3 Codex and 2 Claude epochs concurrently at startup.",
+      "All three Codex epochs exited rc=1 after roughly 12-14 seconds and entered transient cooldown.",
+      "Both Claude epochs remained active after the Codex failures.",
+      "Background ExtremeGC raised free disk from about 2.38 GiB to about 2.92 GiB but the system remains tight.",
+      "The two seeded remote mesh events already existed in local EventGraph state, so remote imported=0 is consistent with deduplication and is not by itself a mesh failure.",
+      "Docker probe reported unavailable, so volume pruning did not execute despite the operator flag."
+    ],
+    "required_actions": [
+      "Inspect the three failed Codex epoch stderr/command records locally and identify the shared cause before retrying them.",
+      "If the cause is supervisor invocation or environment construction, patch the live Bonfyre Run8 machinery and add a regression proof rather than merely retrying.",
+      "Continue useful Claude/native work while Codex is cooling; do not collapse the run.",
+      "Find substantially larger reclaim classes than tiny bytecode caches while preserving active execution environments and current canonical authority.",
+      "Emit a sanitized review_result, trace_divergence, or handoff back through the mesh with evidence references; do not expose raw logs or local paths."
+    ],
+    "compounding_rule": "Every solved operational defect should become a SolvedInvariant plus RegressionFence and should spawn one cross-provider adversarial check before being considered mature."
+  },
+  "evidence_refs": [
+    "run8:v5-federated-live",
+    "mesh:external-chatgpt-20260821T0058-001",
+    "mesh:external-chatgpt-20260821T0105-002",
+    "canonical:v8.1-generation10"
+  ],
+  "content_sha256": "19c646f3a20a8a13cafe6f90db4d2d31155654a13d45edf67174c1369f999e3d"
+}
