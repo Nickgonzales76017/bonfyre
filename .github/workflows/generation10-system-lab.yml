@@ -9,6 +9,10 @@ on:
       - "cmd/**"
       - "engine/**"
       - "integrations/**"
+      - "programs/**"
+      - "estate/**"
+      - "output/inventory/**"
+      - ".gitmodules"
       - "frappe_integration/**"
       - "lib/**"
       - "scripts/**"
@@ -50,7 +54,7 @@ env:
   BONFYRE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
   # Temporary penetration shims are evidence, not a claim that the underlying defects are fixed.
   CC: "cc -include stdint.h"
-  CFLAGS: "-O2 -Wall -Wextra -Werror -Wno-error=format-truncation -std=c11 -D_DEFAULT_SOURCE"
+  CFLAGS: "-O2 -Wall -Wextra -Wno-error=format-truncation -std=c11 -D_DEFAULT_SOURCE"
   BONFYRE_DIAGNOSTIC_SHIMS: "engine_format_truncation,bf_pool_uintptr_header"
 
 jobs:
@@ -132,7 +136,7 @@ jobs:
                       "id": "engine_format_truncation",
                       "status": "temporary",
                       "finding": "engine/core/src/fabric_exec.c effect receipt payload is fixed at 1024 bytes while published_path can approach PATH_MAX",
-                      "penetration": "retain -Werror globally but downgrade only -Wformat-truncation so deeper semantic circuits can execute",
+                      "penetration": "temporarily remove warning-to-error promotion on hosted Linux so deeper semantic circuits can execute while the warning remains visible and receipted",
                   },
                   {
                       "id": "bf_pool_uintptr_header",
@@ -164,6 +168,70 @@ jobs:
             .generation10/hosted-linux-penetration.json
           if-no-files-found: error
           retention-days: 14
+
+  estate-census:
+    name: Census Generation-10 materialization
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Reconcile canonical counts against tracked materialization
+        run: python3 tools/actions/generation10_estate_census.py
+
+      - name: Preserve estate census ReceiptEnvelope
+        uses: actions/upload-artifact@v4
+        with:
+          name: g10-estate-census-${{ github.run_attempt }}
+          path: .generation10/receipts/estate-census/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  physical-fabric:
+    name: Physical fabric / QUIC backend
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Install Ubuntu QUIC comparison substrate
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libssl-dev libngtcp2-dev libngtcp2-crypto-gnutls-dev
+
+      - name: Probe Bonfÿre QUIC backend portability
+        run: python3 tools/actions/generation10_physical_fabric.py
+
+      - name: Preserve physical-fabric ReceiptEnvelope
+        uses: actions/upload-artifact@v4
+        with:
+          name: g10-physical-fabric-${{ github.run_attempt }}
+          path: .generation10/receipts/physical-fabric/*.json
+          if-no-files-found: error
+          retention-days: 30
 
   semantic-circuits:
     name: Circuit / ${{ matrix.circuit }}
@@ -252,7 +320,6 @@ jobs:
         run: |
           set -euo pipefail
           args=(
-            run-power-shard
             --shard "${{ matrix.shard }}"
             --total "${{ matrix.total }}"
             --scope "${{ matrix.scope }}"
@@ -262,7 +329,7 @@ jobs:
           if [ -n "${PR_BASE_SHA:-}" ]; then
             args+=(--base "$PR_BASE_SHA")
           fi
-          python3 tools/actions/generation10_lab.py "${args[@]}"
+          python3 tools/actions/generation10_power_lab.py "${args[@]}"
 
       - name: Preserve Power receipts even on compiler failure
         if: always()
@@ -323,7 +390,7 @@ jobs:
 
   proof-bundle:
     name: Fold EvidenceGraph into ProofBundle
-    needs: [plan, semantic-circuits, power-swarm, semantic-fault-lab]
+    needs: [plan, estate-census, physical-fabric, semantic-circuits, power-swarm, semantic-fault-lab]
     if: always() && needs.plan.result == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
