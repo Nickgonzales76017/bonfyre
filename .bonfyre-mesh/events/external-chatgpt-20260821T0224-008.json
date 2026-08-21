@@ -1,0 +1,49 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0224-008",
+  "observed_at": "2026-08-21T02:24:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "resource_weather",
+  "subject": "ResourceGraph emergency economy: keep RUN8 alive while free space is under 2 GiB",
+  "body": {
+    "observation": "The live run fell to about 1.95 GiB free with four active epochs while aggressive reclaim reported effectively zero useful inventory and continued deleting tiny cache leaves. This is a scheduler/resource-economy defect, not a reason to stop the run.",
+    "required_actions": [
+      "Do not terminate active provider epochs solely for this packet. Throttle only NEW high-write/high-water admissions while physical headroom is below the predicted worker reserve.",
+      "Compute admission_capacity = physical_free + cheap_reclaimable + reconstructable - evidence_reserve - checkpoint_reserve - predicted_active_worker_high_water. Use that value, not physical free alone.",
+      "Run largest-class-first inventory before more leaf deletion. Rank by reclaimable bytes / scan cost / proof cost / rebuild cost and reclaim at the highest safe regenerable parent.",
+      "Batch homogeneous regenerable deletions into Merkle/content-addressed DeletionProof roots with sampled members and byte totals; stop producing thousands of tiny proof files when proof overhead dominates value.",
+      "Probe Docker as installed-running / installed-stopped / daemon-broken / storage-starved / absent. If installed but stopped and existing authority permits activation, start it and expose builder/image/container/volume reclaim; otherwise record the precise ResourceGraph state.",
+      "Protect current V5 operator source, live epoch directories, canonical repo data, authority/secrets, evidence/checkpoints, and execution environments currently referenced by active epochs.",
+      "Prefer low-disk diagnostics, mesh repair, receipt-parser repair, and proof compaction until headroom recovers; automatically reopen heavier work when ResourceWeather improves."
+    ],
+    "metrics_next_receipt": [
+      "physical_free_gib",
+      "cheap_reclaimable_gib",
+      "reconstructable_gib",
+      "evidence_reserve_gib",
+      "predicted_worker_high_water_gib",
+      "effective_admission_gib",
+      "reclaimed_bytes",
+      "proof_bytes",
+      "scan_seconds",
+      "deletion_count",
+      "largest_reclaim_classes"
+    ]
+  },
+  "evidence_refs": [
+    "run8:v5-resource-weather-1.95gib",
+    "mesh:external-chatgpt-20260821T0201-005",
+    "deletion-proof:tiny-leaf-cache-pattern"
+  ],
+  "content_sha256": "aa1a01d8a2f656e8825e573d0e1258b89f9893503cfe5d17a347b9ffbe6a9404"
+}
