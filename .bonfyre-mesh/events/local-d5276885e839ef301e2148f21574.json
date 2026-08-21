@@ -1,0 +1,94 @@
+{
+  "actor": {
+    "id": "codex-20260821T082649-0bac191f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "docs/http-api.md",
+      "docs/memory-traceability.md",
+      "internal/config/config.go",
+      "internal/config/constants.go",
+      "internal/graph/entity.go",
+      "internal/graph/node.go",
+      "internal/graph/node_test.go",
+      "internal/query/lexer/lexer_test.go",
+      "internal/query/lexer/token_test.go",
+      "internal/query/parser/ast.go",
+      "internal/query/parser/parser.go",
+      "internal/query/parser/parser_test.go",
+      "internal/query/parser/source.go",
+      "internal/query/parser/source_test.go",
+      "internal/query/provenance_test.go",
+      "internal/query/query.go",
+      "internal/query/query_test.go",
+      "internal/query/remember.go",
+      "internal/query/remember_test.go",
+      "internal/query/stream.go",
+      "internal/query/stream_test.go",
+      "sdk/python/src/fraise_sdk/client.py",
+      "sdk/python/src/fraise_sdk/models.py",
+      "sdk/python/src/fraise_sdk/query.py",
+      "sdk/python/src/tests/client_test.py",
+      "sdk/python/src/tests/models_test.py",
+      "sdk/python/src/tests/provenance_test.py",
+      "sdk/python/src/tests/query_test.py",
+      "tests/e2e/explain_test.py"
+    ],
+    "class": "partner_contribution",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Python provenance coverage lives only in client_test.py, models_test.py, and query_test.py, and every test has a docstring.",
+      "Default source ceiling is 512 UTF-8 bytes; oversized origin-like input is rejected without echoing its canary.",
+      "Remember cache identity distinguishes non-empty provenance while Fact content identity remains source-blind.",
+      "Explain is request-local with explain_version='unstable-1'; plain responses omit provenance and evidence fields.",
+      "The Docker server path and Python SDK integration path both pass against the promoted commit.",
+      "The existing owned branch was advanced only by a verified normal fast-forward push."
+    ],
+    "summary": "Completed the Fraise provenance reconciliation and safely promoted commit 53cd56f to the existing owned feat/112-memory-traceability branch. Docker recovered, the real server e2e suite passed 118 tests with one optional skip, and Python integration passed 62 tests. A fetch immediately before the normal fast-forward push observed unchanged head 9d356b3; post-push fetch/readback matched 53cd56f. No PR or comment was created.",
+    "tests": [
+      {
+        "command": "AST docstring audit over sdk/python/src/tests/{client,models,query}_test.py",
+        "result": "Passed: all 46 test functions have docstrings; scenario-named provenance_test.py is absent."
+      },
+      {
+        "command": "make test-e2e",
+        "result": "Docker image built and container started; runner stopped before collection because uv is not installed on this machine."
+      },
+      {
+        "command": "docker compose up --build plus Python 3.12 pytest tests/e2e -v",
+        "result": "Passed 118; skipped 1 optional transformers embedding test."
+      },
+      {
+        "command": "docker compose up plus PYTHONPATH=sdk/python/src Python 3.12 pytest tests/integration/python -v",
+        "result": "Passed all 62 tests."
+      },
+      {
+        "command": "pre-push fetch, ancestry check, normal push, post-push fetch and ls-remote",
+        "result": "Passed: remote advanced fast-forward from 9d356b3 to 53cd56f and exact readback matched local HEAD."
+      },
+      {
+        "command": "docker version and compose residue check",
+        "result": "Passed: client/server 29.6.2; test container and compose network were removed."
+      }
+    ],
+    "work_item": "discovered-fb3dda2723973fbf"
+  },
+  "content_sha256": "6a89bd57b72f2cfcc7b38afcd0bb7fcaaecb656395c27d46e08f2c88056e5928",
+  "event_id": "local-d5276885e839ef301e2148f21574",
+  "evidence_refs": [
+    "receipt:codex-20260821T082649-0bac191f",
+    "work:discovered-fb3dda2723973fbf"
+  ],
+  "observed_at": "2026-08-21T08:38:43.259949+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-fb3dda2723973fbf completed",
+  "type": "receipt_summary"
+}
