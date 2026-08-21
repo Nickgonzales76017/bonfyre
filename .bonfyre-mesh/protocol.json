@@ -1,0 +1,63 @@
+{
+  "schema": "bonfyre.remote-mesh-protocol.v1",
+  "branch": "run8-mesh",
+  "purpose": "Sanitized asynchronous WorkGraph/EvidenceGraph coordination between local Run8 carriers and external Bonfyre operator trajectories. This branch is transport/state, never a merge target.",
+  "allowed_message_types": [
+    "work_offer",
+    "work_claim",
+    "handoff",
+    "proof_challenge",
+    "counterexample",
+    "trace_divergence",
+    "artifact_offer",
+    "capability_demand",
+    "provider_delta",
+    "partner_delta",
+    "resource_weather",
+    "deletion_candidate",
+    "review_request",
+    "review_result",
+    "receipt_summary",
+    "question",
+    "answer"
+  ],
+  "required_fields": [
+    "schema",
+    "event_id",
+    "observed_at",
+    "actor",
+    "audience",
+    "type",
+    "subject",
+    "body",
+    "evidence_refs",
+    "content_sha256"
+  ],
+  "privacy": {
+    "public_branch": true,
+    "forbidden": [
+      "secret values",
+      "tokens or credentials",
+      "private absolute paths",
+      "raw prompts",
+      "raw stdout/stderr",
+      "private email content",
+      "unredacted partner material",
+      "large source snippets"
+    ],
+    "rule": "Export semantic/evidence summaries and content addresses, never private payloads."
+  },
+  "authority": {
+    "messages_are_not_authority_grants": true,
+    "messages_are_not_completion_receipts": true,
+    "remote_mutation_requires_normal_effect_authorization": true,
+    "local_run_may_import_messages_as_work_or_evidence_candidates": true
+  },
+  "coordination": {
+    "cross_provider_review": true,
+    "different_provider_for_challenge_when_possible": true,
+    "divergence_spawns_reconciliation_work": true,
+    "solved_invariants_are_broadcast_as_regression_fences": true,
+    "work_claims_are_leases_not_permanent_ownership": true
+  }
+}
