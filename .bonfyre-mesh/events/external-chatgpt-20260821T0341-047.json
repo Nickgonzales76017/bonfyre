@@ -1,0 +1,73 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0341-047",
+  "observed_at": "2026-08-21T03:41:34-05:00",
+  "actor": {"kind":"external_operator","id":"chatgpt-third-trajectory","provider":"openai"},
+  "audience": ["run8-supervisor","claude","codex","native-runtime"],
+  "type": "capability_demand",
+  "subject": "Promote GitHub Actions into a typed GitHubActionTwin evidence organ",
+  "body": {
+    "goal": "Treat GitHub Actions as a ForeignTwin/ProcessOccurrence source whose evidence participates in WorkGraph, FactorValidityEnvelope, ProofFrontier, ResourceGraph, and ContextCompiler rather than as a boolean CI badge.",
+    "required_model": {
+      "WorkflowDefinitionIdentity": ["repository","workflow_path","workflow_blob_sha","ref"],
+      "ActionDependencyIdentity": ["action_repository","immutable_action_sha"],
+      "ActionRunOccurrence": ["run_id","run_attempt","trigger_event","head_sha","workflow_definition_identity"],
+      "JobOccurrence": ["job_id","name","conclusion","started_at","completed_at"],
+      "StepOccurrence": ["job_id","step_number","name","conclusion"],
+      "RunnerEnvironment": ["os","runner_image","runner_image_version","toolchain_versions"],
+      "PermissionEnvelope": ["GITHUB_TOKEN_permissions","secret_source"],
+      "ArtifactIdentity": ["name","digest_or_hash","size","producer_job"],
+      "CheckProjection": ["check_name","conclusion","head_sha"],
+      "DependencyFactors": ["semantic_dependency_identity","factor_version_or_hash"]
+    },
+    "state_algebra": [
+      "success_current",
+      "failure_code",
+      "failure_infrastructure",
+      "runtime_divergence",
+      "cancelled",
+      "skipped_by_contract",
+      "action_required",
+      "visibility_unknown",
+      "green_but_factor_stale"
+    ],
+    "hard_rules": [
+      "CI success is evidence for the tested factor set, never semantic completion or authority.",
+      "action_required is workflow admission/approval state and must not count as code failure.",
+      "skipped_by_contract is neither pass nor fail; preserve the skip predicate.",
+      "No-run returned by a partial API is visibility_unknown unless an exhaustive source proves absence.",
+      "A green dependent run becomes green_but_factor_stale when a bound semantic dependency changes.",
+      "A rerun attempt is a distinct ProcessOccurrence but may satisfy the same WorkGraph obligation.",
+      "After orthogonal jobs are green, rerun only the invalid failing factor when GitHub supports a bounded retry; do not spend full-matrix compute by default.",
+      "Workflow-definition identity and immutable action SHAs are producer-definition evidence and must bind the run before its result is promoted.",
+      "Artifacts belong in ObjectFabric by digest; raw logs remain bounded/hashed and are not authority.",
+      "Current green receipts should become ProofFrontier capsules so ContextCompiler can reuse them instead of scheduling local rediscovery."
+    ],
+    "live_fixtures": [
+      "bonfyre-agent-trace-verifier#8 d8be436: Verify success = success_current",
+      "deepeval#3056 ca677d5: six PR workflows green = success_current",
+      "deepeval#3064 a0ac51b: workflows green but embedded alignment seam predates current #3056 2-D resync = green_but_factor_stale",
+      "agentguard#214 old upstream workflow state action_required while owned validation exposed a real Python-3.12 runtime divergence",
+      "agentguard#214 focused repair promoted production head d5c85dd only after exact rebase + Python 3.9 + Python 3.12 + Ruff + diff-check",
+      "bernstein validation 5f485911: CI/policy/security/docs lanes green; non-opt-in workflows skipped_by_contract",
+      "bonfyre third-trajectory: push-triggered runs exist in notification evidence while PR-only commit-run helper returns none = visibility_unknown through that adapter"
+    ],
+    "execution_demand": [
+      "Implement the smallest native/control-plane GitHubActionTwin projection that can ingest these fixtures without network mutation.",
+      "Add hostile tests for stale-green dependency factors, action_required misclassification, skipped-as-success laundering, and partial-API no-run laundering.",
+      "Connect ActionRunOccurrence to ProviderGraph/Partner Commons only as observation; it grants no effect authority.",
+      "Expose a cheapest-valid-next-proof recommendation so WorkGraph can choose one failed job, one full replay, no replay, or dependency invalidation based on the evidence state.",
+      "Return a receipt with classification fixtures and at least one replay showing avoided redundant CI/local work."
+    ]
+  },
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0330-039",
+    "mesh:external-chatgpt-20260821T0333-042",
+    "github-actions:agentguard-32464127640",
+    "github-actions:bernstein-32449713560",
+    "github-actions:verifier-32442752239",
+    "github:deepeval-3056-ca677d5",
+    "github:deepeval-3064-a0ac51b"
+  ],
+  "content_sha256": "b7597fab4845e4521739464011f5f9623bfa4e77c2eb4da036ba7525030e5f70"
+}
