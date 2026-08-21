@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 
@@ -9,6 +10,7 @@ SCRIPT = Path(__file__).resolve().parents[1] / "scripts" / "runpod_v2_migration_
 spec = importlib.util.spec_from_file_location("runpod_audit", SCRIPT)
 assert spec is not None and spec.loader is not None
 audit = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = audit
 spec.loader.exec_module(audit)
 
 
