@@ -34,6 +34,7 @@ TEXT_SUFFIXES = {
 }
 TEXT_NAMES = {"Dockerfile", "Makefile", "Justfile", "Procfile", "CLAUDE.md", "AGENTS.md"}
 MAX_FILE_BYTES = 8 * 1024 * 1024
+BINARY_SNIFF_BYTES = 4096
 
 
 @dataclass(frozen=True)
@@ -103,7 +104,14 @@ def scan(repo: Path, paths: Iterable[Path] | None = None) -> dict:
             continue
         try:
             size = path.stat().st_size
+            with path.open("rb") as handle:
+                prefix = handle.read(BINARY_SNIFF_BYTES)
         except OSError:
+            continue
+        # Binary identity takes precedence over the text-size budget. A binary
+        # file is not "large text" merely because it exceeds MAX_FILE_BYTES,
+        # and reading only the prefix keeps this classification bounded.
+        if b"\0" in prefix:
             continue
         if size > MAX_FILE_BYTES:
             skipped_large.append({"path": rel, "bytes": size})
@@ -111,8 +119,6 @@ def scan(repo: Path, paths: Iterable[Path] | None = None) -> dict:
         try:
             data = path.read_bytes()
         except OSError:
-            continue
-        if b"\0" in data[:4096]:
             continue
         scanned += 1
         for rule, pattern, family, disposition in RULES:
