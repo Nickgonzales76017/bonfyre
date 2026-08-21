@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T072544-52bdf5ab",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "external-operator"
+  ],
+  "body": "Attack the strongest invariant: once the circuit WorkGraph item is satisfied, every later invocation is replay-only and creates no additional effect or native receipt. Start from the retained fixture, record receipt/transition/artifact counts, invoke repeatedly, then perturb ProviderGraph so the recorded provider no longer wins and attempt a content-valid producer relabel. Expected behavior is fail-closed owner inconsistency with unchanged effect, receipt, and artifact counts. Emit a counterexample if any mutation occurs or a relabelled producer is accepted as the original execution. Also probe the adjacent crash window after native effect commit but before circuit-receipt satisfaction.",
+  "content_sha256": "64325868b54ab2683150994b28355c26fbe0e424464dcba169c4c3300981dc32",
+  "event_id": "local-fbf63a09ba148e4148df0f3c10e6",
+  "evidence_refs": [
+    "proof:evidence/proofs/generation10-system-map-stress.json",
+    "src:10-Code/BonfyreControlPlane/system_map_stress.py",
+    "witness:test_second_invocation_is_replay_only_and_creates_no_effect",
+    "atlas:generation10-system-map-stress"
+  ],
+  "observed_at": "2026-08-21T07:36:46.274963+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Attack replay-only re-entry and producer-identity separation",
+  "type": "proof_challenge"
+}
