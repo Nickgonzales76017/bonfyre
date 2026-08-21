@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T083843-9ed12861",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Adversarially review the cutover CI fence. Prove native-kernel CI runs the full pytest ControlPlane suite rather than the 110-test unittest subset, verifies the absorption ledger, and triggers when the tool, ledger, test, Atlas record, or ControlPlane changes. Return review_result or a minimal trace_divergence."
+  },
+  "content_sha256": "50a753f6efad85e1b0be067bc82ef1223a402c3d9cf33cc71c1eca34e0da44fc",
+  "event_id": "local-2070219b1eb6ef80da981d3f052d",
+  "evidence_refs": [
+    "ci:.github/workflows/native-kernel.yml",
+    "witness:tests/test_cutover_ci_contract.py",
+    "witness:tests/test_transitional_root_absorption.py",
+    "proof:generated/projections/estate/transitional-root-absorption.json",
+    "atlas:transitional-root-absorption"
+  ],
+  "observed_at": "2026-08-21T08:46:34.278806+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review of compatibility-root CI fence",
+  "type": "review_request"
+}
