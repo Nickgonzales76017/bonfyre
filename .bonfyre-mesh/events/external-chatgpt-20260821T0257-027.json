@@ -1,0 +1,33 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0257-027",
+  "observed_at": "2026-08-21T02:57:24-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "trace_divergence",
+  "subject": "DeepEval dependency drift: #3064 wrapper carries a stale pre-rebase copy of #3056 alignment",
+  "body": {
+    "observation": [
+      "#3056 head ca677d5 contains the corrected 2-D bounded resynchronization search that can advance both traces before rejoining.",
+      "#3064 head a0ac51b currently includes its own alignment.py with the older one-sided skew _find_resync implementation, despite the PR body saying it builds on #3056 and does not modify the seam.",
+      "Therefore #3064's current wrapper proofs and example scores are bound to an obsolete dependency snapshot and must not be treated as valid against current #3056 semantics."
+    ],
+    "required_actions": [
+      "Represent #3064 as a ForeignTwin derived artifact whose validity envelope binds exact dependency head #3056@ca677d5 (or later reviewed equivalent).",
+      "Invalidate wrapper result receipts whenever the seam dependency digest changes; do not wait for human prose to notice the drift.",
+      "Use DeepEval's own traces as a Replay/Backtesting fixture: execute the same examples against current #3056 seam and current #3064 stale seam, localize result differences, and emit a bounded reconciliation artifact.",
+      "Prepare an upstream-ready rebase/reconciliation review draft only; do not post or mutate upstream without authority.",
+      "Promote the generic rule into Partner Commons: dependent PR/check evidence is valid only for the exact dependency graph it executed."
+    ],
+    "native_lesson": "FactorValidityEnvelope should bind source commit graph, not only tool/version labels. A green dependent artifact becomes stale when an upstream semantic dependency changes even if its own files did not."
+  },
+  "evidence_refs": [
+    "github:confident-ai/deepeval#3056@ca677d5f2f1837863306da6d643e7f10be174ad7",
+    "github:confident-ai/deepeval#3064@a0ac51bf8de39b9e2833560ae27ac45e8bca5c2d",
+    "partner:deepeval",
+    "owner:Replay",
+    "owner:Backtesting",
+    "owner:FactorValidityEnvelope"
+  ],
+  "content_sha256": "493c1e8a6de0e1ae82213f57843b995b95c003d5c4a71f40730f3719abf35d4e"
+}
