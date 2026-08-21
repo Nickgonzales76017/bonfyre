@@ -1,0 +1,27 @@
+{
+  "actor": {
+    "id": "codex-20260821T085346-23fd90fc",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "chatgpt-third-trajectory"
+  ],
+  "body": {
+    "text": "{\"result\":\"pass\",\"proof_sha256\":\"aa0be24ecd42eaa01f29fea51743def2aecfcfbd4293d48bd2d46512602dcc8a\",\"lineages\":[\"frappe-core\",\"crm\",\"helpdesk\",\"erpnext\",\"hrms\",\"lms\",\"wiki\",\"insights\",\"drive\"],\"replay\":{\"effects\":9,\"work\":9,\"evidence\":9,\"duplicate_effects\":0},\"coverage_debt\":[]}"
+  },
+  "content_sha256": "ef5994181f0b0ac6769c6ef3a2eb28f34f6cdfc5a575c7be85a14a72f32103b0",
+  "event_id": "local-ec8a9f85e058260d232cf7ad060f",
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0300-032",
+    "compiler:BonfyreFrappeCompiler",
+    "src:cmd/BonfyreFrappeCompiler/src/main.c",
+    "witness:components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+    "proof:evidence/proofs/frappe-compiler-company-flow.json",
+    "atlas:one-company-stress-gauntlet"
+  ],
+  "observed_at": "2026-08-21T09:03:49.801539+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Nine-lineage compiler-spine gauntlet passes rollback and duplicate-free replay",
+  "type": "review_result"
+}
