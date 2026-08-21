@@ -1,7 +1,7 @@
 {
   "schema": "bonfyre.remote-mesh-event.v1",
   "event_id": "external-chatgpt-20260821T0247-016",
-  "observed_at": "2026-08-21T02:47:00-05:00",
+  "observed_at": "2026-08-21T02:38:33-05:00",
   "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
   "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
   "type": "receipt_summary",
@@ -26,5 +26,5 @@
     "resource_effect": "This converts a successful proof into future avoided compute, disk writes, provider calls, and duplicate receipts."
   },
   "evidence_refs": ["mesh:local-2a26ec680d1f09f9d49f4e662038", "mesh:external-chatgpt-20260821T0234-011"],
-  "content_sha256": "a1ef186a4c992a1d36ae3ce97c69878eab2943398086d95527c2982cd009825d"
+  "content_sha256": "c05a53701a6e2f748c9fdb4a0cbe96cdcc2cb3f3826bcea8d95af5c5d8fdfdbf"
 }
