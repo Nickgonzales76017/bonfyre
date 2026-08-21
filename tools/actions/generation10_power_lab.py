@@ -6,8 +6,10 @@ barrier. The QUIC/OpenSSL backend is exercised by the separate physical-fabric
 lane, so a transport dependency cannot suppress evidence from the remaining
 public Power estate.
 
-A Power's Makefile owns its command-specific CFLAGS. Hosted-runner foundation
-flags must never erase those private include paths or compile contracts.
+A Power's Makefile owns its command-specific CFLAGS. Hosted-runner portability
+must be additive and must never erase those private include paths, defines, or
+compile contracts. The swarm therefore removes workflow CFLAGS/OPTFLAGS for
+individual Powers and injects hosted-Linux feature visibility through CC.
 """
 from __future__ import annotations
 
@@ -24,6 +26,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT = Path(__file__).with_name("generation10_contract.json")
 SCHEMA = "bonfyre.generation10.action-receipt.v1"
+POWER_PORTABILITY_FLAGS = ("-D_GNU_SOURCE", "-D_DEFAULT_SOURCE")
 
 
 def canonical(value: Any) -> bytes:
@@ -90,6 +93,14 @@ def manifest_observation(commands: list[str]) -> dict[str, Any]:
     }
 
 
+def additive_cc(base: str) -> str:
+    cc = base.strip() or "cc"
+    for flag in POWER_PORTABILITY_FLAGS:
+        if flag not in cc.split():
+            cc = f"{cc} {flag}"
+    return cc
+
+
 def make_env(*, foundation_flags: str | None) -> dict[str, str]:
     env = os.environ.copy()
     env.update({
@@ -102,6 +113,10 @@ def make_env(*, foundation_flags: str | None) -> dict[str, str]:
         # already defined and would lose the Power's own -I/-D contract.
         env.pop("CFLAGS", None)
         env.pop("OPTFLAGS", None)
+        # Hosted Linux feature-test visibility is additive through CC instead:
+        # command-local CFLAGS, LOCAL_CFLAGS, OPTFLAGS, include paths and
+        # linker contracts remain owned by the Power Makefile.
+        env["CC"] = additive_cc(env.get("CC", "cc"))
     else:
         env["CFLAGS"] = foundation_flags
         env["OPTFLAGS"] = foundation_flags
@@ -152,13 +167,30 @@ def build_power(name: str, timeout: int) -> dict[str, Any]:
     directory = ROOT / "cmd" / name
     result = run_make(directory, timeout, foundation_flags=None)
     result["command"] = name
-    result["build_contract"] = "command_makefile_owned"
+    result["build_contract"] = "command_makefile_owned_with_additive_host_feature_visibility"
+    result["host_feature_flags"] = list(POWER_PORTABILITY_FLAGS)
     result["built_executables"] = sorted(
         p.name
         for p in directory.iterdir()
         if p.is_file() and p.name != "Makefile" and os.access(p, os.X_OK)
     )
     return result
+
+
+def classify_failure(item: dict[str, Any]) -> list[str]:
+    text = f"{item.get('stdout_tail', '')}\n{item.get('stderr_tail', '')}".lower()
+    classes: list[str] = []
+    checks = (
+        ("host_dependency", ("no such file or directory", "cannot find -l", "fatal error:")),
+        ("platform_assumption", ("sys/sysctl.h", ".dylib", "__fp16")),
+        ("link_contract", ("undefined reference", "dso missing from command line")),
+        ("strict_c_feature_visibility", ("path_max", "clock_monotonic", "clock_realtime", "strtok_r", "strdup", "popen", "open_memstream", "m_pi")),
+        ("compiler_warning_contract", ("all warnings being treated as errors", "[-werror=")),
+    )
+    for label, needles in checks:
+        if any(needle in text for needle in needles):
+            classes.append(label)
+    return classes or ["unclassified_native_build_debt"]
 
 
 def receipt_base(subject: str) -> dict[str, Any]:
@@ -219,6 +251,8 @@ def main() -> int:
     foundation_ok = all(item["outcome"] == "passed" for item in foundation)
     results = [build_power(name, args.timeout) for name in assigned] if foundation_ok else []
     failures = [item for item in foundation + results if item["outcome"] != "passed"]
+    for item in failures:
+        item["failure_classes"] = classify_failure(item)
 
     receipt = receipt_base(f"powers-{args.shard}-of-{args.total}")
     receipt.update({
@@ -226,12 +260,22 @@ def main() -> int:
         "inventory_observation": manifest_observation(command_dirs()),
         "commands_assigned": assigned,
         "core_foundation": foundation,
-        "power_build_contract": "preserve each command Makefile's CFLAGS/OPTFLAGS; hosted flags apply only to shared foundation",
+        "power_build_contract": "preserve each command Makefile's CFLAGS/OPTFLAGS; inject hosted GNU/default feature visibility additively through CC only",
+        "host_portability_penetration": {
+            "channel": "CC",
+            "flags": list(POWER_PORTABILITY_FLAGS),
+            "status": "diagnostic_penetration",
+            "purpose": "remove strict-C hosted-Linux feature visibility noise without replacing command-owned build contracts",
+        },
         "physical_fabric_split": {
             "libquic_transport": "separate Generation-10 physical-fabric lane",
             "reason": "a transport/backend dependency must not globally suppress public Power evidence",
         },
         "results": results,
+        "failure_taxonomy": {
+            item.get("command") or item.get("path", "unknown"): item.get("failure_classes", [])
+            for item in failures
+        },
         "outcome": "failed" if failures else "passed",
     })
     path = seal(receipt, Path(args.output_dir))
@@ -245,6 +289,7 @@ def main() -> int:
                         {
                             "subject": item.get("command") or item.get("path"),
                             "exit_code": item.get("exit_code"),
+                            "failure_classes": item.get("failure_classes", []),
                             "stderr_tail": item.get("stderr_tail", "")[-1400:],
                         }
                         for item in failures
