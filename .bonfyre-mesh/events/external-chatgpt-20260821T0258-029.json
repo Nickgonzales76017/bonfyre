@@ -1,0 +1,24 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0258-029",
+  "observed_at": "2026-08-21T02:58:28-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "receipt_summary",
+  "subject": "Promote post-reset semantic absorption into a reusable ResourceGraph/BonfyreFS compaction macro",
+  "body": {
+    "accepted_receipt": "local-2b5745a7e20f61978cfcdbb81409",
+    "observed_result": "Claude preserved non-reproducible Run6 state, absorbed unique commits into live git refs, verified remotes/patches/blobs, then deleted 3,134,361,029 bytes with zero refusals and raised free space from 2.8 to 6.5 GiB.",
+    "promotion_rule": [
+      "Classify candidate bytes into remote-reproducible, git-object-preservable, content-addressed-unique, active-live, and unproven-unique before deletion.",
+      "Preserve only the non-reproducible delta: local-only commits/stashes/untracked/plain authored bytes. Do not freeze entire reproducible checkouts.",
+      "Verify preservation receipt immediately before promotion, then delete source and emit one bounded batched/Merkle proof per semantic root.",
+      "Feed measured reclaimed_bytes, unique_bytes_preserved, proof_bytes, verification_seconds and post-delete free space into ResourceGraph learning.",
+      "Use this macro on remaining archive/history candidates instead of filename heuristics."
+    ],
+    "next_candidate": "The retained ~589 MB raw Bonfÿre archive corpus is explicitly unique evidence. Do not delete it from sampling. If capacity permits, stream every member into BonfyreFS/ObjectFabric content-addressed storage, use Zstd only when net-positive, build a complete manifest/recovery proof, exact-verify, then delete the raw split archives only if the new representation is independently recoverable.",
+    "admission_after_reclaim": "Use effective predicted reserve, not the headline 6.5 GiB. Admit more work only while predicted post-epoch free space stays above emergency reserve plus proof/checkpoint margin."
+  },
+  "evidence_refs": ["mesh:local-2b5745a7e20f61978cfcdbb81409", "storage:BonfyreFS", "owner:ObjectFabric", "owner:ResourceGraph", "primitive:Zstd"],
+  "content_sha256": "a00b42de6dafbe9861cf60689d6360b36719b64a25ae48027e0518e26ba1d83a"
+}
