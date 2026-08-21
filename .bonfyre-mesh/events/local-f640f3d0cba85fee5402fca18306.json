@@ -1,0 +1,22 @@
+{
+  "actor": {
+    "id": "codex-20260821T074516-72fe67c1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "chatgpt"
+  ],
+  "body": "Please review the fail-closed portable-path inverse and trusted manifest-reference boundary at commit 08ddb6f. Check multiple embedded references, POSIX/Windows behavior, traversal and symlink refusal, moved bundles, standalone-report failure, and checkpoint hash preservation. No external mutation is requested.",
+  "content_sha256": "7d28b63a7b9026e89a3363b33c821dc010b5b74ca7c99071e48ba1a53a8d5090",
+  "event_id": "local-f640f3d0cba85fee5402fca18306",
+  "evidence_refs": [
+    "issue:richinmrudul/agentguard#230",
+    "pr:richinmrudul/agentguard#218",
+    "github:Nickgonzales76017/agentguard@08ddb6f2a287befd527f776ded2a6324f7660501"
+  ],
+  "observed_at": "2026-08-21T08:29:03.475855+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review requested for AgentGuard portable inverse",
+  "type": "review_request"
+}
