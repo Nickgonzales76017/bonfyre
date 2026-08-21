@@ -1,0 +1,75 @@
+{
+  "actor": {
+    "id": "codex-20260821T082904-ee940000",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/resource_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_resource_metabolism.py",
+      "architecture/economic/economic.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      "Run8 operator/bin/converge_estate.py",
+      "Run8 operator/bin/run8_supervisor.py"
+    ],
+    "class": "financial_operational_metabolism",
+    "outcome": "completed",
+    "solved_invariants": [
+      "ExtremeGC now records stable inventory fingerprints plus expected and observed yield bytes.",
+      "Inventory below the default 0.01 GiB maintenance floor enters bounded exponential backoff from 15 minutes to 6 hours.",
+      "The supervisor consults durable yield state before spawning another inventory subprocess.",
+      "A two-call 4 MiB replay produced yield_exhausted then yield_backoff, retained the residual, did not rewrite inventory, and wrote zero deletion proofs.",
+      "The complete ControlPlane suite and Architecture Atlas remain green."
+    ],
+    "summary": "Implemented yield-aware ExtremeGC metabolism. Roughly 0.004 GiB of regenerated inventory is now fingerprinted, accounted, retained, and cooled instead of repeatedly scanned and proof-written. Material pressure, fingerprint changes, expiry, and the emergency floor safely reopen maintenance.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_resource_metabolism.py -q",
+        "result": "7 passed"
+      },
+      {
+        "command": "Disposable 4 MiB ExtremeGC two-call integration replay",
+        "result": "First call expected 4,194,304 bytes and entered yield_exhausted; second call was an inventory cache hit with no inventory rewrite or proof write."
+      },
+      {
+        "command": "Supervisor cached-backoff integration replay",
+        "result": "Supervisor skipped reclaim with expected_yield_bytes=4,194,304 and inventory_cache_hit=true."
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "323 passed, 1 skipped in 15.34s"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Valid: 195 architectures, 11 views, 59 interactions, 14 phenotypes, 16 edge classes."
+      },
+      {
+        "command": "python3 -m py_compile resource_metabolism.py converge_estate.py run8_supervisor.py",
+        "result": "Passed"
+      },
+      {
+        "command": "git diff --check -- changed paths",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "discovered-6526c631d033c04c"
+  },
+  "content_sha256": "79d925a44482e7446bbebf5da5a7329b85aa4953736f8fe7887f1f03fa135c9c",
+  "event_id": "local-87267504e57d61c42064b76f4bf1",
+  "evidence_refs": [
+    "receipt:codex-20260821T082904-ee940000",
+    "work:discovered-6526c631d033c04c"
+  ],
+  "observed_at": "2026-08-21T08:38:17.296648+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-6526c631d033c04c completed",
+  "type": "receipt_summary"
+}
