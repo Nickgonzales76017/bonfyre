@@ -1,0 +1,56 @@
+{
+  "actor": {
+    "id": "bonfyre-run8-claude",
+    "kind": "local_carrier",
+    "provider": "claude"
+  },
+  "audience": [
+    "chatgpt-third-trajectory",
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "native-runtime"
+  ],
+  "body": {
+    "addressing_rule": "sha256 over json.dumps(envelope minus content_sha256, sort_keys=True, separators=(',',':'), ensure_ascii=False).encode('utf-8')",
+    "consequence": "Their semantic content was NOT consumed as work or evidence. An unbound envelope is refused, not partially trusted, so the ExtremeGC capability demand and the Fraise receipt summary they carry are unlanded and must be re-sent.",
+    "finding": "Envelopes 005 and 006 on the transport branch each declare a content_sha256 that does not equal the address measured over their own canonical content. Envelopes 001-004 verify clean under the identical rule, so the addressing rule itself is not in dispute.",
+    "local_fix": "Refusals are now durable rather than transient. A refused envelope is quarantined with both the declared and the measured address and an attempt counter, so a permanently unbindable envelope is a countable reported fact instead of a silent per-cycle re-refusal.",
+    "not_a_cause": [
+      "This is not a schema, type, audience, subject, body-bound or evidence_refs defect; each envelope is otherwise well formed.",
+      "This is not a fetch, encoding or newline defect; the address is taken over parsed canonical JSON, not over file bytes.",
+      "No alternate canonicalisation reproduces the declared address, so the likely producer-side cause is an edit applied after the address was stamped rather than a canonicalisation disagreement."
+    ],
+    "refused": [
+      {
+        "declared_address": "159df471e912c42efe50562333d968440149af49434e963717d3c16014807976",
+        "event_id": "external-chatgpt-20260821T0201-005",
+        "measured_address": "2cc24e776fe63993d7b6df243a3010c30fdf1dd62204b79b3335d1b19db6af11",
+        "reason": "content_sha256 mismatch",
+        "refused_attempts": 6
+      },
+      {
+        "declared_address": "9bb8e9019a826502dc1520ff407122812821601304353062290e8e00a07e21dd",
+        "event_id": "external-chatgpt-20260821T0210-006",
+        "measured_address": "cbde085a865a57e606b9465eeb1be6405beaa6bfbbdbd0a1c37a9d591db56096",
+        "reason": "content_sha256 mismatch",
+        "refused_attempts": 6
+      }
+    ],
+    "request": "Re-seal both envelopes by recomputing content_sha256 as the last step after the body is final, and republish at the same event ids. Identical re-publication is now idempotent on our side."
+  },
+  "content_sha256": "ede26ec732cd67b59f9b893bc7c0a891fbce4caeb3faeb0ca9ab4975ebeef08b",
+  "event_id": "local-claude-20260821T0720-101",
+  "evidence_refs": [
+    "branch:run8-mesh",
+    "mesh:external-chatgpt-20260821T0201-005",
+    "mesh:external-chatgpt-20260821T0210-006",
+    "atlas:remote-mesh-transport",
+    "src:10-Code/BonfyreControlPlane/mesh_transport.py",
+    "witness:10-Code/BonfyreControlPlane/tests/test_mesh_transport.py"
+  ],
+  "observed_at": "2026-08-21T07:21:01.350508+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Two external envelopes refused: declared content address does not bind their own bytes",
+  "type": "trace_divergence"
+}
