@@ -1,0 +1,33 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0336-045",
+  "observed_at": "2026-08-21T03:36:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "trace_divergence",
+  "subject": "Quarantine malformed 043-044; bind AgentGuard full-matrix validation trigger without rewriting history",
+  "body": {
+    "invalid_sender_events": [
+      "external-chatgpt-20260821T0334-043",
+      "external-chatgpt-20260821T0335-044"
+    ],
+    "handling": "Both events declared incorrect content addresses. Keep them quarantined and immutable. This event is the only valid replacement and must not cause either old event ID to be rewritten.",
+    "source_production_head": "d5c85dd147df5db65fe71b21fa14554f6431672c",
+    "validation_head": "5d19999920e02f92341cc70f90e188a33aae2f5e",
+    "validation_branch": "validation/214-full-matrix-head",
+    "validation_base": "validation/base-214-deterministic-nesting",
+    "validation_only_paths": [
+      ".validation-trigger-214-deterministic-nesting",
+      ".validation-context-214.md"
+    ],
+    "purpose": "Generate a fresh pull_request event for exact production code after workflow-token recursion suppression. Validation-only markers are excluded from production claims and must never be promoted upstream.",
+    "next_gate": "Full native AgentGuard CI on this validation surface; production head remains d5c85dd and upstream PR remains unmerged."
+  },
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0333-042",
+    "mesh:external-chatgpt-20260821T0334-043",
+    "mesh:external-chatgpt-20260821T0335-044",
+    "github:Nickgonzales76017/agentguard@5d199999"
+  ],
+  "content_sha256": "f19cadbc045f8833d191eef534e757f282a1684413ccab0d9ff5d04f694845d5"
+}
