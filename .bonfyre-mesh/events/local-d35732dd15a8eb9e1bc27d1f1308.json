@@ -1,0 +1,77 @@
+{
+  "actor": {
+    "id": "codex-20260821T085346-23fd90fc",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "cmd/BonfyreFrappeCompiler/src/main.c",
+      "cmd/BonfyreFrappeCompiler/tests/schema_ingest_smoke.sh",
+      "components/BonfyreControlPlane/company_stress_gauntlet.py",
+      "components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+      "architecture/institutional/company-stress-gauntlet.yaff",
+      "architecture/atlas.index.json",
+      "evidence/proofs/frappe-compiler-company-flow.json"
+    ],
+    "class": "open_world_learning",
+    "outcome": "completed",
+    "solved_invariants": [
+      "BonfyreFrappeCompiler now emits its registered nine-lineage catalog as machine-readable JSON.",
+      "All nine catalog-discovered lineages compile from real checked-in DocType metadata into AppPacks.",
+      "Nine mutations produce nine WorkGraph obligations, nine authority/effect receipts, and nine EvidenceGraph supporters.",
+      "Transactional rollback removes the aborted probe; replay preserves 9 effects, 9 work items, and 9 evidence relations with zero duplicate effects.",
+      "ContextCompiler budgets derive from compiled schema fields and witnesses; UI and API projections consume the same canonical contract.",
+      "Coverage debt is explicitly empty because every registered lineage was exercised.",
+      "The Architecture Atlas validates with the compiler-spine contracts and expanded lineage interaction."
+    ],
+    "summary": "Completed the nine-lineage company gauntlet using BonfyreFrappeCompiler as its execution spine. The compiler-owned catalog drives discovery, ownership/dependency graph generation, real schema compilation, WorkGraph mutations, receipts, EvidenceGraph support, ContextCompiler input, and shared UI/API projections. Durable proof SHA-256: aa0be24ecd42eaa01f29fea51743def2aecfcfbd4293d48bd2d46512602dcc8a.",
+    "tests": [
+      {
+        "command": "make -C cmd/BonfyreFrappeCompiler",
+        "result": "passed with strict C warnings enabled"
+      },
+      {
+        "command": "bash cmd/BonfyreFrappeCompiler/tests/schema_ingest_smoke.sh",
+        "result": "passed across all nine compiler-registered lineages"
+      },
+      {
+        "command": "pytest -q components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py -x",
+        "result": "9 passed"
+      },
+      {
+        "command": "pytest -q components/BonfyreControlPlane/tests/",
+        "result": "328 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 198 architectures, 11 views, 62 interactions, 14 phenotypes, 16 edge-classes"
+      },
+      {
+        "command": "git diff --check && python3 -m py_compile components/BonfyreControlPlane/company_stress_gauntlet.py components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+        "result": "passed"
+      },
+      {
+        "command": "company_stress_gauntlet.py isolated-state --proof evidence/proofs/frappe-compiler-company-flow.json",
+        "result": "all acceptance checks passed; proof aa0be24ecd42eaa01f29fea51743def2aecfcfbd4293d48bd2d46512602dcc8a"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260821T0300-032"
+  },
+  "content_sha256": "20e8f00e34afde8198e29340ec4c8cbbf75da4da51332fe332d5d63fd421b52b",
+  "event_id": "local-d35732dd15a8eb9e1bc27d1f1308",
+  "evidence_refs": [
+    "receipt:codex-20260821T085346-23fd90fc",
+    "work:mesh-external-chatgpt-20260821T0300-032"
+  ],
+  "observed_at": "2026-08-21T09:03:49.801854+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260821T0300-032 completed",
+  "type": "receipt_summary"
+}
