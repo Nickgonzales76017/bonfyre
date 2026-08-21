@@ -9,9 +9,10 @@ make -C "$root/programs/bonfyre" >/dev/null
 
 BONFYRE_STATE_DIR="$base/fresh" "$fabric" fabric init >/dev/null
 BONFYRE_STATE_DIR="$base/fresh" "$fabric" fabric init >/dev/null
-test "$(sqlite3 "$base/fresh/fabric.db" 'SELECT max(version) FROM schema_migrations')" = 5
-test "$(sqlite3 "$base/fresh/fabric.db" "SELECT count(*) FROM schema_migrations WHERE version=4")" = 1
-test "$(sqlite3 "$base/fresh/fabric.db" "SELECT count(*) FROM schema_migrations WHERE version=5")" = 1
+test "$(sqlite3 "$base/fresh/fabric.db" 'SELECT max(version) FROM schema_migrations')" = 8
+for version in 4 5 6 7 8; do
+    test "$(sqlite3 "$base/fresh/fabric.db" "SELECT count(*) FROM schema_migrations WHERE version=$version")" = 1
+done
 
 # Build a version-3 shape without scheduler data, then invoke only the public runtime.
 mkdir -p "$base/v3"
@@ -26,7 +27,10 @@ CREATE TABLE events(id TEXT PRIMARY KEY,mission_id TEXT,task_id TEXT,attempt INT
 CREATE TABLE receipts(id TEXT PRIMARY KEY,subject_kind TEXT NOT NULL,subject_id TEXT NOT NULL,content_hash TEXT NOT NULL,payload TEXT NOT NULL,created_at TEXT NOT NULL);
 SQL
 BONFYRE_STATE_DIR="$base/v3" "$fabric" fabric init >/dev/null
-test "$(sqlite3 "$base/v3/fabric.db" 'SELECT max(version) FROM schema_migrations')" = 5
+test "$(sqlite3 "$base/v3/fabric.db" 'SELECT max(version) FROM schema_migrations')" = 8
+for version in 4 5 6 7 8; do
+    test "$(sqlite3 "$base/v3/fabric.db" "SELECT count(*) FROM schema_migrations WHERE version=$version")" = 1
+done
 
 mkdir -p "$base/malformed"
 sqlite3 "$base/malformed/fabric.db" <<'SQL'
