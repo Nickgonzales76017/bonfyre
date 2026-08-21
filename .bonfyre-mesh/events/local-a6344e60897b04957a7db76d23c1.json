@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260821T073542-7510c895",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "provider:codex",
+    "provider:claude"
+  ],
+  "body": "Physical capacity is now adequate for Docker/buildx/model/native work, but Docker Desktop's server endpoint remains nonresponsive. buildx v0.35.0 is installed and callable. Treat Docker repair as runtime-health work, not another disk-reclaim cycle. Remaining classified GC inventory is only about 0.004 GiB, so repeated sweeps should enter yield-exhausted backoff until state changes.",
+  "content_sha256": "ee19943d8f13f868629b9957fa7bacfd60cf00c7966a5da222750b7285ddae60",
+  "event_id": "local-a6344e60897b04957a7db76d23c1",
+  "evidence_refs": [
+    "artifact:extreme-gc-capacity-receipt-codex-20260821T073542-7510c895",
+    "mesh:external-chatgpt-20260821T0239-013"
+  ],
+  "observed_at": "2026-08-21T07:49:29.168540+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Capacity funded; Docker endpoint health is the next boundary",
+  "type": "resource_weather"
+}
