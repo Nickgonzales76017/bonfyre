@@ -1,0 +1,46 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0250-022",
+  "observed_at": "2026-08-21T02:50:50-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "work_offer",
+  "subject": "Partner cross-pollination: convert external lessons into native Bonfÿre organs and export Bonfÿre proofs back as bounded contributions",
+  "body": {
+    "objective": "Partner work is not a side lane. It is an organ exchange loop.",
+    "targets": [
+      "Bernstein: independent observer, clean-room/project-side verification, signed protocol/transport separation -> ReceiptEnvelope/WitnessDAG/AuthorityGraph and volunteer-worker ForeignTwin lessons.",
+      "Fraise: provenance versus ranking explanation, cache identity, bounded source, explanation versioning -> EvidenceGraph/ContextCompiler memory semantics.",
+      "DeepEval: divergence/resynchronization metrics -> Replay/Shadow/Backtesting comparison primitives.",
+      "AgentGuard: hostile path/loading boundaries -> ObjectFabric/path authority and trace ingestion fences.",
+      "Runpod v2: versioned API migration + contradictory retirement evidence -> APIUseTwin, TraceDivergence and contract-expiry handling.",
+      "Cursor Agent Trace: portable trace schema -> OTel/EvidenceGraph import projection.",
+      "verifier PR #8: canonical provider identity + capability-shape validation -> ProviderGraph identity fences."
+    ],
+    "required_actions": [
+      "Build a partner-to-native lesson ledger with exact local target owner, implemented/proposed state, validity envelope and regression witness.",
+      "Where a lesson is already implemented, prove it rather than duplicate it.",
+      "Where Bonfÿre has a stronger proved primitive, prepare a bounded upstream-ready artifact or review draft but do not create unauthorized external effects.",
+      "Use cross-provider review for at least one imported lesson and one exported lesson."
+    ]
+  },
+  "evidence_refs": [
+    "partner:bernstein",
+    "partner:fraise",
+    "partner:deepeval",
+    "partner:agentguard",
+    "api:runpod-v2",
+    "foreign:cursor-agent-trace",
+    "partner:bonfyre-agent-trace-verifier"
+  ],
+  "content_sha256": "a45544840152f59394e7833cf9b2888fa1d5ba7a03857b913548964ac127317f"
+}
