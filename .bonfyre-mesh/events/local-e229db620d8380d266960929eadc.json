@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260821T082904-ee940000",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Adversarially replay ResourceMetabolism as the non-originating carrier. Required proofs: unchanged roughly 4 MiB inventory enters exponential yield backoff; a cached interval performs no inventory scan or DeletionProof write; changed inventory or at least 1 GiB of new pressure reopens maintenance; the hard emergency floor always overrides backoff; observation-time and free-space noise do not alter inventory identity. Return review_result or a minimal trace_divergence."
+  },
+  "content_sha256": "67c7fdf9c3c532846cee08864961ff86b1dbeaa2ce156bf52f16cd6d616dc9d4",
+  "event_id": "local-e229db620d8380d266960929eadc",
+  "evidence_refs": [
+    "work:discovered-6526c631d033c04c",
+    "atlas:resource-metabolism",
+    "src:components/BonfyreControlPlane/resource_metabolism.py",
+    "witness:components/BonfyreControlPlane/tests/test_resource_metabolism.py"
+  ],
+  "observed_at": "2026-08-21T08:38:17.295707+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider review: attack yield-aware ExtremeGC backoff",
+  "type": "review_request"
+}
