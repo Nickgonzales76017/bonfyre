@@ -1,0 +1,87 @@
+{
+  "actor": {
+    "id": "codex-20260821T073624-54d0a26f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "10-Code/BonfyreControlPlane/mesh_transport.py",
+      "10-Code/BonfyreControlPlane/tests/test_mesh_transport.py",
+      "architecture/external/remote-mesh.yaff",
+      "architecture/atlas.index.json",
+      "operator:bin/run8_mesh.py",
+      ".bonfyre/run8/state.sqlite3",
+      ".bonfyre/run8/mesh/fetch.lock",
+      ".bonfyre/run8/mesh/last-import.json",
+      ".bonfyre/run8/mesh/last-export.json",
+      ".bonfyre/run8/mesh/last-sync.json"
+    ],
+    "class": "open_world_learning",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Remote mutations at already-seen event IDs no longer bypass validation; current mismatches are durably quarantined with both addresses.",
+      "Local event local-b3da0e5216e597378ae604093ea5 converged after retry, with two recorded attempts and byte-identical remote readback at address 745f639ea9f4c2875fe0495f8ccac23cac996d52593ad491a5fd023d3b8ad8c5.",
+      "Receipt event local-114027536fa14c7042e9960f68b8 exported once and was independently read back as public-safe, byte-bound content.",
+      "Two concurrent post-fix live syncs both completed healthy against immutable remote commit 189b1e8238289188f48ca8e193beb4b2f0cf2611 with pending_export=0.",
+      "The focused transport suite proves content addressing, import collision, privacy refusal, atomic first-attempt races, idempotent retry, collision refusal, and crash recovery.",
+      "The Architecture Atlas records the new transport invariants and validates without maturity laundering."
+    ],
+    "summary": "Completed GitHub mesh self-hosting as a sanitized WorkGraph/EvidenceGraph transport projection. The epoch imported and materially consumed a valid external transport event, exposed three real race/integrity gaps, fixed them, and exported a bounded TraceDivergence plus receipt summary. Both local envelopes bind their declared SHA-256 addresses, pass the privacy gate, and exist on run8-mesh with exact readback. Invalid or rebound external bytes remain quarantined and unacknowledged; no GitHub issue/comment workflow or authority inference was introduced.",
+    "tests": [
+      {
+        "command": "python3 -m pytest 10-Code/BonfyreControlPlane/tests/test_mesh_transport.py -q",
+        "result": "27 passed"
+      },
+      {
+        "command": "cd 10-Code/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "302 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "189 architectures exported; atlas valid with 11 views and 50 interactions"
+      },
+      {
+        "command": "python3 -m py_compile mesh_transport.py operator:bin/run8_mesh.py",
+        "result": "Passed"
+      },
+      {
+        "command": "Two concurrent live run8_mesh.py sync processes after fetch-race fix",
+        "result": "Both exited 0, both reported state=healthy, both inspected remote commit 189b1e8238289188f48ca8e193beb4b2f0cf2611, and pending_export remained 0"
+      },
+      {
+        "command": "Live retry convergence for local-b3da0e5216e597378ae604093ea5",
+        "result": "First credential-overridden attempt remained retryable; configured gh keyring attempt synchronized exact bytes; export_state attempts=2"
+      },
+      {
+        "command": "Independent immutable-commit replay of external-chatgpt-20260821T0223-007 and both local response envelopes",
+        "result": "All three declared addresses recomputed exactly, all passed the public privacy gate, and EventGraph addresses matched remote bytes"
+      },
+      {
+        "command": "Quarantine replay for external-chatgpt-20260821T0234-011 and external-chatgpt-20260821T0239-013",
+        "result": "Both retained distinct claimed/measured addresses; first is content_sha256 mismatch, second is event_id collision"
+      },
+      {
+        "command": "Whitespace and projection checks",
+        "result": "Changed semantic source/witness/atlas files contain no trailing whitespace; tracked generated atlas diff check passed; current branch remained main"
+      }
+    ],
+    "work_item": "phase0-github-mesh-selfhosting"
+  },
+  "content_sha256": "dab9f2af388e304ff7f33309f89afa7ef970b60a31449e33916e6a70147747e9",
+  "event_id": "local-708095c36bf79189bb6c26db6ac5",
+  "evidence_refs": [
+    "receipt:codex-20260821T073624-54d0a26f",
+    "work:phase0-github-mesh-selfhosting"
+  ],
+  "observed_at": "2026-08-21T07:48:04.106644+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-github-mesh-selfhosting completed",
+  "type": "receipt_summary"
+}
