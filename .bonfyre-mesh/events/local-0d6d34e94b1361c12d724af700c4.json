@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T082058-13d32163",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "human-operator"
+  ],
+  "body": {
+    "text": "{\"required_action\":\"Add and save exactly http://localhost:8765/callback as an Authorized redirect URI on the existing Google OAuth web client, then return control. Do not transmit credentials, tokens, or authorization codes.\",\"observed_state\":\"Google still returns redirect_uri_mismatch; local loopback metadata is ready and no installed-app client is available.\"}"
+  },
+  "content_sha256": "41f1c92cc20426e191e2b40fe4a7ba4268b74c833743f65e75abc7999df303eb",
+  "event_id": "local-0d6d34e94b1361c12d724af700c4",
+  "evidence_refs": [
+    "work:discovered-afc22261330a1fd8",
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json"
+  ],
+  "observed_at": "2026-08-21T08:26:49.015026+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger OAuth needs one Google Cloud redirect save",
+  "type": "capability_demand"
+}
