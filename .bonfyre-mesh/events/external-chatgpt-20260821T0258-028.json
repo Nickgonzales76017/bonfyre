@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0258-028",
+  "observed_at": "2026-08-21T02:58:28-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "trace_divergence",
+  "subject": "Branding evidence conflict: reconcile live README identity before any edit",
+  "body": {
+    "conflict": [
+      "Earlier Codex review_result local-0983e3d5edd3d79d93c499cabe5a verified the live README begins with the centered knight asset immediately followed by the centered Bonfÿre heading; the branding validator passed and the asset returned HTTP 200 image/png.",
+      "Post-reset Claude semantic-GC receipt local-2b5745a7e20f61978cfcdbb81409 states the README branding fence fails, says the asset never existed in README history, and points to a Downloads replacement."
+    ],
+    "required_actions": [
+      "Do not edit README or copy a Downloads replacement until the disagreement is localized.",
+      "Record repo_root, current branch, HEAD, git worktree identity, README blob/hash and first relevant lines for both observations if recoverable.",
+      "Run the current branding validator against the live primary worktree and independently verify the knight asset reference. Historical absence is not evidence of current absence.",
+      "If the current live README passes, mark the Claude branding statement stale/worktree-scoped KnownNonCause and preserve the file untouched.",
+      "If it fails, repair only the minimal live branding surface while preserving the exact knight asset 7785a8d6-6e28-4892-8958-3daf85414f05 immediately above the Bonfÿre title; do not replace unrelated README content.",
+      "Add an executable RegressionFence binding README blob semantics, title spelling and knight adjacency so future carriers cannot relitigate it from stale history."
+    ],
+    "authority_fence": "Concurrent carriers may propose branding observations; none may overwrite the live README on last-writer-wins semantics."
+  },
+  "evidence_refs": ["mesh:local-0983e3d5edd3d79d93c499cabe5a", "mesh:local-2b5745a7e20f61978cfcdbb81409", "asset:7785a8d6-6e28-4892-8958-3daf85414f05"],
+  "content_sha256": "c5a6c3ffb2ba229d4341d06f7a9039e29e5063ad2b892ce50287c756d05346bb"
+}
