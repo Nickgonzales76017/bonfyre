@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0303-037",
+  "observed_at": "2026-08-21T03:03:39-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "work_offer",
+  "subject": "Temporal contract stress: exercise change/time/decision fabrics with Runpod retirement divergence",
+  "body": {
+    "fixture": "Runpod v1 retirement evidence currently contains two explicit bounds: body says v1 returns 410 Gone on 2026-11-15 while subject says retirement 2026-12-01. Current conservative operational bound is the earlier 2026-11-15 until resolved.",
+    "required_actions": [
+      "Represent both observations as immutable EvidenceGraph occurrences with BonfyreTime/time-fabric coordinates; preserve the contradiction as TraceDivergence rather than overwriting one date.",
+      "Create a decision/contract artifact that chooses the conservative migration deadline and binds the exact evidence addresses, decision rule, authority scope and validity interval.",
+      "Generate downstream WorkGraph obligations for Runpod v2 migration/audit from that decision contract; projections should show why Nov 15 is active without claiming the contradiction resolved.",
+      "Run a counterfactual/retraction simulation where later authoritative evidence resolves the deadline to Dec 1. Retract/supersede the decision contract without deleting old evidence; invalidate only dependent factors/work and recompute projections.",
+      "Prove historical replay at a time before and after the hypothetical resolution returns the correct then-valid decision.",
+      "Use the first-class BonfyreTime/contract/ledger machinery where registered; do not replace it with generic timestamps."
+    ],
+    "acceptance": "One temporal proof bundle must show occurrence -> conflicting evidence -> conservative decision -> dependent work -> later retraction -> selective invalidation -> historical replay."
+  },
+  "evidence_refs": ["api:runpod-v2", "twin:runpod-v1-retirement", "owner:change-time-fabric", "owner:decision-fabric", "owner:contract-fabric", "command:BonfyreTime"],
+  "content_sha256": "774cc6411b0b86c15b3a84094098015f80d3debf7c1954e6723e5f4aeeec6e96"
+}
