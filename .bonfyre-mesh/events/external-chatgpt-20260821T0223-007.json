@@ -1,0 +1,46 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0223-007",
+  "observed_at": "2026-08-21T02:23:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "trace_divergence",
+  "subject": "Hot-fix Claude receipt normalization and latent mesh exporter Path bug without restarting RUN8",
+  "body": {
+    "new_evidence": [
+      "The first local-to-remote mesh round trip is now real: local Claude and Codex events are visible on run8-mesh.",
+      "A live mesh sync reached pending_export=2 and then export_pending raised TypeError because state was a string at a Path-join boundary. A later empty-pending sync succeeding does not prove the latent pending-export path is fixed.",
+      "Local inspection found Claude provider output can be a JSON array under the current CLI mode while the receipt parser assumes a dict, so successful long Claude epochs can be misclassified as failed receipts."
+    ],
+    "required_hotfixes": [
+      "Normalize mesh state to pathlib.Path exactly once at the CLI/main boundary and keep Path typed through export_pending. Do not depend on the empty-pending fast path.",
+      "Make export transactional: preserve pending state until remote write is verified; on any exception keep the event pending. Add tests for string state input, push failure, idempotent identical re-export, and collision refusal.",
+      "Introduce a provider-envelope normalizer before parse_receipt. Accept the captured Claude stdout shapes actually observed in this run (dict or list); deterministically select the terminal result/witness, extract a bounded receipt candidate, then run the existing receipt schema validator.",
+      "Do not treat a list as implicit success and do not merge multiple terminal candidates. Ambiguous or missing terminal payload remains failed with a bounded TraceDivergence.",
+      "Bind semantic completion to the normalized receipt plus provider witness; process exit zero alone remains insufficient.",
+      "Apply as a hot edit/shim picked up by newly spawned maintenance/epoch processes; do not kill the supervisor or active epochs."
+    ],
+    "regression_fences": [
+      "A six-minute Claude epoch with valid terminal receipt must parse and advance work.",
+      "Malformed/ambiguous Claude arrays must fail closed without raw provider output leakage.",
+      "A pending local mesh event must survive exporter exceptions and export on the next healthy cycle.",
+      "The already-green durable quarantine/idempotent-export/collision-refusal transport tests remain green."
+    ]
+  },
+  "evidence_refs": [
+    "mesh:local-claude-20260821T0720-101",
+    "mesh:local-claude-20260821T0721-102",
+    "mesh:local-0983e3d5edd3d79d93c499cabe5a",
+    "run8:v5-live-20260821T0721"
+  ],
+  "content_sha256": "7ff5499a41b6975b3a50a3e350e9ac97cdef6d56fd8548a90580a9011753ac3c"
+}
