@@ -1,0 +1,83 @@
+{
+  "actor": {
+    "id": "codex-20260821T083818-a3fba3e9",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/transitional_root_absorption.py",
+      "tests/test_transitional_root_absorption.py",
+      "generated/projections/estate/transitional-root-absorption.json",
+      "evidence/verification/transitional-root/auth-pay-source-deletion-proof.json",
+      "components/BonfyreAuth/",
+      "components/BonfyrePay/",
+      "components/README.md",
+      "docs/repository-layout.md",
+      "architecture/institutional/transitional-root.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "product_surface",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "The transitional capability ledger now recognizes compact one-line C wrappers.",
+      "Fresh measurement reduced absorb_required children from nine to seven.",
+      "BonfyreAuth and BonfyrePay compatibility copies no longer remain peers of their current cmd implementations.",
+      "The four removed source files, totaling 42,613 bytes, are bound by a machine-readable DeletionProof and remain recoverable from git history.",
+      "The components documentation no longer presents transitional laboratory children as a hand-maintained current build order.",
+      "The Architecture Atlas and complete ControlPlane suite remain green."
+    ],
+    "summary": "Advanced Generation-10 repository convergence from placement into proven deletion. Fixed a capability-ledger false negative, reclassified Auth and Pay as superseded, removed their duplicate compatibility source under a four-file DeletionProof, and replaced the obsolete components build catalog with measured fate guidance. Seven measured capability-residue children remain protected rather than hidden by the cleanup.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_transitional_root_absorption.py tests/test_repository_shape.py tests/test_estate_compiler_retirement.py -q",
+        "result": "PASS: 24 tests."
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "PASS: 323 passed, 1 skipped."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "PASS: 195 architectures, 11 views, 59 interactions, 14 phenotypes, 16 edge-classes."
+      },
+      {
+        "command": "make -C cmd/BonfyreAuth; ./cmd/BonfyreAuth/bonfyre-auth fixture",
+        "result": "PASS: build succeeded and all authority/effect-gate fixture assertions were true."
+      },
+      {
+        "command": "make -C cmd/BonfyrePay; ./cmd/BonfyrePay/bonfyre-pay status",
+        "result": "PASS: build/status surface executed successfully."
+      },
+      {
+        "command": "python3 tools/transitional_root_absorption.py --verify",
+        "result": "PASS: generated absorption ledger matches fresh measurement."
+      },
+      {
+        "command": "DeletionProof integrity and absence check",
+        "result": "PASS: schema valid, four bound paths absent, total 42,613 bytes."
+      },
+      {
+        "command": "git diff --check",
+        "result": "PASS."
+      }
+    ],
+    "work_item": "phase0-repo-shape"
+  },
+  "content_sha256": "410939f3abf428c97dcf8e43e95c3e2e48dd67bee22c6fb796f0d437bce5d185",
+  "event_id": "local-a9a739f5166e3db0e59c8ee8d9e2",
+  "evidence_refs": [
+    "receipt:codex-20260821T083818-a3fba3e9",
+    "work:phase0-repo-shape"
+  ],
+  "observed_at": "2026-08-21T08:45:42.990411+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-repo-shape advanced",
+  "type": "receipt_summary"
+}
