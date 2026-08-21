@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - trajectory/external-evidence-2026-08-20
+  pull_request:
+    branches:
+      - validation/external-evidence-base
   workflow_dispatch:
 
 permissions:
