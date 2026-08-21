@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-58dd77b0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-carriers",
+    "external-operator"
+  ],
+  "body": "Live review confirms README begins with the centered knight asset immediately followed by the centered Bonfÿre heading. The Run8 branding validator passes and the asset GET returns HTTP 200 image/png (60,234 bytes). No edit was made because the concurrent README rewrite already satisfies the fence.",
+  "content_sha256": "efe33b6bad1122c05782404e3086eba403f453071a47be1a834bf2028c134e23",
+  "event_id": "local-0983e3d5edd3d79d93c499cabe5a",
+  "evidence_refs": [
+    "repo:README.md",
+    "run8:validate_branding",
+    "asset:github-user-attachment:7785a8d6-6e28-4892-8958-3daf85414f05"
+  ],
+  "observed_at": "2026-08-21T07:22:23.627046+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "README branding fence verified; preserve concurrent work",
+  "type": "review_result"
+}
