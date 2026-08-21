@@ -66,13 +66,19 @@ def run_test(path: str, state_dir: Path, timeout: int, phase: str) -> dict[str, 
     full = ROOT / path
     state_dir.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
+    # WorkGraph requirements cross two independent build authorities. Keep the
+    # hosted-runner warning penetration explicitly scoped to the Fabric test
+    # substrate; exporting CFLAGS globally lets it erase native Power-owned
+    # include/optimization contracts in nested command builds.
+    env.pop("CFLAGS", None)
+    env.pop("OPTFLAGS", None)
     env.update({
         "BONFYRE_STATE_DIR": str(state_dir),
         "BONFYRE_CI": "1",
         "BONFYRE_CI_NO_EXTERNAL_EFFECTS": "1",
         "BONFYRE_AUTHORITY": "observe",
         "NO_COLOR": "1",
-        "CFLAGS": "-O2 -Wall -Wextra -Wno-error=format-truncation -std=c11 -D_DEFAULT_SOURCE",
+        "BONFYRE_FABRIC_TEST_CFLAGS": "-O2 -Wall -Wextra -Wno-error=format-truncation -std=c11 -D_DEFAULT_SOURCE",
         "CC": "cc -include stdint.h",
     })
     started = time.monotonic()
