@@ -1,0 +1,65 @@
+{
+  "actor": {
+    "id": "codex-20260821T073646-90d221c6",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "bin/blogger_publish.py",
+      "10-Code/BonfyreControlPlane/tests/test_blogger_publish.py"
+    ],
+    "class": "external_specialty",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Standard dotenv entries prefixed with `export` now participate in the OAuth client-identity coherence fence.",
+      "OAuth authorization now uses a state-bound local callback with a five-minute timeout instead of printing a URL and requesting a pasted authorization code.",
+      "The callback accepts only explicit HTTP loopback hosts with a registered port and expected path.",
+      "The full control-plane suite and Architecture Atlas remain green after the OAuth hardening."
+    ],
+    "summary": "Advanced the Blogger repair to its final interactive boundary. The signed-in Google Cloud Credentials page is open on the correct project, the existing web client still lacks a redirect URI, and the two publication artifacts remain valid. The local publisher now correctly reads exported secret references and captures OAuth callbacks locally without leaking authorization codes. No post, token, or remote configuration change is claimed; publication awaits the required user-confirmed cloud save.",
+    "tests": [
+      {
+        "command": "python3 -m pytest 10-Code/BonfyreControlPlane/tests/test_blogger_publish.py 10-Code/BonfyreControlPlane/tests/test_blogger_receipts.py -q",
+        "result": "7 passed."
+      },
+      {
+        "command": "cd 10-Code/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "302 passed, 1 skipped."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 189 architectures, 11 views, 50 interactions, 14 phenotypes, and 16 edge classes."
+      },
+      {
+        "command": "ProofBundle digest and credential/private-path scan",
+        "result": "Both post digests matched; privacy scan passed."
+      },
+      {
+        "command": "python3 bin/blogger_publish.py auth",
+        "result": "Preflight remains correctly blocked because the web client has no registered redirect URI."
+      },
+      {
+        "command": "git diff --check -- bin/blogger_publish.py 10-Code/BonfyreControlPlane/tests/test_blogger_publish.py",
+        "result": "Passed."
+      }
+    ],
+    "work_item": "discovered-afc22261330a1fd8"
+  },
+  "content_sha256": "988154cd2fae2c2a078b984928051df1acb746cb9c44a1aa47eb7bceb566665a",
+  "event_id": "local-9fdecdbca3be7712be15aec0aefc",
+  "evidence_refs": [
+    "receipt:codex-20260821T073646-90d221c6",
+    "work:discovered-afc22261330a1fd8"
+  ],
+  "observed_at": "2026-08-21T07:45:15.419192+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-afc22261330a1fd8 advanced",
+  "type": "receipt_summary"
+}
