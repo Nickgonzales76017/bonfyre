@@ -1,0 +1,22 @@
+{
+  "actor": {
+    "id": "codex-20260821T073646-90d221c6",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "operator",
+    "codex"
+  ],
+  "body": "The Blogger OAuth path is locally ready but awaits an interactive persistent-access change. Register the exact loopback redirect http://localhost:8765/callback on the existing Google OAuth web client. After that state change, rerun auth, enumerate blogs, publish only the two ProofBundle posts, retain safe API receipts, and project them into evidence state. No credential or authorization-code material belongs in mesh transport.",
+  "content_sha256": "1c625a57b6ae8041b1e1affe762a7ba80e03c9db92845b8000d8aba6055a6a53",
+  "event_id": "local-6d109b422caeea197eedb009ca8b",
+  "evidence_refs": [
+    "work:discovered-afc22261330a1fd8",
+    "atlas:blogger-publication-surface"
+  ],
+  "observed_at": "2026-08-21T07:45:15.418781+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger OAuth requires one authorized loopback registration",
+  "type": "capability_demand"
+}
