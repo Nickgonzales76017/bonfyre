@@ -1,0 +1,92 @@
+{
+  "actor": {
+    "id": "codex-20260821T074516-72fe67c1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "agentguard/core/matrix_checkpoint.py",
+      "agentguard/provenance/manifest.py",
+      "agentguard/provenance/portable_paths.py",
+      "agentguard/traces/execution.py",
+      "docs/architecture.md",
+      "tests/integration/test_benchmark_run.py",
+      "tests/unit/test_execution_manifest.py",
+      "tests/unit/test_execution_trace.py"
+    ],
+    "class": "partner_reconciliation",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "resolve_portable recursively mirrors portable_value for strings, paths, lists, tuples, and mappings.",
+      "Portable text containing several POSIX and Windows references round-trips to its original value.",
+      "Lexical traversal and existing symlink escapes cannot cross a trusted Path root.",
+      "A moved report bundle rehydrates <repository>, <run>, and <report> against its new location.",
+      "A standalone report without its repository bundle produces controlled refusal.",
+      "Checkpoint resume remains reusable when an explicitly supplied current configuration matches the manifest hash.",
+      "AgentGuard passed 1,507 unit tests and 133 runnable non-Docker integration tests.",
+      "Bonfÿre Architecture Atlas and ControlPlane validation remained green.",
+      "The owned fork branch and PR projection both resolve to 08ddb6f on current upstream main."
+    ],
+    "summary": "Implemented the maintainer-requested portable-path inverse, rebased and updated the existing AgentGuard #218 owned branch, and restored report/checkpoint compatibility without weakening hash or traversal boundaries. All 1,640 runnable AgentGuard tests, Ruff, Bonfÿre Atlas validation, and 302 ControlPlane tests are green. The work remains advanced because GitHub requires maintainer approval before CI and Documentation jobs can run.",
+    "tests": [
+      {
+        "command": "AgentGuard focused inverse, reader, traversal, moved-bundle, standalone-report, and #229 regressions",
+        "result": "11 passed."
+      },
+      {
+        "command": "AgentGuard targeted manifest/report/matrix-resume suite",
+        "result": "31 passed."
+      },
+      {
+        "command": "AgentGuard pytest tests/unit -q",
+        "result": "1,507 passed; one benign duplicate-ZIP warning."
+      },
+      {
+        "command": "AgentGuard non-Docker integration subset",
+        "result": "133 passed."
+      },
+      {
+        "command": "Ruff check on all changed Python files",
+        "result": "Passed."
+      },
+      {
+        "command": "git diff --check",
+        "result": "Passed."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 191 architectures, 11 views, 51 interactions."
+      },
+      {
+        "command": "BonfyreControlPlane python3 -m pytest tests/ -q",
+        "result": "302 passed, 1 skipped."
+      },
+      {
+        "command": "AgentGuard full pytest tests -q",
+        "result": "Boundedly interrupted after proving the blocker was a hung docker info child; no full-suite verdict claimed."
+      },
+      {
+        "command": "Remote PR and workflow verification",
+        "result": "PR #218 projects head 08ddb6f on base 0449e7d; CI and Documentation are action_required with zero jobs pending maintainer approval."
+      }
+    ],
+    "work_item": "partner-richinmrudul-agentguard-230"
+  },
+  "content_sha256": "030bfffa460923a297438e7c08579ddc9c940a28edc93648a32840d51ac2e0a7",
+  "event_id": "local-82192e6c80a20caf2e5a89434100",
+  "evidence_refs": [
+    "receipt:codex-20260821T074516-72fe67c1",
+    "work:partner-richinmrudul-agentguard-230"
+  ],
+  "observed_at": "2026-08-21T08:29:03.476585+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "partner-richinmrudul-agentguard-230 advanced",
+  "type": "receipt_summary"
+}
