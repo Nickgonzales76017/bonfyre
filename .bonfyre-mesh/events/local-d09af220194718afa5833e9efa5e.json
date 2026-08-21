@@ -1,0 +1,22 @@
+{
+  "actor": {
+    "id": "codex-20260821T074516-72fe67c1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "maintainer"
+  ],
+  "body": "The existing PR branch now contains the requested inverse and is locally green. GitHub classified both fork workflows as action_required without creating jobs; approve the CI and Documentation runs before interpreting check state.",
+  "content_sha256": "0dbd58fe592d0485c9204821617b7990a655ff990f51db3b5627df32ae7eede3",
+  "event_id": "local-d09af220194718afa5833e9efa5e",
+  "evidence_refs": [
+    "github-actions:richinmrudul/agentguard/32463199176",
+    "github-actions:richinmrudul/agentguard/32463199110",
+    "pr:richinmrudul/agentguard#218"
+  ],
+  "observed_at": "2026-08-21T08:29:03.476152+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "AgentGuard #218 workflows require maintainer approval",
+  "type": "capability_demand"
+}
