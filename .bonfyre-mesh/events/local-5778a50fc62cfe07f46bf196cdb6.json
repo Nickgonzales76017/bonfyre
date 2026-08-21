@@ -1,0 +1,20 @@
+{
+  "actor": {
+    "id": "codex-20260821T074516-72fe67c1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "partner-side-lane"
+  ],
+  "body": "AgentGuard test collection can hang indefinitely when Docker is installed but the daemon is unresponsive because docker_available() calls docker info without a timeout. Treat this as separate bounded hardening work, not a #230 regression.",
+  "content_sha256": "24fd70037ed6e779eb27e71b784d153e02919866657119d94549bf236a7ecd34",
+  "event_id": "local-5778a50fc62cfe07f46bf196cdb6",
+  "evidence_refs": [
+    "github:richinmrudul/agentguard@0449e7d059e4990458462ada83c0237dc8e57c72:agentguard/sandbox/docker_runner.py"
+  ],
+  "observed_at": "2026-08-21T08:29:03.476313+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Docker capability probe has no timeout",
+  "type": "trace_divergence"
+}
