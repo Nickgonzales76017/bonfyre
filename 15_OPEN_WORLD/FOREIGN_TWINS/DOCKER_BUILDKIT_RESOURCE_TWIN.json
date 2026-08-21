@@ -1,0 +1,189 @@
+{
+  "schema": "bonfyre.foreign-resource-twin.v1",
+  "foreign_system": {
+    "name": "Docker Engine / BuildKit / Buildx",
+    "authority": "Docker official CLI and BuildKit documentation",
+    "role": "container execution, image storage, build-cache realization and reclaim"
+  },
+  "bonfyre_owners": [
+    "ResourceGraph",
+    "ResourceWeather",
+    "Execution",
+    "ObjectFabric",
+    "EffectKernel",
+    "EvidenceGraph"
+  ],
+  "purpose": "Treat Docker capacity as schedulable physical state. Prefer archive/history eviction and BuildKit-aware least-recently-used cache reclamation over low-free-space hard stops, while keeping persistent volume deletion a distinct authority class.",
+  "observations": [
+    {
+      "command": ["docker", "system", "df", "--format", "json"],
+      "effect": "observe",
+      "projects": ["engine_images", "containers", "local_volumes", "build_cache"],
+      "note": "Docker documents JSON formatting for daemon disk-usage summary."
+    },
+    {
+      "command": ["docker", "buildx", "du", "--format=json"],
+      "effect": "observe",
+      "projects": [
+        "buildkit_record_id",
+        "reclaimable",
+        "mutable",
+        "shared",
+        "size",
+        "last_used_at",
+        "usage_count",
+        "type"
+      ],
+      "note": "Buildx emits newline-delimited JSON records. Raw descriptions are diagnostic input, not ResourceGraph identity."
+    }
+  ],
+  "buildkit_record_types": [
+    "internal",
+    "frontend",
+    "source.local",
+    "source.git.checkout",
+    "exec.cachemount",
+    "regular"
+  ],
+  "resource_classes": {
+    "buildkit_reclaimable_private": {
+      "disposition": "EVICT_FIRST",
+      "recovery_cost": "rebuild_or_refetch",
+      "authority": "automatic_resource_gc"
+    },
+    "buildkit_reclaimable_shared": {
+      "disposition": "EVICT_AFTER_PRIVATE_WHEN_PRESSURED",
+      "recovery_cost": "may_reduce_cache_hits_across_multiple_builds",
+      "authority": "automatic_resource_gc"
+    },
+    "buildkit_mutable": {
+      "disposition": "DO_NOT_ASSUME_RECLAIMABLE",
+      "authority": "foreign_state_controls_reclaimability"
+    },
+    "stopped_container": {
+      "disposition": "EVICT_WHEN_NOT_PINNED_BY_CURRENT_WORK",
+      "recovery_cost": "recreate_from_image_and_runtime_contract",
+      "authority": "automatic_resource_gc"
+    },
+    "unused_image": {
+      "disposition": "EVICT_AGGRESSIVELY",
+      "recovery_cost": "pull_or_rebuild",
+      "authority": "automatic_resource_gc"
+    },
+    "unused_network": {
+      "disposition": "EVICT_AGGRESSIVELY",
+      "recovery_cost": "recreate",
+      "authority": "automatic_resource_gc"
+    },
+    "anonymous_unused_volume": {
+      "disposition": "EVICT_ONLY_IN_VOLUME_ENABLED_GC",
+      "recovery_cost": "potential_state_loss",
+      "authority": "persistent_state_gc"
+    },
+    "named_unused_volume": {
+      "disposition": "NEVER_COLLAPSE_INTO_NORMAL_CACHE_GC",
+      "recovery_cost": "may_contain_database_or_irreplaceable_local_state",
+      "authority": "explicit_persistent_state_gc"
+    },
+    "inactive_image_store": {
+      "disposition": "AUDIT_SEPARATELY",
+      "recovery_cost": "depends_on_store_contents",
+      "authority": "storage_backend_transition",
+      "note": "Docker Desktop classic and containerd image stores are distinct. Switching stores can leave the inactive store consuming disk while its images and containers are hidden from the active store view."
+    }
+  },
+  "prune_surfaces": [
+    {
+      "command_family": "docker buildx prune",
+      "authority": "automatic_resource_gc",
+      "controls": [
+        "--filter",
+        "--all",
+        "--max-used-space",
+        "--min-free-space",
+        "--reserved-space"
+      ],
+      "scheduler_preference": "Use --min-free-space to express ResourceGraph reserve goals and let BuildKit evict least-recently-used records. Use --reserved-space as the hard cache floor rather than deleting cache indiscriminately."
+    },
+    {
+      "command_family": "docker system prune",
+      "authority": "automatic_resource_gc",
+      "default_scope": [
+        "stopped containers",
+        "unused networks",
+        "dangling images",
+        "unused build cache"
+      ],
+      "aggressive_scope": "-a also removes all unused images",
+      "volume_boundary": "Volumes are outside the default prune. Volume deletion remains a separately admitted persistent-state effect."
+    }
+  ],
+  "v3_docker_capacity_policy": {
+    "target_free_space_gib": 20,
+    "soft_free_space_gib": 12,
+    "principle": "Docker/build capacity is more valuable than retaining reconstructable local archaeology.",
+    "ordered_reclaim": [
+      "superseded Bonfyre/Aurekai archives and historical campaign bulk",
+      "language/package caches and generated build products",
+      "BuildKit reclaimable private records",
+      "BuildKit reclaimable shared records when required to reach reserve",
+      "stopped containers and unused networks",
+      "unused images",
+      "reconstructable Python/Frappe environments",
+      "anonymous/named volume state only under separate persistent-state authority"
+    ],
+    "buildkit_preferred_expression": [
+      "docker",
+      "buildx",
+      "prune",
+      "--force",
+      "--min-free-space",
+      "20gb"
+    ],
+    "note": "The concrete command is an EffectKernel candidate, not an unconditional startup command. ResourceWeather should first observe reclaimability and current free-space state."
+  },
+  "scheduler_features": [
+    "filesystem_free_bytes",
+    "docker_total_bytes_reported",
+    "docker_reclaimable_bytes_reported",
+    "buildkit_record_sum_bytes",
+    "buildkit_reclaimable_record_sum_bytes",
+    "buildkit_private_reclaimable_record_sum_bytes",
+    "buildkit_shared_reclaimable_record_sum_bytes",
+    "buildkit_mutable_record_sum_bytes",
+    "buildkit_oldest_last_used_at",
+    "buildkit_type_distribution",
+    "docker_capacity_target_deficit_bytes"
+  ],
+  "admission_rules": [
+    "A Docker-heavy WorkNode should include predicted image/build-context/cache growth in its resource envelope.",
+    "When free space is below target but BuildKit reports enough reclaimable cache, prefer BuildKit GC over rejecting the WorkNode.",
+    "A non-reclaimable BuildKit record is not promoted to deletable merely because Bonfyre is under pressure.",
+    "A named volume is persistent state even when unused by a currently running container; do not treat 'unused' as equivalent to 'reconstructable'.",
+    "A completed containerized WorkNode should leave a compact receipt identifying image/build inputs and effect outputs so stopped containers can be disposable realization state.",
+    "ResourceWeather must distinguish physical bytes from sums over shared cache records; record sums are evidence/features, not necessarily filesystem accounting."
+  ],
+  "factor_validity_triggers": [
+    "Docker Desktop image-store backend switch",
+    "Buildx builder selection change",
+    "BuildKit GC policy/configuration change",
+    "named/anonymous volume policy change",
+    "Docker daemon root/store location change",
+    "major Docker/BuildKit upgrade changing disk-usage or prune semantics"
+  ],
+  "anti_amnesia": {
+    "solved_invariants": [
+      "Docker volumes are not ordinary build cache.",
+      "BuildKit reclaimability is foreign evidence that must be observed, not guessed from path names.",
+      "Free-space targets can be expressed to BuildKit directly with --min-free-space.",
+      "Shared BuildKit records may affect multiple builds and should remain distinguishable from private records.",
+      "Inactive Docker Desktop image stores can consume capacity while being invisible from the active image-store view."
+    ],
+    "regression_fences": [
+      "Do not gate all Docker work on a fixed free-space threshold when reclaimable BuildKit capacity exists.",
+      "Do not run volume deletion as an implicit consequence of ordinary docker system prune.",
+      "Do not interpret a BuildKit record-size sum as exact physical disk usage when shared records are present.",
+      "Do not let a Docker storage-backend switch invalidate ResourceWeather silently."
+    ]
+  }
+}
