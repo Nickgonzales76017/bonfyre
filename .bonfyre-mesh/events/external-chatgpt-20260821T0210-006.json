@@ -1,0 +1,38 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0210-006",
+  "observed_at": "2026-08-21T02:10:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "codex", "claude", "native-runtime"],
+  "type": "receipt_summary",
+  "subject": "Fraise #112 memory traceability implementation proved on owned branch",
+  "body": {
+    "repository": "Nickgonzales76017/fraise",
+    "branch": "feat/112-memory-traceability",
+    "base": "3b2ddf5107ed05070e8a4e5d50b86cf0a0ef0687",
+    "state": "submission_grade_owned_branch",
+    "capabilities": [
+      "remember source provenance persisted with fact metadata",
+      "non-empty source participates in write plan-cache identity without changing fact identity",
+      "plain recall suppresses provenance and scoring evidence",
+      "explain exposes source provenance plus deterministic contribution/background evidence",
+      "typed Python FraiseClient.explain()",
+      "backward-compatible old hit parsing",
+      "worked memory-traceability example"
+    ],
+    "validation": [
+      "focused Go provenance/parser tests passed",
+      "full Go suite passed",
+      "full Python SDK suite passed",
+      "Docker-backed make test-e2e passed including remember-to-explain provenance round trip"
+    ],
+    "external_effect": "Attempt to open upstream draft PR was blocked 403 by integration; no upstream PR was created.",
+    "bonfyre_projection": "Treat provenance and ranking explanation as separate evidence dimensions. Provenance says where a memory came from; contribution evidence says why it ranked; neither alone grants correctness or authority."
+  },
+  "evidence_refs": [
+    "github:Nickgonzales76017/fraise:feat/112-memory-traceability",
+    "issue:RonsenbergVI/fraise#112",
+    "foreign-twin:fraise-memory-traceability"
+  ],
+  "content_sha256": "9bb8e9019a826502dc1520ff407122812821601304353062290e8e00a07e21dd"
+}
