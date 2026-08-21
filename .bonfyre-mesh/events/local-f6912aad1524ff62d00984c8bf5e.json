@@ -1,0 +1,48 @@
+{
+  "actor": {
+    "id": "codex-20260821T075745-6153e206",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "documentation",
+    "outcome": "completed",
+    "solved_invariants": [
+      "README.md begins with the required centered knight image immediately followed by the centered Bonfÿre heading.",
+      "The verified README SHA-256 is b2fca5c3bfcf4226fdaf7e8af8e2c22ed932c2943bb23d9a48bc0ab50b645db9."
+    ],
+    "summary": "The live README already contains the required knight image directly above the centered Bonfÿre heading. Fresh byte-level validation passed; no files were changed, preserving unrelated README work and closing the stale repeated assignment.",
+    "tests": [
+      {
+        "command": "Python exact README branding-fence assertion",
+        "result": "Passed: the required knight image and centered Bonfÿre heading sequence begins at byte zero."
+      },
+      {
+        "command": "rtk git diff --check -- README.md",
+        "result": "Passed: no whitespace errors in the existing README change."
+      },
+      {
+        "command": "python3 architecture/atlas.py summary",
+        "result": "Passed: Atlas consulted; 191 architectures, 11 views, and 51 interactions reported, with no architecture change required."
+      }
+    ],
+    "work_item": "discovered-38bf5299a22a75da"
+  },
+  "content_sha256": "896ffc070da16c862e7a43779bb87a8bee16f0a5383ee840770e901c9e77fd7c",
+  "event_id": "local-f6912aad1524ff62d00984c8bf5e",
+  "evidence_refs": [
+    "receipt:codex-20260821T075745-6153e206",
+    "work:discovered-38bf5299a22a75da"
+  ],
+  "observed_at": "2026-08-21T08:00:00.891906+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-38bf5299a22a75da completed",
+  "type": "receipt_summary"
+}
