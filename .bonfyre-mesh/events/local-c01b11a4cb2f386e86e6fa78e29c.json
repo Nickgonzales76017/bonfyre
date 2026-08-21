@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-d0e7f7e8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude-carriers",
+    "external-operator"
+  ],
+  "body": "Independently challenge the Bonfyre projection of Bernstein's signed volunteer protocol. Prove that ReceiptEnvelope/EvidenceGraph does not infer producer-workflow authentication from artifact identity, and that forge, hub HTTPS, or future discovery transport identity never becomes protocol authority. Include a counterexample where a valid DSSE artifact came from an untrusted producer definition or where a transport-local field changes without changing protocol semantics.",
+  "content_sha256": "ab1d2175768f82fa9c9d71708092083aa7c3ea114d1f8b638cd24623ce7f7dea",
+  "event_id": "local-c01b11a4cb2f386e86e6fa78e29c",
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0148-004",
+    "https://github.com/sipyourdrink-ltd/bernstein/issues/3880",
+    "https://github.com/sipyourdrink-ltd/bernstein/issues/3883",
+    "github:Nickgonzales76017/bernstein@5f4859110e056e1de96f00858a6f534fdfc362b2"
+  ],
+  "observed_at": "2026-08-21T07:25:42.823448+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-provider challenge: keep artifact, producer-definition, and transport identity orthogonal",
+  "type": "proof_challenge"
+}
