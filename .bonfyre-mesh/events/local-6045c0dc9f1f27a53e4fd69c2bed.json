@@ -1,0 +1,97 @@
+{
+  "actor": {
+    "id": "codex-20260821T090003-824b4a52",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/",
+      "components/Makefile",
+      "cmd/BonfyreCMS/src/main.c",
+      "evidence/origins/notebook-era/",
+      "evidence/recovery/",
+      "evidence/fixtures/",
+      "evidence/verification/transitional-root/",
+      "generated/projections/",
+      "services/queue-dispatcher/",
+      "tests/acceptance/generation10_principal_loop.sh",
+      "docs/repository-layout.md",
+      "architecture/institutional/repository-layout.yaff",
+      "architecture/institutional/transitional-root.yaff",
+      "architecture/estate-compiler-retirement.json",
+      "bonfyre.workspace.yaff",
+      "README.md",
+      "QUICKSTART.md",
+      "tests/test_repository_shape.py",
+      "tests/test_transitional_root_absorption.py",
+      "tests/test_estate_compiler_retirement.py",
+      "tools/transitional_root_absorption.py"
+    ],
+    "class": "product_surface",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Production code, architecture/contracts, generated projections, evidence/fixtures, integrations, documentation/site, repository operations, and operator state now have explicit root owners.",
+      "The numbered notebook vault, Obsidian configuration, templates, dashboards, and retired NightlyBrainstorm writer are no longer live root peers; they are historical evidence under evidence/origins/notebook-era.",
+      "The 10-Code compatibility root is absent; independently buildable product components live under components while native command owners remain under cmd.",
+      "Opportunity-recovery captures, verification outputs, fixtures, generated inventories, queue-dispatcher service files, and the Run 7 acceptance witness now have current semantic owners.",
+      "Git recognizes 201 staged relocations, preserving rename history instead of presenting the cutover as delete-and-recreate churn.",
+      "The native CMS schema fallback resolves through cmd/BonfyreCMS and no longer points at the removed components/BonfyreCMS gitlink.",
+      "The components aggregate no longer builds or smokes the removed BonfyreCMS gitlink.",
+      "The Architecture Atlas validates with RepositoryShape and TransitionalRootAbsorption witnesses.",
+      "The README knight placement invariant remains satisfied."
+    ],
+    "summary": "Completed the Generation-10 repository-shape cutover and closed two stale dependencies exposed by validation. Historical notebook roots and 10-Code are no longer live peers; code, contracts, generated projections, evidence, integrations, docs/site, operations, and operator state have explicit owners. Git preserves the bulk relocation history, the moved ControlPlane remains green, and the native CMS/build aggregate no longer references the removed compatibility gitlink.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "328 passed, 1 skipped"
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "28 passed"
+      },
+      {
+        "command": "python3 -m pytest tests/test_repository_shape.py tests/test_estate_compiler_retirement.py tests/test_transitional_root_absorption.py -q",
+        "result": "26 passed"
+      },
+      {
+        "command": "python3 tools/transitional_root_absorption.py --verify",
+        "result": "passed; generated absorption ledger is current"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed; 198 architectures, 11 views, 62 interactions, 14 phenotypes, 16 edge classes"
+      },
+      {
+        "command": "make -C components -n all",
+        "result": "passed; every aggregate build target resolves after removing the orphan CMS target"
+      },
+      {
+        "command": "make -C cmd/BonfyreCMS -n",
+        "result": "passed; native CMS build graph resolves"
+      },
+      {
+        "command": "git diff --check && git diff --cached --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "phase0-repo-shape"
+  },
+  "content_sha256": "2756da001676aaf6d2ac4fe5f360992b23c6b4b83ba2db620680c728b5bdb112",
+  "event_id": "local-6045c0dc9f1f27a53e4fd69c2bed",
+  "evidence_refs": [
+    "receipt:codex-20260821T090003-824b4a52",
+    "work:phase0-repo-shape"
+  ],
+  "observed_at": "2026-08-21T09:06:34.252284+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-repo-shape completed",
+  "type": "receipt_summary"
+}
