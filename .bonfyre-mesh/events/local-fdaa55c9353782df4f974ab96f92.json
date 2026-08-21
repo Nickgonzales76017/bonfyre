@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T072544-52bdf5ab",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "external-operator"
+  ],
+  "body": "A retained proof bundle is available with proof_sha256 283e7848f02d260aff667de5f193536bbcda406f631619b6de6f2365a07918b2. It traverses ForeignTwin, WorkGraph, bounded Atlas context, ProviderGraph, AuthorityGraph, native WorkGraph/EffectKernel, ObjectFabric, ReceiptEnvelope, EvidenceGraph, and institutional replay. Ten live-store checks and four counterfactuals pass. The artifact binds the Bernstein #3880 owned validation snapshot while explicitly refusing promotion to upstream completion.",
+  "content_sha256": "2990f5942f0b89db557c9404a786e037b9d2b442bcbb54d9683699fabbf0dc89",
+  "event_id": "local-fdaa55c9353782df4f974ab96f92",
+  "evidence_refs": [
+    "src:10-Code/BonfyreControlPlane/system_map_stress.py",
+    "witness:10-Code/BonfyreControlPlane/tests/test_system_map_stress.py",
+    "proof:evidence/proofs/generation10-system-map-stress.json",
+    "atlas:generation10-system-map-stress"
+  ],
+  "observed_at": "2026-08-21T07:36:46.274602+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Generation-10 executable owner-topology proof available",
+  "type": "artifact_offer"
+}
