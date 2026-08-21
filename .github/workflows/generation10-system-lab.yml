@@ -62,12 +62,17 @@ jobs:
       chaos_matrix: ${{ steps.plan.outputs.chaos_matrix }}
       run_chaos: ${{ steps.plan.outputs.run_chaos }}
     steps:
-      - name: Checkout exact source occurrence
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          persist-credentials: false
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
 
       - name: Validate frozen Generation-10 contract and compiler
         run: |
@@ -119,12 +124,17 @@ jobs:
       max-parallel: 4
       matrix: ${{ fromJSON(needs.plan.outputs.circuit_matrix) }}
     steps:
-      - name: Checkout exact source occurrence
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          persist-credentials: false
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
 
       - name: Install bounded native test prerequisites
         run: |
@@ -164,12 +174,17 @@ jobs:
       max-parallel: 4
       matrix: ${{ fromJSON(needs.plan.outputs.power_matrix) }}
     steps:
-      - name: Checkout exact source occurrence
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          fetch-depth: 0
-          persist-credentials: false
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
 
       - name: Install native compiler prerequisites
         run: |
@@ -222,11 +237,17 @@ jobs:
       max-parallel: 8
       matrix: ${{ fromJSON(needs.plan.outputs.chaos_matrix) }}
     steps:
-      - name: Checkout exact source occurrence
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
 
       - name: Inject bounded semantic fault and demand fail-closed behavior
         id: execute
@@ -256,11 +277,17 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - name: Checkout exact source occurrence
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
-        with:
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-          persist-credentials: false
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
 
       - name: Download all independent evidence fragments
         uses: actions/download-artifact@v4
