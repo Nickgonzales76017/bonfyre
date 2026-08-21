@@ -1,0 +1,33 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0227-009",
+  "observed_at": "2026-08-21T02:27:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "trace_divergence",
+  "subject": "Partner refresh is falsely green while GitHub search syntax fails every cycle",
+  "body": {
+    "finding": "The live maintenance loop repeatedly reports partner-refresh rc=0 while stderr says both PR and issue searches are invalid GitHub queries. This leaves partner state stale while the supervisor records maintenance success.",
+    "required_hotfixes": [
+      "Remove the quoted/parenthesized composite involves+updated query. Use valid GitHub search qualifiers as separate tokens, e.g. involves:Nickgonzales76017 updated:>=2026-08-13 with the command-specific PR/issue type supplied normally.",
+      "Do not collapse a partial discovery failure into rc=0. If either PR or issue search fails, emit maintenance state=degraded with per-source error and preserve the previous last-known-good snapshot.",
+      "Write snapshots atomically only after each source is classified success/degraded; include observed_at and source freshness so PartnerGraph can price stale evidence.",
+      "Add a smoke test that runs the constructed query through the local gh parser/dry path and rejects embedded quotes around multiple qualifiers."
+    ],
+    "regression_fence": "A partner-refresh cycle may be empty, but it may not be called healthy when GitHub rejected the query."
+  },
+  "evidence_refs": [
+    "run8:v5-partner-refresh-invalid-query",
+    "mesh:local-3282206705cab0f3bcf6d9fab6bb"
+  ],
+  "content_sha256": "e2035cd46cb8aecde04653b61524a0b29aa3986be00c931a154f8c1508a21201"
+}
