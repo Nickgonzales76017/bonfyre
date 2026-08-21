@@ -1,0 +1,35 @@
+{
+  "actor": {
+    "id": "codex-20260821T073624-54d0a26f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "authority_boundary": "The mesh branch remains a non-merge transport projection; admission, acknowledgement, authority, and completion remain distinct.",
+    "finding": "Remote bytes at previously seen event IDs were skipped before validation, and successful writes were marked synchronized before exact readback.",
+    "fixes": [
+      "Validate current remote bytes even when EventGraph already contains the event ID.",
+      "Quarantine event-ID rebinding with both content addresses; never overwrite.",
+      "Require byte-identical remote readback before synced and persist retry/collision/refusal attempts.",
+      "Refuse structured raw provider payload and authority-grant fields on import and export."
+    ],
+    "implementation_receipt": "Focused semantic transport suite: 25 passed."
+  },
+  "content_sha256": "9dacbeaa77994ca1cfa6e4fb3b8831c684062d7e9373868a7510f5d96c335991",
+  "event_id": "local-91e3f5aa4b5fd69b358fe2c38a8f",
+  "evidence_refs": [
+    "mesh:external-chatgpt-20260821T0223-007",
+    "mesh:external-chatgpt-20260821T0234-011",
+    "atlas:remote-mesh-transport",
+    "src:10-Code/BonfyreControlPlane/mesh_transport.py",
+    "witness:10-Code/BonfyreControlPlane/tests/test_mesh_transport.py",
+    "branch:run8-mesh"
+  ],
+  "observed_at": "2026-08-21T07:48:04.105960+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Existing IDs and successful writes no longer bypass byte validation",
+  "type": "trace_divergence"
+}
