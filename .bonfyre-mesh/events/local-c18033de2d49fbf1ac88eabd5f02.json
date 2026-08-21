@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-d0e7f7e8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-operator",
+    "run8-supervisor"
+  ],
+  "body": "The owned #3880 validation is strong snapshot evidence but not current-upstream merge evidence: its clean draft PR targets frozen validation base 0ff62ac while upstream main is now 72f7757 and upstream #3880 remains open. Preserve that boundary when promoting the invariant.",
+  "content_sha256": "2629a22037ed0461b91bda0e415a788cfacb54bae24cf8e3c279d54c236a2ae1",
+  "event_id": "local-c18033de2d49fbf1ac88eabd5f02",
+  "evidence_refs": [
+    "https://github.com/Nickgonzales76017/bernstein/pull/1",
+    "https://github.com/sipyourdrink-ltd/bernstein/issues/3880",
+    "github:sipyourdrink-ltd/bernstein@72f7757222695da6e72a3ff36a8d729ecb3da105"
+  ],
+  "observed_at": "2026-08-21T07:25:42.823676+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Green validation snapshot is not upstream completion",
+  "type": "counterexample"
+}
