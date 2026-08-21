@@ -1,0 +1,298 @@
+name: Generation-10 System Lab
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/generation10-**"
+      - "tools/actions/**"
+      - "cmd/**"
+      - "engine/**"
+      - "integrations/**"
+      - "frappe_integration/**"
+      - "lib/**"
+      - "scripts/**"
+      - "schemas/**"
+      - "tests/requirements/**"
+      - "Makefile"
+  push:
+    branches:
+      - "actions/generation10-system-lab-*"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Affected closure, full estate, or full estate plus semantic fault lab"
+        required: true
+        default: "full"
+        type: choice
+        options: [affected, full, chaos]
+      power_shards:
+        description: "Native Power shard count"
+        required: true
+        default: "8"
+        type: choice
+        options: ["4", "8", "12"]
+  schedule:
+    - cron: "17 7 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: generation10-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+env:
+  PYTHONUNBUFFERED: "1"
+  BONFYRE_CI: "1"
+  BONFYRE_CI_NO_EXTERNAL_EFFECTS: "1"
+  BONFYRE_AUTHORITY: "observe"
+  BONFYRE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  plan:
+    name: Compile AffectedClosure
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    outputs:
+      mode: ${{ steps.plan.outputs.mode }}
+      plan_sha256: ${{ steps.plan.outputs.plan_sha256 }}
+      circuit_matrix: ${{ steps.plan.outputs.circuit_matrix }}
+      power_matrix: ${{ steps.plan.outputs.power_matrix }}
+      chaos_matrix: ${{ steps.plan.outputs.chaos_matrix }}
+      run_chaos: ${{ steps.plan.outputs.run_chaos }}
+    steps:
+      - name: Checkout exact source occurrence
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate frozen Generation-10 contract and compiler
+        run: |
+          python3 tools/actions/generation10_lab.py contract
+          python3 -m unittest -v tools/actions/test_generation10_lab.py
+
+      - name: Compile changed paths into semantic closure
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_MODE: ${{ inputs.mode }}
+          INPUT_SHARDS: ${{ inputs.power_shards }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          mode=auto
+          shards=8
+          base=""
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            mode=chaos
+          elif [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            mode="${INPUT_MODE:-full}"
+            shards="${INPUT_SHARDS:-8}"
+          elif [ "$EVENT_NAME" = "pull_request" ]; then
+            base="$PR_BASE_SHA"
+          fi
+          args=(plan --mode "$mode" --head "$SOURCE_SHA" --power-shards "$shards" --output .generation10/plan.json)
+          if [ -n "$base" ]; then
+            args+=(--base "$base")
+          fi
+          python3 tools/actions/generation10_lab.py "${args[@]}"
+
+      - name: Publish planning receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: generation10-plan-${{ github.run_attempt }}
+          path: .generation10/plan.json
+          if-no-files-found: error
+          retention-days: 14
+
+  semantic-circuits:
+    name: Circuit / ${{ matrix.circuit }}
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.circuit_matrix) }}
+    steps:
+      - name: Checkout exact source occurrence
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install bounded native test prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libssl-dev zlib1g-dev libsqlite3-dev jq
+
+      - name: Execute cross-organ requirement circuit
+        id: execute
+        continue-on-error: true
+        run: |
+          python3 tools/actions/generation10_lab.py run-circuit \
+            --circuit "${{ matrix.circuit }}" \
+            --timeout 240 \
+            --output-dir ".generation10/receipts/${{ matrix.circuit }}"
+
+      - name: Preserve circuit ReceiptEnvelope even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g10-circuit-${{ matrix.circuit }}-${{ github.run_attempt }}
+          path: .generation10/receipts/${{ matrix.circuit }}/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce circuit verdict after evidence persistence
+        if: steps.execute.outcome == 'failure'
+        run: exit 1
+
+  power-swarm:
+    name: Power shard ${{ matrix.shard }}/${{ matrix.total }}
+    needs: plan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix: ${{ fromJSON(needs.plan.outputs.power_matrix) }}
+    steps:
+      - name: Checkout exact source occurrence
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install native compiler prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libssl-dev zlib1g-dev libsqlite3-dev
+
+      - name: Build assigned Powers against portable hosted-runner flags
+        id: execute
+        continue-on-error: true
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          args=(
+            run-power-shard
+            --shard "${{ matrix.shard }}"
+            --total "${{ matrix.total }}"
+            --scope "${{ matrix.scope }}"
+            --head "$SOURCE_SHA"
+            --output-dir ".generation10/receipts/powers-${{ matrix.shard }}"
+          )
+          if [ -n "${PR_BASE_SHA:-}" ]; then
+            args+=(--base "$PR_BASE_SHA")
+          fi
+          python3 tools/actions/generation10_lab.py "${args[@]}"
+
+      - name: Preserve Power receipts even on compiler failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g10-powers-${{ matrix.shard }}-${{ github.run_attempt }}
+          path: .generation10/receipts/powers-${{ matrix.shard }}/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce Power shard verdict after evidence persistence
+        if: steps.execute.outcome == 'failure'
+        run: exit 1
+
+  semantic-fault-lab:
+    name: Fault / ${{ matrix.scenario }}
+    needs: plan
+    if: needs.plan.outputs.run_chaos == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix: ${{ fromJSON(needs.plan.outputs.chaos_matrix) }}
+    steps:
+      - name: Checkout exact source occurrence
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Inject bounded semantic fault and demand fail-closed behavior
+        id: execute
+        continue-on-error: true
+        run: |
+          python3 tools/actions/generation10_lab.py fault \
+            --scenario "${{ matrix.scenario }}" \
+            --output-dir ".generation10/receipts/fault-${{ matrix.scenario }}"
+
+      - name: Preserve fault witness
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: g10-fault-${{ matrix.scenario }}-${{ github.run_attempt }}
+          path: .generation10/receipts/fault-${{ matrix.scenario }}/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Enforce fail-closed semantic result
+        if: steps.execute.outcome == 'failure'
+        run: exit 1
+
+  proof-bundle:
+    name: Fold EvidenceGraph into ProofBundle
+    needs: [plan, semantic-circuits, power-swarm, semantic-fault-lab]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source occurrence
+        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Download all independent evidence fragments
+        uses: actions/download-artifact@v4
+        with:
+          pattern: g10-*
+          path: .generation10/artifacts
+          merge-multiple: false
+
+      - name: Seal content-addressed ProofBundle
+        id: bundle
+        continue-on-error: true
+        run: |
+          python3 tools/actions/generation10_lab.py bundle \
+            --input-dir .generation10/artifacts \
+            --output .generation10/proof-bundle.json \
+            --summary .generation10/summary.md
+
+      - name: Publish immutable proof surface
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: generation10-proof-${{ env.BONFYRE_SOURCE_SHA }}-${{ github.run_attempt }}
+          path: |
+            .generation10/proof-bundle.json
+            .generation10/summary.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render proof into Actions summary
+        if: always()
+        run: cat .generation10/summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce ProofBundle closure
+        if: steps.bundle.outcome == 'failure'
+        run: exit 1

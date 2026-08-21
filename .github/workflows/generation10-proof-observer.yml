@@ -1,0 +1,115 @@
+name: Generation-10 Proof Observer
+
+on:
+  workflow_run:
+    workflows: ["Generation-10 System Lab"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: generation10-observer-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  second-observer:
+    name: Independent ProofBundle observer
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Download evidence without checking out producer code
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          mkdir -p observed
+          gh run download "$RUN_ID" --repo "$REPO" --dir observed
+          find observed -maxdepth 4 -type f -print | sort
+
+      - name: Verify bundle address, receipt addresses, source identity, and factor identity
+        env:
+          EXPECTED_SHA: ${{ github.event.workflow_run.head_sha }}
+          PRODUCER_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          root = Path("observed")
+          bundles = list(root.rglob("proof-bundle.json"))
+          if len(bundles) != 1:
+              raise SystemExit(f"expected exactly one proof-bundle.json, found {len(bundles)}")
+          bundle = json.loads(bundles[0].read_text(encoding="utf-8"))
+
+          def canonical(value):
+              return (json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode()
+
+          sealed = dict(bundle)
+          declared = sealed.pop("bundle_sha256")
+          observed = hashlib.sha256(canonical(sealed)).hexdigest()
+          if declared != observed:
+              raise SystemExit(f"ProofBundle address mismatch: declared={declared} observed={observed}")
+
+          expected_sha = os.environ["EXPECTED_SHA"]
+          if bundle.get("git_shas") != [expected_sha]:
+              raise SystemExit(f"source factor mismatch: expected {[expected_sha]!r}, got {bundle.get('git_shas')!r}")
+          if len(bundle.get("contract_shas", [])) != 1:
+              raise SystemExit("ProofBundle is not bound to exactly one Generation-10 contract")
+
+          receipt_by_name = {}
+          for path in root.rglob("*.json"):
+              if path.name in {"proof-bundle.json", "plan.json"}:
+                  continue
+              receipt_by_name.setdefault(path.name, []).append(path)
+
+          checked = 0
+          for entry in bundle.get("receipts", []):
+              name = Path(entry["path"]).name
+              candidates = receipt_by_name.get(name, [])
+              if len(candidates) != 1:
+                  raise SystemExit(f"cannot uniquely resolve receipt {entry['path']}: {candidates}")
+              path = candidates[0]
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              if digest != entry["sha256"]:
+                  raise SystemExit(f"receipt file digest mismatch for {entry['path']}")
+              receipt = json.loads(path.read_text(encoding="utf-8"))
+              content = dict(receipt)
+              receipt_declared = content.pop("content_sha256")
+              receipt_observed = hashlib.sha256(canonical(content)).hexdigest()
+              if receipt_declared != receipt_observed:
+                  raise SystemExit(f"ReceiptEnvelope address mismatch for {entry['path']}")
+              if receipt.get("git_sha") != expected_sha:
+                  raise SystemExit(f"stale or foreign receipt source factor for {entry['path']}")
+              if receipt.get("contract_sha256") != bundle["contract_shas"][0]:
+                  raise SystemExit(f"contract factor divergence for {entry['path']}")
+              checked += 1
+
+          if checked != bundle.get("receipt_count"):
+              raise SystemExit(f"receipt cardinality mismatch: checked={checked} declared={bundle.get('receipt_count')}")
+
+          print(json.dumps({
+              "proof_bundle_sha256": declared,
+              "source_sha": expected_sha,
+              "receipt_count": checked,
+              "producer_conclusion": os.environ["PRODUCER_CONCLUSION"],
+              "proof_complete": bundle.get("proof_complete"),
+          }, indent=2))
+          PY
+
+      - name: Record independent observation
+        run: |
+          {
+            echo "## Generation-10 second observer"
+            echo
+            echo "- producer run: \`${{ github.event.workflow_run.id }}\`"
+            echo "- producer conclusion: \`${{ github.event.workflow_run.conclusion }}\`"
+            echo "- source SHA: \`${{ github.event.workflow_run.head_sha }}\`"
+            echo "- untrusted producer code was **not checked out or executed**"
+            echo "- ProofBundle and every referenced ReceiptEnvelope were independently re-addressed"
+          } >> "$GITHUB_STEP_SUMMARY"
