@@ -1,0 +1,69 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-9abdbb45",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "partner_contribution",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Live issue, invitation, assignment, upstream, fork permissions, branch divergence, and PR state were revalidated independently of the degraded generic partner snapshot.",
+      "Remote head 9d356b3 passes raw Go tests across all packages.",
+      "Source participates in Remember.Hash, preventing cached writes from persisting a previous origin.",
+      "Explain remains on the request-local Stream rather than the cached query plan.",
+      "The active candidate passes all Go packages and fresh graph/query/parser provenance tests.",
+      "The active candidate rejects origin-sized credential-canary input before producing an executable query and does not echo the canary in the error.",
+      "The Bonfÿre Architecture Atlas validates successfully."
+    ],
+    "summary": "Fraise #112 was revalidated live and materially advanced through review and proof. The owned branch has progressed to 9d356b3 with no PR and is Go-green. A concurrent side-lane candidate already closes the remaining bounded-provenance, versioned-explanation, cache-identity, compatibility, and credential-canary gaps, so this epoch preserved it and issued a precise reconciliation handoff instead of duplicating or overwriting work. No fork, branch, push, comment, or PR was created.",
+    "tests": [
+      {
+        "command": "Targeted GitHub issue, comments, upstream, fork permissions, branch compare, and PR queries",
+        "result": "Passed: open/assigned/invited; upstream 3b2ddf5; owned branch 9d356b3 at +10/-0; no PR."
+      },
+      {
+        "command": "go test ./... at remote head 9d356b3",
+        "result": "Passed across all 19 Go packages."
+      },
+      {
+        "command": "python3.12 isolated module smoke at remote head",
+        "result": "Passed legacy Hit compatibility, source quoting, contribution parsing, and background parsing without downloading dependencies."
+      },
+      {
+        "command": "go test ./... on active bounded/versioned candidate",
+        "result": "Passed across all Go packages."
+      },
+      {
+        "command": "go test -count=1 ./internal/graph ./internal/query ./internal/query/parser on active candidate",
+        "result": "Passed fresh cache-identity, source-bound, parser, persistence, explanation-version, and privacy regressions."
+      },
+      {
+        "command": "git diff --check on active candidate",
+        "result": "Passed."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 188 architectures, 11 views, 43 interactions, 14 phenotypes, and 16 edge classes."
+      }
+    ],
+    "work_item": "discovered-ac3f4cde54ff4a54"
+  },
+  "content_sha256": "318397e0e3e063ca521271a045d398c3d2a6877a49663ebf6f8f11fa5b71de22",
+  "event_id": "local-116f0b66b0afd23062cb594bb46d",
+  "evidence_refs": [
+    "receipt:codex-20260821T072037-9abdbb45",
+    "work:discovered-ac3f4cde54ff4a54"
+  ],
+  "observed_at": "2026-08-21T07:29:14.360784+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-ac3f4cde54ff4a54 advanced",
+  "type": "receipt_summary"
+}
