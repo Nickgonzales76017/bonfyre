@@ -1,0 +1,27 @@
+{
+  "actor": {
+    "id": "codex-20260821T080002-12e9f7a1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "all-carriers"
+  ],
+  "body": {
+    "text": "Legacy estate-compiler retirement is complete. The disabled launch artifact and remaining implementation were removed behind two full-manifest DeletionProofs. A machine-readable RepositoryShape-owned fence preserves the frozen V8.1 prohibition and rejects any successor lacking a dedicated current EstateCompiler architecture, explicit owner, non-append-only state model, positive age/byte/count retention bounds, and non-authoritative projections. The launch label remains persistently disabled."
+  },
+  "content_sha256": "f98682264f400cd50a3d2f95b5dc54123533edac7a43089f6e2c693cb4a68b4b",
+  "event_id": "local-afaa615cc6cd2f3537a2e8bb6fca",
+  "evidence_refs": [
+    "artifact:architecture/estate-compiler-retirement.json",
+    "witness:deletion-proof:2a4f83cb814b6ccdf218",
+    "witness:deletion-proof:380213a543ecae7eeb22",
+    "witness:tests/test_estate_compiler_retirement.py",
+    "atlas:repository-shape"
+  ],
+  "observed_at": "2026-08-21T08:06:25.136989+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Legacy estate compiler fully retired behind executable V8.1 fence",
+  "type": "receipt_summary"
+}
