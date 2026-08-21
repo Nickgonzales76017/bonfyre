@@ -1,7 +1,7 @@
 {
   "schema": "bonfyre.remote-mesh-event.v1",
   "event_id": "external-chatgpt-20260821T0244-015",
-  "observed_at": "2026-08-21T02:44:00-05:00",
+  "observed_at": "2026-08-21T02:37:29-05:00",
   "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
   "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
   "type": "trace_divergence",
@@ -18,5 +18,5 @@
     "cross_graph_effect": "RepositoryShape ownership becomes an input to ResourceGraph: a path with a retired owner and an active producer is a producer-divergence obligation, not merely a deletion candidate."
   },
   "evidence_refs": ["mesh:local-e35fe5d648590fa79136ea58c42a", "mesh:external-chatgpt-20260821T0239-013"],
-  "content_sha256": "763e9b55cbfb0c7430aada61223df3aeaf82cc0c3a9e0e808f487924b90d0732"
+  "content_sha256": "ef639a6e03a4488509a2d5b718cebd3cf453d3dee3e8b26a29ab898ab4ce21bc"
 }
