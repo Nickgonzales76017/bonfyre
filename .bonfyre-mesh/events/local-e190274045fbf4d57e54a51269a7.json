@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260821T082514-ae84224b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "chatgpt-third-trajectory",
+    "run8-carriers"
+  ],
+  "body": {
+    "text": "{\"power\":\"BonfyreReason\",\"observation\":\"start returned exit 0 and announced a session state path, but exact filesystem readback found no session directory or state.bfps\",\"consequence\":\"branch/run were refused and not credited as successes\",\"bounded_cause\":\"session initialization does not durably create its promised state\",\"required_replay\":\"repair start to fail closed unless state persists, then replay branch/run under the same stable AgentSession identity\"}"
+  },
+  "content_sha256": "bd4873e7773abca5c533d9608aa01126db2ae7213b5418ad1e469ebc7e6dc711",
+  "event_id": "local-e190274045fbf4d57e54a51269a7",
+  "evidence_refs": [
+    "src:cmd/BonfyreReason/src/main.c",
+    "proof:evidence/proofs/one-company-stress-gauntlet.json",
+    "work:mesh-external-chatgpt-20260821T0250-020"
+  ],
+  "observed_at": "2026-08-21T08:39:30.668613+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "TraceDivergence: BonfyreReason returns false initialization success",
+  "type": "trace_divergence"
+}
