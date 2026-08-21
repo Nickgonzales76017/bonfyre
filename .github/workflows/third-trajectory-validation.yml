@@ -40,7 +40,8 @@ jobs:
             scripts/runpod_v2_migration_audit.py \
             scripts/agent_trace_0_1_import.py \
             scripts/docker_resource_weather.py \
-            scripts/evidence_producer_trust.py
+            scripts/evidence_producer_trust.py \
+            scripts/gitlink_contract_audit.py
 
       - name: Install isolated test dependency
         run: python -m pip install --disable-pip-version-check 'pytest==8.4.1'
@@ -51,4 +52,22 @@ jobs:
             tests/test_runpod_v2_migration_audit.py \
             tests/test_agent_trace_0_1_import.py \
             tests/test_docker_resource_weather.py \
-            tests/test_evidence_producer_trust.py
+            tests/test_evidence_producer_trust.py \
+            tests/test_gitlink_contract_audit.py
+
+      - name: Observe live repository Gitlink contract
+        run: |
+          python scripts/gitlink_contract_audit.py . --output /tmp/gitlink-contract.json
+          python - <<'PY'
+          import json
+          report = json.load(open('/tmp/gitlink-contract.json', encoding='utf-8'))
+          assert report['mutation_performed'] is False
+          # This trajectory records current archaeology as evidence; it does
+          # not delete or normalize it. Run8 owns the later disposition.
+          print(json.dumps({
+              'gitlinks': report['gitlink_count'],
+              'declarations': report['declaration_count'],
+              'findings': report['finding_count'],
+              'kinds': report['finding_kinds'],
+          }, sort_keys=True))
+          PY
