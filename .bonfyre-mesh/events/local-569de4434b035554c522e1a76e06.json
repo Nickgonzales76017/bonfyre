@@ -1,0 +1,80 @@
+{
+  "actor": {
+    "id": "codex-20260821T082514-ae84224b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/company_stress_gauntlet.py",
+      "components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+      "architecture/institutional/company-stress-gauntlet.yaff",
+      "architecture/atlas.index.json",
+      "evidence/proofs/one-company-stress-gauntlet.json",
+      ".bonfyre/run8/evidence/one-company-gauntlet/"
+    ],
+    "class": "open_world_learning",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Four lanes crossed 6, 8, 8, and 9 distinct owner families while retaining one shared semantic identity.",
+      "Customer-to-cash preserved canonical identity through CRM, Helpdesk, ERPNext quotation/order/invoice/payment, MoneyGraph, and Insights projections.",
+      "Six registered Format Commons families round-tripped with semantic validation, content hashes, ObjectFabric addresses, and Zstd recovery.",
+      "Partner engineering preserved ForeignTwin rights, closed bounded WorkGraph work against a ReceiptEnvelope, and kept unsigned DSSE explicit.",
+      "Eight named Powers were physically invoked through their live registry entries.",
+      "The reusable proof bundle validates at SHA-256 546d5fcdbca88a9c8cb04a112370666892b95dbee420bbd59f3d3c4951d50a88 and contains no private absolute paths or secret-shaped strings.",
+      "The Architecture Atlas validates at 195 architectures, 11 views, and 59 interactions."
+    ],
+    "summary": "Completed the bounded one-company stress gauntlet. Four shared-object lanes crossed Powers, Frappe, Model/Provider, Format, Partner, Work, Evidence, and physical-fabric owners and converged on a reusable tamper-evident proof. All runnable checks passed; unavailable runtime edges were preserved as exact blockers. No external mutation, spend, model download, or partner effect occurred.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py -q",
+        "result": "7 passed in 16.14s"
+      },
+      {
+        "command": "python3 -m pytest focused gauntlet/Frappe/system-map/economic tests -q",
+        "result": "19 passed in 6.46s"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "323 passed, 1 skipped in 16.14s"
+      },
+      {
+        "command": "make -C engine/core test",
+        "result": "passed native core suite"
+      },
+      {
+        "command": "cc agent_contract.c agent_contract_test.c && run",
+        "result": "13 checks, 0 failures"
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "exported 195 architectures; validation passed with 59 interactions"
+      },
+      {
+        "command": "verify one-company-stress-gauntlet proof digest and privacy scan",
+        "result": "digest valid; no private absolute paths or secret-shaped strings"
+      },
+      {
+        "command": "git diff --check -- changed gauntlet paths",
+        "result": "passed"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260821T0250-020"
+  },
+  "content_sha256": "084851f100412310e70b9642477f6b579f24ba819f1df8ea177e4a82da1cb76d",
+  "event_id": "local-569de4434b035554c522e1a76e06",
+  "evidence_refs": [
+    "receipt:codex-20260821T082514-ae84224b",
+    "work:mesh-external-chatgpt-20260821T0250-020"
+  ],
+  "observed_at": "2026-08-21T08:39:30.669064+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260821T0250-020 completed",
+  "type": "receipt_summary"
+}
