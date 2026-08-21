@@ -1,0 +1,74 @@
+{
+  "actor": {
+    "id": "codex-20260821T083843-9ed12861",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".github/workflows/native-kernel.yml",
+      "tests/test_cutover_ci_contract.py"
+    ],
+    "class": "product_surface",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Native CI now installs pytest and runs the complete ControlPlane reference suite instead of the smaller unittest-discovery subset.",
+      "Native CI verifies the compatibility-root absorption ledger and triggers on every cutover contract path.",
+      "The old 10-Code root remains absent.",
+      "Native control replay, AgentSession contracts, engine conformance, and all 16 Python-derived vectors are green.",
+      "The current ledger and Architecture Atlas validate without drift."
+    ],
+    "summary": "Advanced the compatibility-root cutover by closing a material CI blind spot. Native CI now runs all 323 ControlPlane reference tests, verifies the absorption ledger, and is triggered by every cutover contract path. Native parity evidence is green for the implemented surface, but full cutover remains correctly fenced by seven capability-residue children, nine unassigned runtime children, three orphan gitlinks, and incomplete whole-ControlPlane native parity.",
+    "tests": [
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "323 passed, 1 skipped."
+      },
+      {
+        "command": "zig build test-control && zig build test-agent-contract",
+        "result": "15 control checks and 13 AgentSession/ReceiptEnvelope checks passed."
+      },
+      {
+        "command": "make -C engine/core test",
+        "result": "All 14 native conformance binaries passed."
+      },
+      {
+        "command": "python3 tests/conformance/control/generate_vectors.py --check",
+        "result": "16 vectors checked, 0 mismatches."
+      },
+      {
+        "command": "python3 -m pytest tests/test_cutover_ci_contract.py tests/test_transitional_root_absorption.py tests/test_repository_shape.py tests/test_estate_compiler_retirement.py -q",
+        "result": "26 passed."
+      },
+      {
+        "command": "python3 tools/transitional_root_absorption.py --verify",
+        "result": "Committed ledger matches fresh measurement."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "195 architectures, 11 views, 59 interactions valid."
+      },
+      {
+        "command": "Ruby YAML parse and git diff --check",
+        "result": "Workflow YAML parsed and edited paths passed whitespace validation."
+      }
+    ],
+    "work_item": "discovered-22aef8c59e5d9b0b"
+  },
+  "content_sha256": "875feb59417210a7024e5cbe78c43ad8b3c4bd21451d87a6eafd0e8017dfdbcc",
+  "event_id": "local-2096865f388b67af1bf738189c5b",
+  "evidence_refs": [
+    "receipt:codex-20260821T083843-9ed12861",
+    "work:discovered-22aef8c59e5d9b0b"
+  ],
+  "observed_at": "2026-08-21T08:46:34.279100+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-22aef8c59e5d9b0b advanced",
+  "type": "receipt_summary"
+}
