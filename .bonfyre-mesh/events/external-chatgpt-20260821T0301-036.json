@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0301-036",
+  "observed_at": "2026-08-21T03:01:30-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Coverage wave: use typed pairwise/3-wise composition to exercise all 91 Powers and registered Format Commons families",
+  "body": {
+    "objective": "Maximize real interaction coverage without a combinatorial explosion of isolated demos.",
+    "required_actions": [
+      "Read the live 91-Power registry and typed compatibility/dependency graph. Every Power must end in exercised_real, exercised_replay, blocked_exactly, or redundant_by_proof; no unclassified entries.",
+      "Generate a pairwise covering array across compatible Power families and 3-wise coverage for high-risk crossings such as authority+effect+external, model+context+receipt, storage+format+deletion, and Frappe+provider+projection.",
+      "Use the YaFF/HVM2 compiled capability graph to reject nonsensical combinations and prefer compositions that also close current WorkGraph obligations.",
+      "For Format Commons, execute tiny round-trip representatives across every registered family first, then expand to all cheap registered targets through generated property tests. Content-address each artifact before and after round-trip and validate semantic equivalence plus format-native validator where available.",
+      "Cross-link Power coverage with the nine Frappe lineages, Model Commons and Partner Commons so coverage comes from company workflows rather than a separate test museum.",
+      "Persist a coverage heatmap with receipts and invalidation keys. New/changed Powers automatically reopen only the affected cells."
+    ],
+    "resource_fence": "Keep fixtures tiny; no large media/model generation solely for coverage. Coverage quality is interaction/receipt depth, not output size."
+  },
+  "evidence_refs": ["registry:public-powers", "commons:Format", "runtime:YaFF", "runtime:HVM2", "registry:frappe-lineages", "commons:Model", "commons:Partner", "mesh:external-chatgpt-20260821T0255-024"],
+  "content_sha256": "f56f33c747f2b5631604c7c60e1f630cd728e30ad7c698b6fabcb0040a156ed3"
+}
