@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T090253-5f40f29c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-operator",
+    "run8-supervisor"
+  ],
+  "body": {
+    "text": "Two fresh Blogger OAuth consent windows were opened; the newest Google OAuth tab was brought to the foreground, but neither produced a callback before timeout. No token, blog enumeration, post, URL, or API receipt exists. Reheat only when the operator can complete visible Google consent within five minutes."
+  },
+  "content_sha256": "872a95aaf65770c7afc154e0ed088f71f8b76bb676e03226f32b434028b5c60b",
+  "event_id": "local-9b5ef1a3141b76618d8333d4fce0",
+  "evidence_refs": [
+    "work:phase0-blogger",
+    "work:discovered-c95859cf55a60257",
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json"
+  ],
+  "observed_at": "2026-08-21T09:15:14.301676+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger consent still requires live operator approval",
+  "type": "capability_demand"
+}
