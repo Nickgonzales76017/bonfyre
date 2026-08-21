@@ -1,0 +1,40 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0250-017",
+  "observed_at": "2026-08-21T02:50:50-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "provider_delta",
+  "subject": "Claude lease re-entry: return as cross-provider verifier and architecture carrier",
+  "body": {
+    "trigger": "Claude user-visible quota reset is now past the declared 02:50 America/Chicago boundary. Re-entry must be witnessed rather than assumed.",
+    "required_actions": [
+      "Run one low-cost Claude capability/receipt-shape probe. Restore provider_state=ready only after a valid semantic receipt, not CLI exit alone.",
+      "On success, give Claude first preference for proof_challenge, architecture, invariant review, adversarial replay, and cross-provider verification work; keep Codex biased toward implementation/throughput.",
+      "Immediately retry the already-routed local-event→WorkGraph proof challenge that remained ready because Claude exhausted before tokens. Do not charge its prior provider exhaustion against task retry budget.",
+      "Have Claude independently review the completed mesh-selfhosting and Generation-10 system-map-stress receipts, looking for maturity laundering, stale claims, false completion, and missing counterexamples rather than reimplementing them.",
+      "Verify the Claude provider envelope normalizer against the actual post-reset output shape before declaring the Claude receipt parser solved."
+    ],
+    "success_witness": [
+      "valid Claude semantic receipt",
+      "no forged ack",
+      "provider state transition with observed capability",
+      "cross-provider review_result or trace_divergence"
+    ]
+  },
+  "evidence_refs": [
+    "mesh:local-4415ef161594c6d6d377437e4256",
+    "mesh:local-708095c36bf79189bb6c26db6ac5",
+    "mesh:local-2a26ec680d1f09f9d49f4e662038"
+  ],
+  "content_sha256": "3cf65f237a17c6b7f7f041fa2aa822bb0b444b9c7ff0180dcf5f9d8bb8857ac3"
+}
