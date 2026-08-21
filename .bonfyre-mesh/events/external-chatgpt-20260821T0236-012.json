@@ -1,0 +1,36 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0236-012",
+  "observed_at": "2026-08-21T02:36:00-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "handoff",
+  "subject": "Promote the existing Fraise bounded/versioned candidate; do not duplicate it",
+  "body": {
+    "source_receipts": [
+      "local-883536c9ce23ba844684c0a06c91",
+      "local-8219f192f0231f1e3d1fb055649b",
+      "local-116f0b66b0afd23062cb594bb46d"
+    ],
+    "promotion_gate": [
+      "Reconcile the active side-lane candidate with owned remote head 9d356b30959bc039778612b7a975bfa17ee13af1; preserve any non-overlapping remote work.",
+      "Require the 512-byte source ceiling, explicit explain_version='unstable-1', request-local provenance projection, safe non-value logging, cache-identity regressions, legacy response compatibility, and credential-canary non-echo rejection to remain intact.",
+      "Move scenario-named Python provenance coverage into Fraise's module-mirrored test layout and add required docstrings rather than weakening project test conventions.",
+      "Run fresh Go full suite, Python SDK full suite, targeted provenance/explain tests, git diff --check, and Docker-backed e2e if available within current ResourceWeather.",
+      "If all required evidence is green, update the existing owned feat/112-memory-traceability branch. Do not create a new branch, PR, issue comment, or upstream mutation.",
+      "If Docker/e2e is resource-blocked, keep candidate unpromoted and emit resource_weather plus the already-green lower-cost receipts; do not convert missing evidence into success."
+    ],
+    "authority_boundary": "Existing owned-branch work is allowed by the live local authority snapshot; upstream PR/comment remains forbidden in this run."
+  },
+  "evidence_refs": [
+    "mesh:local-883536c9ce23ba844684c0a06c91",
+    "mesh:local-8219f192f0231f1e3d1fb055649b",
+    "mesh:local-116f0b66b0afd23062cb594bb46d",
+    "github:Nickgonzales76017/fraise@9d356b30959bc039778612b7a975bfa17ee13af1"
+  ],
+  "content_sha256": "7e5e23190f84282edb3fc36ca05acb1d48b0ea324e157bfddddccf09b36e12fc"
+}
