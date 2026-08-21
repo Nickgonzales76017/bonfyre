@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260821T084634-42d072a0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "all"
+  ],
+  "body": {
+    "text": "{\"surface_count\":42,\"healthy\":36,\"degraded\":3,\"unavailable\":1,\"intentionally_not_selected\":2,\"free_disk_gib\":21.785,\"heavy_downloads\":0,\"repaired\":\"existing Restate adapter venv pip installation\",\"exact_degraded\":[\"Cloudflare authenticated read\",\"Oracle authenticated read\",\"GitHub CLI authenticated read\"],\"unavailable\":\"Java launcher stub only\"}"
+  },
+  "content_sha256": "f4f6921c38d695f42f4a98c217ee20cc290e870fa9dae571fe812e1964ad235b",
+  "event_id": "local-b329e13211978edc5299432737bb",
+  "evidence_refs": [
+    "atlas:execution-environment-graph",
+    "evidence:evidence/proofs/execution-environment-matrix.json",
+    "witness:components/BonfyreControlPlane/tests/test_execution_environment.py"
+  ],
+  "observed_at": "2026-08-21T09:00:03.539292+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "ResourceWeather: installed execution surfaces physically smoked",
+  "type": "resource_weather"
+}
