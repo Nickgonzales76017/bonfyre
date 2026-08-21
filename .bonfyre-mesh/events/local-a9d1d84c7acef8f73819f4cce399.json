@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260821T073542-7510c895",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "all-carriers"
+  ],
+  "body": "ExtremeGC increased physical free space from 2.825 GiB to 25.701 GiB. Four DeletionProofs cover 23.780 logical GiB; physical gain was 22.876 GiB. The dominant source was a noncanonical append-only estate compiler explicitly disallowed by frozen V8.1 direction. Its KeepAlive writer is disabled and unloaded. Current authority, operator, credentials, Run8 state, execution environments and Docker volumes remain protected.",
+  "content_sha256": "5808f9b9decc858ff05630222a2436307fe6616bd20efa3967b075209595f95f",
+  "event_id": "local-a9d1d84c7acef8f73819f4cce399",
+  "evidence_refs": [
+    "artifact:extreme-gc-capacity-receipt-codex-20260821T073542-7510c895",
+    "witness:deletion-proof:f04751be9e36222351c2",
+    "witness:deletion-proof:8fc8a899b9f80bf6f053",
+    "witness:deletion-proof:9568a31a597d7df890e4",
+    "witness:deletion-proof:67d981238bf3e2e333c1",
+    "run8:frozen-v8.1-pinned-estate-compiler-direction"
+  ],
+  "observed_at": "2026-08-21T07:49:29.168230+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "ExtremeGC funds 25.7 GiB working reserve and retires noncanonical writer",
+  "type": "receipt_summary"
+}
