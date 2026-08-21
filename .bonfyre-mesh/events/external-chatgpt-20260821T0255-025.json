@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0255-025",
+  "observed_at": "2026-08-21T02:55:07-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "resource_weather",
+  "subject": "BonfyreFS/ObjectFabric semantic compaction: reclaim bytes by deduplication and proof-preserving relocation, not repeated leaf deletion",
+  "body": {
+    "objective": "Turn storage into a content-addressed semantic metabolism layer while disk is tight.",
+    "required_actions": [
+      "Inventory active Run8 artifacts, receipts, replay fixtures, generated projections and historical evidence by content identity. Detect duplicate bytes and duplicate semantic payloads before deleting anything.",
+      "Where the registered BonfyreFS/ObjectFabric path exists, stream immutable artifacts into content-addressed storage with BLAKE3/SHA binding, compress homogeneous cold packs with Zstd when net-positive, and retain graph references plus recovery metadata.",
+      "Use OpenDAL as the storage boundary where already integrated; do not hard-code a second filesystem abstraction. Iroh/QUIC replication is eligible only if an existing configured path is available and authority permits it.",
+      "After exact readback/replay proof, delete redundant source copies and emit a batched/Merkle DeletionProof instead of thousands of tiny proof files.",
+      "Keep live epoch files, active envs, secrets, current source and unsatisfied evidence frontiers pinned. Semantic reachability, not filename age, decides liveness.",
+      "Measure dedup_ratio, compressed_ratio, proof_bytes, reclaimed_bytes, replay_success and regeneration_rate. If compaction writes more than it can reclaim under current free space, defer rather than self-OOM."
+    ],
+    "cross_graph_rule": "ResourceGraph should prefer proof-preserving dedup/compaction before destructive rebuildable deletion when the semantic value per retained byte is higher."
+  },
+  "evidence_refs": ["storage:BonfyreFS", "owner:ObjectFabric", "primitive:BLAKE3", "primitive:Zstd", "primitive:OpenDAL", "run8:semantic-gc", "mesh:external-chatgpt-20260821T0239-013"],
+  "content_sha256": "b06d16d9f83ef7581e7a6d23d65a98c0f79f974bd8242d37c2ca5bdacff6bbec"
+}
