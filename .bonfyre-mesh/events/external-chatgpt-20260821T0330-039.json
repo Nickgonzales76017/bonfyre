@@ -1,0 +1,83 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0330-039",
+  "observed_at": "2026-08-21T03:30:02-05:00",
+  "actor": {
+    "kind": "external_operator",
+    "id": "chatgpt-third-trajectory",
+    "provider": "openai"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude",
+    "codex",
+    "native-runtime"
+  ],
+  "type": "trace_divergence",
+  "subject": "GitHub Actions telemetry: separate green, stale-green, approval-blocked, and interpreter-divergent evidence",
+  "body": {
+    "action_ledger": [
+      {
+        "surface": "bonfyre-agent-trace-verifier#8",
+        "head": "d8be436030456a419e4b896f3b4f9a3d480969db",
+        "state": "green_current",
+        "evidence": "Verify run 32442752239 completed success"
+      },
+      {
+        "surface": "deepeval#3056",
+        "head": "ca677d5f2f1837863306da6d643e7f10be174ad7",
+        "state": "green_current",
+        "evidence": "six PR workflows success: metrics, confident, integration, core, lint, title"
+      },
+      {
+        "surface": "deepeval#3064",
+        "head": "a0ac51bf8de39b9e2833560ae27ac45e8bca5c2d",
+        "state": "green_but_factor_stale",
+        "evidence": "historical PR workflows are green, but the wrapper embeds the older one-sided resync seam while #3056 now uses the corrected two-dimensional resync search",
+        "required_semantics": "FactorValidityEnvelope must invalidate dependent green evidence when a bound semantic dependency changes"
+      },
+      {
+        "surface": "agentguard#214 upstream",
+        "head": "82bca309477d3c4093db96e86433711477e04803",
+        "state": "workflow_approval_blocked",
+        "evidence": "upstream CI and Documentation are action_required; this is not a code verdict"
+      },
+      {
+        "surface": "Nickgonzales76017/agentguard#1 owned validation",
+        "head": "82bca309477d3c4093db96e86433711477e04803",
+        "state": "real_red_single_lane",
+        "evidence": "Ruff, packaging, Python 3.9/3.10/3.11, full Docker integration and coverage pass; only Python 3.12 fails",
+        "failure": "2 failed, 1727 passed, 18 deselected. Python 3.12 parses a 1500-deep array then rejects wrong-shape, while the contract expects the nesting/JSON rejection route.",
+        "required_fix": "enforce MAX_TRACE_NESTING before json.loads with a string/escape-aware scanner; retain post-parse _validate_bounds as defense in depth; prove structure characters inside JSON strings do not count"
+      },
+      {
+        "surface": "Nickgonzales76017/bernstein#1",
+        "head": "5f4859110e056e1de96f00858a6f534fdfc362b2",
+        "state": "green_current",
+        "evidence": "CI, PR policy, zizmor, required-check canary, CI gate stub, trufflehog and docs-drift all success; expected non-opt-in workflows skipped"
+      },
+      {
+        "surface": "bonfyre third-trajectory validator",
+        "head": "16564b182f7a971210eac0d26dbf32c5ff7b3823",
+        "state": "push_trigger_visibility_split",
+        "evidence": "PR-run query reports no runs because the helper filters to pull_request runs; notification evidence shows repeated push-triggered validation. Last directly inspected run 32449150920 on 1d11910 compiled successfully and had 20/21 tests pass; sole failure was dirty path './relative.py'. Later head includes the clean-path and Gitlink-auditor fixes, but no current success receipt is being inferred without a run witness."
+      }
+    ],
+    "promotion_rules": [
+      "GitHub Actions conclusion is one evidence dimension, never a completion bit.",
+      "Distinguish code failure, provider/interpreter divergence, workflow approval, skipped-by-contract, trigger-visibility blind spots, and stale dependency factors.",
+      "Only redispatch the minimum failing lane when all orthogonal lanes are green.",
+      "When a CI failure exposes a semantic cross-runtime difference, promote the rejection route itself into a RegressionFence.",
+      "Feed current green receipts to ProofFrontier so ContextCompiler does not spend epochs re-running solved external checks."
+    ]
+  },
+  "evidence_refs": [
+    "github-actions:verifier-32442752239",
+    "github-actions:agentguard-32449541509",
+    "github-actions:bernstein-32449713560",
+    "github-actions:bonfyre-32449150920",
+    "github:deepeval-3056-ca677d5",
+    "github:deepeval-3064-a0ac51b"
+  ],
+  "content_sha256": "3ad9d64d287147fd1d89c336c4a6a2350a3850d2e8ceda290b4c79ab25ba41ab"
+}
