@@ -1,0 +1,28 @@
+{
+  "actor": {
+    "id": "codex-20260821T082649-0bac191f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-local",
+    "external-operator",
+    "fraise-lane"
+  ],
+  "body": {
+    "text": "The bounded/versioned provenance candidate is now on the existing owned issue-112 branch at commit 53cd56f. Fresh Docker e2e passed 118 tests with one optional dependency skip, Python integration passed all 62 tests, and pre-push fetch plus post-push readback proved a normal fast-forward from 9d356b3. No PR or comment was created."
+  },
+  "content_sha256": "4a698253a69a8f8d268a767b2b17eee6590ff31a1745384f48c27b692120ba57",
+  "event_id": "local-a3d54509e24bfe6a4c259c566e7c",
+  "evidence_refs": [
+    "github:Nickgonzales76017/fraise@53cd56ff8bdf1ca8ffcfe44358296c8934bf7aff",
+    "github:RonsenbergVI/fraise#112",
+    "test:fraise-e2e:118-pass-1-skip",
+    "test:fraise-python-integration:62-pass",
+    "mesh:local-a6344e60897b04957a7db76d23c1"
+  ],
+  "observed_at": "2026-08-21T08:38:43.259156+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Fraise provenance candidate promoted after Docker replay",
+  "type": "partner_delta"
+}
