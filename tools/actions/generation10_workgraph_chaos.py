@@ -49,6 +49,9 @@ SCENARIOS = {
     ],
 }
 
+FABRIC_TEST_CFLAGS = "-O2 -Wall -Wextra -Wno-error=format-truncation -std=c11 -D_DEFAULT_SOURCE"
+COMMAND_COMPLETION = "tests/requirements/command_completion.sh"
+
 
 def canonical(value: Any) -> bytes:
     return (json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode()
@@ -66,21 +69,27 @@ def run_test(path: str, state_dir: Path, timeout: int, phase: str) -> dict[str, 
     full = ROOT / path
     state_dir.mkdir(parents=True, exist_ok=True)
     env = os.environ.copy()
-    # WorkGraph requirements cross two independent build authorities. Keep the
-    # hosted-runner warning penetration explicitly scoped to the Fabric test
-    # substrate; exporting CFLAGS globally lets it erase native Power-owned
-    # include/optimization contracts in nested command builds.
-    env.pop("CFLAGS", None)
-    env.pop("OPTFLAGS", None)
     env.update({
         "BONFYRE_STATE_DIR": str(state_dir),
         "BONFYRE_CI": "1",
         "BONFYRE_CI_NO_EXTERNAL_EFFECTS": "1",
         "BONFYRE_AUTHORITY": "observe",
         "NO_COLOR": "1",
-        "BONFYRE_FABRIC_TEST_CFLAGS": "-O2 -Wall -Wextra -Wno-error=format-truncation -std=c11 -D_DEFAULT_SOURCE",
         "CC": "cc -include stdint.h",
     })
+
+    # Most lifecycle requirements build only the Fabric and need the bounded
+    # hosted-runner warning penetration directly. command_completion is the one
+    # scenario that crosses from Fabric into 93 independently-owned Power
+    # Makefiles, so route the same penetration through its dedicated Fabric-only
+    # channel and ensure no test-level CFLAGS/OPTFLAGS can leak into Powers.
+    if path == COMMAND_COMPLETION:
+        env.pop("CFLAGS", None)
+        env.pop("OPTFLAGS", None)
+        env["BONFYRE_FABRIC_TEST_CFLAGS"] = FABRIC_TEST_CFLAGS
+    else:
+        env["CFLAGS"] = FABRIC_TEST_CFLAGS
+
     started = time.monotonic()
     try:
         proc = subprocess.run(
