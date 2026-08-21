@@ -1,0 +1,74 @@
+{
+  "actor": {
+    "id": "codex-20260821T084634-42d072a0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/execution_environment.py",
+      "components/BonfyreControlPlane/tests/test_execution_environment.py",
+      "architecture/execution/work.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      "evidence/proofs/execution-environment-matrix.json",
+      "services/bonfyre-restate-adapter/venv/lib/python3.12/site-packages/pip"
+    ],
+    "class": "machine_execution",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "All relevant cataloged runtimes plus discovered clang++, g++, GitHub, AWS, OCI, Cloudflare and curl surfaces were actively invoked.",
+      "Python, Node/npm/pnpm, Bun, Deno, Go, Rust, C, C++, CMake, Ninja, Make, Perl, Ruby, Docker, Git, SQLite, HVM, provider CLIs, Homebrew and pipx completed bounded execution.",
+      "The existing Restate adapter venv was repaired in place; adapter import and `pip check` now pass without creating another environment.",
+      "Both Docker contexts completed live daemon API round trips.",
+      "OpenAI and AWS completed authenticated read-only probes; no external write occurred.",
+      "The evidence artifact contains ownership, regeneration cost, suitable work classes and health for 42 surfaces, with no private machine path or secret variable value.",
+      "The Architecture Atlas validates with ExecutionEnvironmentGraph and its WorkGraph placement interaction.",
+      "The temporary OCI configuration and corrupt pip backup were deleted after use; they are unrecoverable locally but fully regenerable and contained no user-authored data."
+    ],
+    "summary": "Advanced the execution-environment frontier from catalog presence to physical evidence. Forty-two surfaces were evaluated: 36 healthy, three credential-degraded, one unavailable Java stub, and two intentionally unselected dotenv shadows. Repaired the existing Restate venv’s broken pip installation, added durable ResourceGraph/ResourceWeather evidence and architecture, exercised explicit C++ frontends, and performed authenticated read-only OpenAI/AWS probes without secrets or external writes.",
+    "tests": [
+      {
+        "command": "python3 components/BonfyreControlPlane/execution_environment.py --catalog .bonfyre/run8/env/catalog.json --output evidence/proofs/execution-environment-matrix.json",
+        "result": "42 surfaces recorded: 36 healthy, 3 degraded, 1 unavailable, 2 intentionally not selected; nonzero health-fence status preserved for degraded surfaces."
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/test_execution_environment.py -q",
+        "result": "3 passed."
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "326 passed, 1 skipped."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Valid: 198 architectures, 11 views, 62 interactions, 14 phenotypes and 16 edge classes."
+      },
+      {
+        "command": "services/bonfyre-restate-adapter/venv/bin/python -m pip check; import app and restate from the adapter directory",
+        "result": "No broken requirements; adapter import passed."
+      },
+      {
+        "command": "Scan execution-environment evidence for private machine paths and credential variable names",
+        "result": "Clean."
+      }
+    ],
+    "work_item": "phase0-execution-env-matrix"
+  },
+  "content_sha256": "e91c1fc293334cf50aca18644ca15da798e57a0eb4143f2c37a029e18d0ff534",
+  "event_id": "local-97552d81a2f12beea2558c669ae2",
+  "evidence_refs": [
+    "receipt:codex-20260821T084634-42d072a0",
+    "work:phase0-execution-env-matrix"
+  ],
+  "observed_at": "2026-08-21T09:00:03.539760+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "phase0-execution-env-matrix advanced",
+  "type": "receipt_summary"
+}
