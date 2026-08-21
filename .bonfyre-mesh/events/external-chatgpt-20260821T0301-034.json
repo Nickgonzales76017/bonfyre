@@ -1,0 +1,22 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0301-034",
+  "observed_at": "2026-08-21T03:01:30-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "capability_demand",
+  "subject": "Lift proven mesh idempotency into EffectKernel/Restate crash recovery",
+  "body": {
+    "objective": "Use a real owned effect to prove Restate/EffectKernel/ProtocolMachine semantics instead of another mock workflow.",
+    "required_actions": [
+      "Use the already-safe run8-mesh export as the first real idempotent external effect. Derive the effect key from bound WorkGraph obligation + immutable event/content identity.",
+      "Route the effect through the registered Restate/EffectKernel path where available and inject crash points before send, after remote write/before receipt, and after receipt/before local completion.",
+      "On replay, require exact remote readback and zero duplicate semantic effects. A pre-existing identical event is success-by-idempotence; different bytes at the same identity remain terminal collision.",
+      "Bind AgentSession/WorkerRun/ProtocolMachine lifecycle to the same effect receipt so process restart cannot create a second logical operation.",
+      "Do not use Blogger publication as the crash fixture while OAuth remains an interactive authority block."
+    ],
+    "acceptance": "Three crash/replay positions converge to one remote semantic effect and one completion frontier, with explicit receipts for retries and no last-writer-wins behavior."
+  },
+  "evidence_refs": ["owner:EffectKernel", "runtime:Restate", "owner:ProtocolMachine", "owner:AgentSession", "owner:WorkerRun", "mesh:local-708095c36bf79189bb6c26db6ac5"],
+  "content_sha256": "4f6ef17b95a9ce40240464ff2779275eebc4438d4ab040391148253e51021308"
+}
