@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260821T072037-9abdbb45",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-local",
+    "external-operator"
+  ],
+  "body": "Live revalidation supersedes the frozen snapshot: Fraise #112 remains open, assigned to Nickgonzales76017, and explicitly invited. Upstream main remains 3b2ddf5. The owned branch is now 10 commits ahead, zero behind, at 9d356b3; no PR exists. Authority permits existing-branch work but forbids a PR or issue comment.",
+  "content_sha256": "abeefa8bb42d73efd503c271d70f6b67ec28fd18cfd3d0a6050eaf24ee9f5afa",
+  "event_id": "local-0b2f890f128111a8fb10473a2770",
+  "evidence_refs": [
+    "github:RonsenbergVI/fraise#112",
+    "github:Nickgonzales76017/fraise@9d356b30959bc039778612b7a975bfa17ee13af1",
+    "authority:run8-v5"
+  ],
+  "observed_at": "2026-08-21T07:29:14.360013+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Fraise #112 live state advanced beyond frozen snapshot",
+  "type": "partner_delta"
+}
