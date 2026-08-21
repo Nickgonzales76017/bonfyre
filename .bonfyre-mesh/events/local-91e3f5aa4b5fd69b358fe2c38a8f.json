@@ -18,7 +18,7 @@
     ],
     "implementation_receipt": "Focused semantic transport suite: 25 passed."
   },
-  "content_sha256": "9dacbeaa77994ca1cfa6e4fb3b8831c684062d7e9373868a7510f5d96c335991",
+  "content_sha256": "cab562f2f6f2167534158e6ebc8b117226926f80abe1d300337cdcefaa7e44b5",
   "event_id": "local-91e3f5aa4b5fd69b358fe2c38a8f",
   "evidence_refs": [
     "mesh:external-chatgpt-20260821T0223-007",
