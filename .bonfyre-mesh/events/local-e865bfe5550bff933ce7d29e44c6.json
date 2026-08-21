@@ -1,0 +1,80 @@
+{
+  "actor": {
+    "id": "codex-20260821T084544-be26954d",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "engine/core/include/bf_lifecycle.h",
+      "engine/core/src/lifecycle.c",
+      "engine/core/src/fabric.c",
+      "engine/core/src/fabric_exec.c",
+      "engine/core/Makefile",
+      "engine/core/tests/lifecycle_test.c",
+      "services/bonfyre-restate-adapter/app.py",
+      "tests/restate_integration.sh",
+      "components/BonfyreControlPlane/company_stress_gauntlet.py",
+      "components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+      "architecture/execution/work.yaff",
+      "architecture/interactions.yaff",
+      "architecture/substrate/foundry.yaff",
+      "architecture/atlas.index.json",
+      "evidence/proofs/worker-lifecycle-restate-recovery.json"
+    ],
+    "class": "execution_contract",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Native WorkerRun and ProtocolMachine definitions, instances, transitions, status readback, and CLI paths are registered in the live fabric.",
+      "Matching replay creates neither duplicate lifecycle identities nor duplicate transitions; mismatched bindings and reused operation keys fail closed.",
+      "Real Restate 1.7.5 discovered the service, completed node A, survived a forced bridge kill during durable sleep, reconciled effects, and completed node B.",
+      "Crash/restart readback found exactly one WorkerRun with three transitions and one ProtocolMachine with four transitions.",
+      "The one-company gauntlet no longer reports WorkerRun, ProtocolMachine, or Restate binding as blockers.",
+      "The Architecture Atlas validates with measured WorkerRun, ProtocolMachine, and Restate recovery witnesses."
+    ],
+    "summary": "Closed the worker lifecycle bindings end to end. Added a durable native lifecycle registry and CLI, wired Restate through stable WorkerRun and ProtocolMachine identities, gated resume on EffectKernel reconciliation, proved forced crash/restart recovery against a real Restate server, updated blocker accounting, and registered the measured architecture. The bounded proof digest is 2506a25cb387f1c64c17d40e7428697c897b164754c068dbf96647794123c5c0.",
+    "tests": [
+      {
+        "command": "tests/restate_integration.sh",
+        "result": "passed: real Restate discovery, node-A checkpoint, forced bridge kill, restart, effect recovery, node-B completion, WorkerRun 1/3 and ProtocolMachine 1/4"
+      },
+      {
+        "command": "make -C engine/core test",
+        "result": "passed all 15 native conformance binaries, including hostile lifecycle replay tests"
+      },
+      {
+        "command": "cc ... engine/core/tests/effect_commit_crash_test.c && /tmp/bonfyre-effect-commit-crash-test",
+        "result": "passed all EffectKernel crash-consistency checks"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "328 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 198 architectures, 11 views, 62 interactions, 14 phenotypes, 16 edge classes"
+      },
+      {
+        "command": "git diff --check -- <changed tracked paths>",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-8478c9c0da679f5e"
+  },
+  "content_sha256": "1d4e952a0bc6fb46d609f81048ae93ddea550025838da02cf8640aac2691a74b",
+  "event_id": "local-e865bfe5550bff933ce7d29e44c6",
+  "evidence_refs": [
+    "receipt:codex-20260821T084544-be26954d",
+    "work:discovered-8478c9c0da679f5e"
+  ],
+  "observed_at": "2026-08-21T09:02:52.285015+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-8478c9c0da679f5e completed",
+  "type": "receipt_summary"
+}
