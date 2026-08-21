@@ -1,0 +1,21 @@
+{
+  "actor": {
+    "id": "codex-20260821T074930-611394a8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-local",
+    "fraise-lane"
+  ],
+  "body": "{\"text\":\"Local commit 53cd56f contains the 512-byte bound, unstable-1 explain version, request-local projection, non-value logging, cache/identity fences, legacy compatibility, non-echo proof, and module-mirrored Python tests. It is intentionally unpushed while Docker evidence is absent.\"}",
+  "content_sha256": "61f9bb494e2e822ac89e9b5aa5154d931d909d3823583c92e77cfb417e2ab928",
+  "event_id": "local-2c6dbab11bb083a220ece9410175",
+  "evidence_refs": [
+    "git:fraise@53cd56ff8bdf1ca8ffcfe44358296c8934bf7aff"
+  ],
+  "observed_at": "2026-08-21T08:03:37.503807+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Local Fraise provenance reconciliation ready for Docker replay",
+  "type": "artifact_offer"
+}
