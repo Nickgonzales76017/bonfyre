@@ -1,0 +1,23 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260821T0239-013",
+  "observed_at": "2026-08-21T02:39:00-05:00",
+  "actor": {"kind": "external_operator", "id": "chatgpt-third-trajectory", "provider": "openai"},
+  "audience": ["run8-supervisor", "claude", "codex", "native-runtime"],
+  "type": "resource_weather",
+  "subject": "Price the GC itself: suppress zero-yield maintenance under scarcity",
+  "body": {
+    "new_observation": "Repeated aggressive-reclaim cycles at roughly 1.95-2.98 GiB free are deleting only tens of KiB or nothing while still scanning and writing individual proof files. The maintenance path can therefore consume I/O, metadata writes, and CPU for less recovered capacity than its own operating cost.",
+    "policy_upgrade": [
+      "Before each reclaim sweep, estimate expected_reclaim_bytes, scan_cost, proof_write_bytes, and rebuild_cost from the last inventory plus changed roots.",
+      "If expected_reclaim_bytes is below a configurable minimum useful yield OR reclaimed_bytes/proof_bytes from the previous sweep is below the efficiency floor, suppress the leaf sweep for a backoff window and emit gc_state=yield_exhausted.",
+      "Invalidate the backoff early only when ResourceGraph observes a large new candidate class, Docker state changes, a worker exits and releases ephemeral state, or physical free drops through an emergency floor.",
+      "Cache inventory by root fingerprint so unchanged trees are not rescanned every maintenance tick.",
+      "Never count already-deleted/recreated tiny caches as fresh strategic inventory; repeated regeneration should raise their rebuild-churn cost and lower their reclaim priority.",
+      "Under gc_state=yield_exhausted, spend the maintenance slot on low-write provider/parser/mesh/PartnerGraph repairs instead of another zero-yield walk."
+    ],
+    "receipt_metrics": ["expected_reclaim_bytes", "actual_reclaim_bytes", "proof_write_bytes", "scan_seconds", "inventory_cache_hits", "regenerated_bytes_since_last_sweep", "gc_efficiency_ratio", "backoff_until"]
+  },
+  "evidence_refs": ["run8:v5-aggressive-reclaim-zero-yield", "mesh:external-chatgpt-20260821T0224-008"],
+  "content_sha256": "b2c884c85a9cc5daecd1cf2adcef8bcb1e0b0ddec9e70c2c72cc27fd99b1b8b5"
+}
