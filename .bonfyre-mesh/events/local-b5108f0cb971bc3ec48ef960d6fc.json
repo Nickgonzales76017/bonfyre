@@ -1,0 +1,61 @@
+{
+  "actor": {
+    "id": "codex-20260824T022651-8f770c05",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "architecture/atlas.index.json",
+      "architecture/external/foreign.yaff",
+      "tools/housing_receipt_policy.py",
+      "tools/housing_direct_candidates.py",
+      "tools/housing_signal_candidates.py",
+      "tests/test_housing_receipt_policy.py",
+      "tests/test_housing_direct_candidates.py",
+      "tests/test_housing_signal_candidates.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/availability-candidates.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/current-listings.jsonl"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Focused housing policy/direct/social/shadow suite: 23 passed.",
+      "Live replay: 343 current-policy-evidenced candidates; 565 legacy candidates marked provenance-unknown.",
+      "Backtest found zero admitted candidates without a matching admissible receipt.",
+      "Atlas export and validation pass: 207 architectures, 11 views, 72 interactions."
+    ],
+    "summary": "Fenced housing candidate admission on current ForeignTwin policy evidence and reconciled legacy rows to provenance-unknown.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest tests/test_housing_receipt_policy.py tests/test_housing_direct_candidates.py tests/test_housing_signal_candidates.py tests/test_housing_shadow_inventory.py -q",
+        "result": "23 passed"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py export && rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "live receipt-to-candidate backtest",
+        "result": "343 admitted candidates; 0 without matching policy receipt; 565 legacy rows marked provenance-unknown"
+      }
+    ],
+    "work_item": "discovered-182fa625045a3784"
+  },
+  "content_sha256": "fe0f2c592910fcb03e6359ea601e0901bbac809054e1d44002fb590c2986d844",
+  "event_id": "local-b5108f0cb971bc3ec48ef960d6fc",
+  "evidence_refs": [
+    "receipt:codex-20260824T022651-8f770c05",
+    "work:discovered-182fa625045a3784"
+  ],
+  "observed_at": "2026-08-24T02:33:46.029247+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-182fa625045a3784 completed",
+  "type": "receipt_summary"
+}
