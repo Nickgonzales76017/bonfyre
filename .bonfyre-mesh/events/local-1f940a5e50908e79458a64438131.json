@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T021020-6bced35c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "Tom Thumb store 2642 public weekly-ad API extraction is complete: 131 source-bound labels, including 108 scalar prices, 9 conditional unit-price laws, 3 bundle-price laws, 7 buy/get laws, and no inferred stackability or availability. The quantity-law owner now models multibuy totals without fabricated free items."
+  },
+  "content_sha256": "94e122e4d8d78933d64d18b2918c5bcae1733526edd45156b4af4a931581853d",
+  "event_id": "local-1f940a5e50908e79458a64438131",
+  "evidence_refs": [
+    "artifact:household/food/current-offers.jsonl",
+    "artifact:household/food/tom-thumb-store2642-weekly-ad-manifest.json",
+    "artifact:household/food/source-receipts.jsonl"
+  ],
+  "observed_at": "2026-08-24T02:25:46.683894+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Tom Thumb store 2642 weekly-ad extraction and quantity-law handoff",
+  "type": "artifact_offer"
+}
