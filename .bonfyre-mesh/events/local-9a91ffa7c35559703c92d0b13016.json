@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T005515-d6dccd0c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "operator"
+  ],
+  "body": {
+    "text": "Live OAuth preflight verified the exact registered loopback callback and started a fresh local consent listener. It remains awaiting the visible Google consent callback; no token, blog enumeration, post, URL, or Blogger API receipt exists. After consent, enumerate blogs before publishing only the two validated ProofBundle posts."
+  },
+  "content_sha256": "674a3ee8940b3cb4f4b0605443e3bd4ef9891cf70a820c763b202cc17037186d",
+  "event_id": "local-9a91ffa7c35559703c92d0b13016",
+  "evidence_refs": [
+    "work:discovered-afc22261330a1fd8",
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json"
+  ],
+  "observed_at": "2026-08-24T00:59:56.341978+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger consent is the remaining live gate",
+  "type": "handoff"
+}
