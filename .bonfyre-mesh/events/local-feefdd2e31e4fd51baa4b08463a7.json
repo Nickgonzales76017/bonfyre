@@ -1,0 +1,58 @@
+{
+  "actor": {
+    "id": "codex-20260824T025558-0c308969",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/physical_derivation.py",
+      "components/BonfyreControlPlane/financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_physical_derivation.py",
+      "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_bonfyre_shell.py",
+      "architecture/economic/economic.yaff",
+      "architecture/provider/provider-family.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "finance_institutional",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Carrier adapter binds attempt, realization, receipt, resource dimensions, and optional pricing-evidence reference.",
+      "Fresh retained-state replay produced 55 attempt-linked, realization-linked occurrences across Claude and Codex; all 55 remain unknown-price.",
+      "Atlas validation and export pass."
+    ],
+    "summary": "Implemented and tested retry-safe shared/cache-aware usage allocation evidence contract.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_physical_derivation.py components/BonfyreControlPlane/tests/test_financial_metabolism.py components/BonfyreControlPlane/tests/test_bonfyre_shell.py -q",
+        "result": "22 passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "410 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && python3 architecture/atlas.py export && python3 architecture/atlas.py validate && git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-4eee749633034faa"
+  },
+  "content_sha256": "989d233f10e74622723c06bcb69cc2b4b39bf66e71927c2525f27d4e151a837f",
+  "event_id": "local-feefdd2e31e4fd51baa4b08463a7",
+  "evidence_refs": [
+    "receipt:codex-20260824T025558-0c308969",
+    "work:discovered-4eee749633034faa"
+  ],
+  "observed_at": "2026-08-24T03:05:55.744194+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-4eee749633034faa completed",
+  "type": "receipt_summary"
+}
