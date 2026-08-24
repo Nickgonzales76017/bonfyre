@@ -1,0 +1,63 @@
+{
+  "actor": {
+    "id": "codex-20260824T013346-e928e480",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/tests/test_food_fulfillment_route.py",
+      "architecture/economic/economic.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/fulfillment-route-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/weekly-meal-plan.md"
+    ],
+    "class": "finance_institutional",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Persisted 16,261 exact-Decimal component baskets and 13 FFTS lexical review leads from 60 normalized offers.",
+      "Persisted 24 origin-specific fulfillment frontiers: 1,362 plans each, 378 fully resolved and 984 explicitly lower-bounded.",
+      "Added regression coverage for delivery-minimum refusal and unresolved two-stop hybrid handling.",
+      "Registered fulfillment and route semantics in FoodCombinationGraph and exported a valid Atlas."
+    ],
+    "summary": "Computed and persisted the food-combination and fulfillment Pareto frontier. It includes absolute-cheapest, protein, one-store, low-cook, two-stop lower-bound, no-customer-travel, and travel-aware strategies while leaving unsupported per-serving, batch/freezer, substitution, and grocery-restaurant hybrid claims unranked.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_combination_engine.py components/BonfyreControlPlane/tests/test_food_fulfillment_route.py -q",
+        "result": "passed: 7 tests"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "passed: 374 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "passed: 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "JSON validation and git diff --check",
+        "result": "passed for all persisted food projections and working tree diff"
+      }
+    ],
+    "work_item": "food-combination-engine"
+  },
+  "content_sha256": "283f188f834957dd4133616f02e4f2baeb0ca174f7a413eaae71500602b04671",
+  "event_id": "local-e66f844024951b7e5055e0d63a33",
+  "evidence_refs": [
+    "receipt:codex-20260824T013346-e928e480",
+    "work:food-combination-engine"
+  ],
+  "observed_at": "2026-08-24T01:40:54.677364+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "food-combination-engine completed",
+  "type": "receipt_summary"
+}
