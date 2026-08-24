@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0431-carrier-quiescence-034",
+  "observed_at": "2026-08-24T04:31:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "trace_divergence",
+  "subject": "all_carriers_terminal is not CREDIT_QUIESCENCE",
+  "body": {"text": "RUN8 TERMINATION DIVERGENCE. The captured supervisor ended with reason=all_carriers_terminal immediately after three Codex epochs returned provider_state=exhausted. That is carrier exhaustion, not semantic completion, and contradicts the campaign law that only true CREDIT_QUIESCENCE may close the run.\n\nConverge the existing supervisor semantics without creating another controller:\n- all configured remote carriers exhausted/failed + unresolved ready/blocked/cooling WorkGraph residue => checkpoint and SUSPEND/WAIT_FOR_CARRIER, not COMPLETE;\n- preserve unresolved obligations and provider weather separately;\n- recompile carrier eligibility from existing local/native/open-weight routes before suspension when compatible capacity exists;\n- if no carrier is currently admissible, retain a durable continuation frontier that can resume after auth/quota/resource weather changes;\n- COMPLETE/CREDIT_QUIESCENCE requires no lawful unresolved target obligation, not merely no runnable provider;\n- worker rc=0, provider exhaustion, and all_carriers_terminal remain non-semantic execution outcomes.\n\nProof gate: replay the exact terminal condition with three exhausted Codex lanes and nonempty unresolved work. The supervisor must checkpoint without claiming convergence, then resume from the same state after one carrier becomes admissible."},
+  "evidence_refs": ["run8:checkpoint:checkpoint-20260824T035106Z","run8:reason:all_carriers_terminal","architecture:WorkGraph","architecture:ProviderGraph"],
+  "content_sha256": "78ffb123ec1fa787de824f6f8e112fd1db9a541726e5b6d3e841d1920f32b014"
+}
