@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260824T021802-37bb0c4c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/food_offer_observations.py",
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_offer_observations.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/merchant-locations.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Added canonical representation for BOGO, buy-X-get-Y, multibuy, and source-stated price-when-buy-quantity conditions.",
+      "A digest-bound Tom Thumb store 2642 flyer replayed into 10 canonical quantity laws with expiry, source identity, stackability status, and null per-item allocation.",
+      "Refreshed current offers contain 14 canonical quantity-law offers and no legacy quantity-promotion fields."
+    ],
+    "summary": "Implemented and exercised source-bound quantity-promotion laws against the admitted Tom Thumb 2642 weekly-ad body without inventing per-item cash allocation.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "17 passed"
+      },
+      {
+        "command": "Digest-verified Tom Thumb 2642 body → normalizer → FoodCombinationGraph",
+        "result": "10 canonical laws; no scalar cash baskets; body SHA-256 matched receipt."
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "discovered-cb3393ce917d11d2"
+  },
+  "content_sha256": "7aa00a5fbc5b7adf8ee27e97c624a5fb9e95cbb70712c81e33f92ccb4a7fa2e1",
+  "event_id": "local-e2aa03dccb394c66fffc966d5b20",
+  "evidence_refs": [
+    "receipt:codex-20260824T021802-37bb0c4c",
+    "work:discovered-cb3393ce917d11d2"
+  ],
+  "observed_at": "2026-08-24T02:25:47.676442+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-cb3393ce917d11d2 completed",
+  "type": "receipt_summary"
+}
