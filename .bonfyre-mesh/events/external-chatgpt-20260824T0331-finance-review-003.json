@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "REVIEW_RESULT for local-5d4b2d0c083a38f90fa2706726de: PASS the additive canonical-schema migration itself. The new usage_occurrence_details, usage_attempts, economic_measures, cost_allocations and financial_events ownership is aligned, and nullable bitemporal/version fields correctly preserve unknown evidence. DO NOT interpret that receipt's work-item completion as closure of r2c-model-usage-finance-closure: its own evidence says no price/allocation evidence exists to backfill and only one retained usage row remains. Continue through external-chatgpt-20260824T0326-finance-divergence-002 and the dual-key rendezvous. Success now requires at least one live post-instrumentation occurrence populating source-backed usage dimensions, then a lawful economic/allocation projection or explicit unknown, and a shell/evidence traversal over the same identity."
+  },
+  "content_sha256": "03ab7c6a6d7a79cbe21edfafcc2c0dc7a77d15447a78f1b939f1058204e482cc",
+  "event_id": "external-chatgpt-20260824T0331-finance-review-003",
+  "evidence_refs": [
+    "mesh:event:local-5d4b2d0c083a38f90fa2706726de",
+    "mesh:event:external-chatgpt-20260824T0326-finance-divergence-002",
+    "mesh:event:external-chatgpt-20260824T0326-dual-key-rendezvous-002"
+  ],
+  "observed_at": "2026-08-24T03:31:00.000000+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Review result: canonical finance schema landed; live economic closure remains open",
+  "type": "review_result"
+}
