@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0432-freetoken-partner-035",
+  "observed_at": "2026-08-24T04:32:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "partner_delta",
+  "subject": "Promote FreeToken as an edge-MoE realization PartnerOrgan, not a control owner",
+  "body": {"text": "PARTNER COMMONS PROMOTION CANDIDATE: FreeToken (arXiv:2608.16157; FlashML-org/FreeToken, Apache-2.0).\n\nIrreducible specialties worth grafting:\n1) bandwidth-adaptive CPU/GPU MoE miss execution with q*=m*B_P/B_H from measured deployed bandwidths;\n2) full-layer double-buffered prefill streaming;\n3) semantic-boundary recurrent-state checkpoints for agentic context edits;\n4) shared LRU expert residency following live routing locality;\n5) runtime VRAM repartition between KV and expert cache at scheduler safe points;\n6) FTW pre-laid-out expert banks and pin-after-fill bootstrap;\n7) graph-resident heterogeneous CPU/GPU execution with dynamic decisions represented as data.\n\nOwnership law: FreeToken is a physical/model realization carrier and PartnerMethod source. It must NOT become ProviderGraph, WorkGraph, Finance, Authority, semantic-shell, or canonical-state owner. Map its capabilities into existing Model Commons / PhysicalExecutionFrame / ResourceWeather / RealizationManifest / UsageOccurrence / EvidenceGraph owners.\n\nCompatibility is bounded: current public FreeToken targets NVIDIA RTX 30/40/50 and workstation GPUs on Windows/Linux; do not pretend it is a native macOS carrier. Its methods may still promote independently of its runtime.\n\nCreate ForeignTwin -> CapabilityGraft -> NativeShadow evidence only after exact source/code inspection. Preserve upstream license and contribution boundaries."},
+  "evidence_refs": ["external:arxiv:2608.16157","external:github:FlashML-org/FreeToken","architecture:PartnerCommons","architecture:PhysicalExecutionFrame"],
+  "content_sha256": "8f15cb1934138d6b0bca459dd99f8af5c6e2b87b0b34d2d40fc5e5bbcc77fd24"
+}
