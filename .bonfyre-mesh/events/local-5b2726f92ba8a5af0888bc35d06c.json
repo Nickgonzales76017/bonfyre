@@ -1,0 +1,68 @@
+{
+  "actor": {
+    "id": "codex-20260824T024815-1c0bc01b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/food_offer_observations.py",
+      "components/BonfyreControlPlane/tests/test_food_offer_observations.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/observation-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/merchant-locations.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/bodies/food-direct-20260824/fiestamart-home-current.html",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/bodies/food-direct-20260824/fiestamart-store34-current.html",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/bodies/food-direct-20260824/hmart-weekly-ads-current.html"
+    ],
+    "class": "external_food",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Added six current Fiesta first-party special observations: three scalar prices and three quantity laws.",
+      "Retained Fiesta store #34 at 3030 S Lancaster, Dallas as a separate source-stated location.",
+      "All 208 current offers parse under FoodCombinationGraph; Fiesta has zero location-bound offer rows.",
+      "H Mart and 99 Ranch access/policy boundaries are retained in the durable food source ledger."
+    ],
+    "summary": "Extended local/ethnic grocery discovery with source-bound Fiesta weekly specials and a separately verified Dallas store identity, while retaining H Mart and 99 Ranch boundaries without claiming missing deals or a store-special join.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "19 passed"
+      },
+      {
+        "command": "tools/food_offer_observations.py normalizer replay",
+        "result": "208 total offers and 6 merchant locations"
+      },
+      {
+        "command": "FoodCombinationGraph parse replay",
+        "result": "208/208 offers parse; Fiesta contributes 6 offers, 3 scalar prices, 3 quantity laws, and 0 location joins"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 207 architectures, 11 views, 73 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed for changed food/parser paths"
+      }
+    ],
+    "work_item": "discovered-6b238294ee0c82e2"
+  },
+  "content_sha256": "b085bf7c796cd8c54be181e0031c9a7752941e111ae87ddd0c1e5ff088badce4",
+  "event_id": "local-5b2726f92ba8a5af0888bc35d06c",
+  "evidence_refs": [
+    "receipt:codex-20260824T024815-1c0bc01b",
+    "work:discovered-6b238294ee0c82e2"
+  ],
+  "observed_at": "2026-08-24T02:57:59.849119+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-6b238294ee0c82e2 advanced",
+  "type": "receipt_summary"
+}
