@@ -1,0 +1,52 @@
+{
+  "actor": {
+    "id": "codex-20260824T032750-6118157e",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/state.sqlite3"
+    ],
+    "class": "finance_institutional",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Canonical initializer added usage_occurrence_details, usage_attempts, economic_measures, cost_allocations, and financial_events.",
+      "economic_measures exposes nullable price_effective_at and price_observed_at; cost_allocations exposes nullable allocation_version_ref.",
+      "One retained usage row and one retained financial-position row remain; a repeat initializer pass made zero DML changes.",
+      "SQLite integrity_check and Architecture Atlas validation pass."
+    ],
+    "summary": "Migrated the retained FinancialMetabolism ledger additively through its canonical schema initializer. No price or allocation evidence exists to backfill, so the new bitemporal/version fields remain available but empty.",
+    "tests": [
+      {
+        "command": "cd components/BonfyreControlPlane && rtk python3 -m pytest tests/test_financial_metabolism.py -q",
+        "result": "15 passed"
+      },
+      {
+        "command": "rtk sqlite3 .bonfyre/run8-r2c/20260823T032652Z-27525/state.sqlite3 'PRAGMA integrity_check'",
+        "result": "ok"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate",
+        "result": "atlas valid: 208 architectures, 11 views, 74 interactions"
+      }
+    ],
+    "work_item": "discovered-14145d43e8ad4e8e"
+  },
+  "content_sha256": "837033cca067394801016bb7c98c6927fb7351ae4eea0333143f93979216050a",
+  "event_id": "local-5d4b2d0c083a38f90fa2706726de",
+  "evidence_refs": [
+    "receipt:codex-20260824T032750-6118157e",
+    "work:discovered-14145d43e8ad4e8e"
+  ],
+  "observed_at": "2026-08-24T03:30:22.635367+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-14145d43e8ad4e8e completed",
+  "type": "receipt_summary"
+}
