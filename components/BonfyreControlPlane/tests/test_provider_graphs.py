@@ -18,18 +18,58 @@ def _db():
 
 def test_tournament_ranks_on_metric_vector_and_gates_authority():
     db = _db()
+    # real units: cost is context bytes, latency is milliseconds -- both spent,
+    # so both minimized. Nothing is pre-negated to please the scorer.
     pg.record_bid(db, capability="T_FPQ", provider="local",
-                  metric={"quality": 0.9, "latency": 0.8, "authority": 1.0, "cost": 0.9})
+                  metric={"quality": 0.9, "latency": 40.0, "authority": 1.0, "cost": 500.0})
     pg.record_bid(db, capability="T_FPQ", provider="remote",
-                  metric={"quality": 0.95, "latency": 0.2, "authority": 1.0, "cost": 0.1})
+                  metric={"quality": 0.95, "latency": 900.0, "authority": 1.0, "cost": 40000.0})
     pg.record_bid(db, capability="T_FPQ", provider="unauthorized",
                   metric={"quality": 1.0, "authority": 0.0})
-    # latency-weighted policy favors local; the unauthorized bid is not selectable
     ranked = pg.tournament(db, "T_FPQ", weights={"latency": 3.0, "quality": 1.0})
     providers = [p for p, _ in ranked]
-    assert providers[0] == "local"
+    assert providers[0] == "local"                  # lower latency wins on a latency policy
     assert "unauthorized" not in providers          # available is not authorized
     assert pg.fallback_tree(db, "T_FPQ", weights={"latency": 3.0}) == ["local", "remote"]
+
+
+def test_minimized_dimensions_are_costs_not_goods():
+    """The polarity regression: with an all-ones default weighting the scorer
+    used to rank the most expensive, slowest, lossiest bid first -- the exact
+    inversion of preferring the cheapest sufficient realization."""
+    db = _db()
+    pg.record_bid(db, capability="T_CTX", provider="cheap",
+                  metric={"cost": 461.0, "authority": 1.0})
+    pg.record_bid(db, capability="T_CTX", provider="expensive",
+                  metric={"cost": 257986.0, "authority": 1.0})
+    assert pg.fallback_tree(db, "T_CTX") == ["cheap", "expensive"]
+    assert pg.polarity("cost") == -1
+    assert pg.polarity("latency") == -1
+    assert pg.polarity("semantic_loss") == -1
+    assert pg.polarity("quality") == 1
+    assert pg.polarity("trust") == 1
+
+
+def test_a_weight_expresses_importance_never_direction():
+    """A caller raising a weight must never be able to invert a dimension's
+    meaning -- otherwise every producer has to guess the scorer's convention."""
+    db = _db()
+    pg.record_bid(db, capability="T_W", provider="cheap",
+                  metric={"cost": 100.0, "authority": 1.0})
+    pg.record_bid(db, capability="T_W", provider="dear",
+                  metric={"cost": 10000.0, "authority": 1.0})
+    for weight in (0.001, 1.0, 50.0):
+        assert pg.fallback_tree(db, "T_W", weights={"cost": weight})[0] == "cheap"
+
+
+def test_read_paths_work_on_a_db_that_never_took_a_write():
+    """The live control plane had no provider_bids table at all, so the first
+    production reader crashed instead of seeing an empty tournament."""
+    fresh = sqlite3.connect(":memory:")
+    assert pg.tournament(fresh, "nothing") == []
+    assert pg.fallback_tree(fresh, "nothing") == []
+    assert pg.placement_of(fresh, "nothing") is None
+    assert pg.parity_group(fresh, "nothing") == []
 
 
 def test_placement_is_recorded_not_authority():
