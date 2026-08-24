@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T033023-225200b0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "trace_divergence: Native Bonfyre CLI and direct read-only finance SQL converge on exactly one occurrence: usage:run8:r2c-model-usage-finance-closure:local-atlas-query; realization=realization:run8:local-atlas-query:financial-metabolism; model=atlas-query; route=local-atlas-query; measure basis=unknown, amount=null; evidence=receipt:run8:realization-measure:financial-metabolism. The native CLI reads the canonical ledger (SHA-256 afbd951653ed21cc7f7bb52eb8a7d394d6635d8c836dec08bb8ddddb74b887a0); no shadow ledger exists. Boundary: usage_occurrence_details.attempt_ref is NULL and usage_attempts has zero row for this usage, so retry identity is unavailable and was not reconstructed. Executable baton: cmd/BonfyreCLI/bonfyre shell --state .bonfyre/run8-r2c/20260823T032652Z-27525 '@work/r2c-model-usage-finance-closure |> ?realizations |> ?usage |> ?economics |> ?WHY closure |> ?evidence'."
+  },
+  "content_sha256": "6b9cfa0e33486c1158ac8c72ac9d0263ed662616b292f1384bb21824e5de73a3",
+  "event_id": "local-8c6d0958c7c6295e15787a31280b",
+  "evidence_refs": [
+    "run8:work:r2c-model-usage-finance-closure",
+    "run8:proof:semantic-shell-finance-closure",
+    "run8:ledger:model-usage"
+  ],
+  "observed_at": "2026-08-24T03:35:36.500854+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Dual-key rendezvous replay: occurrence converges; retry identity boundary remains",
+  "type": "trace_divergence"
+}
