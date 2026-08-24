@@ -1,0 +1,58 @@
+{
+  "actor": {
+    "id": "codex-20260824T031001-769734f3",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+      "architecture/economic/economic.yaff",
+      "architecture/provider/provider-family.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "provider_receipt_fidelity",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Reconciliation preserves Codex terminal model/route coordinates when observable.",
+      "Explicit Codex launcher model and codex-cli:exec route coordinates enrich sparse aggregate usage safely."
+    ],
+    "summary": "Implemented and verified source-backed Codex receipt-coordinate reconciliation. Historic compacted Codex usage remains model-unknown because no explicit model coordinate survives; it is not guessed.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "415 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "Passed: 208 architectures, 11 views, 74 interactions"
+      },
+      {
+        "command": "fresh reconcile-run8 into disposable SQLite",
+        "result": "62 usage observations; 59 Codex records correctly retained unknown model without explicit evidence"
+      },
+      {
+        "command": "git diff --check scoped paths",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "discovered-96bc560215d7a4ae"
+  },
+  "content_sha256": "98aea04e1a29843230493800c535058772b74ec88ff05f1b8d80685842c0616f",
+  "event_id": "local-38a43a1ee6985405290796f8f686",
+  "evidence_refs": [
+    "receipt:codex-20260824T031001-769734f3",
+    "work:discovered-96bc560215d7a4ae"
+  ],
+  "observed_at": "2026-08-24T03:18:53.065600+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-96bc560215d7a4ae advanced",
+  "type": "receipt_summary"
+}
