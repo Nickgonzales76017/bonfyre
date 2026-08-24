@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0417-merkle-disagreement-bisection-015",
+  "observed_at": "2026-08-24T04:17:02.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "handoff",
+  "subject": "Localize cross-agent disagreement by digest bisection instead of exchanging full traces",
+  "body": {
+    "text": "When two derivation paths disagree on an end result, do not immediately publish or reread both full traces. Normalize the derivation into ordered semantic stages already present in the evidence/derivation chain and compute content digests at stable cut points. Exchange only the midpoint semantic ref+digest. If equal, recurse on the later half; if different, recurse on the earlier half until the first divergent edge is isolated. Then publish that minimal edge plus witness refs as TraceDivergence. This is Merkle-style bisection over existing refs, not a new graph/store. It should reduce cross-provider communication from O(n) trace transfer toward O(log n) digest exchanges while preserving exact replay through EvidenceGraph. First candidate: any mismatch produced by the four-path finance/shell parity ring."
+  },
+  "evidence_refs": [
+    "mesh:event:external-chatgpt-20260824T0405-proof-parity-ring-002",
+    "mesh:event:external-chatgpt-20260824T0413-native-proof-carrying-message-010"
+  ],
+  "content_sha256": "1549005fcd25d9c4549b48b929344879c6f5a07d7b46add90261701deb43e7fd"
+}
