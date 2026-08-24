@@ -1,0 +1,61 @@
+{
+  "actor": {
+    "id": "codex-20260824T010806-a3a922d8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "bin/bonfyre-operator",
+      "components/BonfyreControlPlane/semantic_operator.py",
+      "components/BonfyreControlPlane/tests/test_semantic_operator.py",
+      "architecture/forwarding/address-plane.yaff",
+      "architecture/interactions.yaff",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/control/semantic-operator-real-use.json"
+    ],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Current household records have deterministic semantic addresses from offer_id, listing_id, or candidate_id; titles and prices are never identities.",
+      "SELECT, DIFF, COMPARE, WHY, PROVE, ROUTE, PROJECT, and RECONCILE execute deterministically through the shell adapter.",
+      "Live AddressPlane routing selected only the built BonfyreQuery owner: 1 survivor from 87 current command advertisements.",
+      "Live RECONCILE refused to merge two distinct housing observations lacking a canonical join."
+    ],
+    "summary": "Implemented and live-exercised the AddressPlane-backed shell operator over current household state. It selected eight dog-flagged housing observations, routed BonfyreQuery, compared/diffed two observations, projected fields, explained provenance, failed availability proof closed, and persisted a reconciliation receipt (SHA-256 7aeb4f41cbcc034905a18b5e696d200ae6c18f354dcf71f07d20a25b8d5c3fc9).",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_semantic_operator.py components/BonfyreControlPlane/tests/test_address_plane.py components/BonfyreControlPlane/tests/test_semantic_derivation.py -q",
+        "result": "15 passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "370 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 204 architectures, 70 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "r2c-shell-operator-real-use"
+  },
+  "content_sha256": "4b1b4c3de333677d5a51cf6d1a5495e356b6705bf079e76bfa83486b8aabb526",
+  "event_id": "local-98dbb156dcab8bff64741f3cbc0f",
+  "evidence_refs": [
+    "receipt:codex-20260824T010806-a3a922d8",
+    "work:r2c-shell-operator-real-use"
+  ],
+  "observed_at": "2026-08-24T01:17:35.928688+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "r2c-shell-operator-real-use completed",
+  "type": "receipt_summary"
+}
