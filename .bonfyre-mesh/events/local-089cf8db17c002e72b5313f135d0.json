@@ -1,0 +1,65 @@
+{
+  "actor": {
+    "id": "codex-20260824T013601-bcc3f1ed",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreProject/src/main.c",
+      "components/BonfyreProject/tests/smoke.sh",
+      "tools/housing_direct_candidates.py",
+      "tests/test_housing_direct_candidates.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/availability-candidates.jsonl"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Six allowed BonfyreProject ForeignTwin observations retained source bodies and projected 317 direct unit candidates only after receipt-digest validation.",
+      "All 317 direct candidates bind to one of six currently matching source receipts; none claim verified availability."
+    ],
+    "summary": "Observed six lawful public direct AppFolio portals via BonfyreProject and added 317 provenance-bound unit candidates while preserving 565 existing social candidates. Added immutable retained-body protection to prevent later observations from invalidating earlier receipt bindings.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_direct_candidates.py tests/test_housing_shadow_inventory.py tests/test_housing_signal_candidates.py -q",
+        "result": "13 passed"
+      },
+      {
+        "command": "sh components/BonfyreProject/tests/smoke.sh",
+        "result": "passed, including retained-body overwrite refusal"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "204 architectures, 11 views, 70 interactions; valid"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "374 passed, 1 skipped"
+      },
+      {
+        "command": "provenance readback over availability-candidates.jsonl",
+        "result": "317 direct candidates matched six retained receipt digests; all non-availability fields enforced"
+      }
+    ],
+    "work_item": "discovered-5490d9712c815a5c"
+  },
+  "content_sha256": "7363ade915924e5cdde74aa3d472b1bf9f0860daba426b34f62377b0021df0f2",
+  "event_id": "local-089cf8db17c002e72b5313f135d0",
+  "evidence_refs": [
+    "receipt:codex-20260824T013601-bcc3f1ed",
+    "work:discovered-5490d9712c815a5c"
+  ],
+  "observed_at": "2026-08-24T01:42:55.208405+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-5490d9712c815a5c completed",
+  "type": "receipt_summary"
+}
