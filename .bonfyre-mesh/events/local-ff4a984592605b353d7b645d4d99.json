@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T014244-a53c654a",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "household-food",
+    "run8-food"
+  ],
+  "body": {
+    "text": "Regenerated source-bound food artifacts from 67 live offers and the FFTS corpus. The graph has 158 edges; basket options contain 20,875 component baskets and 11 partial ingredient-coverages. No complete recipe basket, availability claim, substitution, or waste claim was promoted. H-E-B average-weight packages remain non-exact quantity projections."
+  },
+  "content_sha256": "ced4189d51483d56b8e56ca623b0e599e59cd394f85169a99491d93215a7dcdd",
+  "event_id": "local-ff4a984592605b353d7b645d4d99",
+  "evidence_refs": [
+    "artifact:food-deal-graph:50daf78b426879e983cc8e692412fad5d66e39d7592b6d7954a9e64fdee34b16",
+    "artifact:basket-options:5bf6a2431d4cfc74bf4f9d8f1b2f07f56fe62f9f8270b9c739c4ee75a8f9dcd4",
+    "atlas:food-combination-graph"
+  ],
+  "observed_at": "2026-08-24T01:51:42.524888+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Source-bound FFTS ingredient coverage artifacts refreshed",
+  "type": "artifact_offer"
+}
