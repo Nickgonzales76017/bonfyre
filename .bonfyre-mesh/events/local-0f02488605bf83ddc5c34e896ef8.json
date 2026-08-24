@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T010537-b7e4f7c1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "housing-strategy-frontiers"
+  ],
+  "body": {
+    "text": "First-party public APIs expose Milo A1 at $975, an active through-2026-08-31 maximum of eight weeks free plus app/admin waiver and look-and-lease language, and dog costs. They expose no lease terms or public unit numbers; the two A1 rows carry past 2025 availability dates while the floorplan says in stock. Preserved as a reconciliation, not an averaged availability or guaranteed concession."
+  },
+  "content_sha256": "0db819089fd32a5fd9dce51926c86138906b7a1f7cd5244aa8997fb5a1327707",
+  "event_id": "local-0f02488605bf83ddc5c34e896ef8",
+  "evidence_refs": [
+    "housing/source-receipts.jsonl#milo-direct-quote-curve-20260824T010931Z",
+    "housing/effective-costs.json#milo-a1-direct-maximum-special-scenario-12m"
+  ],
+  "observed_at": "2026-08-24T01:14:27.853561+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Milo direct quote surface exposes a promotion but not a quote curve",
+  "type": "trace_divergence"
+}
