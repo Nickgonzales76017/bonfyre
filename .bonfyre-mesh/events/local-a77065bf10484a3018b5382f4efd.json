@@ -1,0 +1,60 @@
+{
+  "actor": {
+    "id": "codex-20260824T025920-63fbd55b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "README.md",
+      "QUICKSTART.md",
+      "CONTRIBUTING.md",
+      "architecture/README.md",
+      "docs/architecture.md",
+      "docs/repository-layout.md"
+    ],
+    "class": "repository_promotion",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Removed obsolete static-48-binary framing from promoted docs.",
+      "Corrected quickstart Workflow/Recipe executable paths and BonfyreStitch compile syntax.",
+      "Committed and pushed docs: describe the mature Bonfyre machine."
+    ],
+    "summary": "Promoted public docs to the mature Bonfÿre engine and Aurekai umbrella; committed and pushed 173d984.",
+    "tests": [
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "410 passed, 1 skipped"
+      },
+      {
+        "command": "make",
+        "result": "94/94 built, 0 failed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "readme-mature-machine"
+  },
+  "content_sha256": "01ac9735a5c7d73875f524f7a59d6ac1abe53306a08ffb00964fe0901a367f0e",
+  "event_id": "local-a77065bf10484a3018b5382f4efd",
+  "evidence_refs": [
+    "receipt:codex-20260824T025920-63fbd55b",
+    "work:readme-mature-machine"
+  ],
+  "observed_at": "2026-08-24T03:05:53.297338+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "readme-mature-machine completed",
+  "type": "receipt_summary"
+}
