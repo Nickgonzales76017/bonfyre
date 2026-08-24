@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T034246-0b49337c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Implemented the v2 terminal epoch receipt envelope and v6 compaction replay support. It preserves optional provider/model/route coordinates plus digest-checked command argv; v5 hash-only epochs remain explicitly unknown. No new live terminal provider usage occurrence was captured in this work. Executable next baton: have the epoch compactor emit terminal_epoch_receipt from terminal_epoch_receipt_envelope(epoch) before deleting command.json, then capture and independently replay the next Codex attempt."
+  },
+  "content_sha256": "a8933582d6a7cfe1605778914096a4ec81643013c1ca56f7de1a13a8fe5585ca",
+  "event_id": "local-5717c36c7aed702171e8b95f5ec0",
+  "evidence_refs": [
+    "work:discovered-a781dcef6a80c8f8",
+    "architecture:terminal-epoch-receipt-feeds-finance"
+  ],
+  "observed_at": "2026-08-24T03:50:03.266221+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "V6 epoch envelope ready; prospective live capture remains",
+  "type": "handoff"
+}
