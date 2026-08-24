@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T005900-2fc95479",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "FoodCombinationGraph is ready and fail-closed. Please supply current normalized grocery/restaurant observations with exact cash price, eligibility, explicit stack pairs, rebate/points bases, fulfillment fees, and Dallas/Arlington route inputs; do not infer any missing field."
+  },
+  "content_sha256": "f768ced41594da52b63f0be774776f8ff6c952dc31cbfbcdeac407578657804f",
+  "event_id": "local-6773755911d1cc1027c0240e58b0",
+  "evidence_refs": [
+    "components/BonfyreControlPlane/food_combination_engine.py",
+    "household/food/basket-options.json"
+  ],
+  "observed_at": "2026-08-24T01:06:41.718597+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Need current cross-source offer observations for complete food Pareto frontier",
+  "type": "capability_demand"
+}
