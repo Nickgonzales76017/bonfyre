@@ -1,0 +1,77 @@
+{
+  "actor": {
+    "id": "codex-20260824T011431-0a3eb4cb",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/provider_graphs.py",
+      "components/BonfyreControlPlane/tests/test_provider_graphs.py",
+      "architecture/atlas_collapse.py",
+      "build.zig",
+      "engine/core/include/bf_agent_contract.h",
+      "engine/core/src/agent_contract.c",
+      "engine/core/tests/agent_contract_test.c",
+      "tests/conformance/control/generate_vectors.py",
+      "tests/conformance/control/run_native.c",
+      "tests/conformance/control/vectors/admission.json",
+      "tests/conformance/control/vectors/control.vec",
+      "tests/conformance/control/vectors/cooling.json",
+      "tests/conformance/control/vectors/provider.json",
+      "tests/conformance/control/vectors/work.json"
+    ],
+    "class": "github_partner",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "ProviderGraph centrally minimizes cost, latency, and semantic loss while preserving authority gating.",
+      "ProviderGraph readers initialize safely on a fresh database.",
+      "Atlas collapse loads the canonical support lattice owner.",
+      "Native `test-control` replays 15 frozen vectors with zero failures."
+    ],
+    "summary": "Published bounded convergence commits and direct CI repairs. Native command builds and the native vector replay are green; remaining CI failures are evidenced out-of-scope self-containment and BonfyreFS portability residue.",
+    "tests": [
+      {
+        "command": "rtk pytest components/BonfyreControlPlane/tests/test_provider_graphs.py -q",
+        "result": "6 passed"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate",
+        "result": "passed"
+      },
+      {
+        "command": "rtk git diff --check",
+        "result": "passed before commits"
+      },
+      {
+        "command": "rtk python3 -m pytest architecture/tests/test_atlas_collapse.py -q",
+        "result": "5 passed"
+      },
+      {
+        "command": "rtk zig build test-control",
+        "result": "15 checks, 0 failures; CI passed"
+      },
+      {
+        "command": "rtk zig build test-agent-contract",
+        "result": "13 checks, 0 failures"
+      }
+    ],
+    "work_item": "github-bonfyre-tranche"
+  },
+  "content_sha256": "dd43e6f70f95b65d9d0ff8bdd7b4bcd57e01a0df49e7c6d0b3c6c6cf8c6fbf63",
+  "event_id": "local-9a203c5b413020a783eb882ad8dd",
+  "evidence_refs": [
+    "receipt:codex-20260824T011431-0a3eb4cb",
+    "work:github-bonfyre-tranche"
+  ],
+  "observed_at": "2026-08-24T01:25:08.301481+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "github-bonfyre-tranche advanced",
+  "type": "receipt_summary"
+}
