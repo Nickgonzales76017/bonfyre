@@ -1,0 +1,62 @@
+{
+  "actor": {
+    "id": "codex-20260824T004823-3cbac527",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/normalize_ffts_mealmaster.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/bodies/allrecip.zip",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/recipe-corpus.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Recovered the retained catalogue as Git blob 815e8c723329a76e984b358307e0307c50af1bb5 (SHA-256 1f9ce1331c04ec11e7f912026aff7fe83f77e96d7cb207ba44796d83223596bd).",
+      "Persisted and normalized the bounded FFTS allrecip.zip body (SHA-256 464d997b97d34ae95892f3090042668f6cad8345ba540c87fc09705f4ed20b92).",
+      "The activated corpus has 2,923 recipes, 23,945 ingredients, servings metadata, and 71 source-bound unverified substitution candidates."
+    ],
+    "summary": "Recovered the existing FFTS catalogue from Git object storage. The original detailed archive bodies were absent and the retained deletion proof identifies the reclaimed recursive script, so performed the authorized bounded fallback—one high-coverage archive, not a corpus-wide scrape. Exact refs are in household/food/source-receipts.jsonl; recipe records are ready for deal matching.",
+    "tests": [
+      {
+        "command": "curl --fail --location https://www.ffts.com/recipes/allrecip.zip",
+        "result": "Passed; retrieved 791 KiB ZIP containing allrecip.mmf (2,993,530 bytes)."
+      },
+      {
+        "command": "python3 -m py_compile tools/normalize_ffts_mealmaster.py && python3 tools/normalize_ffts_mealmaster.py ...",
+        "result": "Passed; generated 2,923 recipe records."
+      },
+      {
+        "command": "Python integrity verification of archive, receipt, JSONL, ingredients, substitution states, and ZIP member",
+        "result": "Passed; 23,945 ingredients, 71 candidates, all SHA-256 bindings valid."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 203 architectures, 11 views, 68 interactions."
+      },
+      {
+        "command": "git diff --check -- tools/normalize_ffts_mealmaster.py",
+        "result": "Passed."
+      }
+    ],
+    "work_item": "food-ffts-reuse"
+  },
+  "content_sha256": "5874495fa1fe76238dae362d3a1fc05944bb6c7ea472c582ece0865ab08fe079",
+  "event_id": "local-9322c5632558bf5038f00c445453",
+  "evidence_refs": [
+    "receipt:codex-20260824T004823-3cbac527",
+    "work:food-ffts-reuse"
+  ],
+  "observed_at": "2026-08-24T00:59:00.334548+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "food-ffts-reuse completed",
+  "type": "receipt_summary"
+}
