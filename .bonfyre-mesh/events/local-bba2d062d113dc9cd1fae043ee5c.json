@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T021012-b689ceb0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-mesh"
+  ],
+  "body": {
+    "text": "Implemented the native, read-only household semantic-lowering kernel. It validates declared food/housing identities and source evidence, derives deterministic addresses/content digests, lowers bounded duplicate-free read closures with writes=0, preserves distinct units, and always returns non-promoting proof verdicts."
+  },
+  "content_sha256": "8c395f5db027a21a43fb3e04041333f6a4f694d51f574a9464847f1badd22085",
+  "event_id": "local-bba2d062d113dc9cd1fae043ee5c",
+  "evidence_refs": [
+    "engine/core/include/bf_semantic_operator.h",
+    "engine/core/src/semantic_operator.c",
+    "engine/core/tests/semantic_operator_test.c",
+    "schemas/control/household-projection.yaff"
+  ],
+  "observed_at": "2026-08-24T02:18:00.538616+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Native source-bound household semantic lowering available",
+  "type": "artifact_offer"
+}
