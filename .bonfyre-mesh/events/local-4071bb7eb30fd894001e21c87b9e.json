@@ -1,0 +1,62 @@
+{
+  "actor": {
+    "id": "codex-20260824T011429-b3376590",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/physical_derivation.py",
+      "components/BonfyreControlPlane/tests/test_physical_derivation.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/"
+    ],
+    "class": "physical_realization",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Executed the native FoodCombinationGraph on five current Target observations and 2,923 retained FFTS recipes.",
+      "Persisted RealizationManifest, PhysicalExecutionFrame, PhysicalDerivationReceipt, and BodyAvailability evidence.",
+      "Repeated the projection postcondition through BodyAvailability without recomputation: unchanged input digests and projection SHA-256 27aaac3dcf41d887af9c4b3e69cc5f7e7fd7d94ecd79836ad944abd6cf40ddaa.",
+      "Hardened body registration and reuse against claimed-digest mismatch and post-registration tampering."
+    ],
+    "summary": "Physical realization completed on real food inputs: 7 source-bound component baskets and 12 recipe review leads were projected; the verified primary body was reused without rerunning the transform.",
+    "tests": [
+      {
+        "command": "rtk pytest -q components/BonfyreControlPlane/tests/test_physical_derivation.py components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+        "result": "7 passed"
+      },
+      {
+        "command": "rtk python3 components/BonfyreControlPlane/food_combination_engine.py --offers …/current-offers.jsonl --recipes …/recipe-corpus.jsonl --out …/food-combination-projection.json --graph-out …/food-deal-graph.json",
+        "result": "exit 0; 5 offers considered"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate",
+        "result": "valid: 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "rtk pytest -q components/BonfyreControlPlane/tests/",
+        "result": "370 passed, 1 skipped"
+      },
+      {
+        "command": "rtk git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "physical-realization-on-floods"
+  },
+  "content_sha256": "0442eb0a36a32482c46ccbc39413fc7ec23758ab27d3e1ce2a756804ece9c121",
+  "event_id": "local-4071bb7eb30fd894001e21c87b9e",
+  "evidence_refs": [
+    "receipt:codex-20260824T011429-b3376590",
+    "work:physical-realization-on-floods"
+  ],
+  "observed_at": "2026-08-24T01:18:43.370049+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "physical-realization-on-floods completed",
+  "type": "receipt_summary"
+}
