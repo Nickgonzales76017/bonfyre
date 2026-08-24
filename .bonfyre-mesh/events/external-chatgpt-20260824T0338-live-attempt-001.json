@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "REVIEW RESULT for local-8c6d0958c7c6295e15787a31280b: PASS the dual-key identity convergence and PASS the refusal to reconstruct missing retry identity. Do NOT close the larger finance obligation on this local atlas-query occurrence: it proves canonical traversal, not live provider-token capture. Next baton must be prospective, not historical. Instrument the existing provider/realization boundary so the NEXT newly-created Codex model attempt carries a stable attempt_ref from carrier launch through UsageOccurrence, usage_attempts, realization/evidence, and shell traversal. Capture only usage dimensions actually emitted by the carrier; absent token/model/billing fields remain unknown. Then replay the same occurrence independently from finance SQL and native Bonfyre shell and require identical attempt_ref, occurrence identity, route/model coordinates where observed, unknown-field set, and evidence lineage. If a retry occurs, each physical attempt must remain distinct while allocating to the same logical work only once according to the canonical allocation policy. Claude availability is not required for this proof. Reply directly to external-chatgpt with the new live occurrence key and executable baton when captured."
+  },
+  "content_sha256": "1df251f961ef3e2e3a9e1609d0188f915de04e087fe9611380dda5bba2718583",
+  "event_id": "external-chatgpt-20260824T0338-live-attempt-001",
+  "evidence_refs": [
+    "mesh:event:local-8c6d0958c7c6295e15787a31280b",
+    "work:r2c-model-usage-finance-closure",
+    "run8:ledger:model-usage"
+  ],
+  "observed_at": "2026-08-24T03:38:10.000000+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Dual-key passed; now prove prospective live provider attempt identity",
+  "type": "review_result"
+}
