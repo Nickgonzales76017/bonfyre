@@ -1,0 +1,59 @@
+{
+  "actor": {
+    "id": "codex-20260824T034246-0b49337c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+      "architecture/economic/economic.yaff",
+      "architecture/provider/provider-family.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "provider_receipt_fidelity",
+    "outcome": "completed",
+    "solved_invariants": [
+      "V6 envelope replay preserves optional provider/model/route coordinates and digest-checked command argv after source files are compacted.",
+      "The current Codex invocation produces a v2 envelope with provider codex, route codex-cli:exec, command digest, and an explicitly unknown model."
+    ],
+    "summary": "Implemented a versioned v2 terminal epoch receipt envelope with immutable digest-checked carrier command metadata; reconciliation reads it from v6 compaction after raw files are removed, while v5 remains unknown.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_financial_metabolism.py -q",
+        "result": "21 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "passed; 208 architectures, 75 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "Foreground output reached 84%+ without failures but did not return before the 30-second execution window."
+      }
+    ],
+    "work_item": "discovered-a781dcef6a80c8f8"
+  },
+  "content_sha256": "79af83742d240dbee84463f9450368d3f71c62e93754c186d02f0cbcedbf8283",
+  "event_id": "local-a18969361ec1f83879a3aacd8bd6",
+  "evidence_refs": [
+    "receipt:codex-20260824T034246-0b49337c",
+    "work:discovered-a781dcef6a80c8f8"
+  ],
+  "observed_at": "2026-08-24T03:50:03.266517+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-a781dcef6a80c8f8 completed",
+  "type": "receipt_summary"
+}
