@@ -19,7 +19,11 @@ on:
       - "build.zig"
       - "schemas/control/**"
       - "tests/conformance/**"
-      - "10-Code/BonfyreControlPlane/**"
+      - "components/BonfyreControlPlane/**"
+      - "tools/transitional_root_absorption.py"
+      - "tests/test_transitional_root_absorption.py"
+      - "generated/projections/estate/transitional-root-absorption.json"
+      - "architecture/institutional/transitional-root.yaff"
       - ".github/workflows/native-kernel.yml"
   pull_request:
   workflow_dispatch:
@@ -45,9 +49,15 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Reference implementation still agrees
-        working-directory: 10-Code/BonfyreControlPlane
-        run: python3 -m unittest discover -s tests
+      - name: Install reference-test runner
+        run: python3 -m pip install pytest
+
+      - name: Full reference implementation still agrees
+        working-directory: components/BonfyreControlPlane
+        run: python3 -m pytest tests/ -q
+
+      - name: Compatibility-root absorption ledger is current
+        run: python3 tools/transitional_root_absorption.py --verify
 
       - name: Vectors still describe the reference
         run: python3 tests/conformance/control/generate_vectors.py --check

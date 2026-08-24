@@ -1,0 +1,16 @@
+{
+  "file_count": 1,
+  "files": [
+    {
+      "bytes": 35328,
+      "path": "components/BonfyreProject/bonfyre-project",
+      "sha256": "b107bfd7f11f07ee438e22ac743d7f938ffb78452999a1480ee583a6f21de891"
+    }
+  ],
+  "kind": "transitional-root-build-products",
+  "reason": "committed executable build products of superseded command trees; regenerable from the current cmd/ owner and recoverable from git history",
+  "root_digest_sha256": "80a3c6be04fdf7d114432a1903f4cfaa781b73db861dcfcd4df607bd53735e23",
+  "schema": "bonfyre.deletion-proof.v1",
+  "total_bytes": 35328,
+  "transitional_root": "components"
+}
