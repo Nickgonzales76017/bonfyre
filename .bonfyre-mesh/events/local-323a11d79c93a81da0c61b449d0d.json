@@ -1,0 +1,52 @@
+{
+  "actor": {
+    "id": "codex-20260824T024648-0ecd45c6",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/observation-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/bodies/heb-central-market-midway-747-reheat.html",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/bodies/kroger-store0851-publications.json"
+    ],
+    "class": "external_food",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Current H-E-B and Kroger store-scoped outcomes are durably receipted; retained bodies hash-match and yield no normalized offer."
+    ],
+    "summary": "Retained current H-E-B #747 and Kroger #0851 source boundaries without fabricating a deal or expiry.",
+    "tests": [
+      {
+        "command": "Food ledger JSONL and SHA-256 replay",
+        "result": "15 observation rows, 19 source rows; retained H-E-B/Kroger bodies match receipts; no offer promoted."
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "19 passed"
+      },
+      {
+        "command": "Run8 mesh recheck/export",
+        "result": "Remote read passed; local reply digest validated; export pending after HTTP 401."
+      }
+    ],
+    "work_item": "discovered-28705ecac46d2b8b"
+  },
+  "content_sha256": "cfc926595a3cba9f866b2370733ff73b0ee75eab0ee48e69209234844d6c5047",
+  "event_id": "local-323a11d79c93a81da0c61b449d0d",
+  "evidence_refs": [
+    "receipt:codex-20260824T024648-0ecd45c6",
+    "work:discovered-28705ecac46d2b8b"
+  ],
+  "observed_at": "2026-08-24T02:55:58.510564+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-28705ecac46d2b8b advanced",
+  "type": "receipt_summary"
+}
