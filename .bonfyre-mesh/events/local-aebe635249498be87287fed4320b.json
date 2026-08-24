@@ -1,0 +1,93 @@
+{
+  "actor": {
+    "id": "codex-20260824T012558-3a4bed72",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".gitignore",
+      "architecture/atlas.index.json",
+      "architecture/apps/frappe-apps.yaff",
+      "architecture/capability/closure.yaff",
+      "architecture/capability/command-law.yaff",
+      "architecture/context/attention-cooling.yaff",
+      "architecture/economic/economic.yaff",
+      "architecture/evidence/evidence-family.yaff",
+      "architecture/evidence/proof-frontier.yaff",
+      "architecture/execution/work.yaff",
+      "architecture/external/foreign.yaff",
+      "architecture/fabric/fabric.yaff",
+      "architecture/forms/form.yaff",
+      "architecture/forwarding/address-plane.yaff",
+      "architecture/identity/actor.yaff",
+      "architecture/institutional/authority.yaff",
+      "architecture/interactions.yaff",
+      "architecture/model/fpq.yaff",
+      "architecture/opportunity/unlock.yaff",
+      "architecture/provider/external-providers.yaff",
+      "architecture/provider/provider-family.yaff",
+      "architecture/provider/state.yaff",
+      "architecture/substrate/foundry.yaff",
+      "bin/blogger_publish.py",
+      "components/BonfyreControlPlane/blogger_receipts.py",
+      "components/BonfyreControlPlane/partner_commons.py",
+      "components/BonfyreControlPlane/tests/test_blogger_publish.py",
+      "components/BonfyreControlPlane/tests/test_blogger_receipts.py",
+      "components/BonfyreControlPlane/tests/test_partner_commons.py",
+      "components/BonfyreProject/README.md"
+    ],
+    "class": "repository_promotion",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Published 8e45e472: exact 10-Code-to-components path/witness relocation across 20 canonical atlas files.",
+      "Published dd3b77fe: Partner Commons and Blogger publication surfaces with focused implementation tests.",
+      "Published 7387254f: digest-bound body retention, rights/robots-aware ForeignTwin observations, housing normalization, tests, and raw-body exclusion.",
+      "Published 9b15447e: atlas export generated from the isolated promoted tree; index contains Partner Commons, Blogger surface, and ForeignTwin."
+    ],
+    "summary": "Converged and pushed the requested repository-promotion tranche as four coherent non-force commits, including an isolated atlas-export follow-up that avoided absorbing live worktree changes.",
+    "tests": [
+      {
+        "command": "make -C components/BonfyreProject clean all && bash components/BonfyreProject/tests/smoke.sh",
+        "result": "passed"
+      },
+      {
+        "command": "python3 -m pytest tests/test_housing_signal_candidates.py -q",
+        "result": "passed: 9 passed"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_partner_commons.py components/BonfyreControlPlane/tests/test_blogger_publish.py components/BonfyreControlPlane/tests/test_blogger_receipts.py -q",
+        "result": "passed: 8 passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "passed: 372 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "isolated promoted-tree atlas export and validate",
+        "result": "passed: 184 architectures, 38 interactions"
+      }
+    ],
+    "work_item": "discovered-825c32be8316d36a"
+  },
+  "content_sha256": "3ec32c7995e27883b4dceb50d1ba72414f8a97f5c076aeda002f0dc1367f49a4",
+  "event_id": "local-aebe635249498be87287fed4320b",
+  "evidence_refs": [
+    "receipt:codex-20260824T012558-3a4bed72",
+    "work:discovered-825c32be8316d36a"
+  ],
+  "observed_at": "2026-08-24T01:35:58.445574+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-825c32be8316d36a completed",
+  "type": "receipt_summary"
+}
