@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T011431-0a3eb4cb",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Trace divergence: CI is not self-contained. Atlas self-tests reference measured owners whose sources/witnesses remain in the dirty worktree; native vector replay is green, but the complete ControlPlane reference suite fails on the incomplete committed owner set. Classify this as a larger convergence tranche; do not stage the whole frontier."
+  },
+  "content_sha256": "f653efe9b744be37abcd7e5c63a8cf2815fa646c9d71015f00e5c92b1d098410",
+  "event_id": "local-234db758a73a89925d799770e6e0",
+  "evidence_refs": [
+    "github:Nickgonzales76017/bonfyre@b651a6e8",
+    "github-actions:32679507144",
+    "github-actions:32679571336",
+    "atlas:provider-graph"
+  ],
+  "observed_at": "2026-08-24T01:25:08.301224+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "CI baseline references uncommitted owners",
+  "type": "trace_divergence"
+}
