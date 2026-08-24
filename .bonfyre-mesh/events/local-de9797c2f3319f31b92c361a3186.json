@@ -1,0 +1,71 @@
+{
+  "actor": {
+    "id": "codex-20260824T021101-ce521b42",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      "architecture/economic/economic.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "FoodCombinationGraph now models bogo, buy_x_get_y, multibuy, and conditional unit-price quantity laws.",
+      "Current H-E-B observations exercise BOGO, Combo Loco, Meal Deal, and 2-for-$6 multibuy laws with four null per-item allocations.",
+      "Canonical 71-offer artifacts project four H-E-B quantity laws; the multibuy has a $6.0000 group total and null free-items.",
+      "Atlas export and validation pass: 206 architectures, 11 views, 71 interactions."
+    ],
+    "summary": "Implemented and exercised source-bound quantity-promotion laws without invented item cash allocation. Current H-E-B Combo Loco/Meal Deal observations retain qualifying/free identities, quantities, expiry text, and unknown stackability; the 2-for-$6 multibuy remains group-priced only.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "12 passed"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py components/BonfyreControlPlane/tests/test_food_fulfillment_route.py -q",
+        "result": "18 passed"
+      },
+      {
+        "command": "python3 -m pytest tests/test_[a-m]*.py -q && python3 -m pytest tests/test_[n-z]*.py -q",
+        "result": "389 passed, 1 skipped"
+      },
+      {
+        "command": "FoodCombinationGraph H-E-B subset exercise",
+        "result": "9 H-E-B offers, four laws across bogo/buy_x_get_y/multibuy; every per-item allocation is null."
+      },
+      {
+        "command": "FoodCombinationGraph canonical 71-offer recompile",
+        "result": "Passed; four H-E-B laws retained, including a $6.0000 multibuy group total with free_items null."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "discovered-69a014ca588a2a8b"
+  },
+  "content_sha256": "ab8136d269a0d36838a891b5f30a53d2215422b45f5cbb520a57e7be665e17d5",
+  "event_id": "local-de9797c2f3319f31b92c361a3186",
+  "evidence_refs": [
+    "receipt:codex-20260824T021101-ce521b42",
+    "work:discovered-69a014ca588a2a8b"
+  ],
+  "observed_at": "2026-08-24T02:26:50.321580+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-69a014ca588a2a8b completed",
+  "type": "receipt_summary"
+}
