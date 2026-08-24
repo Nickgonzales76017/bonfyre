@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0425-content-addressed-work-dedup-024",
+  "observed_at": "2026-08-24T04:25:03.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "Use semantic content identity to stop duplicate mesh work without replaying historical coordination",
+  "body": {
+    "text": "The remote mesh should transport evidence/work candidates, but unchanged or semantically equivalent messages must not repeatedly create current obligations. BonfyreQueue is already WorkGraph-backed and BonfyreGraph already has content-addressed operator/lineage concepts; use existing canonical identities rather than another dedup database.\n\nDerive a stable semantic work-demand identity from message type + normalized predicate/target + relevant basis/evidence refs + validity scope, separate from transport event_id and Git commit SHA. On import:\n- new transport event with an already-open equivalent demand attaches evidence/causal provenance to the existing WorkGraph obligation rather than duplicating it;\n- an already-satisfied demand becomes historical evidence unless new basis/validity invalidates the prior solution;\n- deterministic invalid envelope/content digest gets terminal quarantine until the remote content/address changes, not a refusal counter every sync;\n- old Run8 coordination events stay evidence and are not replayed as fresh obligations merely because a new campaign starts;\n- genuinely changed evidence/basis can re-open or derive a new obligation with an explicit edge.\n\nDo not make BonfyreGraph the WorkGraph owner and do not make Git commit identity semantic identity. Prove idempotent import on one duplicate/equivalent event and legitimate reactivation on one changed-basis event."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreQueue/src/main.c",
+    "repo:cmd/BonfyreGraph/src/main.c",
+    "mesh:protocol:v1",
+    "run8:coordination:live"
+  ],
+  "content_sha256": "d6d9a01ae99af29bdd4ab1197e10675dbaef2d43b2e8d67d861967ccbcd8836f"
+}
