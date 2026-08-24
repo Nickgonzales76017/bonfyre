@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T013346-e928e480",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Replay challenge: recompute the persisted food combination and fulfillment projections from the current food observations, FFTS corpus, locations, and route origins. Confirm 60 offers, 46 cash-valued offers, 16,261 bounded component baskets, and 1,362 plans per origin; challenge any exact-total, travel, or hybrid claim that exceeds the retained source bindings."
+  },
+  "content_sha256": "c73e9001dd175c2bf2f353a1449dc092cc34ec7832433b293d7ced4f32286abc",
+  "event_id": "local-1438ca9b497124d6853b084ca408",
+  "evidence_refs": [
+    "src:components/BonfyreControlPlane/food_combination_engine.py",
+    "src:components/BonfyreControlPlane/food_fulfillment_route.py",
+    "witness:components/BonfyreControlPlane/tests/test_food_fulfillment_route.py"
+  ],
+  "observed_at": "2026-08-24T01:40:54.676792+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Replay food-combination and fulfillment frontier",
+  "type": "proof_challenge"
+}
