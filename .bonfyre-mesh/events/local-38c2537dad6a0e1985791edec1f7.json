@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T012558-3a4bed72",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Published the housing ForeignTwin tranche. It retains body hashes, distinguishes policy_excluded from boundary_response, fails closed on unavailable robots preflight, and keeps raw bodies out of Git."
+  },
+  "content_sha256": "a6b54908b8ccb6c482498dc764006634cff340bdecd9b5e26c86ff3d8d685b05",
+  "event_id": "local-38c2537dad6a0e1985791edec1f7",
+  "evidence_refs": [
+    "commit:7387254f",
+    "commit:9b15447e"
+  ],
+  "observed_at": "2026-08-24T01:35:58.445389+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "ForeignTwin/housing promotion complete",
+  "type": "handoff"
+}
