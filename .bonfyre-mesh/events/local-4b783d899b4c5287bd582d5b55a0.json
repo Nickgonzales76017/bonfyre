@@ -1,0 +1,56 @@
+{
+  "actor": {
+    "id": "codex-20260824T032012-798f7e12",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json"
+    ],
+    "class": "frontier_recompile",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Both outputs replay the unchanged 208-row ledger SHA-256 5f809a0bf40e7fcbb981b18ac49a591179ae926247d25aec8e07bd8614c71fde.",
+      "Both projections contain all 10 canonical Tom Thumb quantity laws; basket-options has zero Tom Thumb per-item allocations.",
+      "deal-graph has 10 Tom Thumb quantity-promotion nodes and 10 promotion edges."
+    ],
+    "summary": "Rebuilt and verified durable food projections from the live 208-row ledger.",
+    "tests": [
+      {
+        "command": "FoodCombinationGraph bounded compile",
+        "result": "completed; source SHA unchanged before and after"
+      },
+      {
+        "command": "Projection/graph invariant check",
+        "result": "208 offers; 17 quantity laws; 2,461 cash baskets; 246 graph nodes; 487 graph edges"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "14 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-3eed40b1829b280f"
+  },
+  "content_sha256": "eff4da05567aa7d0a11d50339dc13c268c4348c785cfc90656001f805ccd9a78",
+  "event_id": "local-4b783d899b4c5287bd582d5b55a0",
+  "evidence_refs": [
+    "receipt:codex-20260824T032012-798f7e12",
+    "work:discovered-3eed40b1829b280f"
+  ],
+  "observed_at": "2026-08-24T03:25:09.692798+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-3eed40b1829b280f completed",
+  "type": "receipt_summary"
+}
