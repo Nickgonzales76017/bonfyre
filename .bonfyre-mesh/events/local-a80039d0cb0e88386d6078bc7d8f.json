@@ -1,0 +1,56 @@
+{
+  "actor": {
+    "id": "codex-20260824T024023-cdcd8bb0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "architecture/economic/economic.yaff",
+      "architecture/atlas.index.json",
+      "components/BonfyreControlPlane/financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/finance/model-usage-mesh-replay.sqlite",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/finance/mesh-finance-replay-summary.json"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Current finance work traversal exposes realization, usage, economics, allocation version, and receipt evidence as distinct layers.",
+      "Current food/housing replay includes Codex and Claude where receipts exist without backfilling absent dimensions.",
+      "Focused finance/physical tests pass; Atlas validation passes."
+    ],
+    "summary": "Completed a current receipt-to-finance proof replay and hardened retries, bitemporal pricing, allocation versioning, and financial-event separation.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_financial_metabolism.py components/BonfyreControlPlane/tests/test_physical_derivation.py -q",
+        "result": "12 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 207 architectures, 11 views, 73 interactions"
+      },
+      {
+        "command": "python3 components/BonfyreControlPlane/financial_metabolism.py reconcile-run8 --state <run8-state> --db <fresh-mesh-replay-db>",
+        "result": "47 occurrences across Codex and Claude; food, housing, and machine workstreams"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260824T0236-finance-001"
+  },
+  "content_sha256": "3d2bbeb2b95c5ed8b24277e0533dd610323bc1eea8f585d7abb43c717cbd00a2",
+  "event_id": "local-a80039d0cb0e88386d6078bc7d8f",
+  "evidence_refs": [
+    "receipt:codex-20260824T024023-cdcd8bb0",
+    "work:mesh-external-chatgpt-20260824T0236-finance-001"
+  ],
+  "observed_at": "2026-08-24T02:45:38.158043+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260824T0236-finance-001 completed",
+  "type": "receipt_summary"
+}
