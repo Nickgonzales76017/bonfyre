@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260824T023449-fd1ea5da",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_explicit_observations.py",
+      "tests/test_housing_explicit_observations.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/current-listings.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shadow-unpromoted.jsonl"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Restored 10 explicit source-labelled rows, including Vine, LIV+, and Milo.",
+      "Shadow verification wrote 88 owned rows while preserving 34 explicit/social foreign rows.",
+      "Final shared ledger contains 122 rows: 10 explicit, 88 shadow, and 24 social."
+    ],
+    "summary": "Restored the lost explicit housing lane from durable Run 8 source summaries, replayed the shadow verifier, and confirmed all housing lanes coexist in the shared ledger.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest tests/test_housing_explicit_observations.py tests/test_housing_receipt_policy.py tests/test_housing_direct_candidates.py tests/test_housing_signal_candidates.py tests/test_housing_shadow_inventory.py -q",
+        "result": "24 passed"
+      },
+      {
+        "command": "rtk python3 tools/housing_shadow_inventory.py ... verify",
+        "result": "88 verified listings; 11 unpromoted; 34 foreign rows preserved"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-385b96e6e544fdcf"
+  },
+  "content_sha256": "62dd7b96a5563f7207c80e7149598bb340b1b9690015ee3f9a0edb109d86d3b5",
+  "event_id": "local-3f85a5ee03537963d0d997122d57",
+  "evidence_refs": [
+    "receipt:codex-20260824T023449-fd1ea5da",
+    "work:discovered-385b96e6e544fdcf"
+  ],
+  "observed_at": "2026-08-24T02:41:41.397150+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-385b96e6e544fdcf completed",
+  "type": "receipt_summary"
+}
