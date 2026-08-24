@@ -391,3 +391,25 @@ interaction proof-frontier-reheats-feldera
   invalidates_on the maintained relation is read while a proof fact write is in flight
   witness reachability-proof.json (the retraction that withdrew organism 2 and reheated the fold)
   binding components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+
+interaction partner-commons-projects-foreign-twin
+  source partner-commons
+  destination foreign-twin
+  relation rights_limited_projection
+  preserves partner identity, source institution, and observe/reference rights
+  drops remote mutation rights and any claim that cached state is current remote truth
+  forbidden_inference a partner observation -> bind or act authority
+  witness partner_state_is_a_rights_limited_foreign_twin
+  binding components/BonfyreControlPlane/partner_commons.py
+
+interaction blogger-receipt-feeds-evidence
+  source blogger-publication-surface
+  destination evidence-graph
+  relation receipt_projection
+  preserves external post identity, public URL, publication time, source lineage, and API acknowledgement
+  drops OAuth credentials, access tokens, refresh tokens, and unneeded Blogger response fields
+  forbidden_inference an API acknowledgement -> the article's substantive claims are true
+  invalidates_on the public URL becomes unavailable or the receipt no longer matches the external post identity
+  evidence the safe Blogger API response supports only api-acknowledged and publicly-addressable publication claims
+  witness test_safe_blogger_receipt_projects_once_into_occurrence_and_evidence
+  binding components/BonfyreControlPlane/blogger_receipts.py

@@ -52,6 +52,29 @@ architecture service-lifecycle
   witness 10-Code/BonfyreControlPlane/tests/test_service_lifecycle.py
   source_lineage OSB / ServiceLifecycle architecture
 
+architecture partner-commons
+  canonical_name PartnerCommons
+  family external
+  domain External / Institutions
+  layer external/relationship
+  semantic_question What narrow specialty and observed relationship state does a partner contribute without taking Bonfyre semantic ownership?
+  purpose Typed partner profiles plus append-only source-backed observations. Each profile states its boundary contribution and what it does not own; observations project to rights-limited ForeignTwins and EvidenceGraph claims.
+  maturity implemented
+  node_types PartnerProfile
+  node_types PartnerObservation
+  edge_types contributes_to
+  edge_types observed_as
+  invariant every profile states explicit semantic non-ownership
+  invariant every observation carries a source reference and observation time
+  forbidden_inference a maintainer interaction -> authority to mutate the partner institution
+  forbidden_inference a partner specialty -> ownership of the connected Bonfyre organ
+  computational_form durable
+  native_format crux
+  source_path components/BonfyreControlPlane/partner_commons.py
+  witness components/BonfyreControlPlane/tests/test_partner_commons.py
+  source_lineage Generation-10 V8.1 Partner Commons plus Run 6/7 relationship state
+  known_gap live refresh remains a bounded external observation effect; the stored latest row is never remote truth
+
 architecture result-receipt-bundle
   canonical_name ResultReceiptBundleGraph
   family external
@@ -72,3 +95,33 @@ architecture result-receipt-bundle
   source_path external:sipyourdrink-ltd/bernstein/src/bernstein/core/security/result_receipt_bundle.py
   witness external:bernstein tests/unit/security/test_result_receipt_bundle.py (9 tests)
   source_lineage bernstein volunteer umbrella #3863 issue #3870
+
+architecture blogger-publication-surface
+  canonical_name BloggerPublicationSurface
+  family external
+  domain External / Publication
+  layer external/surface
+  semantic_question Which source-backed Bonfyre artifact was published to which Blogger URL, under what authority, and with which safe API receipt?
+  purpose Blogger is a bounded External CMS realization: proof-bundled HTML crosses an authorized effect boundary, while the returned post identity, status, timestamps, and URL become occurrence and evidence records.
+  maturity implemented
+  node_types PublicationArtifact
+  node_types BloggerPost
+  node_types BloggerReceipt
+  edge_types publishes_to
+  edge_types acknowledges
+  state_types staged
+  state_types live
+  invariant OAuth credentials and tokens remain outside the repository and outside durable receipts
+  invariant a live claim requires a Blogger API receipt and public URL
+  forbidden_inference a staged article or callable adapter -> a published post
+  forbidden_inference a Blogger connection -> authority to edit or delete remote content
+  computational_form external_effect
+  native_format html
+  native_format json
+  external_binding blogger-v3
+  source_path bin/blogger_publish.py
+  source_path components/BonfyreControlPlane/blogger_receipts.py
+  witness components/BonfyreControlPlane/tests/test_blogger_publish.py
+  witness components/BonfyreControlPlane/tests/test_blogger_receipts.py
+  source_lineage Generation-10 V8.1 External CMS / business systems profile
+  known_gap live maturity remains below measured until OAuth consent yields retained Blogger response receipts and URLs
