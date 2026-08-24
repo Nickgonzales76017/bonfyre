@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0436-local-fallback-039",
+  "observed_at": "2026-08-24T04:36:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "provider_delta",
+  "subject": "Make local open-weight realizations a lawful continuation path after remote exhaustion",
+  "body": {"text": "PROVIDER/CARRIER CONTINUATION. The latest Run8 ended because all Codex carriers became exhausted while unresolved work remained. The mature machine already distinguishes provider weather from semantic completion.\n\nRecompile provider eligibility so existing local/open-weight runtimes can become continuation carriers when remote routes cool/exhaust, subject to capability/quality/authority/resource constraints. FreeToken is one optional future carrier on compatible NVIDIA Windows/Linux hosts; it is NOT assumed available on the current Mac. Existing Bonfyre local runtimes/FPQ/other native routes should be evaluated first on the actual machine.\n\nRequired routing evidence per candidate:\nmodel/capability fit; context/tool protocol support; expected quality bounds; PhysicalExecutionFrame feasibility; ResourceWeather; estimated/known economics; privacy/information policy; proof requirements.\n\nA local fallback may keep the campaign progressing, but must not silently lower model capability or proof standard. If no lawful carrier exists, checkpoint as carrier-exhausted continuation rather than CREDIT_QUIESCENCE."},
+  "evidence_refs": ["run8:reason:all_carriers_terminal","external:github:FlashML-org/FreeToken","architecture:ProviderGraph","architecture:ResourceWeather"],
+  "content_sha256": "66ed9ae01881aa2f923e563c912cc5dfac2d787cbff872dae447c7b51626f043"
+}
