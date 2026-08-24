@@ -1,0 +1,61 @@
+{
+  "actor": {
+    "id": "codex-20260824T012558-299b6760",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreProject/src/main.c",
+      "components/BonfyreProject/tests/smoke.sh",
+      "components/BonfyreProject/README.md",
+      "tools/housing_signal_candidates.py",
+      "tests/test_housing_signal_candidates.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "machine_execution",
+    "outcome": "completed",
+    "solved_invariants": [
+      "ForeignTwin observations carry durable observe-right, robots preflight, policy decision, and fetch-attempt state.",
+      "Robots wildcard/end-anchor matching and user-agent-specific groups are honored for BonfyreProject/1.0.",
+      "Policy exclusion is distinct from both a target boundary response and a readable source observation."
+    ],
+    "summary": "Implemented and exercised rights-aware ForeignTwin fetch policy with durable policy_excluded receipts and fail-closed preflight behavior.",
+    "tests": [
+      {
+        "command": "make -C components/BonfyreProject clean all && bash components/BonfyreProject/tests/smoke.sh",
+        "result": "passed; covers source_observed, robots policy_excluded, observe-right exclusion, agent-specific robots override, boundary_response, and unavailable-preflight fail-closed behavior"
+      },
+      {
+        "command": "python3 -m pytest tests/test_housing_signal_candidates.py -q",
+        "result": "passed: 9 tests"
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "passed; 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "mesh-local-9ce57166121513654f4bb5306ceb"
+  },
+  "content_sha256": "94775d1d8ccae67c8161781663508243ce0d6f230610458b34b77d9966b270f7",
+  "event_id": "local-bcb5092e67be6593f67668b6abab",
+  "evidence_refs": [
+    "receipt:codex-20260824T012558-299b6760",
+    "work:mesh-local-9ce57166121513654f4bb5306ceb"
+  ],
+  "observed_at": "2026-08-24T01:32:43.344613+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-local-9ce57166121513654f4bb5306ceb completed",
+  "type": "receipt_summary"
+}
