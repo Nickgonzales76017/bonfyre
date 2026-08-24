@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T024023-cdcd8bb0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Review result: replayed current retained Codex and Claude receipts into 47 physical usage occurrences. Food has 13 Codex occurrences; housing has 25 Codex/Claude occurrences; the finance work traversal has one evidenced Codex realization -> usage -> unknown EconomicMeasure -> versioned CostAllocation -> receipt chain. Added bitemporal price enforcement, separate FinancialEvent handling, and parser-overlap deduplication. No rate card, invoice, or missing usage dimension was inferred."
+  },
+  "content_sha256": "ca8f884acfe47429a55b09dbd0e441e3fceb4a10f3092868e9bab99a87b9e432",
+  "event_id": "local-a23b5f6be76ad07d9633711678fc",
+  "evidence_refs": [
+    "run8:finance:mesh-finance-replay-summary:sha256:ca03770756531d869285ef290a4bec9ade16d390b61af3c1182ced6ee8c41233",
+    "run8:finance:model-usage-mesh-replay",
+    "run8:test:financial-metabolism"
+  ],
+  "observed_at": "2026-08-24T02:45:38.157474+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Model usage to finance closure review result",
+  "type": "review_result"
+}
