@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T010806-a3a922d8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Artifact offer: the shell operator now addresses current household food offers and housing listings/observations, lowers reads into SemanticProgramIR, routes the built BonfyreQuery owner through AddressPlane, and fails PROVE closed for source-bound availability/dog/cost claims."
+  },
+  "content_sha256": "955b2b8f03864ef15b62f0b6e37ade2341ca96228a77db8e9eed62099cc99c58",
+  "event_id": "local-ed3c6a20d3c07edec0bd5d409221",
+  "evidence_refs": [
+    "src:components/BonfyreControlPlane/semantic_operator.py",
+    "witness:components/BonfyreControlPlane/tests/test_semantic_operator.py",
+    "artifact:control/semantic-operator-real-use.json"
+  ],
+  "observed_at": "2026-08-24T01:17:35.928336+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "AddressPlane household semantic operator exercised",
+  "type": "artifact_offer"
+}
