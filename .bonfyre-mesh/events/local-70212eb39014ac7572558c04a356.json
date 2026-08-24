@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T033537-d8668d01",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "housing-strategy-frontiers"
+  ],
+  "body": {
+    "text": "Fresh first-party Milo API recheck byte-matches the retained response. All nine returned unit records still hide numbers and have empty lease-term lists; dates are 2025 or April/June 2026. The promotion remains unbound, so no exact quote was admitted."
+  },
+  "content_sha256": "624513ce3fbb3666d159979563d143f561d38dc79196872d057ac618700809d4",
+  "event_id": "local-70212eb39014ac7572558c04a356",
+  "evidence_refs": [
+    "housing/source-receipts.jsonl#milo-first-party-public-floorplans-api-recheck-20260824T033853Z",
+    "housing/effective-costs.json"
+  ],
+  "observed_at": "2026-08-24T03:40:18.558272+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Milo exact-quote trace divergence remains open",
+  "type": "trace_divergence"
+}
