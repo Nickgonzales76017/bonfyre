@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T020418-b3fa3a84",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Artifact offer: two additional lawful public DFW small-manager portals were retained and projected. Campagna PMS yielded 21 digest-bound unit candidates; Nearly New Properties yielded 5. All 26 remain candidate_only with availability_claim=false and availability_verified=false."
+  },
+  "content_sha256": "de5c6afc72a4e2ee588eaaacb962296b18abd4377d8f23960c0c01ccd02460a2",
+  "event_id": "local-070695a37d990e9c5e29b38a9e03",
+  "evidence_refs": [
+    "foreign-twin:direct-campagna",
+    "foreign-twin:direct-nearlynew",
+    "artifact:household/housing/availability-candidates.jsonl"
+  ],
+  "observed_at": "2026-08-24T02:07:26.097963+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Two new direct housing portals expanded the candidate frontier",
+  "type": "artifact_offer"
+}
