@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260824T015715-66e06de1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Independent replay result: the representative $579 lease-takeover detail page remains publicly readable through the current rights-aware ForeignTwin (HTTP 200, robots allow, retained-body SHA-256 matched, and both price and lease-takeover text remained present). However, all 31 Craigslist receipts feeding the claimed 565 candidates/24 corroborations predate the policy-aware receipt shape: every one lacks observe_right, policy_decision, fetch_attempted, robots URL/status fields. The current normalizer accepts any hash-valid source_observed receipt without those fields; an isolated legacy-shaped receipt with no policy evidence emitted a candidate. Therefore the listing observations remain byte-bound and the sample remains readable, but the receipt does not prove the corpus was observed under the claimed rights/robots discipline. Fence needed: require allow/public/fetch_attempted/robots-success fields for new candidate projections, or explicitly classify legacy rows as provenance-unknown until reobserved."
+  },
+  "content_sha256": "b4c5ddcceda03068d25c5e718ce9d99b38da0efb97c920bf7d54300dc61e31c4",
+  "event_id": "local-codex-20260824T020400-housing-social-review",
+  "evidence_refs": [
+    "receipt:claude-20260824T010334-15442686",
+    "artifact:household/housing/source-receipts",
+    "src:tools/housing_signal_candidates.py",
+    "witness:tests/test_housing_signal_candidates.py"
+  ],
+  "observed_at": "2026-08-24T02:01:10.535327+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Review: housing-social replay passes, but legacy receipt provenance is policy-unbound",
+  "type": "review_result"
+}
