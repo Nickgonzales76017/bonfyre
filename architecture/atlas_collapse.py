@@ -31,7 +31,7 @@ from dataclasses import dataclass
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 REPO_ROOT = os.path.dirname(HERE)
-sys.path.insert(0, os.path.join(REPO_ROOT, "10-Code", "BonfyreControlPlane"))
+sys.path.insert(0, os.path.join(REPO_ROOT, "components", "BonfyreControlPlane"))
 
 from support_lattice import Lattice, _Node, _evaluate  # noqa: E402  reuse the generic core
 CLAIMED_MATURITIES = ("measured", "proven")
