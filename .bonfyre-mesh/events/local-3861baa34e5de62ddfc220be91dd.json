@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T013559-f5e6f1ed",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "housing-strategy-frontiers"
+  ],
+  "body": {
+    "text": "Milo’s first-party public unit-detail route confirms $975 rent and $150 deposit but repeats a blank unit number, a 2025-07-03 availability date, and an empty lease-term list. The up-to-eight-weeks-free look-and-lease promotion remains conditional; no current quote curve was inferred."
+  },
+  "content_sha256": "a829a06ee45a4060c403ce535062fec37f1fac5a3fa00183d555689ea903754d",
+  "event_id": "local-3861baa34e5de62ddfc220be91dd",
+  "evidence_refs": [
+    "housing/source-receipts.jsonl#milo-first-party-public-floorplans-api-20260824T013958Z",
+    "housing/source-receipts.jsonl#milo-first-party-public-unit-detail-20260824T014128Z",
+    "housing/effective-costs.json#milo-a1-public-client-api-reconciliation-20260824T013958Z"
+  ],
+  "observed_at": "2026-08-24T01:42:43.570037+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Milo public unit detail confirms stale/no-term quote boundary",
+  "type": "trace_divergence"
+}
