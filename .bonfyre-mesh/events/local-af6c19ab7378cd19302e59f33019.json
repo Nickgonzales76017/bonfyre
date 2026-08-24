@@ -1,0 +1,82 @@
+{
+  "actor": {
+    "id": "codex-20260824T004823-02374715",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".github/workflows/native-kernel.yml",
+      "10-Code/BonfyreAPI/Makefile",
+      "10-Code/BonfyreAPI/bonfyre-api",
+      "10-Code/BonfyreAPI/src/main.c",
+      "10-Code/BonfyreAPI/static/app.js",
+      "10-Code/BonfyreAPI/static/index.html",
+      "10-Code/BonfyreAPI/static/styles.css",
+      "cmd/BonfyreAPI/bonfyre-api-selftest",
+      "cmd/BonfyreAPI/src/main.c",
+      "cmd/BonfyreAPI/static/app.js",
+      "cmd/BonfyreAPI/static/index.html",
+      "cmd/BonfyreAPI/static/styles.css",
+      "components/BonfyreProject/bonfyre-project",
+      "evidence/verification/transitional-root/build-products-deletion-proof.json",
+      "generated/projections/estate/transitional-root-absorption.json",
+      "tools/transitional_root_absorption.py"
+    ],
+    "class": "repository_promotion",
+    "outcome": "completed",
+    "solved_invariants": [
+      "BonfyreAPI is no longer an absorb_required child.",
+      "BonfyreAPI static surface is owned and served by cmd/BonfyreAPI.",
+      "The reconstructable BonfyreProject binary was removed with a hashed DeletionProof."
+    ],
+    "summary": "Committed coherent repository-promotion tranche 602c78cb (825 paths): provenance-preserving 10-Code→components relocation, BonfyreAPI absorption into cmd, deletion proof, cutover ledger, and CI fences.",
+    "tests": [
+      {
+        "command": "make -C cmd/BonfyreAPI",
+        "result": "passed"
+      },
+      {
+        "command": "./cmd/BonfyreAPI/bonfyre-api-selftest",
+        "result": "passed: auth 200, invalid key 401, static surface served"
+      },
+      {
+        "command": "python3 -m pytest tests/test_transitional_root_absorption.py -q",
+        "result": "passed: 13 tests"
+      },
+      {
+        "command": "python3 tools/transitional_root_absorption.py --verify",
+        "result": "passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 203 architectures, 11 views, 68 interactions"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "passed: 360 passed, 1 skipped"
+      },
+      {
+        "command": "git diff --check && git diff --cached --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "r2c-repo-absorb-required"
+  },
+  "content_sha256": "7ff998e391d342fb04efb9e466edd003eedea39ab038a4a725776009e29d5c90",
+  "event_id": "local-af6c19ab7378cd19302e59f33019",
+  "evidence_refs": [
+    "receipt:codex-20260824T004823-02374715",
+    "work:r2c-repo-absorb-required"
+  ],
+  "observed_at": "2026-08-24T00:57:27.836189+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "r2c-repo-absorb-required completed",
+  "type": "receipt_summary"
+}
