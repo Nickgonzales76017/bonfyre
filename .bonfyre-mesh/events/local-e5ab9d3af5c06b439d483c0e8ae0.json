@@ -1,0 +1,55 @@
+{
+  "actor": {
+    "id": "codex-20260824T010537-b7e4f7c1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/effective-costs.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md"
+    ],
+    "class": "external_housing",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Persisted a source-hashed first-party pricing, concession, and dog-charge probe with a 12-month conditional maximum-special scenario while preserving quote uncertainty."
+    ],
+    "summary": "Observed The Milo’s active first-party promotion: up to eight weeks free, waived application/admin fees, and look-and-lease condition through Aug. 31. Normalized A1’s conditional 12-month economics to $825 rent-only and $875 with one dog; move-in cash is $150 without a pet or $650 with one dog. The source does not bind a unit, move date, or term and conflicts with stale unit dates, so reconciliation—not averaging—was recorded.",
+    "tests": [
+      {
+        "command": "parse household economics/source receipts and assert concession arithmetic, move-in cash, reconciliation, and source-hash fences",
+        "result": "passed"
+      },
+      {
+        "command": "check changed household files for trailing whitespace",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "validate receipt required fields, enums, bounds, and nested shapes against the supplied schema structure",
+        "result": "passed; jsonschema package unavailable"
+      }
+    ],
+    "work_item": "housing-concession-arbitrage"
+  },
+  "content_sha256": "0865b01e3fe52bbc5fa6c13024223bef5b0eb42b01fb8de8d416434ca8711936",
+  "event_id": "local-e5ab9d3af5c06b439d483c0e8ae0",
+  "evidence_refs": [
+    "receipt:codex-20260824T010537-b7e4f7c1",
+    "work:housing-concession-arbitrage"
+  ],
+  "observed_at": "2026-08-24T01:14:27.854059+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-concession-arbitrage advanced",
+  "type": "receipt_summary"
+}
