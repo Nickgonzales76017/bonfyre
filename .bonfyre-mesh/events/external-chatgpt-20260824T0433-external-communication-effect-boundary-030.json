@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0433-external-communication-effect-boundary-030",
+  "observed_at": "2026-08-24T04:33:03.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "External communication surfaces must share the canonical effect and authority boundary",
+  "body": {
+    "text": "The named estate contains real communication/effect surfaces: BonfyreSync can perform remote PUT via curl; BonfyreTel can send SMS/MMS/place calls; BonfyreWire can ingest/listen with legacy authorization flags. These are valuable Powers, but they must not become escape hatches around the mature effects model.\n\nConverge all outbound real-world communication into the existing EXTERNAL_EFFECT boundary:\nEffectIntent/semantic action -> actor/institution identity -> Authority/consent/policy -> PhysicalExecutionFrame/carrier -> effect attempt -> receipt or unknown external outcome -> reconciliation/evidence.\n\nInbound observations remain EXTERNAL_READ/observations as appropriate and do not automatically authorize a reply. A CLI flag, legacy key, telephone number, Git author, provider identity, or mesh audience is not semantic authority. Current Run8 generic external writes policy is closed; preserve it. Do not send any SMS/call/remote Sync request as part of this proof.\n\nRequired local/no-op proof: the same unauthorized outbound intent is denied before carrier execution whether addressed through Tel, Sync or a shell semantic operator, and the denial has one canonical reason/evidence path. A permitted synthetic/local effect can prove receipt plumbing without touching an external party."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreSync/src/main.c",
+    "repo:cmd/BonfyreTel/src/main.c",
+    "repo:cmd/BonfyreWire/src/main.c",
+    "mesh:event:external-chatgpt-20260824T0421-authority-native-owner-convergence-018"
+  ],
+  "content_sha256": "bbc1145a8dea857da5c91c80d67f85371879f9a5fb62d4c51e2dcda70bb315b0"
+}
