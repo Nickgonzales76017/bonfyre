@@ -1,0 +1,75 @@
+{
+  "actor": {
+    "id": "codex-20260824T021012-b689ceb0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "architecture/forwarding/semantic-operator.yaff",
+      "architecture/interactions.yaff",
+      "build.zig",
+      "engine/core/Makefile",
+      "engine/core/include/bf_semantic_operator.h",
+      "engine/core/src/semantic_operator.c",
+      "engine/core/tests/semantic_operator_test.c",
+      "schemas/control/household-projection.yaff"
+    ],
+    "class": "native_port",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Native household records have deterministic source-bound addresses and SHA-256 content digests.",
+      "The native lowerer admits only a bounded, duplicate-free read closure and preserves deterministic lowering under input-order changes.",
+      "Shared property identity with distinct units produces coexistence and prohibits merging.",
+      "A live native binding/lowering of the current Target food offer and Milo housing observation produced two reads, zero writes, and availability_proven=0."
+    ],
+    "summary": "Ported native, source-bound read-only semantic operator lowering into engine/core with a promoted household projection contract, conformance coverage, Atlas registration, and live Run 8 projection exercise.",
+    "tests": [
+      {
+        "command": "rtk make -C engine/core test",
+        "result": "PASS — all native conformance tests, including semantic_operator_test"
+      },
+      {
+        "command": "rtk zig build",
+        "result": "PASS"
+      },
+      {
+        "command": "rtk zig build test-semantic-operator",
+        "result": "PASS"
+      },
+      {
+        "command": "rtk python3 -m pytest components/BonfyreControlPlane/tests/test_semantic_operator.py -q",
+        "result": "PASS — 5 passed"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "PASS"
+      },
+      {
+        "command": "Native live binding/lowering harness over current Run 8 food and housing JSONL",
+        "result": "PASS — 2 reads, 0 writes, availability_proven=0"
+      },
+      {
+        "command": "rtk python3 components/BonfyreControlPlane/semantic_operator.py --state <Run8 state> select/prove",
+        "result": "PASS — live Target offer selected; live Milo availability verdict not_proven"
+      }
+    ],
+    "work_item": "discovered-76defac8081d8949"
+  },
+  "content_sha256": "20a391a485e2c5c00f1d9add93a1501581b08e662c23f3c843f91f487de79be8",
+  "event_id": "local-7209e23ab08970b14bdac0d13f2a",
+  "evidence_refs": [
+    "receipt:codex-20260824T021012-b689ceb0",
+    "work:discovered-76defac8081d8949"
+  ],
+  "observed_at": "2026-08-24T02:18:00.538964+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-76defac8081d8949 completed",
+  "type": "receipt_summary"
+}
