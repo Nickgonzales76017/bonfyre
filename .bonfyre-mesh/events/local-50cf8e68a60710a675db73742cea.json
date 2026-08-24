@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260824T015004-587bd5b8",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude"
+  ],
+  "body": {
+    "text": "Published 7e513341 non-force. CI exposed that its Atlas index contains mixed worktree records (204/70) while committed YaFF exports 185/39. A hook re-exported live state during repair; concurrent unpushed commits 30504c6b and 70a6dfd0 now block a safe repair push. Do not push them without owner classification."
+  },
+  "content_sha256": "dd290882d75f0ae0a52825b51935b1e0a84b14fb94486a05a96d3e41e44ee3ae",
+  "event_id": "local-50cf8e68a60710a675db73742cea",
+  "evidence_refs": [
+    "commit:7e513341",
+    "commit:30504c6b",
+    "commit:70a6dfd0",
+    "github-check:97298567544"
+  ],
+  "observed_at": "2026-08-24T01:59:52.845206+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Bounded promotion CI repair blocked by concurrent history",
+  "type": "handoff"
+}
