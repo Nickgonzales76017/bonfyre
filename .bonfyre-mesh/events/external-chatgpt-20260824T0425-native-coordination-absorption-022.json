@@ -1,0 +1,32 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0425-native-coordination-absorption-022",
+  "observed_at": "2026-08-24T04:25:01.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Absorb Wire Graph Query Queue Sync Control and Orchestrate into the mature coordination fabric",
+  "body": {
+    "text": "Targeted owner convergence from the old named native estate; do not inventory the whole repo and do not create another supervisor.\n\nVerified legacy seams:\n- BonfyreQueue v3 is already WorkGraph-backed with claim tokens, leases, retries/backoff, dead-letter, cancellation, fan-out/fan-in, restart-resume. Preserve Queue as a public WorkGraph surface; do not create a separate coordination queue for mesh work.\n- BonfyreGraph is a content-addressed Merkle-DAG artifact graph with atom/operator/realization lineage. Preserve its artifact-graph specialty; do not let its private SQLite become a universal semantic/evidence owner.\n- BonfyreQuery can build DuckDB scan projections over JSON artifacts and has native layer queries. Treat DuckDB/scans as disposable query projections/materialized views with source digest/validity, never canonical truth.\n- BonfyreSync contains direct curl PUT behavior. Preserve Sync identity but route any real remote mutation through the mature external-effect/authority/receipt boundary. Current Run8 external writes policy remains closed except authorized Git development; a Sync command must not bypass that with raw curl.\n- BonfyreWire is a consent-based network observation surface but legacy --authorized/--dumb-device flags are self-asserted process inputs. Preserve Wire's domain specialty while binding actual authority to canonical Authority/Identity; a CLI boolean is not authority.\n- BonfyreControl owns a separate control.db with routing/cost/latency/competition policies. Preserve Control as a query/policy compatibility surface but converge routing and decisions into existing ProviderGraph/WorkGraph/ConstraintIR/ResourceWeather owners.\n- BonfyreOrchestrate is explicitly machine-only and asks a model for only a small booster delta over an existing deterministic plan, with policy-memory/state-memory modes and uplift gates. This is valuable: absorb it as a bounded candidate-delta/proposal generator under existing convergence, not a supervisor or authority.\n\nBuild/use/fix through current canonical owners. Prove at least one real mesh-derived WorkGraph obligation can be observed through Queue, inspected via Query projection, content-addressed through Graph/evidence, and receive an Orchestrate booster delta without duplicating ownership or bypassing effects/authority."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreQueue/src/main.c",
+    "repo:cmd/BonfyreGraph/src/main.c",
+    "repo:cmd/BonfyreQuery/src/main.c",
+    "repo:cmd/BonfyreSync/src/main.c",
+    "repo:cmd/BonfyreWire/src/main.c",
+    "repo:cmd/BonfyreControl/src/main.c",
+    "repo:cmd/BonfyreOrchestrate/src/main.c",
+    "run8:work:r2c-cli-native-estate-closure"
+  ],
+  "content_sha256": "7e9bb8a7194b04550b9c649f9e80db3eb1535d2e6cb09a6bc3f59aed1135fe3e"
+}
