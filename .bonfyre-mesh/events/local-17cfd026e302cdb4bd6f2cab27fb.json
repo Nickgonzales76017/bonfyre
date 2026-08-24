@@ -1,0 +1,54 @@
+{
+  "actor": {
+    "id": "codex-20260824T020235-663f4543",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "architecture/economic/household-economic-circuit.yaff",
+      "architecture/interactions.yaff",
+      "components/BonfyreControlPlane/household_economic_circuit.py",
+      "components/BonfyreControlPlane/tests/test_household_economic_circuit.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/cross-domain/economic-circuit.json"
+    ],
+    "class": "mature_machine",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Live circuit preserves 8 housing scenarios, 4 one-time component views, 72 route strategies, input digests, and an explicit refused join.",
+      "Canonical Atlas validation recognizes 205 architectures and 71 interactions."
+    ],
+    "summary": "Built and exercised a source-bound food × housing × finance × evidence circuit; it exposes the absent residence identity rather than inventing a household budget or accounting result.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "385 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 205 architectures, 11 views, 71 interactions"
+      },
+      {
+        "command": "git diff --check -- components/BonfyreControlPlane/household_economic_circuit.py components/BonfyreControlPlane/tests/test_household_economic_circuit.py architecture/economic/household-economic-circuit.yaff architecture/interactions.yaff",
+        "result": "passed"
+      }
+    ],
+    "work_item": "cross-domain-household-circuit"
+  },
+  "content_sha256": "3a20c2c8745409b6b3b6aa590a64f748685ef836d3d7f77ca7bcd22fbceccdbf",
+  "event_id": "local-17cfd026e302cdb4bd6f2cab27fb",
+  "evidence_refs": [
+    "receipt:codex-20260824T020235-663f4543",
+    "work:cross-domain-household-circuit"
+  ],
+  "observed_at": "2026-08-24T02:10:19.390417+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "cross-domain-household-circuit advanced",
+  "type": "receipt_summary"
+}
