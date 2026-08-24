@@ -1,0 +1,56 @@
+{
+  "actor": {
+    "id": "codex-20260824T015715-66e06de1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/state.sqlite3",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/mesh/last-export.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/mesh/last-sync.json"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Fresh replay confirmed the representative public detail page remains readable under the current rights-aware ForeignTwin path.",
+      "The target corpus contains 31 Craigslist receipts, including all 24 corroborating detail receipts, with none of the current policy-preflight fields."
+    ],
+    "summary": "Cross-provider review completed: the representative listing replayed successfully, but the claimed social-housing corpus is not durably proven to have been observed under rights/robots policy because its legacy receipts lack policy evidence and remain admissible.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_signal_candidates.py -q",
+        "result": "passed: 9 tests"
+      },
+      {
+        "command": "bash components/BonfyreProject/tests/smoke.sh",
+        "result": "passed"
+      },
+      {
+        "command": "fresh current-policy ForeignTwin replay of representative lease-takeover page",
+        "result": "HTTP 200; robots allow; retained-body SHA-256 matched; price and lease-takeover text present"
+      },
+      {
+        "command": "isolated legacy-receipt adversarial projection replay",
+        "result": "a receipt without policy fields emitted one AvailabilityCandidate"
+      }
+    ],
+    "work_item": "crosscheck-claude-20260824T010334-15442686"
+  },
+  "content_sha256": "c2c6321948aa3cb846e7b405aee0a3f408a6050a0cc268fba17fa20c7f6ddf29",
+  "event_id": "local-959cda8236bab5591c4d90de7264",
+  "evidence_refs": [
+    "receipt:codex-20260824T015715-66e06de1",
+    "work:crosscheck-claude-20260824T010334-15442686"
+  ],
+  "observed_at": "2026-08-24T02:02:22.015917+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "crosscheck-claude-20260824T010334-15442686 completed",
+  "type": "receipt_summary"
+}
