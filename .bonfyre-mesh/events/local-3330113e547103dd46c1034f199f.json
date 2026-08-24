@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T011429-b3376590",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Ran FoodCombinationGraph over five current source-bound Target offers and the retained 2,923-record FFTS corpus. The projection body was read back by SHA-256 and reused without a second transform; body cache reuse now retracts if the file is absent or tampered."
+  },
+  "content_sha256": "bfd950bef95612cc36aad08cb7f56b66c9449e56783a1c707a53e4e9d8cb97c6",
+  "event_id": "local-3330113e547103dd46c1034f199f",
+  "evidence_refs": [
+    "atlas:physical-derivation",
+    "atlas:food-combination-graph",
+    "artifact:.bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/physical-derivation-receipt.json",
+    "artifact:.bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T011429-b3376590/physical-realization-food/reuse-proof.json"
+  ],
+  "observed_at": "2026-08-24T01:18:43.369731+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Actual food projection physically realized and lawfully reused",
+  "type": "artifact_offer"
+}
