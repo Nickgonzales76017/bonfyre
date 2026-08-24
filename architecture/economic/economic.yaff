@@ -11,8 +11,8 @@ architecture money-graph
   semantic_question What money flows here -- funds, pays, owes, grants, subsidizes, costs, earns?
   purpose Causal economic relationships between actors and institutions. Distinct from the ledger, which records; this models the flow.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/economic_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
   node_types Party
   edge_types funds
   edge_types owes
@@ -28,8 +28,8 @@ architecture commitment-graph
   semantic_question Who committed what resource to whom, under what conditions, until when?
   purpose Resource commitments -- purchase orders, SLAs, equipment reservations, grants, human assignments -- each domain-distinct, with authority and expiry.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/economic_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
   node_types ResourceCommitment
   edge_types commits
   forbidden_inference a commitment -> the resource delivered
@@ -44,8 +44,8 @@ architecture recursive-value-graph
   semantic_question What does this unlock, prefill, strengthen, or make reachable -- without converting to cash?
   purpose Vector-valued causal value: unlocks, prefills, increases-eligibility, strengthens-evidence, decreases-cost/time, creates capacity/distribution/relationship/learning options. No implicit conversion to money.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/economic_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
   node_types ValueEdge
   edge_types unlocks_value
   forbidden_inference a value edge -> a cash amount
@@ -60,8 +60,8 @@ architecture institutional-cost-graph
   semantic_question What does this mission actually cost across compute, model, storage, provider, human, facility?
   purpose Recursive cost allocation of a mission across every resource it consumes, ultimately projecting legitimate costs into ERPNext.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/economic_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_economic_graphs.py
+  source_path components/BonfyreControlPlane/economic_graphs.py
+  witness components/BonfyreControlPlane/tests/test_economic_graphs.py
   node_types CostEnvelope
   edge_types allocates
   forbidden_inference a projected cost -> a booked accounting entry

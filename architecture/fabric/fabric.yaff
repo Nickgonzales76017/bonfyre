@@ -24,8 +24,8 @@ architecture bonfyre-fs
   forbidden_inference a virtual query directory -> stored state (it is a maintained set projected as folders, not a directory on disk)
   publishes QueryDirectory
   source_path engine/core/src/filesystem_projection.c
-  source_path 10-Code/BonfyreControlPlane/fabric_publish.py
-  source_path 10-Code/BonfyreControlPlane/fabric_queries.py
-  witness 10-Code/BonfyreControlPlane/tests/test_fabric_queries.py
+  source_path components/BonfyreControlPlane/fabric_publish.py
+  source_path components/BonfyreControlPlane/fabric_queries.py
+  witness components/BonfyreControlPlane/tests/test_fabric_queries.py
   source_lineage fabric.db served live by bonfyre-fs; virtual query directories (riff SS38)
   known_gap virtual query directories are implemented as maintained sets computed from live state (Unverified-Actors, Load-Bearing, Ready-To-Verify, Pending-Occurrences, Fragile-Capacity, Wiring-Gaps) and materialized as a browsable tree; fabric.db namespace registration is opt-in (the live daemon holds the db for writes, so register_in_fabric runs when it is idle -- never force-unmount)

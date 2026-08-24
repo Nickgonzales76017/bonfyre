@@ -33,8 +33,8 @@ architecture address-plane
   forbidden_inference a mask match -> a semantic match
   forbidden_inference a blackholed hypothesis -> permanently false (a reheat reopens it)
   native_format graf
-  source_path 10-Code/BonfyreControlPlane/address_plane.py
-  witness 10-Code/BonfyreControlPlane/tests/test_address_plane.py
+  source_path components/BonfyreControlPlane/address_plane.py
+  witness components/BonfyreControlPlane/tests/test_address_plane.py
   internal_calculus route funnel: capability -> authority -> proof rejection over the real estate
   internal_calculus CID prefix routing: longest-prefix placement partitions over content digests
   internal_calculus SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)
@@ -48,11 +48,11 @@ architecture address-plane
   interacts capability-closure
   interacts lance
   interacts hash-identity
-  source_path 10-Code/BonfyreControlPlane/bonfyre_sid.py
-  source_path 10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
-  witness 10-Code/BonfyreControlPlane/tests/test_cid_sid.py
+  source_path components/BonfyreControlPlane/bonfyre_sid.py
+  source_path components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
+  witness components/BonfyreControlPlane/tests/test_cid_sid.py
   witness ~/.bonfyre/substrates/v6.1/feldera/route-set-proof.jsonl
-  witness 10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py
+  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py
   source_lineage AddressPlane / institutional packet-switching vision
   known_gap SID ANN via bonfyre-vec awaits the sqlite-vec extension; the learned-optimizer layer is built (see route-ranker)
 
@@ -72,8 +72,8 @@ architecture route-ranker
   invariant a feature's weak signal collapses to 0 rather than pretending to matter
   forbidden_inference a high rank -> a correct or authorized route (the exact closure still verifies the top choice)
   forbidden_inference a learned weight -> a large training set (currently ~10 real workload_proven successes)
-  source_path 10-Code/BonfyreControlPlane/route_ranker.py
-  witness 10-Code/BonfyreControlPlane/tests/test_route_ranker.py
+  source_path components/BonfyreControlPlane/route_ranker.py
+  witness components/BonfyreControlPlane/tests/test_route_ranker.py
   interacts address-plane
   source_lineage AddressPlane / BitNet learned-forwarding vision
   known_gap richer structural features (SID / masks / cost buckets / prior similar-route outcomes) and more routing-outcome records; a real BitNet backend when one exists in Bonfyre

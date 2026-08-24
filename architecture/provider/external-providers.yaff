@@ -139,7 +139,7 @@ architecture physical-asset
   interacts kratos-provider
   interacts feldera
   interacts work-graph
-  source_path 10-Code/BonfyreControlPlane/physical_asset.py
-  witness 10-Code/BonfyreControlPlane/tests/test_physical_asset.py
+  source_path components/BonfyreControlPlane/physical_asset.py
+  witness components/BonfyreControlPlane/tests/test_physical_asset.py
   source_lineage external-repo composition -- physical asset as derived-capability Resource
   known_gap proven for a robot climb capability through the live reachable_capacity DBSP circuit (telemetry -1 -> capability withdrawn); binding real OpenCat telemetry + Kratos proofs at the device boundary is the external-provider wiring

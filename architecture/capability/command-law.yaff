@@ -16,9 +16,9 @@ architecture command-law
   forbidden_inference same domain -> same law
   forbidden_inference a law label -> a proof the algebra holds
   command BonfyreDiscipl
-  source_path 10-Code/BonfyreControlPlane/command_laws.py
-  source_path 10-Code/BonfyreControlPlane/command_advertisements.py
-  witness 10-Code/BonfyreControlPlane/tests/test_command_advertisements.py
+  source_path components/BonfyreControlPlane/command_laws.py
+  source_path components/BonfyreControlPlane/command_advertisements.py
+  witness components/BonfyreControlPlane/tests/test_command_advertisements.py
   publishes CommandAdvertisement
   known_gap the whole 91-cmd surface (94 dirs, 87 built) is advertised as CommandAdvertisements mapped to the capability each provides (BonfyreAuth->Authority, BonfyreLedger->Value, BonfyreFPQ->FPQRepresentation, ...) and served in the fabric; binding each advertisement's consumes/produces into DisCIPL composition is the next step
   interacts capability-lattice

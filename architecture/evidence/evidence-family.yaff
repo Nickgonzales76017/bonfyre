@@ -16,8 +16,8 @@ architecture artifact-graph
   semantic_question What operator transformed this source artifact into that derived one?
   purpose Transformation semantics: source -> operator -> derived -> packet -> export. Distinct from lineage (ancestry) and provenance (who/what/when).
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/evidence_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
   node_types SourceArtifact
   node_types DerivedArtifact
   edge_types transformed_by
@@ -33,8 +33,8 @@ architecture provenance-graph
   semantic_question Through what source, observer, actor, runtime, model, provider, transport did this arrive?
   purpose The full path an artifact took to exist -- the cheap path-vector checks (untrusted provider, missing authority provenance, loops) ride on this.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/evidence_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
   node_types ProvenanceNode
   edge_types produced_by
   forbidden_inference a provenance path -> authority over the artifact
@@ -53,10 +53,10 @@ architecture evidence-graph
   semantic_question Does this support, contradict, reproduce, or falsify that claim?
   purpose The claim-support relation itself (supports / contradicts / reproduces / falsifies / contextualizes / witnesses). SERM produces its consequences; it is not this.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py
   source_path engine/core/src/evidence.c
   source_path engine/core/include/bf_evidence.h
-  witness 10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
   witness engine/core/tests/evidence_test.c
   node_types Claim
   edge_types supports
@@ -76,8 +76,8 @@ architecture temporal-evidence-graph
   semantic_question Which time is this -- event, publication, observation, retrieval, effective, supersession, correction, expiration?
   purpose Timestamps must not collapse. Stale-for-decision does not mean delete the historical evidence.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/evidence_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
   node_types TimedFact
   edge_types supersedes
   forbidden_inference retrieval time -> event time
@@ -93,8 +93,8 @@ architecture claim-graph
   semantic_question What does this claim depend on, assume, and what is its current vs historical proof state?
   purpose A claim with its definition/evidence dependencies, counterclaims, caveats, assumptions, and current vs historical proof state.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/evidence_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_evidence_graphs.py
+  source_path components/BonfyreControlPlane/evidence_graphs.py
+  witness components/BonfyreControlPlane/tests/test_evidence_graphs.py
   node_types Claim
   node_types Counterclaim
   edge_types depends_on

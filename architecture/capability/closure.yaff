@@ -21,11 +21,11 @@ architecture capability-lattice
   forbidden_inference a family name -> the estate is only that (BonfyreNet is not only networking)
   forbidden_inference classified into an estate -> cannot span estates
   command BonfyreCapability
-  source_path 10-Code/BonfyreControlPlane/estate_catalog.py
-  source_path 10-Code/BonfyreControlPlane/capability_catalog.py
-  source_path 10-Code/BonfyreControlPlane/probe_native_capabilities.py
-  source_path 10-Code/BonfyreControlPlane/probe_native_commands.py
-  witness 10-Code/BonfyreControlPlane/tests/test_capability_catalog.py
+  source_path components/BonfyreControlPlane/estate_catalog.py
+  source_path components/BonfyreControlPlane/capability_catalog.py
+  source_path components/BonfyreControlPlane/probe_native_capabilities.py
+  source_path components/BonfyreControlPlane/probe_native_commands.py
+  witness components/BonfyreControlPlane/tests/test_capability_catalog.py
   source_lineage bonfyre operating model plural-fabric
 
 architecture discipl-composition
@@ -44,9 +44,9 @@ architecture discipl-composition
   forbidden_inference a proposed chain -> a runnable chain (binding is separate)
   computational_form fused
   command BonfyreDiscipl
-  source_path 10-Code/BonfyreControlPlane/capability_closure.py
-  source_path 10-Code/BonfyreControlPlane/command_pipeline_seed.py
-  witness 10-Code/BonfyreControlPlane/tests/test_capability_closure.py
+  source_path components/BonfyreControlPlane/capability_closure.py
+  source_path components/BonfyreControlPlane/command_pipeline_seed.py
+  witness components/BonfyreControlPlane/tests/test_capability_closure.py
   source_lineage capability closure essay
 
 architecture capability-closure
@@ -77,7 +77,7 @@ architecture capability-closure
   computational_form durable
   command BonfyreDiscipl
   command BonfyreFPQ
-  source_path 10-Code/BonfyreControlPlane/capability_closure.py
-  witness 10-Code/BonfyreControlPlane/tests/test_fpq_closure.py
-  witness 10-Code/BonfyreControlPlane/tests/test_capability_closure.py
+  source_path components/BonfyreControlPlane/capability_closure.py
+  witness components/BonfyreControlPlane/tests/test_fpq_closure.py
+  witness components/BonfyreControlPlane/tests/test_capability_closure.py
   source_lineage capability closure essay

@@ -12,7 +12,7 @@ interaction feldera-maintains-reachability
   forbidden_inference an organism route withdrawn -> its independent members retracted
   invalidates_on a proof fact is inserted or retracted (reheat)
   witness reachability-proof.json (organism 1,2,3,2; fpq_present 1,1,1,1)
-  binding 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+  binding components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
 
 interaction verus-verifies-frontier-invariant
   source verus
@@ -52,7 +52,7 @@ interaction address-plane-feeds-closure
   drops candidates rejected by capability, authority, or proof masks
   forbidden_inference a survivor -> a runnable or authorized binding (it is only eligible)
   witness RouteResult
-  binding 10-Code/BonfyreControlPlane/address_plane.py
+  binding components/BonfyreControlPlane/address_plane.py
 
 interaction authority-compiles-to-mask
   source authority-graph
@@ -63,7 +63,7 @@ interaction authority-compiles-to-mask
   forbidden_inference a mask bit set -> authority to act (the mask is a compiled cut, not the grant)
   invalidates_on a grant is revoked or expires
   witness authority_have_mask
-  binding 10-Code/BonfyreControlPlane/address_plane.py
+  binding components/BonfyreControlPlane/address_plane.py
 
 interaction frontier-compiles-to-ternary
   source proof-frontier
@@ -74,7 +74,7 @@ interaction frontier-compiles-to-ternary
   forbidden_inference a -1 blackhole -> a permanent truth (a reheat signal reopens it)
   invalidates_on a reheat signal satisfies a cooled invariant
   witness proof_ternary
-  binding 10-Code/BonfyreControlPlane/address_plane.py
+  binding components/BonfyreControlPlane/address_plane.py
 
 interaction capability-compiles-to-mask
   source capability-lattice
@@ -84,7 +84,7 @@ interaction capability-compiles-to-mask
   drops nothing
   forbidden_inference a capability mask match -> a runnable binding
   witness capability_mask
-  binding 10-Code/BonfyreControlPlane/address_plane.py
+  binding components/BonfyreControlPlane/address_plane.py
 
 interaction closure-gated-by-frontier
   source capability-closure
@@ -97,7 +97,7 @@ interaction closure-gated-by-frontier
   authority the fence decision is binding, not advisory
   invalidates_on a named reheat signal satisfies a cooled invariant
   witness FenceDecision
-  binding 10-Code/BonfyreControlPlane/capability_closure.py
+  binding components/BonfyreControlPlane/capability_closure.py
 
 interaction lattice-feeds-discipl
   source capability-lattice
@@ -108,7 +108,7 @@ interaction lattice-feeds-discipl
   drops maturity claims of unrelated commands
   forbidden_inference classified estate -> single-estate binding
   witness command binding source_ref
-  binding 10-Code/BonfyreControlPlane/capability_closure.py
+  binding components/BonfyreControlPlane/capability_closure.py
 
 interaction discipl-composes-into-closure
   source discipl-composition
@@ -118,7 +118,7 @@ interaction discipl-composes-into-closure
   drops nothing
   forbidden_inference proposed chain -> runnable chain
   witness ExecutionOrganism
-  binding 10-Code/BonfyreControlPlane/capability_closure.py
+  binding components/BonfyreControlPlane/capability_closure.py
 
 interaction serm-reduces-to-sufficiency
   source serm
@@ -129,7 +129,7 @@ interaction serm-reduces-to-sufficiency
   forbidden_inference a required layer named -> a required layer proven
   invalidates_on a covered layer is reheated
   witness serm.sufficiency invariant
-  binding 10-Code/BonfyreControlPlane/serm.py
+  binding components/BonfyreControlPlane/serm.py
 
 interaction fpq-run-feeds-frontier
   source fpq-transform
@@ -143,7 +143,7 @@ interaction fpq-run-feeds-frontier
   invalidates_on fixture mse exceeds ceiling
   invalidates_on fixture gguf hash changes
   witness fpq.reconstruction.fixture.tiny_f16
-  binding 10-Code/BonfyreControlPlane/fpq_evidence.py
+  binding components/BonfyreControlPlane/fpq_evidence.py
 
 interaction representation-feeds-sli
   source fpq-transform
@@ -165,7 +165,7 @@ interaction actor-autofills-form
   authority only a verified_for(profile) actor may fill a field
   invalidates_on the actor's identifier profile changes
   witness Field.autofill_actor
-  binding 10-Code/BonfyreControlPlane/atomic_forms.py
+  binding components/BonfyreControlPlane/atomic_forms.py
 
 interaction formgraph-compiles-to-atomicform
   source form-graph
@@ -175,7 +175,7 @@ interaction formgraph-compiles-to-atomicform
   drops conditional fields whose condition does not hold for this submission
   forbidden_inference a field in the graph -> a required field in the compiled form
   witness compile(FormGraph, values)
-  binding 10-Code/BonfyreControlPlane/form_graph.py
+  binding components/BonfyreControlPlane/form_graph.py
 
 interaction binding-fills-form-evidence
   source evidence-binding
@@ -187,7 +187,7 @@ interaction binding-fills-form-evidence
   forbidden_inference positional order -> a valid binding
   invalidates_on the bound artifact's digest changes
   witness EvidenceBinding.witness
-  binding 10-Code/BonfyreControlPlane/institution_loop.py
+  binding components/BonfyreControlPlane/institution_loop.py
 
 interaction twin-materializes-into-evidence
   source foreign-twin
@@ -199,7 +199,7 @@ interaction twin-materializes-into-evidence
   authority materialize requires at least the reference right
   invalidates_on the foreign projection changes
   witness EvidenceSlot.artifact_digest
-  binding 10-Code/BonfyreControlPlane/foreign.py
+  binding components/BonfyreControlPlane/foreign.py
 
 interaction closure-submits-work
   source capability-closure
@@ -209,7 +209,7 @@ interaction closure-submits-work
   drops non-durable form routing
   forbidden_inference blocked organism -> submitted work
   witness native mission id
-  binding 10-Code/BonfyreControlPlane/capability_closure.py
+  binding components/BonfyreControlPlane/capability_closure.py
 
 interaction transport-carries-hop
   source transport-phenotype
@@ -219,7 +219,7 @@ interaction transport-carries-hop
   drops nothing
   forbidden_inference MCP receipt -> a different computation ran
   witness signed receipt
-  binding 10-Code/BonfyreControlPlane/transport.py
+  binding components/BonfyreControlPlane/transport.py
 
 interaction service-backs-work
   source service-lifecycle
@@ -230,7 +230,7 @@ interaction service-backs-work
   forbidden_inference service active -> bind authority
   invalidates_on the service lease goes stale
   witness ProvisionBinding
-  binding 10-Code/BonfyreControlPlane/service_lifecycle.py
+  binding components/BonfyreControlPlane/service_lifecycle.py
 
 interaction unlock-activates-resource
   source unlock-graph
@@ -250,7 +250,7 @@ interaction verification-resolves-identity-blocker
   forbidden_inference asserted actor -> resolved identity blocker
   invalidates_on the actor's confidence drops below verified
   witness actor_nodes.confidence
-  binding 10-Code/BonfyreControlPlane/opportunity.py
+  binding components/BonfyreControlPlane/opportunity.py
 
 interaction proof-resolves-layer-blocker
   source proof-frontier
@@ -261,7 +261,7 @@ interaction proof-resolves-layer-blocker
   forbidden_inference an open layer -> a resolved proof_layer blocker
   invalidates_on the frontier layer is reheated
   witness frontier_layers.status
-  binding 10-Code/BonfyreControlPlane/opportunity.py
+  binding components/BonfyreControlPlane/opportunity.py
 
 interaction work-resolves-dependency-blocker
   source work-graph
@@ -271,7 +271,7 @@ interaction work-resolves-dependency-blocker
   drops unsatisfied or failed items
   forbidden_inference an open work item -> a resolved work_done blocker
   witness work_items.state
-  binding 10-Code/BonfyreControlPlane/opportunity.py
+  binding components/BonfyreControlPlane/opportunity.py
 
 interaction authority-gates-activation
   source authority-graph
@@ -282,7 +282,7 @@ interaction authority-gates-activation
   forbidden_inference resource eligible -> resource activated
   invalidates_on the activate grant is revoked or expires
   witness has_authority(ACTIVATE)
-  binding 10-Code/BonfyreControlPlane/resource_activation.py
+  binding components/BonfyreControlPlane/resource_activation.py
 
 interaction service-binding-activates-resource
   source service-lifecycle
@@ -293,7 +293,7 @@ interaction service-binding-activates-resource
   forbidden_inference service provisioned -> resource activated
   invalidates_on the service is released
   witness bound_services
-  binding 10-Code/BonfyreControlPlane/resource_activation.py
+  binding components/BonfyreControlPlane/resource_activation.py
 
 interaction activation-resolves-resource-blocker
   source resource-activation
@@ -303,7 +303,7 @@ interaction activation-resolves-resource-blocker
   drops resources short of activated
   forbidden_inference a candidate resource -> a resolved resource_active blocker
   witness is_activated
-  binding 10-Code/BonfyreControlPlane/opportunity.py
+  binding components/BonfyreControlPlane/opportunity.py
 
 interaction relationship-resolves-stage-blocker
   source relationship-graph
@@ -314,7 +314,7 @@ interaction relationship-resolves-stage-blocker
   forbidden_inference collaboration on one profile -> a resolved stage blocker on another
   invalidates_on the relationship is corrected below the required stage
   witness stage_at_least
-  binding 10-Code/BonfyreControlPlane/opportunity.py
+  binding components/BonfyreControlPlane/opportunity.py
 
 interaction shadow-converts-via-relationship
   source relationship-graph
@@ -325,7 +325,7 @@ interaction shadow-converts-via-relationship
   forbidden_inference public structure mapped -> shadow institution active
   invalidates_on the relationship is corrected below engaged
   witness conversion_stage
-  binding 10-Code/BonfyreControlPlane/shadow_institution.py
+  binding components/BonfyreControlPlane/shadow_institution.py
 
 interaction relationship-earns-verification
   source relationship-graph
@@ -335,7 +335,7 @@ interaction relationship-earns-verification
   drops asserted-only identity
   forbidden_inference relationship engaged -> actor automatically verified (verification is a deliberate act)
   witness relationship trajectory
-  binding 10-Code/BonfyreControlPlane/relationship.py
+  binding components/BonfyreControlPlane/relationship.py
 
 interaction authority-resolves-authority-blocker
   source authority-graph
@@ -346,7 +346,7 @@ interaction authority-resolves-authority-blocker
   forbidden_inference an unlock exists -> authority to take it
   invalidates_on the granting edge expires or is revoked
   witness has_authority
-  binding 10-Code/BonfyreControlPlane/opportunity.py
+  binding components/BonfyreControlPlane/opportunity.py
 
 interaction reachability-gates-form-pipeline
   source unlock-graph
@@ -358,7 +358,7 @@ interaction reachability-gates-form-pipeline
   authority only a reachable_now opportunity may drive the submit-ready loop
   invalidates_on any blocker reopens
   witness OpportunityLoopResult
-  binding 10-Code/BonfyreControlPlane/institution_loop.py
+  binding components/BonfyreControlPlane/institution_loop.py
 
 interaction service-bind-is-an-unlock
   source unlock-graph
@@ -369,7 +369,7 @@ interaction service-bind-is-an-unlock
   forbidden_inference service catalogued -> service_bound blocker resolved
   authority binding a service requires the bind right
   witness ServiceProfile.state
-  binding 10-Code/BonfyreControlPlane/service_lifecycle.py
+  binding components/BonfyreControlPlane/service_lifecycle.py
 
 interaction address-plane-ranks-survivors
   source address-plane
@@ -379,7 +379,7 @@ interaction address-plane-ranks-survivors
   drops nothing (ranking never removes an eligible candidate)
   forbidden_inference a top rank -> a correct, authorized, or runnable route (the fence and closure still run)
   witness rank_commands
-  binding 10-Code/BonfyreControlPlane/route_ranker.py
+  binding components/BonfyreControlPlane/route_ranker.py
 
 interaction proof-frontier-reheats-feldera
   source proof-frontier
@@ -390,4 +390,4 @@ interaction proof-frontier-reheats-feldera
   forbidden_inference a reheat occurred -> the maintained answer changed (a reheat may reconfirm the same set)
   invalidates_on the maintained relation is read while a proof fact write is in flight
   witness reachability-proof.json (the retraction that withdrew organism 2 and reheated the fold)
-  binding 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+  binding components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs

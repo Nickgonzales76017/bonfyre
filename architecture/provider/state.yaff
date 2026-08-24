@@ -23,9 +23,9 @@ architecture provider-state
   state_types exhausted
   forbidden_inference available -> authorized
   forbidden_inference cheapest -> valid
-  source_path 10-Code/BonfyreControlPlane/provider_state.py
+  source_path components/BonfyreControlPlane/provider_state.py
   source_path engine/core/src/control_provider.c
-  witness 10-Code/BonfyreControlPlane/tests/test_provider_state.py
+  witness components/BonfyreControlPlane/tests/test_provider_state.py
   source_lineage run6 control-plane retrospective
 
 architecture resource-admission
@@ -46,11 +46,11 @@ architecture resource-admission
   forbidden_inference resource exists -> resource is reachable (activation is separate)
   invariant three verdicts admit/defer/reject never collapse; a request that cannot fit even if every grant were released is reject (never), not defer (not now)
   invariant committed grant bytes are subtracted from free space, so concurrent planes cannot each be admitted against the same bytes (native + python parity on the shared resource_grants ledger)
-  source_path 10-Code/BonfyreControlPlane/resource_admission.py
+  source_path components/BonfyreControlPlane/resource_admission.py
   source_path engine/core/src/control_admission.c
   source_path engine/core/src/admission.c
   source_path engine/core/include/bf_admission.h
-  witness 10-Code/BonfyreControlPlane/tests/test_resource_admission.py
+  witness components/BonfyreControlPlane/tests/test_resource_admission.py
   witness engine/core/tests/admission_test.c
   source_lineage run6 control-plane retrospective
   known_gap native decide() kernel returns verdicts byte-for-byte matching the python decide() across the case battery, and the native grant ledger writes the shared resource_grants store python counts (proven); binding native admission to a live disk probe at real supervisor call sites is the remaining native-absorption item

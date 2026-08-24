@@ -15,8 +15,8 @@ architecture blocker-graph
   invariant a blocker with no substrate to decide it is open, never assumed satisfied
   forbidden_inference blocker removed -> opportunity won
   source_lineage SEED-A recursive organ document
-  source_path 10-Code/BonfyreControlPlane/opportunity.py
-  witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
+  source_path components/BonfyreControlPlane/opportunity.py
+  witness components/BonfyreControlPlane/tests/test_opportunity.py
 
 architecture unlock-graph
   canonical_name UnlockGraph
@@ -48,13 +48,13 @@ architecture unlock-graph
   forbidden_inference an unlock exists -> the unlock is authorized or free
   forbidden_inference all blockers resolved -> opportunity won
   source_lineage SEED-A recursive organ document
-  source_path 10-Code/BonfyreControlPlane/opportunity.py
-  source_path 10-Code/BonfyreControlPlane/reachability_publish.py
-  source_path 10-Code/BonfyreControlPlane/reachability_watch.py
-  source_path 10-Code/BonfyreControlPlane/reachability_bridge.py
-  witness 10-Code/BonfyreControlPlane/tests/test_opportunity.py
+  source_path components/BonfyreControlPlane/opportunity.py
+  source_path components/BonfyreControlPlane/reachability_publish.py
+  source_path components/BonfyreControlPlane/reachability_watch.py
+  source_path components/BonfyreControlPlane/reachability_bridge.py
+  witness components/BonfyreControlPlane/tests/test_opportunity.py
   witness packs/institutional-opportunities/opportunities.yaff
-  witness 10-Code/BonfyreControlPlane/tests/test_loop_reachability.py
+  witness components/BonfyreControlPlane/tests/test_loop_reachability.py
   native_format graf
   known_gap unlockable (not yet reachable) opportunities are refused; auto-executing their unlocks is the next step
 
@@ -83,9 +83,9 @@ architecture collapse-front
   forbidden_inference single-retraction collapse -> that fact is the sole cause (co-critical grounds may each be independently solo-critical)
   forbidden_inference absent from every collapse front -> the conclusion is true (robust support is not truth; it may also be already unsupported)
   interacts actor-graph
-  source_path 10-Code/BonfyreControlPlane/support_lattice.py
+  source_path components/BonfyreControlPlane/support_lattice.py
   source_path architecture/atlas_collapse.py
-  witness 10-Code/BonfyreControlPlane/tests/test_support_lattice.py
+  witness components/BonfyreControlPlane/tests/test_support_lattice.py
   witness architecture/tests/test_atlas_collapse.py
   source_lineage retraction dual harvested from run6/run7 DBSP retraction algebra
   known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions). Self-applied to the atlas's own maturity claims (atlas_collapse.py): 21 measured/proven claims audited, zero laundered against the real witness files, 13 single-witness fragile. Extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
@@ -117,8 +117,8 @@ architecture fortification-plan
   interacts collapse-front
   interacts actor-graph
   interacts unlock-graph
-  source_path 10-Code/BonfyreControlPlane/fortification.py
-  witness 10-Code/BonfyreControlPlane/tests/test_fortification.py
+  source_path components/BonfyreControlPlane/fortification.py
+  witness components/BonfyreControlPlane/tests/test_fortification.py
   source_lineage CollapseFront applied to real institutional prioritization
   known_gap measured on the live 68-actor graph: Tarbell Center is the top verify target (279 live conclusions rest on an only-asserted actor), then the funder set at 15 each; plan published to the live fabric as fortification-plan.v1. Feeding the leverage signal back into reachable_capacity so the loop pursues fragile-but-reachable capacity before it collapses is the next step
 
@@ -151,10 +151,10 @@ architecture resource-activation
   forbidden_inference provider available -> resource activation bypassed
   forbidden_inference resource eligible -> resource authorized
   native_format graf
-  source_path 10-Code/BonfyreControlPlane/resource_activation.py
+  source_path components/BonfyreControlPlane/resource_activation.py
   source_path engine/core/src/activation.c
   source_path engine/core/include/bf_activation.h
-  witness 10-Code/BonfyreControlPlane/tests/test_resource_activation.py
+  witness components/BonfyreControlPlane/tests/test_resource_activation.py
   witness engine/core/tests/activation_test.c
   source_lineage SEED-A recursive organ document
   known_gap native state machine derives gap<candidate<qualified<eligible<authorized<activated on the shared resource_candidates store; the activate-authority gate is un-short-circuitable (authority result is an input -- authority stays its own fact); python reads native-written candidates -- parity proven

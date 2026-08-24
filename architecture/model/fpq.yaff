@@ -37,12 +37,12 @@ architecture fpq-transform
   command BonfyreFPQ
   source_path cmd/BonfyreFPQ/src/fpq_native.c
   source_path cmd/BonfyreFPQ/src/ggml_reader.c
-  source_path 10-Code/BonfyreControlPlane/fpq_evidence.py
-  source_path 10-Code/BonfyreControlPlane/fpq_pack_evidence.py
+  source_path components/BonfyreControlPlane/fpq_evidence.py
+  source_path components/BonfyreControlPlane/fpq_pack_evidence.py
   witness packs/fpq-proof-frontier/fixtures/tiny-f16.gguf
   witness packs/fpq-proof-frontier/measured-witness.yaff
-  witness 10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py
-  witness 10-Code/BonfyreControlPlane/fpq_pack_evidence.py
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness components/BonfyreControlPlane/fpq_pack_evidence.py
   witness ~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)
   source_lineage run4_institutional_fabric FPQ archive
   source_lineage mature fpqqwen substrate (HuggingFace, cmd/BonfyreQwenFPQ, ~/BonfyreModels/fpq)
@@ -90,7 +90,7 @@ architecture fpq-mode-select
   computational_form fused
   command BonfyreFPQ
   source_path cmd/BonfyreFPQ/src/fpq_codec_v2.c
-  witness 10-Code/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
   source_lineage run4_institutional_fabric FPQ archive
 
 architecture sli-execution

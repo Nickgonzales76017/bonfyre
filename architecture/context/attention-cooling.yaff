@@ -19,7 +19,7 @@ architecture attention-cooling
   invariant a cooled subject must name what reheats it, or it consumes attention forever
   invariant only a signal matching a named reheat condition may reheat a cooled subject
   forbidden_inference a symptom -> attention (only a named reheat signal warms a cooled subject)
-  source_path 10-Code/BonfyreControlPlane/scheduling.py
+  source_path components/BonfyreControlPlane/scheduling.py
   interacts proof-frontier
   interacts work-graph
   source_lineage run6 control-plane retrospective -- the Proton attention-drain fix

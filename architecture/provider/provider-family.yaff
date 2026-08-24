@@ -10,8 +10,8 @@ architecture provider-graph
   semantic_question Which providers can realize this capability, at what multidimensional metric?
   purpose Capability bids, tournament, fallback tree -- native/frappe/replicated/signal/sidecar/external/commercial/capacity/model/device/human bids scored on a vector (cost/quality/latency/trust/authority/locality/semantic-loss/availability), no scalar collapse. Anycast over equivalent realizations.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/provider_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_provider_graphs.py
+  source_path components/BonfyreControlPlane/provider_graphs.py
+  witness components/BonfyreControlPlane/tests/test_provider_graphs.py
   node_types CapabilityBid
   node_types ProviderTournament
   edge_types realizes
@@ -31,8 +31,8 @@ architecture placement-graph
   semantic_question Where does this run or reside, given locality and resource constraints?
   purpose The material placement of a selected realization across Mac fabric, LAN, GPU, device, remote. Distinct from ProviderGraph (who can) and RuntimeMesh (what instances exist).
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/provider_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_provider_graphs.py
+  source_path components/BonfyreControlPlane/provider_graphs.py
+  witness components/BonfyreControlPlane/tests/test_provider_graphs.py
   node_types PlacementNode
   edge_types placed_on
   forbidden_inference placeable -> authorized to execute there
@@ -48,8 +48,8 @@ architecture runtime-parity-graph
   semantic_question Do direct, MCP, and HTTP carriers produce the same semantic result?
   purpose Proven semantic equivalence across execution carriers, so route selection can treat them as an equal-cost multipath group.
   maturity implemented
-  source_path 10-Code/BonfyreControlPlane/provider_graphs.py
-  witness 10-Code/BonfyreControlPlane/tests/test_provider_graphs.py
+  source_path components/BonfyreControlPlane/provider_graphs.py
+  witness components/BonfyreControlPlane/tests/test_provider_graphs.py
   node_types Carrier
   edge_types parity_with
   forbidden_inference a carrier ran -> semantic parity with the others

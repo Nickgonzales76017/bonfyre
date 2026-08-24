@@ -25,12 +25,12 @@ architecture work-graph
   invariant a node's family must be registered as routable, or it is rejected (native + python parity)
   forbidden_inference queue priority -> durability guarantee
   command BonfyreQueue
-  source_path 10-Code/BonfyreControlPlane/work_graph.py
+  source_path components/BonfyreControlPlane/work_graph.py
   source_path engine/core/src/workgraph.c
   source_path engine/core/include/bf_workgraph.h
   witness engine/core/tests/routable_family_test.c
   known_gap native WorkGraph is mature and now family-routing-checked; native Occurrence and Resource/Actor persistence, plane replay, and supervisor call-site replacement are the open native-absorption items (Python authority not yet retired)
-  witness 10-Code/BonfyreControlPlane/tests/test_work_graph.py
+  witness components/BonfyreControlPlane/tests/test_work_graph.py
   source_lineage run6 control-plane retrospective
 
 architecture occurrence-spine
@@ -50,12 +50,12 @@ architecture occurrence-spine
   edge_types precedes
   forbidden_inference retrieval time -> event time (timestamps must not collapse)
   invariant observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store
-  source_path 10-Code/BonfyreControlPlane/external_events.py
-  source_path 10-Code/BonfyreControlPlane/ingest_github_notifications.py
-  source_path 10-Code/BonfyreControlPlane/migrate_run6.py
+  source_path components/BonfyreControlPlane/external_events.py
+  source_path components/BonfyreControlPlane/ingest_github_notifications.py
+  source_path components/BonfyreControlPlane/migrate_run6.py
   source_path engine/core/src/occurrence.c
   source_path engine/core/include/bf_occurrence.h
-  witness 10-Code/BonfyreControlPlane/tests/test_external_events.py
+  witness components/BonfyreControlPlane/tests/test_external_events.py
   witness engine/core/tests/occurrence_spine_test.c
   witness engine/core/tests/run6_replay.sh
   witness engine/core/tests/occurrence_correction_test.c
@@ -84,6 +84,6 @@ architecture transport-phenotype
   forbidden_inference MCP receipt present -> different computation occurred
   computational_form durable
   command BonfyreProject
-  source_path 10-Code/BonfyreControlPlane/transport.py
-  witness 10-Code/BonfyreControlPlane/tests/test_transport.py
+  source_path components/BonfyreControlPlane/transport.py
+  witness components/BonfyreControlPlane/tests/test_transport.py
   source_lineage MCP native_tool_invoke work

@@ -6,7 +6,7 @@ atlas substrate
 # Maturity is real, not aspirational: 13 substrates are vendored, built and
 # probed under ~/.bonfyre/substrates/v6.1, each with a recorded live-upstream
 # semantic proof (state=passed, output_digest) -- consumed by
-# 10-Code/BonfyreControlPlane/substrate_evidence.py, never re-derived. They are
+# components/BonfyreControlPlane/substrate_evidence.py, never re-derived. They are
 # measured. HVM4 is implemented via a real hvm reduction (substrate_hvm.py); its
 # HVM2->HVM4 upgrade is the one open gap.
 
@@ -24,7 +24,7 @@ architecture yaff
   forbidden_inference two architectures sharing YaFF -> the same semantics
   native_format yaff
   source_path architecture/atlas.py
-  source_path 10-Code/BonfyreControlPlane/substrate_evidence.py
+  source_path components/BonfyreControlPlane/substrate_evidence.py
   source_path ~/.bonfyre/substrates/v6.1/yaff/source
   witness architecture/tests/test_atlas.py
   witness ~/.bonfyre/substrates/v6.1/yaff/semantic-proof.json
@@ -43,8 +43,8 @@ architecture hvm4
   forbidden_inference a reduction completing -> the reduced structure is correct
   native_format helix
   interacts fpq-seed
-  source_path 10-Code/BonfyreControlPlane/substrate_hvm.py
-  witness 10-Code/BonfyreControlPlane/tests/test_substrate_hvm.py
+  source_path components/BonfyreControlPlane/substrate_hvm.py
+  witness components/BonfyreControlPlane/tests/test_substrate_hvm.py
   source_lineage Reality Foundry 14-substrate
   known_gap installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending
 
@@ -88,20 +88,20 @@ architecture feldera
   interacts unlock-graph
   command BonfyreProof
   source_path ~/.bonfyre/substrates/v6.1/feldera/source
-  source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
-  source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
-  source_path 10-Code/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs
-  source_path 10-Code/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
-  source_path 10-Code/BonfyreControlPlane/substrate/feldera_maintained_relations.rs
-  witness 10-Code/BonfyreControlPlane/substrate/full_retraction_cascade.sh
-  witness 10-Code/BonfyreControlPlane/substrate/maintained_relations_witness.sh
-  source_path 10-Code/BonfyreControlPlane/substrate_feldera.py
-  source_path 10-Code/BonfyreControlPlane/reachability_bridge.py
+  source_path components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_maintained_relations.rs
+  witness components/BonfyreControlPlane/substrate/full_retraction_cascade.sh
+  witness components/BonfyreControlPlane/substrate/maintained_relations_witness.sh
+  source_path components/BonfyreControlPlane/substrate_feldera.py
+  source_path components/BonfyreControlPlane/reachability_bridge.py
   witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json
   witness ~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json
-  witness 10-Code/BonfyreControlPlane/tests/test_substrate_feldera.py
-  witness 10-Code/BonfyreControlPlane/tests/test_reachability_bridge.py
+  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py
+  witness components/BonfyreControlPlane/tests/test_reachability_bridge.py
   source_lineage Reality Foundry 14-substrate
   known_gap live-fabric relations now feed the DBSP engine via reachability_bridge (backfilled from real state, DBSP reproduces the Python answer exactly); remaining is a persistent long-lived circuit fed by fabric change-deltas rather than a per-tick reseed
 

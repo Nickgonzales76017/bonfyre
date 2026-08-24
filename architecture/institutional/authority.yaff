@@ -34,8 +34,8 @@ architecture authority-graph
   forbidden_inference available -> authorized
   forbidden_inference presence -> authority
   native_format graf
-  source_path 10-Code/BonfyreControlPlane/authority.py
-  witness 10-Code/BonfyreControlPlane/tests/test_authority.py
+  source_path components/BonfyreControlPlane/authority.py
+  witness components/BonfyreControlPlane/tests/test_authority.py
   source_lineage SEED-A recursive organ document
 
 architecture relationship-graph
@@ -61,8 +61,8 @@ architecture relationship-graph
   forbidden_inference relationship -> contract
   forbidden_inference collaboration on one profile -> standing on another
   native_format graf
-  source_path 10-Code/BonfyreControlPlane/relationship.py
-  witness 10-Code/BonfyreControlPlane/tests/test_relationship.py
+  source_path components/BonfyreControlPlane/relationship.py
+  witness components/BonfyreControlPlane/tests/test_relationship.py
   source_lineage capitalgym crm relationships
 
 architecture shadow-institution
@@ -87,8 +87,8 @@ architecture shadow-institution
   forbidden_inference observed hierarchy -> established authority
   forbidden_inference public structure mapped -> relationship established
   native_format graf
-  source_path 10-Code/BonfyreControlPlane/shadow_institution.py
-  witness 10-Code/BonfyreControlPlane/tests/test_shadow_institution.py
+  source_path components/BonfyreControlPlane/shadow_institution.py
+  witness components/BonfyreControlPlane/tests/test_shadow_institution.py
   source_lineage SEED-A recursive organ document
 
 architecture institution-graph
