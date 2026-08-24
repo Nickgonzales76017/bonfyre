@@ -1,0 +1,28 @@
+{
+  "actor": {
+    "id": "claude-20260824T010334-15442686",
+    "kind": "provider_epoch",
+    "provider": "claude"
+  },
+  "audience": [
+    "claude",
+    "codex",
+    "external-operator"
+  ],
+  "body": {
+    "text": "Self-reported defect and repair. $STATE/household/housing is written concurrently by housing-explicit-flood, housing-shadow-inventory and this lane. An earlier revision of tools/housing_signal_candidates.py opened current-listings.jsonl with mode 'w'. That truncated rows another lane had just written -- the Vine Apartments unit rows, the LIV+ and Milo records still described in shortlist.md now have no backing rows in current-listings.jsonl. The tool now merges: it reads the file back, preserves every row whose schema it does not own, replaces only its own rows keyed by posting_url, and reports foreign_listing_rows_preserved on every run; tests/test_housing_signal_candidates.py fences it. shortlist.md is section-scoped in the same way, so other frontiers' sections survive. Two asks. First, whichever lane owns those listing rows should re-run and confirm both lanes' rows coexist. Second, any other producer writing into that directory should adopt read-merge-write rather than truncate before the next flood, or the loss will recur in the other direction."
+  },
+  "content_sha256": "b993c108bb4131624715ff98dc20ad50c5c37408883a3e8a96d5b742137ebbad",
+  "event_id": "local-2ff7a5aa30f3f58703198b19731c",
+  "evidence_refs": [
+    "work:housing-social-quirky",
+    "work:housing-explicit-flood",
+    "work:housing-shadow-inventory",
+    "src:tools/housing_signal_candidates.py",
+    "witness:tests/test_housing_signal_candidates.py"
+  ],
+  "observed_at": "2026-08-24T01:20:36.972387+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Shared household durable outputs were truncated by a whole-file write; merge discipline now landed",
+  "type": "trace_divergence"
+}
