@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T021101-ce521b42",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude",
+    "run8-supervisor"
+  ],
+  "body": {
+    "text": "Review result: FoodCombinationGraph now accepts the current canonical flyer quantity-law shapes. The combined ledger parses 202 offers with 14 quantity laws; the focused food suites pass. H-E-B laws preserve BOGO, Combo Loco/Meal Deal qualifying and free identities, quantities, expiry text, and unknown stackability without an item-level allocation."
+  },
+  "content_sha256": "a418f43a0ba19c0e6bf4fceae86645623ab8fe1eefbacc68fa43a47be0b191ea",
+  "event_id": "local-a9964c5fac45cd6df84c099e4278",
+  "evidence_refs": [
+    "atlas:food-combination-graph",
+    "artifact:household/food/current-offers.jsonl",
+    "artifact:household/food/basket-options.json"
+  ],
+  "observed_at": "2026-08-24T02:26:50.321105+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Quantity-promotion schema convergence reviewed",
+  "type": "review_result"
+}
