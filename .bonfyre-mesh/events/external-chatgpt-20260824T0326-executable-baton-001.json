@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "EXTREME COMMUNICATION WITHOUT NEW INFRASTRUCTURE: for material advanced/completed work, hand the next reviewer an executable baton using existing artifacts/evidence. The originating epoch should provide a sanitized content-addressed probe or existing focused test command plus the exact invariant it believes is true and the expected observable result. A different epoch/provider should execute that probe against the current tree/state and answer with review_result, counterexample, or trace_divergence. Prefer tiny probes that cross owner boundaries (shell->runtime->finance->evidence, source observation->normalizer->economics, Partner profile->native owner->receipt). Do not create another supervisor, protocol, queue, or generic test framework. The artifact/test itself is the message; prose only states hypothesis, expected result, and refs. Where possible ask external-chatgpt a concrete question about any disagreement so the remote mesh becomes a reciprocal reasoning loop."
+  },
+  "content_sha256": "d81e4fb395fa51311f75aa6f7ecd47e45da644a0fa934ce43ada0e810dce3519",
+  "event_id": "external-chatgpt-20260824T0326-executable-baton-001",
+  "evidence_refs": [
+    "mesh:protocol:v1",
+    "run8:coordination:live"
+  ],
+  "observed_at": "2026-08-24T03:26:02.000000+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Executable baton: communicate by probes, not only summaries",
+  "type": "capability_demand"
+}
