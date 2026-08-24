@@ -83,13 +83,13 @@
       "tracked_files": 2
     },
     {
-     "fate": "retain_until_native_parity",
-     "name": "BonfyreControlPlane",
-     "reason": "cited by the mandatory control-plane suite, the native-kernel workflow and live atlas witnesses; native parity is unproven",
+      "fate": "retain_until_native_parity",
+      "name": "BonfyreControlPlane",
+      "reason": "cited by the mandatory control-plane suite, the native-kernel workflow and live atlas witnesses; native parity is unproven",
       "tracked_files": 129,
-     "witnesses": [
-       ".github/workflows/native-kernel.yml",
-       "components/BonfyreControlPlane/tests"
+      "witnesses": [
+        ".github/workflows/native-kernel.yml",
+        "components/BonfyreControlPlane/tests"
       ]
     },
     {
@@ -309,28 +309,28 @@
       "fate": "absorb_required",
       "name": "BonfyreProject",
       "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
-     "residue_documentation": [
-       "components/BonfyreProject/README.md"
-     ],
+      "residue_documentation": [
+        "components/BonfyreProject/README.md"
+      ],
       "residue_source": [
         "components/BonfyreProject/tests/smoke.sh"
       ],
-     "residue_symbols": [
+      "residue_symbols": [
         "derive_robots_url",
         "fetch_to_file",
-       "is_http_url",
-       "observe_foreign",
+        "is_http_url",
+        "observe_foreign",
         "read_child_stdout",
         "robots_disallow_source",
         "robots_pattern_matches",
         "robots_user_agent_score",
         "trim_ascii",
         "write_policy_receipt"
-     ],
+      ],
       "tracked_files": 4
-   },
-   {
-     "current_owner": "cmd/BonfyreProof",
+    },
+    {
+      "current_owner": "cmd/BonfyreProof",
       "fate": "absorb_docs_and_fixtures",
       "name": "BonfyreProof",
       "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
@@ -533,13 +533,13 @@
       "tracked_files": 2
     },
     {
-     "fate": "absorb_to_current_runtime",
-     "live_references": [
-       ".bonfyre-runtime/local-ai-transcription-queue.json",
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        ".bonfyre-runtime/local-ai-transcription-queue.json",
         ".bonfyre-runtime/sync-transcription-notes.py",
-       "services/queue-dispatcher/drain_transcription_queue.pl"
-     ],
-     "name": "LocalAITranscriptionService",
+        "services/queue-dispatcher/drain_transcription_queue.pl"
+      ],
+      "name": "LocalAITranscriptionService",
       "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
       "tracked_files": 38
     },
@@ -819,13 +819,13 @@
       ],
       "name": "_shared",
       "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
-     "tracked_files": 1
-   }
- ],
+      "tracked_files": 1
+    }
+  ],
   "deleted_pending_commit": [],
- "fate_counts": {
-   "absorb_docs_and_fixtures": 14,
-   "absorb_required": 7,
+  "fate_counts": {
+    "absorb_docs_and_fixtures": 14,
+    "absorb_required": 7,
     "absorb_to_current_runtime": 9,
     "absorb_to_evidence": 45,
     "retain_until_native_parity": 1,
