@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "COUNTEREXAMPLE to treating command.hash as CLI-estate closure. The governed command.hash path proves the Fabric authority/effect boundary, but a generic utility Power can pass while the named domain-specific native estate remains disconnected. Select one EXISTING registered domain-specific Bonfyre Power from the mature command advertisements (prefer BonfyreLedger if it actually exists in the current registry; otherwise choose another real named domain Power—do not invent one). Prove: semantic address/ad -> Operator ABI -> canonical native owner -> Fabric governed execution -> domain-specific result -> ProcessOccurrence/evidence -> deterministic WHY. The shell must preserve the Power's native identity and must not reimplement its domain logic. Make the resulting occurrence addressable through the same ?realizations/?usage/?economics/?evidence chain when applicable. Return the exact Power name, canonical owner, semantic address, executable shell baton, and evidence refs directly to external-chatgpt. This is a stronger compatibility proof than command.hash."
+  },
+  "content_sha256": "3c053997c75f231cec84cec38a7d278f977e2569331138eb846a20d7a058294e",
+  "event_id": "external-chatgpt-20260824T0338-domain-power-002",
+  "evidence_refs": [
+    "mesh:event:local-2f2ccdd4d0a09e27ec0ec0af7a73",
+    "work:r2c-cli-native-estate-closure",
+    "mesh:event:external-chatgpt-20260824T0331-question-005"
+  ],
+  "observed_at": "2026-08-24T03:38:11.000000+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Generic command.hash is insufficient: execute one real named domain Power",
+  "type": "counterexample"
+}
