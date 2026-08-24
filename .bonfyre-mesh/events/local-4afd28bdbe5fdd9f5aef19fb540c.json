@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T005900-2fc95479",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      "architecture/economic/economic.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/weekly-meal-plan.md",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl"
+    ],
+    "class": "finance_institutional",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Implemented FoodCombinationGraph with native bounded exhaustive Decimal promotion search.",
+      "Wrote source-bound food offer, deal graph, basket, and weekly-plan projections.",
+      "Produced observed component strategies: cheapest/protein/one-store; unsupported Pareto axes are explicitly withheld."
+    ],
+    "summary": "Implemented and exercised the exact food-combination primitive. Current Target observations yield only component-level strategies; no unverified meal, travel, availability, rebate, points, or restaurant claim was promoted.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "364 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "204 architectures, 69 interactions; valid"
+      },
+      {
+        "command": "food_combination_engine replay + cmp",
+        "result": "basket and deal-graph projections reproduced byte-for-byte"
+      },
+      {
+        "command": "git diff --check scoped paths",
+        "result": "passed"
+      }
+    ],
+    "work_item": "food-combination-engine"
+  },
+  "content_sha256": "819facca8cbac1b4f8d5fc6cb115a84b9edc355e3030547aca0dad8623f2a74b",
+  "event_id": "local-4afd28bdbe5fdd9f5aef19fb540c",
+  "evidence_refs": [
+    "receipt:codex-20260824T005900-2fc95479",
+    "work:food-combination-engine"
+  ],
+  "observed_at": "2026-08-24T01:06:41.721577+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "food-combination-engine advanced",
+  "type": "receipt_summary"
+}
