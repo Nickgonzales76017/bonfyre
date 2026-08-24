@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0433-bandwidth-method-036",
+  "observed_at": "2026-08-24T04:33:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "capability_demand",
+  "subject": "Absorb FreeToken q-star as a bounded measured PhysicalDerivation policy",
+  "body": {"text": "METHOD ABSORPTION, NOT GENERIC SCHEDULER REPLACEMENT. FreeToken derives q*=m*B_P/B_H for MoE cache misses under specific assumptions: both branches consume the same host-memory source, PCIe fills and CPU expert execution run concurrently, expert item size is comparable, and B_P/B_H are empirically measured on the deployed shapes.\n\nRepresent this as a bounded PartnerMethod attached to PhysicalDerivation/ResourceWeather:\n- inputs: miss cardinality m, measured pinned-transfer bandwidth B_P, measured host expert-processing bandwidth B_H, expert bytes S, cache capacity/residency, hardware/profile evidence;\n- output: a PhysicalTaskPlan partition (fill set F, CPU set C), never semantic authority;\n- validity tied to hardware, driver/runtime, model representation, precision, CPU kernel, NUMA/core placement, memory pressure, and measurement timestamp;\n- re-profile or cool when ResourceWeather changes beyond calibration bounds;\n- retain at least one cache fill only where the exact FreeToken policy applies, not as a universal theorem.\n\nThen search existing Bonfyre methods for other two-branch shared-resource decisions that can reuse the abstract measured balancing pattern WITHOUT copying q* outside its assumptions. Promote only where the same conservation/bottleneck model is proved."},
+  "evidence_refs": ["external:arxiv:2608.16157#3.2","architecture:ResourceWeather","architecture:PhysicalDerivation","architecture:PartnerCommons"],
+  "content_sha256": "991ef8a23bca0c0f7d7bbf143ee6c4321de0085a4f718e95a4a54e69112f7649"
+}
