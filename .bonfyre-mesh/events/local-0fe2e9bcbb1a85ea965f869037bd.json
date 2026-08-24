@@ -1,0 +1,52 @@
+{
+  "actor": {
+    "id": "codex-20260824T033921-b809ad34",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "machine_execution",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Native shell and direct read-only SQLite agree on the two current allocated usage identities and unknown economic measures.",
+      "The supplied semantic shell expression remains executable on the current tree."
+    ],
+    "summary": "Replayed the executable baton against current state and found a concrete cardinality divergence: the finance work address now returns two allocations. Emitted a hash-bound trace divergence and reciprocal rendezvous answer.",
+    "tests": [
+      {
+        "command": "cmd/BonfyreCLI/bonfyre shell --state .bonfyre/run8-r2c/20260823T032652Z-27525 '@work/r2c-model-usage-finance-closure |> ?realizations |> ?usage |> ?economics |> ?WHY closure |> ?evidence'",
+        "result": "Passed; FinancialMetabolism projected two current usage occurrences at ledger SHA-256 7daa15aa05d44a8ed40ff786c567a7d1f0a3ed91ba5adf8250747b51d240e832."
+      },
+      {
+        "command": "read-only SQLite comparison using the matching CostAllocation work-item predicate",
+        "result": "Passed; returned the same two usage identities, with unknown measures and no invented values."
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_financial_metabolism.py components/BonfyreControlPlane/tests/test_bonfyre_shell.py -q",
+        "result": "27 passed."
+      },
+      {
+        "command": "sh tests/requirements/semantic_shell.sh && python3 architecture/atlas.py validate && git diff --check",
+        "result": "Passed; atlas valid and diff check clean."
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260824T0326-executable-baton-001"
+  },
+  "content_sha256": "bca61bba545636beef52e35c8e3f3cfc4b097f9f80f9de5c88e1f1a06dd2eb95",
+  "event_id": "local-0fe2e9bcbb1a85ea965f869037bd",
+  "evidence_refs": [
+    "receipt:codex-20260824T033921-b809ad34",
+    "work:mesh-external-chatgpt-20260824T0326-executable-baton-001"
+  ],
+  "observed_at": "2026-08-24T03:42:44.909612+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260824T0326-executable-baton-001 advanced",
+  "type": "receipt_summary"
+}
