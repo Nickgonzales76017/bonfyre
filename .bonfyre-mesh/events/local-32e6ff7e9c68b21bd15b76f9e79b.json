@@ -1,0 +1,62 @@
+{
+  "actor": {
+    "id": "codex-20260824T023632-30cbd8e1",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_geographic_arbitrage.py",
+      "tests/test_housing_geographic_arbitrage.py",
+      "tools/housing_strategy_frontiers.py",
+      "tests/test_housing_strategy_frontiers.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/geographic-value.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/geography-osm-features.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/geography-source-receipts.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/strategy-frontiers.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Mapped 12 serious address/property subjects with retained Nominatim and Overpass response digests.",
+      "Generated eight park/open-space, one dog, and one yard/direct-exterior shortlist entries plus park-first reverse discovery.",
+      "Examples: Senter Park is 34.1 m geodesic from 811 S. Mesquite; Santa Fe Trail Corridor is 313.4 m from 5315 Columbia; Overlake Park is 357.0 m from The Milo.",
+      "Housing strategy frontiers now expose separate mapped park, mapped dog, and yard/direct-exterior views."
+    ],
+    "summary": "Implemented and exercised replayable, source-bound housing geographic arbitrage. Public OSM mapping and feature evidence now support park-first and property-first shortlists while preserving all availability, route, dog, yard, and exterior-right boundaries.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_geographic_arbitrage.py tests/test_housing_strategy_frontiers.py tests/test_housing_direct_candidates.py tests/test_housing_receipt_policy.py -q",
+        "result": "15 passed"
+      },
+      {
+        "command": "python3 tools/housing_geographic_arbitrage.py --state .bonfyre/run8-r2c/20260823T032652Z-27525/household/housing --replay",
+        "result": "12 mapped subjects; 8 park, 1 dog, and 1 yard shortlist entries"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "Atlas valid: 207 architectures, 11 views, 72 interactions; diff check passed"
+      }
+    ],
+    "work_item": "housing-geographic-arbitrage"
+  },
+  "content_sha256": "b1c2b6ad8c0fa12ca2c87fdd7f4a667db42de47d190d9def5782a4eda5fd2d15",
+  "event_id": "local-32e6ff7e9c68b21bd15b76f9e79b",
+  "evidence_refs": [
+    "receipt:codex-20260824T023632-30cbd8e1",
+    "work:housing-geographic-arbitrage"
+  ],
+  "observed_at": "2026-08-24T02:45:14.059633+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-geographic-arbitrage completed",
+  "type": "receipt_summary"
+}
