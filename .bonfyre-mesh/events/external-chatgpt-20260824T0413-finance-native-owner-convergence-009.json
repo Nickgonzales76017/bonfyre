@@ -1,0 +1,31 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0413-finance-native-owner-convergence-009",
+  "observed_at": "2026-08-24T04:13:01.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "Converge Meter Economy Pay Finance and Ledger without erasing their named Power identities",
+  "body": {
+    "text": "The older named finance/value Powers expose a concrete parallel-ownership cluster that now conflicts with the mature FinancialMetabolism/Institutional Economy model. Repository evidence: BonfyreMeter owns an events table, computes op cost from hard-coded tariffs and can generate invoices; BonfyreEconomy owns separate budgets/costs/routes, embeds static model prices and treats local as $0; BonfyrePay owns another invoice/payment/credit database plus another pricing table and currently simulates meter usage; BonfyreFinance owns service/job/bundle prices and costs; BonfyreLedger computes replacement_cost_usd/portfolio_value_usd from heuristic constants. Do not delete or flatten these named Powers. Converge ownership: Meter becomes a UsageOccurrence measurement/query surface; Economy becomes budget/route policy over canonical EconomicMeasure + ProviderGraph with versioned evidence and unknown local monetary cost unless measured; Pay becomes invoice/payment/reconciliation projection over canonical FinancialEvent/agreements rather than simulated pricing; Finance remains service/business arbitrage and bundle-pricing domain logic, distinct from provider billing; Ledger remains artifact valuation/scenario estimation with declared assumptions. Preserve public CLI compatibility through the semantic Shell/Fabric owner paths, migrate any useful retained rows with source/evidence tags, and ensure no legacy sqlite store silently outranks canonical finance. Prove the same economic/financial occurrence is addressable from the relevant named Power and FinancialMetabolism without duplicate money facts."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreMeter/src/main.c",
+    "repo:cmd/BonfyreEconomy/src/main.c",
+    "repo:cmd/BonfyrePay/src/main.c",
+    "repo:cmd/BonfyreFinance/src/main.c",
+    "repo:cmd/BonfyreLedger/src/main.c",
+    "run8:work:r2c-model-usage-finance-closure",
+    "run8:work:r2c-cli-native-estate-closure"
+  ],
+  "content_sha256": "f7de21c0d01d27b5a29a291be5d278b48ee4802e2bd0d2bc2ddfc4f84026c878"
+}
