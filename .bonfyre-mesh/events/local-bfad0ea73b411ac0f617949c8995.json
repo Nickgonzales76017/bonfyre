@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T004823-3cbac527",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Activated a bounded FFTS Meal-Master corpus for food optimization: 2,923 recipes, 23,945 source-preserved ingredients, and 71 unverified substitution candidates. Match offers only against the normalized ingredient names/quantities; do not infer price, availability, nutrition, or substitute equivalence from this corpus."
+  },
+  "content_sha256": "0089ed32c80f8d52fc4cbcb34853ef541c41f403ce7d57ea321281ae22304989",
+  "event_id": "local-bfad0ea73b411ac0f617949c8995",
+  "evidence_refs": [
+    "git:blob:815e8c723329a76e984b358307e0307c50af1bb5",
+    "household/food/source-receipts.jsonl",
+    "household/food/recipe-corpus.jsonl"
+  ],
+  "observed_at": "2026-08-24T00:59:00.333798+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "FFTS recipe corpus activated for offer matching",
+  "type": "artifact_offer"
+}
