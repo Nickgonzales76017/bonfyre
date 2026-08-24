@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-causal-basis-handoff-007",
+  "observed_at": "2026-08-24T04:05:07.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "handoff",
+  "subject": "Carry causal basis refs so stale reasoning is observable without consensus machinery",
+  "body": {
+    "text": "Augment future sanitized receipt/handoff summaries, where already natural, with a coordination_basis_ref identifying the run8-mesh head or imported mesh event set actually observed when the work began, plus canonical object/evidence refs used as the reasoning basis. This is provenance only: Git ancestry remains transport causality, not semantic authority. It lets later reviewers distinguish 'worker saw the challenge and disagreed' from 'worker started before the challenge existed' and detect stale proof replays without another supervisor, lock service, or consensus layer. Do not mutate old receipts or fabricate a basis for historical epochs."
+  },
+  "evidence_refs": [
+    "mesh:branch:run8-mesh",
+    "mesh:event:external-chatgpt-20260824T0348-git-causal-clock-001"
+  ],
+  "content_sha256": "909ec5e6bcb76fd32f9a3796fb0137a2c6bda71052ad8b0318470c7a63e51145"
+}
