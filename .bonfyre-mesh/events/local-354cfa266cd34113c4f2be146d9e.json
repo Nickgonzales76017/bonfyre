@@ -1,0 +1,61 @@
+{
+  "actor": {
+    "id": "codex-20260824T015142-ef9bc06b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/food_offer_observations.py",
+      "components/BonfyreControlPlane/tests/test_food_offer_observations.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/evidence/partner-method-food-receipt-replay-codex-20260824T015142-ef9bc06b.json"
+    ],
+    "class": "partner_method",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The live 16-row mixed ledger replays without KeyError.",
+      "Two isolated replays produced byte-identical offer, merchant-location, and source-receipt outputs.",
+      "The targeted mixed-ledger regression now passes."
+    ],
+    "summary": "Applied the existing AgentTrace Verifier fingerprint/replay method to a live food provenance failure, repaired ForeignTwin receipt-shape selection, and recorded deterministic replay evidence.",
+    "tests": [
+      {
+        "command": "python3 tools/food_offer_observations.py --receipts <live food source-receipts.jsonl> --root . --offers-out <isolated> --locations-out <isolated> --sources-out <isolated> (twice)",
+        "result": "both completed; 1 offer, 1 location, 4 source URLs, 2 no-parser boundaries; all three output files byte-identical"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py -q",
+        "result": "4 passed"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests -q",
+        "result": "382 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "python3 -m py_compile tools/food_offer_observations.py && git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "partner-method-from-real-problem"
+  },
+  "content_sha256": "a005b5a086c287a242501a0bd1d4a1a0d1e0b259eb05aec351ee081c640aa51f",
+  "event_id": "local-354cfa266cd34113c4f2be146d9e",
+  "evidence_refs": [
+    "receipt:codex-20260824T015142-ef9bc06b",
+    "work:partner-method-from-real-problem"
+  ],
+  "observed_at": "2026-08-24T01:57:14.262019+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "partner-method-from-real-problem completed",
+  "type": "receipt_summary"
+}
