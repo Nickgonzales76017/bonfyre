@@ -1,345 +1,459 @@
 <div align="center">
-<img width="105" height="108" alt="Bonfÿre" src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05"><h1>Bonfÿre</h1>
-<strong>Semantic routing and compilation for heterogeneous software, data, capabilities, and external systems.</strong>
+<img width="105" height="108" alt="Bonfÿre" src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05">
+<h1>Bonfÿre</h1>
+<strong>A semantic operating engine for compiling work across software, data, models, people, devices, evidence, and economics.</strong>
 <br><br>
-<a href="#what-bonfÿre-is">What it is</a> ·
-<a href="#how-it-works">How it works</a> ·
+<em>Bonfÿre is the engine. Aurekai is the larger umbrella.</em>
+<br><br>
+<a href="#the-machine">The machine</a> ·
+<a href="#core-laws">Core laws</a> ·
+<a href="#operator-model">Operator model</a> ·
+<a href="#native-powers">Native Powers</a> ·
+<a href="#repository-map">Repository map</a> ·
 <a href="#quick-start">Quick start</a> ·
-<a href="#architecture">Architecture</a> ·
-<a href="#use-cases">Use cases</a> ·
-<a href="#project-layout">Project layout</a> ·
-<a href="#contributing">Contributing</a>
+<a href="#licensing">Licensing</a>
 </div>
 
 ---
 
 ## What Bonfÿre is
 
-Most integration software starts after a request already has a known shape.
+Bonfÿre is not an AI router, an ERP, an agent framework, a workflow builder, or a collection of unrelated command-line tools.
 
-Bonfÿre starts earlier.
+It is the engine underneath those kinds of systems.
 
-It is a **semantic routing and compilation engine** designed to accept increasingly heterogeneous inputs—documents, databases, APIs, policies, application state, media, models, events, and other software surfaces—and turn them into typed, reusable structure before deciding how the work should be realized.
+Bonfÿre gives heterogeneous reality a shared semantic coordinate system, turns differences between addressed states into durable work, selects lawful realizations across native code and external providers, records what physically happened, attaches evidence and economics, and projects the result into whatever surface is appropriate.
 
-A compact view:
-
-```text
-heterogeneous input
-        │
-        ▼
- institutionalize
-        │
-        ▼
- typed semantic fabric
-        │
-        ▼
-      compile
-        │
-        ▼
-   resolve / route
-        │
-        ▼
- local · model · human · external
-        │
-        ▼
- externalize / project
-```
-
-Traditional routing looks like:
+The shortest useful description is:
 
 ```text
-known request → choose destination
+reality
+  → address
+  → derive
+  → work
+  → route
+  → realize
+  → observe
+  → prove
+  → reconcile
+  → project
 ```
 
-Bonfÿre is built for:
+A file, Frappe record, model call, database row, provider capability, human action, device, artifact, economic event, or external API should not need a separate architectural universe merely because its carrier is different.
 
-```text
-heterogeneous reality
-→ understood meaning
-→ legal operation
-→ selected realization
-→ target-compatible result
-```
-
-AI can participate in that process, but Bonfÿre is not an AI router. Models are one class of provider alongside local code, services, humans, devices, and external systems.
-
-The larger goal is to make repeated integration work increasingly reusable:
-
-```text
-many bespoke solutions
-        │
-        ▼
-shared semantic structure
-+ shared capability structure
-+ shared boundary/compiler machinery
-+ small customer-specific differences
-```
-
-## Why
-
-Software teams repeatedly solve variations of the same problem:
-
-- ingest a customer's data or documents;
-- understand an existing application's shape;
-- map business rules and policies;
-- connect one or more providers;
-- transform the result into another system's required form;
-- build a new API, adapter, workflow, or application surface around it.
-
-The implementations differ, but much of the underlying structure repeats.
-
-Bonfÿre is designed to capture that reusable structure instead of forcing every project to remain a one-off integration.
-
-## How it works
-
-### 1. Institutionalize
-
-Bonfÿre converts incoming material into typed semantic participation.
-
-Depending on the source, that may include:
-
-```text
-identity
-kind / type
-authority
-provenance
-state
-relations
-evidence
-representations
-capabilities
-work
-```
-
-This is intentionally broader than parsing or ETL.
-
-A PDF is not only converted into text. A database is not only converted into rows. An external application is not only reduced to an API schema.
-
-The useful parts become addressable according to what they **mean** and what they are allowed to participate in.
-
-### 2. Compile
-
-A constellation of compiler responsibilities lowers semantic meaning into increasingly executable structures.
-
-Examples include:
-
-```text
-source / boundary understanding
-domain grammar
-capability requirements
-evidence and context
-addressability
-placement
-execution
-surfaces
-target-specific externalization
-```
-
-The compiler model lets Bonfÿre preserve high-level meaning while changing how that meaning is physically realized.
-
-### 3. Resolve and route
-
-A capability describes **what can be done**, independently of whichever implementation currently performs it.
-
-One capability may be realized by:
-
-```text
-local native code
-local model
-remote model
-external API
-MCP service
-human
-device
-another Bonfÿre node
-```
-
-Routing therefore happens over semantic intent, current reachability, policy, authority, representations, provider health, resources, and other execution constraints.
-
-### 4. Externalize
-
-External systems have their own schemas, protocols, permissions, object models, and accepted representations.
-
-Bonfÿre treats those boundaries explicitly.
-
-```text
-foreign/native form
-       │
-       ▼
- ingress grammar
-       │
-       ▼
- Bonfÿre semantics
-       │
-       ▼
- egress grammar
-       │
-       ▼
-target-native form
-```
-
-An API is a carrier. An adapter is an implementation detail. The boundary includes the meaning required to participate correctly in the target system.
-
-This allows the same internal semantic result to be lowered into different outward forms without treating each output as a separate one-off pipeline.
-
-## Architecture
-
-The public architecture can be understood as four large operations:
-
-```text
-┌──────────────────┐
-│ INSTITUTIONALIZE │
-└────────┬─────────┘
-         ▼
-╔══════════════════════════╗
-║  TYPED SEMANTIC FABRIC  ║
-╚════════════╤═════════════╝
-             ▼
-      ┌─────────────┐
-      │   COMPILE   │
-      └──────┬──────┘
-             ▼
-      ┌─────────────┐
-      │ ROUTE /     │
-      │ RESOLVE     │
-      └──────┬──────┘
-             ▼
-   local · model · human
-        · external
-             │
-             ▼
-      ┌─────────────┐
-      │ EXTERNALIZE │
-      │ / PROJECT   │
-      └─────────────┘
-```
-
-Several deeper parts of the repository support those operations:
-
-- **semantic and domain grammars** — typed structure instead of application-specific glue;
-- **capabilities and providers** — stable intent separated from implementation;
-- **boundary compilation** — reusable understanding of external systems;
-- **execution, receipts, and metering** — distinguish intent from what actually happened;
-- **work and durable continuation** — represent causal work separately from queues and processes;
-- **context, evidence, and source coordinates** — retain where information came from;
-- **representation and format machinery** — preserve format-specific semantics rather than flattening everything into generic blobs;
-- **local model/runtime machinery** — models participate as providers and representations inside the same execution fabric;
-- **projection surfaces** — expose underlying semantics through APIs, MCP, filesystems, applications, reports, and other hosts.
-
-Bonfÿre keeps specialized machinery specialized where the distinction matters.
-
-The guiding rule is:
+Bonfÿre tries to preserve the distinctions that matter while factoring the machinery that repeats.
 
 > **Preserve what is meaningfully different. Factor what is merely repeated.**
 
-## Reusable boundaries
+## Bonfÿre and Aurekai
 
-A major part of Bonfÿre is making external integrations reusable without pretending the external system belongs to Bonfÿre.
+**Aurekai** is the larger company/project/learning umbrella.
 
-A reusable boundary can describe:
+**Bonfÿre** is the engine: the semantic, execution, evidence, model, financial, artifact, provider, and projection machine that Aurekai can operate and optimize.
 
-```text
-external shape
-identity mappings
-kind mappings
-authority constraints
-ingress grammar
-egress grammar
-capability bindings
-event profiles
-representation rules
-validation
-loss / round-trip behavior
-```
+That distinction is intentional. Aurekai may learn from repeated execution and improve how work is presented or realized; it does not get to silently rewrite deterministic semantic truth.
 
-A live customer or environment can then bind that reusable definition to its own endpoint, credentials, scopes, policy, and runtime state.
+## One machine, not a bag of products
 
-Conceptually:
+Bonfÿre is designed to run as one institutional machine.
+
+CRM, ERP, helpdesk, knowledge, model execution, media, artifact handling, provider routing, financial reasoning, evidence, local runtimes, APIs, MCP surfaces, filesystems, and operator tooling are not meant to become separate mini-platforms glued together after the fact.
+
+They are different projections and organs over shared semantic state.
+
+That means a useful fact discovered in one part of the machine can lawfully participate in another without being copied into a second shadow architecture.
+
+Examples:
 
 ```text
-             reusable boundary
-                    │
-        ┌───────────┼───────────┐
-        ▼           ▼           ▼
-   customer A  customer B  customer C
-   connection  connection  connection
+housing observation
+  → exact source evidence
+  → AddressPlane subject
+  → geographic / financial derivation
+  → WorkGraph obligation
+  → provider realization
+  → usage + cost
+  → evidence closure
+  → CLI / Frappe / report projection
 ```
-
-This is one of the ways Bonfÿre aims to reduce repeated bespoke integration engineering.
-
-## Use cases
-
-Bonfÿre is intentionally not tied to one input or output class.
-
-### Document and knowledge systems
 
 ```text
-PDF / DOCX / transcript / spreadsheet
-                │
-                ▼
-        semantic material
-                │
-       ┌────────┼────────┐
-       ▼        ▼        ▼
-      API      MCP     application
-       │
-       ├→ evidence
-       ├→ model context
-       ├→ database
-       └→ downstream provider
+model/provider attempt
+  → physical occurrence
+  → UsageOccurrence
+  → EconomicMeasure
+  → CostAllocation
+  → work/result/evidence lineage
 ```
 
-### Existing application integration
-
-Understand an application's schema, capabilities, events, and authority boundary once, then reuse that compiled understanding across connections instead of rebuilding the integration for every customer.
-
-### Provider-independent capabilities
-
-Express the required capability first and resolve among local code, local models, remote models, APIs, humans, or other providers according to the current environment.
-
-### Process-shaped software
-
-Existing product/domain semantics can be reused without forcing users to navigate the historical application boundaries that originally contained them.
-
-### Local and hybrid AI
-
-Local model runtimes, embeddings, vectors, quantized representations, prepared state, and remote model providers participate in the same capability and routing model rather than living in a separate AI architecture.
-
-### Media and artifact pipelines
-
-Documents, audio, video, structured data, model artifacts, packages, and other formats retain their own representation semantics while still participating in common routing and compilation machinery.
-
-## Current repository
-
-This repository contains the public Bonfÿre runtime and command estate, including native C components, shared libraries, operator tooling, registries, artifact and pipeline machinery, local model integrations, media tooling, and integration/runtime surfaces.
-
-The repository has evolved beyond the original fixed-binary framing. Command names remain useful public/operator identities, but the architecture increasingly factors repeated behavior into shared capability, representation, compiler, and runtime machinery.
-
-Use the repository itself as the source of truth for the currently built command surface:
-
-```bash
-make
-./cmd/BonfyreCLI/bonfyre list --health
+```text
+external schema or document
+  → BoundaryCompiler / format semantics
+  → canonical meaning
+  → reusable capability
+  → target-native projection
 ```
 
-For operator/catalog drift after pulling new runtime code:
+## The machine
 
-```bash
-./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
-./cmd/BonfyreIndex/bonfyre-index layers --root layeros/state
-./cmd/BonfyreWorkflow/bonfyre-workflow list
-./cmd/BonfyreRecipe/bonfyre-recipe list
-./cmd/BonfyreLayer/bonfyre-layer registry --root layeros/state
+The mature architecture is easiest to understand as a set of connected fabrics rather than a product menu.
+
+```text
+                            EXTERNAL REALITY
+        files · APIs · DBs · Frappe · models · people · devices · events
+                                      │
+                                      ▼
+                ┌──────────────────────────────────────────┐
+                │ BoundaryCompiler / Format / Partner      │
+                │ Commons / foreign-system grammars        │
+                └───────────────────┬──────────────────────┘
+                                    ▼
+                         ┌────────────────────┐
+                         │    AddressPlane    │
+                         │ identity · time    │
+                         │ relation · world   │
+                         │ projection · proof │
+                         └─────────┬──────────┘
+                                   │
+                     FactDelta     │     Authority / Evidence
+                         ┌─────────▼──────────┐
+                         │ SemanticDerivation │
+                         │ exact read closure │
+                         └─────────┬──────────┘
+                                   ▼
+                    ┌───────────────────────────┐
+                    │ WorkGraph + TargetObligation│
+                    │ semantic difference due    │
+                    └─────────────┬─────────────┘
+                                  │
+              learned priors ─────┤──── operator algebra
+              never authority     │
+                    ┌─────────────▼─────────────┐
+                    │ Provider / Placement /    │
+                    │ ResourceWeather / Env     │
+                    └─────────────┬─────────────┘
+                                  ▼
+     ┌─────────────────────────────────────────────────────────────┐
+     │ native Powers · Frappe ×9 · local models · remote models   │
+     │ APIs · MCP · services · humans · devices · other nodes     │
+     └────────────────────────────┬────────────────────────────────┘
+                                  ▼
+                    ┌──────────────────────────┐
+                    │ PhysicalDerivation      │
+                    │ manifest · frame        │
+                    │ observation · receipt   │
+                    │ body availability/reuse │
+                    └─────────────┬────────────┘
+                                  │
+                   ┌──────────────┼──────────────┐
+                   ▼              ▼              ▼
+             EvidenceGraph   UsageOccurrence   result/body
+             WHY / PROVE          │              │
+                                  ▼              │
+                         FinancialMetabolism    │
+                         basis-explicit money   │
+                                  │              │
+                   └──────────────┼──────────────┘
+                                  ▼
+                   Projection / Surface / Namespace
+                  CLI · API · MCP · BonfÿreFS · apps
+                         reports · external systems
 ```
+
+Aurekai sits above this machine as a learning and optimization layer. It can identify repeated motifs, candidate locality, or cheaper equivalent realizations, but lowering is proof-gated and must lift again when its validity envelope changes.
+
+## Core laws
+
+The project becomes much easier to understand once a few invariants are kept explicit:
+
+- **Address is not location.** `AddressPlane` is a semantic coordinate system spanning identity, relation, time, world, projection, evidence, and closure.
+- **Work is not a queue entry.** `WorkGraph` represents an executable semantic difference between addressed states. A queue/process/provider call is only one possible realization of that work.
+- **Carrier failure is not semantic failure.** A `TargetObligation` survives failed providers, builds, sessions, waits, and retries until proof closes it or a replacement explicitly supersedes it.
+- **Provider is not capability.** Native code, a local model, a remote model, an API, MCP, a human, or a device can compete to realize the same capability without redefining the capability.
+- **Similarity is not identity.** Latent/embedding spaces can rank or narrow candidates; they do not establish semantic identity, authority, evidence, relation, or financial truth.
+- **Execution is not proof.** A zero exit code or successful network response does not by itself prove the semantic target.
+- **Physical usage is not booked money.** Accrued, billed, paid, booked, credit, avoided work, and projected value remain different bases.
+- **Projection is not ownership.** A Frappe row, API response, filesystem path, report, or UI surface may expose a semantic object without becoming its canonical owner.
+- **Representation is not identity.** Compression, quantization, serialization, caching, or a different file format may change physical realization without changing the semantic subject.
+- **Named specialization stays named.** Domain-specific Powers, runtimes, graphs, and mathematical kernels are not flattened into generic nouns just to make the diagram tidy.
+
+## Operator model
+
+Bonfÿre is converging on a small semantic instruction set that composes across domains:
+
+```text
+ADDRESS
+SELECT
+DIFF
+CLOSE
+PROJECT
+ROUTE
+ATTACH
+DETACH
+MOVE
+RECONCILE
+PROVE
+WORK
+EXECUTE
+COMPENSATE
+```
+
+Compound operations such as retire, offboard, migrate, reconcile, fulfill, or publish are built from these semantics rather than each receiving an unrelated orchestration system.
+
+The operator surface also distinguishes three useful modes:
+
+```text
+@   semantic address / cursor / join
+?   deterministic inspection and derived queries
+!   governed raw process occurrence
+```
+
+Raw shell execution is therefore not an escape hatch from the machine. When used through Bonfÿre it is still a physical occurrence with authority, evidence, and usage consequences.
+
+## AddressPlane, WorkGraph, and WHY
+
+Three ideas tie a large amount of the system together.
+
+### AddressPlane
+
+A semantic address names **what** something is in context, not merely where its bytes live.
+
+The same underlying object can participate in different time, world, projection, evidence, or relation contexts without creating unrelated shadow identities.
+
+### WorkGraph
+
+Work is the difference between an addressed current state and an addressed required state.
+
+That allows work to shrink or disappear when reality changes, survive a failed carrier, branch into alternative realizations, or create new work when proof discovers a genuine residual.
+
+### WHY / PROVE
+
+`WHY` is a causal/evidence slice explaining how a result, route, decision, or state was derived.
+
+`PROVE` builds an evidence closure sufficient for a target's proof requirements. Evidence remains source-addressed; confidence or model output does not silently become ground truth.
+
+## Semantic and physical derivation
+
+Bonfÿre separates *what must be true* from *how bytes/processes make it true*.
+
+```text
+FactDelta
+   │
+   ▼
+SemanticDerivationGraph
+   │ exact dependency/read closure
+   ▼
+required postcondition
+   │
+   ▼
+RealizationManifest
+   │
+   ▼
+PhysicalExecutionFrame
+   │
+   ▼
+RealizationObservation
+   │
+   ▼
+PhysicalDerivationReceipt
+```
+
+That separation allows repeated work to be reused safely. If the semantic postcondition and derivation identity are still valid and a lawful body already exists, Bonfÿre can reuse the body rather than recompute it.
+
+The same mechanism lets cost or provider conditions change without pretending the semantic result or bytes changed.
+
+## Models and latent spaces
+
+Models are first-class participants, not the center of the architecture.
+
+Bonfÿre supports local, remote, prepared, quantized, embedded, multimodal, and specialized model realizations behind the same capability/evidence/usage laws as other providers.
+
+The governed latent layer attaches replayable learned coordinates to exact semantic subjects with explicit passports, encoder identity, feature closure, causal frontier, metric, allowed uses, and comparability rules.
+
+Examples of model/representation work in the estate include:
+
+- `BonfyreQwenFPQ` and FPQ/quantized model execution;
+- Lambda Tensors and specialized tensor/math paths;
+- local embeddings/vector search;
+- speech, vision, media, and transcription runtimes;
+- remote frontier-model providers;
+- learned candidate ranking and trajectory/watch signals.
+
+The rule remains:
+
+```text
+latent prior → candidate narrowing
+latent prior ↛ authority / identity / evidence / booked truth
+```
+
+## Financial metabolism
+
+Economics are part of execution rather than an afterthought.
+
+A physical or model attempt can create a `UsageOccurrence`; admitted pricing/allocation evidence can derive economics; financial position preserves basis instead of collapsing every number into "cost" or "savings."
+
+```text
+physical occurrence
+   ↓
+UsageOccurrence
+   ↓
+EconomicMeasure
+   ↓
+CostAllocation
+   ↓
+FinancialPosition / evidence / work
+```
+
+Retries remain distinct occurrences. Shared/cache allocations must be explicit. Unknown token/resource dimensions remain unknown rather than becoming zero. Avoided work is not automatically cash savings.
+
+This same machinery is intended to reason over compute, model, storage, provider, human, facility, and institutional resource use.
+
+## Native Powers
+
+Bonfÿre has a large native command estate. Those commands are not legacy names that should all disappear into one generic runtime.
+
+A Power keeps its domain identity and canonical owner while sharing common fabric underneath it.
+
+Representative areas include:
+
+- `BonfyreLedger` — ledger/economic and evidence-oriented operations;
+- `BonfyreQwenFPQ` — specialized local model execution;
+- `BonfyreWire` — observed external/device/network material;
+- `BonfyreStitch` — composition/planning;
+- `BonfyreFrappeCompiler` — Frappe schema/projection compilation;
+- `BonfyreCLI` — operator front door and command registry;
+- workflow, recipe, layer, API, CMS, media, inference, distribution, model, artifact, and control Powers;
+- shared low-level libraries including `libbonfyre`, `liblambda-tensors`, and QUIC transport.
+
+The important architectural distinction is:
+
+```text
+semantic shell surface ≠ implementation owner
+```
+
+A shell can invoke a Power without reimplementing the Power's domain logic.
+
+## Frappe ×9
+
+Bonfÿre uses the Frappe ecosystem as a major institutional projection surface rather than as nine disconnected products.
+
+The mature lineage spans the shared Frappe/ERP base plus CRM, HRMS, Helpdesk, LMS, Insights, Wiki, and Drive surfaces. Their DocTypes and application grammars can project common Bonfÿre semantics while keeping each app's domain distinctions intact.
+
+The goal is not to create a special "Bonfÿre food app," "Bonfÿre housing app," or one-off app for every workload. New workloads should reuse the shared semantic fabric and project through existing institutional surfaces when lawful.
+
+## Formats, artifacts, and BonfÿreFS
+
+Bonfÿre treats representations as meaningful execution choices.
+
+PDF, DOCX, XLSX, SQLite, Parquet, Arrow, media containers, model artifacts, WASM, packages, 3D formats, and other representations have different object models, access patterns, streaming behavior, canonicalization, finalization, loss, and validation rules.
+
+The common artifact/fabric layer factors storage, addressing, provenance, transport, and reuse while format-specific semantics remain where needed.
+
+The namespace side of the machine projects files, records, queries, artifacts, maintained sets, and foreign objects through one addressable fabric. A path resolving does not itself grant read authority, and a virtual query directory is not pretending to be stored state.
+
+## Partner Commons and the open world
+
+Bonfÿre is intentionally open-world: useful outside libraries, protocols, services, models, repositories, and methods can participate without becoming canonical truth or being rewritten as Bonfÿre code.
+
+Partner Commons captures reusable specialties and roles such as:
+
+```text
+schema / contract tooling
+columnar and vector data
+incremental computation
+transport and storage
+model runtimes
+benchmarking / evaluation
+finance / quant methods
+policy / authorization
+artifact and format tooling
+agent/runtime hosts
+```
+
+The lifecycle is:
+
+```text
+discover specialty
+  → understand exact shape
+  → bind lawful role/boundary
+  → route real work through it
+  → measure consequences
+  → retain external owner or absorb only where justified
+```
+
+External does not mean temporary, and native absorption is not automatically the goal.
+
+## Evidence and proof
+
+Bonfÿre is built to keep the difference between claims and observations visible.
+
+Execution receipts, source coordinates, causal fronts, provider/model identity, body digests, pricing evidence, authority decisions, test results, and external observations can all participate in proof.
+
+The system should be able to answer questions such as:
+
+```text
+WHY did this route win?
+WHY is this work still open?
+WHY is this result considered current?
+WHAT physically produced these bytes?
+WHAT evidence closed this obligation?
+WHAT cost basis produced this number?
+WHAT changed since the previous frontier?
+```
+
+That is why evidence is a fabric, not merely a log directory.
+
+## Repository map
+
+The repository is actively converging several historical source eras into stable owners. **Do not infer the current architecture from the age or number of top-level folders.** Some directories are lineage and evidence; others are canonical runtime owners.
+
+The important public areas today are:
+
+```text
+engine/core/       low-level Bonfÿre execution kernel
+lib/               shared native libraries and mathematical/runtime substrate
+cmd/               named native Powers and operator binaries
+estate/            registries, provider/operator inventories, compatibility data
+integrations/      external system, MCP, ERP/Frappe and host integrations
+layeros/           artifact/layer/queue/runtime state machinery
+docs/              subsystem documentation and historical implementation notes
+tests/             conformance, requirements, integration and regression tests
+scripts/           operational, build and workload helpers
+site/              public/demo surfaces
+10-Code/           transitional historical source lineage; not the desired final owner
+01-Ideas/ ...       research/project lineage; useful history, not the runtime architecture
+```
+
+The canonical direction is toward a smaller set of explicit owners rather than keeping duplicate implementations forever:
+
+```text
+engine/core       native kernel
+lib               shared low-level libraries
+cmd / services    named Powers and specialized runtimes
+semantic/control  shared semantic, work, proof, provider and economic fabric
+schemas/contracts source-of-truth machine contracts
+generated         reconstructable projections, not authority
+evidence          proof/history, not runtime ownership
+```
+
+Old source is removed only when current-owner parity and evidence make deletion lawful. Duplicate-looking paths therefore do not imply that Bonfÿre intends to preserve multiple competing architectures.
 
 ## Quick start
 
-### Build from source
+### Build
 
 ```bash
-git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
-cd bonfyre-oss
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
 make
+```
+
+The top-level build discovers command directories with Makefiles and builds the shared libraries plus native command estate.
+
+For a portable build without `-march=native`:
+
+```bash
+make portable
 ```
 
 ### Install
@@ -348,246 +462,101 @@ make
 make install
 ```
 
-By default this installs into the configured local prefix. You can override it where supported:
+The default prefix is `~/.local`. Override it with:
 
 ```bash
 PREFIX=/usr/local make install
 ```
 
-### Inspect the system
+### Inspect the operator surface
+
+```bash
+./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
+./cmd/BonfyreCLI/bonfyre list --health
+```
+
+After installation:
 
 ```bash
 bonfyre list --health
-bonfyre workflow list
-bonfyre recipe list
-bonfyre layer registry --root layeros/state
 ```
 
-### Explore a concrete path
-
-The Wire → artifact → recipe path is a useful way to see how observed external material becomes something Bonfÿre can reason about and execute against:
+### Run the test surface
 
 ```bash
-bonfyre wire ingest-pcap capture.pcap --dumb-device --root layeros/state
-bonfyre wire probe <capture_id> --root layeros/state
-bonfyre wire artifacts <capture_id> --root layeros/state
-bonfyre wire recipe <capture_id> --root layeros/state > recipe.json
-bonfyre stitch plan recipe.json
+make test
 ```
 
-## Native runtime
+### Try a concrete external-material path
 
-Bonfÿre remains aggressively native and local-first where that makes sense.
+The existing Wire → artifact → recipe → stitch path is a useful narrow entry point into the larger machine:
 
-The public estate includes work across:
+```bash
+./cmd/BonfyreWire/bonfyre-wire ingest-pcap capture.pcap --dumb-device --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire probe <capture_id> --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire artifacts <capture_id> --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire recipe <capture_id> --root layeros/state > recipe.json
+./cmd/BonfyreStitch/bonfyre-stitch plan recipe.json
+```
+
+This path is an example, **not the definition of Bonfÿre**.
+
+## Where to read next
+
+- [`QUICKSTART.md`](QUICKSTART.md) — concrete build/operator path.
+- [`docs/architecture.md`](docs/architecture.md) — earlier public architecture material.
+- [`docs/bonfyre_status_and_drift.md`](docs/bonfyre_status_and_drift.md) — runtime/operator drift notes.
+- [`docs/bonfyre_wire.md`](docs/bonfyre_wire.md) — external/device observation path.
+- [`docs/FPQx-Algebra-Reference.md`](docs/FPQx-Algebra-Reference.md) — FPQ algebra/reference work.
+- [`docs/lambda-tensors.md`](docs/lambda-tensors.md) — Lambda Tensor work.
+- [`docs/api.md`](docs/api.md) — API surface.
+- [`docs/cms.md`](docs/cms.md) — CMS surface.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — contribution guidance.
+
+Some older documents describe earlier phases of the machine. Treat the repository and current canonical owner/evidence work as higher authority than an old phase-completion note.
+
+## Development principles
+
+Bonfÿre development follows a few recurring rules:
+
+1. **Extend the current owner before creating a parallel subsystem.**
+2. **Make the semantic target explicit before optimizing its realization.**
+3. **Keep authority, evidence, identity, economics, and provider availability separate.**
+4. **Prefer real workloads to decorative demos.** A new path should eventually carry actual work.
+5. **Measure before promotion.** External tools, learned paths, compression, caching, lowerings, and provider substitutions need receipts or equivalence evidence.
+6. **Delete only after parity.** Historical code is lineage until a current owner and proof make it safely reconstructable or obsolete.
+7. **Keep domain-specific machinery first-class.** BonfyreLedger remains BonfyreLedger; BonfyreQwenFPQ remains BonfyreQwenFPQ; Lambda Tensors remain Lambda Tensors.
+8. **Use one semantic machine across domains.** Food, housing, finance, software delivery, media, institutional apps, and external partner work should stress the same fabrics rather than creating one-off architectures.
+
+## What Bonfÿre is trying to become
+
+The end state is not "more integrations."
+
+It is a machine where a new domain or external system increasingly contributes only the information that is genuinely new:
 
 ```text
-C11 runtime and shared libraries
-SQLite-backed state and registries
-content-addressed artifacts
-local embeddings and vector search
-speech and media processing
-realtime communications
-workflow and orchestration
-model/provider integration
-artifact and format handling
-distribution and deployment
+new identity / grammar / constraints / capability / evidence / representation
+                              +
+             an already existing semantic machine
+                              =
+                    much less bespoke software
 ```
 
-The architecture does **not** require every capability to be native C. Native implementations, external providers, models, services, humans, and devices can all participate behind capability contracts.
+As more work passes through the same address, derivation, evidence, provider, execution, finance, format, and projection fabrics, the system should compound instead of merely grow.
 
-That lets the engine optimize for locality and performance without making implementation language part of the semantic contract.
+That is the point of Bonfÿre.
 
-## Representations and formats
+## Licensing
 
-Bonfÿre does not treat every format as a disposable encoding of the same generic blob.
+Bonfÿre is **source-available**, not permissively licensed open source.
 
-PDF, XLSX, SQLite, Parquet, MP4, GLB, WASM, model formats, packages, and other representations have different:
+Covered source in this repository is distributed under the **PolyForm Shield License 1.0.0** with the Bonfÿre licensing notice in [`LICENSE`](LICENSE). Prior versions released under MIT remain under the rights granted with those versions. Third-party or separately licensed components retain their own terms.
 
-```text
-logical object models
-validation rules
-access patterns
-editability
-streaming behavior
-canonicalization
-finalization
-source coordinates
-loss characteristics
-```
+Commercial and partner licensing may be available separately.
 
-Common artifact machinery is shared where possible, but format-specific semantics are retained when required.
+---
 
-This same rule appears throughout the project:
-
-```text
-representation ≠ identity
-provider       ≠ capability
-projection     ≠ ownership
-adapter        ≠ boundary
-candidate      ≠ actual
-compression    ≠ semantic deletion
-```
-
-## AI and models
-
-Bonfÿre can use AI without requiring AI for every execution.
-
-AI may help:
-
-- understand unfamiliar external systems;
-- inspect documentation and schemas;
-- propose transformations;
-- reason over difficult inputs;
-- provide generation, vision, speech, embedding, or other capabilities.
-
-Once useful structure is understood and validated, that structure can be represented explicitly and reused without asking a frontier model to rediscover the same solution every time.
-
-The model estate therefore participates as part of the larger engine:
-
-```text
-semantic capability
-       │
-       ▼
-model / provider / representation choices
-       │
-       ▼
-local · prepared · remote · specialized
-```
-
-## Open-world integrations
-
-Bonfÿre is designed to make useful external systems first-class participants without requiring them to become native Bonfÿre code.
-
-External libraries, services, protocols, repositories, models, and platforms can contribute:
-
-```text
-capabilities
-representations
-events
-foreign-owned objects
-identity
-authority
-distribution
-host surfaces
-```
-
-The intended lifecycle is closer to:
-
-```text
-discover useful external specialty
-        │
-        ▼
-understand its shape
-        │
-        ▼
-compile a reusable boundary
-        │
-        ▼
-bind a live connection
-        │
-        ▼
-route real work through it
-        │
-        ▼
-measure actual behavior
-```
-
-External does not mean temporary, and native absorption is not automatically the goal.
-
-## Project layout
-
-The exact tree evolves, but the major public areas include:
-
-```text
-cmd/              native command/operator surfaces
-lib/              shared native libraries
-docs/             architecture and subsystem documentation
-integrations/     external/runtime integration surfaces
-layeros/          state, layer, and registry material
-examples/         runnable examples and demonstrations
-scripts/          development and operational helpers
-```
-
-Inspect the current repository rather than relying on a fixed command count.
-
-## Design principles
-
-Bonfÿre is built around a few recurring constraints:
-
-**Meaning before transport.**  
-A valid API call is not useful if it represents the wrong thing.
-
-**Authority travels with semantics.**  
-Having a local copy does not make Bonfÿre the owner of foreign truth.
-
-**Capabilities outlive providers.**  
-Provider selection can change without changing what the caller asked to accomplish.
-
-**Boundaries are bidirectional.**  
-Understanding what enters a system is only half of integration; Bonfÿre also needs to compile semantic intent into the target's valid form.
-
-**Specialization is preserved.**  
-Shared machinery should be factored, but genuinely different state regimes, graphs, formats, runtimes, and mathematical kernels should not be flattened for architectural neatness.
-
-**Repeated engineering should become reusable structure.**  
-The long-term target is not a larger collection of one-off adapters. It is progressively more reusable semantic, capability, boundary, and execution machinery.
-
-## Documentation
-
-Start with the documentation that matches what you are trying to understand:
-
-| Area | Where to start |
-|---|---|
-| Architecture | [`docs/architecture.md`](docs/architecture.md) |
-| Current runtime/operator status | [`docs/bonfyre_status_and_drift.md`](docs/bonfyre_status_and_drift.md) |
-| Wire / observed external systems | [`docs/bonfyre_wire.md`](docs/bonfyre_wire.md) |
-| Pipeline | [`docs/pipeline.md`](docs/pipeline.md) |
-| API | [`docs/api.md`](docs/api.md) |
-| CMS | [`docs/cms.md`](docs/cms.md) |
-| Orchestration | [`docs/orchestrate.md`](docs/orchestrate.md) |
-| Lambda Tensors | [`docs/lambda-tensors.md`](docs/lambda-tensors.md) |
-| Benchmarks | [`docs/benchmarks.md`](docs/benchmarks.md) |
-
-## Contributing
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-Useful contributions include:
-
-- bug fixes;
-- performance work;
-- new capability implementations;
-- provider and protocol integrations;
-- boundary/schema improvements;
-- tests and validation;
-- representation/format support;
-- local model/runtime work;
-- documentation;
-- examples;
-- language and host bindings.
-
-When adding a new external integration, prefer preserving its real semantics over forcing it into an existing abstraction that does not fit.
-
-When adding a new native capability, prefer sharing existing runtime/compiler machinery where the semantics are genuinely the same.
-
-## License
-
-Bonfÿre is source-available under the
-**Bonfÿre Shield License 1.0.0**.
-
-You may inspect, use, modify, and distribute the source subject to the
-license terms. The public license does not permit using Bonfÿre to provide
-a product or service that competes with Bonfÿre or an Aurekai product built
-with Bonfÿre.
-
-Commercial, OEM, hosted, embedded, white-label, resale, and strategic partner
-licenses are available separately from Aurekai.
-
-Individual third-party components and selected SDKs may carry their own
-licenses. See the applicable source directory and `THIRD_PARTY_NOTICES.md`.
-
-"Bonfÿre", "Aurekai", their logos, and associated branding are not granted
-for unrestricted use by the software license.
-
-Made by [Nick Gonzales](https://github.com/Nickgonzales76017).
+<div align="center">
+<strong>Bonfÿre engine · Aurekai umbrella</strong><br>
+<sub>Meaning before transport. Evidence before closure. Capability before provider. One machine across domains.</sub>
+</div>
