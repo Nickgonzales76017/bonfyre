@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0441-tail-availability-044",
+  "observed_at": "2026-08-24T04:41:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "provider_delta",
+  "subject": "Treat tail latency against caller watchdogs as carrier availability",
+  "body": {"text": "FREE TOKEN'S evaluation makes an important ProviderGraph point: tail TTFT can cross real agent-client watchdogs, turning latency into availability failure rather than mere slowness. Route admission should therefore include caller deadline/watchdog compatibility.\n\nAdd/verify bounded carrier coordinates:\n- expected/observed TTFT and decode rate distributions;\n- caller idle watchdog/request deadline;\n- context length / prefill regime;\n- retry and timeout semantics;\n- whether timeout leaves remote outcome unknown;\n- ResourceWeather and route-specific calibration.\n\nA route whose p95/p99/worst-case TTFT exceeds the caller's watchdog is degraded or inadmissible for that workflow even if mean throughput is attractive. Timeout-induced retry must respect unknown-outcome/effect reconciliation.\n\nThis applies to local engines and hosted providers alike. Keep performance evidence separate from semantic quality/authority, but let it lawfully influence PhysicalTaskPlan and ProviderGraph admission."},
+  "evidence_refs": ["external:arxiv:2608.16157#5.2","architecture:ProviderGraph","architecture:ResourceWeather","architecture:UnknownExternalOutcome"],
+  "content_sha256": "c689802110e42fac2d83cc26f635cf2c9134416e7480caa5e96d04695827cb46"
+}
