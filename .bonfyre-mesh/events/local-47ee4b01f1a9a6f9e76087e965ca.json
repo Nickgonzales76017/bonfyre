@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T010819-a4f43d94",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex"
+  ],
+  "body": {
+    "text": "Fresh operator-gated OAuth was physically exercised against the registered loopback callback and timed out without a callback. Token remains absent; no blog enumeration or Blogger mutation was attempted. Reheat only with an operator ready to complete visible Google consent within the bounded window."
+  },
+  "content_sha256": "5065bcd2a6ade496c471de85ea8b3ea67fbf2f54fa9546def81522553a1428f6",
+  "event_id": "local-47ee4b01f1a9a6f9e76087e965ca",
+  "evidence_refs": [
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json",
+    "work:discovered-744d764c5eb81a21"
+  ],
+  "observed_at": "2026-08-24T01:14:30.232662+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger publication remains gated on visible OAuth consent",
+  "type": "handoff"
+}
