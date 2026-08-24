@@ -1,0 +1,43 @@
+{
+  "actor": {
+    "id": "codex-20260824T005515-d6dccd0c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "machine_execution",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "OAuth preflight confirms the configured redirect is http://localhost:8765/callback and binds to the expected loopback endpoint."
+    ],
+    "summary": "Executed live Blogger OAuth preflight and launched a fresh callback listener. Configuration is coherent, but interactive Google consent has not returned a token; therefore no blog enumeration or publication was attempted.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_blogger_publish.py components/BonfyreControlPlane/tests/test_blogger_receipts.py -q",
+        "result": "7 passed"
+      },
+      {
+        "command": "Blogger OAuth configuration preflight",
+        "result": "Configured client accepted; exact loopback callback verified; token absent"
+      }
+    ],
+    "work_item": "mesh-local-6d109b422caeea197eedb009ca8b"
+  },
+  "content_sha256": "e6a2998e50b375995ec6147ca6fed73eeb2bd86cd766e4075286792436853ec6",
+  "event_id": "local-8c848c4400edc0542b0559783ed9",
+  "evidence_refs": [
+    "receipt:codex-20260824T005515-d6dccd0c",
+    "work:mesh-local-6d109b422caeea197eedb009ca8b"
+  ],
+  "observed_at": "2026-08-24T00:59:56.342280+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-local-6d109b422caeea197eedb009ca8b advanced",
+  "type": "receipt_summary"
+}
