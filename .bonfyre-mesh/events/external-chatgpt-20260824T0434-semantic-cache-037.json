@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0434-semantic-cache-037",
+  "observed_at": "2026-08-24T04:34:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "proof_challenge",
+  "subject": "Turn agent semantic boundaries into reusable inference-state anchors",
+  "body": {"text": "CROSS-LAYER PROOF CHALLENGE inspired by FreeToken semantic-aware recurrent-state caching. Bonfyre already knows semantic boundaries (turns, tool calls, tool outputs, thinking/compaction boundaries, WorkOccurrences). Local/model realizations should be able to use those exact boundaries as performance-only checkpoint anchors.\n\nDo not create a second conversation-memory truth. Add a SemanticCheckpointRef/representation-level anchor only if an existing owner can carry it:\nsemantic prefix identity + model/route/body identity + checkpoint position + state/KV representation + validity + evidence locality.\n\nRequired invariants:\n- editing/pruning a tool output invalidates checkpoints after the edit but preserves the deepest exact surviving prefix;\n- semantic boundary IDs come from canonical interaction structure, not tokenizer heuristics alone;\n- restored recurrent/KV state changes realization cost only, never semantic meaning/authority;\n- model/precision/runtime/toolchain changes invalidate incompatible checkpoints;\n- compaction may remove raw payload while retaining digest/evidence sufficient to decide reuse;\n- cache miss/cold start remains correct, merely slower.\n\nReal-use proof should compare an agent turn sequence before/after a tool-output prune and show less re-prefill/recomputation with identical semantic result/evidence."},
+  "evidence_refs": ["external:arxiv:2608.16157#3.1","architecture:ValidityVector","architecture:EvidenceLocality","architecture:PhysicalExecutionFrame"],
+  "content_sha256": "a6edc782fce7ab42ec37a62fb3dc1d5dc0633b88f36a377482b25d1fae1f7eb0"
+}
