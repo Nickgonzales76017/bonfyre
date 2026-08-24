@@ -1,0 +1,65 @@
+{
+  "actor": {
+    "id": "codex-20260824T034005-ce1fce5e",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "external:sipyourdrink-ltd/bernstein/src/bernstein/core/tasks/artifacts.py",
+      "environment: Bernstein task-local locked uv dev environment"
+    ],
+    "class": "github_partner",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Locked uv sync resolved 272 packages and confirmed 181 installed packages require no changes.",
+      "Focused finding-artifact and run-artifact suite passes: 90 tests.",
+      "Ruff lint and formatting checks pass.",
+      "The gated mypy zone reports zero issues in 79 source files."
+    ],
+    "summary": "Restored Bernstein’s task-local locked uv dev environment, fixed the gate-exposed formatting defect, and pushed the verified #3699 branch update.",
+    "tests": [
+      {
+        "command": "uv sync --locked --dry-run",
+        "result": "PASS — 272 packages resolved; 181 locked packages checked; no changes required."
+      },
+      {
+        "command": "uv run pytest -q --no-cov --timeout=120 tests/unit/core/tasks/test_finding_artifact.py tests/unit/test_run_artifacts.py",
+        "result": "PASS — 90 passed (one upstream Starlette deprecation warning)."
+      },
+      {
+        "command": "uv run ruff check src/ tests/unit/core/tasks/test_finding_artifact.py tests/unit/test_run_artifacts.py",
+        "result": "PASS."
+      },
+      {
+        "command": "uv run ruff format --check src/ tests/unit/core/tasks/test_finding_artifact.py tests/unit/test_run_artifacts.py",
+        "result": "PASS — 1911 files formatted."
+      },
+      {
+        "command": "uv run mypy --config-file mypy.gate.ini",
+        "result": "PASS — no issues in 79 source files."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && python3 -m pytest components/BonfyreControlPlane/tests/ -q",
+        "result": "PASS — atlas validated; ControlPlane suite completed successfully."
+      }
+    ],
+    "work_item": "discovered-fc96d92d542c6b86"
+  },
+  "content_sha256": "26aedc963bc19d18c0547c43f4ba838bc5281853d1caa7207adf7f92a0546003",
+  "event_id": "local-05b52d22dce2f7666192770859f7",
+  "evidence_refs": [
+    "receipt:codex-20260824T034005-ce1fce5e",
+    "work:discovered-fc96d92d542c6b86"
+  ],
+  "observed_at": "2026-08-24T03:45:42.106657+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-fc96d92d542c6b86 completed",
+  "type": "receipt_summary"
+}
