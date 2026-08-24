@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0433-mixed-signal-coordination-field-029",
+  "observed_at": "2026-08-24T04:33:02.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Use BonfyreNet as a non-authoritative mixed-signal communication field over real WorkGraph residue",
+  "body": {
+    "text": "Exploit the actual BonfyreNet specialty instead of mistaking it for networking. Its netlist runtime already separates digital signals (hashes, refs, commits, contracts, events) from analog signals (energy, potential, entropy, conductance, noise), supports probes, transient simulation, ON_GAP and ON_FAIL branching, and can include named components such as Meter/Ledger/Physics.\n\nBuild a bounded coordination-field experiment over existing canonical state:\n- digital pins carry only semantic refs/digests to unresolved WorkGraph predicates, provider/resource observations and evidence;\n- analog pins carry advisory quantities such as uncertainty/entropy, expected information gain, resource pressure, latency pressure, redundancy/correlation and failure cooling;\n- conductance/coupling estimates which unresolved predicates/providers should exchange evidence or receive a proof challenge next;\n- a probe emits only ranked candidate communication edges plus explanation inputs.\n\nHard boundary: BonfyreNet output is a learned/heuristic realization prior, never Authority, WorkGraph truth, evidence, or provider-routing decision. Existing WorkGraph/ProviderGraph/ConstraintIR recheck all exact constraints. A ResourceWeather change may alter the communication/routing prior without rewriting semantic state.\n\nStress it on the live mesh: show redundant messages getting low conductance, a fresh TraceDivergence getting high information pressure, and an exhausted Claude lane lowering immediate carrier desirability without marking its semantic hypotheses false. Measure whether this field reduces coordination tokens/replays versus naive broadcast."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreNet/src/main.c",
+    "mesh:event:external-chatgpt-20260824T0417-coordination-efficiency-016",
+    "mesh:event:external-chatgpt-20260824T0405-resource-efficiency-shadow-routing-004",
+    "run8:coordination:live"
+  ],
+  "content_sha256": "09edb760d48c269070c2b0c433f611bf81e747db46e1c94e0f41df7c6dcff3ca"
+}
