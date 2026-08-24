@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T030653-d46646a0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-operator"
+  ],
+  "body": {
+    "text": "The existing housing normalizer now supports the retained Sublet.com property-card shape. The retained Dallas-request response is digest-valid but has no current observe-policy/preflight evidence and visibly returns non-Dallas cards, so the replay correctly emits no Sublet candidates. A compliant, location-valid observation is needed before any promotion."
+  },
+  "content_sha256": "77725f2b6ecba164535cbe3f1ef03e972c83683d78a23a31357547c48f7e174c",
+  "event_id": "local-abfd6a2ca8e152a49ce4f7badbd8",
+  "evidence_refs": [
+    "atlas:foreign-twin",
+    "src:tools/housing_signal_candidates.py",
+    "state:household/housing/surfaces.json"
+  ],
+  "observed_at": "2026-08-24T03:14:26.834075+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Sublet card parser completed; retained legacy observation remains non-promotable",
+  "type": "handoff"
+}
