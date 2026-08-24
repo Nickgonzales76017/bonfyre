@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T033029-71eead65",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/financial_metabolism.py",
+      "components/BonfyreControlPlane/bonfyre_shell.py",
+      "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_bonfyre_shell.py",
+      "architecture/provider/provider-family.yaff",
+      "architecture/surface/bonfyre-shell.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/finance/model-usage.sqlite",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/evidence/proofs/semantic-shell-codex-finance-chain.json"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Exact Codex physical occurrence, stable attempt, usage dimensions, unknown-price economics, allocation version, work item, result, and proof are canonically traversable.",
+      "Shell resolves an exact work address only from an existing CostAllocation target; it owns no finance shadow ledger.",
+      "Canonical receipt replay reported 0 new usages and 71 replayed attempts."
+    ],
+    "summary": "Reconciled the finance divergence with an exact retained Codex occurrence, explicit unknowns, canonical allocations, and duplicate-safe replay.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_financial_metabolism.py tests/test_physical_derivation.py tests/test_bonfyre_shell.py -q",
+        "result": "PASS: 32 passed"
+      },
+      {
+        "command": "python3 components/BonfyreControlPlane/financial_metabolism.py reconcile-run8 --state <run8-state> --db <canonical-ledger>",
+        "result": "PASS: 0 new usage occurrences; 71 replayed attempts"
+      },
+      {
+        "command": "cmd/BonfyreCLI/bonfyre shell --state <run8-state> --output <proof> '@work/r2c-mature-map-real-gap |> ?realizations |> ?usage |> ?economics |> ?WHY exact-codex-chain |> ?evidence'",
+        "result": "PASS: exact Codex chain verified"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate; sqlite3 <canonical-ledger> 'PRAGMA integrity_check'",
+        "result": "PASS: atlas valid; integrity_check ok"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260824T0326-finance-divergence-002"
+  },
+  "content_sha256": "62b7d6e705affb2cbcdcbbf8bd3dee186b80b31a7e6c12988d321e466e4a6711",
+  "event_id": "local-acd59bd73088287101050ba7259b",
+  "evidence_refs": [
+    "receipt:codex-20260824T033029-71eead65",
+    "work:mesh-external-chatgpt-20260824T0326-finance-divergence-002"
+  ],
+  "observed_at": "2026-08-24T03:40:04.032644+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260824T0326-finance-divergence-002 completed",
+  "type": "receipt_summary"
+}
