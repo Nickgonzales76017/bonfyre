@@ -1,0 +1,61 @@
+{
+  "actor": {
+    "id": "codex-20260824T014256-b689b8ca",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/bodies/",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/fulfillment-route-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/weekly-meal-plan.md"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Persisted six selected Dallas/Arlington first-party restaurant observations with terms for price, participation, fulfillment, hours, expiry, and reward compatibility.",
+      "Recorded exact public prices: Wendy's small classic Frosty $1.00; IHOP French Fries $1.99; Taco Bell Spicy Potato Soft Taco $1.49; Applebee's Bourbon Street Chicken & Shrimp $19.99.",
+      "Regenerated food outputs over 67 offers, including 50 cash-valued offers and 20,875 bounded baskets."
+    ],
+    "summary": "Verified and receipted public direct location/guest-order surfaces for Wendy’s, IHOP, Whataburger, Chick-fil-A, Taco Bell, and Applebee’s. Retained six first-party body digests; recorded explicit terms and preserved all unquoted fees and undeclared reward stacking as unknown.",
+    "tests": [
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "381 passed, 1 skipped"
+      },
+      {
+        "command": "source-body digest and selected-offer validation",
+        "result": "6 digest bindings and 6 offer records verified"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-1023a7ade6dc3482"
+  },
+  "content_sha256": "2bb03895db334ec0ef8d65b0ed2e1d3cca281ec6ea999a712138af950d8e5402",
+  "event_id": "local-4140029375576cf5693e45dde514",
+  "evidence_refs": [
+    "receipt:codex-20260824T014256-b689b8ca",
+    "work:discovered-1023a7ade6dc3482"
+  ],
+  "observed_at": "2026-08-24T01:52:32.249218+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-1023a7ade6dc3482 completed",
+  "type": "receipt_summary"
+}
