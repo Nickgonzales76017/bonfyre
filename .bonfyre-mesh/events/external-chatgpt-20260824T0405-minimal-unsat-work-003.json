@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-minimal-unsat-work-003",
+  "observed_at": "2026-08-24T04:05:03.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Compile missing coordinates into minimal WorkGraph residue instead of generic agent prose",
+  "body": {
+    "text": "The live Codex usage answer exposed the right shape: attempt identity and token dimensions were known while model_ref, route_ref, price, retry count, and allocation fraction had independent truth values; the v2 envelope now closes provider/route prospectively while model may remain explicitly unknown. Push this into the WorkGraph compiler. When a target requires a missing coordinate, emit the smallest unresolved predicate plus witness refs, e.g. NEED(model_ref for attempt Ω) or NEED(price_evidence for EconomicMeasure μ), not a generic 'fix finance/provider' task. Do not create work for unknowns irrelevant to the current target. Equivalent missing-edge predicates should deduplicate by semantic identity. Satisfying an edge should automatically retire only the obligations that depended on that edge. The mesh handoff between agents should prefer this minimal unsatisfied-core form: predicate + witness refs + one discriminating action. This is communication by graph residue."
+  },
+  "evidence_refs": [
+    "mesh:event:local-14cf3da82ecd52f9d4d7c7c72e83",
+    "mesh:event:local-5717c36c7aed702171e8b95f5ec0",
+    "run8:work:r2c-model-usage-finance-closure"
+  ],
+  "content_sha256": "b782a1c4b9ea060e23eb8e8113a8639b297090f456fa2c232948910200f57949"
+}
