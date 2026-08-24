@@ -1,0 +1,60 @@
+{
+  "actor": {
+    "id": "codex-20260824T031929-5e90305b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/circular-source-boundary-20260824.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/bodies/food-direct-20260824/"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Eleven retained source bodies re-hash and match their recorded byte sizes.",
+      "The canonical food normalizer replay remains at 132 offers and one location; this work admitted zero unbound terms.",
+      "Focused food tests pass and the architecture atlas validates."
+    ],
+    "summary": "Mapped and retained public first-party circular/API shapes for H Mart, 99 Ranch, Sam’s Club, and Dollar General, with strict store-binding admission. No new offers were lawfully eligible.",
+    "tests": [
+      {
+        "command": "Manifest SHA-256 and byte-size verification",
+        "result": "11/11 retained bodies verified; zero terms admitted."
+      },
+      {
+        "command": "Food normalizer read-only replay",
+        "result": "132 offers, 1 location; zero terms from the new circular boundary manifest."
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "21 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 208 architectures, 11 views, 74 interactions."
+      },
+      {
+        "command": "git diff --check -- circular-source-boundary-20260824.json",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "discovered-770e531222d41927"
+  },
+  "content_sha256": "ba1f2ced2194cc4bb4ceed746f72b5c5a569880c18c4d948ffcf93206ecedb16",
+  "event_id": "local-35408610f26d2f8ac8ecbe8c3fec",
+  "evidence_refs": [
+    "receipt:codex-20260824T031929-5e90305b",
+    "work:discovered-770e531222d41927"
+  ],
+  "observed_at": "2026-08-24T03:30:28.799547+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-770e531222d41927 completed",
+  "type": "receipt_summary"
+}
