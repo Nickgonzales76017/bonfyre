@@ -1,0 +1,56 @@
+{
+  "actor": {
+    "id": "codex-20260824T030653-d46646a0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_signal_candidates.py",
+      "tests/test_housing_signal_candidates.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/surfaces.json"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Added `sublet_card_grid` dispatch to the existing normalizer; no parallel tool was created.",
+      "Sublet card parsing preserves the card’s own property URL, location, monthly price, and short-term rate terms.",
+      "Replayed the shared housing projection without truncating foreign rows; legacy Sublet receipt correctly yielded zero candidates.",
+      "Architecture atlas export and validation pass."
+    ],
+    "summary": "Implemented and tested Sublet.com property-card normalization in the existing housing normalizer, then replayed the projection. The retained body is SHA-valid but policy-incomplete and non-Dallas, so it remains correctly excluded.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest tests/test_housing_signal_candidates.py tests/test_housing_receipt_policy.py tests/test_housing_strategy_frontiers.py -q",
+        "result": "21 passed"
+      },
+      {
+        "command": "rtk python3 tools/housing_signal_candidates.py --state .bonfyre/run8-r2c/20260823T032652Z-27525/household/housing --surfaces .bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/surfaces.json --repo-root .",
+        "result": "completed; 0 admissible current candidates, 122 foreign listing rows preserved"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-b0039dc469168646"
+  },
+  "content_sha256": "8361c514dde583cab06e6f3a038e7fc28308298020c5f56616a851d80bba7c34",
+  "event_id": "local-ce5549fb7dbf6b00199d11ae4158",
+  "evidence_refs": [
+    "receipt:codex-20260824T030653-d46646a0",
+    "work:discovered-b0039dc469168646"
+  ],
+  "observed_at": "2026-08-24T03:14:26.834449+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-b0039dc469168646 completed",
+  "type": "receipt_summary"
+}
