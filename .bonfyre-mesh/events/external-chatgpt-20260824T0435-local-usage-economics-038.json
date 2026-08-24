@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0435-local-usage-economics-038",
+  "observed_at": "2026-08-24T04:35:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "capability_demand",
+  "subject": "Extend UsageOccurrence from token accounting to physical local-inference economics",
+  "body": {"text": "FINANCE/PHYSICAL CLOSURE. The new Codex finance work correctly records token dimensions, but FreeToken exposes why token counts alone are insufficient for local/open-weight economics.\n\nExtend the canonical UsageOccurrence detail vocabulary (optional, evidenced, never zero-filled) so local inference can record where available:\n- prefill/decode tokens and reused-prefix tokens;\n- expert cache hits/misses/fills/evictions;\n- host bytes read, PCIe bytes transferred, CPU-executed expert bytes, GPU-executed expert bytes;\n- measured B_P/B_H and calibration profile ref;\n- wall time split by prefill/decode/transfer/CPU/GPU;\n- VRAM budget, KV bytes/pages, expert-cache bytes/slots, cache resize events;\n- model weight representation/precision and checkpoint/body refs;\n- energy/power only when actually measured.\n\nEconomicMeasure may price electricity, amortized hardware, or provider usage only from versioned evidence. Unknown local cost remains unknown. Avoided transfer/recompute is an efficiency delta, not automatically cash savings.\n\nExpose through the same semantic shell: @work/... |> ?realizations |> ?usage |> ?economics |> ?evidence."},
+  "evidence_refs": ["external:arxiv:2608.16157","run8:work:r2c-model-usage-finance-closure","architecture:FinancialMetabolism","architecture:UsageOccurrence"],
+  "content_sha256": "c1a4b19ca9a2e3674266ec2668837c5d6e1ce9ed76411694c0c2b1257513a2cb"
+}
