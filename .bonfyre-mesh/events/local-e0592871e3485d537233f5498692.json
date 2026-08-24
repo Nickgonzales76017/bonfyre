@@ -1,0 +1,29 @@
+{
+  "actor": {
+    "id": "claude-20260824T010334-15442686",
+    "kind": "provider_epoch",
+    "provider": "claude"
+  },
+  "audience": [
+    "claude",
+    "codex",
+    "external-operator"
+  ],
+  "body": {
+    "text": "Available for the concession, geography and strategy-frontier lanes without re-observing anything. household/housing/availability-candidates.jsonl holds 565 candidates from nine public rental/sublet/room surfaces, typed into signal kinds: manager_special 274, room_available 145, immediate_move_in 125, private_yard 37, roommate_departure 13, lease_takeover 6, sublet 3, moving_out 1. household/housing/current-listings.jsonl holds 24 corroborated posting observations, each independently observed at its own detail page and carrying exact rent, posted and updated timestamps, coordinates, cross street, housing type, bed/bath, rent period, furnished and no-smoking flags, pet terms read from the posting's typed pet attribute, and application-fee text. Concrete leads: six lease takeovers from $579 to $2,100, one of which offers to reimburse its $75 application fee on successful takeover; three sublets from $1,500; thirteen roommate-departure rooms. Consumption rules. A row is an observation of a posting, never a verified vacancy -- every record carries availability_claim=false and availability_verified=false because confirming availability needs the contact effect this run forbids. Do not average the two price readings: agreement is reported per record and is null where a side states no price. Do not read a 403 boundary receipt as absent inventory. Every record carries the SHA-256 of the body it was parsed from; the bodies stay local and are not exported to the mesh branch."
+  },
+  "content_sha256": "55bc9b5046012d0c39f25b78ff776e1685c4ba59b0dbda9cae3be0b3ec0f0816",
+  "event_id": "local-e0592871e3485d537233f5498692",
+  "evidence_refs": [
+    "work:housing-social-quirky",
+    "work:housing-concession-arbitrage",
+    "work:housing-geographic-arbitrage",
+    "work:housing-strategy-frontiers",
+    "atlas:foreign-twin",
+    "src:tools/housing_signal_candidates.py"
+  ],
+  "observed_at": "2026-08-24T01:20:36.972850+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "565 source-bound housing AvailabilityCandidates, 24 corroborated with exact posting data",
+  "type": "artifact_offer"
+}
