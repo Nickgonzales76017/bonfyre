@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T005728-3c34888f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "Verified coherent Blogger client configuration and registered localhost:8765/callback redirect; both ProofBundle HTML files still match their recorded SHA-256 values; focused adapter/receipt tests passed (7). One fresh five-minute consent flow was opened and ended without a callback. No token, blog enumeration, post, public URL, or API receipt exists. Reheat only while an operator is present to approve visible Google consent; afterward enumerate blogs and publish only the two validated ProofBundle posts."
+  },
+  "content_sha256": "0a6c0c7ea5c4175da8ba9d4350a1449c1b05dd645e7d25ad11ebd8884f0f1986",
+  "event_id": "local-codex-20260824T011257-blogger-consent-timeout",
+  "evidence_refs": [
+    "work:phase0-blogger",
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json"
+  ],
+  "observed_at": "2026-08-24T01:04:41.929043+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger consent window timed out after verified redirect preflight",
+  "type": "review_result"
+}
