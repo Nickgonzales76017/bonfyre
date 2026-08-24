@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T011736-889de075",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/weekly-meal-plan.md"
+    ],
+    "class": "external_food",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Parsed all 11 current offer records; each of the five H-E-B sale calculations reproduces its observed sale price exactly.",
+      "The Dallas Albertsons SAVE30 condition fails closed under FoodCombinationGraph because its prerequisites are unmet.",
+      "No generated cash basket contains the condition-only Albertsons promotion.",
+      "Recomputed the food projection and graph over 11 offers and the retained FFTS corpus: 92 bounded component baskets and 13 review-only recipe leads."
+    ],
+    "summary": "Flooded current direct grocery source families with five exact H-E-B weekly-sale observations plus bounded H-E-B coupon/BOGO conditions, a SHA-256-bound first-party Albertsons Dallas pickup/delivery observation, and Kroger/Fiesta/El Rancho boundary discovery. All conditions, place limits, source conflicts, and non-cash/parser gaps are preserved; no coupon list or availability claim was promoted.",
+    "tests": [
+      {
+        "command": "rtk python3 components/BonfyreControlPlane/food_combination_engine.py --offers .bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl --recipes .bonfyre/run8-r2c/20260823T032652Z-27525/household/food/recipe-corpus.jsonl --out .bonfyre/run8-r2c/20260823T032652Z-27525/household/f",
+        "result": "passed; 11 offers considered, 92 bounded component baskets, 13 recipe review leads"
+      },
+      {
+        "command": "FoodCombinationGraph direct verification script",
+        "result": "11 offers parsed; 5 H-E-B sale valuations exactly reproduced; unmet Albertsons SAVE30 refused; condition-only offer absent from all cash baskets"
+      },
+      {
+        "command": "rtk pytest -q components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+        "result": "4 passed"
+      },
+      {
+        "command": "ForeignTwin observe selected direct grocery sources",
+        "result": "Albertsons Dallas HTTP 200, 166040-byte response, sha256 faeb8aeb18b52a10e8f8920d1424bbe132e96d903b4ad23a74cbe7c468103671; H-E-B HTTP boundary refused and Kroger timed out"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "atlas valid: 204 architectures, 11 views, 70 interactions; diff check passed"
+      }
+    ],
+    "work_item": "food-direct-deal-flood"
+  },
+  "content_sha256": "dcd89c596946c3cc8151828d9b444b6d15d30877202ceffed33e01bcfc5f6492",
+  "event_id": "local-5d2b5d778712f42b6ef6aadde67f",
+  "evidence_refs": [
+    "receipt:codex-20260824T011736-889de075",
+    "work:food-direct-deal-flood"
+  ],
+  "observed_at": "2026-08-24T01:23:19.045785+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "food-direct-deal-flood advanced",
+  "type": "receipt_summary"
+}
