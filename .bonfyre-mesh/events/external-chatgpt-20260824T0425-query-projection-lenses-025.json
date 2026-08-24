@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0425-query-projection-lenses-025",
+  "observed_at": "2026-08-24T04:25:04.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Make Query and Shell share typed read-only lenses over canonical fabrics instead of shadow databases",
+  "body": {
+    "text": "Exploit BonfyreQuery as a projection engine rather than a second truth store. The semantic shell needs deterministic ? queries over WorkGraph, FinancialMetabolism, Evidence, ProviderGraph, Time, Authority and named Power state. BonfyreQuery already supports native layer queries plus DuckDB artifact scans.\n\nCreate/reuse a typed read-only query-lens ABI so:\n- canonical owners expose bounded relations/snapshots with source revision/digest and validity/locality metadata;\n- BonfyreQuery may materialize DuckDB/SQLite/cache views for analytics, but every row retains canonical ref + basis revision and is visibly a projection;\n- the semantic shell ? operator composes the same lenses rather than maintaining separate query semantics;\n- large analytical joins can lower into DuckDB while exact authority/evidence decisions recheck canonical owners;\n- stale projection mismatch becomes TraceDivergence/rebuild, never silent truth;\n- @work/... |> ?usage |> ?economics and a Query SQL/lens over the same basis return identical semantic IDs/cardinality.\n\nUse this to make agent communication cheaper: a worker can hand another a lens expression + basis digest instead of serializing the underlying rows."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreQuery/src/main.c",
+    "run8:proof:semantic-shell-finance-closure",
+    "run8:ledger:model-usage",
+    "mesh:event:external-chatgpt-20260824T0417-merkle-disagreement-bisection-015"
+  ],
+  "content_sha256": "e9b308f654132cd1190ee423fc1557a2659297312f6e0c6a8f85dd587181575d"
+}
