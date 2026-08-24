@@ -17,16 +17,27 @@ architecture foreign-twin
   state_types bind
   state_types act
   invariant a cached projection is not remote truth
+  invariant a retained observation body is parsed only while it still hashes to its receipt
+  invariant a projected candidate carries the receipt digest of the body it was read from
+  invariant a source excluded by robots or an absent observe right is receipted without fetching its source URL
   forbidden_inference foreign twin cache -> remote authority
   forbidden_inference observe right -> bind or act right
+  forbidden_inference retained body -> verified availability
+  forbidden_inference weak public supply signal -> exact availability fact
+  forbidden_inference policy exclusion -> absence of external inventory
   computational_form durable
   native_format graf
   command BonfyreProject
-  source_path 10-Code/BonfyreControlPlane/foreign.py
-  source_path 10-Code/BonfyreControlPlane/fabric_publish.py
-  witness 10-Code/BonfyreControlPlane/tests/test_foreign.py
-  witness 10-Code/BonfyreControlPlane/tests/test_fabric_publish.py
+  source_path components/BonfyreControlPlane/foreign.py
+  source_path components/BonfyreControlPlane/fabric_publish.py
+  source_path components/BonfyreProject/src/main.c
+  source_path tools/housing_signal_candidates.py
+  witness components/BonfyreControlPlane/tests/test_foreign.py
+  witness components/BonfyreControlPlane/tests/test_fabric_publish.py
+  witness components/BonfyreProject/tests/smoke.sh
+  witness tests/test_housing_signal_candidates.py
   source_lineage external boundary architecture
+  known_gap foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. The first lawful projection (public rental/sublet/room postings -> AvailabilityCandidates -> corroborated posting observations) is witnessed; residue is that only the craigslist static shape has a parser, so retained bodies from other public surfaces stay unparsed, and a corroborated posting is still not verified availability because verification would need a forbidden contact effect.
 
 architecture service-lifecycle
   canonical_name ServiceLifecycleGraph
@@ -48,8 +59,8 @@ architecture service-lifecycle
   forbidden_inference service active -> bind authority
   computational_form durable
   command BonfyreAPI
-  source_path 10-Code/BonfyreControlPlane/service_lifecycle.py
-  witness 10-Code/BonfyreControlPlane/tests/test_service_lifecycle.py
+  source_path components/BonfyreControlPlane/service_lifecycle.py
+  witness components/BonfyreControlPlane/tests/test_service_lifecycle.py
   source_lineage OSB / ServiceLifecycle architecture
 
 architecture partner-commons
