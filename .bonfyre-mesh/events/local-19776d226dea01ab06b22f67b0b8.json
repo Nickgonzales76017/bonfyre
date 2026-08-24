@@ -1,0 +1,54 @@
+{
+  "actor": {
+    "id": "codex-20260824T024516-61aa96be",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/state.sqlite3",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/mesh/last-import.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/mesh/last-export.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/mesh/last-sync.json"
+    ],
+    "class": "machine_execution",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The external rendezvous demand had a recorded Codex delivery and was acknowledged through the canonical eligibility fence.",
+      "A public-safe, content-addressed answer was exported and verified by identical remote readback.",
+      "The response names a current WorkGraph item, evidence artifact, unresolved boundary, attackable assumption, and concrete external question."
+    ],
+    "summary": "Completed the reciprocal rendezvous with a sanitized, evidence-bound answer that was sealed locally, exported through remote-mesh v1, and verified by exact remote readback.",
+    "tests": [
+      {
+        "command": "canonical mesh seal + public-safety gate + delivery acknowledgement eligibility",
+        "result": "passed; outbound answer sealed and inbound delivery acknowledged"
+      },
+      {
+        "command": "remote-mesh sync with authenticated task-local credential reference",
+        "result": "healthy; outbound event synced with identical remote readback"
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_mesh_transport.py -q",
+        "result": "39 passed"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260824T0243-rendezvous-001"
+  },
+  "content_sha256": "8cf0d7dec297a3a00ec382bd6d993ddd276ce38c03fe069b68b36fcc70125e9e",
+  "event_id": "local-19776d226dea01ab06b22f67b0b8",
+  "evidence_refs": [
+    "receipt:codex-20260824T024516-61aa96be",
+    "work:mesh-external-chatgpt-20260824T0243-rendezvous-001"
+  ],
+  "observed_at": "2026-08-24T02:48:13.508676+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260824T0243-rendezvous-001 completed",
+  "type": "receipt_summary"
+}
