@@ -1,0 +1,52 @@
+{
+  "actor": {
+    "id": "codex-20260824T031525-3687bee5",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "github_partner",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Fallback isolated focused suite passed: 90 tests covering finding artifacts and run artifacts.",
+      "Source compilation and branch whitespace checks pass."
+    ],
+    "summary": "Verified the existing #3699 fork branch with the installed Bernstein runtime; focused tests pass, but uv/ruff/mypy remain blocked by the absent locked environment. Authority is unchanged, so no upstream PR was opened.",
+    "tests": [
+      {
+        "command": "PYTHONPATH=src pytest -c /dev/null --confcutdir=tests/unit -q tests/unit/core/tasks/test_finding_artifact.py tests/unit/test_run_artifacts.py",
+        "result": "PASS: 90 passed"
+      },
+      {
+        "command": "python -m compileall -q changed finding/artifact modules and focused tests",
+        "result": "PASS"
+      },
+      {
+        "command": "git diff --check upstream/main...HEAD",
+        "result": "PASS"
+      },
+      {
+        "command": "uv run ruff check; uv run mypy --config-file mypy.gate.ini",
+        "result": "BLOCKED: uv and its locked dev dependency set are unavailable"
+      }
+    ],
+    "work_item": "discovered-da576dc397194ca1"
+  },
+  "content_sha256": "a0077d99eb33a6ababb141334757c1f75b67381c1ebbd4e0ec2fe4bde698c331",
+  "event_id": "local-e221f60da6e7e436b7fb338143cc",
+  "evidence_refs": [
+    "receipt:codex-20260824T031525-3687bee5",
+    "work:discovered-da576dc397194ca1"
+  ],
+  "observed_at": "2026-08-24T03:19:28.591765+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-da576dc397194ca1 advanced",
+  "type": "receipt_summary"
+}
