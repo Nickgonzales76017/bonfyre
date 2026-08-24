@@ -1,0 +1,96 @@
+{
+  "actor": {
+    "id": "claude-20260824T010334-15442686",
+    "kind": "provider_epoch",
+    "provider": "claude"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreProject/src/main.c",
+      "components/BonfyreProject/README.md",
+      "components/BonfyreProject/tests/smoke.sh",
+      "tools/housing_signal_candidates.py",
+      "tests/test_housing_signal_candidates.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".gitignore",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/surfaces.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/availability-candidates.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/candidate-rejections.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/current-listings.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/bodies/"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "bonfyre-project foreign observe can retain the observed body under --body and record body_path, so a downstream reader binds to the exact bytes the receipt hashed instead of re-fetching a different page.",
+      "A retained body is parsed only while it still re-hashes to its receipt's content_sha256; a tampered or replaced body yields zero candidates.",
+      "Every AvailabilityCandidate and every corroborated posting observation carries the content digest of the body it was read from.",
+      "565 weak public supply signals across nine surfaces are typed into nine named signal kinds and 24 strong candidates are corroborated by an independent observation of the posting's own detail page.",
+      "Corroboration reports agreement rather than collapsing it: price agreement is tri-state so a posting that states no price is recorded as absence, not as source disagreement.",
+      "The shared household/housing durable outputs are merged by owned schema plus posting_url, so this lane can no longer truncate another lane's rows."
+    ],
+    "summary": "Extended the existing ForeignTwin command surface (bonfyre-project foreign observe) with --body retention so a downstream reader can bind to the exact receipted bytes, then used it to mine 9 lawful public rental/sublet/room surfaces in DFW/Arlington. Projected 565 AvailabilityCandidates carrying quirky supply signals (lease takeover, sublet, roommate departure, room available, immediate move-in, manager special, private/fenced yard) and corroborated 24 strong candidates by independently observing each posting's own detail page, yielding exact price, posted/updated timestamps, coordinates, cross street, pet terms, application-fee text and availability language. Robots.txt was honored: Reddit disallows all crawling and was therefore never fetched; roomies.com returned 403 and is retained as a boundary response, not as absence of inventory. No contact, application, tour, fee or message was attempted.",
+    "tests": [
+      {
+        "command": "make -C components/BonfyreProject clean all",
+        "result": "passed; cc -O2 -Wall -Wextra -std=c11, no warnings"
+      },
+      {
+        "command": "bash components/BonfyreProject/tests/smoke.sh",
+        "result": "passed; new assertions prove --body retains the observed bytes, body_path is recorded, content_sha256 equals sha256 of the retained file, the non---body path records no body_path, file:// is refused, and --body without a path is refused"
+      },
+      {
+        "command": "python3 -m pytest tests/test_housing_signal_candidates.py -q",
+        "result": "8 passed"
+      },
+      {
+        "command": "python3 tools/housing_signal_candidates.py --state <STATE>/household/housing --surfaces <STATE>/household/housing/surfaces.json --repo-root .",
+        "result": "565 candidates, 24 corroborated, 0 rejections on the current corpus, receipts_read 197; signal histogram manager_special 274, room_available 145, immediate_move_in 125, private_yard 37, roommate_departure 13, lease_takeover 6, sublet 3, moving_out 1, new_phase 0"
+      },
+      {
+        "command": "source-agreement audit over the 24 corroborated postings",
+        "result": "0 price disagreements, 0 title disagreements, 2 postings state no price on either side (recorded as null, not as disagreement), 16 postings gained additional signal kinds from the detail read"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "passed; 204 architectures, 11 views, 70 interactions, 14 phenotypes, 16 edge-classes"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "1 failed, 367 passed, 1 skipped; the single failure is test_mesh_transport.py::test_first_export_attempt_is_atomic_across_sync_processes ('trigger mesh_ack_update_guard already exists'), which passes in isolation (39 passed) and is a race with the concurrently running mesh sync, not this change"
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "1 failed, 35 passed; the single failure is test_transitional_root_absorption.py::test_ledger_matches_a_fresh_measurement, reproduced on a pristine detached worktree at HEAD with none of this epoch's changes present"
+      },
+      {
+        "command": "git worktree add --detach /tmp/<tmp> HEAD && python3 tools/transitional_root_absorption.py --verify",
+        "result": "verify_exit=1, 'ledger drifted from measurement'; proves the drift is pre-existing in commit 602c78cb and not caused by this epoch"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "housing-social-quirky"
+  },
+  "content_sha256": "2772ed4299d3929c1720b0c7baba264715ecbe063e31b25411b2980ced47b5d4",
+  "event_id": "local-9a875982e5a13a45517341d565c3",
+  "evidence_refs": [
+    "receipt:claude-20260824T010334-15442686",
+    "work:housing-social-quirky"
+  ],
+  "observed_at": "2026-08-24T01:20:36.973645+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-social-quirky completed",
+  "type": "receipt_summary"
+}
