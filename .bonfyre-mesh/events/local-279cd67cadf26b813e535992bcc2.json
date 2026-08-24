@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260824T020418-b3fa3a84",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/bodies/direct/direct-campagna.html",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/bodies/direct/direct-nearlynew.html",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/availability-candidates.jsonl"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Campagna PMS and Nearly New Properties both returned 200 through the rights-aware ForeignTwin path and each retained body re-hashes to its receipt.",
+      "The direct candidate projection now contains 343 rows, including 26 from the two new portals; all 908 combined candidate rows make no availability assertion."
+    ],
+    "summary": "Expanded the DFW shadow inventory through two previously unobserved public small-manager portals. Retained receipt-bound bodies and added 26 unit candidates (21 Campagna PMS, 5 Nearly New Properties), without promoting any to availability.",
+    "tests": [
+      {
+        "command": "bonfyre-project foreign observe direct-campagna … && foreign observe direct-nearlynew …",
+        "result": "Both public robots preflights allowed observation; both target responses were HTTP 200."
+      },
+      {
+        "command": "python3 tools/housing_direct_candidates.py --source-ids direct-fortune,direct-rde,direct-c21,direct-classic,direct-firstchoice,direct-blacksand,direct-campagna,direct-nearlynew …",
+        "result": "343 direct candidates projected while preserving 565 foreign candidates."
+      },
+      {
+        "command": "python3 -m pytest tests/test_housing_direct_candidates.py tests/test_housing_shadow_inventory.py tests/test_housing_signal_candidates.py -q",
+        "result": "13 passed."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "Atlas valid (204 architectures, 11 views, 70 interactions); diff check passed."
+      }
+    ],
+    "work_item": "housing-shadow-inventory"
+  },
+  "content_sha256": "ac6b2ebfd2c370d35a936788e163d7f3eda402808a70513b299172a6d73c21a5",
+  "event_id": "local-279cd67cadf26b813e535992bcc2",
+  "evidence_refs": [
+    "receipt:codex-20260824T020418-b3fa3a84",
+    "work:housing-shadow-inventory"
+  ],
+  "observed_at": "2026-08-24T02:07:26.098271+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-shadow-inventory completed",
+  "type": "receipt_summary"
+}
