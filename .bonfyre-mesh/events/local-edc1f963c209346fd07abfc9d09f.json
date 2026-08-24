@@ -1,0 +1,63 @@
+{
+  "actor": {
+    "id": "codex-20260824T012319-d9c7ab15",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_signal_candidates.py",
+      "tools/housing_shadow_inventory.py",
+      "tests/test_housing_shadow_inventory.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/current-listings.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shadow-unpromoted.jsonl"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Shadow verification replay wrote 36 lane-owned rows while preserving 24 social rows.",
+      "A reverse social replay preserved all 36 shadow rows; current-listings.jsonl contains 60 rows total."
+    ],
+    "summary": "Implemented merge discipline for the remaining shadow producer, migrated social observations to a lane-owned schema, and physically replayed both producers against live household state. Cross-lane coexistence is now demonstrated in both directions; lost explicit-flood rows require owner rehydration.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_signal_candidates.py tests/test_housing_shadow_inventory.py -q",
+        "result": "9 passed"
+      },
+      {
+        "command": "python3 tools/housing_signal_candidates.py --state <state>/household/housing --surfaces <state>/household/housing/surfaces.json --repo-root .",
+        "result": "565 candidates, 24 corroborated, 36 foreign shadow rows preserved"
+      },
+      {
+        "command": "python3 tools/housing_shadow_inventory.py --receipts <state>/household/housing/source-receipts.jsonl verify --candidates-out <state>/household/housing/shadow-candidates.jsonl --listings-out <state>/household/housing/current-listings.jsonl --unpromoted-out <state>/household/housing/shadow-unpromoted.",
+        "result": "36 verified listings, 4 unpromoted, 24 foreign social rows preserved"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed; 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "mesh-local-2ff7a5aa30f3f58703198b19731c"
+  },
+  "content_sha256": "d4239d0e6c68954749701be2f689a17668460e5ea12a40ef61602657b66eefc9",
+  "event_id": "local-edc1f963c209346fd07abfc9d09f",
+  "evidence_refs": [
+    "receipt:codex-20260824T012319-d9c7ab15",
+    "work:mesh-local-2ff7a5aa30f3f58703198b19731c"
+  ],
+  "observed_at": "2026-08-24T01:27:26.628871+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-local-2ff7a5aa30f3f58703198b19731c advanced",
+  "type": "receipt_summary"
+}
