@@ -1,0 +1,53 @@
+{
+  "actor": {
+    "id": "codex-20260824T025534-b2dd993f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/household_economic_circuit.py",
+      "components/BonfyreControlPlane/tests/test_household_economic_circuit.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/cross-domain/economic-circuit.json"
+    ],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Replayed current inputs into a digest-bound circuit: 8 housing scenarios, 4 one-time component views, 72 food strategies, and 24 food origins.",
+      "Coverage now identifies five housing calculations excluded for lack of known required recurring sums.",
+      "Focused household, food-route, and finance tests passed; Atlas validation and diff whitespace validation passed."
+    ],
+    "summary": "Hardened and replayed the cross-domain household circuit. It explicitly surfaces housing/food coverage gaps and the FinancialMetabolism boundary while refusing an unproven residence join and all accounting promotion.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest components/BonfyreControlPlane/tests/test_household_economic_circuit.py components/BonfyreControlPlane/tests/test_food_fulfillment_route.py components/BonfyreControlPlane/tests/test_financial_metabolism.py -q",
+        "result": "13 passed"
+      },
+      {
+        "command": "rtk python3 components/BonfyreControlPlane/household_economic_circuit.py",
+        "result": "8 housing scenarios, 72 food strategies, join state no_explicit_residence_identity_join"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "Atlas valid: 207 architectures, 11 views, 73 interactions; whitespace check passed"
+      }
+    ],
+    "work_item": "cross-domain-household-circuit"
+  },
+  "content_sha256": "72458b71e458ae2be63b3c6afe44a2f0e4df42be4791916c4d6ce38105e52d94",
+  "event_id": "local-33277d43dd3cd0dcbda2d40e41e9",
+  "evidence_refs": [
+    "receipt:codex-20260824T025534-b2dd993f",
+    "work:cross-domain-household-circuit"
+  ],
+  "observed_at": "2026-08-24T02:59:20.192639+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "cross-domain-household-circuit completed",
+  "type": "receipt_summary"
+}
