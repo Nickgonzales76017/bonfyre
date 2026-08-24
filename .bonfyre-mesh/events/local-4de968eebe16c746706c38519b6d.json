@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T004823-4f9beb4b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreProject/src/main.c",
+      "components/BonfyreProject/README.md",
+      "components/BonfyreProject/tests/smoke.sh",
+      "components/BonfyreProject/bonfyre-project",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl"
+    ],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "BonfyreProject, the atlas-declared ForeignTwin command surface, now emits timestamped SHA-256 boundary-observation receipts.",
+      "The live Dallas housing workload retained its 403 source evidence without collapsing it into availability."
+    ],
+    "summary": "Closed the BonfyreProject ForeignTwin gap: native `foreign observe` now produces content-addressed source receipts and was exercised on the active Dallas housing source.",
+    "tests": [
+      {
+        "command": "make -C components/BonfyreProject clean all && bash components/BonfyreProject/tests/smoke.sh",
+        "result": "passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "360 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "verify latest household housing source receipt fields and 403 boundary classification",
+        "result": "passed"
+      }
+    ],
+    "work_item": "r2c-mature-map-real-gap"
+  },
+  "content_sha256": "253ecb1f11c40bd868d90a79cd9ed21503b3e068ab57c1ffe30729d4a29c2db6",
+  "event_id": "local-4de968eebe16c746706c38519b6d",
+  "evidence_refs": [
+    "receipt:codex-20260824T004823-4f9beb4b",
+    "work:r2c-mature-map-real-gap"
+  ],
+  "observed_at": "2026-08-24T00:55:15.494873+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "r2c-mature-map-real-gap completed",
+  "type": "receipt_summary"
+}
