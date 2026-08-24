@@ -1,0 +1,58 @@
+{
+  "actor": {
+    "id": "codex-20260824T015233-d5dba36e",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreAuth/Makefile",
+      "components/BonfyreAuth/bonfyre-auth",
+      "components/BonfyreAuth/src/main.c",
+      "components/BonfyrePay/Makefile",
+      "components/BonfyrePay/bonfyre-pay",
+      "components/BonfyrePay/src/main.c",
+      "evidence/verification/transitional-root/build-products-deletion-proof.json",
+      "generated/projections/estate/transitional-root-absorption.json"
+    ],
+    "class": "repository_promotion",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Removed 39 proof-bound compatibility-root files: 35 executable build products plus four Auth/Pay source files.",
+      "Regenerated the build-product proof with 35 tracked artifacts totaling 1,308,248 bytes.",
+      "Regenerated the ledger with deleted_pending_commit empty and exact clean-tree rendering."
+    ],
+    "summary": "Repaired and pushed the transitional-root absorption ledger drift. Fresh detached checkout verification now passes.",
+    "tests": [
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "382 passed, 1 skipped"
+      },
+      {
+        "command": "detached checkout: python3 tools/transitional_root_absorption.py --verify && pytest tests/test_transitional_root_absorption.py -q",
+        "result": "ledger current; 13 passed"
+      }
+    ],
+    "work_item": "discovered-7773baa6d681d117"
+  },
+  "content_sha256": "a1fbfdee6c2dca8fc4e7ad1a7d02ceaeb9a27753b6710ae9b1ef39ccb0ff7df1",
+  "event_id": "local-f7284b9c18d9ff59761fea385fcc",
+  "evidence_refs": [
+    "receipt:codex-20260824T015233-d5dba36e",
+    "work:discovered-7773baa6d681d117"
+  ],
+  "observed_at": "2026-08-24T02:02:34.919585+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-7773baa6d681d117 completed",
+  "type": "receipt_summary"
+}
