@@ -413,3 +413,14 @@ interaction blogger-receipt-feeds-evidence
   evidence the safe Blogger API response supports only api-acknowledged and publicly-addressable publication claims
   witness test_safe_blogger_receipt_projects_once_into_occurrence_and_evidence
   binding components/BonfyreControlPlane/blogger_receipts.py
+
+interaction resource-pressure-triggers-metabolism
+  source resource-admission
+  destination resource-metabolism
+  relation bounded_capacity_recovery
+  preserves the measured free-space state, hard emergency floor, and configured target
+  drops any implication that a target shortfall justifies unbounded maintenance
+  forbidden_inference disk below the configured target -> every reclaim candidate is worth scanning or deleting
+  invalidates_on free-space state, inventory fingerprint, yield policy, or backoff deadline changes
+  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py
+  binding components/BonfyreControlPlane/resource_metabolism.py

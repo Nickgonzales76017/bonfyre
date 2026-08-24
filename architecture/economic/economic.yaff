@@ -66,3 +66,22 @@ architecture institutional-cost-graph
   edge_types allocates
   forbidden_inference a projected cost -> a booked accounting entry
   source_lineage run6/run7 economic estate
+
+architecture resource-metabolism
+  canonical_name ResourceMetabolism
+  family economic
+  domain Economic / Resource
+  layer economic
+  semantic_question When does physical maintenance still return more capacity than its scan, proof, and deletion cost?
+  purpose Marginal-yield accounting for ExtremeGC: content-address reclaim inventory, compare expected and observed capacity yield, and exponentially cool unchanged exhausted inventory while preserving an emergency-floor override.
+  maturity implemented
+  source_path components/BonfyreControlPlane/resource_metabolism.py
+  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py
+  node_types ReclaimInventory
+  node_types YieldEnvelope
+  edge_types cools_maintenance
+  edge_types reopens_on_expiry
+  invariant cached backoff never suppresses reclaim at or below the hard emergency disk floor
+  invariant an inventory fingerprint excludes observation-time and free-space noise
+  forbidden_inference cached low yield -> the physical estate cannot have changed
+  source_lineage Run8 ExtremeGC operational metabolism

@@ -127,6 +127,7 @@
       "semantic_question": "Of all the state available, what is even eligible to participate in this operation?",
       "source_paths": [
         "components/BonfyreControlPlane/address_plane.py",
+        "components/BonfyreControlPlane/semantic_operator.py",
         "components/BonfyreControlPlane/bonfyre_sid.py",
         "components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs"
       ],
@@ -137,9 +138,65 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_address_plane.py",
+        "components/BonfyreControlPlane/tests/test_semantic_operator.py",
         "components/BonfyreControlPlane/tests/test_cid_sid.py",
         "~/.bonfyre/substrates/v6.1/feldera/route-set-proof.jsonl",
         "components/BonfyreControlPlane/tests/test_substrate_feldera.py"
+      ]
+    },
+    "agent-session": {
+      "canonical_name": "AgentSession",
+      "commands": [],
+      "consumes": [
+        "WorkState",
+        "ContextCut",
+        "CapabilityBid"
+      ],
+      "derived": [],
+      "domain": "Execution / Agentic realization",
+      "edge_types": [
+        "realizes",
+        "compacts",
+        "changes_strategy"
+      ],
+      "family": "execution",
+      "forbidden_inferences": [
+        "provider-native session reference -> AgentSession identity, authority, completion, or semantic continuity",
+        "provider attribution -> effect safety, quality, ownership, or evidence sufficiency"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "session identity is independent of provider-native session references and may span provider and model changes",
+        "every model turn records provider identity, model identity and evidence origin for independent receipt verification",
+        "context compaction and strategy change carry distinct before/after references and an observable reason"
+      ],
+      "known_gaps": [],
+      "layer": "execution/session",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "AgentSession",
+        "AgentEvent",
+        "ModelTurn",
+        "ContextCompaction",
+        "StrategyChange"
+      ],
+      "owns": [
+        "AgentSession"
+      ],
+      "publishes": [
+        "AgentEvent"
+      ],
+      "semantic_question": "Which governed session and observable event frontier spans changing provider realizations?",
+      "source_paths": [
+        "schemas/control/agent-session-receipt.yaff",
+        "engine/core/src/agent_contract.c",
+        "engine/core/include/bf_agent_contract.h"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "engine/core/tests/agent_contract_test.c"
       ]
     },
     "apparatus-provider": {
@@ -215,6 +272,59 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_evidence_graphs.py"
+      ]
+    },
+    "atlas-context-provider": {
+      "canonical_name": "AtlasContextProvider",
+      "commands": [],
+      "consumes": [],
+      "derived": [
+        "AtlasAnswer"
+      ],
+      "domain": "Context / Model Context",
+      "edge_types": [
+        "answers",
+        "truncates"
+      ],
+      "family": "context",
+      "forbidden_inferences": [
+        "a bounded answer -> the registry is lossy (the registry stays lossless; only the read path is bounded)",
+        "cheapest read path -> authoritative answer (the index is derived; the YaFF registry is canonical)"
+      ],
+      "internal_calculi": [
+        "value-walk (keys are schema, never content)",
+        "per-response byte budget with explicit truncation"
+      ],
+      "invariants": [
+        "every op declares a byte budget and reports truncation rather than silently exceeding it",
+        "search matches field values and the architecture id, never field names",
+        "explain fields (matched_fields, snippet) are request-local and never enter the exported index"
+      ],
+      "known_gaps": [
+        "only the atlas is served this way; the same bounded-read discipline is unapplied to the fabric and evidence surfaces"
+      ],
+      "layer": "context",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "Query",
+        "BoundedAnswer"
+      ],
+      "owns": [
+        "AtlasAnswer"
+      ],
+      "publishes": [
+        "AtlasAnswer"
+      ],
+      "semantic_question": "What does one atlas question cost to answer, and can it cost only that?",
+      "source_paths": [
+        "architecture/atlas_query.py",
+        "architecture/atlas.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "architecture/tests/test_atlas_query.py"
       ]
     },
     "atomic-form": {
@@ -319,12 +429,15 @@
         "a frequent motif -> a correct or authorized one (frequency is not correctness; the fence and Authority still run)"
       ],
       "internal_calculi": [],
-      "invariants": [],
+      "invariants": [
+        "LOWER requires equivalence evidence and a nonempty invalidation envelope",
+        "a covered dependency change LIFTs the lowered circuit without changing semantic truth"
+      ],
       "known_gaps": [
-        "the learning organ is architectural; the trace->candidate loop is specified, not yet trained"
+        "M2 builds the reversible control machinery; M9 still owes a real repeated circuit, measured equivalence and dependency-mutation LOWER-to-LIFT proof"
       ],
       "layer": "learning",
-      "maturity": "architectural",
+      "maturity": "implemented",
       "native_formats": [],
       "node_types": [],
       "owns": [],
@@ -332,10 +445,16 @@
         "SurfaceCandidate"
       ],
       "semantic_question": "Which presentation and adjacency motifs recur, and what better candidates should be proposed?",
-      "source_paths": [],
+      "source_paths": [
+        "components/BonfyreControlPlane/pattern_graph.py",
+        "components/BonfyreControlPlane/aurekai_lowering.py"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_run_history_absorption.py",
+        "components/BonfyreControlPlane/tests/test_aurekai_lowering.py"
+      ]
     },
     "authority-graph": {
       "canonical_name": "AuthorityGraph",
@@ -4715,6 +4834,67 @@
         "engine/core/tests/evidence_test.c"
       ]
     },
+    "execution-environment-graph": {
+      "canonical_name": "ExecutionEnvironmentGraph",
+      "commands": [],
+      "consumes": [
+        "ResourceWeather",
+        "ProviderState"
+      ],
+      "derived": [],
+      "domain": "Execution / Physical Environment",
+      "edge_types": [
+        "suitable_for",
+        "owned_by",
+        "observed_as",
+        "resolved_from",
+        "routes_to"
+      ],
+      "family": "execution",
+      "forbidden_inferences": [
+        "catalog presence or version text -> runtime health or semantic completion",
+        "credential reachability -> effect authority",
+        "one expired copy of a conflicting variable name -> the capability is unavailable",
+        "an answering OS shim -> an installed runtime",
+        "measured routing latency -> durable provider cost or availability guarantee"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "a catalog entry becomes healthy only after a bounded workload or authenticated read-only probe succeeds",
+        "reference environments are sourced task-locally and values never enter evidence",
+        "a cataloged executable path is resolved against installed alternates before its surface is called unavailable",
+        "a capability whose variable name conflicts across reference files is resolved by probing every declared source and naming the one that authenticates",
+        "a model route is live only after a real bounded completion returns the expected answer, never from credential presence",
+        "a failing probe records its failure mode so an expired credential, an exhausted quota and a refused transport stay distinguishable"
+      ],
+      "known_gaps": [],
+      "layer": "execution/environment",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "ExecutionEnvironment",
+        "EnvironmentHealthObservation",
+        "CapabilityCredentialResolution",
+        "ModelRoute"
+      ],
+      "owns": [
+        "CapabilityEnvironment"
+      ],
+      "publishes": [
+        "CapabilityEnvironment",
+        "ResourceWeather"
+      ],
+      "semantic_question": "Which installed machine surfaces are healthy, regenerable, owned, and suitable for this work now?",
+      "source_paths": [
+        "components/BonfyreControlPlane/execution_environment.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_execution_environment.py",
+        "evidence/proofs/execution-environment-matrix.json"
+      ]
+    },
     "feldera": {
       "canonical_name": "Feldera",
       "commands": [
@@ -4781,6 +4961,135 @@
         "components/BonfyreControlPlane/tests/test_reachability_bridge.py"
       ]
     },
+    "financial-metabolism": {
+      "canonical_name": "FinancialMetabolism",
+      "commands": [],
+      "consumes": [
+        "PhysicalDerivationReceipt",
+        "CommercialAgreement"
+      ],
+      "derived": [],
+      "domain": "Economic / Financial Metabolism",
+      "edge_types": [
+        "valued_by",
+        "funded_by",
+        "projects_position"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "accrued cost -> billed, paid, or booked money",
+        "avoided usage -> cash savings"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "usage requires a physical receipt and admitted rate source before cost accrues",
+        "funding availability never supplies spend authority"
+      ],
+      "known_gaps": [],
+      "layer": "economic/finance",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "UsageOccurrence",
+        "FundingRoute",
+        "FinancialPosition"
+      ],
+      "owns": [
+        "UsageOccurrence",
+        "FundingCircuit",
+        "FinancialPosition",
+        "DerivationEconomics",
+        "ChangeEconomics"
+      ],
+      "publishes": [
+        "FinancialPosition"
+      ],
+      "semantic_question": "How does observed usage become accrued economics, funding selection and basis-explicit position without becoming booked truth?",
+      "source_paths": [
+        "components/BonfyreControlPlane/financial_metabolism.py",
+        "components/BonfyreControlPlane/economic_graphs.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+        "components/BonfyreControlPlane/tests/test_economic_graphs.py"
+      ]
+    },
+    "food-combination-graph": {
+      "canonical_name": "FoodCombinationGraph",
+      "commands": [],
+      "consumes": [
+        "FinancialPosition",
+        "HouseholdRecipeObservation"
+      ],
+      "derived": [],
+      "domain": "Economic / Household Food Combination",
+      "edge_types": [
+        "explicitly_stacks_with",
+        "lexical_review_lead",
+        "source_name_and_quantity_covers",
+        "has_cash_basis",
+        "fulfilled_by",
+        "bound_to_origin"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "advertised price -> effective economic cost",
+        "recipe lexical match -> substitution or complete meal",
+        "points or rebate -> cash paid",
+        "geodesic travel lower bound -> road distance, drive time, or fuel cost"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "promotions combine only through source-declared compatible pairs",
+        "cash paid, delayed rebate and points remain separately basis-labelled",
+        "restaurant channel marks prepared-food observations without promoting them to complete meals or local availability",
+        "incomplete recipe coverage remains a review lead, never a meal total",
+        "recipe ingredient coverage requires a source-contained normalized name and explicit compatible package unit; leftover arithmetic never asserts waste",
+        "a basket that misses a source-stated fulfillment minimum has no plan in that mode",
+        "an unresolved fulfillment leg never supplies an exact cash total or zero travel"
+      ],
+      "known_gaps": [],
+      "layer": "economic/food",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "ObservedFoodOffer",
+        "PromotionEffect",
+        "RecipeReviewLead",
+        "RecipeIngredientCoverage",
+        "FulfillmentPlan",
+        "RouteOrigin"
+      ],
+      "owns": [
+        "FoodOfferObservation",
+        "PromotionEffect",
+        "FoodCombinationProjection",
+        "RecipeReviewLead",
+        "RecipeIngredientCoverage",
+        "FulfillmentPlan"
+      ],
+      "publishes": [
+        "FoodCombinationProjection"
+      ],
+      "semantic_question": "Which source-bound food offers can be lawfully composed into exact cash, delayed-rebate, points, fulfillment, recipe-lead and travel-aware strategy dimensions?",
+      "source_paths": [
+        "tools/food_offer_observations.py",
+        "components/BonfyreControlPlane/food_combination_engine.py",
+        "components/BonfyreControlPlane/food_fulfillment_route.py",
+        ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_food_offer_observations.py",
+        "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+        "components/BonfyreControlPlane/tests/test_food_fulfillment_route.py",
+        ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+        ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/fulfillment-route-options.json"
+      ]
+    },
     "foreign-twin": {
       "canonical_name": "ForeignTwinGraph",
       "commands": [
@@ -4805,11 +5114,12 @@
       "invariants": [
         "a cached projection is not remote truth",
         "a retained observation body is parsed only while it still hashes to its receipt",
+        "a retained observation body path is immutable after receipt materialization",
         "a projected candidate carries the receipt digest of the body it was read from",
         "a source excluded by robots or an absent observe right is receipted without fetching its source URL"
       ],
       "known_gaps": [
-        "foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. The first lawful projection (public rental/sublet/room postings -> AvailabilityCandidates -> corroborated posting observations) is witnessed; residue is that only the craigslist static shape has a parser, so retained bodies from other public surfaces stay unparsed, and a corroborated posting is still not verified availability because verification would need a forbidden contact effect."
+        "foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. Retained Craigslist and direct AppFolio public portal bodies now project only provenance-bound candidates; a candidate is still not verified availability because verification would need a forbidden contact effect. Other retained direct-source shapes remain unparsed."
       ],
       "layer": "external",
       "maturity": "measured",
@@ -4827,7 +5137,9 @@
         "components/BonfyreControlPlane/foreign.py",
         "components/BonfyreControlPlane/fabric_publish.py",
         "components/BonfyreProject/src/main.c",
-        "tools/housing_signal_candidates.py"
+        "tools/housing_signal_candidates.py",
+        "tools/housing_shadow_inventory.py",
+        "tools/housing_direct_candidates.py"
       ],
       "subscribes": [],
       "views": [
@@ -4838,7 +5150,9 @@
         "components/BonfyreControlPlane/tests/test_foreign.py",
         "components/BonfyreControlPlane/tests/test_fabric_publish.py",
         "components/BonfyreProject/tests/smoke.sh",
-        "tests/test_housing_signal_candidates.py"
+        "tests/test_housing_signal_candidates.py",
+        "tests/test_housing_shadow_inventory.py",
+        "tests/test_housing_direct_candidates.py"
       ]
     },
     "form-graph": {
@@ -5138,6 +5452,64 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
+    },
+    "generation10-system-map-stress": {
+      "canonical_name": "Generation10SystemMapStress",
+      "commands": [],
+      "consumes": [
+        "WorkState",
+        "AtlasAnswer",
+        "CapabilityBid",
+        "Authority",
+        "Artifact",
+        "Evidence"
+      ],
+      "derived": [],
+      "domain": "Institutional / Whole-machine proof",
+      "edge_types": [
+        "hands_off_to",
+        "replays"
+      ],
+      "family": "institutional",
+      "forbidden_inferences": [
+        "a successful replay -> current foreign truth, upstream completion, effect authority, or a new external effect",
+        "a content-valid receipt -> the named producer actually produced it"
+      ],
+      "internal_calculi": [
+        "content-addressed envelope replay against live owner stores",
+        "counterfactual authority and identity mutation"
+      ],
+      "invariants": [
+        "every successful run closes durable work against a content-addressed receipt after the native effect receipt and ObjectFabric artifact exist",
+        "a second invocation over satisfied work is replay-only and creates no additional effect or native receipt",
+        "foreign rights, AuthorityGraph grants, provider identity, transport identity, artifact identity, provenance and claim support remain separately replayable dimensions"
+      ],
+      "known_gaps": [],
+      "layer": "replay",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "OwnerTransition",
+        "ReceiptEnvelope",
+        "ReplayVerdict"
+      ],
+      "owns": [
+        "CircuitReplayReport"
+      ],
+      "publishes": [
+        "ReceiptEnvelope",
+        "CircuitReplayReport"
+      ],
+      "semantic_question": "Can one real effect cross the Generation-10 owner topology and replay without collapsing any owner's semantics?",
+      "source_paths": [
+        "components/BonfyreControlPlane/system_map_stress.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_system_map_stress.py",
+        "evidence/proofs/generation10-system-map-stress.json"
       ]
     },
     "gigatoken": {
@@ -5600,6 +5972,63 @@
         "~/.bonfyre/substrates/v6.1/lance/semantic-proof.json"
       ]
     },
+    "latent-coordinate-fabric": {
+      "canonical_name": "LatentCoordinateFabric",
+      "commands": [],
+      "consumes": [
+        "AddressSet",
+        "InformationPolicy"
+      ],
+      "derived": [],
+      "domain": "Model / Governed Coordinates",
+      "edge_types": [
+        "projected_from",
+        "comparable_under",
+        "follows"
+      ],
+      "family": "model",
+      "forbidden_inferences": [
+        "similarity -> identity, relation, evidence, authority, or financial truth",
+        "latent drift -> causal change"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "every projection names an exact semantic subject, feature closure, causal frontier and source digest",
+        "cross-space comparison requires an explicit comparability contract"
+      ],
+      "known_gaps": [],
+      "layer": "model/latent",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "LatentProfile",
+        "EmbeddingProjection",
+        "LatentSpacePassport"
+      ],
+      "owns": [
+        "LatentProfile",
+        "EmbeddingProjection",
+        "LatentSpacePassport",
+        "ComparabilityContract",
+        "LatentTrajectory",
+        "LatentDelta",
+        "LatentWatch"
+      ],
+      "publishes": [
+        "LatentWatch"
+      ],
+      "semantic_question": "Which replayable learned coordinate is attached to this exact subject, under what passport, comparability and use law?",
+      "source_paths": [
+        "components/BonfyreControlPlane/latent_fabric.py",
+        "components/BonfyreControlPlane/address_plane.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_latent_fabric.py",
+        "components/BonfyreControlPlane/tests/test_address_plane.py"
+      ]
+    },
     "lms": {
       "canonical_name": "LMS",
       "commands": [],
@@ -5670,6 +6099,66 @@
       "subscribes": [],
       "views": [],
       "witnesses": []
+    },
+    "mesh-routing-replay": {
+      "canonical_name": "MeshRoutingReplay",
+      "commands": [],
+      "consumes": [
+        "MeshEvent",
+        "WorkState"
+      ],
+      "derived": [],
+      "domain": "External / Federation",
+      "edge_types": [
+        "replays",
+        "refutes"
+      ],
+      "family": "external",
+      "forbidden_inferences": [
+        "a passing replay -> the envelope's claims are true",
+        "a passing replay -> authority to perform the challenge's requested effects",
+        "a snapshot replay -> the live frontier was exercised under concurrency"
+      ],
+      "internal_calculi": [
+        "address rebinding over reconstructed EventGraph state",
+        "route re-derivation and adversarial author/audience mutation matrix"
+      ],
+      "invariants": [
+        "the route is recomputed from the envelope; agreement with the stored row is a check, never an assumption",
+        "replay runs against a SQLite backup copy, so a proof never mutates the coordination frontier it measures",
+        "a replayed projection that creates a row, or a re-admission that is not a duplicate, is a failed proof rather than a repair",
+        "the mutation matrix must show the fence reacting to the author and audience, because a constant answer proves nothing",
+        "the replay probes obligation-id injectivity in both lossy directions, because a dropped obligation and an honest idempotent replay are otherwise indistinguishable",
+        "every mesh work id in live state must re-derive from a live event id, so an injectivity repair cannot orphan an obligation the frontier already owns",
+        "the emitted artifact is repo-relative and quotable onto the public branch"
+      ],
+      "known_gaps": [
+        "replay measures a snapshot, so it cannot observe a race between two carriers writing the same delivery row",
+        "only the local side is replayed; an external producer's own state remains unobservable"
+      ],
+      "layer": "external/proof",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "ReplayCheck",
+        "RoutingCase"
+      ],
+      "owns": [
+        "MeshRoutingReplay"
+      ],
+      "publishes": [
+        "ReplayVerdict"
+      ],
+      "semantic_question": "Does this envelope's claimed cross-provider routing actually hold in live state, and does replaying it change anything?",
+      "source_paths": [
+        "components/BonfyreControlPlane/mesh_routing_replay.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "evidence/proofs/mesh-routing-fence-replay.json",
+        "components/BonfyreControlPlane/tests/test_mesh_transport.py"
+      ]
     },
     "model-representation-graph": {
       "canonical_name": "ModelRepresentationGraph",
@@ -5830,6 +6319,81 @@
         "engine/core/tests/p0_loop_test.c"
       ]
     },
+    "one-company-stress-gauntlet": {
+      "canonical_name": "OneCompanyStressGauntlet",
+      "commands": [],
+      "consumes": [
+        "ExternalEvent",
+        "WorkState",
+        "CapabilityBid",
+        "FormatProfile",
+        "PartnerObservation",
+        "ModelRoute",
+        "Artifact",
+        "FrappeLineageCatalog",
+        "CanonicalContractIR"
+      ],
+      "derived": [],
+      "domain": "Institutional / Cross-organ operating proof",
+      "edge_types": [
+        "projects_through",
+        "converges_on"
+      ],
+      "family": "institutional",
+      "forbidden_inferences": [
+        "isolated simulation cash -> production revenue",
+        "local partner review -> remote partner completion, authority or mutation",
+        "unsigned DSSE envelope -> verified signature",
+        "byte equivalence -> producer, model, transport, authority or claim support",
+        "provider process identity -> AgentSession, WorkerRun or WorkGraph identity",
+        "source checkout or semantic proof -> live registered runtime binding"
+      ],
+      "internal_calculi": [
+        "shared-identity owner-trace replay across at least five owner families per lane",
+        "format-native round-trip plus content-addressed semantic equivalence",
+        "exact blocker preservation for unavailable lifecycle, storage, peer-transport, context and model routes",
+        "catalog-derived lineage dependency graph plus idempotent WorkGraph effect replay"
+      ],
+      "invariants": [
+        "at least three lanes cross five or more distinct owner families over the same semantic object",
+        "every claimed Power invocation resolves through the live public-Power registry and carries an output digest",
+        "blocked organs remain named blockers and cannot contribute a success check",
+        "all reusable lane evidence converges on one tamper-evident ProofBundle digest",
+        "every registered Frappe lineage mutation has one WorkGraph obligation and one authority-bounded ReceiptEnvelope",
+        "ContextCompiler, UI and API projections bind the same canonical Frappe contract digest",
+        "replay and transactional rollback create no duplicate lineage effects, work or evidence relations"
+      ],
+      "known_gaps": [],
+      "layer": "replay",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "CompanySemanticObject",
+        "LaneReceipt",
+        "BoundedBlocker",
+        "ProofBundle",
+        "FrappeLineageCatalog",
+        "CanonicalContractIR"
+      ],
+      "owns": [
+        "CompanyGauntletReplay"
+      ],
+      "publishes": [
+        "ReceiptEnvelope",
+        "ProofBundle"
+      ],
+      "semantic_question": "Can one tiny company object cross Powers, Frappe, Model Commons, Format Commons and Partner Commons without collapsing their meanings?",
+      "source_paths": [
+        "components/BonfyreControlPlane/company_stress_gauntlet.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+        "evidence/proofs/one-company-stress-gauntlet.json",
+        "evidence/proofs/frappe-compiler-company-flow.json"
+      ]
+    },
     "opencat-provider": {
       "canonical_name": "OpenCatProvider",
       "commands": [],
@@ -5983,11 +6547,13 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "not built; the route-ranker learns route ordering, a first learned organ"
+        "clusters and candidate proposals are durable; proof-gated promotion into the capability registry remains open"
       ],
       "layer": "learning",
-      "maturity": "architectural",
-      "native_formats": [],
+      "maturity": "implemented",
+      "native_formats": [
+        "crux"
+      ],
       "node_types": [
         "ActionTrace",
         "PatternCluster"
@@ -5995,10 +6561,15 @@
       "owns": [],
       "publishes": [],
       "semantic_question": "What recurring pattern do these action traces and residuals cluster into?",
-      "source_paths": [],
+      "source_paths": [
+        "components/BonfyreControlPlane/pattern_graph.py",
+        "packs/run-history/run8-absorption.json"
+      ],
       "subscribes": [],
       "views": [],
-      "witnesses": []
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_run_history_absorption.py"
+      ]
     },
     "physical-asset": {
       "canonical_name": "PhysicalAssetGraph",
@@ -6053,6 +6624,61 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_physical_asset.py"
+      ]
+    },
+    "physical-derivation": {
+      "canonical_name": "PhysicalDerivation",
+      "commands": [],
+      "consumes": [
+        "CapabilityEnvironment",
+        "ResourceWeather",
+        "CapabilityBid"
+      ],
+      "derived": [],
+      "domain": "Provider / Physical Derivation",
+      "edge_types": [
+        "realizes",
+        "materializes",
+        "reuses_body"
+      ],
+      "family": "provider",
+      "forbidden_inferences": [
+        "a command exited zero -> its semantic target is proven",
+        "a body digest -> producer identity or authority"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "environment evidence records dependency names and references, never secret values",
+        "body reuse is keyed by derivation identity and current validity"
+      ],
+      "known_gaps": [],
+      "layer": "provider/realization",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "RealizationManifest",
+        "PhysicalExecutionFrame",
+        "PhysicalDerivationReceipt"
+      ],
+      "owns": [
+        "RealizationManifest",
+        "PhysicalExecutionFrame",
+        "RealizationObservation",
+        "PhysicalDerivationReceipt",
+        "BodyAvailability"
+      ],
+      "publishes": [
+        "UsageOccurrence",
+        "PhysicalDerivationReceipt"
+      ],
+      "semantic_question": "What source, toolchain, environment names, bodies and observations physically realized this semantic demand?",
+      "source_paths": [
+        "components/BonfyreControlPlane/physical_derivation.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_physical_derivation.py"
       ]
     },
     "placement-graph": {
@@ -6202,6 +6828,57 @@
         "engine/core/tests/proof_test.c"
       ]
     },
+    "protocol-machine": {
+      "canonical_name": "ProtocolMachine",
+      "commands": [],
+      "consumes": [
+        "WorkerRunState",
+        "ExecutionReceipt"
+      ],
+      "derived": [],
+      "domain": "Execution / Boundary programs",
+      "edge_types": [
+        "admits_transition"
+      ],
+      "family": "execution",
+      "forbidden_inferences": [
+        "valid protocol transition -> WorkGraph satisfaction, effect authority, external acknowledgement or outcome truth"
+      ],
+      "internal_calculi": [
+        "registered transition table + per-instance idempotency journal"
+      ],
+      "invariants": [
+        "an idempotency key can name one operation only and replay preserves its first durable transition",
+        "Restate resume is illegal until node A acknowledgement and EffectKernel recovery have crossed the waiting state"
+      ],
+      "known_gaps": [],
+      "layer": "execution/protocol",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "ProtocolMachine",
+        "ProtocolInstance"
+      ],
+      "owns": [
+        "ProtocolState"
+      ],
+      "publishes": [
+        "ProtocolTransition"
+      ],
+      "semantic_question": "Which operations are legal now in a durable foreign conversation, and which acknowledgement permits the next one?",
+      "source_paths": [
+        "engine/core/include/bf_lifecycle.h",
+        "engine/core/src/lifecycle.c",
+        "services/bonfyre-restate-adapter/app.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "engine/core/tests/lifecycle_test.c",
+        "tests/restate_integration.sh",
+        "evidence/proofs/worker-lifecycle-restate-recovery.json"
+      ]
+    },
     "provenance-graph": {
       "canonical_name": "ProvenanceGraph",
       "commands": [],
@@ -6241,7 +6918,10 @@
     "provider-graph": {
       "canonical_name": "ProviderGraph",
       "commands": [],
-      "consumes": [],
+      "consumes": [
+        "CapabilityBid",
+        "ArtifactParity"
+      ],
       "derived": [],
       "domain": "Provider / Resolution",
       "edge_types": [
@@ -6256,7 +6936,8 @@
       "internal_calculi": [],
       "invariants": [],
       "known_gaps": [
-        "ProviderStateFold folds events, the route-set daemon advertises/withdraws routes"
+        "ProviderStateFold folds events, the route-set daemon advertises/withdraws routes",
+        "only ArchitectureLookup has real bids; every other capability still has an empty tournament, which is silence rather than a choice"
       ],
       "layer": "provider",
       "maturity": "implemented",
@@ -6316,6 +6997,7 @@
       "semantic_question": "What is a provider's current admissible state, folded from its event history?",
       "source_paths": [
         "components/BonfyreControlPlane/provider_state.py",
+        "components/BonfyreControlPlane/continuous_supervisor.py",
         "engine/core/src/control_provider.c"
       ],
       "subscribes": [],
@@ -6323,7 +7005,115 @@
         "ProviderResourceView"
       ],
       "witnesses": [
-        "components/BonfyreControlPlane/tests/test_provider_state.py"
+        "components/BonfyreControlPlane/tests/test_provider_state.py",
+        "components/BonfyreControlPlane/tests/test_continuous_supervisor.py"
+      ]
+    },
+    "realization-measurement": {
+      "canonical_name": "RealizationMeasurement",
+      "commands": [],
+      "consumes": [
+        "AtlasAnswer"
+      ],
+      "derived": [
+        "RealizationCost"
+      ],
+      "domain": "Provider / Realization",
+      "edge_types": [
+        "measures",
+        "bids_for"
+      ],
+      "family": "provider",
+      "forbidden_inferences": [
+        "measured cheapest -> selected (authority and proof still admit)",
+        "byte-identical answers -> one provider (artifact identity and producer identity are orthogonal proof dimensions)"
+      ],
+      "internal_calculi": [
+        "executed measurement (paths are run, not estimated)",
+        "answer-digest comparison for artifact parity"
+      ],
+      "invariants": [
+        "a bid records real units; polarity belongs to the metric dimension, never to the caller's weights",
+        "a realization that was not executed does not bid"
+      ],
+      "known_gaps": [
+        "only ArchitectureLookup is measured; the native rung has no bidder yet for this capability"
+      ],
+      "layer": "provider",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "Realization",
+        "LadderRung"
+      ],
+      "owns": [
+        "RealizationCost"
+      ],
+      "publishes": [
+        "CapabilityBid",
+        "ArtifactParity"
+      ],
+      "semantic_question": "What does each realization of this capability actually spend, measured rather than assumed?",
+      "source_paths": [
+        "components/BonfyreControlPlane/realization_measure.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_realization_measure.py"
+      ]
+    },
+    "receipt-envelope": {
+      "canonical_name": "ReceiptEnvelope",
+      "commands": [],
+      "consumes": [
+        "AgentEvent",
+        "Occurrence",
+        "Artifact"
+      ],
+      "derived": [],
+      "domain": "Evidence / Receipts",
+      "edge_types": [
+        "covers_event",
+        "produced_by",
+        "carried_by"
+      ],
+      "family": "evidence",
+      "forbidden_inferences": [
+        "artifact/content identity -> producer, model, transport, authority, provenance, or claim support",
+        "repeated provider/model attribution -> verified producer fidelity without a verifier observation",
+        "subject, host, or external origin -> either of the other origin classes"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "receipt coverage requires same-sequence and same-origin evidence for every AgentEvent",
+        "model-turn evidence repeats the exact provider and model identity declared by the covered event and binds an explicit producer verifier observation",
+        "external evidence carries transport identity while artifact, producer/model and transport identities remain orthogonal"
+      ],
+      "known_gaps": [],
+      "layer": "evidence/receipt",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "ReceiptEnvelope",
+        "ReceiptEvidence"
+      ],
+      "owns": [
+        "ReceiptEnvelope"
+      ],
+      "publishes": [
+        "Evidence"
+      ],
+      "semantic_question": "What exact session event frontier occurred, and from which evidence origin and identity dimensions?",
+      "source_paths": [
+        "schemas/control/agent-session-receipt.yaff",
+        "engine/core/src/agent_contract.c",
+        "engine/core/include/bf_agent_contract.h"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "engine/core/tests/agent_contract_test.c"
       ]
     },
     "recursive-value-graph": {
@@ -6406,6 +7196,128 @@
       ],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_relationship.py"
+      ]
+    },
+    "remote-mesh-transport": {
+      "canonical_name": "RemoteMeshTransport",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "External / Federation",
+      "edge_types": [
+        "addresses",
+        "quarantines",
+        "diverges_from",
+        "materializes_as_work"
+      ],
+      "family": "external",
+      "forbidden_inferences": [
+        "a delivered mesh message -> an authority grant",
+        "a delivered mesh message -> a completion receipt",
+        "an admitted envelope -> its claims are true",
+        "a projection that inserted no row -> the obligation was already held",
+        "an address collision -> permission to force-push the transport branch",
+        "the transport branch -> a merge target"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "the declared address must equal the address measured over the envelope's own content",
+        "an already-seen event id never bypasses validation of the bytes currently present on the remote branch",
+        "one event id cannot be rebound to different content; both addresses are retained as a collision",
+        "a refused envelope is retained with both addresses, never silently dropped",
+        "re-presenting a quarantined envelope increments an attempt count instead of re-refusing it invisibly",
+        "the privacy gate runs on import as well as export, so an upstream leak never becomes our publication",
+        "structured raw prompt, stdout, stderr, raw log, private correspondence, and authority-grant fields are refused",
+        "a divergence report carries the two addresses and never echoes the refused content",
+        "an actionable provider-authored event addressed to another local carrier materializes as idempotent WorkGraph state that excludes its author",
+        "the WorkGraph id of a mesh obligation is injective in the event id, so two distinct legal envelopes can never collapse onto one obligation and silently drop the second",
+        "a receipt can acknowledge only an existing delivery to the same provider; it cannot manufacture delivery",
+        "the originating provider cannot acknowledge a cross-provider obligation that excludes it",
+        "the privacy gate reads every string in the envelope, list positions included, so evidence_refs, audience, changed_paths and tests[].command are inspected rather than skipped",
+        "the set of acknowledgements the eligibility fence would refuse today is empty; a closure written before the fence existed is reopened, with the prior closure preserved verbatim",
+        "repeated valid acknowledgement preserves the first consumption receipt rather than replacing it",
+        "durable store guards enforce delivery and cross-provider acknowledgement eligibility even when a long-running carrier still has pre-upgrade Python loaded",
+        "pre-fence ineligible acknowledgements are retracted from the live frontier while their original ReceiptEnvelope assertion remains auditable",
+        "a successful write is not synchronized until remote readback bytes exactly equal the local payload",
+        "concurrent first export attempts converge through atomic bookkeeping rather than a unique-key failure",
+        "a terminal exact-readback receipt recovers a crash before EventGraph export-state projection without another remote write",
+        "concurrent importers serialize the shared tracking-ref update and inspect one immutable commit snapshot per cycle",
+        "a partial import or export failure is explicitly degraded even though bounded maintenance remains nonfatal"
+      ],
+      "known_gaps": [
+        "the producer side of the mesh is external, so a re-sealed envelope cannot be proven to arrive; only its refusal can be reported back",
+        "divergence_report and mark_divergence_reported have no production caller; the remote-mesh-quarantines-into-divergence interaction is exercised only by its unit witness, so on 2026-08-21 sixteen quarantined envelopes carried 8385 cumulative refused re-fetch attempts with divergence_reported still 0 for every row and no producer notified",
+        "quarantined and divergence_report call ensure_schema, so an observer holding a read-only handle to live coordination state cannot read the divergence backlog through the module's own API",
+        "envelopes published before the list-traversal fix are already public; the gate can refuse republication but cannot unpublish local-2b5745a7e20f61978cfcdbb81409, whose body carried a home path"
+      ],
+      "layer": "external/transport",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "MeshEnvelope",
+        "QuarantinedEnvelope",
+        "ExportState",
+        "CoordinationObligation",
+        "DeliveryReceipt"
+      ],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Did this coordination envelope arrive as the bytes its producer addressed, and what happens when it did not?",
+      "source_paths": [
+        "components/BonfyreControlPlane/mesh_transport.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_mesh_transport.py"
+      ]
+    },
+    "repository-shape": {
+      "canonical_name": "RepositoryShape",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Institution / Repository",
+      "edge_types": [
+        "physically_owned_by"
+      ],
+      "family": "institutional",
+      "forbidden_inferences": [
+        "physical placement -> semantic authority",
+        "a documented YaFF Scan design -> authority to run an estate compiler"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "campaigns and runs are evidence, fixtures, packs, receipts, or operator state rather than parallel implementation roots",
+        "independently buildable product components live under components and the notebook-era 10-Code root cannot return",
+        "retired notebook writers live under evidence origins and cannot remain scheduled production services",
+        "the legacy estate compiler remains retired unless a successor names a current Atlas architecture and owner, uses a non-append-only snapshot state model, and declares positive age, byte, and snapshot-count retention bounds"
+      ],
+      "known_gaps": [],
+      "layer": "institutional",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "RepositoryOwner",
+        "PhysicalRoot"
+      ],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "Which physical root owns this class of source, projection, evidence, integration, documentation, or operator state?",
+      "source_paths": [
+        "bonfyre.workspace.yaff",
+        "docs/repository-layout.md",
+        "evidence/README.md",
+        "generated/README.md",
+        "components/README.md",
+        "services/queue-dispatcher/README.md",
+        "architecture/estate-compiler-retirement.json"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "tests/test_repository_shape.py",
+        "tests/test_estate_compiler_retirement.py"
       ]
     },
     "resource-activation": {
@@ -6521,6 +7433,45 @@
         "engine/core/tests/admission_test.c"
       ]
     },
+    "resource-metabolism": {
+      "canonical_name": "ResourceMetabolism",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Economic / Resource",
+      "edge_types": [
+        "cools_maintenance",
+        "reopens_on_expiry"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "cached low yield -> the physical estate cannot have changed"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "cached backoff never suppresses reclaim at or below the hard emergency disk floor",
+        "an inventory fingerprint excludes observation-time and free-space noise"
+      ],
+      "known_gaps": [],
+      "layer": "economic",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "ReclaimInventory",
+        "YieldEnvelope"
+      ],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "When does physical maintenance still return more capacity than its scan, proof, and deletion cost?",
+      "source_paths": [
+        "components/BonfyreControlPlane/resource_metabolism.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_resource_metabolism.py"
+      ]
+    },
     "restate": {
       "canonical_name": "Restate",
       "commands": [],
@@ -6548,14 +7499,17 @@
       "publishes": [],
       "semantic_question": "How does the trial durably wait hours or days on external reality?",
       "source_paths": [
-        "~/.bonfyre/substrates/v6.1/restate/source"
+        "~/.bonfyre/substrates/v6.1/restate/source",
+        "services/bonfyre-restate-adapter/app.py"
       ],
       "subscribes": [],
       "views": [
         "SubstrateView"
       ],
       "witnesses": [
-        "~/.bonfyre/substrates/v6.1/restate/semantic-proof.json"
+        "~/.bonfyre/substrates/v6.1/restate/semantic-proof.json",
+        "tests/restate_integration.sh",
+        "evidence/proofs/worker-lifecycle-restate-recovery.json"
       ]
     },
     "result-receipt-bundle": {
@@ -6679,6 +7633,63 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_provider_graphs.py"
+      ]
+    },
+    "semantic-derivation": {
+      "canonical_name": "SemanticDerivationGraph",
+      "commands": [],
+      "consumes": [
+        "FactDelta"
+      ],
+      "derived": [],
+      "domain": "Fabric / Incremental Derivation",
+      "edge_types": [
+        "reads",
+        "writes",
+        "invalidates"
+      ],
+      "family": "fabric",
+      "forbidden_inferences": [
+        "a learned rank -> a satisfied hard constraint",
+        "a FactDelta -> global invalidation"
+      ],
+      "internal_calculi": [
+        "fixed-point dependency closure over exact addresses",
+        "HybridLogicalClock merge and tick"
+      ],
+      "invariants": [
+        "learned signals may rank candidates but cannot satisfy a hard constraint",
+        "programs outside the changed read closure remain valid"
+      ],
+      "known_gaps": [],
+      "layer": "fabric/derivation",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "SemanticProgramIR",
+        "ConstraintIR",
+        "FactDelta"
+      ],
+      "owns": [
+        "SemanticDerivationGraph",
+        "SemanticProgramIR",
+        "SemanticSlice",
+        "SemanticConstraintNetwork",
+        "DecisionSnapshot",
+        "AllocationProblem"
+      ],
+      "publishes": [
+        "DecisionSnapshot",
+        "SemanticSlice"
+      ],
+      "semantic_question": "Which exact programs and read closures are affected by this FactDelta?",
+      "source_paths": [
+        "components/BonfyreControlPlane/semantic_derivation.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_semantic_derivation.py"
       ]
     },
     "serm": {
@@ -6937,6 +7948,58 @@
       "views": [],
       "witnesses": []
     },
+    "target-obligation": {
+      "canonical_name": "TargetObligation",
+      "commands": [],
+      "consumes": [
+        "ExecutionReceipt"
+      ],
+      "derived": [],
+      "domain": "Execution / Persistent Purpose",
+      "edge_types": [
+        "realized_by",
+        "waits_for",
+        "superseded_by"
+      ],
+      "family": "execution",
+      "forbidden_inferences": [
+        "a failed realization -> the TargetObligation failed",
+        "a checkpoint or wait -> semantic completion"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "carrier, tool, provider and build failure never terminate semantic purpose",
+        "unchanged deterministic failures cool by realization and dependency digest"
+      ],
+      "known_gaps": [],
+      "layer": "execution/obligation",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "TargetObligation",
+        "StandingPredicate",
+        "FailureFingerprint"
+      ],
+      "owns": [
+        "TargetObligation",
+        "StandingPredicate",
+        "FailureFingerprint"
+      ],
+      "publishes": [
+        "TargetState"
+      ],
+      "semantic_question": "Which semantic objective remains due across carrier failures, waits, and checkpoints?",
+      "source_paths": [
+        "components/BonfyreControlPlane/target_obligation.py",
+        "components/BonfyreControlPlane/continuous_supervisor.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_target_obligation.py",
+        "components/BonfyreControlPlane/tests/test_continuous_supervisor.py"
+      ]
+    },
     "temporal-evidence-graph": {
       "canonical_name": "TemporalEvidenceGraph",
       "commands": [],
@@ -7009,6 +8072,70 @@
       ],
       "witnesses": [
         "~/.bonfyre/substrates/v6.1/tract/semantic-proof.json"
+      ]
+    },
+    "transitional-root-absorption": {
+      "canonical_name": "TransitionalRootAbsorption",
+      "commands": [],
+      "consumes": [
+        "RepositoryTree",
+        "CommandSurface"
+      ],
+      "derived": [],
+      "domain": "Institutional / Estate convergence",
+      "edge_types": [
+        "superseded_by",
+        "absorbs_into"
+      ],
+      "family": "institutional",
+      "forbidden_inferences": [
+        "renaming or relocating the transitional root -> its children are absorbed",
+        "an empty child directory -> the child is worthless, because unregistered gitlinks present as empty",
+        "a similarly named remote repository -> it contains or may replace the recorded gitlink object",
+        "a legacy source file being larger than its current owner -> it holds unique capability"
+      ],
+      "internal_calculi": [
+        "top-level C definition extraction over legacy and current owner trees",
+        "bf_-namespaced rename resolution for helpers absorbed into lib",
+        "residue grading across source, documentation, sample output and scratch"
+      ],
+      "invariants": [
+        "the transitional root is resolved by measurement, never by hard-coded directory name",
+        "a child is superseded only when every symbol and durable file has a current owner",
+        "C definition measurement is formatting-independent, including compact one-line wrappers",
+        "a symbol surviving only under a legacy_from_ tree is residue, not an owner",
+        "committed executable build products are deleted under a DeletionProof, never counted as capability",
+        "an orphan gitlink is registered, vendored, or removed only after its exact mode and object identity receive a disposition proof",
+        "the root survives while any child still carries unabsorbed capability"
+      ],
+      "known_gaps": [],
+      "layer": "cutover",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "TransitionalChild",
+        "ResidueSymbol",
+        "CutoverFate"
+      ],
+      "owns": [
+        "AbsorptionLedger"
+      ],
+      "publishes": [
+        "AbsorptionLedger",
+        "DeletionProof"
+      ],
+      "semantic_question": "Which children of the transitional compatibility root still own capability that no current owner provides?",
+      "source_paths": [
+        "tools/transitional_root_absorption.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "tests/test_transitional_root_absorption.py",
+        "generated/projections/estate/transitional-root-absorption.json",
+        "evidence/verification/transitional-root/build-products-deletion-proof.json",
+        "evidence/verification/transitional-root/auth-pay-source-deletion-proof.json",
+        "evidence/verification/transitional-root/orphan-gitlink-disposition-proof.json"
       ]
     },
     "transport-phenotype": {
@@ -7316,6 +8443,56 @@
         "components/BonfyreControlPlane/tests/test_work_graph.py"
       ]
     },
+    "worker-run": {
+      "canonical_name": "WorkerRun",
+      "commands": [],
+      "consumes": [
+        "WorkState",
+        "ExecutionReceipt"
+      ],
+      "derived": [],
+      "domain": "Execution / Agentic realization",
+      "edge_types": [
+        "realizes"
+      ],
+      "family": "execution",
+      "forbidden_inferences": [
+        "provider invocation ID or PID -> WorkerRun identity, WorkGraph identity, completion or authority"
+      ],
+      "internal_calculi": [
+        "replay-safe lifecycle transitions keyed by stable semantic identity"
+      ],
+      "invariants": [
+        "replay with matching semantic bindings returns the existing WorkerRun and creates no new transition",
+        "an identity collision with different worker, mission or ProtocolMachine bindings fails closed"
+      ],
+      "known_gaps": [],
+      "layer": "execution/lifecycle",
+      "maturity": "measured",
+      "native_formats": [],
+      "node_types": [
+        "WorkerRun"
+      ],
+      "owns": [
+        "WorkerRun"
+      ],
+      "publishes": [
+        "WorkerRunState"
+      ],
+      "semantic_question": "Which stable logical worker execution spans process death, provider retries and durable continuation?",
+      "source_paths": [
+        "engine/core/include/bf_lifecycle.h",
+        "engine/core/src/lifecycle.c",
+        "services/bonfyre-restate-adapter/app.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "engine/core/tests/lifecycle_test.c",
+        "tests/restate_integration.sh",
+        "evidence/proofs/worker-lifecycle-restate-recovery.json"
+      ]
+    },
     "yaff": {
       "canonical_name": "YaFF",
       "commands": [],
@@ -7537,6 +8714,59 @@
       "relation": "learned_ranking",
       "source": "address-plane"
     },
+    "address-plane-routes-household-operator": {
+      "destination": "semantic-derivation",
+      "drops": [
+        "proof, authority, availability and economic truth not carried by a witness"
+      ],
+      "forbidden_inferences": [
+        "source-bound household projection -> current availability, dog acceptance, effective cost, purchase authority or proof"
+      ],
+      "invalidates_on": [
+        "the source record digest, identity key, command advertisement or operator implementation changes"
+      ],
+      "preserves": [
+        "the addressed source record, selected command owner, exact read set and semantic program digest"
+      ],
+      "relation": "deterministic_operator_lowering",
+      "source": "address-plane"
+    },
+    "agent-session-binds-receipt-envelope": {
+      "destination": "receipt-envelope",
+      "drops": [
+        "provider-private state and provider-native session identity as a semantic owner"
+      ],
+      "forbidden_inferences": [
+        "evidence for one origin -> evidence for another origin",
+        "artifact identity -> producer, model, transport, authority, completion, or claim support",
+        "matching provider/model strings -> verified producer fidelity without a verifier observation"
+      ],
+      "invalidates_on": [
+        "an event is inserted, removed, reordered, rebound to another origin, or attributed to another provider/model"
+      ],
+      "preserves": [
+        "session identity, event sequence, event kind, provider/model attribution, explicit producer verifier reference and subject/host/external evidence origin"
+      ],
+      "relation": "event_frontier_coverage",
+      "source": "agent-session"
+    },
+    "atlas-context-provider-bounds-model-context": {
+      "destination": "realization-measurement",
+      "drops": [
+        "every architecture that was not asked about"
+      ],
+      "forbidden_inferences": [
+        "a bounded answer -> the caller has seen the atlas"
+      ],
+      "invalidates_on": [
+        "atlas.py export rewrites the index"
+      ],
+      "preserves": [
+        "the exact registry record for the id asked about"
+      ],
+      "relation": "bounded_read_realization",
+      "source": "atlas-context-provider"
+    },
     "authority-compiles-to-mask": {
       "destination": "address-plane",
       "drops": [
@@ -7686,6 +8916,38 @@
       "relation": "composition",
       "source": "discipl-composition"
     },
+    "evidence-feeds-pattern-graph": {
+      "destination": "pattern-graph",
+      "drops": [
+        "automatic proof and promotion authority"
+      ],
+      "forbidden_inferences": [
+        "repeated source-backed observations -> a proven or promoted primitive"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "trace references and source-backed evidence references"
+      ],
+      "relation": "evidence_bound_clustering",
+      "source": "evidence-graph"
+    },
+    "execution-environment-informs-work-placement": {
+      "destination": "work-graph",
+      "drops": [
+        "credential values, raw subprocess output, and task-irrelevant reference environments"
+      ],
+      "forbidden_inferences": [
+        "a healthy suitable environment -> authority to execute an effect or semantic completion"
+      ],
+      "invalidates_on": [
+        "the executable, context, reference environment, or bound dependency changes"
+      ],
+      "preserves": [
+        "environment identity, observed health, owning subsystem, regeneration cost, and suitable work classes"
+      ],
+      "relation": "resource_weather_placement_input",
+      "source": "execution-environment-graph"
+    },
     "feldera-maintains-reachability": {
       "destination": "proof-frontier",
       "drops": [
@@ -7702,6 +8964,23 @@
       ],
       "relation": "incremental_maintenance",
       "source": "feldera"
+    },
+    "food-combination-preserves-economic-basis": {
+      "destination": "financial-metabolism",
+      "drops": [
+        "any permission to purchase, availability claim, booked-accounting claim or cash conversion for points and rebates"
+      ],
+      "forbidden_inferences": [
+        "observed offer composition -> authorized transaction, effective meal cost, or booked financial position"
+      ],
+      "invalidates_on": [
+        "an offer source, eligibility/stack law, product price, fulfillment fee, route, rebate, points term or recipe coverage changes"
+      ],
+      "preserves": [
+        "source identity, cash basis, delayed-rebate basis, points basis, eligibility conditions and exact promotion arithmetic"
+      ],
+      "relation": "household_offer_economic_projection",
+      "source": "food-combination-graph"
     },
     "formgraph-compiles-to-atomicform": {
       "destination": "atomic-form",
@@ -7754,6 +9033,111 @@
       "relation": "ternary_compilation",
       "source": "proof-frontier"
     },
+    "generation10-stress-admits-effect": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "ForeignTwin rights as an authority source"
+      ],
+      "forbidden_inferences": [
+        "foreign act label -> AuthorityGraph grant"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "actor, permission, subject, purpose and effect scope"
+      ],
+      "relation": "exact_effect_admission",
+      "source": "authority-graph"
+    },
+    "generation10-stress-bounds-context": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "the rest of the lossless registry from provider context"
+      ],
+      "forbidden_inferences": [
+        "bounded context -> complete mission evidence"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "query identity, answer digest and delivered byte count"
+      ],
+      "relation": "bounded_context_delivery",
+      "source": "atlas-context-provider"
+    },
+    "generation10-stress-closes-work": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "queue priority as a durability claim"
+      ],
+      "forbidden_inferences": [
+        "effect command exit zero -> work satisfied"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "work item identity, transitions and satisfying receipt reference"
+      ],
+      "relation": "receipt_bound_lifecycle_replay",
+      "source": "work-graph"
+    },
+    "generation10-stress-consumes-foreign-twin": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "mutation authority and any claim of current remote truth"
+      ],
+      "forbidden_inferences": [
+        "cached partner observation -> authority or upstream completion"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "source institution, remote resource identity, observation event and observe/reference rights"
+      ],
+      "relation": "rights_limited_observation_input",
+      "source": "foreign-twin"
+    },
+    "generation10-stress-replays-artifact": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "producer and transport identity from artifact identity"
+      ],
+      "forbidden_inferences": [
+        "byte-identical artifact -> same producer or same execution"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "content digest, URI, byte count and transformation lineage"
+      ],
+      "relation": "objectfabric_content_replay",
+      "source": "artifact-graph"
+    },
+    "generation10-stress-replays-evidence": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "unsupported upstream-completion claims"
+      ],
+      "forbidden_inferences": [
+        "green owned validation snapshot -> current upstream completion"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the exact evidence, relation kind and supported claim"
+      ],
+      "relation": "directional_claim_replay",
+      "source": "evidence-graph"
+    },
+    "generation10-stress-selects-provider": {
+      "destination": "generation10-system-map-stress",
+      "drops": [
+        "unauthorized candidates from selection, not from historical observation"
+      ],
+      "forbidden_inferences": [
+        "available or cheapest provider -> authorized provider"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "provider identity and the multidimensional bid vector"
+      ],
+      "relation": "authority_filtered_realization",
+      "source": "provider-graph"
+    },
     "hvm4-reduces-fpq-seed": {
       "destination": "fpq-seed",
       "drops": [
@@ -7768,6 +9152,23 @@
       ],
       "relation": "bounded_reduction",
       "source": "hvm4"
+    },
+    "latent-coordinate-narrows-derivation": {
+      "destination": "semantic-derivation",
+      "drops": [
+        "authority, evidence truth and hard-constraint satisfaction"
+      ],
+      "forbidden_inferences": [
+        "nearest neighbor -> exact semantic relation"
+      ],
+      "invalidates_on": [
+        "feature closure, encoder, passport, information policy, source digest, or causal frontier changes"
+      ],
+      "preserves": [
+        "subject identity, passport, comparability contract and causal frontier"
+      ],
+      "relation": "learned_candidate_prior",
+      "source": "latent-coordinate-fabric"
     },
     "lattice-feeds-discipl": {
       "destination": "discipl-composition",
@@ -7785,6 +9186,84 @@
       "relation": "binding_source",
       "source": "capability-lattice"
     },
+    "mesh-routing-replay-refutes-transport-claims": {
+      "destination": "remote-mesh-transport",
+      "drops": [
+        "any trust in the stored routing row, which is recomputed rather than read"
+      ],
+      "forbidden_inferences": [
+        "a 14/14 replay -> the transport is correct for envelopes it has not replayed",
+        "a replay verdict -> a completion receipt for the challenge that requested it"
+      ],
+      "invalidates_on": [
+        "the transport's routing rule, canonicalisation, or privacy gate changes"
+      ],
+      "preserves": [
+        "the envelope's declared address, its re-derived route, and the exact bytes published at that address"
+      ],
+      "relation": "adversarial_replay",
+      "source": "mesh-routing-replay"
+    },
+    "one-company-gauntlet-binds-model-session": {
+      "destination": "one-company-stress-gauntlet",
+      "drops": [
+        "provider-native process identity as lifecycle identity"
+      ],
+      "forbidden_inferences": [
+        "selected model route -> authority, quality, completion or lifecycle identity"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "stable AgentSession identity, provider/model identity, work node and evidence origin"
+      ],
+      "relation": "provider_faithful_decision_receipt",
+      "source": "agent-session"
+    },
+    "one-company-gauntlet-binds-partner": {
+      "destination": "one-company-stress-gauntlet",
+      "drops": [
+        "remote mutation authority and any claim that local review changed the partner institution"
+      ],
+      "forbidden_inferences": [
+        "local partner observation -> remote completion or authority"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "partner identity, source reference, local observation and observe/reference rights"
+      ],
+      "relation": "rights_limited_partner_review",
+      "source": "partner-commons"
+    },
+    "one-company-gauntlet-projects-frappe": {
+      "destination": "one-company-stress-gauntlet",
+      "drops": [
+        "any implication that a projection owns actor, evidence, money or authority semantics"
+      ],
+      "forbidden_inferences": [
+        "app record -> canonical identity, booked value, problem resolution or committed derived fact"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "ActorGraph identity, occurrence identity, commitment identity, compiler-registered lineage identity and real DocType field/type grammar"
+      ],
+      "relation": "shared_object_doctype_projection",
+      "source": "crm"
+    },
+    "one-company-gauntlet-roundtrips-artifacts": {
+      "destination": "one-company-stress-gauntlet",
+      "drops": [
+        "unavailable OpenDAL and Iroh carriers from the success frontier"
+      ],
+      "forbidden_inferences": [
+        "common family substrate -> format equivalence or peer storage success"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "concrete format identity, family, native validation, semantic equivalence, digest and ObjectFabric URI"
+      ],
+      "relation": "format_profile_objectfabric_replay",
+      "source": "artifact-graph"
+    },
     "partner-commons-projects-foreign-twin": {
       "destination": "foreign-twin",
       "drops": [
@@ -7799,6 +9278,23 @@
       ],
       "relation": "rights_limited_projection",
       "source": "partner-commons"
+    },
+    "physical-derivation-feeds-finance": {
+      "destination": "financial-metabolism",
+      "drops": [
+        "any implication that observed usage is already billed or booked"
+      ],
+      "forbidden_inferences": [
+        "physical execution -> booked financial fact"
+      ],
+      "invalidates_on": [
+        "usage, agreement rate, funding, currency, or allocation basis changes"
+      ],
+      "preserves": [
+        "target, resource, quantity, unit and physical receipt identity"
+      ],
+      "relation": "observed_usage_valuation",
+      "source": "physical-derivation"
     },
     "proof-frontier-reheats-feldera": {
       "destination": "feldera",
@@ -7834,6 +9330,38 @@
       "relation": "blocker_resolution",
       "source": "proof-frontier"
     },
+    "protocol-machine-gates-restate-resume": {
+      "destination": "restate",
+      "drops": [
+        "the carrier process and transport invocation identity"
+      ],
+      "forbidden_inferences": [
+        "legal resume -> external effect completed or WorkGraph satisfied"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "WorkerRun identity, WorkGraph mission identity and the EffectKernel recovery witness"
+      ],
+      "relation": "durable_resume_typestate",
+      "source": "protocol-machine"
+    },
+    "provider-weather-preserves-target-obligation": {
+      "destination": "target-obligation",
+      "drops": [
+        "provider-native invocation/session identifiers and raw carrier output"
+      ],
+      "forbidden_inferences": [
+        "provider quota, authentication, or transport state -> TargetObligation completion, failure, or supersession"
+      ],
+      "invalidates_on": [
+        "an explicit provider observation, dependency digest change, or evidence-backed target transition"
+      ],
+      "preserves": [
+        "append-only provider weather, explicit ExpectedProofDelta, and the semantic target identity"
+      ],
+      "relation": "realization_routing",
+      "source": "provider-state"
+    },
     "reachability-gates-form-pipeline": {
       "destination": "atomic-form",
       "drops": [
@@ -7850,6 +9378,42 @@
       ],
       "relation": "reachability_gate",
       "source": "unlock-graph"
+    },
+    "realization-measurement-feeds-provider-graph": {
+      "destination": "provider-graph",
+      "drops": [
+        "the execution that produced the measurement (only the cost survives)"
+      ],
+      "forbidden_inferences": [
+        "a bid exists -> that realization is authorized to serve",
+        "the tournament ranked it first -> it is valid (cheapest is not valid)"
+      ],
+      "invalidates_on": [
+        "the measured path changes cost class (reheat: re-measure)"
+      ],
+      "preserves": [
+        "the metric vector in real units, uncollapsed"
+      ],
+      "relation": "measured_bid_supply",
+      "source": "realization-measurement"
+    },
+    "receipt-envelope-closes-mesh-delivery": {
+      "destination": "remote-mesh-transport",
+      "drops": [
+        "any implication that an acknowledgement proves the event claim or grants authority"
+      ],
+      "forbidden_inferences": [
+        "a provider listing an event id in mesh_acks -> that provider received the event",
+        "an originating provider receipt -> satisfaction of its own cross-provider proof obligation"
+      ],
+      "invalidates_on": [
+        "the delivery row is absent, belongs to another consumer, or the coordination route excludes the acknowledging provider"
+      ],
+      "preserves": [
+        "event identity, consuming provider identity, prior delivery, and the first consumption receipt"
+      ],
+      "relation": "delivered_event_consumption",
+      "source": "receipt-envelope"
     },
     "relationship-earns-verification": {
       "destination": "actor-graph",
@@ -7883,6 +9447,59 @@
       "relation": "blocker_resolution",
       "source": "relationship-graph"
     },
+    "remote-mesh-materializes-work": {
+      "destination": "work-graph",
+      "drops": [
+        "transport authority and any implication that delivery is acknowledgement"
+      ],
+      "forbidden_inferences": [
+        "an actionable mesh event -> authority to perform its requested effects",
+        "a WorkGraph projection -> the addressed carrier consumed the event"
+      ],
+      "invalidates_on": [
+        "the event content address no longer binds its envelope or the work is explicitly cooled/superseded"
+      ],
+      "preserves": [
+        "event identity, typed request, bounded body, evidence references, addressed carrier, and originating provider"
+      ],
+      "relation": "content_bound_coordination_projection",
+      "source": "remote-mesh-transport"
+    },
+    "remote-mesh-quarantines-into-divergence": {
+      "destination": "work-graph",
+      "drops": [
+        "the refused payload itself, which is never echoed back onto the public branch"
+      ],
+      "forbidden_inferences": [
+        "an envelope refused for its address -> its semantic content is wrong",
+        "a reported divergence -> the producer will re-seal it"
+      ],
+      "invalidates_on": [
+        "the producer publishes a re-sealed envelope at the same event id"
+      ],
+      "preserves": [
+        "both the declared and the measured address of a refused envelope"
+      ],
+      "relation": "bounded_divergence_report",
+      "source": "remote-mesh-transport"
+    },
+    "remote-mesh-quarantines-into-evidence": {
+      "destination": "evidence-graph",
+      "drops": [
+        "raw refused envelope content, provider authority, producer identity, and any truth claim embedded in the refused body"
+      ],
+      "forbidden_inferences": [
+        "a quarantined envelope -> authority, producer identity, or truth of its embedded claim"
+      ],
+      "invalidates_on": [
+        "a new quarantine occurrence or a changed claimed/measured address pair"
+      ],
+      "preserves": [
+        "the event identifier, refusal reason, claimed/measured address dimensions, and first/last observation times"
+      ],
+      "relation": "refusal_evidence_projection",
+      "source": "remote-mesh-transport"
+    },
     "representation-feeds-sli": {
       "destination": "sli-execution",
       "drops": [
@@ -7898,6 +9515,23 @@
       "relation": "representation_to_execution",
       "source": "fpq-transform"
     },
+    "resource-pressure-triggers-metabolism": {
+      "destination": "resource-metabolism",
+      "drops": [
+        "any implication that a target shortfall justifies unbounded maintenance"
+      ],
+      "forbidden_inferences": [
+        "disk below the configured target -> every reclaim candidate is worth scanning or deleting"
+      ],
+      "invalidates_on": [
+        "free-space state, inventory fingerprint, yield policy, or backoff deadline changes"
+      ],
+      "preserves": [
+        "the measured free-space state, hard emergency floor, and configured target"
+      ],
+      "relation": "bounded_capacity_recovery",
+      "source": "resource-admission"
+    },
     "restate-durably-runs-work": {
       "destination": "work-graph",
       "drops": [
@@ -7912,6 +9546,23 @@
       ],
       "relation": "durable_execution",
       "source": "restate"
+    },
+    "semantic-derivation-demands-realization": {
+      "destination": "physical-derivation",
+      "drops": [
+        "semantic authority from the selected physical command"
+      ],
+      "forbidden_inferences": [
+        "selected realization -> admitted semantic delta"
+      ],
+      "invalidates_on": [
+        "the semantic read closure or toolchain passport changes"
+      ],
+      "preserves": [
+        "target reference, dependency closure and expected outputs"
+      ],
+      "relation": "required_postcondition_realization",
+      "source": "semantic-derivation"
     },
     "serm-reduces-to-sufficiency": {
       "destination": "proof-frontier",
@@ -7995,6 +9646,38 @@
       ],
       "relation": "conversion_gate",
       "source": "relationship-graph"
+    },
+    "target-obligation-materializes-work": {
+      "destination": "work-graph",
+      "drops": [
+        "any implication that one Work item exhausts the target"
+      ],
+      "forbidden_inferences": [
+        "Work failure or lease expiry -> TargetObligation termination"
+      ],
+      "invalidates_on": [
+        "target proof requirements or source frontier change"
+      ],
+      "preserves": [
+        "semantic target identity and proof requirements"
+      ],
+      "relation": "realization_residue",
+      "source": "target-obligation"
+    },
+    "transitional-root-measures-command-law": {
+      "destination": "transitional-root-absorption",
+      "drops": [
+        "any claim that a legacy tree's age or size implies unique capability"
+      ],
+      "forbidden_inferences": [
+        "a live cmd/ owner existing -> the legacy tree beneath the transitional root is safe to delete"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "command identity, current owner path and defined symbol set"
+      ],
+      "relation": "supersession_evidence_input",
+      "source": "command-law"
     },
     "transport-carries-hop": {
       "destination": "capability-closure",
@@ -8089,6 +9772,21 @@
       ],
       "relation": "blocker_resolution",
       "source": "work-graph"
+    },
+    "worker-run-realizes-workgraph": {
+      "destination": "work-graph",
+      "drops": [
+        "provider invocation IDs, PIDs and transport retry identity"
+      ],
+      "forbidden_inferences": [
+        "durable WorkerRun -> satisfied WorkGraph or effect authority"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "the mission identity and receipt-bound WorkGraph completion frontier"
+      ],
+      "relation": "durable_realization",
+      "source": "worker-run"
     }
   },
   "phenotypes": {
