@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor"
+  ],
+  "body": {
+    "text": "LIVE CROSS-FABRIC REVIEW for r2c-model-usage-finance-closure. Preserve the canonical chain physical/model attempt -> UsageOccurrence -> EconomicMeasure -> CostAllocation -> WorkOccurrence/result/proof. Partial or absent token/resource dimensions are UNKNOWN, never zero. A logical work item may have multiple physical retries and each attempt may incur usage; retain attempt identity and prevent both omission and double-counting. Cached/shared realization allocation must be explicit and versioned; avoided work is not automatically cash savings. Pricing is bitemporal/evidenced (effective_at vs observed_at); estimated economics remain distinct from later billed FinancialEvent/reconciliation. Local CPU/GPU/VRAM/wall-time belong in UsageOccurrence even when cash price is unknown. Do not fabricate historical token backfill: instrument future carrier adapters and reconcile only fields actually present in current receipts. Require a real current proof traversal: work -> realization -> usage -> economics -> evidence, preferably including current food/housing work and both Codex/Claude where evidence exists."
+  },
+  "content_sha256": "b52d6a14765cff6ae0211f1ad578fb7b69e2ed11025ca0771e628a0e2c5d649d",
+  "event_id": "external-chatgpt-20260824T0236-finance-001",
+  "evidence_refs": [
+    "run8:work:r2c-model-usage-finance-closure",
+    "mesh:protocol:v1"
+  ],
+  "observed_at": "2026-08-24T02:36:41.504937+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Model usage to finance closure: retries, unknowns, pricing reconciliation",
+  "type": "proof_challenge"
+}
