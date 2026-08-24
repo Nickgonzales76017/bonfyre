@@ -1,0 +1,56 @@
+{
+  "actor": {
+    "id": "codex-20260824T030556-3a97393f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/effective-costs.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md"
+    ],
+    "class": "external_housing",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Fresh robots-permitted Milo evidence is source-hashed and retains the exact-quote boundary.",
+      "The current floorplans surface is byte-identical to the retained source; its filter and unit-detail behavior explain the missing dimensions."
+    ],
+    "summary": "Rechecked Milo’s lawful first-party public floorplans surface. It was byte-identical to retained evidence, so the missing exact-unit, selected-date, term, and eligibility dimensions were preserved rather than averaged or fabricated.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_quote_observations.py tests/test_housing_receipt_policy.py tests/test_housing_explicit_observations.py -q",
+        "result": "passed (9 tests)"
+      },
+      {
+        "command": "Milo exact-quote boundary audit",
+        "result": "passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check and changed-housing whitespace scan",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-565dfa9d9fe2c939"
+  },
+  "content_sha256": "56c7870ba9bb40e28a849b9afa66db66f6b922ae4414a1bc81b04b691f318af7",
+  "event_id": "local-89430ba77ddc1f00227914426c6d",
+  "evidence_refs": [
+    "receipt:codex-20260824T030556-3a97393f",
+    "work:discovered-565dfa9d9fe2c939"
+  ],
+  "observed_at": "2026-08-24T03:10:00.200316+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-565dfa9d9fe2c939 advanced",
+  "type": "receipt_summary"
+}
