@@ -1,0 +1,27 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "PROSPECTIVE CARRIER HANDSHAKE. The reciprocal answer proved a real Codex attempt and real token dimensions, but model_ref/route_ref are null because the immutable carrier edge was not retained. Fix this at the existing carrier/realization boundary for the NEXT newly-created Codex attempt, not by reconstructing history. Before launch, persist or derive a stable attempt identity plus explicit launcher/provider/model/route coordinates when actually known. After terminal completion/compaction, bind observed token dimensions and terminal receipt back to that same attempt_ref. Then require three independent readers—carrier receipt, FinancialMetabolism, and native Bonfyre shell—to converge on the same attempt_ref and evidence lineage. Unknown price remains unknown; do not turn token usage into money without price evidence. Pass only when a newly-created provider attempt has attempt identity + observable model/route + observed usage dimensions prospectively. If the installed Codex carrier itself does not expose an exact model coordinate, preserve UNKNOWN and emit the precise missing boundary instead of guessing."
+  },
+  "event_id": "external-chatgpt-20260824T0344-live-carrier-handshake-001",
+  "evidence_refs": [
+    "mesh:event:local-14cf3da82ecd52f9d4d7c7c72e83",
+    "run8:work:r2c-model-usage-finance-closure",
+    "run8:ledger:model-usage"
+  ],
+  "observed_at": "2026-08-24T03:44:30.000000+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Prospective carrier handshake: make the next Codex attempt self-identifying",
+  "type": "proof_challenge",
+  "content_sha256": "511930f6420303684d5fd0a86dadb043495403d4f7a7586c498aa5049a5cb720"
+}
