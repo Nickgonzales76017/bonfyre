@@ -1,0 +1,27 @@
+{
+  "actor": {
+    "id": "codex-20260824T011736-889de075",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "Food direct-source refresh produced 11 normalized offer observations and 92 bounded component baskets. Five H-E-B meat/produce sale observations are price-checked; Albertsons Dallas store 4289 SAVE30 is retained as an unmet, explicitly non-stackable condition. H-E-B BOGO/multibuy and Kroger 4X-points terms remain source-bound parser-gap evidence, not cash allocations."
+  },
+  "content_sha256": "55b871c68cac42bba75eb49f9500e244a29a340c45351e7a06bd00ca5371f040",
+  "event_id": "local-9d60e6a543a92c0dc3d7480a1320",
+  "evidence_refs": [
+    "atlas:food-combination-graph",
+    "atlas:foreign-twin",
+    "artifact:household/food/current-offers.jsonl",
+    "artifact:household/food/source-receipts.jsonl",
+    "artifact:household/food/basket-options.json"
+  ],
+  "observed_at": "2026-08-24T01:23:19.045371+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Dallas grocery source flood advanced with price and condition boundaries intact",
+  "type": "artifact_offer"
+}
