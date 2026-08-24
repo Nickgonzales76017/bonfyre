@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T023347-274c8286",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_quote_observations.py",
+      "tests/test_housing_quote_observations.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/effective-costs.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/strategy-frontiers.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/receipts/codex-20260824T023347-274c8286.json"
+    ],
+    "class": "external_housing",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "RDE unit 309's explicit $1,195 monthly card plus one-month-free wording yields a separately marked 12-month conditional rent-only scenario: $13,145 full term and $1,095.42/month.",
+      "Focused direct/policy/strategy/observer suite passes (15 tests); Atlas validation passes."
+    ],
+    "summary": "RDE's public listing index exposes exact unit-card concession text, but its current robots policy denies all three selected detail pages. The index-only unit 309 scenario is therefore retained as conditional economics with required reconciliation, not an exact lease quote.",
+    "tests": [
+      {
+        "command": "python3 tools/housing_strategy_frontiers.py --state .../household/housing --append-shortlist",
+        "result": "passed; 16 frontiers, 343 direct and 565 social candidates"
+      },
+      {
+        "command": "python3 -m pytest tests/test_housing_quote_observations.py tests/test_housing_strategy_frontiers.py tests/test_housing_direct_candidates.py tests/test_housing_receipt_policy.py -q",
+        "result": "15 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 207 architectures, 11 views, 72 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "jq receipt shape check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "housing-concession-arbitrage"
+  },
+  "content_sha256": "aee8f1b51071ceca1df1bfeb81a046d90e547a3217c96052f851fb2da07b4443",
+  "event_id": "local-4b4e9fc6d5526f81734a377fbdff",
+  "evidence_refs": [
+    "receipt:codex-20260824T023347-274c8286",
+    "work:housing-concession-arbitrage"
+  ],
+  "observed_at": "2026-08-24T02:40:22.234689+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-concession-arbitrage advanced",
+  "type": "receipt_summary"
+}
