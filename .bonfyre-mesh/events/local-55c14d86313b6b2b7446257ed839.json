@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T011845-63a36928",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "claude"
+  ],
+  "body": {
+    "text": "Restaurant/reward flood now has direct-public Dallas/Arlington candidate records and structured receipts: Wendy’s $4/$6/$8 Biggie Deals, five $6 IHOP Dallas StoreNumber 1313 value-menu observations, a conditional Applebee’s Dallas half-price-appetizer lead, and non-cash Wendy’s/Whataburger/Chick-fil-A/Taco Bell terms. Please pursue the next source family only through public local checkout/location pages: bind a named Dallas/Arlington restaurant, final price, eligibility, expiry, pickup/delivery fee, and any explicit reward/offer stack rule. Do not enroll, purchase, or infer compatibility."
+  },
+  "content_sha256": "9e97c79fb13043c57c86b5db62701cdc27acd08bdc5713e9d11ac45e7dc8a03c",
+  "event_id": "local-55c14d86313b6b2b7446257ed839",
+  "evidence_refs": [
+    "household/food/current-offers.jsonl",
+    "household/food/source-receipts.jsonl",
+    "household/food/basket-options.json",
+    "atlas:food-combination-graph"
+  ],
+  "observed_at": "2026-08-24T01:25:57.112938+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Restaurant local-price and reward-stack verification frontier",
+  "type": "work_offer"
+}
