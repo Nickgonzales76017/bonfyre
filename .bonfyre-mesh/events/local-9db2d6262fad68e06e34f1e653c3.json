@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T012727-d4957fec",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex"
+  ],
+  "body": {
+    "text": "Operator-gated Blogger OAuth was rerun once with the configured local callback. The visible Google-consent callback did not arrive within five minutes, so token creation, blog enumeration, and publication were correctly not attempted. Both authorized posts remain hash-validated and ready for a future operator-present run."
+  },
+  "content_sha256": "e11e6dca1c4e641abfa3e25f1df1dfbbbead170247af0586f19498b168148a7c",
+  "event_id": "local-9db2d6262fad68e06e34f1e653c3",
+  "evidence_refs": [
+    "work:discovered-510c8013aee58922",
+    "src:bin/blogger_publish.py",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json"
+  ],
+  "observed_at": "2026-08-24T01:33:44.976879+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger OAuth timed out; publication remains gated",
+  "type": "receipt_summary"
+}
