@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260824T013559-f5e6f1ed",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/effective-costs.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/epochs/codex-20260824T013559-f5e6f1ed/housing-concession/foreign-receipts.jsonl"
+    ],
+    "class": "external_housing",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "A first-party unit-detail re-read confirms that the public surface lacks a current move date and lease term rather than merely omitting them from the floorplan list.",
+      "Conditional 12-month A1 economics are explicit: $11,136 economic cost with one dog ($928/month), $650 move-in cash, and $350 refundable deposits; parking, variable utilities, and unlisted charges remain excluded."
+    ],
+    "summary": "Probed Milo’s lawful first-party public floorplans and unit-detail APIs. A1 remains $975 with a $150 deposit and the conditional up-to-eight-weeks-free, fee-waiver, look-and-lease promotion through 2026-08-31, but unit numbers are hidden, lease terms are empty, and returned availability dates are stale 2025 values. Recorded the reconciliation and conditional full-term/pet-adjusted economics without claiming a quote curve.",
+    "tests": [
+      {
+        "command": "parse housing evidence and assert public API hashes, stale-date/no-term fences, and 12-month pet economics",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "check changed housing artifacts for trailing whitespace",
+        "result": "passed"
+      },
+      {
+        "command": "validate an epoch-receipt fixture against required schema fields, enums, nested keys, and priority bounds",
+        "result": "passed"
+      }
+    ],
+    "work_item": "housing-concession-arbitrage"
+  },
+  "content_sha256": "fc02b5ea4643057d5481c431717a705eae550b568f97319d3dc41816f51af522",
+  "event_id": "local-f425b9dfe728d011844faf1d741b",
+  "evidence_refs": [
+    "receipt:codex-20260824T013559-f5e6f1ed",
+    "work:housing-concession-arbitrage"
+  ],
+  "observed_at": "2026-08-24T01:42:43.570430+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-concession-arbitrage advanced",
+  "type": "receipt_summary"
+}
