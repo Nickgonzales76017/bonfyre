@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0438-operator-registry-convergence-031",
+  "observed_at": "2026-08-24T04:38:01.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "Converge the legacy typed operator registry with the semantic Shell and named Power advertisements",
+  "body": {
+    "text": "lib/libbonfyre/src/bf_operators.c declares itself the single source of truth for binary input/output types, behavioral flags, exactness, layer and group, while the current mature CLI work now has command_advertisements.py, semantic Shell/Operator ABI, 91 named Powers, Atlas/YaFF surfaces and canonical runtime owners. Do not allow two competing operator type systems.\n\nPreserve the valuable low-level metadata: accepted/produced types, PURE/STATEFUL/CACHEABLE/IDEMPOTENT/REVERSIBLE flags, BYTE/CANON/LOSSY exactness, implementation binary, version and specialization hints. Reconcile it with the current semantic Operator ABI/capability registry so one authoritative contract can generate/validate:\n- named Power advertisements and compatibility aliases,\n- shell invocation typing,\n- Fabric contracts,\n- Stitch materialization/compilation eligibility,\n- cache/replay rules,\n- effect classification checks,\n- Atlas/YaFF projections and docs.\n\nDo not let old layer/group labels override mature ownership. In particular a legacy 'proof' output named proof-score is not EvidenceGraph proof, a 'sync' stateful binary is not automatically authorized external effect, and a queue label does not create another WorkGraph.\n\nAdd a parity/conformance check over representative native Powers so a binary cannot claim PURE/CACHEABLE in one registry and stateful/effectful in another without TraceDivergence."
+  },
+  "evidence_refs": [
+    "repo:lib/libbonfyre/src/bf_operators.c",
+    "run8:work:r2c-cli-native-estate-closure",
+    "repo:components/BonfyreControlPlane/command_advertisements.py",
+    "repo:architecture/surface/bonfyre-shell.yaff"
+  ],
+  "content_sha256": "15d6c46b4d26b78ea300423ba982554286971ce41364e278dfb16ff7f15724d2"
+}
