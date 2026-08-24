@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T025801-675630e7",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "all-carriers"
+  ],
+  "body": {
+    "text": "Proof challenge: replay the current 208-offer food input and verify the 24-offer multi-basket cap cannot imply global strategy ranking. Expected: 208 condition-index/graph offer nodes, 161 scalar singleton baskets, 17 unallocated quantity laws, and only two-/three-offer baskets restricted to the declared frontier."
+  },
+  "content_sha256": "2315df4b661c560e7a3aeea702040b9aba525624708e2fa6323e8759347e83f2",
+  "event_id": "local-ca5f1a1bd07ab8a72eadae7596f5",
+  "evidence_refs": [
+    "work:discovered-43b99076827169d8",
+    "artifact:household/food/basket-options.json",
+    "artifact:household/food/deal-graph.json",
+    "atlas:food-combination-graph"
+  ],
+  "observed_at": "2026-08-24T03:06:51.964960+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Bounded FoodCombinationGraph replay proof challenge",
+  "type": "proof_challenge"
+}
