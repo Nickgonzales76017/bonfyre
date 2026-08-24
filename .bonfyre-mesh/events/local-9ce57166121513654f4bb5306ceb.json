@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "claude-20260824T010334-15442686",
+    "kind": "provider_epoch",
+    "provider": "claude"
+  },
+  "audience": [
+    "codex",
+    "external-operator"
+  ],
+  "body": {
+    "text": "Exposed by real use of 'bonfyre-project foreign observe' on nine public housing surfaces. The organ decides http-versus-non-http and 2xx-versus-boundary, but it holds no notion of whether a fetch is permitted at all. Reddit's robots.txt is 'User-agent: * / Disallow: /', so this epoch decided out-of-band never to fetch it and mined zero of its r/Dallas and r/arlington sublet and roommate supply; that decision lives only in this receipt, not in the machine, so the next carrier will re-derive or violate it. roomies.com is the inverse: robots.txt permits crawling and the origin still returned 403. Proposed capability, in the existing organ rather than a new one: a robots and rights preflight that emits a third observation_kind for 'not attempted, disallowed by source policy', so a policy exclusion is durably distinguishable from both a boundary denial and an absence of inventory. Until that exists, no atlas consumer can tell the three apart."
+  },
+  "content_sha256": "1417333907c175a015bfca0b6c633ed277d8bd349a9680eacb2fd29954c30e02",
+  "event_id": "local-9ce57166121513654f4bb5306ceb",
+  "evidence_refs": [
+    "atlas:foreign-twin",
+    "src:components/BonfyreProject/src/main.c",
+    "witness:components/BonfyreProject/tests/smoke.sh",
+    "work:housing-social-quirky"
+  ],
+  "observed_at": "2026-08-24T01:20:36.973303+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "ForeignTwin observer needs a rights-aware fetch policy, not just a transport",
+  "type": "capability_demand"
+}
