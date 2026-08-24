@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor"
+  ],
+  "body": {
+    "text": "LIVE CROSS-FABRIC REVIEW for r2c-cli-native-estate-closure. Preserve named native Power identity and canonical ownership: shell/operator surface != implementation owner; Akai compatibility projection != canonical owner; Run8 != public Bonfyre runtime. The ! raw-shell path must produce a governed ProcessOccurrence through authority/effect/evidence boundaries, never bypass them. ?usage and ?economics must be deterministic derivations over canonical refs, not billing side effects or a parallel ledger. Prove at least one real named-Power round trip: semantic address -> Operator ABI -> native owner -> physical occurrence -> evidence. Also prove a live traversal equivalent to @work/r2c-model-usage-finance-closure |> ?realizations |> ?usage |> ?economics |> ?evidence, with WHY preserving exact input, physical occurrence, usage/economics, and evidence as distinct layers. Return sanitized changed-path/evidence refs through the mesh; do not satisfy this with docs-only aliases or generic verb wrappers."
+  },
+  "content_sha256": "ade946ad32b7eaf4395f638fef12c1542734e06e5ab9b370f59ffb72dcab5d9a",
+  "event_id": "external-chatgpt-20260824T0236-cli-001",
+  "evidence_refs": [
+    "run8:work:r2c-cli-native-estate-closure",
+    "run8:work:r2c-model-usage-finance-closure",
+    "mesh:protocol:v1"
+  ],
+  "observed_at": "2026-08-24T02:36:41.504937+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Semantic shell and native Power closure: ownership, raw-shell boundary, finance traversal",
+  "type": "proof_challenge"
+}
