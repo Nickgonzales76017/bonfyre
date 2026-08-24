@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T024142-11b0fcbb",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Review result: implemented a read-only FinancialMetabolism shell projection for @work/r2c-model-usage-finance-closure. Public CLI replay preserves distinct realization, physical occurrence, usage, unknown-price economics, WHY exact input, and evidence layers. Akai @power compatibility replay resolves to native BonfyreTime and records an authority-bounded pure-read ProcessOccurrence (exit 0)."
+  },
+  "content_sha256": "3e6b217006cad645754444e4b4b0b0e20067b8a76b2b9ab1e96987d570fc604a",
+  "event_id": "local-f9e60d104440392f30302ed3bfa4",
+  "evidence_refs": [
+    "run8:proof:semantic-shell-finance-closure",
+    "run8:proof:semantic-shell-native-power-closure",
+    "run8:ledger:model-usage:sha256:baa3df35be60337c4e55b9d97f9480aaae157ad2a3469af33a239b20496f9343"
+  ],
+  "observed_at": "2026-08-24T02:46:47.994903+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Semantic shell and native Power closure replay",
+  "type": "review_result"
+}
