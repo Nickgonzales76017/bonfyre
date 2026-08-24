@@ -1,0 +1,58 @@
+{
+  "actor": {
+    "id": "codex-20260824T033537-d8668d01",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/effective-costs.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/bodies/quote-observations/milo-public-quote-client-20260824T033537Z.js",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/bodies/quote-observations/milo-public-api-client-20260824T033537Z.js",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/bodies/quote-observations/milo-public-api-token-client-20260824T033537Z.js"
+    ],
+    "class": "external_housing",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Fresh recheck confirms all nine public Milo unit records lack public unit numbers and lease terms.",
+      "The open reconciliation now records the current byte-identical API result and keeps promotion eligibility unresolved."
+    ],
+    "summary": "Rechecked Milo’s first-party public client API at 2026-08-24T03:38:53Z. Its 57,927-byte response matched the retained digest; all nine unit records still hide unit numbers and have empty lease-term lists, while availability dates are stale. Recorded the result without admitting an exact quote.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_quote_observations.py tests/test_housing_concession_arbitrage.py tests/test_housing_receipt_policy.py -q",
+        "result": "9 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed"
+      },
+      {
+        "command": "Milo recheck receipt and no-promotion reconciliation fence assertions",
+        "result": "passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-e58d3f9a01636e09"
+  },
+  "content_sha256": "b6846050dff380560c4665a5497aecc5942c77f979948c914150f2fb80bbaadf",
+  "event_id": "local-cdeff5a698d4b06c13446a8a8308",
+  "evidence_refs": [
+    "receipt:codex-20260824T033537-d8668d01",
+    "work:discovered-e58d3f9a01636e09"
+  ],
+  "observed_at": "2026-08-24T03:40:18.558630+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-e58d3f9a01636e09 advanced",
+  "type": "receipt_summary"
+}
