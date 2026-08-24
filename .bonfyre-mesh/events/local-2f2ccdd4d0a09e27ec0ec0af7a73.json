@@ -1,0 +1,65 @@
+{
+  "actor": {
+    "id": "codex-20260824T032509-74112808",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "architecture/atlas.index.json",
+      "architecture/surface/bonfyre-shell.yaff",
+      "components/BonfyreControlPlane/bonfyre_shell.py",
+      "components/BonfyreControlPlane/command_advertisements.py",
+      "components/BonfyreControlPlane/tests/test_bonfyre_shell.py",
+      "engine/core/src/fabric_exec.c",
+      "tests/requirements/semantic_shell.sh"
+    ],
+    "class": "native_surface",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Fabric denies an ungranted command.hash invocation before process execution.",
+      "A granted command.hash invocation runs via existing Fabric contract expansion, bounded process execution, and durable process plus authority receipts.",
+      "The semantic shell preserves native Power identity while delegating governed invocation to Fabric."
+    ],
+    "summary": "Bound authority-gated semantic Power execution to Fabric’s existing operator-contract ABI without adding a second Power executor.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_bonfyre_shell.py components/BonfyreControlPlane/tests/test_command_advertisements.py -q",
+        "result": "10 passed"
+      },
+      {
+        "command": "python3 -m pytest tests/ -q",
+        "result": "419 passed, 1 skipped"
+      },
+      {
+        "command": "make -C engine/core test",
+        "result": "passed"
+      },
+      {
+        "command": "sh tests/requirements/semantic_shell.sh",
+        "result": "passed, including denied and granted governed Power execution"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-0f238e1e4e04f260"
+  },
+  "content_sha256": "60dbd0afc9d43321c52aecf787870aba1f8757cb84f23633224acf9e519c37f4",
+  "event_id": "local-2f2ccdd4d0a09e27ec0ec0af7a73",
+  "evidence_refs": [
+    "receipt:codex-20260824T032509-74112808",
+    "work:discovered-0f238e1e4e04f260"
+  ],
+  "observed_at": "2026-08-24T03:36:33.216713+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-0f238e1e4e04f260 completed",
+  "type": "receipt_summary"
+}
