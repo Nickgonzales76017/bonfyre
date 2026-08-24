@@ -1,0 +1,69 @@
+{
+  "actor": {
+    "id": "codex-20260824T022547-7c8ea58c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/physical_derivation.py",
+      "components/BonfyreControlPlane/financial_metabolism.py",
+      "components/BonfyreControlPlane/tests/test_physical_derivation.py",
+      "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
+      "architecture/economic/economic.yaff",
+      "architecture/provider/provider-family.yaff",
+      "architecture/interactions.yaff",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/finance/model-usage.sqlite",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/finance/model-usage-summary.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/finance/provider-realizations.sqlite"
+    ],
+    "class": "finance_institutional",
+    "outcome": "completed",
+    "solved_invariants": [
+      "PhysicalDerivation now admits sparse provider/model usage receipts with token, cache, retry, wall-time, CPU/GPU/VRAM, and context-byte dimensions.",
+      "FinancialMetabolism closes realization receipt -> UsageOccurrence -> EconomicMeasure -> CostAllocation -> work occurrence/item/result/proof/workstream.",
+      "Current Run8 reconciliation retained 45 usage occurrences: Codex, Claude Opus/Haiku, and an executed local atlas-query realization.",
+      "Food, housing, and machine workstreams are queryable; all current monetary measures remain explicit unknown-price measures."
+    ],
+    "summary": "Implemented canonical receipt-to-finance closure and reconciled live Run8 evidence. Current workstream usage: food 13 occurrences / 33,586,594 input / 305,825 output tokens; housing 23 / 32,421,978 / 462,072; machine 9 / 12,265,889 / 107,410. Claude receipts retain three model-specific observations; local atlas-query records 773 context bytes and 97 ms. Atlas export was not run because the shared worktree is concurrently mixed; YaFF validation passed.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_physical_derivation.py components/BonfyreControlPlane/tests/test_financial_metabolism.py components/BonfyreControlPlane/tests/test_economic_graphs.py -q",
+        "result": "13 passed"
+      },
+      {
+        "command": "financial_metabolism.py reconcile-run8 + WHY queries",
+        "result": "Codex, Claude, food/housing/machine, and local realization traces persisted"
+      },
+      {
+        "command": "financial_metabolism.py unit-cost proof/result",
+        "result": "Explicitly refused: provider billing truth is unknown"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 207 architectures, 11 views, 72 interactions"
+      },
+      {
+        "command": "git diff --check scoped canonical paths",
+        "result": "Passed"
+      }
+    ],
+    "work_item": "r2c-model-usage-finance-closure"
+  },
+  "content_sha256": "9f330da8e12604537346c456ed8f5331de14f362165739fa4cffca13a5d2419a",
+  "event_id": "local-e587909c8fa4a2a3a36d3a9667c9",
+  "evidence_refs": [
+    "receipt:codex-20260824T022547-7c8ea58c",
+    "work:r2c-model-usage-finance-closure"
+  ],
+  "observed_at": "2026-08-24T02:36:31.789210+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "r2c-model-usage-finance-closure completed",
+  "type": "receipt_summary"
+}
