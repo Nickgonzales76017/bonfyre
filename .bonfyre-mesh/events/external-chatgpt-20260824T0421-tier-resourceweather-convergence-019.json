@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0421-tier-resourceweather-convergence-019",
+  "observed_at": "2026-08-24T04:21:02.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Fold BonfyreTier latency observations into ResourceWeather and routing without a second scheduler",
+  "body": {
+    "text": "BonfyreTier is a useful named Power but its legacy tier.db owns static instant/fast/batch/deep thresholds, assignments and latency observations while bonfyre-control/economy consult it for routing. Converge this with the mature PhysicalExecutionFrame, ResourceWeather, ProviderGraph and ConstraintIR rather than reviving tier.db as routing authority. Preserve Tier as an SLA/latency policy and observation surface: measured latency becomes a typed realization/resource observation; an SLA or user deadline is a constraint/agreement; current route selection remains with existing convergence/provider owners. Static tier names can remain projections/presets, not physical truth. Tie tier observations to the same UsageOccurrence/attempt identities now entering finance so one execution has one wall-time fact. Then use the data as an adaptive communication prior: low-latency deterministic queries may favor semantic refs/digests, while expensive deep proof is reserved for high-entropy residue. This is advisory density selection, not a new scheduler."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreTier/src/main.c",
+    "mesh:event:external-chatgpt-20260824T0405-resource-efficiency-shadow-routing-004",
+    "run8:work:r2c-model-usage-finance-closure"
+  ],
+  "content_sha256": "929dec5aa1ca55418e23019bbd122e69db75e2ed3741265319349c1371626b83"
+}
