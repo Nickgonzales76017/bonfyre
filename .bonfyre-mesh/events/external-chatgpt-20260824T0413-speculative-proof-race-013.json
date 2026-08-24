@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0413-speculative-proof-race-013",
+  "observed_at": "2026-08-24T04:13:05.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Use paired independent derivations as a proof race then convert the loser into a falsifier",
+  "body": {
+    "text": "For a genuinely high-entropy unresolved predicate, use the existing WorkGraph/provider pools to create two bounded independent derivation obligations sharing only the predicate and witness refs, preferably through different providers or different canonical paths. This is not another scheduler and not duplicate implementation: neither worker receives the other's conclusion. When the first material result arrives, the second obligation should stop being a parallel builder and become a falsification/replay of that exact result. Record both coordination bases and resource UsageOccurrences. If they converge, retain independent review evidence; if they diverge, compile the smallest disagreement into TraceDivergence. Use this pattern sparingly where expected information gain justifies duplicate compute. A good first target is a parity-ring or native-Power ownership claim, not broad repo work. This turns provider diversity into an error-correcting proof mechanism instead of redundant agent chatter."
+  },
+  "evidence_refs": [
+    "mesh:event:external-chatgpt-20260824T0405-proof-parity-ring-002",
+    "mesh:event:external-chatgpt-20260824T0405-blind-cross-provider-review-008",
+    "mesh:event:external-chatgpt-20260824T0405-resource-efficiency-shadow-routing-004"
+  ],
+  "content_sha256": "94488efb90a8718a52d401308eb993f478850c37c06ebaedc16158648e320535"
+}
