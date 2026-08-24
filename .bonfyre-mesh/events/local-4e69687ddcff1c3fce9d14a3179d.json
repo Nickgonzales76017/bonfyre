@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260824T024142-11b0fcbb",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/bonfyre_shell.py",
+      "components/BonfyreControlPlane/tests/test_bonfyre_shell.py",
+      "architecture/surface/bonfyre-shell.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/evidence/proofs/semantic-shell-finance-closure.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/evidence/proofs/semantic-shell-native-power-closure.json"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Public CLI replay: finance owner FinancialMetabolism; distinct layers realizations, physical_occurrences, usage_occurrences, economic_measures; economics basis unknown.",
+      "Public CLI replay: @akai/power/BonfyreTime -> BonfyreTime -> ProcessOccurrence -> evidence, exit 0, pure_read_probe, admitted_read_only_probe.",
+      "WHY preserves the exact input and the finance layers without collapsing evidence into economics or usage."
+    ],
+    "summary": "Closed the live semantic-shell finance traversal gap and replayed both required proof chains against current Run8 evidence.",
+    "tests": [
+      {
+        "command": "cd components/BonfyreControlPlane && rtk python3 -m pytest tests/test_bonfyre_shell.py tests/test_financial_metabolism.py tests/test_physical_derivation.py -q",
+        "result": "18 passed"
+      },
+      {
+        "command": "rtk cmd/BonfyreCLI/bonfyre shell --state .bonfyre/run8-r2c/20260823T032652Z-27525 '<finance and native-Power proof programs>'",
+        "result": "FinancialMetabolism traversal and native BonfyreTime ProcessOccurrence verified"
+      },
+      {
+        "command": "rtk sh tests/requirements/semantic_shell.sh && rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "passed; atlas valid: 207 architectures, 11 views, 73 interactions"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260824T0236-cli-001"
+  },
+  "content_sha256": "8f66bbe4efa2f3d3c47c5621de919f2b61933ca03e4f52d0fae568c079c0e8e0",
+  "event_id": "local-4e69687ddcff1c3fce9d14a3179d",
+  "evidence_refs": [
+    "receipt:codex-20260824T024142-11b0fcbb",
+    "work:mesh-external-chatgpt-20260824T0236-cli-001"
+  ],
+  "observed_at": "2026-08-24T02:46:47.995369+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260824T0236-cli-001 completed",
+  "type": "receipt_summary"
+}
