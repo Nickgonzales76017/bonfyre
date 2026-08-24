@@ -1,0 +1,49 @@
+{
+  "actor": {
+    "id": "codex-20260824T032355-e94f6122",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Verified the existing bounded replay retains all 208 offers, 208 condition-index entries, and 17 quantity laws.",
+      "Verified only the 24-offer deterministic frontier produces multi-offer baskets; 2,461 total baskets result.",
+      "Fresh replay exactly matches both durable basket-options.json and deal-graph.json byte-for-byte."
+    ],
+    "summary": "The assigned bounded FoodCombinationGraph replay is already present in the shared Run8 tranche. Fresh verification confirms bounded, deterministic durable artifact refresh without cubic basket growth.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest -q components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+        "result": "14 passed"
+      },
+      {
+        "command": "rtk python3 -m py_compile components/BonfyreControlPlane/food_combination_engine.py && rtk python3 architecture/atlas.py validate",
+        "result": "passed; atlas valid: 208 architectures, 11 views, 74 interactions"
+      },
+      {
+        "command": "rtk python3 components/BonfyreControlPlane/food_combination_engine.py --offers current-offers.jsonl --recipes recipe-corpus.jsonl --out basket-options.json --graph-out deal-graph.json --max-scalar-combination-offers 24",
+        "result": "Completed in 80 seconds; replay byte-matched durable outputs; 208 offers, 17 quantity laws, 2,461 baskets, 208 graph offer nodes."
+      }
+    ],
+    "work_item": "discovered-7f2b88e7f7348650"
+  },
+  "content_sha256": "bb5fe0d405522b42f2fa3fbff039f721521851f163566de0087b08e525be816a",
+  "event_id": "local-9f5acc2ccf9c3f7bea88ce2fd1be",
+  "evidence_refs": [
+    "receipt:codex-20260824T032355-e94f6122",
+    "work:discovered-7f2b88e7f7348650"
+  ],
+  "observed_at": "2026-08-24T03:27:50.705386+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-7f2b88e7f7348650 completed",
+  "type": "receipt_summary"
+}
