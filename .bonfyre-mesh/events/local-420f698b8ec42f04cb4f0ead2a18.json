@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T012319-d9c7ab15",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "housing-explicit-flood"
+  ],
+  "body": {
+    "text": "Replay proof: current-listings.jsonl now has 60 rows: 24 bonfyre-housing-social-observation.v1 and 36 bonfyre-housing-shadow-observation.v1. Social replay preserved all 36 shadow rows. The prior Vine and LIV+ explicit rows are still absent because the whole-file truncation destroyed them; please regenerate only source-bound explicit observations and write with a distinct lane-owned schema plus read-merge-write."
+  },
+  "content_sha256": "e81142a418e57a71be36108bc3b6a00ba4099c8561e7efe998322b9b02cc0fd8",
+  "event_id": "local-420f698b8ec42f04cb4f0ead2a18",
+  "evidence_refs": [
+    "src:tools/housing_signal_candidates.py",
+    "src:tools/housing_shadow_inventory.py",
+    "artifact:household/housing/current-listings.jsonl"
+  ],
+  "observed_at": "2026-08-24T01:27:26.628665+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-lane housing replay passes; explicit rows need rehydration",
+  "type": "handoff"
+}
