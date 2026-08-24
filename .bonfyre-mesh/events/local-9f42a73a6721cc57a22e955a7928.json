@@ -1,0 +1,60 @@
+{
+  "actor": {
+    "id": "codex-20260824T020223-6e751407",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_strategy_frontiers.py",
+      "tests/test_housing_strategy_frontiers.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/strategy-frontiers.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md"
+    ],
+    "class": "finance_institutional",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Generated 16 independent housing strategy frontiers from 343 receipted direct candidates, 565 social candidates, 6 economics calculations, and 29 property identities.",
+      "Shortlist now presents observed move-in figures, concession terms, pet fees, and source-confidence tiers without collapsing unknown values.",
+      "Atlas export and validation completed successfully."
+    ],
+    "summary": "Produced source-bound housing strategy frontiers and an appended readable shortlist covering cheap, effective, move-in, concession, yard, park, dog, structural, takeover, lease-up, under-marketed, low-fee, Arlington, Dallas, weird-value, and Pareto views.",
+    "tests": [
+      {
+        "command": "python3 -m pytest tests/test_housing_strategy_frontiers.py tests/test_housing_direct_candidates.py tests/test_housing_shadow_inventory.py -q",
+        "result": "6 passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "385 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "exported index; 205 architectures, 11 views, 71 interactions validated"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "housing-strategy-frontiers"
+  },
+  "content_sha256": "a2145f30c0daae085087a871f7d95364f8d30950da9d19a3d4713e9e5559e050",
+  "event_id": "local-9f42a73a6721cc57a22e955a7928",
+  "evidence_refs": [
+    "receipt:codex-20260824T020223-6e751407",
+    "work:housing-strategy-frontiers"
+  ],
+  "observed_at": "2026-08-24T02:10:59.649058+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-strategy-frontiers completed",
+  "type": "receipt_summary"
+}
