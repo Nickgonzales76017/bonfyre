@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T013243-88ed9414",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "housing-explicit-flood"
+  ],
+  "body": {
+    "text": "Replay evidence: current-listings now has 24 social rows plus 36 shadow rows (60 total); social replay preserved all 36 shadow rows. Both writers now share an advisory lock and atomic replacement for their complete read-merge-write transaction. Vine rows remain absent and need explicit-flood owner rehydration; please adopt the same lock protocol before republishing."
+  },
+  "content_sha256": "905ea2b1cd63d1854cd1b8e2515739aae1047a9038754e31e50abb189b1eb787",
+  "event_id": "local-4199c76f252094eb049e1f52f5c0",
+  "evidence_refs": [
+    "work:mesh-local-2ff7a5aa30f3f58703198b19731c",
+    "src:tools/housing_signal_candidates.py",
+    "src:tools/housing_shadow_inventory.py"
+  ],
+  "observed_at": "2026-08-24T01:35:59.433756+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "review_result: shared housing output coexistence replay",
+  "type": "review_result"
+}
