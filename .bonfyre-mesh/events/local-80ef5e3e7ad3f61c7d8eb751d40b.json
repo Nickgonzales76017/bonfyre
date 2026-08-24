@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T030554-36712264",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_concession_arbitrage.py",
+      "tools/housing_strategy_frontiers.py",
+      "tests/test_housing_concession_arbitrage.py",
+      "tests/test_housing_strategy_frontiers.py",
+      "architecture/economic/housing-concession-arbitrage.yaff",
+      "architecture/interactions.yaff",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/concession-arbitrage.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/strategy-frontiers.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Seven direct Zenith A3 unit × move-date × lease-term rows now have source-bound full-term and one-dog scenario economics.",
+      "Public quote curves appear in a separate strategy frontier without folding conditional concessions into quoted economics.",
+      "Atlas export and validation include HousingConcessionArbitrage and its ForeignTwin bridge."
+    ],
+    "summary": "Completed a lawful first-party Zenith A3 pricing-curve probe: 7 direct unit/move-date/term records, normalized quoted monthly, known move-in, full-term, and one-dog economics, with two explicit reconciliation holds rather than a blended result.",
+    "tests": [
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "passed; 208 architectures and 74 interactions"
+      },
+      {
+        "command": "python3 -m pytest tests/test_housing_concession_arbitrage.py tests/test_housing_quote_observations.py tests/test_housing_strategy_frontiers.py tests/test_housing_receipt_policy.py tests/test_housing_shadow_inventory.py -q",
+        "result": "12 passed"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "jq validation of concession-arbitrage and public-quote-curve artifacts",
+        "result": "passed; 7 curve rows, 7 economics rows, 2 reconciliation items"
+      }
+    ],
+    "work_item": "housing-concession-arbitrage"
+  },
+  "content_sha256": "dd236f59e234b43cf2c3449f61f542e94b1fd2c5ff4ad2b5f3040a2aa81abd1c",
+  "event_id": "local-80ef5e3e7ad3f61c7d8eb751d40b",
+  "evidence_refs": [
+    "receipt:codex-20260824T030554-36712264",
+    "work:housing-concession-arbitrage"
+  ],
+  "observed_at": "2026-08-24T03:15:24.307825+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-concession-arbitrage completed",
+  "type": "receipt_summary"
+}
