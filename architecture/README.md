@@ -1,7 +1,7 @@
 # Architecture Atlas
 
-A **lossless registry** of Bonfyre's architectures whose simplified diagrams are
-*generated views*, never canonical definitions. At Bonfyre's size, synthesis has
+A **lossless registry** of Bonfÿre's architectures whose simplified diagrams are
+*generated views*, never canonical definitions. At Bonfÿre's size, synthesis has
 become lossy: each new umbrella term ("Model", "Provider", "Evidence") quietly
 swallows a dozen real systems. The atlas is the opposite discipline — preserve
 every architecture, and let collapse be a **zoom**, not a deletion.
@@ -11,8 +11,10 @@ the `.yaff` files are the data; the constitution below is checked in CI.
 
 ## Operating rule — for every call, mine and codex
 
-1. **Consult the atlas before architecture work.** `python3 atlas.py expand <View>`
-   or read `atlas.index.json`. Do not re-derive the system from memory.
+1. **Consult the atlas before architecture work.** `python3 atlas.py get <id>` /
+   `search <q>` / `summary` / `expand <View>`. Do not re-derive the system from
+   memory, and do not read `atlas.index.json` into a model context: it is 258 KB
+   against ~460 bytes for the same answer via `get`.
 2. **Every new architecture gets an entry**, at three levels: DOMAIN →
    ARCHITECTURE → INTERNAL CALCULI. Never stop at a domain label.
 3. **Update the atlas when you build or change an architecture** — add real
@@ -29,6 +31,10 @@ the `.yaff` files are the data; the constitution below is checked in CI.
 ## Commands
 
 ```
+python3 atlas.py summary         # shape of the whole atlas in ~800 bytes
+python3 atlas.py get <id>        # one architecture record, bounded
+python3 atlas.py search <query>  # content search (values, never field names)
+python3 atlas.py cannot-infer <id>  # what it may NOT be read to imply
 python3 atlas.py validate        # enforce the constitution (CI gate; exit 1 on violation)
 python3 atlas.py loss            # what the atlas knows it is missing
 python3 atlas.py maturity        # honest maturity rollup by family
@@ -42,8 +48,9 @@ python3 atlas.py fs [dir]        # generate the /Bonfyre/Actual/Graphs introspec
 
 - **CI** — `.github/workflows/architecture-atlas.yml` runs `validate` on every
   change; a laundering claim or a view that swallows its children fails the build.
-- **MCP** — `atlas.index.json` is the queryable surface; the project MCP node
-  serves atlas queries from it (ties into the `native_tool_*` work).
+- **MCP** — the project MCP node's `architecture_atlas` tool calls
+  `atlas_query.py` directly, so the MCP transport and the CLI cannot drift into
+  two different answers (ties into the `native_tool_*` work).
 - **BonfyreFS** — the introspection namespace `/Bonfyre/Actual/Graphs/…` is a
   projection of this registry, so the architecture itself becomes inspectable.
 - **Repo cleanup** — an old artifact may only move to `origins/research` once its

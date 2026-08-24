@@ -1,4 +1,4 @@
-# Generation-10 repository layout
+# Bonfÿre repository layout
 
 The repository root is a routing surface, not a notebook. Each tracked path has
 one physical owner; physical placement does not grant semantic authority.

@@ -684,6 +684,66 @@
         "components/BonfyreControlPlane/tests/test_fabric_queries.py"
       ]
     },
+    "bonfyre-semantic-shell": {
+      "canonical_name": "BonfyreSemanticShell",
+      "commands": [],
+      "consumes": [
+        "CommandAdvertisement",
+        "HouseholdEconomicCircuitProjection",
+        "FinancialMetabolism",
+        "ProviderState",
+        "HouseholdProjection"
+      ],
+      "derived": [],
+      "domain": "Surface / Operator ABI",
+      "edge_types": [
+        "addresses",
+        "composes",
+        "invokes_native_owner"
+      ],
+      "family": "surface",
+      "forbidden_inferences": [
+        "semantic address -> authority",
+        "shell presentation or cache -> canonical truth",
+        "CLI route -> implementation ownership",
+        "native Power identity -> generic operator identity",
+        "provider weather observation -> metered usage, billed cost, or capacity authority"
+      ],
+      "internal_calculi": [
+        "@ address |> ? deterministic query |> ! bounded native probe"
+      ],
+      "invariants": [
+        "the shell owns no household, provider, finance, or Power implementation state",
+        "a native Power executes under its advertised Bonfyre identity, never a generic replacement verb",
+        "public shell process probes are restricted to help/version until an authority-gated execution binding exists"
+      ],
+      "known_gaps": [],
+      "layer": "surface",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "SemanticShellProgram",
+        "ProcessOccurrenceView",
+        "ShellQueryResult"
+      ],
+      "owns": [
+        "SemanticShellProgram",
+        "ProcessOccurrenceView"
+      ],
+      "publishes": [
+        "ShellQueryResult"
+      ],
+      "semantic_question": "How can a public Bonfyre CLI expression address current state and compose native Powers without creating another command estate or granting authority?",
+      "source_paths": [
+        "cmd/BonfyreCLI/src/main.c",
+        "components/BonfyreControlPlane/bonfyre_shell.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_bonfyre_shell.py"
+      ]
+    },
     "burn": {
       "canonical_name": "Burn",
       "commands": [],
@@ -4973,17 +5033,26 @@
       "edge_types": [
         "valued_by",
         "funded_by",
-        "projects_position"
+        "projects_position",
+        "allocates"
       ],
       "family": "economic",
       "forbidden_inferences": [
         "accrued cost -> billed, paid, or booked money",
-        "avoided usage -> cash savings"
+        "avoided usage -> cash savings",
+        "identical resource dimensions -> one physical attempt"
       ],
       "internal_calculi": [],
       "invariants": [
         "usage requires a physical receipt and admitted rate source before cost accrues",
-        "funding availability never supplies spend authority"
+        "funding availability never supplies spend authority",
+        "unknown provider price remains an explicit unknown EconomicMeasure, never zero or billed money",
+        "provider, technical account, billing account and agreement are separate usage coordinates",
+        "priced EconomicMeasure binds evidenced effective_at and observed_at price coordinates; a later FinancialEvent never rewrites the estimate",
+        "carrier usage binds a stable physical attempt and realization; exact replay is idempotent while a changed attempt payload is refused",
+        "CostAllocation names an allocation version; shared or cached realization never becomes a cash-saving claim merely by attribution",
+        "known provider pricing matches the pricing evidence bound to the usage attempt; absent pricing evidence remains unknown",
+        "fractional allocations for one measure and allocation version cannot exceed one; unknown fractions remain null"
       ],
       "known_gaps": [],
       "layer": "economic/finance",
@@ -4992,14 +5061,18 @@
       "node_types": [
         "UsageOccurrence",
         "FundingRoute",
-        "FinancialPosition"
+        "FinancialPosition",
+        "FinancialEvent"
       ],
       "owns": [
         "UsageOccurrence",
         "FundingCircuit",
         "FinancialPosition",
         "DerivationEconomics",
-        "ChangeEconomics"
+        "ChangeEconomics",
+        "EconomicMeasure",
+        "CostAllocation",
+        "FinancialEvent"
       ],
       "publishes": [
         "FinancialPosition"
@@ -5013,7 +5086,8 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_financial_metabolism.py",
-        "components/BonfyreControlPlane/tests/test_economic_graphs.py"
+        "components/BonfyreControlPlane/tests/test_economic_graphs.py",
+        "components/BonfyreControlPlane/tests/test_financial_metabolism.py"
       ]
     },
     "food-combination-graph": {
@@ -5038,11 +5112,15 @@
         "advertised price -> effective economic cost",
         "recipe lexical match -> substitution or complete meal",
         "points or rebate -> cash paid",
+        "quantity-promotion group total -> per-item cash value or checkout quote",
+        "bounded scalar replay frontier -> exhaustive strategy ranking, offer ineligibility, or inferior economics",
         "geodesic travel lower bound -> road distance, drive time, or fuel cost"
       ],
       "internal_calculi": [],
       "invariants": [
         "promotions combine only through source-declared compatible pairs",
+        "quantity promotions preserve qualifying/free identities, quantities, expiry, and stackability without allocating an unstated per-item cash value",
+        "bounded scalar basket replay refreshes every parsed offer and quantity law while limiting only two-/three-offer scalar candidates by an explicit deterministic cap",
         "cash paid, delayed rebate and points remain separately basis-labelled",
         "restaurant channel marks prepared-food observations without promoting them to complete meals or local availability",
         "incomplete recipe coverage remains a review lead, never a meal total",
@@ -5057,6 +5135,7 @@
       "node_types": [
         "ObservedFoodOffer",
         "PromotionEffect",
+        "QuantityPromotion",
         "RecipeReviewLead",
         "RecipeIngredientCoverage",
         "FulfillmentPlan",
@@ -5065,6 +5144,7 @@
       "owns": [
         "FoodOfferObservation",
         "PromotionEffect",
+        "QuantityPromotion",
         "FoodCombinationProjection",
         "RecipeReviewLead",
         "RecipeIngredientCoverage",
@@ -5116,10 +5196,11 @@
         "a retained observation body is parsed only while it still hashes to its receipt",
         "a retained observation body path is immutable after receipt materialization",
         "a projected candidate carries the receipt digest of the body it was read from",
+        "a housing AvailabilityCandidate requires a current public observe right, allow decision, attempted fetch, and successful robots preflight on its ForeignTwin receipt",
         "a source excluded by robots or an absent observe right is receipted without fetching its source URL"
       ],
       "known_gaps": [
-        "foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. Retained Craigslist and direct AppFolio public portal bodies now project only provenance-bound candidates; a candidate is still not verified availability because verification would need a forbidden contact effect. Other retained direct-source shapes remain unparsed."
+        "foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. Retained Craigslist and direct AppFolio public portal bodies now project only provenance-bound candidates; source-bound housing frontiers preserve direct, legacy-social, conditional-economics, feature-claim, and public-map proximity tiers rather than scoring unknown facts together. Geographic mapping retains Nominatim/Overpass source response digests and performs geodesic proximity plus park-first reverse discovery, without inferring a walk route, entrance distance, unit-specific exterior right, pet acceptance, or availability. A candidate is still not verified availability because verification would need a forbidden contact effect. Other retained direct-source shapes remain unparsed."
       ],
       "layer": "external",
       "maturity": "measured",
@@ -5138,8 +5219,12 @@
         "components/BonfyreControlPlane/fabric_publish.py",
         "components/BonfyreProject/src/main.c",
         "tools/housing_signal_candidates.py",
+        "tools/housing_explicit_observations.py",
         "tools/housing_shadow_inventory.py",
-        "tools/housing_direct_candidates.py"
+        "tools/housing_direct_candidates.py",
+        "tools/housing_receipt_policy.py",
+        "tools/housing_strategy_frontiers.py",
+        "tools/housing_geographic_arbitrage.py"
       ],
       "subscribes": [],
       "views": [
@@ -5152,7 +5237,10 @@
         "components/BonfyreProject/tests/smoke.sh",
         "tests/test_housing_signal_candidates.py",
         "tests/test_housing_shadow_inventory.py",
-        "tests/test_housing_direct_candidates.py"
+        "tests/test_housing_direct_candidates.py",
+        "tests/test_housing_receipt_policy.py",
+        "tests/test_housing_strategy_frontiers.py",
+        "tests/test_housing_geographic_arbitrage.py"
       ]
     },
     "form-graph": {
@@ -5627,6 +5715,66 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/witness_frappe_apps.py"
+      ]
+    },
+    "household-economic-circuit": {
+      "canonical_name": "HouseholdEconomicCircuit",
+      "commands": [],
+      "consumes": [
+        "FoodCombinationProjection",
+        "FinancialPosition",
+        "Evidence"
+      ],
+      "derived": [],
+      "domain": "Economic / Cross-domain Household Comparison",
+      "edge_types": [
+        "scenario_selects",
+        "evidence_binds",
+        "refuses_unproven_join"
+      ],
+      "family": "economic",
+      "forbidden_inferences": [
+        "candidate route origin -> residence, verified availability or lease",
+        "observed component basket -> meal, weekly or monthly food budget",
+        "geodesic lower bound -> driving distance, time, fuel or travel cost",
+        "cross-domain projection -> billed, paid, booked or spend-authorized accounting truth"
+      ],
+      "internal_calculi": [],
+      "invariants": [
+        "optional pet and parking terms are scenario-selected and remain applicability-unverified unless an explicit source binds them to the selected unit",
+        "reported deposits and fees remain separately labelled and never imply refundability, money due, paid, billed or booked state",
+        "food component baskets and geodesic travel lower bounds remain separate from monthly food, driving and fuel projections",
+        "no cross-domain total exists without an explicit shared residence identity"
+      ],
+      "known_gaps": [],
+      "layer": "economic/household",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "HouseholdRecurringScenario",
+        "HouseholdOneTimeComponentView",
+        "HouseholdComparisonConstraint",
+        "RefusedResidenceJoin"
+      ],
+      "owns": [
+        "HouseholdRecurringScenario",
+        "HouseholdOneTimeComponentView",
+        "HouseholdComparisonConstraint",
+        "HouseholdProjectionEvidenceBundle",
+        "RefusedResidenceJoin"
+      ],
+      "publishes": [
+        "HouseholdEconomicCircuitProjection"
+      ],
+      "semantic_question": "Which current, source-bound housing recurring components and food route strategies can be compared without fabricating a residence join, a budget, or accounting truth?",
+      "source_paths": [
+        "components/BonfyreControlPlane/household_economic_circuit.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "components/BonfyreControlPlane/tests/test_household_economic_circuit.py",
+        ".bonfyre/run8-r2c/20260823T032652Z-27525/household/cross-domain/economic-circuit.json"
       ]
     },
     "hrms": {
@@ -6649,7 +6797,10 @@
       "internal_calculi": [],
       "invariants": [
         "environment evidence records dependency names and references, never secret values",
-        "body reuse is keyed by derivation identity and current validity"
+        "body reuse is keyed by derivation identity and current validity",
+        "sparse provider usage remains explicit rather than becoming zero usage or billing truth",
+        "a carrier adapter binds every UsageOccurrence to stable attempt, realization, and physical-receipt identities",
+        "carrier-declared attempt or realization identities cannot be rebound by an adapter"
       ],
       "known_gaps": [],
       "layer": "provider/realization",
@@ -6658,12 +6809,14 @@
       "node_types": [
         "RealizationManifest",
         "PhysicalExecutionFrame",
-        "PhysicalDerivationReceipt"
+        "PhysicalDerivationReceipt",
+        "ProviderModelUsageObservation"
       ],
       "owns": [
         "RealizationManifest",
         "PhysicalExecutionFrame",
         "RealizationObservation",
+        "ProviderModelUsageObservation",
         "PhysicalDerivationReceipt",
         "BodyAvailability"
       ],
@@ -7690,6 +7843,58 @@
       "views": [],
       "witnesses": [
         "components/BonfyreControlPlane/tests/test_semantic_derivation.py"
+      ]
+    },
+    "semantic-operator": {
+      "canonical_name": "HouseholdSemanticOperator",
+      "commands": [],
+      "consumes": [],
+      "derived": [],
+      "domain": "Forwarding / Semantic Lowering",
+      "edge_types": [
+        "addresses",
+        "lowers",
+        "explains"
+      ],
+      "family": "forwarding",
+      "forbidden_inferences": [
+        "an addressed source observation -> current availability, dog acceptance, effective cost, purchase authority or proof",
+        "an admitted read closure -> authority to mutate a household source or execute a transaction"
+      ],
+      "internal_calculi": [
+        "address = domain / declared identity kind / stable identity",
+        "program digest = SHA-256(operator plus lexically ordered addressed read closure)",
+        "proof verdict = not_proven regardless of observed availability, dog, effective-cost, or price fields"
+      ],
+      "invariants": [
+        "lowered programs have an empty write set",
+        "every accepted read retains a content digest and source evidence reference",
+        "a shared property with distinct units remains coexistence rather than a merge"
+      ],
+      "known_gaps": [],
+      "layer": "forwarding",
+      "maturity": "implemented",
+      "native_formats": [],
+      "node_types": [
+        "HouseholdProjection",
+        "AddressedHouseholdRecord",
+        "SemanticProgram",
+        "NonPromotingProofVerdict"
+      ],
+      "owns": [],
+      "publishes": [],
+      "semantic_question": "How can a current household projection be addressed and queried without promoting its source observations or creating a second household store?",
+      "source_paths": [
+        "schemas/control/household-projection.yaff",
+        "engine/core/include/bf_semantic_operator.h",
+        "engine/core/src/semantic_operator.c",
+        "components/BonfyreControlPlane/semantic_operator.py"
+      ],
+      "subscribes": [],
+      "views": [],
+      "witnesses": [
+        "engine/core/tests/semantic_operator_test.c",
+        "components/BonfyreControlPlane/tests/test_semantic_operator.py"
       ]
     },
     "serm": {
@@ -8729,7 +8934,7 @@
         "the addressed source record, selected command owner, exact read set and semantic program digest"
       ],
       "relation": "deterministic_operator_lowering",
-      "source": "address-plane"
+      "source": "semantic-operator"
     },
     "agent-session-binds-receipt-envelope": {
       "destination": "receipt-envelope",
@@ -8853,6 +9058,39 @@
       "relation": "receipt_projection",
       "source": "blogger-publication-surface"
     },
+    "bonfyre-shell-composes-existing-owners": {
+      "destination": "semantic-operator",
+      "drops": [
+        "implementation ownership from the public CLI route and authority from address resolution"
+      ],
+      "forbidden_inferences": [
+        "@power/BonfyreTime -> permission to invoke a mutating time operation"
+      ],
+      "invalidates_on": [],
+      "preserves": [
+        "semantic address, named native Power identity, selected canonical projection and source digest"
+      ],
+      "relation": "typed_surface_composition",
+      "source": "bonfyre-semantic-shell"
+    },
+    "bonfyre-shell-reads-financial-metabolism": {
+      "destination": "financial-metabolism",
+      "drops": [
+        "billing side effects, pricing mutation, funding choice, payment authority and any unobserved resource dimension"
+      ],
+      "forbidden_inferences": [
+        "a shell finance projection -> a new ledger, billed cost, paid cost, booked cost or authority to spend"
+      ],
+      "invalidates_on": [
+        "the canonical FinancialMetabolism ledger or its allocated work-item closure changes",
+        "command advertisement, native binary identity, selected projection digest, or shell parser change"
+      ],
+      "preserves": [
+        "work-item target, realization, physical receipt, usage dimensions, economic basis, allocation version and evidence reference"
+      ],
+      "relation": "read_only_finance_projection",
+      "source": "bonfyre-semantic-shell"
+    },
     "capability-compiles-to-mask": {
       "destination": "address-plane",
       "drops": [
@@ -8964,6 +9202,23 @@
       ],
       "relation": "incremental_maintenance",
       "source": "feldera"
+    },
+    "food-combination-is-bounded-by-household-circuit": {
+      "destination": "household-economic-circuit",
+      "drops": [
+        "any implicit residence identity, food budget, fuel estimate, order authority or booked accounting state"
+      ],
+      "forbidden_inferences": [
+        "a food route bound to a candidate housing origin -> the candidate is a residence or may be joined to a separate effective-cost listing"
+      ],
+      "invalidates_on": [
+        "the food route projection, housing component projection, input artifact digest, constraint law or explicit residence identity changes"
+      ],
+      "preserves": [
+        "source-bound cash, delayed rebate, points, fulfillment, customer-travel and geodesic-lower-bound dimensions with their input artifact identity"
+      ],
+      "relation": "source_bound_household_comparison",
+      "source": "food-combination-graph"
     },
     "food-combination-preserves-economic-basis": {
       "destination": "financial-metabolism",
@@ -9291,7 +9546,7 @@
         "usage, agreement rate, funding, currency, or allocation basis changes"
       ],
       "preserves": [
-        "target, resource, quantity, unit and physical receipt identity"
+        "target, resource, multi-dimensional token/cache/retry/wall-time/local-resource usage, provider/model/route, separate account coordinates and physical receipt identity"
       ],
       "relation": "observed_usage_valuation",
       "source": "physical-derivation"
