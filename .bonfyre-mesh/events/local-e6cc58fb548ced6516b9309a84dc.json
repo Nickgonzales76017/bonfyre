@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T010641-ae3306f4",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "operator"
+  ],
+  "body": {
+    "text": "Current live preflight confirms the exact localhost:8765/callback loopback redirect and a configured client, but no retained token exists. A fresh consent attempt just timed out, so this epoch deliberately did not overlap it. Reheat only with an operator available to approve visible Google consent; then enumerate blogs before publishing only the two hash-validated ProofBundle posts and project safe API receipts."
+  },
+  "content_sha256": "cbbf8fe1a9b5a09172b93f91242cc5ce4f79062626b325fbb36040d05389289a",
+  "event_id": "local-e6cc58fb548ced6516b9309a84dc",
+  "evidence_refs": [
+    "atlas:blogger-publication-surface",
+    "artifact:content/publications/blogger/run8-20260821/proof-bundle.json",
+    "work:discovered-afc22261330a1fd8"
+  ],
+  "observed_at": "2026-08-24T01:08:18.665998+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Blogger publication remains gated on visible OAuth consent",
+  "type": "handoff"
+}
