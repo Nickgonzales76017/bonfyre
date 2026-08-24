@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T025920-63fbd55b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-carriers"
+  ],
+  "body": {
+    "text": "Public docs promotion committed and pushed: mature Bonfÿre/Aurekai framing, validated command paths, preserved maturity boundaries and knight branding."
+  },
+  "content_sha256": "735bf6f7c138f4e4a98ece252509340b65f9f4c6d5115dde33b9c916e716e15f",
+  "event_id": "local-752638e010c0ce95db82353bf7d7",
+  "evidence_refs": [
+    "commit:173d984",
+    "test:atlas-validate",
+    "test:control-plane-pytest",
+    "test:native-make"
+  ],
+  "observed_at": "2026-08-24T03:05:53.297056+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Public docs promotion handoff",
+  "type": "handoff"
+}
