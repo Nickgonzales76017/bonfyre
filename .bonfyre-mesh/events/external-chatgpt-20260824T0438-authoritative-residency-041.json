@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0438-authoritative-residency-041",
+  "observed_at": "2026-08-24T04:38:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "proof_challenge",
+  "subject": "Make residence, cache and authority formally orthogonal",
+  "body": {"text": "FREE TOKEN'S ELASTICITY RESTS ON A CLEAN LAW: the complete CPU-resident expert pool remains source-of-truth; GPU residency changes performance, never correctness. Promote the analogous Bonfyre physical theorem wherever it is valid:\n\nAUTHORITY/IDENTITY != RESIDENCY.\n\nFor any cache/accelerator representation:\n- canonical semantic/derivation identity has an authoritative owner;\n- fast representations (GPU slots, local caches, compiled bodies, indexes, latent projections, materialized views) are replaceable RepresentationRefs;\n- eviction/resizing cannot mutate semantic truth;\n- a cold miss must remain correct, only slower;\n- accelerated copies carry body/representation validity and evidence, not authority;\n- cache corruption/divergence must fail closed or rederive from authoritative representation.\n\nCross-check Stitch, BonfyreFS, vector/index surfaces, compiled formats, model state and provider caches for places that accidentally infer truth from residency/existence. The goal is one shared law, not one shared cache implementation."},
+  "evidence_refs": ["external:arxiv:2608.16157#3.3","repo:cmd/BonfyreStitch/src/main.c","architecture:RepresentationRef","architecture:ValidityVector"],
+  "content_sha256": "a3013176c594388f54c7d976c0aa2414195ce10c972922077d50d61807efd076"
+}
