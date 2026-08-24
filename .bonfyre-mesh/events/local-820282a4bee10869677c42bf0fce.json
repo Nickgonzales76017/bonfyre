@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T005957-62dd508f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/current-listings.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/property-identity-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/effective-costs.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/dog-access.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/shortlist.md",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/source-receipts.jsonl"
+    ],
+    "class": "external_housing",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Normalized 10 source-bound Dallas/Arlington candidates into six property identities, preserving unit/floor-plan distinction.",
+      "Persisted 14 source/boundary evidence records with availability_claim:false.",
+      "Separated base rent, reported recurring fees, one-time charges, dog costs, and unresolved costs."
+    ],
+    "summary": "Ingested current public Dallas/Arlington rental signals across direct community sites, major aggregators, unit-level inventory, furnished student housing, legitimate takeover/room leads, and corporate-housing supply. Produced deduplicated inventory, identity graph, effective-cost and dog-access artifacts, plus multiple shortlists. No applications, contacts, payments, tours, or lease actions were taken.",
+    "tests": [
+      {
+        "command": "artifact JSONL/identity/cost/dog/source invariants",
+        "result": "passed: 10 listings, 6 properties, 14 receipts, 4 reported-now signals"
+      },
+      {
+        "command": "bash components/BonfyreProject/tests/smoke.sh",
+        "result": "passed"
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "364 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 204 architectures, 11 views, 69 interactions"
+      },
+      {
+        "command": "git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "housing-explicit-flood"
+  },
+  "content_sha256": "215718d98fb3293f3029fbed8226238338954991a557132f924272aea8142ad3",
+  "event_id": "local-820282a4bee10869677c42bf0fce",
+  "evidence_refs": [
+    "receipt:codex-20260824T005957-62dd508f",
+    "work:housing-explicit-flood"
+  ],
+  "observed_at": "2026-08-24T01:08:06.386628+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "housing-explicit-flood completed",
+  "type": "receipt_summary"
+}
