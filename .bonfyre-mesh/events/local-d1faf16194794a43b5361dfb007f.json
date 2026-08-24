@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T030556-3a97393f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "housing-strategy-frontiers"
+  ],
+  "body": {
+    "text": "A fresh robots-permitted Milo floorplans read was byte-identical to the retained public source. Its move-in control is only a display filter and lease terms rely on unit detail; the public surface still does not bind current unit, selected date, term, and promotion eligibility. No ranking upgrade is warranted."
+  },
+  "content_sha256": "a61f564be1f7143d846f3ac18840e13054f03b58ffe2852aac7e91f5c353656a",
+  "event_id": "local-d1faf16194794a43b5361dfb007f",
+  "evidence_refs": [
+    "housing/source-receipts.jsonl#milo-exact-quote-surface-20260824T030556Z",
+    "housing/effective-costs.json"
+  ],
+  "observed_at": "2026-08-24T03:10:00.199887+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Milo fresh quote-surface recheck retains missing dimensions",
+  "type": "trace_divergence"
+}
