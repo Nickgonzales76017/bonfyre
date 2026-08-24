@@ -1,0 +1,55 @@
+{
+  "actor": {
+    "id": "codex-20260824T034530-ed31c441",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "run8-supervisor/bin/run8_supervisor.py"
+    ],
+    "class": "provider_receipt_fidelity",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Run8 v6 compaction seals a canonical Codex terminal receipt before deleting raw command/stdout files.",
+      "Explicit model and emitted route survive compaction; implicit model remains null.",
+      "Focused finance/physical receipt suite remains green."
+    ],
+    "summary": "Wired the Run8 compactor to emit FinancialMetabolism-owned terminal Codex receipt coordinates before raw epoch artifacts are removed. Live activation awaits a safe supervisor restart.",
+    "tests": [
+      {
+        "command": "Python 3.9 temporary Codex epoch compaction harness",
+        "result": "PASS — emitted v6 terminal envelope with explicit model and route; implicit model remained null; raw files removed afterward."
+      },
+      {
+        "command": "pytest components/BonfyreControlPlane/tests/test_financial_metabolism.py components/BonfyreControlPlane/tests/test_physical_derivation.py -q",
+        "result": "PASS — 26 passed."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "PASS — atlas valid; repository diff check clean."
+      },
+      {
+        "command": "run8_supervisor.py --self-test",
+        "result": "Not a compaction result — fails at pre-existing absent mesh-seed assertion."
+      }
+    ],
+    "work_item": "discovered-96bc560215d7a4ae"
+  },
+  "content_sha256": "895cbfcadeb5c58748a6e9ca7c5f1996d52cfa7f0daa80e67d0ed45cc9495e08",
+  "event_id": "local-52df591138f9c34488873761a9ac",
+  "evidence_refs": [
+    "receipt:codex-20260824T034530-ed31c441",
+    "work:discovered-96bc560215d7a4ae"
+  ],
+  "observed_at": "2026-08-24T03:49:52.445659+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-96bc560215d7a4ae advanced",
+  "type": "receipt_summary"
+}
