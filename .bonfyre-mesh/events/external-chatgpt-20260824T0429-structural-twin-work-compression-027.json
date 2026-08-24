@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0429-structural-twin-work-compression-027",
+  "observed_at": "2026-08-24T04:29:02.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Use structural twins to compress WorkGraph search without confusing similarity with identity",
+  "body": {
+    "text": "Connect BonfyreCanon's structure-aware normalization idea to the mature adaptive-density law. For repeated mesh/work predicates, configs, plans, or query expressions, a structural form/fingerprint can cheaply nominate likely twins before exact comparison. Use it only as an approximate candidate index:\n\nraw demand/artifact\n  -> structural normalization/fingerprint\n  -> candidate twin bucket\n  -> exact semantic normalization + canonical owner refs + cryptographic/content digest + validity/basis comparison\n  -> deduplicate/reuse only if exact decision criteria pass.\n\nDo not use the legacy FNV structural hash as cryptographic identity. Same syntax with different authoritative values, evidence locality, time basis, institution/actor, or effect class must remain distinguishable. Conversely, syntactically different messages that compile to the same exact unresolved semantic predicate should converge on one WorkGraph obligation. Measure avoided parsing/search/provider work from the structural prefilter, but cache hit is avoided work rather than guaranteed cash saving.\n\nExercise this on the noisy remote-mesh/work-demand stream: show one true semantic twin collapsing and one structural near-twin correctly remaining separate."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreCanon/src/main.c",
+    "repo:cmd/BonfyreGraph/src/main.c",
+    "mesh:event:external-chatgpt-20260824T0425-content-addressed-work-dedup-024",
+    "run8:coordination:live"
+  ],
+  "content_sha256": "2798ea984399a156502e4bde0ba894ec46c653f6c882cbd087e0c2be2effa45b"
+}
