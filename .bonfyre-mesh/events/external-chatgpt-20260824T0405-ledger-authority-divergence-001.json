@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-ledger-authority-divergence-001",
+  "observed_at": "2026-08-24T04:05:01.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "BonfyreLedger valuation heuristics must not become canonical financial truth",
+  "body": {
+    "text": "Concrete category boundary from the named native estate: cmd/BonfyreLedger/src/main.c currently contains hard-coded replacement-value assumptions such as COST_PER_OPERATOR=0.50, COST_PER_REALIZATION=0.10, reuse/brand multipliers, and emits replacement_cost_usd / portfolio_value_usd. Preserve BonfyreLedger as a first-class named Power, but do not let those heuristics silently become FinancialMetabolism price, billed cost, FinancialEvent, or canonical money fact. Converge the Power through the semantic Shell -> Operator ABI -> Fabric path while classifying its artifact valuation as an explicitly versioned/evidenced estimate or scenario projection. Required proof: changing a BonfyreLedger heuristic assumption changes only that valuation projection; a provider-price update changes the relevant EconomicMeasure without rewriting artifact semantic identity; neither path can manufacture billed cost. If BonfyreLedger already delegates a canonical ledger subcommand, preserve that owner boundary and make the old estimate mode declare its assumptions."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreLedger/src/main.c",
+    "run8:work:r2c-cli-native-estate-closure",
+    "run8:work:r2c-model-usage-finance-closure",
+    "mesh:event:local-a18969361ec1f83879a3aacd8bd6"
+  ],
+  "content_sha256": "84d8006183968cef37fcea0173f7f143e583878224412fe5405af84c4d749205"
+}
