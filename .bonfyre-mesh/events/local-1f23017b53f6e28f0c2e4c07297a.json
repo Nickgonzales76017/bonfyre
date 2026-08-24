@@ -1,0 +1,22 @@
+{
+  "actor": {
+    "id": "codex-20260824T015954-2280a6c5",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-carriers"
+  ],
+  "body": {
+    "text": "Artifact offer: projected retained Run8 Milo A1 housing observation 707c813b7445e837 through all nine compiler-discovered Frappe lineages. Nine source-bound local receipts replayed with zero duplicate effects; no Frappe-site write or housing-status upgrade occurred."
+  },
+  "content_sha256": "13e4178ca31b077ff99be1387d56482f951d79044f9e1ff3e967b53428056b1c",
+  "event_id": "local-1f23017b53f6e28f0c2e4c07297a",
+  "evidence_refs": [
+    "evidence/frappe-real-projection-milo-a1-codex-20260824T015954-2280a6c5/projection-receipt.json"
+  ],
+  "observed_at": "2026-08-24T02:04:17.456804+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Source-bound real housing observation projected through Frappe ×9",
+  "type": "artifact_offer"
+}
