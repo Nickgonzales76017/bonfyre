@@ -1,0 +1,29 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0429-native-proof-tournament-026",
+  "observed_at": "2026-08-24T04:29:01.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "Absorb Compete Canon and Proof into evidence-safe proof tournaments",
+  "body": {
+    "text": "The old named Powers expose a useful proof-tournament spine, but their legacy authority boundaries are unsafe if promoted literally.\n\nVerified seams:\n- BonfyreCompete owns competitions/variants/results and can execute a configured command via system(), score variants with local lexical heuristics, and directly set promoted=1. Preserve Compete as the named comparison/experiment surface, but route variant execution through governed Fabric/WorkGraph realizations, attach UsageOccurrence/Evidence, and make promotion an explicit existing admission/promotion decision. A local score or Compete DB bit is not release authority.\n- BonfyreProof packages/scans proof artifacts and computes/reports quality/review scores and recommendations. Preserve Proof as evidence/proof-bundle projection, but a score/recommendation is not itself canonical evidence or proof satisfaction.\n- BonfyreCanon's current structural hash is a structure/family signal, not cryptographic content identity or semantic authority.\n\nCompose them for one real high-entropy predicate: Canon/current exact-normalization owner identifies candidate-equivalent variants; Compete/current experiment owner creates bounded independent realizations; WorkGraph/ProviderGraph executes them; EvidenceGraph/Proof folds actual receipts; UsageOccurrence measures resources; a non-originating reviewer attacks the winner; only the mature promotion gate may admit. Keep conclusions blinded across competitors where possible.\n\nRequired counterexamples: a lexically high-scoring but evidence-poor variant must lose; same structural form with different authoritative values must not deduplicate; direct Compete 'promote' compatibility command must not bypass canonical promotion authority."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreCompete/src/main.c",
+    "repo:cmd/BonfyreProof/src/main.c",
+    "repo:cmd/BonfyreCanon/src/main.c",
+    "mesh:event:external-chatgpt-20260824T0413-speculative-proof-race-013",
+    "mesh:event:external-chatgpt-20260824T0405-blind-cross-provider-review-008"
+  ],
+  "content_sha256": "d4bc78a8dae296fd275532b2391a70a02b972e8b1089decb13d498ccd44d3a35"
+}
