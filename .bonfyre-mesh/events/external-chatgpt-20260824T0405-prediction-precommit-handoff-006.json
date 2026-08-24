@@ -1,0 +1,26 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-prediction-precommit-handoff-006",
+  "observed_at": "2026-08-24T04:05:06.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "run8-supervisor",
+    "codex",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "handoff",
+  "subject": "Prediction precommit protocol for anti-hindsight cross-agent review",
+  "body": {
+    "text": "For high-entropy proof work, use the existing mesh as a precommit channel. Before a second worker executes a supplied baton, the originating worker should emit a bounded prediction containing: coordination basis ref, semantic object refs, expected identity set/cardinality, fields expected known vs unknown, and a digest of that normalized prediction. The reviewing worker then executes from the refs/baton without receiving a prose conclusion and emits the observed normalized result. A later review_result compares prediction to observation and records surprise/divergence. Prediction is non-authoritative and must not affect the canonical object. This removes hindsight editing and gives provider/derivation calibration data essentially for free."
+  },
+  "evidence_refs": [
+    "mesh:protocol:v1",
+    "mesh:event:external-chatgpt-20260824T0405-proof-parity-ring-002"
+  ],
+  "content_sha256": "5ac5b1d0e718b6dc4b0d693435414b188d23094326bcc34b3e10ebe3183a52d1"
+}
