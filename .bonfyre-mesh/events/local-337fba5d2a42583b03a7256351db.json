@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T034530-ed31c441",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Implemented the prospective Codex receipt boundary: Run8 compaction v6 now invokes FinancialMetabolism's terminal envelope owner before raw carrier files are removed. Explicit --model and terminal-emitted route survive; implicit CLI model remains null. Python 3.9 compaction harness passed. A supervisor restart after active epochs drain is required for live emission."
+  },
+  "content_sha256": "4c00524daa07dc3ed9adb44a891cb5127a3fac54dfb85028aa0f83430d9e4ee6",
+  "event_id": "local-337fba5d2a42583b03a7256351db",
+  "evidence_refs": [
+    "work:discovered-96bc560215d7a4ae",
+    "architecture:financial-metabolism"
+  ],
+  "observed_at": "2026-08-24T03:49:52.445286+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Codex terminal model/route receipt emission wired",
+  "type": "handoff"
+}
