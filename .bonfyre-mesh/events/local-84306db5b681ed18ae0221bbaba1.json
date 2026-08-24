@@ -1,0 +1,67 @@
+{
+  "actor": {
+    "id": "codex-20260824T022549-b4f970b3",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "cmd/BonfyreCLI/src/main.c",
+      "components/BonfyreControlPlane/bonfyre_shell.py",
+      "components/BonfyreControlPlane/tests/test_bonfyre_shell.py",
+      "tests/requirements/semantic_shell.sh",
+      "architecture/surface/bonfyre-shell.yaff",
+      "architecture/interactions.yaff",
+      "architecture/atlas.index.json"
+    ],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The public Bonfyre CLI accepts quoted @ semantic programs and bonfyre shell programs, forwarding them unchanged to the thin semantic shell.",
+      "@provider/codex and @provider/claude expose current provider-capacity observations without inventing usage or billing quantities.",
+      "@work/food, @work/housing, and @work/household compose real current realization, economics, usage-boundary, and evidence projections.",
+      "@power/BonfyreTime, @akai/power/BonfyreLedger, and @power/BonfyreQwenFPQ preserve their named native owners; BonfyreTime and BonfyreQwenFPQ read-only probes completed successfully.",
+      "Live household WHY/PROVE traversal preserves the current refused residence join and returns not_proven."
+    ],
+    "summary": "Converged the public CLI toward the native estate with a typed semantic shell over real Run8 projections and existing named Powers, without duplicating runtime ownership or inventing a billing CLI.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest tests/ -q (components/BonfyreControlPlane)",
+        "result": "PASS — 398 passed, 1 skipped"
+      },
+      {
+        "command": "rtk make -C engine/core test && rtk zig build test-semantic-operator",
+        "result": "PASS — native conformance and semantic lowerer"
+      },
+      {
+        "command": "rtk run 'sh tests/requirements/semantic_shell.sh'",
+        "result": "PASS — public CLI → shell → provider/economics/WHY/PROVE/native BonfyreTime ProcessOccurrence"
+      },
+      {
+        "command": "Live public CLI: @provider/codex |> ?usage; @work/household |> ?economics |> ?evidence; @work/food |> ?realizations |> ?usage |> ?evidence; native Power probes",
+        "result": "PASS — current state traversed; BonfyreTime and BonfyreQwenFPQ exit 0"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py export && rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "PASS — 207 architectures, 11 views, 72 interactions"
+      }
+    ],
+    "work_item": "r2c-cli-native-estate-closure"
+  },
+  "content_sha256": "aabee2060778a6dc211a0546c5ea0ee77c5e3e4d1f91bc8900a93076ea03a341",
+  "event_id": "local-84306db5b681ed18ae0221bbaba1",
+  "evidence_refs": [
+    "receipt:codex-20260824T022549-b4f970b3",
+    "work:r2c-cli-native-estate-closure"
+  ],
+  "observed_at": "2026-08-24T02:34:48.341614+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "r2c-cli-native-estate-closure completed",
+  "type": "receipt_summary"
+}
