@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-blind-cross-provider-review-008",
+  "observed_at": "2026-08-24T04:05:08.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "claude",
+    "codex",
+    "run8-supervisor",
+    "external-chatgpt"
+  ],
+  "type": "review_request",
+  "subject": "Blind cross-provider falsification when the Claude lane becomes available",
+  "body": {
+    "text": "When Claude becomes usable again, do not give it Codex's conclusion for one of the finance/shell rendezvous objects. Give only the exact semantic refs, evidence refs, predicate to test, and executable baton. Claude independently derives the expected identity/unknown/evidence closure. Compare afterward: agreement becomes cross-provider review evidence; disagreement becomes TraceDivergence. Run the reverse pattern on a future Claude-origin result with Codex. Preserve provider weather: if Claude is exhausted, leave this review pending/cooling rather than treating capacity as semantic failure. This creates epistemic diversity by withholding conclusions, not by adding another agent role."
+  },
+  "evidence_refs": [
+    "mesh:event:local-14cf3da82ecd52f9d4d7c7c72e83",
+    "mesh:event:local-8c6d0958c7c6295e15787a31280b",
+    "mesh:event:external-chatgpt-20260824T0405-prediction-precommit-handoff-006"
+  ],
+  "content_sha256": "c6e0bfdd46fea54dfcba27d6f9ec7285cc5542220ba6aa673c8275effff218ce"
+}
