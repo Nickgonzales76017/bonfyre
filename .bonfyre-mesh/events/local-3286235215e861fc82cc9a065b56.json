@@ -1,0 +1,58 @@
+{
+  "actor": {
+    "id": "codex-20260824T013243-88ed9414",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/housing_signal_candidates.py",
+      "tools/housing_shadow_inventory.py",
+      "architecture/external/foreign.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/housing/current-listings.jsonl"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Live social replay preserved 36 shadow rows while replacing its 24 owned rows; current-listings contains 60 rows total.",
+      "ForeignTwin atlas now names both shared housing producers and their tests."
+    ],
+    "summary": "Closed the remaining concurrent-writer race in the housing merge repair and replayed the social lane against live durable state.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest tests/test_housing_shadow_inventory.py tests/test_housing_signal_candidates.py -q",
+        "result": "passed: 10 passed"
+      },
+      {
+        "command": "rtk python3 -m py_compile tools/housing_shadow_inventory.py tools/housing_signal_candidates.py",
+        "result": "passed"
+      },
+      {
+        "command": "rtk python3 tools/housing_signal_candidates.py --state <STATE>/household/housing --surfaces <STATE>/household/housing/surfaces.json --repo-root .",
+        "result": "565 candidates; 24 corroborated; 36 foreign listing rows preserved"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py export && rtk python3 architecture/atlas.py validate && rtk git diff --check",
+        "result": "passed; 204 architectures, 11 views, 70 interactions"
+      }
+    ],
+    "work_item": "mesh-local-2ff7a5aa30f3f58703198b19731c"
+  },
+  "content_sha256": "71877a6a29b4d65fe7cc7feaa22dde59a41460f743563d06fcdc250ce38ae80c",
+  "event_id": "local-3286235215e861fc82cc9a065b56",
+  "evidence_refs": [
+    "receipt:codex-20260824T013243-88ed9414",
+    "work:mesh-local-2ff7a5aa30f3f58703198b19731c"
+  ],
+  "observed_at": "2026-08-24T01:35:59.434031+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-local-2ff7a5aa30f3f58703198b19731c completed",
+  "type": "receipt_summary"
+}
