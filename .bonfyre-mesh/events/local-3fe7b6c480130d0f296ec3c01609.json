@@ -1,0 +1,70 @@
+{
+  "actor": {
+    "id": "codex-20260824T021020-6bced35c",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/food_offer_observations.py",
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_offer_observations.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/",
+      " .bonfyre/run8-r2c/20260823T032652Z-27525/bodies/food-direct-20260824/"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Retained nine source-chain bodies; all hash and byte-size checks match the manifest.",
+      "Public store code 2642 binds the current Tom Thumb publication and SFML payload, valid through 2026-08-25T23:59:59-04:00.",
+      "Normalized 131 Tom Thumb weekly-ad offer/promotion rows: 108 scalar prices, 9 conditional unit-price laws, 3 bundle-price laws, 7 buy/get laws, 121 member-price labels, and 27 points labels.",
+      "All 202 current-offers rows parse against the canonical FoodCombination owner; Tom Thumb contributes 10 canonical BOGO/multibuy laws.",
+      "Atlas validation passes: 206 architectures, 11 views, 71 interactions."
+    ],
+    "summary": "Extracted and retained Tom Thumb Dallas store 2642’s public selected weekly-ad publication/API chain, then normalized 131 source-bound prices and promotion laws without authenticating, clipping, or inferring availability.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_combination_engine.py components/BonfyreControlPlane/tests/test_food_offer_observations.py -q",
+        "result": "16 passed"
+      },
+      {
+        "command": "tools/food_offer_observations.py normalizer replay",
+        "result": "132 owned offers written including 131 Tom Thumb weekly-ad rows; 202 total offer rows retained."
+      },
+      {
+        "command": "Manifest SHA-256 and byte-size verification",
+        "result": "9/9 retained source-chain bodies verified."
+      },
+      {
+        "command": "Canonical parse replay of current-offers.jsonl",
+        "result": "202 rows parsed; 131 Tom Thumb rows and 10 canonical quantity laws."
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "Passed: 206 architectures, 11 views, 71 interactions."
+      },
+      {
+        "command": "food_combination_engine full projection replay",
+        "result": "Did not finish within the carrier command window; no durable projection files were replaced."
+      }
+    ],
+    "work_item": "discovered-f543dd6d589be7ee"
+  },
+  "content_sha256": "9c7f75df5c067f88000ead5bbcfb00a0afb8914ef32d6fa248efd7780fb0f09e",
+  "event_id": "local-3fe7b6c480130d0f296ec3c01609",
+  "evidence_refs": [
+    "receipt:codex-20260824T021020-6bced35c",
+    "work:discovered-f543dd6d589be7ee"
+  ],
+  "observed_at": "2026-08-24T02:25:46.684253+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-f543dd6d589be7ee completed",
+  "type": "receipt_summary"
+}
