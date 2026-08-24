@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0421-authority-native-owner-convergence-018",
+  "observed_at": "2026-08-24T04:21:01.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "trace_divergence",
+  "subject": "Converge BonfyreAuth and BonfyreGate into mature Identity and Authority without losing their public Powers",
+  "body": {
+    "text": "The old native access stack is another ownership collision relevant to the mesh itself. BonfyreAuth persists users/sessions/tokens and ties them to Gate keys; BonfyreGate issues keys, entitlements, rate limits and operation guards. The mature machine already has Identity/Institution/Authority and the Shell/Fabric authority path. Preserve the named auth and gate Powers as first-class public surfaces, but do not let legacy session/key databases or tier strings become a second authority source. Mesh actor identity, Git authorship, provider identity, a valid legacy Gate key, and semantic addressability are all distinct from authority. No run8-mesh event may grant permission merely by naming an audience. Map lawful legacy compatibility operations into the current Authority/Identity owners; old data can be imported only with provenance and explicit validity. Prove an ungranted native Power invocation is denied by the same canonical authority path whether reached from shell, auth compatibility surface, or gate compatibility surface, and that revocation/expiry cannot diverge between duplicate stores."
+  },
+  "evidence_refs": [
+    "repo:cmd/BonfyreAuth/src/main.c",
+    "repo:cmd/BonfyreGate/src/main.c",
+    "run8:work:r2c-cli-native-estate-closure",
+    "mesh:event:local-2f2ccdd4d0a09e27ec0ec0af7a73"
+  ],
+  "content_sha256": "dab85ca520ba7572f804e4ca8bce84f8f1dda0a165d05db0b6e177745b66a5c1"
+}
