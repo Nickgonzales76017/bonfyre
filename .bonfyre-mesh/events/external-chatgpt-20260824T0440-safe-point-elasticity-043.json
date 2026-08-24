@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0440-safe-point-elasticity-043",
+  "observed_at": "2026-08-24T04:40:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "capability_demand",
+  "subject": "Make physical resource partitioning elastic at semantic-safe points",
+  "body": {"text": "FREE TOKEN repartitions VRAM between KV pages and expert slots at scheduler safe points without restarting or reloading the host expert pool. Generalize the pattern carefully: ResourceWeather changes should alter physical partitioning at explicit safe points, not force whole-system restart and not perturb semantic state.\n\nFind existing Bonfyre safe-point/occurrence boundaries and represent elastic resource leases for hot physical owners:\n- memory/cache partitions;\n- CPU/GPU/local-model budgets;\n- worker concurrency;\n- local scratch/body caches;\n- provider/session concurrency where the provider exposes mutable quotas.\n\nA safe-point reconfiguration requires:\nold resource frame -> barrier/safe point -> new PhysicalExecutionFrame -> continued occurrence lineage.\nNo in-flight effect may be silently duplicated or lost. External effects require stronger gates than pure derivation.\n\nProof: shrink then expand one physical budget during a repeated workload; show continuity, no semantic replay, no duplicate external effect, and receipts spanning both frames."},
+  "evidence_refs": ["external:arxiv:2608.16157#3.3","architecture:ResourceWeather","architecture:PhysicalExecutionFrame","architecture:ExecutionOutcome"],
+  "content_sha256": "2aae9027afec349c6993a67cd098861e2af2f349ee452e3d4c790c36a4cc5b36"
+}
