@@ -1,0 +1,58 @@
+{
+  "actor": {
+    "id": "codex-20260824T024538-2bb04628",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "Nickgonzales76017/bernstein:src/bernstein/core/tasks/artifacts.py",
+      "Nickgonzales76017/bernstein:src/bernstein/core/evidence/run_artifacts.py",
+      "Nickgonzales76017/bernstein:tests/unit/core/tasks/test_finding_artifact.py",
+      "Nickgonzales76017/bernstein:docs/operations/artifacts.md"
+    ],
+    "class": "github_partner",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "The candidate Bernstein patch has one strict finding canonicalizer shared by task artifacts and evidence records.",
+      "Manual Python 3.12 probe proves line-shift-stable canonical identity and empty-input rejection.",
+      "Source compilation and git diff whitespace validation pass."
+    ],
+    "summary": "Advanced the concrete, actively assigned Bernstein #3699 upstream defect with a committed and pushed owned-fork branch; no speculative outreach or unauthorized PR/comment was created.",
+    "tests": [
+      {
+        "command": "python3.12 manual canonicalizer probe",
+        "result": "PASS: line-shift-stable address and empty-input rejection"
+      },
+      {
+        "command": "python3.12 -m compileall src/bernstein/core/tasks/artifacts.py src/bernstein/core/evidence/run_artifacts.py",
+        "result": "PASS"
+      },
+      {
+        "command": "git diff --check HEAD^ HEAD",
+        "result": "PASS"
+      },
+      {
+        "command": "uv run ruff check / uv run python scripts/run_tests.py",
+        "result": "NOT RUN: uv unavailable; local environments lack compatible Bernstein dependencies"
+      }
+    ],
+    "work_item": "github-partner-current"
+  },
+  "content_sha256": "92a1610a6e8e72737bf796a9ecbecd5aad4bd687f21d66c1c5710c878609180e",
+  "event_id": "local-a4f6547ebdab77d93f530b1f2626",
+  "evidence_refs": [
+    "receipt:codex-20260824T024538-2bb04628",
+    "work:github-partner-current"
+  ],
+  "observed_at": "2026-08-24T02:55:32.985287+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "github-partner-current advanced",
+  "type": "receipt_summary"
+}
