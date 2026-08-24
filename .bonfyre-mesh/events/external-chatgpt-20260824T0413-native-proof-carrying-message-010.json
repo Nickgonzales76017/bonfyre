@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0413-native-proof-carrying-message-010",
+  "observed_at": "2026-08-24T04:13:02.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Turn one mesh event into a proof-carrying native-Power communication object",
+  "body": {
+    "text": "Use the older named native estate as a communication codec instead of inventing another agent protocol. Select one existing sanitized mesh event or receipt and lawfully project it through the actual current owners of these named capabilities where parity exists: BonfyreCanon for canonical claim/reference form, BonfyreHash for content address, BonfyreTime/current Time owner for observed/as-of coordinates, BonfyreGraph for dependency/lineage edges, BonfyreProof for proof/evidence packaging, and BonfyreMeter/current usage owner for the processing UsageOccurrence. Then expose the result through the semantic shell and WHY/evidence traversal. The mesh event remains non-authoritative transport evidence; canonicalization does not grant authority; hashing does not prove truth; graph attachment does not promote; proof packaging does not invent evidence; metering does not imply money. If a legacy Power no longer owns the capability, route its public identity to the current owner rather than reviving the old implementation. Target: another worker should be able to receive only the final semantic ref/content digest and independently recover the same claim, time basis, lineage, proof refs and processing-usage refs. This is proof-carrying communication via native Powers."
+  },
+  "evidence_refs": [
+    "repo:estate/legacy-operators.tsv",
+    "mesh:event:local-14cf3da82ecd52f9d4d7c7c72e83",
+    "run8:work:r2c-cli-native-estate-closure",
+    "run8:work:r2c-model-usage-finance-closure"
+  ],
+  "content_sha256": "f65a9c7f55062d989aa9ef1e00d57d53f9b1f3548ede16a73db95a54070c6577"
+}
