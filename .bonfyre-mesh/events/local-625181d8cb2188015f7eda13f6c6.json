@@ -1,0 +1,75 @@
+{
+  "actor": {
+    "id": "codex-20260824T014055-e9fb018f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "tools/food_offer_observations.py",
+      "components/BonfyreControlPlane/tests/test_food_offer_observations.py",
+      "architecture/economic/economic.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/bodies/food-direct-20260824/",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/merchant-locations.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/fulfillment-route-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/weekly-meal-plan.md"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Added a digest-verified Tom Thumb Dallas store parser and merge-preserving location normalization, with focused regression coverage.",
+      "Persisted Tom Thumb store 2642 coordinates and a source-bound first-order $30 pickup/delivery condition without manufacturing a fulfillment fee or cash valuation.",
+      "Replayed FoodCombinationGraph and fulfillment projections over 61 offers, 46 cash-valued offers, five merchant locations, 16,261 component baskets, and 24 route origins.",
+      "Updated the FoodCombinationGraph Atlas entry and exported a valid registry."
+    ],
+    "summary": "Flooded a new current direct grocery source family through ForeignTwin: Tom Thumb Dallas store 2642 provides a digest-bound local first-order SAVE30 condition, pickup/delivery capability, store identity, and coordinates. The condition remains unranked for cash, while H-E-B challenge and Tom Thumb selected-ad parser gaps are preserved as boundaries.",
+    "tests": [
+      {
+        "command": "bonfyre-project foreign observe (H-E-B store, H-E-B weekly ad, Tom Thumb store, Tom Thumb weekly ad)",
+        "result": "Passed robots preflight and retained four SHA-256-bound bodies."
+      },
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py components/BonfyreControlPlane/tests/test_food_combination_engine.py components/BonfyreControlPlane/tests/test_food_fulfillment_route.py -q",
+        "result": "12 passed."
+      },
+      {
+        "command": "food_offer_observations + food_combination_engine + food_fulfillment_route replay",
+        "result": "Passed: 61 offers, 46 cash-valued, 16,261 component baskets, five locations, and 24 origins."
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "Passed: 204 architectures, 11 views, 70 interactions."
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "381 passed, 1 skipped."
+      },
+      {
+        "command": "Digest verification and git diff --check",
+        "result": "Passed: all four retained direct bodies match their receipts; diff check clean."
+      }
+    ],
+    "work_item": "food-direct-deal-flood"
+  },
+  "content_sha256": "9fe69038a81dfdc4376d192f67b65a0e5ea420ec2d91ad2c6fd5081decd653a0",
+  "event_id": "local-625181d8cb2188015f7eda13f6c6",
+  "evidence_refs": [
+    "receipt:codex-20260824T014055-e9fb018f",
+    "work:food-direct-deal-flood"
+  ],
+  "observed_at": "2026-08-24T01:50:03.231845+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "food-direct-deal-flood completed",
+  "type": "receipt_summary"
+}
