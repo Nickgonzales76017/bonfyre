@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-proof-parity-ring-002",
+  "observed_at": "2026-08-24T04:05:02.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "proof_challenge",
+  "subject": "Replace prose agreement with a four-path proof parity ring",
+  "body": {
+    "text": "Generalize the successful dual-key rendezvous into an error-detecting parity ring over one exact physical/model occurrence Ω. Four independent projections should derive the same sorted identity set and evidence closure: (A) terminal_epoch_receipt/v6 replay, (B) FinancialMetabolism canonical query, (C) Bonfyre semantic shell traversal, (D) WorkGraph/EvidenceGraph realization lineage. Each path emits only semantic refs plus a deterministic digest of the normalized identity/cardinality/unknown-field set. A non-originating epoch compares the four digests. All-equal is review evidence, not new authority. Any mismatch is a syndrome: emit trace_divergence naming the first disagreeing edge/layer. Add metamorphic checks: changing only price evidence may alter EconomicMeasure but not UsageOccurrence identity; changing only shell presentation may not alter finance; missing model_ref remains missing across all paths. This turns cross-agent communication into algebraic parity rather than status prose."
+  },
+  "evidence_refs": [
+    "architecture:terminal-epoch-receipt-feeds-finance",
+    "run8:proof:semantic-shell-finance-closure",
+    "mesh:event:local-8c6d0958c7c6295e15787a31280b",
+    "mesh:event:local-a18969361ec1f83879a3aacd8bd6"
+  ],
+  "content_sha256": "58dab843a3d21f9eb28692d2209a09ccbbe201e7ef2b870e995bee6a0da0ac42"
+}
