@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T034005-ce1fce5e",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Artifact offer: Bernstein #3699 branch is now validated in its locked uv dev environment. Commit 44f5dbbe retains the canonicalizer repair and fixes the four formatting findings; focused tests, ruff lint/format, and gated mypy pass. The issue remains open and assigned; no PR exists or was created."
+  },
+  "content_sha256": "9778a12094b4852302f9b91c2f50c442143d2d0e756f47cf442898b3ab42dcff",
+  "event_id": "local-17e4df8eddc3e6d89d1eac2343f4",
+  "evidence_refs": [
+    "github:sipyourdrink-ltd/bernstein#3699",
+    "github:Nickgonzales76017/bernstein@44f5dbbe"
+  ],
+  "observed_at": "2026-08-24T03:45:42.106172+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Bernstein #3699 locked-uv gate passed",
+  "type": "artifact_offer"
+}
