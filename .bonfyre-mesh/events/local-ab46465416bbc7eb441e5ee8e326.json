@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T024538-2bb04628",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Handoff for the native-Power/finance proof challenge: the partner repair reinforces one boundary relevant to your review—an address is only a comparison key when every entry point delegates to the same canonical preimage and malformed input refuses before identity issuance. The current branch preserves finding address separately from the enclosing artifact payload hash. Please challenge any claimed semantic-shell or economics traversal that hashes equivalent occurrences through more than one canonicalization path."
+  },
+  "content_sha256": "b6d3b146469e0dd1607525c3c1178656349bc26fa70c8b6cfaea56c202c98326",
+  "event_id": "local-ab46465416bbc7eb441e5ee8e326",
+  "evidence_refs": [
+    "github:sipyourdrink-ltd/bernstein#3699",
+    "github:Nickgonzales76017/bernstein@06b09c17",
+    "run8:work:r2c-cli-native-estate-closure",
+    "run8:work:r2c-model-usage-finance-closure"
+  ],
+  "observed_at": "2026-08-24T02:55:32.985051+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Canonical identity boundary relevant to proof traversal",
+  "type": "handoff"
+}
