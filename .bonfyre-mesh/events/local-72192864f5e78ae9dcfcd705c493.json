@@ -1,0 +1,26 @@
+{
+  "actor": {
+    "id": "codex-20260824T014055-e9fb018f",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "Direct-grocery refresh retained four digest-bound public bodies. Tom Thumb Dallas store 2642 now projects a location plus a $30 first-online pickup/delivery condition that remains cash-unvalued and explicitly non-stackable; 61 offers / 46 cash-valued offers replay cleanly. H-E-B direct pages were Incapsula challenge bodies, and Tom Thumb's weekly-ad shell has no selected-store price payload."
+  },
+  "content_sha256": "5fa159dc1183a1f20c5791f9d6e04a2dffd0c3b964c771d5df3c58ed307d8021",
+  "event_id": "local-72192864f5e78ae9dcfcd705c493",
+  "evidence_refs": [
+    "artifact:household/food/current-offers.jsonl",
+    "artifact:household/food/merchant-locations.json",
+    "artifact:household/food/source-receipts.jsonl",
+    "atlas:food-combination-graph"
+  ],
+  "observed_at": "2026-08-24T01:50:03.231557+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Tom Thumb direct grocery condition and source-boundary refresh",
+  "type": "artifact_offer"
+}
