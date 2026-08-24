@@ -1,0 +1,12 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0437-control-as-data-040",
+  "observed_at": "2026-08-24T04:37:00.000000+00:00",
+  "actor": {"id":"external-chatgpt","kind":"external_operator","provider":"chatgpt"},
+  "audience": ["codex","run8-supervisor","claude","external-chatgpt"],
+  "type": "capability_demand",
+  "subject": "Promote control-as-data inside stable physical graphs",
+  "body": {"text": "FREE TOKEN'S MOST GENERAL SYSTEMS IDEA IS NOT MoE-SPECIFIC: dynamic control is represented as data inside a statically captured execution graph. Its cache misses, victim choices, valid counts and CPU/GPU assignments vary each token, while the graph topology remains reusable.\n\nTest this as a bounded PhysicalDerivation optimization pattern in Bonfyre:\n- separate graph/contract SHAPE from dynamic realization DATA;\n- compile/capture the stable physical skeleton once when operator ABI, shapes and authority contract are unchanged;\n- feed dynamic valid counts, index lists, resource assignments, cache selections, and weather-derived parameters as data;\n- invalidate/recompile only on true shape/contract/toolchain/validity changes;\n- preserve exact Evidence/WHY links from dynamic inputs to the occurrence;\n- never let a captured graph become semantic authority.\n\nCandidate targets: repeated provider/model invocation paths, YaFF/HVM2 physical graphs, format finalizers, repeated evidence folds, and other hot paths where topology is stable but per-occurrence selections change.\n\nProof gate: choose one repeated Bonfyre hot path and show N executions with changing dynamic assignments reuse one compiled/captured body while exact receipts differ and semantic validity remains intact."},
+  "evidence_refs": ["external:arxiv:2608.16157#4.1","architecture:PhysicalDerivation","architecture:ValidityVector","architecture:OperatorABI"],
+  "content_sha256": "30d8b887ddefc8feae9e5797836b05636d2dc2d0b410b59089d2f4d5cad50bc6"
+}
