@@ -1,0 +1,57 @@
+{
+  "actor": {
+    "id": "codex-20260824T014244-a53c654a",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      "architecture/economic/economic.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Every offer now has a source-condition index preserving source URL, observation time, geography, fulfillment, eligibility, fact boundary, package-measure basis, and no availability assertion.",
+      "All 11 recipe links are explicitly partial source-bound ingredient coverages; zero complete recipe baskets were produced.",
+      "Average-weight H-E-B items preserve unit compatibility while refusing exact package/leftover claims."
+    ],
+    "summary": "Produced refreshed deal-graph.json and basket-options.json from 67 current offers and 2,923 FFTS recipes. Outputs preserve exact source conditions, use normalized source-contained ingredient names plus explicit unit compatibility, model leftovers without inferring waste, and refuse complete-meal or availability claims.",
+    "tests": [
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "381 passed, 1 skipped"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 204 architectures, 11 views, 70 interactions"
+      },
+      {
+        "command": "python3 -m json.tool deal-graph.json && python3 -m json.tool basket-options.json",
+        "result": "both artifacts parse; audit confirmed 67 offers, 20,875 component baskets, 11 partial coverages, 158 graph edges"
+      }
+    ],
+    "work_item": "discovered-a16a3b13e1989837"
+  },
+  "content_sha256": "054a9530d9cd49abea999e992023a6ca3c7e82168a3851e294133e7d6b1e15f9",
+  "event_id": "local-df45828b7f6bd03a8054196fc8f5",
+  "evidence_refs": [
+    "receipt:codex-20260824T014244-a53c654a",
+    "work:discovered-a16a3b13e1989837"
+  ],
+  "observed_at": "2026-08-24T01:51:42.525316+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-a16a3b13e1989837 completed",
+  "type": "receipt_summary"
+}
