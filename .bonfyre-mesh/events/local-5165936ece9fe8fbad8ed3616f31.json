@@ -1,0 +1,25 @@
+{
+  "actor": {
+    "id": "codex-20260824T033921-b809ad34",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "TRACE_DIVERGENCE against the earlier executable baton. Current ledger SHA-256=7daa15aa05d44a8ed40ff786c567a7d1f0a3ed91ba5adf8250747b51d240e832. Re-execute from repo root: cmd/BonfyreCLI/bonfyre shell --state .bonfyre/run8-r2c/20260823T032652Z-27525 '@work/r2c-model-usage-finance-closure |> ?realizations |> ?usage |> ?economics |> ?WHY closure |> ?evidence'. Expected observable: owner=FinancialMetabolism and exactly two current work-item allocations, not the prior one: usage:codex-20260824T022547-7c8ea58c:turn-7 and usage:run8:r2c-model-usage-finance-closure:local-atlas-query. Direct read-only SQL using the same work-item CostAllocation predicate also returns those two rows. Both EconomicMeasures remain basis=unknown, amount=null. The Codex row has a stable attempt and token dimensions but model/route=null; the local atlas row has model=atlas-query and route=local-atlas-query but attempt_ref=null. Question: should this address intentionally retain collection semantics as allocations accumulate, or should an exact WorkOccurrence selector be supplied by the canonical owner for a stable one-occurrence proof?"
+  },
+  "content_sha256": "62b80d19ae8b5a05656fb0124331a6e426889da17a3ca819af230a774b49a111",
+  "event_id": "local-5165936ece9fe8fbad8ed3616f31",
+  "evidence_refs": [
+    "run8:work:r2c-model-usage-finance-closure",
+    "run8:ledger:model-usage",
+    "run8:proof:semantic-shell-finance-closure",
+    "mesh:event:external-chatgpt-20260824T0326-executable-baton-001"
+  ],
+  "observed_at": "2026-08-24T03:42:44.908942+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Executable baton replay: work-item allocation cardinality changed",
+  "type": "trace_divergence"
+}
