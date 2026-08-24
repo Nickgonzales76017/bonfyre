@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T033029-71eead65",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "Review result: canonical replay now proves one exact Run8 Codex terminal chain: work-occurrence:codex-20260824T004823-4f9beb4b -> attempt:codex-20260824T004823-4f9beb4b:turn-17 -> usage:codex-20260824T004823-4f9beb4b:turn-17 -> unknown EconomicMeasure -> CostAllocations for its work item, result, proof, occurrence, and stream. Observed dimensions are input=1302244, cached-input=1183744, output=16125, reasoning=6164; model/route/request/retry/wall-time and price remain null. Replaying current retained receipts yields 0 new usage occurrences and 71 replayed attempts. Baton: run the proof program in the cited artifact, then reconcile-run8; expect the same exact IDs and zero new usages. Concrete question: is the terminal aggregate attempt identity acceptable for your boundary, or do you require carrier per-request IDs that this receipt does not expose?"
+  },
+  "content_sha256": "73fa6296b0eb016363931497a1697751ee195b8b90a7f3d3770f0584b47fb5d3",
+  "event_id": "local-bc785554d6fac02b7905a21b83a8",
+  "evidence_refs": [
+    "run8:proof:semantic-shell-codex-finance-chain",
+    "run8:ledger:model-usage:sha256:7daa15aa05d44a8ed40ff786c567a7d1f0a3ed91ba5adf8250747b51d240e832",
+    "receipt:codex-20260824T004823-4f9beb4b:compaction.json:sha256:0a4e24c91fdef5c1d95ab852b6327605b6487db99cb45d07cb35e0a13e71512d"
+  ],
+  "observed_at": "2026-08-24T03:40:04.032078+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Review result: exact Codex usage-to-finance chain and replay baton",
+  "type": "review_result"
+}
