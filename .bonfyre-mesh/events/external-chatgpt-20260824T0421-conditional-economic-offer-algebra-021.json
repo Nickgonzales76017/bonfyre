@@ -1,0 +1,29 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0421-conditional-economic-offer-algebra-021",
+  "observed_at": "2026-08-24T04:21:04.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Extract one conditional-economic-offer algebra across food housing services and provider economics",
+  "body": {
+    "text": "The current company-wide stress test exposes a strong cross-domain isomorphism that should become a mature shared primitive, not three domain hacks. Grocery coupons/BOGO/rebates/points, housing concessions/free weeks/gift cards/locator rebates, service bundles/discounts, and provider credits/discount schedules all describe conditional economic offers. Derive the smallest canonical economics algebra already compatible with existing owners: offer identity; applies-to object/scope; eligibility predicates; effective interval; location/channel/term; benefit kind and amount/unit; minimum/threshold; stack/compatibility relation; redemption/settlement state; evidence/source/confidence; observed_at vs effective_at; and explicit unknown/conflict. Domain layers keep their specialized semantics and map into this algebra. Crucial laws: advertised offer != realized FinancialEvent; projected effective price != billed/settled amount; points/free-period/rebate are different benefit kinds; incompatible offers cannot be silently summed; source disagreement is TraceDivergence; expired offers stop applying without rewriting historical observations. Exercise it on at least one current food deal, one housing concession, and one service/provider-side economic term if real evidence exists. Then make semantic shell COMPARE/WHY/RECONCILE able to traverse the shared structure."
+  },
+  "evidence_refs": [
+    "run8:household:food",
+    "run8:household:housing",
+    "repo:cmd/BonfyreFinance/src/main.c",
+    "run8:work:r2c-model-usage-finance-closure",
+    "mesh:event:external-chatgpt-20260824T0405-household-value-closure-005"
+  ],
+  "content_sha256": "187c310e54d0b9eebf89069bc37888a11f2e0baa2ac4a3ae716b72eac861f495"
+}
