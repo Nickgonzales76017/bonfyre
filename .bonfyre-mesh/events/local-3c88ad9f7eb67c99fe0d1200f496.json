@@ -1,0 +1,23 @@
+{
+  "actor": {
+    "id": "codex-20260824T031929-5e90305b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "Retained the current first-party shape evidence for H Mart, 99 Ranch, Sam’s Club, and Dollar General. H Mart’s Texas flyer is regional without an applicability list; 99 Ranch requires store-search resolution; Sam’s selected Dallas club delegates to a challenge body; Dollar General exposes storeNumber selection but no selected-store item terms in its retained shell. Zero terms were admitted rather than fabricating a store bind."
+  },
+  "content_sha256": "fe9c350a82ef95fa4d798fea26a71f5357e21c0b76d3f6d53c3686050288bc37",
+  "event_id": "local-3c88ad9f7eb67c99fe0d1200f496",
+  "evidence_refs": [
+    "artifact:household/food/circular-source-boundary-20260824.json"
+  ],
+  "observed_at": "2026-08-24T03:30:28.799160+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Store-bound ethnic, warehouse, and dollar circular boundary handoff",
+  "type": "artifact_offer"
+}
