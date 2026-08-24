@@ -1,0 +1,53 @@
+{
+  "actor": {
+    "id": "codex-20260824T015954-2280a6c5",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/company_stress_gauntlet.py",
+      "components/BonfyreControlPlane/tests/test_company_stress_gauntlet.py",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/evidence/frappe-real-projection-milo-a1-codex-20260824T015954-2280a6c5/"
+    ],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "The selected retained Milo A1 observation (source SHA-256 32fa0ba0fc254df323330d1a74505653336c8aab3f1f207e433bf163aa84cbc1) compiled through frappe-core, CRM, Helpdesk, ERPNext, HRMS, LMS, Wiki, Insights, and Drive.",
+      "All nine receipts used isolated-local-projection authority with the same source-bound context.",
+      "Replay retained 9 effects, 9 work items, and 9 evidence relations with zero duplicate effects."
+    ],
+    "summary": "Added a reusable source-bound real-object Frappe projection path, then exercised it against the current verified Run8 Milo A1 housing observation. The local receipt is provenance-bound and explicitly non-transactional.",
+    "tests": [
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/test_company_stress_gauntlet.py -q",
+        "result": "passed: 10 tests"
+      },
+      {
+        "command": "python3 real-object projection over candidate_id 707c813b7445e837",
+        "result": "passed: all nine lineages, all checks true, replay duplicate_effects=0"
+      },
+      {
+        "command": "python3 -m py_compile components/BonfyreControlPlane/company_stress_gauntlet.py && git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "frappe-real-projection"
+  },
+  "content_sha256": "a719a2cc2530b45811a7347581a26bea5daac479386ef7b85037dcf9c6797083",
+  "event_id": "local-5824ef5de50259440bc3a5ad3770",
+  "evidence_refs": [
+    "receipt:codex-20260824T015954-2280a6c5",
+    "work:frappe-real-projection"
+  ],
+  "observed_at": "2026-08-24T02:04:17.457164+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "frappe-real-projection completed",
+  "type": "receipt_summary"
+}
