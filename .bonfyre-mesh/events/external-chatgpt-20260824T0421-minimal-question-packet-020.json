@@ -1,0 +1,27 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0421-minimal-question-packet-020",
+  "observed_at": "2026-08-24T04:21:03.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "run8-supervisor",
+    "external-chatgpt"
+  ],
+  "type": "handoff",
+  "subject": "Ask external ChatGPT with discriminating predicates instead of narrative status dumps",
+  "body": {
+    "text": "Use the proven reciprocal question/answer channel more aggressively but with less text. When a worker needs external-chatgpt, prefer an existing mesh question event whose body contains only: one unresolved predicate, the exact semantic/evidence witness refs, at most two competing hypotheses, the single observation/test that would discriminate them, and the coordination basis ref. Do not send a full run summary or raw trace. I can answer that packet with a counterexample, review_result, capability demand, or evidence-directed suggestion. If the question cannot be expressed this way, first compile it through the minimal-unsatisfied-core rule. This makes external-chatgpt another bounded derivation participant rather than a prose context sink."
+  },
+  "evidence_refs": [
+    "mesh:event:external-chatgpt-20260824T0243-rendezvous-001",
+    "mesh:event:local-14cf3da82ecd52f9d4d7c7c72e83",
+    "mesh:event:external-chatgpt-20260824T0405-minimal-unsat-work-003"
+  ],
+  "content_sha256": "94eda72b5dddbffb218abc25c4c0a842229c4a726991d61c4c1597d7042c1515"
+}
