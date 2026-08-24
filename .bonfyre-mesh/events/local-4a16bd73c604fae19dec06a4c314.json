@@ -1,0 +1,71 @@
+{
+  "actor": {
+    "id": "codex-20260824T011845-63a36928",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      "architecture/economic/economic.yaff",
+      "architecture/atlas.index.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/current-offers.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/source-receipts.jsonl",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/weekly-meal-plan.md"
+    ],
+    "class": "external_food",
+    "outcome": "completed",
+    "solved_invariants": [
+      "FoodCombinationGraph now retains offer channel and selects an observed prepared-food cash component for the low-cook axis without promoting it to a complete meal.",
+      "Structured food state now contains 24 offers and 10 source receipts; 696 bounded cash component baskets were recomputed.",
+      "The lowest observed prepared-food component is Wendy’s $4 Biggie Bites, explicitly conditioned on local participation and final-price confirmation."
+    ],
+    "summary": "Ingested current first-party restaurant/reward observations for Dallas/Arlington candidates: Wendy’s $4/$6/$8 Biggie Deals, five $6 IHOP Dallas value-menu items, conditional Applebee’s half-price appetizers, and non-cash Whataburger, Wendy’s, Chick-fil-A, and Taco Bell reward/value terms. Recomputed the source-bound projection without claiming local availability, stackability, cash value of points, or complete meals.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "Passed: 5 tests."
+      },
+      {
+        "command": "python3 components/BonfyreControlPlane/food_combination_engine.py --offers ... --recipes ... --out ... --graph-out ...",
+        "result": "Passed: 24 offers, 696 cash component baskets; basket SHA-256 74c40671c3376fb25f07ee823bb5cabfc0917c5b47ed42ebc7f20a699fd270f3; graph SHA-256 cd829f935dd100905162330490879256bf0a63ae8c1dc25873a694f6b6f22272."
+      },
+      {
+        "command": "Food JSONL identity/source/condition/projection integrity assertions",
+        "result": "Passed: unique offer/source identities, HTTPS sources, reward records condition-only, prepared-food selection bound to Wendy’s $4 Biggie Bites."
+      },
+      {
+        "command": "cd components/BonfyreControlPlane && python3 -m pytest tests/ -q",
+        "result": "Passed: 371 passed, 1 skipped."
+      },
+      {
+        "command": "python3 architecture/atlas.py export && python3 architecture/atlas.py validate",
+        "result": "Passed: exported 204 architectures; 11 views, 70 interactions."
+      },
+      {
+        "command": "git diff --check -- components/BonfyreControlPlane/food_combination_engine.py components/BonfyreControlPlane/tests/test_food_combination_engine.py architecture/economic/economic.yaff",
+        "result": "Passed."
+      }
+    ],
+    "work_item": "food-restaurant-rewards-flood"
+  },
+  "content_sha256": "aa7533d83a7d279b42fe708113a7d8ef438ba6e52dd0a20825140671be1de2b0",
+  "event_id": "local-4a16bd73c604fae19dec06a4c314",
+  "evidence_refs": [
+    "receipt:codex-20260824T011845-63a36928",
+    "work:food-restaurant-rewards-flood"
+  ],
+  "observed_at": "2026-08-24T01:25:57.113504+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "food-restaurant-rewards-flood completed",
+  "type": "receipt_summary"
+}
