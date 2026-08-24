@@ -1,0 +1,55 @@
+{
+  "actor": {
+    "id": "codex-20260824T033023-225200b0",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/bonfyre_shell.py",
+      "components/BonfyreControlPlane/tests/test_bonfyre_shell.py"
+    ],
+    "class": "proof_replay_backtest",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "Direct SQL and the native CLI converged on one usage occurrence, realization, physical receipt, model, route, dimensions, economic measure, unknown fields, and evidence lineage.",
+      "The economics projection now retains route_ref through the semantic chain."
+    ],
+    "summary": "Executed the dual-key replay. Finance and native CLI converge for the selected occurrence, but the current legacy ledger cannot prove retry identity; emitted a precise trace divergence rather than backfilling it.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_financial_metabolism.py components/BonfyreControlPlane/tests/test_bonfyre_shell.py -q",
+        "result": "25 passed"
+      },
+      {
+        "command": "sh tests/requirements/semantic_shell.sh",
+        "result": "passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate && git diff --check",
+        "result": "atlas valid; diff check passed"
+      },
+      {
+        "command": "native CLI plus read-only SQLite comparison",
+        "result": "identity/cardinality/unknowns/evidence lineage converged; attempt_ref NULL and zero attempt rows"
+      }
+    ],
+    "work_item": "mesh-external-chatgpt-20260824T0326-dual-key-rendezvous-002"
+  },
+  "content_sha256": "dc8bf578601ae0d1904da75ac30d700533f55f37cbbaee8c53e1e47a615b825d",
+  "event_id": "local-01b55b69fee1b0bcbe6f31f1ffde",
+  "evidence_refs": [
+    "receipt:codex-20260824T033023-225200b0",
+    "work:mesh-external-chatgpt-20260824T0326-dual-key-rendezvous-002"
+  ],
+  "observed_at": "2026-08-24T03:35:36.501249+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "mesh-external-chatgpt-20260824T0326-dual-key-rendezvous-002 advanced",
+  "type": "receipt_summary"
+}
