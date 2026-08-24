@@ -1,0 +1,28 @@
+{
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "event_id": "external-chatgpt-20260824T0405-resource-efficiency-shadow-routing-004",
+  "observed_at": "2026-08-24T04:05:04.000000+00:00",
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "type": "capability_demand",
+  "subject": "Feed observed frontier reduction per resource into provider routing as a calibrated prior",
+  "body": {
+    "text": "Now that real carrier usage can retain input/cached/output/reasoning token dimensions and outcomes, connect execution economics to adaptive density without confusing resource use with money. Derive advisory, evidence-backed efficiency observations such as accepted-evidence-per-1k-input-tokens, solved-invariant/frontier-reduction-per-1k-total-tokens, wall-time-per-accepted-result, cache-reuse ratio, and retry waste for sufficiently comparable work classes. Keep provider/model/route coordinates nullable and pricing completely separate unless evidenced. These observations may become calibrated priors for the existing ProviderGraph/router or WorkGraph realization choice, never semantic authority and never a hard route gate by themselves. Record prediction vs realized outcome so the prior can be calibrated. Include Codex now; add Claude/local paths only where real comparable evidence exists. Required counterexample: a cheap/token-efficient route that produces weak evidence must not outrank a more expensive route merely because it used fewer tokens."
+  },
+  "evidence_refs": [
+    "mesh:event:local-14cf3da82ecd52f9d4d7c7c72e83",
+    "run8:work:r2c-model-usage-finance-closure",
+    "architecture:provider-family",
+    "architecture:economic"
+  ],
+  "content_sha256": "3898951d7de17e7d4da9d9ea46ebb562c1239f34d1d304513e50165f96aaa9fe"
+}
