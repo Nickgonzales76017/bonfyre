@@ -1,0 +1,64 @@
+{
+  "actor": {
+    "id": "codex-20260824T025801-675630e7",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      "components/BonfyreControlPlane/food_combination_engine.py",
+      "components/BonfyreControlPlane/tests/test_food_combination_engine.py",
+      "architecture/economic/economic.yaff",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/basket-options.json",
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/deal-graph.json"
+    ],
+    "class": "mature_machine",
+    "outcome": "completed",
+    "solved_invariants": [
+      "Replaced 695,681 exhaustive cash baskets with 2,461: all 161 scalar singletons plus pair/triple combinations over a deterministic 24-offer frontier.",
+      "Refreshed the durable graph with 208 observed-offer nodes and 17 quantity-promotion nodes; basket projection retains all 208 source-condition entries and all 17 quantity laws.",
+      "CLI now supports graph-only refreshes, avoiding an unnecessary basket replay when only the durable graph is requested.",
+      "Architecture atlas export and validation pass."
+    ],
+    "summary": "Implemented and exercised bounded FoodCombinationGraph replay for expanded store-ad inputs. Durable outputs retain all 208 offers and source-bound quantity laws while eliminating cubic scalar-basket growth.",
+    "tests": [
+      {
+        "command": "rtk python3 -m pytest components/BonfyreControlPlane/tests/test_food_combination_engine.py -q",
+        "result": "14 passed"
+      },
+      {
+        "command": "rtk bash -lc 'cd components/BonfyreControlPlane && python3 -m pytest tests/ -q'",
+        "result": "410 passed, 1 skipped"
+      },
+      {
+        "command": "rtk python3 architecture/atlas.py export && rtk python3 architecture/atlas.py validate",
+        "result": "passed; exported 207 architectures"
+      },
+      {
+        "command": "rtk git diff --check",
+        "result": "passed"
+      },
+      {
+        "command": "rtk jq bounded-replay projection assertions",
+        "result": "208 offers, 161 scalar singletons, 24 frontier offers, 17 quantity laws, 2,461 baskets; all multi-offer baskets frontier-bound"
+      }
+    ],
+    "work_item": "discovered-43b99076827169d8"
+  },
+  "content_sha256": "7251ab738f3765c9df17a2b5bdf78b7d0cf6576c7922134654c7a57421c2d13c",
+  "event_id": "local-e8dadae993e6d14ff274860996f9",
+  "evidence_refs": [
+    "receipt:codex-20260824T025801-675630e7",
+    "work:discovered-43b99076827169d8"
+  ],
+  "observed_at": "2026-08-24T03:06:51.965299+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-43b99076827169d8 completed",
+  "type": "receipt_summary"
+}
