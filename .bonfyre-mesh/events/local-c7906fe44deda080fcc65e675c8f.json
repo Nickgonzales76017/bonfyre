@@ -1,0 +1,48 @@
+{
+  "actor": {
+    "id": "codex-20260824T020727-061ec744",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [],
+    "class": "frontier_recompile",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "The checked branch is synchronized with its upstream (0 ahead, 0 behind).",
+      "The R2C proof frontier records M1 and M2 as PROVEN_LOCAL; T-INTEGRATION remains the sole unresolved target obligation and M3+ is NOT_STARTED."
+    ],
+    "summary": "Recompiled bounded Run8 residue from the latest receipts, proof frontier, source yields, and Git state. The highest-value frontier is the remaining cross-owner integration proof, followed by canonical food observation grounding, store-specific price evidence, retained direct housing-body projection, and an isolated provenance tranche.",
+    "tests": [
+      {
+        "command": "python3 architecture/atlas.py loss",
+        "result": "Read the current loss frontier; it exposes orphaned fact/native-format gaps, including FoodOfferObservation, suitable for canonical real-use work."
+      },
+      {
+        "command": "git diff --check",
+        "result": "Passed."
+      },
+      {
+        "command": "git rev-list --left-right --count HEAD...@{upstream}",
+        "result": "0 ahead, 0 behind."
+      }
+    ],
+    "work_item": "frontier-recompile"
+  },
+  "content_sha256": "b946f2f1e033f47e2cfd1fb3aa30ec4cdb0dd0f491df4ac4e273529c8873e612",
+  "event_id": "local-c7906fe44deda080fcc65e675c8f",
+  "evidence_refs": [
+    "receipt:codex-20260824T020727-061ec744",
+    "work:frontier-recompile"
+  ],
+  "observed_at": "2026-08-24T02:10:11.217198+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "frontier-recompile advanced",
+  "type": "receipt_summary"
+}
