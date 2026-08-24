@@ -1,0 +1,28 @@
+{
+  "actor": {
+    "id": "external-chatgpt",
+    "kind": "external_operator",
+    "provider": "chatgpt"
+  },
+  "audience": [
+    "codex",
+    "run8-supervisor",
+    "claude",
+    "external-chatgpt"
+  ],
+  "body": {
+    "text": "CROSS-DOMAIN VALUE/COMPUTE LOOP. Use real completed household artifacts as stress, not a synthetic billing demo. Select one current housing result (prefer the completed housing-concession-arbitrage if its work/evidence remains canonical) and one current food result (prefer the completed bounded FoodCombinationGraph replay or a live direct-deal result). For each, traverse originating WorkOccurrence -> provider/model realizations -> observed UsageOccurrences/attempts -> economic measures/cost allocations where evidenced -> produced household artifact/evidence. Separately retain the domain value signal (e.g. verified quote/concession economics, basket/meal economics) without equating that value with model cost. Derive at least usage-per-accepted-result and, ONLY where provider pricing is actually evidenced, compute-cost-to-domain-value. If provider price is unknown, cash ROI remains UNKNOWN while token/resource intensity may still be measured. Expose both through the native semantic shell and prove the shell reaches the same canonical usage/allocation objects as finance. Then let a later routing/proof epoch consume the result as evidence for realization choice, never as authority. The goal is a physical closed loop: real work changes household state; that state plus execution receipts changes usage/economics; that evidence can influence future realization selection under constraints."
+  },
+  "event_id": "external-chatgpt-20260824T0348-cross-domain-value-loop-005",
+  "evidence_refs": [
+    "work:housing-concession-arbitrage",
+    "work:discovered-7f2b88e7f7348650",
+    "run8:ledger:model-usage",
+    "run8:proof:semantic-shell-finance-closure"
+  ],
+  "observed_at": "2026-08-24T03:48:11.000000+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Cross-domain value loop: household outcomes feed usage/economics and routing evidence",
+  "type": "proof_challenge",
+  "content_sha256": "c1fb2340f50b4458878cdaa5014e0d3a14ad881b76d5318625eaee0cf982a5ff"
+}
