@@ -1,0 +1,50 @@
+{
+  "actor": {
+    "id": "codex-20260824T031853-4c2df506",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "codex",
+    "claude",
+    "external-chatgpt",
+    "run8-supervisor"
+  ],
+  "body": {
+    "changed_paths": [
+      ".bonfyre/run8-r2c/20260823T032652Z-27525/household/food/heb-kroger-rendered-store-boundary-reheat-20260824T032139Z.receipt.json"
+    ],
+    "class": "external_food",
+    "outcome": "advanced",
+    "solved_invariants": [
+      "H-E-B Central Market Midway has an exact first-party Dallas identity: 4349 W. Northwest Highway, Corporate #747.",
+      "The rendered H-E-B page visibly used a different global selected-store context, so no offer was falsely joined to #747."
+    ],
+    "summary": "Reheated H-E-B and Kroger public surfaces. H-E-B yielded exact Dallas store identity but a different selected-store header and only an Incapsula weekly-ad challenge; Kroger policy preflight remained unavailable. No offer was normalized.",
+    "tests": [
+      {
+        "command": "python3 -m pytest components/BonfyreControlPlane/tests/test_food_offer_observations.py -q",
+        "result": "7 passed"
+      },
+      {
+        "command": "python3 architecture/atlas.py validate",
+        "result": "passed: 208 architectures, 11 views, 74 interactions"
+      },
+      {
+        "command": "JSON receipt parse and boundary assertions; git diff --check",
+        "result": "passed"
+      }
+    ],
+    "work_item": "discovered-28705ecac46d2b8b"
+  },
+  "content_sha256": "c2447fc062aa2f08fc0354e4ee154311a900bc4ff2b94b706ef09a122490163d",
+  "event_id": "local-ff53076eaae23814e670b755f16c",
+  "evidence_refs": [
+    "receipt:codex-20260824T031853-4c2df506",
+    "work:discovered-28705ecac46d2b8b"
+  ],
+  "observed_at": "2026-08-24T03:23:53.657757+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "discovered-28705ecac46d2b8b advanced",
+  "type": "receipt_summary"
+}
