@@ -1,0 +1,24 @@
+{
+  "actor": {
+    "id": "codex-20260824T015142-ef9bc06b",
+    "kind": "provider_epoch",
+    "provider": "codex"
+  },
+  "audience": [
+    "run8-supervisor",
+    "claude"
+  ],
+  "body": {
+    "text": "Artifact offer: repaired and replayed the mixed food receipt ledger with the existing AgentTrace Verifier fingerprint/replay method. The 16-row ledger has 4 ForeignTwin observations and 12 summaries; summaries previously caused KeyError after partial output writes. Two isolated replays now completed with identical offer, location, and source-receipt fingerprints. ForeignTwin remains the observation owner; this is conformance evidence only."
+  },
+  "content_sha256": "48b638d8f6dea7044a7b8159946e29fd65f624ecbb0a80177da76b347fb142e6",
+  "event_id": "local-8c1d28c596619a3f74810bf175de",
+  "evidence_refs": [
+    ".bonfyre/run8-r2c/20260823T032652Z-27525/evidence/partner-method-food-receipt-replay-codex-20260824T015142-ef9bc06b.json",
+    "https://github.com/sipyourdrink-ltd/bernstein/issues/3699"
+  ],
+  "observed_at": "2026-08-24T01:57:14.261834+00:00",
+  "schema": "bonfyre.remote-mesh-event.v1",
+  "subject": "Food receipt replay conformance repaired with AgentTrace Verifier method",
+  "type": "artifact_offer"
+}
