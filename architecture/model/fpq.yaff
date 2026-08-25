@@ -1,0 +1,134 @@
+atlas model
+# The model estate is not one architecture. FPQ alone is at least three: the
+# weight transformation, the seed-program calculus it searches, and the per-block
+# mode selection. Each has its own node ontology and its own maturity. None of
+# them may claim the others' evidence.
+
+architecture fpq-transform
+  owns FPQRepresentation
+  consumes ResourcePressure
+  publishes FPQRepresentation
+  canonical_name FPQTransformationGraph
+  family model
+  domain Model Representation
+  layer model/representation
+  semantic_question Can these weights be reconstructed within tolerance from a compact functional representation?
+  purpose Store seed programs, not weights. Functional Polar Quantization of a weight tensor.
+  maturity measured
+  node_types WeightTensor
+  node_types PolarDecomposition
+  node_types ResidualField
+  node_types FPQRepresentation
+  edge_types decomposes_into
+  edge_types leaves_residual
+  edge_types reconstructs_to
+  internal_calculus RandomSigns/FWHT
+  internal_calculus RecursiveS^N-PolarDecomposition
+  internal_calculus ExpectedAngularStructure
+  internal_calculus SeedDiscovery
+  internal_calculus QJLResidual
+  invariant reconstruction is deterministic byte-for-byte across runs on the same fixture
+  forbidden_inference low reconstruction error -> good semantic generation quality
+  forbidden_inference reconstruction within tolerance -> SLI execution correctness
+  forbidden_inference fixture reconstruction -> qwen model reconstruction
+  computational_form fused
+  native_format axon
+  native_format crux
+  command BonfyreFPQ
+  source_path cmd/BonfyreFPQ/src/fpq_native.c
+  source_path cmd/BonfyreFPQ/src/ggml_reader.c
+  source_path components/BonfyreControlPlane/fpq_evidence.py
+  source_path components/BonfyreControlPlane/fpq_pack_evidence.py
+  witness packs/fpq-proof-frontier/fixtures/tiny-f16.gguf
+  witness packs/fpq-proof-frontier/measured-witness.yaff
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness components/BonfyreControlPlane/fpq_pack_evidence.py
+  witness ~/BonfyreModels/fpq/*.fpq-pack.json (recorded substrate quality gates)
+  source_lineage run4_institutional_fabric FPQ archive
+  source_lineage mature fpqqwen substrate (HuggingFace, cmd/BonfyreQwenFPQ, ~/BonfyreModels/fpq)
+  known_gap real qwen2.5-0.5b tensor fixture (current fixture is synthetic-but-structured)
+  known_gap recorded fpqqwen packs show semantic_behavior OPEN (generation parity failed) -- honest, not laundered
+  reheat_condition reconstruction fixture mse exceeds ceiling
+  reheat_condition fixture gguf hash changes
+
+architecture fpq-seed
+  canonical_name FPQSeedProgramGraph
+  family model
+  domain Model Representation
+  layer model/representation
+  semantic_question What combinator program reproduces this weight block's angular structure?
+  purpose The combinator calculus FPQ searches: ROT PAIR SCALE SHIFT REP FOLD LERP FREQ RAMP REFINE DBREF CHURCH DCT.
+  maturity implemented
+  node_types SeedProgram
+  node_types Combinator
+  edge_types recursive_dependency
+  edge_types refinement_branch
+  internal_calculus combinator-depth-and-parameter-search
+  forbidden_inference seed found for a block -> seed generalizes to the tensor
+  computational_form fused
+  native_format helix
+  command BonfyreFPQ
+  source_path cmd/BonfyreFPQ/src/seed.c
+  source_path cmd/BonfyreFPQ/src/seed_v1.c
+  known_gap structural correctness only partially witnessed
+  source_lineage run4_institutional_fabric FPQ archive
+
+architecture fpq-mode-select
+  canonical_name FPQModeSelectionGraph
+  family model
+  domain Model Representation
+  layer model/representation
+  semantic_question Which decomposition mode (FWHT / DIRECT / COORD) minimizes error-plus-cost for this block?
+  purpose Lazy/thunk-based per-block mode selection; distinct from the seed combinator graph.
+  maturity measured
+  node_types FPQBlock
+  node_types ModeCandidate
+  edge_types scored_by
+  edge_types selects
+  internal_calculus thunk-eval FWHT|DIRECT|COORD@k
+  forbidden_inference chosen mode on one block -> best mode on another
+  computational_form fused
+  command BonfyreFPQ
+  source_path cmd/BonfyreFPQ/src/fpq_codec_v2.c
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
+  source_lineage run4_institutional_fabric FPQ archive
+
+architecture sli-execution
+  canonical_name SLIExecutionGraph
+  family model
+  domain Model Execution
+  layer model/execution
+  semantic_question Does structured-layer inference over the representation match the reference within divergence bounds?
+  purpose Prepared-layer structured execution over an FPQ/SLI representation, measured against a reference.
+  maturity declared
+  node_types RepresentationArtifact
+  node_types PreparedLayerArtifact
+  node_types DivergenceMeasurement
+  node_types SLIExecutionWitness
+  edge_types prepares
+  edge_types diverges_from
+  forbidden_inference SLI public identity (Structured Layer Inference) -> historical Spectral Lattice Inference profile
+  historical_name Spectral Lattice Inference
+  command BonfyreSLI
+  known_gap workload proof incomplete
+  source_lineage packs/fpq-proof-frontier/work.yaff fpq_split_sli_identity
+
+architecture kv-temporal
+  owns KVPassport
+  consumes ExecutionReceipt
+  publishes KVPassport
+  canonical_name KVTemporalGraph
+  family model
+  domain Model Execution
+  layer model/execution
+  semantic_question Which KV-cache blocks stay resident, and why, across turns?
+  purpose Model-specific temporal continuity of attention state; hard/soft/resident retention.
+  maturity implemented
+  node_types KVBlock
+  node_types RetentionClass
+  edge_types depends_on
+  edge_types evicts
+  forbidden_inference resident block -> semantically necessary block
+  command BonfyreKVCache
+  source_path cmd/BonfyreKVCache
+  known_gap semantic retention (Quest integration) not yet witnessed

@@ -1,233 +1,208 @@
-# Bonfyre Architecture
+# Bonfÿre / Aurekai architecture
 
-## The One Abstraction
+Bonfÿre is a typed institutional operating machine. Aurekai is its
+evidence-bound learning loop. The architecture preserves distinct semantic
+owners and lets many physical realizations serve them; it does not make one
+language, binary, database, model, agent, or hosted product the whole system.
 
-Bonfyre is **typed artifact families + composable operator graphs + projection-first outputs**.
+## Authority and truth
 
-Every binary in the system does one of three things:
-1. **Produces** a `BfArtifact` manifest
-2. **Transforms** one `BfArtifact` into another
-3. **Serves** artifact state over HTTP or CLI
+Two sources answer different questions:
 
-The artifact contract (`bonfyre.h`) is the universal interface. If you understand `BfArtifact`, you understand the whole system.
+1. The frozen Generation-10/V8.1 map defines the cumulative semantic
+   destination and its validated projection estate.
+2. [`architecture/`](../architecture/) is the canonical live registry for what
+   this repository currently implements, measures, or only declares.
 
-```c
-typedef struct {
-    char artifact_id[512];     // content-addressed (SHA-256 of canonical form)
-    char artifact_type[128];   // "transcript", "brief", "proof", "offer", etc.
-    char source_system[128];   // originating binary
-    char created_at[128];      // ISO-8601 UTC
-    char root_hash[128];       // SHA-256 of content
-    char family_key[17];       // FNV-1a-64: groups structurally equivalent artifacts
-    char canonical_key[17];    // FNV-1a-64: distinguishes signatures within a family
-    int  atoms_count;          // sub-objects
-    int  operators_count;      // transform nodes
-    int  realizations_count;   // materialized outputs
-    int  component_total;      // atoms + operators + realizations
-} BfArtifact;
-```
-
-## Design Philosophy
-
-1. **One binary, one job.** Each tool does one thing. Compose via pipes and files.
-2. **SQLite everywhere.** Every binary that needs state uses SQLite. One folder backup.
-3. **Zero cloud.** Everything runs on your machine. No external API calls unless you choose to.
-4. **C11 for size and speed.** Every binary is < 70 KB. Startup is < 50 ms.
-5. **Pure or stateful. Never both.** Every binary declares its behavioral class.
-6. **Artifacts, not files.** Every output is a typed, hashed, family-grouped manifest.
-
-## Layer Model
-
-Binaries are classified by behavioral contract, not by marketing category.
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  SURFACE — product-facing, stateful services                     │
-│  cms · api · auth · pipeline · cli · transcript-family · project │
-├──────────────────────────────────────────────────────────────────┤
-│  VALUE — monetization, metering, delivery                        │
-│  offer · gate · meter · ledger · finance · outreach · pay        │
-│  pack · distribute                                               │
-├──────────────────────────────────────────────────────────────────┤
-│  TRANSFORM — pure, cacheable, stateless                          │
-│  media-prep · transcribe · transcript-clean · paragraph · brief  │
-│  proof · embed · narrate · render · emit · mfa-dict              │
-│  weaviate-index                                                  │
-├──────────────────────────────────────────────────────────────────┤
-│  SUBSTRATE — cold, formal, stable infrastructure                 │
-│  ingest · hash · index · compress · stitch · graph               │
-│  runtime · queue · sync                                          │
-├──────────────────────────────────────────────────────────────────┤
-│  LIBRARIES                                                       │
-│  libbonfyre (runtime contract, operators, SHA-256, utilities)    │
-│  liblambda-tensors (structural family compression)               │
-└──────────────────────────────────────────────────────────────────┘
-```
-
-**Rules:**
-- **Substrate** binaries never import product concepts. Cold infrastructure.
-- **Transform** binaries are pure: same inputs → same outputs. Cacheable by `(operator, params, input_hash)`.
-- **Surface** binaries own mutable state and serve HTTP or complex CLI interfaces.
-- **Value** binaries handle money, metering, and delivery. Separate privilege boundary.
-
-## Operator Model
-
-Every binary declares a typed operator descriptor in `libbonfyre`:
-
-| Flag | Meaning |
-|---|---|
-| `BF_OP_PURE` | Stateless: same inputs, same outputs |
-| `BF_OP_STATEFUL` | Owns mutable state (SQLite, files) |
-| `BF_OP_CACHEABLE` | Output can be cached by `(op, params, hash)` |
-| `BF_OP_REVERSIBLE` | Output → input reconstruction is possible |
-| `BF_OP_IDEMPOTENT` | Running twice = running once |
-| `BF_OP_STREAMING` | Can process data incrementally |
-
-A binary is **either** `PURE` **or** `STATEFUL`. Never both. Enforced by tests.
-
-**Exactness classes:**
-
-| Class | Meaning | Examples |
-|---|---|---|
-| `BF_EXACT_BYTE` | Byte-for-byte identical on replay | hash, compress, pack |
-| `BF_EXACT_CANON` | Identical after canonicalization | index, transcript-clean |
-| `BF_EXACT_LOSSY` | Derived but not perfectly reconstructable | transcribe, narrate |
-
-## Dependency Graph
-
-```
-Binary              SQLite  zlib  Whisper  Piper  ONNX  Pandoc  Weaviate
-──────              ──────  ────  ───────  ─────  ────  ──────  ────────
-bonfyre-cms           ✓      ✓
-bonfyre-api           ✓
-bonfyre-auth          ✓
-bonfyre-pipeline      ✓      ✓
-bonfyre-index         ✓
-bonfyre-meter         ✓
-bonfyre-graph         ✓
-bonfyre-queue         ✓
-bonfyre-ledger        ✓
-bonfyre-transcribe                  ✓
-bonfyre-narrate                              ✓
-bonfyre-embed                                       ✓
-bonfyre-emit                                               ✓
-bonfyre-weaviate-idx                                               ✓
-
-All others: libc only (no external dependencies)
-```
-
-Required at build: C11 compiler + SQLite3 headers + zlib headers.
-Optional at runtime: Whisper model, Piper TTS, ONNX runtime, pandoc, Weaviate.
-
-## Family Model
-
-Artifacts that share `(artifact_type, source_system)` belong to the same **family**.
-
-Families are the natural unit of compression, indexing, caching, and storage:
-
-```
-family_key    = FNV-1a-64(normalize(type) + "|" + normalize(system))
-canonical_key = FNV-1a-64(type + "|" + system + "|" + atom_count + "|" + op_count + "|" + real_count)
-```
-
-Lambda Tensors exploits structural similarity within families to achieve 13.5% of raw JSON size with random access.
-
-## Artifact Lifecycle
-
-```
-Source → Ingest → Transform chain → Index → Realize
-```
-
-1. **Ingest:** `bonfyre-ingest` detects type, normalizes, stamps `BfArtifact` manifest
-2. **Transform:** Pure operators in sequence. Each reads `BfArtifact`, produces `BfArtifact`
-3. **Index:** `bonfyre-index` registers in SQLite, groups by `family_key`
-4. **Realize:** Materialize outputs on demand (pack, emit, narrate, distribute)
-
-**Key principle:** transforms produce artifacts; realizations produce outputs.
-
-## Data Flow
-
-```
-audio.mp3
-  → bonfyre-ingest     (manifest + type detection)
-  → bonfyre-media-prep (16kHz mono WAV)
-  → bonfyre-hash       (SHA-256 content address)
-  → bonfyre-transcribe (Whisper speech-to-text)
-  → bonfyre-transcript-clean (remove filler)
-  → bonfyre-paragraph  (structure text)
-  → bonfyre-brief      (summary + action items)
-  → bonfyre-proof      (quality score)
-  → bonfyre-offer      (pricing)
-  → bonfyre-pack       (ZIP deliverable)
-```
-
-Or: `bonfyre-pipeline run` — all 10 steps in one process, 5–8 ms.
-
-## Storage
-
-All data lives in `~/.local/share/bonfyre/` by default:
-
-```
-~/.local/share/bonfyre/
-├── cms.db          # BonfyreCMS schemas, content, tokens
-├── jobs.db         # BonfyreAPI job tracking
-├── meter.db        # Usage metering
-├── index.db        # Artifact index
-├── uploads/        # Uploaded files
-└── artifacts/      # Pipeline outputs
-```
-
-## HTTP endpoints (bonfyre-api)
-
-```
-GET  /api/health           → {"status":"ok","version":"1.0.0"}
-GET  /api/status           → job counts, upload counts, available binaries
-POST /api/upload           → multipart file upload
-POST /api/jobs             → submit pipeline job
-GET  /api/jobs             → list all jobs
-GET  /api/jobs/:id         → job detail
-*    /api/binaries/:name/* → proxy to any bonfyre-* binary
-GET  /*                    → static files (frontend SPA)
-```
-
-## Build System
+Generated diagrams and this page are views. They never outrank the Atlas. Run:
 
 ```bash
-make              # Build 2 libraries + 37 binaries
-make lib          # Build liblambda-tensors + libbonfyre
-make install      # Install to ~/.local
-make clean        # Remove all build artifacts
-make test         # Run all test suites
-make sanitize     # Rebuild with ASan + UBSan for security testing
-make help         # Show all targets
+python3 architecture/atlas.py validate
+python3 architecture/atlas.py expand ExecutionView
+python3 architecture/atlas.py get work-graph
+python3 architecture/atlas.py loss
 ```
 
-## Libraries
+No maturity laundering is allowed: `measured` and `proven` require witnesses,
+and a collapsed view must expand reversibly to real children.
 
-### libbonfyre (runtime contract)
+## Whole-machine flow
 
-The shared substrate. Defines the artifact contract, operator registry, SHA-256, FNV-1a, and common utilities that were previously duplicated across all 37 binaries.
+```text
+foreign / digital / physical / human worlds
+                         │
+              boundary + contract fabric
+                         │
+                         ▼
+ Identity · Occurrence · Capability · Authority · Commitment
+                         │
+                         ▼
+           WorkGraph + CapabilityClosure
+                         │
+      ┌──────────────────┼───────────────────┐
+      ▼                  ▼                   ▼
+ ProviderGraph      ContextCompiler      Money/Resource graphs
+      └──────────────────┼───────────────────┘
+                         ▼
+         EffectKernel + execution phenotype
+                         │
+       native · local model · agent · distributed · human
+                         │
+                         ▼
+       ReceiptEnvelope + WitnessDAG + EvidenceGraph
+                         │
+                         ▼
+        replay · shadow · simulation · backtesting
+                         │
+                         ▼
+              Aurekai learning and promotion
+```
 
-- Header: `lib/libbonfyre/include/bonfyre.h`
-- Static library: `lib/libbonfyre/libbonfyre.a`
-- Tests: 20 tests covering artifact parsing, key computation, SHA-256 vectors, operator registry invariants
+## Semantic owners
 
-### liblambda-tensors (family compression)
+### Constitution and time
 
-Structural compression for families of similar JSON records.
+Identity, Occurrence, Work/Effect, Capability, Authority, Evidence/Receipt,
+Commitment, TraceDivergence, ServiceLifecycle, ResidentResource, and the
+SemanticEvolutionGraph form the contract spine. Occurrence and FactDelta keep
+causal and bitemporal state explicit; current projections never erase history.
 
-- 5 encoding tiers: V1 (varint) → V2 (type-aware) → Interned → Huffman → Arithmetic
-- Family string tables: cross-member deduplication
-- Random access: O(1) per-field reads on compressed data
-- 13.5% of raw JSON size at N=10,000 with Huffman
+### Work and execution
 
-## Adding a New Binary
+WorkGraph owns missions, dependency edges, leases, cooling, commitments, and
+completion contracts. CapabilityClosure composes typed transforms, binds them
+to real capabilities, checks the proof frontier, selects a computational form,
+and only then admits execution. EffectKernel is the final idempotency and
+authority boundary.
 
-1. Create `cmd/BonfyreYourThing/src/main.c`
-2. Create `cmd/BonfyreYourThing/Makefile` (copy any existing one)
-3. Add an operator descriptor to `lib/libbonfyre/src/bf_operators.c`
-4. Declare whether you are `BF_OP_PURE` or `BF_OP_STATEFUL` — pick one
-5. Read/write `BfArtifact` manifests for all inputs and outputs
-6. Implement at minimum: `status` command, `--help`, `--version`
-7. `make` in the new directory, `make test` from root
-8. Open a PR
+`AgentSession` is one possible repeated realization circuit. Claude Code,
+Codex CLI, MCP, A2A, and other carriers can participate, but none replaces
+WorkGraph, CapabilityClosure, Authority, or named Bonfÿre Powers.
+
+### Evidence and learning
+
+Execution produces ReceiptEnvelopes, witnesses, trace divergence, and proof
+bundles. Replay, shadow worlds, simulations, gyms, walk-forward evaluation, and
+institutional backtesting compare candidate behavior with observed behavior.
+
+Aurekai consumes that evidence to discover recurring patterns and candidate
+factors. Promotion requires proof and validation. Learning may propose a new
+route or factor; it may not mutate semantic truth or cross an authority line.
+
+### Projection kernel
+
+Contract Projection Kernel v2 materializes only the outputs demanded by an
+ActiveClosure. Its projection families include:
+
+- native C, Zig, C++, Rust, Python, and TypeScript contracts
+- WIT/WASI/Wasm and component boundaries
+- Arrow, Feldera, Substrait, SQL, DuckDB, Daft, Lance, and local metadata
+- JSON Schema, OpenAPI, AsyncAPI, GraphQL, protobuf/gRPC, MCP, and A2A
+- ActivityPub, MoQ, external participation, and host surfaces
+- all nine Frappe product lineages
+- finance, evidence, evolution, migration, conformance, gyms, and packs
+
+The frozen V8.1 projection estate proves the complete target. Live repository
+absorption is still tracked per organ in the Atlas.
+
+## Product and capability surfaces
+
+### 91 public Powers
+
+The public Power surface contains 91 identities. Identity and callability are
+different facts. The live capability ladder is:
+
+```text
+defined → implemented → built → installed → resolvable → version_aligned
+        → health_probed → activated → workload_proven → quality_proven
+        → promoted
+```
+
+This prevents a planner from treating a name, a `--help` response, or an
+installed binary as proof that a real workload can complete.
+
+### Frappe ×9
+
+Frappe/Core, ERPNext, LMS, HRMS, CRM, Helpdesk, Insights, Wiki, and Drive are
+first-class product grammars over shared semantic objects. The products are
+installed and their DocTypes are extracted by `BonfyreFrappeCompiler`. The live
+Atlas marks them implemented while honestly recording remaining runtime
+write-back work.
+
+### Model Commons
+
+Model Commons retains separate identities for models, packs, tokenizers,
+quantization, inference, context/cache, retrieval, reasoning, placement,
+movement, evaluation, and speech/media. FPQ/FPQx, QwenFPQ, GGUF, BitNet,
+llama.cpp, ONNX Runtime, Burn, CubeCL, Metal, Wasm, Embed, Vec, SAE, GigaToken,
+KV/PreparedContext passports, and whisper.cpp are specialties, not aliases for
+one generic AI runtime.
+
+### Partner Commons
+
+The frozen Generation-10 estate contains 112 Partner Commons profiles and 82
+deep-promoted specialties. They connect through ForeignTwin, ProviderGraph,
+BoundaryCompiler, WorkGraph, SurfaceIR, EvidenceGraph, and institutional
+contracts. A partner provides a specialty or carrier; it does not acquire
+Bonfÿre authority over work, identity, evidence, finance, or source truth.
+
+## Operational and financial metabolism
+
+Operational metabolism makes external-tool readiness, provider price/credit,
+quota, rate limits, freshness, schedules, artifact packets, placement, and
+autonomous worker dependencies part of routing and admission. Resource pressure
+degrades concurrency and realization choices before it becomes an unexplained
+hard stop.
+
+Financial metabolism preserves the full state transition:
+
+```text
+usage/work occurrence → agreement + billing account → spend intent
+  → funding source + payment instrument → funding circuit
+  → authorization/capture/invoice/accrual/settlement/refund/credit
+  → FinancialEvent → CostAllocation → ERPNext accounting → evidence
+```
+
+List price, contracted price, estimate, accrual, invoice, authorization,
+capture, settlement, payment, accounting, allocation, provider credit, reward,
+and economic value are not interchangeable.
+
+## Live maturity snapshot
+
+The Atlas currently records:
+
+| Area | Live maturity |
+|---|---|
+| WorkGraph and Occurrence spine | implemented |
+| Capability lattice and composition | implemented |
+| CapabilityClosure and transport phenotype | measured |
+| Proof frontier, ForeignTwin, and result-receipt bundle | measured |
+| Nine Frappe product grammars | implemented, with write-back gaps recorded |
+| Model view | mixed implemented/measured/declared |
+| SurfaceIR renderer | architectural |
+| Full Aurekai pattern-to-promotion loop | architectural |
+
+This table is a convenience view. The Atlas entry and its witnesses are the
+source of truth.
+
+## Invariants
+
+- Reachability and a rendered affordance never auto-commit past the human or
+  authority line.
+- Candidate state is not current truth; current truth is not immutable history.
+- A generated plan is not an authorized effect.
+- A receipt is evidence of an occurrence, not universal proof of correctness.
+- A Frappe record or external profile does not replace its Bonfÿre semantic
+  owner.
+- A learned pattern is not a promoted primitive.
+- Optimization may change realization cost only inside a proven validity
+  envelope; otherwise the machine thaws to a proven ancestor.
+
+## Read and run next
+
+- [Architecture Atlas](../architecture/README.md)
+- [Quickstart](../QUICKSTART.md)
+- [Status and drift](bonfyre_status_and_drift.md)
+- [Pages runtime](pages-runtime.md)
+- [Client surfaces](client-surfaces.md)
+- [Ontology surfaces](ontology_surfaces.md)

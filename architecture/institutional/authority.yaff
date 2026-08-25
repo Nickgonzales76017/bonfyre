@@ -1,0 +1,121 @@
+atlas institutional
+# Honest architectural stubs: named, lineage-tracked, but not yet built. The
+# atlas surfaces them via `loss` as no_interaction_contract / unwitnessed rather
+# than pretending they exist. They are the next mining targets, not claims.
+
+architecture authority-graph
+  owns Authority
+  consumes Actor
+  consumes Policy
+  publishes Authority
+  source_path engine/core/src/authority.c
+  source_path engine/core/include/bf_authority.h
+  witness engine/core/tests/authority_test.c
+  invariant authority is never inferred: it holds only from a matching non-revoked edge inside its time window with a general-or-matching purpose (native + python has_authority parity on the shared authority_edges store)
+  canonical_name AuthorityGraph
+  family institutional
+  domain Institutional / Authority
+  layer institutional
+  semantic_question Who may do what, to what, for what purpose, under what evidence, until when?
+  purpose Typed authority edges (observe/reference/bind/activate/act/review/approve/commit/delegate/revoke/publish/spend/share/disclose) with scope, expiry, delegation, revocation, evidence.
+  maturity implemented
+  node_types AuthorityEdge
+  node_types Permission
+  edge_types delegates
+  edge_types revokes
+  state_types granted
+  state_types expired
+  state_types revoked
+  internal_calculus in-window non-revoked edge lookup
+  internal_calculus scope-constrained delegation
+  invariant delegation may compose only under constrained scope
+  invariant an edge outside its window or revoked grants nothing
+  forbidden_inference affiliation -> authority
+  forbidden_inference available -> authorized
+  forbidden_inference presence -> authority
+  native_format graf
+  source_path components/BonfyreControlPlane/authority.py
+  witness components/BonfyreControlPlane/tests/test_authority.py
+  source_lineage SEED-A recursive organ document
+
+architecture relationship-graph
+  canonical_name RelationshipGraph
+  family institutional
+  domain Institutional / Relationship
+  layer institutional
+  semantic_question Where along the discovery-to-adoption trajectory is this real relationship?
+  purpose Not a CRM pipeline: discovered -> observed -> contacted -> replied -> engaged -> assigned -> reviewed -> corrected -> collaborated -> committed -> adopted -> converted. Bernstein/AgentGuard/DeepEval/ACM each get an independent trajectory.
+  maturity implemented
+  node_types Relationship
+  node_types RelationshipTransition
+  edge_types advances_to
+  state_types discovered
+  state_types engaged
+  state_types collaborated
+  state_types adopted
+  state_types converted
+  internal_calculus ordered-stage monotone trajectory, per profile
+  invariant a stage is reached only when recorded, with evidence; no silent regress
+  invariant two relationships to one actor under different profiles are independent
+  forbidden_inference contact -> relationship
+  forbidden_inference relationship -> contract
+  forbidden_inference collaboration on one profile -> standing on another
+  native_format graf
+  source_path components/BonfyreControlPlane/relationship.py
+  witness components/BonfyreControlPlane/tests/test_relationship.py
+  source_lineage capitalgym crm relationships
+
+architecture shadow-institution
+  canonical_name ShadowInstitutionGraph
+  family institutional
+  domain Institutional / Epistemic
+  layer institutional
+  semantic_question What do we know about an institution before any relationship or authority is established?
+  purpose Epistemic knowledge of an institution pre-relationship: observed hierarchy, claim paths, public attachments, activation plan. NOT ForeignTwin (which models an externally-owned resource projection).
+  maturity implemented
+  node_types ShadowInstitutionNode
+  node_types ObservedHierarchy
+  node_types PublicAttachment
+  edge_types observed_from
+  edge_types converts_via
+  state_types observed
+  state_types shadow
+  state_types relationship_established
+  state_types active
+  internal_calculus conversion staged by real relationship progress
+  invariant conversion to active requires a relationship at >= collaborated, not a richer public picture
+  forbidden_inference observed hierarchy -> established authority
+  forbidden_inference public structure mapped -> relationship established
+  native_format graf
+  source_path components/BonfyreControlPlane/shadow_institution.py
+  witness components/BonfyreControlPlane/tests/test_shadow_institution.py
+  source_lineage SEED-A recursive organ document
+
+architecture institution-graph
+  canonical_name InstitutionGraph
+  family institutional
+  domain Institutional / Structure
+  layer institutional
+  semantic_question What is this institution's real structure -- units, roles, resources, authority domains, protocols?
+  purpose An established institution (units, departments, programs, memberships, role assignments, workcells, resources, facilities, authority domains, protocols). Distinct from ShadowInstitution (pre-relationship, epistemic).
+  maturity architectural
+  node_types Institution
+  node_types Unit
+  edge_types member_of
+  forbidden_inference observed structure -> established authority
+  source_lineage run6/run7 institutional estate
+  known_gap not built; ShadowInstitution models the pre-relationship view already
+
+architecture social-presence-graph
+  canonical_name SocialPresenceGraph
+  family institutional
+  domain Institutional / Presence
+  layer institutional
+  semantic_question Who is present, on what surface, with what disclosure state, availability, and attention?
+  purpose Presence sessions over surfaces/rooms with disclosure state, interaction rights, availability, attention. Habitat, chat, live work and events depend on it.
+  maturity architectural
+  node_types PresenceSession
+  edge_types present_on
+  forbidden_inference presence -> authority
+  source_lineage run6/run7 institutional estate
+  known_gap not built

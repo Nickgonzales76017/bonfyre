@@ -1,0 +1,93 @@
+{
+  "suite": "work",
+  "vectors": [
+    {
+      "name": "work_reaches_satisfied",
+      "derived_from": "run6: 242 rows, 242 open, 0 closed",
+      "steps": [
+        {
+          "op": "enqueue",
+          "target": "run5_recursive_external",
+          "subject": "s1"
+        },
+        {
+          "op": "claim",
+          "plane": "run5_recursive_external",
+          "at": "2026-08-13T01:00:00+00:00"
+        },
+        {
+          "op": "effected",
+          "at": "2026-08-13T02:00:00+00:00"
+        },
+        {
+          "op": "satisfy",
+          "receipt": "receipt:88",
+          "at": "2026-08-13T03:00:00+00:00"
+        }
+      ],
+      "expect": {
+        "state": "satisfied",
+        "open_count": 0
+      }
+    },
+    {
+      "name": "unroutable_work_is_refused",
+      "derived_from": "run6: an item targeting a plane called coordinator",
+      "steps": [
+        {
+          "op": "enqueue",
+          "target": "coordinator",
+          "subject": "native_catalog_absorption"
+        }
+      ],
+      "expect": {
+        "error": "UnknownPlane",
+        "open_count": 0
+      }
+    },
+    {
+      "name": "expired_lease_returns_the_work",
+      "derived_from": "run6: planes lost to pipe deadlock, rc137 and ENOSPC",
+      "steps": [
+        {
+          "op": "enqueue",
+          "target": "run5_recursive_external",
+          "subject": "s1"
+        },
+        {
+          "op": "claim",
+          "plane": "run5_recursive_external",
+          "at": "2026-08-13T01:00:00+00:00",
+          "lease_minutes": 30
+        },
+        {
+          "op": "reap",
+          "at": "2026-08-13T01:40:00+00:00"
+        }
+      ],
+      "expect": {
+        "state": "open",
+        "open_count": 1
+      }
+    },
+    {
+      "name": "illegal_transition_raises",
+      "derived_from": "run6: silent stalls instead of errors",
+      "steps": [
+        {
+          "op": "enqueue",
+          "target": "run5_recursive_external",
+          "subject": "s1"
+        },
+        {
+          "op": "satisfy",
+          "receipt": "receipt:1",
+          "at": "2026-08-13T01:00:00+00:00"
+        }
+      ],
+      "expect": {
+        "error": "IllegalTransition"
+      }
+    }
+  ]
+}

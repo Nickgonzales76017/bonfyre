@@ -359,6 +359,53 @@ int bf_workgraph_update_mission(BfWorkgraph *graph, const char *mission_id,
     return 0;
 }
 
+BfWorkgraphResult bf_workgraph_register_family(BfWorkgraph *graph, const char *family) {
+    if (graph == NULL || family == NULL || family[0] == '\0') {
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, NULL, NULL,
+                                   "invalid_argument", "family is empty");
+    }
+    sqlite3_exec(graph->db,
+                 "CREATE TABLE IF NOT EXISTS workgraph_routable_families(family TEXT PRIMARY KEY)",
+                 NULL, NULL, NULL);
+    sqlite3_stmt *statement = NULL;
+    if (sqlite3_prepare_v2(graph->db,
+            "INSERT OR IGNORE INTO workgraph_routable_families(family) VALUES(?)",
+            -1, &statement, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(statement, 1, family, -1, SQLITE_TRANSIENT);
+        sqlite3_step(statement);
+    }
+    sqlite3_finalize(statement);
+    return bf_workgraph_result(BF_WORKGRAPH_OK, NULL, NULL, NULL, NULL);
+}
+
+/* The routable-family registry is enforced only once populated: with no families
+ * registered the check is skipped (unchanged behavior). A missing table means the
+ * prepare fails and enforcement is off. */
+static int bf_workgraph_family_registry_enforced(BfWorkgraph *graph) {
+    sqlite3_stmt *statement = NULL;
+    int enforced = 0;
+    if (sqlite3_prepare_v2(graph->db,
+            "SELECT count(*) FROM workgraph_routable_families", -1, &statement, NULL) == SQLITE_OK) {
+        if (sqlite3_step(statement) == SQLITE_ROW) {
+            enforced = sqlite3_column_int(statement, 0) > 0;
+        }
+    }
+    sqlite3_finalize(statement);
+    return enforced;
+}
+
+static int bf_workgraph_family_is_registered(BfWorkgraph *graph, const char *family) {
+    sqlite3_stmt *statement = NULL;
+    int found = 0;
+    if (sqlite3_prepare_v2(graph->db,
+            "SELECT 1 FROM workgraph_routable_families WHERE family=?", -1, &statement, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(statement, 1, family, -1, SQLITE_TRANSIENT);
+        found = sqlite3_step(statement) == SQLITE_ROW;
+    }
+    sqlite3_finalize(statement);
+    return found;
+}
+
 BfWorkgraphResult bf_workgraph_add_node(BfWorkgraph *graph, const BfWorkgraphNodeSpec *spec) {
     BfWorkgraphResult result;
     sqlite3_stmt *statement = NULL;
@@ -368,6 +415,17 @@ BfWorkgraphResult bf_workgraph_add_node(BfWorkgraph *graph, const BfWorkgraphNod
         spec->operator_id == NULL) {
         return bf_workgraph_result(BF_WORKGRAPH_INVALID, NULL, NULL,
                                    "invalid_argument", "node specification is incomplete");
+    }
+    /* Reject an unroutable family, matching the Python reference: once the routable
+     * registry is populated, a family that is neither "default" nor registered
+     * (e.g. "coordinator") cannot be scheduled. */
+    if (spec->family != NULL && spec->family[0] != '\0' &&
+        strcmp(spec->family, "default") != 0 &&
+        bf_workgraph_family_registry_enforced(graph) &&
+        !bf_workgraph_family_is_registered(graph, spec->family)) {
+        return bf_workgraph_result(BF_WORKGRAPH_INVALID, spec->mission_id, spec->node_id,
+                                   "unroutable_family",
+                                   "node family is not a registered routable family");
     }
     result = bf_workgraph_result(BF_WORKGRAPH_OK, spec->mission_id, spec->node_id, NULL, NULL);
     if (bf_workgraph_begin(graph, &result) != 0) {

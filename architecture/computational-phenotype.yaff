@@ -1,0 +1,181 @@
+atlas computational-phenotype
+# The ComputationalPhenotype contract. Every substrate declares WHAT KIND of
+# computation it is -- what it consumes and produces, whether it is
+# deterministic / incremental / distributed / retraction-capable, its proof
+# class and its effect class -- so ProviderGraph and the closure machinery can
+# reason about Feldera and Tract through the same capability contract even though
+# they do completely different things. A phenotype is not another architecture;
+# it is how an execution phenotype presents itself to the selector.
+#
+# A phenotype block: `phenotype <id>` with `architecture <substrate-id>`, at
+# least one `produces`, and the boolean/enum fields below. atlas.py validates
+# that the architecture is registered and that produces is named; loss() flags
+# any substrate lacking a phenotype.
+
+phenotype yaff-phenotype
+  architecture yaff
+  produces SemanticContract
+  consumes TypedCut
+  deterministic yes
+  incremental no
+  distributed no
+  supports_retraction no
+  proof_class none
+  effect_class none
+  witness_schema ContractDigest
+
+phenotype automerge-phenotype
+  architecture automerge
+  produces CandidateState
+  deterministic no
+  incremental yes
+  distributed yes
+  supports_retraction yes
+  proof_class none
+  effect_class possible-only
+  witness_schema CRDTMergeReceipt
+
+phenotype feldera-phenotype
+  architecture feldera
+  produces DerivedRelation
+  produces Delta
+  consumes SourceRelation
+  deterministic yes
+  incremental yes
+  distributed yes
+  supports_retraction yes
+  proof_class none
+  effect_class none
+  witness_schema DerivedRelationDelta
+
+phenotype egglog-phenotype
+  architecture egglog
+  produces EquivalentForm
+  consumes PlanOrRewrite
+  deterministic yes
+  incremental no
+  distributed no
+  supports_retraction no
+  proof_class equivalence-search
+  effect_class none
+  witness_schema EquivalenceProofTrace
+
+phenotype hvm4-phenotype
+  architecture hvm4
+  produces ReducedStructure
+  consumes SymbolicStructure
+  deterministic yes
+  incremental no
+  distributed yes
+  supports_retraction no
+  proof_class bounded-reduction
+  effect_class none
+  witness_schema ReductionResult
+
+phenotype gigatoken-phenotype
+  architecture gigatoken
+  produces MissionContext
+  consumes SourceUniverse
+  deterministic no
+  incremental no
+  distributed yes
+  supports_retraction no
+  proof_class none
+  effect_class none
+  witness_schema ContextCutManifest
+
+phenotype lance-phenotype
+  architecture lance
+  produces VectorBody
+  consumes MultimodalArtifact
+  deterministic yes
+  incremental yes
+  distributed yes
+  supports_retraction yes
+  proof_class none
+  effect_class none
+  witness_schema DatasetVersion
+
+phenotype daft-phenotype
+  architecture daft
+  produces TransformedCorpus
+  consumes Corpus
+  deterministic yes
+  incremental no
+  distributed yes
+  supports_retraction no
+  proof_class none
+  effect_class none
+  witness_schema TransformManifest
+
+phenotype tract-phenotype
+  architecture tract
+  produces Inference
+  consumes PreparedModel
+  deterministic yes
+  incremental no
+  distributed no
+  supports_retraction no
+  proof_class none
+  effect_class compute-only
+  witness_schema InferenceReceipt
+
+phenotype burn-phenotype
+  architecture burn
+  produces TrainedModel
+  consumes TensorDataset
+  deterministic no
+  incremental yes
+  distributed yes
+  supports_retraction no
+  proof_class none
+  effect_class compute-only
+  witness_schema TrainingRun
+
+phenotype cubecl-phenotype
+  architecture cubecl
+  produces GeneratedKernel
+  consumes FusedOperation
+  deterministic yes
+  incremental no
+  distributed no
+  supports_retraction no
+  proof_class none
+  effect_class compute-only
+  witness_schema KernelBenchmark
+
+phenotype hydro-phenotype
+  architecture hydro
+  produces DistributedPlacement
+  consumes Dataflow
+  deterministic yes
+  incremental yes
+  distributed yes
+  supports_retraction yes
+  proof_class none
+  effect_class placement-only
+  witness_schema PlacementPlan
+
+phenotype restate-phenotype
+  architecture restate
+  produces ContinuationReceipt
+  consumes DurableInvocation
+  deterministic yes
+  incremental no
+  distributed yes
+  supports_retraction no
+  proof_class none
+  effect_class durable-external
+  witness_schema JournaledHandle
+
+phenotype verus-phenotype
+  architecture verus
+  produces FormalWitness
+  consumes StatedInvariant
+  deterministic yes
+  incremental no
+  distributed no
+  supports_retraction no
+  proof_class formal
+  effect_class none
+  witness_schema BoundedProof

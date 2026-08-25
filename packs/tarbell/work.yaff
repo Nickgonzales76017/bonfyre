@@ -1,0 +1,36 @@
+pack tarbell-work
+generation control-1
+source_plane run2_relationship_adoption
+item_kind tarbell_campaign
+source_ref campaign:tarbell
+note objective is a trusted technical evidence position, not a grant application
+
+work tarbell_research_source_relationship
+  target_plane run2_relationship_adoption
+  priority 9.0
+  reason Position Bonfyre as a technical evidence and source resource rather than a funding applicant; preserve reporter independence explicitly
+
+work tarbell_evidence_packet_001_celld
+  target_plane run5_recursive_external
+  priority 9.5
+  reason Journalist-inspectable packet on the celld work with artifacts, reproduction commands, measured deltas, and the places the autonomous system failed
+
+work tarbell_evidence_packet_002_run6
+  target_plane run5_recursive_external
+  priority 7.0
+  reason Run 6 autonomy packet covering 3h22m of operation, 97.6 percent cache ratio, zero realized revenue, provider and disk exhaustion, and public self-correction
+
+work tarbell_investigation_packet_economics
+  target_plane run3_four_economies_campaign
+  priority 6.5
+  reason Agentic AI economics packet contrasting 137.5M accounted input against 3.3M fresh input, local-model substitution, and real provider limits
+
+work tarbell_journalist_workbench
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Narrow investigative research workbench over the existing substrate with source claim and timeline graphs, provenance retained, contradictions surfaced
+
+work tarbell_grant_pitches_prepared
+  target_plane run1_capital_conversion
+  priority 5.0
+  reason Prepare up to three journalistic pitches in the 1k to 20k band before the next round opens rather than scrambling when it does

@@ -1,0 +1,20 @@
+pack utd-vdc-work
+generation control-1
+source_plane run3_four_economies_campaign
+item_kind utd_vdc
+source_ref campaign:utd-vdc
+
+work vdc_finish_directory
+  target_plane run3_four_economies_campaign
+  priority 8.0
+  reason The promotion offer is conditional on the directory being complete. Finishing it is the thing that converts an offer into distribution
+
+work vdc_resolve_contact_identities
+  target_plane run2_relationship_adoption
+  priority 7.0
+  reason Only first names are recorded. Resolve surnames and exact titles from the VDC site or signature block before any outbound use
+
+work vdc_scope_physical_requirements
+  target_plane run3_four_economies_campaign
+  priority 5.0
+  reason Determine whether workspace or lab access is actually needed and at what cost, before treating availability as an opportunity worth pursuing

@@ -1,0 +1,154 @@
+pack habitat-human-factors-actors
+generation control-1
+provenance research-brief:2026-08-14 (citations supplied, none independently checked by this process)
+authority asserted
+note Every person here is asserted. Names, titles, affiliations and research focus come from a brief with links that were not fetched or read. Confirm each from the institution's own directory before any outbound use. Getting an academic's title or department wrong in a cold email is disqualifying.
+
+actor org:uta
+  node_kind organization
+  display_name University of Texas at Arlington
+  detail Prior personal relationship: former EE student, Pulsed Power and Energy Laboratory. That history is the bridge; it is not a claim of research overlap.
+
+actor org:uta-ee
+  node_kind organization
+  display_name UTA Electrical Engineering
+  org_id org:uta
+
+actor org:uta-cse
+  node_kind organization
+  display_name UTA Computer Science and Engineering
+  org_id org:uta
+
+actor org:uta-psychology
+  node_kind organization
+  display_name UTA Department of Psychology
+  org_id org:uta
+
+actor person:david-wetz
+  node_kind person
+  display_name David Wetz
+  role Professor and Associate Chair, EE; director, Pulsed Power and Energy Laboratory
+  org_id org:uta-ee
+  detail Existing relationship through PPEL. Value is institutional position and introductions, not subject-matter overlap. Do not approach as though social cognition is his field.
+
+actor person:saibun-tjuatja
+  node_kind person
+  display_name Saibun Tjuatja
+  role Associate Professor, EE
+  org_id org:uta-ee
+  detail Second existing EE relationship. Same framing as Wetz.
+
+actor person:mel-sellick
+  node_kind person
+  display_name Mel Sellick
+  role Chair, IEEE P7023
+  detail Most precisely aligned person found. UTA hosted her Feb 2026 on developing psychological and relational capability in the age of AI; P7023 concerns organizational readiness for human-AI identity integration. Affiliation beyond the standards role is unrecorded because the brief did not state one.
+
+actor person:cesar-torres
+  node_kind person
+  display_name Cesar Torres
+  role Faculty, HCI
+  org_id org:uta-cse
+  detail HCI, physical computing, new media, digital fabrication.
+
+actor person:shawn-gieser
+  node_kind person
+  display_name Shawn Gieser
+  role Faculty, HCI
+  org_id org:uta-cse
+  detail HCI, VR/XR, human-robot interaction, simulation and UI design. Closest UTA match for spatial-interaction criticism.
+
+actor person:fillia-makedon
+  node_kind person
+  display_name Fillia Makedon
+  role Faculty, human-centered computing
+  org_id org:uta-cse
+  detail HCI and human-robot interaction; NSF-funded XR and remote-work/telerobotic work.
+
+actor person:jared-kenworthy
+  node_kind person
+  display_name Jared Kenworthy
+  role Faculty, Psychology
+  org_id org:uta-psychology
+
+actor person:logan-watts
+  node_kind person
+  display_name Logan Watts
+  role Faculty, Psychology
+  org_id org:uta-psychology
+
+actor org:chicago-booth
+  node_kind organization
+  display_name University of Chicago Booth School of Business
+
+actor person:nicholas-epley
+  node_kind person
+  display_name Nicholas Epley
+  role Director, Roman Family Center for Decision Research
+  org_id org:chicago-booth
+  detail Social cognition, connection, perspective-taking, undersociality. The question for him is whether a computational workplace can increase genuine human-human connection rather than making solitary work feel socially populated.
+
+actor org:uc-irvine
+  node_kind organization
+  display_name UC Irvine, Bren School of ICS
+
+actor person:gloria-mark
+  node_kind person
+  display_name Gloria Mark
+  role Faculty, Informatics
+  org_id org:uc-irvine
+  detail Attention, multitasking, mood and stress in real workplaces. Directly attacks Habitat's largest risk: becoming a beautiful interruption machine.
+
+actor org:stanford
+  node_kind organization
+  display_name Stanford University
+
+actor person:jeff-hancock
+  node_kind person
+  display_name Jeff Hancock
+  role Faculty; AI-mediated communication
+  org_id org:stanford
+  detail Effects of AI and social technology on social cognition, well-being and trust. Relevant because human-to-human, human-to-AI, and human-through-AI-to-human are not psychologically equivalent.
+
+actor org:berkeley-haas
+  node_kind organization
+  display_name UC Berkeley Haas School of Business
+
+actor person:juliana-schroeder
+  node_kind person
+  display_name Juliana Schroeder
+  role Faculty
+  org_id org:berkeley-haas
+  detail Social inference, mind perception, communication modality. Has collaborated with Epley on undersociality.
+
+actor org:kellogg
+  node_kind organization
+  display_name Kellogg School of Management, Northwestern
+
+actor person:adam-waytz
+  node_kind person
+  display_name Adam Waytz
+  role Faculty
+  org_id org:kellogg
+  detail Anthropomorphism and mind attribution. The direct attack on Habitat spatializing agents into more apparent mind, agency and moral standing than the system warrants.
+
+edge org:uta employs person:david-wetz
+edge org:uta employs person:saibun-tjuatja
+edge org:uta employs person:cesar-torres
+edge org:uta employs person:shawn-gieser
+edge org:uta employs person:fillia-makedon
+edge org:uta employs person:jared-kenworthy
+edge org:uta employs person:logan-watts
+edge org:chicago-booth employs person:nicholas-epley
+edge org:uc-irvine employs person:gloria-mark
+edge org:stanford employs person:jeff-hancock
+edge org:berkeley-haas employs person:juliana-schroeder
+edge org:kellogg employs person:adam-waytz
+
+edge person:david-wetz authority_over org:uta-ee
+  detail Associate Chair; positioned to know who is worth talking to and to make introductions
+edge person:mel-sellick authority_over person:mel-sellick
+  detail chairs IEEE P7023, the standards surface closest to Habitat's evaluation questions
+
+edge person:juliana-schroeder contact_of person:nicholas-epley
+  detail co-authors on undersociality; a warm path between two of the five external targets

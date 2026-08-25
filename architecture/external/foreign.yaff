@@ -1,0 +1,138 @@
+atlas external
+
+architecture foreign-twin
+  canonical_name ForeignTwinGraph
+  family external
+  domain External
+  layer external
+  semantic_question What is the current cached projection of an externally-owned resource, and what rights do we hold over it?
+  purpose Remote stays remote. A content-addressed cached projection with rights observe/reference/bind/act. Materialize ingests the projection into the fabric.
+  maturity measured
+  node_types ForeignTwin
+  node_types Projection
+  edge_types projects
+  edge_types materializes_to
+  state_types observe
+  state_types reference
+  state_types bind
+  state_types act
+  invariant a cached projection is not remote truth
+  invariant a retained observation body is parsed only while it still hashes to its receipt
+  invariant a projected candidate carries the receipt digest of the body it was read from
+  invariant a source excluded by robots or an absent observe right is receipted without fetching its source URL
+  forbidden_inference foreign twin cache -> remote authority
+  forbidden_inference observe right -> bind or act right
+  forbidden_inference retained body -> verified availability
+  forbidden_inference weak public supply signal -> exact availability fact
+  forbidden_inference policy exclusion -> absence of external inventory
+  computational_form durable
+  native_format graf
+  command BonfyreProject
+  source_path components/BonfyreControlPlane/foreign.py
+  source_path components/BonfyreControlPlane/fabric_publish.py
+  source_path components/BonfyreProject/src/main.c
+  source_path tools/housing_signal_candidates.py
+  witness components/BonfyreControlPlane/tests/test_foreign.py
+  witness components/BonfyreControlPlane/tests/test_fabric_publish.py
+  witness components/BonfyreProject/tests/smoke.sh
+  witness tests/test_housing_signal_candidates.py
+  source_lineage external boundary architecture
+  known_gap foreign observe now preflights a declared public observe right and robots.txt, preserving policy_excluded separately from a target boundary_response, and retains an allowed body under --body so a downstream reader can bind to exact receipted bytes. The first lawful projection (public rental/sublet/room postings -> AvailabilityCandidates -> corroborated posting observations) is witnessed; residue is that only the craigslist static shape has a parser, so retained bodies from other public surfaces stay unparsed, and a corroborated posting is still not verified availability because verification would need a forbidden contact effect.
+
+architecture service-lifecycle
+  canonical_name ServiceLifecycleGraph
+  family external
+  domain External / Service
+  layer external/service
+  semantic_question Where is a provisionable service in its lifecycle, and what may we do with it now?
+  purpose OSB-shaped catalog -> provision -> bind -> execute -> release over the real BonfyreAPI. Shared lifecycle mechanics do not erase concrete protocols (OSB, GPU lease, human assignment).
+  maturity implemented
+  node_types ServiceProfile
+  node_types ServiceInstance
+  edge_types provisions
+  edge_types binds
+  state_types cataloged
+  state_types provisioned
+  state_types bound
+  state_types released
+  invariant bind requires the bind right; release is idempotent
+  forbidden_inference service active -> bind authority
+  computational_form durable
+  command BonfyreAPI
+  source_path components/BonfyreControlPlane/service_lifecycle.py
+  witness components/BonfyreControlPlane/tests/test_service_lifecycle.py
+  source_lineage OSB / ServiceLifecycle architecture
+
+architecture partner-commons
+  canonical_name PartnerCommons
+  family external
+  domain External / Institutions
+  layer external/relationship
+  semantic_question What narrow specialty and observed relationship state does a partner contribute without taking Bonfyre semantic ownership?
+  purpose Typed partner profiles plus append-only source-backed observations. Each profile states its boundary contribution and what it does not own; observations project to rights-limited ForeignTwins and EvidenceGraph claims.
+  maturity implemented
+  node_types PartnerProfile
+  node_types PartnerObservation
+  edge_types contributes_to
+  edge_types observed_as
+  invariant every profile states explicit semantic non-ownership
+  invariant every observation carries a source reference and observation time
+  forbidden_inference a maintainer interaction -> authority to mutate the partner institution
+  forbidden_inference a partner specialty -> ownership of the connected Bonfyre organ
+  computational_form durable
+  native_format crux
+  source_path components/BonfyreControlPlane/partner_commons.py
+  witness components/BonfyreControlPlane/tests/test_partner_commons.py
+  source_lineage Generation-10 V8.1 Partner Commons plus Run 6/7 relationship state
+  known_gap live refresh remains a bounded external observation effect; the stored latest row is never remote truth
+
+architecture result-receipt-bundle
+  canonical_name ResultReceiptBundleGraph
+  family external
+  domain External / Attestation
+  layer external/attestation
+  semantic_question Does this worker submission's portable bundle verify offline, byte for byte?
+  purpose The portable unit of trust: patch, gate results, task ref, sandbox selection, worker key, DSSE-signed attestation, chain-linked. Offline field-level verify. Contributed upstream (bernstein #3870).
+  maturity measured
+  node_types ResultBundle
+  node_types GateResult
+  node_types ChainLink
+  edge_types attests
+  edge_types chains_to
+  invariant tampering any byte of the patch or a gate log fails verification with a field-level error
+  invariant verification is offline and side-effect free
+  forbidden_inference embedded worker key -> pinned provenance (requires an out-of-band roster)
+  native_format crux
+  source_path external:sipyourdrink-ltd/bernstein/src/bernstein/core/security/result_receipt_bundle.py
+  witness external:bernstein tests/unit/security/test_result_receipt_bundle.py (9 tests)
+  source_lineage bernstein volunteer umbrella #3863 issue #3870
+
+architecture blogger-publication-surface
+  canonical_name BloggerPublicationSurface
+  family external
+  domain External / Publication
+  layer external/surface
+  semantic_question Which source-backed Bonfyre artifact was published to which Blogger URL, under what authority, and with which safe API receipt?
+  purpose Blogger is a bounded External CMS realization: proof-bundled HTML crosses an authorized effect boundary, while the returned post identity, status, timestamps, and URL become occurrence and evidence records.
+  maturity implemented
+  node_types PublicationArtifact
+  node_types BloggerPost
+  node_types BloggerReceipt
+  edge_types publishes_to
+  edge_types acknowledges
+  state_types staged
+  state_types live
+  invariant OAuth credentials and tokens remain outside the repository and outside durable receipts
+  invariant a live claim requires a Blogger API receipt and public URL
+  forbidden_inference a staged article or callable adapter -> a published post
+  forbidden_inference a Blogger connection -> authority to edit or delete remote content
+  computational_form external_effect
+  native_format html
+  native_format json
+  external_binding blogger-v3
+  source_path bin/blogger_publish.py
+  source_path components/BonfyreControlPlane/blogger_receipts.py
+  witness components/BonfyreControlPlane/tests/test_blogger_publish.py
+  witness components/BonfyreControlPlane/tests/test_blogger_receipts.py
+  source_lineage Generation-10 V8.1 External CMS / business systems profile
+  known_gap live maturity remains below measured until OAuth consent yields retained Blogger response receipts and URLs

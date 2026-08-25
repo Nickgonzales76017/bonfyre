@@ -1,0 +1,41 @@
+pack fpq-proof-frontier-work
+generation control-1
+source_plane run4_institutional_fabric
+item_kind proof_frontier
+source_ref campaign:anti-amnesia
+note Built the RegressionFence rather than touching FPQ, because the archive's central lesson is that "fix FPQ" is a prohibited vague mission. The material contribution is the mechanism that governs FPQ, not FPQ. All FPQ-specific claims here are recorded at MEASURED at most, from the archive, not re-run by this process.
+
+work proof_frontier_wire_into_fence
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason proof_frontier.py works and is seeded for Qwen-0.5B FPQ: three proven layers, open at transformer_math, three known non-causes. Next is making authorize_mutation a real gate a model-editing mission must pass, not a library call. It belongs in the same admission position as resource and provider checks
+
+work fpq_verify_archive_claims_before_promoting
+  target_plane run5_recursive_external
+  priority 7.5
+  reason Every FPQ frontier entry is asserted from the archive at the measured plane. The FP16-passthrough and Q/K/V-bypass experiments should be re-run and turned into golden fixtures before any invariant moves to the proven plane. Until then a reheat condition -- reconstruction fixture fails -- has nothing to fire against
+
+work fpq_split_sli_identity
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason SLI is two concepts under one name: Structured Layer Inference (the public BonfyreSLI) and Spectral Lattice Inference (FPQ direct execution). Do not rename the command; disambiguate the profiles beneath it -- sli.structured-layer/v1 and fpq.spectral-lattice-execution/v1 -- so a receipt says which ran
+
+work fpq_representation_is_not_identity
+  target_plane run4_institutional_fabric
+  priority 7.0
+  reason Model identity, representation profile, prepared SLI state, execution phenotype and runtime capability have historically leaked into each other, which is why changing one silently invalidated another. A ModelPassport that binds them, and separate invalidation domains, is the structural fix. FPQ is representation, never identity
+
+work representation_cut_generalization
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason The archive's deepest claim is that FPQ, Context Cut and Habitat are three scales of one operation: source state to basis plus residual plus witness, executed as a phenotype, measured against a purpose-relative divergence. Worth testing whether the ProofFrontier machinery already generalizes -- the Bernstein test says the fence does; the basis-residual-witness reduction itself is the larger open question
+
+work proof_frontier_over_agentguard_218
+  target_plane run2_relationship_adoption
+  priority 6.5
+  reason A live test of the fence outside FPQ: agentguard 218's portable-paths regression is a proven-below-open situation. The inverse resolver is the open layer; the structural validation from 229 is proven and off-limits. The fence would encode exactly the boundary the maintainer drew by hand
+
+work knownnoncause_for_every_diagnosis
+  target_plane run5_recursive_external
+  priority 5.5
+  reason This session eliminated several hypotheses by experiment -- the probe pipe deadlock, the acronym manifest, the vacuous 214 regression, the Proton client-vs-account block. Each is a KnownNonCause worth recording, so the next worker subtracts them rather than rediscovering them

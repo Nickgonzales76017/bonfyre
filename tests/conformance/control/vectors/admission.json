@@ -1,0 +1,91 @@
+{
+  "suite": "admission",
+  "vectors": [
+    {
+      "name": "celld_clone_refused_without_headroom",
+      "derived_from": "run6: ENOSPC while building the 316-crate celld workspace",
+      "policy": {
+        "floor": 10,
+        "quota": 20,
+        "max_grant": 40
+      },
+      "free_gib": 18,
+      "grants": [],
+      "request": {
+        "plane": "run5",
+        "gib": 15
+      },
+      "expect": {
+        "verdict": "reject"
+      }
+    },
+    {
+      "name": "concurrent_planes_cannot_double_spend",
+      "derived_from": "run6: five planes each observed the same free bytes",
+      "policy": {
+        "floor": 10,
+        "quota": 20,
+        "max_grant": 40
+      },
+      "free_gib": 40,
+      "grants": [
+        {
+          "plane": "run1",
+          "gib": 12
+        },
+        {
+          "plane": "run2",
+          "gib": 12
+        }
+      ],
+      "request": {
+        "plane": "run3",
+        "gib": 12
+      },
+      "expect": {
+        "verdict": "defer"
+      }
+    },
+    {
+      "name": "defer_when_waiting_could_help",
+      "derived_from": "run6: no distinction between not-now and never",
+      "policy": {
+        "floor": 10,
+        "quota": 20,
+        "max_grant": 40
+      },
+      "free_gib": 40,
+      "grants": [
+        {
+          "plane": "run1",
+          "gib": 20
+        }
+      ],
+      "request": {
+        "plane": "run2",
+        "gib": 15
+      },
+      "expect": {
+        "verdict": "defer"
+      }
+    },
+    {
+      "name": "admit_with_real_headroom",
+      "derived_from": "baseline",
+      "policy": {
+        "floor": 10,
+        "quota": 20,
+        "max_grant": 40
+      },
+      "free_gib": 40,
+      "grants": [],
+      "request": {
+        "plane": "run5",
+        "gib": 15
+      },
+      "expect": {
+        "verdict": "admit"
+      }
+    }
+  ]
+}
