@@ -1,0 +1,186 @@
+{
+  "file_count": 35,
+  "files": [
+    {
+      "bytes": 35664,
+      "path": "components/BonfyreAuth/bonfyre-auth",
+      "sha256": "32331783e71f768b2e847ab0e694765b687b22e1ef6e1e4afc0107553ab32dd7"
+    },
+    {
+      "bytes": 34976,
+      "path": "components/BonfyreBrief/bonfyre-brief",
+      "sha256": "9a7ffea7de4962f3c66c76df91232a944bda860bf9f401394a4c85a26c62e822"
+    },
+    {
+      "bytes": 34344,
+      "path": "components/BonfyreCLI/bonfyre",
+      "sha256": "1ad5b2bff1af0a9dd36bb19adfcd395f6d24124848d66a4cab4d57f883cb5925"
+    },
+    {
+      "bytes": 34448,
+      "path": "components/BonfyreCompress/bonfyre-compress",
+      "sha256": "0945de2cad8941d5d0e14ed9d86187b1e59e75e6cf57edecec2f876bc50330fe"
+    },
+    {
+      "bytes": 34528,
+      "path": "components/BonfyreDistribute/bonfyre-distribute",
+      "sha256": "1ddde50ae3e6ec2942009d5e8b975ff5c4e29c61c56ec0b17f42ee294f8e3a1e"
+    },
+    {
+      "bytes": 34848,
+      "path": "components/BonfyreEmbed/bonfyre-embed",
+      "sha256": "55cb013f7228e9973cd79c90933666239a46a4b59e8bcd85e1dccd8e53052ae3"
+    },
+    {
+      "bytes": 34672,
+      "path": "components/BonfyreEmit/bonfyre-emit",
+      "sha256": "59f7f0dba37144e25c76a25b5ddd63721c2260684fbbc4bdc1a963a3d7718f5e"
+    },
+    {
+      "bytes": 52448,
+      "path": "components/BonfyreFinance/bonfyre-finance",
+      "sha256": "0efd9c140e52db042cd23a4d5cf616d0e8fef7aede03eccc444ae1291d99a2b1"
+    },
+    {
+      "bytes": 34384,
+      "path": "components/BonfyreGate/bonfyre-gate",
+      "sha256": "be66c3b23dd50c474bd5b6760cbea83bb24da9fe6c36479f6ab554eb81a76cb6"
+    },
+    {
+      "bytes": 52528,
+      "path": "components/BonfyreGraph/bonfyre-graph",
+      "sha256": "b0186f6f0d2c2a1b7c1da49b57fcb1caa16764869e21d6a3f15f4d25ebdda6c1"
+    },
+    {
+      "bytes": 35072,
+      "path": "components/BonfyreHash/bonfyre-hash",
+      "sha256": "0c47f6b789b456d89fa0a260ba6f4373de1763a212b381376e26e94e68b1b189"
+    },
+    {
+      "bytes": 34672,
+      "path": "components/BonfyreHash/bonfyre-hash-old",
+      "sha256": "aa0cf6a6db3710d2f0bae7c0fc1d4e551a520be39263780ff99b4eedb18c0e51"
+    },
+    {
+      "bytes": 70112,
+      "path": "components/BonfyreIndex/bonfyre-index",
+      "sha256": "c4d454a1ea9cd9805a47f96ba38fbc1bd8dc204014eb0a91f7113fd8dc37dbeb"
+    },
+    {
+      "bytes": 34784,
+      "path": "components/BonfyreIngest/bonfyre-ingest",
+      "sha256": "aefbabdff1f8714b370ccd536da2fb05d91bd964c9371efe7d8e6c75f2c32b1c"
+    },
+    {
+      "bytes": 34720,
+      "path": "components/BonfyreLedger/bonfyre-ledger",
+      "sha256": "0b189ab06c24484e5cd8d08969c81d3cc06799e1d5e0d793b5e5677fd9d99940"
+    },
+    {
+      "bytes": 34880,
+      "path": "components/BonfyreMFADict/bonfyre-mfa-dict",
+      "sha256": "c81ab8ee9033fc90bea4ea5fda9fcca7a469ef823cd5a0b894f0823ee0b9d84c"
+    },
+    {
+      "bytes": 34080,
+      "path": "components/BonfyreMediaPrep/bonfyre-media-prep",
+      "sha256": "429230f16e882c7a6750d74c52812768b6705019c95c74af55e529ab3c78ca00"
+    },
+    {
+      "bytes": 35120,
+      "path": "components/BonfyreMeter/bonfyre-meter",
+      "sha256": "fd35db2af82c98507c221835099476fa7b62412222db54c6d033d40a3110125f"
+    },
+    {
+      "bytes": 35248,
+      "path": "components/BonfyreNarrate/bonfyre-narrate",
+      "sha256": "528a4a1507f64935a96d6b94fb75282f14d91535c819a504d191e093457039a8"
+    },
+    {
+      "bytes": 34768,
+      "path": "components/BonfyreOffer/bonfyre-offer",
+      "sha256": "de443d8ec92f0793846bd7ec19fd526b32636deaee32079a8e15c31c30cefc86"
+    },
+    {
+      "bytes": 35456,
+      "path": "components/BonfyreOutreach/bonfyre-outreach",
+      "sha256": "8257389e7bf00d77ad43e6f7d6e39356b9a085a899c87f75d1a51df59a1e10a9"
+    },
+    {
+      "bytes": 34144,
+      "path": "components/BonfyrePack/bonfyre-pack",
+      "sha256": "897f1286c1527537ef835d76be504bbbf1bac517e7171645a09e985817d4c9ed"
+    },
+    {
+      "bytes": 35312,
+      "path": "components/BonfyreParagraph/bonfyre-paragraph",
+      "sha256": "33dbb21498f68c83bf4c812c58c868aad019d0be88cd357643f66f84a4e90f82"
+    },
+    {
+      "bytes": 35384,
+      "path": "components/BonfyrePay/bonfyre-pay",
+      "sha256": "80e927a9abb75342aeefcba0ffc371d4daa06baeb19dc88d8aac579291179a87"
+    },
+    {
+      "bytes": 52944,
+      "path": "components/BonfyrePipeline/bonfyre-pipeline",
+      "sha256": "8aca0ca18e98eb6c083695e27cbbd2d802db6c6487e6b0e2ad14ea9888937c53"
+    },
+    {
+      "bytes": 35840,
+      "path": "components/BonfyrePipeline/bonfyre-pipeline-old",
+      "sha256": "3f5cca99913dce828988209d784cf926a920a704d946d4d90ba593df00f44303"
+    },
+    {
+      "bytes": 34848,
+      "path": "components/BonfyreProof/bonfyre-proof",
+      "sha256": "66ad460a4be900a2d8f139760649d957a9f136beb1a5e341720d67495c3bff2c"
+    },
+    {
+      "bytes": 34592,
+      "path": "components/BonfyreQueue/bonfyre-queue",
+      "sha256": "732c8c5ec1b6aea2d202708c91f160bcc1020b19858ee18d77181e35d63e71a1"
+    },
+    {
+      "bytes": 34800,
+      "path": "components/BonfyreRender/bonfyre-render",
+      "sha256": "4c92e5c29b64f457f312ffc461f9880f5cdb3caff3698c25937a060fe0785d45"
+    },
+    {
+      "bytes": 34640,
+      "path": "components/BonfyreRuntime/bonfyre-runtime",
+      "sha256": "adee02b1308a28d4045f14ba8385e0ff918c6cf25a69cb8733d4f891ef6a4a87"
+    },
+    {
+      "bytes": 34608,
+      "path": "components/BonfyreStitch/bonfyre-stitch",
+      "sha256": "a64a057241f6d10c517cd7121665ff170b00f11694a45bac4deae5567f48396e"
+    },
+    {
+      "bytes": 34528,
+      "path": "components/BonfyreSync/bonfyre-sync",
+      "sha256": "dec414722205c1e81486286616f37aafcd96597b9009624cac1c377a1adafc92"
+    },
+    {
+      "bytes": 35016,
+      "path": "components/BonfyreTranscriptClean/bonfyre-transcript-clean",
+      "sha256": "e07134ddc43b210088ec6c0ff715ff51cb752a712b35f1c634bee73d08e3499e"
+    },
+    {
+      "bytes": 34888,
+      "path": "components/BonfyreTranscriptFamily/bonfyre-transcript-family",
+      "sha256": "fc18115df13a0cf8883092bf6a41064cb24f874fd0a76356e0bc6fc1b52e7faa"
+    },
+    {
+      "bytes": 34952,
+      "path": "components/BonfyreWeaviateIndex/bonfyre-weaviate-index",
+      "sha256": "96a19d593ed6b31ee6a5d2e05af7ad13460495bcb7a26aae67815702f297677b"
+    }
+  ],
+  "kind": "transitional-root-build-products",
+  "reason": "committed executable build products of superseded command trees; regenerable from the current cmd/ owner and recoverable from git history",
+  "root_digest_sha256": "b5af1fb4c01679012712a91fee5d605616ef33ebb8da31d2b1e61e24bc60d677",
+  "schema": "bonfyre.deletion-proof.v1",
+  "total_bytes": 1308248,
+  "transitional_root": "components"
+}

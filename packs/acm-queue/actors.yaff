@@ -1,0 +1,28 @@
+pack acm-queue-actors
+generation control-1
+provenance inbound-email:2026-08-14 (editor reply requesting an outline)
+authority asserted
+note Editorial institution. Outline requested, NOT accepted -- the editor said it goes to the editorial board for a fit decision. Do not record acceptance.
+
+actor org:acm-queue
+  node_kind organization
+  display_name ACM Queue
+  detail Practitioner-facing ACM publication. Editorial board decides fit; an outline request is interest, not acceptance.
+
+actor person:matt-slaybaugh
+  node_kind person
+  display_name Matt Slaybaugh
+  role Editor, ACM Queue
+  org_id org:acm-queue
+  detail Named in the inbound reply. Requested a detailed outline. Confirm spelling and role before any outbound use.
+
+actor content:identity-continuity-article
+  node_kind publication
+  display_name Identity continuity in content-addressed software evidence
+  detail Proposed practitioner article. Subject overlaps Bonfyre's own provenance work, so it can be built from the evidence estate rather than written as thought leadership.
+
+edge org:acm-queue employs person:matt-slaybaugh
+edge person:matt-slaybaugh authority_over org:acm-queue
+  detail editorial fit decision routed through the board, not held personally
+edge content:identity-continuity-article publishes_in org:acm-queue
+  detail proposed only; outline pending board review

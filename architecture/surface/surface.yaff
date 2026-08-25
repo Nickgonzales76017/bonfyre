@@ -1,0 +1,49 @@
+atlas surface
+# The surface compiler and the learning organ above it. SurfaceIR consumes every
+# app grammar + addressing + authority + evidence and compiles what an actor sees
+# and can do; it renders affordances, it never authorizes. Its action traces feed
+# Aurekai, which proposes better presentation/adjacency to the AddressPlane --
+# closing the learning loop (riff SS10) without ever mutating semantic truth.
+
+architecture surface-ir
+  canonical_name SurfaceIR
+  family surface
+  domain Surface / Compilation
+  layer surface
+  semantic_question What should this actor see and be able to do, compiled from all relevant state?
+  purpose The surface compiler. Consumes the nine app grammars plus addressing, authority and evidence, and emits a rendered surface and an action trace. It renders affordances; the exact Authority check still runs at effect time.
+  maturity architectural
+  owns SurfaceIR
+  consumes DocType
+  consumes SurfaceGrammar
+  consumes DealState
+  consumes TicketState
+  consumes DerivedView
+  consumes KnowledgeClaim
+  consumes ShareGrant
+  consumes RepresentationHistory
+  consumes OpportunityEligibility
+  consumes FortificationPlan
+  consumes RouteAdvertisement
+  consumes Authority
+  publishes ActionTrace
+  publishes SurfaceDelta
+  forbidden_inference a surface renders an action -> the action is authorized (Authority gates at effect time; the surface only shows affordances)
+  forbidden_inference a fact is off-surface -> the fact does not exist (a surface is a projection, not the fabric)
+  source_lineage frontend fold -- surfaces as projections over shared semantic objects
+  known_gap the surface compiler is architectural; it names the grammars it fuses, not yet a running renderer
+
+architecture aurekai
+  canonical_name Aurekai
+  family surface
+  domain Surface / Learning
+  layer learning
+  semantic_question Which presentation and adjacency motifs recur, and what better candidates should be proposed?
+  purpose Learns from action traces and proposes surface candidates and SID-locality to the AddressPlane. It proposes; it never changes deterministic semantic truth.
+  maturity architectural
+  consumes ActionTrace
+  publishes SurfaceCandidate
+  forbidden_inference a learned pattern -> changed semantic truth (Aurekai proposes; the fabric stays authoritative)
+  forbidden_inference a frequent motif -> a correct or authorized one (frequency is not correctness; the fence and Authority still run)
+  source_lineage frontend fold -- variation/pattern/promotion above the deterministic fabric
+  known_gap the learning organ is architectural; the trace->candidate loop is specified, not yet trained

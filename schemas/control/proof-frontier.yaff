@@ -1,0 +1,56 @@
+schema ProofFrontier
+generation control-1
+authority native-kernel
+absorbs 10-Code/BonfyreControlPlane/proof_frontier.py
+note The anti-amnesia spine. WorkGraph says what work remains; this says what knowledge is settled, and therefore what work is permitted. FPQ is the motivating case: a garbage generation at the top layer kept authorizing an encoder rewrite at the bottom.
+
+truth_plane declared implemented measured proven
+  note A comment claiming a property is declared. Only a witness makes it proven. A measured cosine is not a proof of behavioural equivalence, and a docstring claiming category isomorphism is not proof of one.
+
+concept SolvedInvariant
+  field invariant_id text identity
+  field subject_resource text required
+  field subject_profile text
+  field subject_hashes list
+  field layer text required
+  field statement text required
+  field truth_plane enum declared implemented measured proven
+  field status enum cooled challenged invalidated
+  field reheat_conditions list required-when-cooled
+  invariant cooled-needs-a-way-back
+    statement a cooled invariant must name what reheats it, or it is settled forever against reality
+  invariant symptom-does-not-challenge
+    statement only a signal matching a named reheat condition may move a cooled invariant to challenged
+
+concept KnownNonCause
+  field noncause_id text identity
+  field hypothesis text required
+  field subject_scope text required
+  field experiment text required
+  field witness_ref text
+  field invalidation_conditions list
+  note negative causal knowledge, often more valuable than another failure log. The FP16-passthrough and Q/K/V-bypass experiments each eliminated a hypothesis permanently.
+
+concept ProofFrontier
+  field subject_resource text required
+  field subject_profile text
+  ordered_layers source_model representation_abi reconstruction prepared_state transformer_math runtime_contract physical_execution semantic_behavior
+  layer_status proven open blocked untested
+  field first_open_layer derived
+  field mutation_ceiling derived
+  note the eight FPQ correctness layers, low to high; the frontier machinery is not FPQ-specific and applies to Bernstein adapters, Habitat, Frappe absorption equally
+
+decision RegressionFence
+  input target_layer observed_failure reheat_signal
+  output allow deny
+  rule deny-known-noncause
+    statement if the failure matches a KnownNonCause for the subject, the target is not the cause
+  rule deny-below-frontier
+    statement a target layer below the first open layer is proven ground and off-limits
+  rule reheat-only-on-named-signal
+    statement a proven layer reopens only when a reheat signal satisfies a cooled invariant on it
+  rule allow-at-or-above-frontier
+    statement the open layer and above are the permitted work
+
+law fix-fpq-is-a-prohibited-mission
+  statement no mission may target model representation code on a bare "generation is garbage". It must name which profile, which artifact hash, which proof layer failed, which causes are already eliminated, and what evidence authorizes reheating that layer.

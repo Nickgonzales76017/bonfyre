@@ -1,0 +1,192 @@
+name: native kernel
+
+# The native kernel had no CI. 7,722 lines of C in engine/core, the control
+# primitives, the conformance vectors and 88 cmd/Bonfyre* binaries were all
+# verified only by whoever last ran them locally.
+#
+# The BonfyreFS job is the one that matters most: it mounts a fabric and reads
+# it back through the filesystem. The fork bug that made daemon mode list an
+# empty tree passed every build and every unit test, and only a real mount
+# would have caught it -- so this asserts on mounted content, not on exit codes.
+
+on:
+  push:
+    paths:
+      - "engine/**"
+      - "lib/**"
+      - "cmd/BonfyreFS/**"
+      - "programs/**"
+      - "build.zig"
+      - "schemas/control/**"
+      - "tests/conformance/**"
+      - "components/BonfyreControlPlane/**"
+      - "tools/transitional_root_absorption.py"
+      - "tests/test_transitional_root_absorption.py"
+      - "generated/projections/estate/transitional-root-absorption.json"
+      - "architecture/institutional/transitional-root.yaff"
+      - ".github/workflows/native-kernel.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  control-conformance:
+    name: control vectors (native + reference)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+
+      - name: Replay vectors against the native kernel
+        run: zig build test-control
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install reference-test runner
+        run: python3 -m pip install pytest
+
+      - name: Full reference implementation still agrees
+        working-directory: components/BonfyreControlPlane
+        run: python3 -m pytest tests/ -q
+
+      - name: Compatibility-root absorption ledger is current
+        run: python3 tools/transitional_root_absorption.py --verify
+
+      - name: Vectors still describe the reference
+        run: python3 tests/conformance/control/generate_vectors.py --check
+
+      - name: Vectors are committed in sync with the generator
+        run: |
+          python3 tests/conformance/control/generate_vectors.py
+          if ! git diff --quiet -- tests/conformance/control/vectors; then
+            echo "::error::vectors/ is stale; re-run generate_vectors.py and commit"
+            git --no-pager diff --stat -- tests/conformance/control/vectors
+            exit 1
+          fi
+
+  fabric-roundtrip:
+    name: BonfyreFS mounts a real fabric
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mlugg/setup-zig@v1
+        with:
+          version: 0.13.0
+
+      - name: Install FUSE and SQLite
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libfuse-dev libsqlite3-dev pkg-config fuse
+
+      - name: Build the fabric and BonfyreFS
+        run: |
+          zig build
+          make -C cmd/BonfyreFS
+
+      - name: Ingest a known artifact into a fresh fabric
+        env:
+          BONFYRE_STATE_DIR: ${{ runner.temp }}/fabric
+        run: |
+          mkdir -p "$BONFYRE_STATE_DIR"
+          ./zig-out/bin/bonfyre fabric init
+          ./zig-out/bin/bonfyre mission create ci-roundtrip
+          # A file whose digest we can recompute independently.
+          ./zig-out/bin/bonfyre artifact ingest schemas/control/work.yaff text/plain \
+            | tee "$RUNNER_TEMP/ingest.txt"
+          ./zig-out/bin/bonfyre fabric status
+
+      - name: Mount as a daemon and read it back
+        env:
+          BONFYRE_STATE_DIR: ${{ runner.temp }}/fabric
+        run: |
+          set -euo pipefail
+          MOUNT="$RUNNER_TEMP/mnt"
+          mkdir -p "$MOUNT"
+
+          # Deliberately NOT -f. Foreground mode never forks, and the fork is
+          # exactly what broke this before.
+          ./cmd/BonfyreFS/bonfyre-fs "$MOUNT"
+
+          for _ in $(seq 1 20); do
+            mountpoint -q "$MOUNT" && break
+            sleep 0.5
+          done
+          mountpoint -q "$MOUNT" || { echo "::error::mount never appeared"; exit 1; }
+
+          echo "--- Missions ---"; ls -1 "$MOUNT/Missions"
+          echo "--- Artifacts ---"; ls -1 "$MOUNT/Artifacts"
+
+          if [ -z "$(ls -A "$MOUNT/Missions")" ]; then
+            echo "::error::Missions/ is empty but the fabric has a mission."
+            echo "::error::This is the daemon-fork regression: a SQLite handle"
+            echo "::error::opened before fuse_main() does not survive the fork."
+            fusermount -u "$MOUNT" || true
+            exit 1
+          fi
+
+          test -f "$MOUNT/Missions/ci-roundtrip.json"
+          grep -q '"mission_id":"ci-roundtrip"' "$MOUNT/Missions/ci-roundtrip.json"
+
+          # The artifact is content-addressed: its filename must be the digest
+          # of the bytes we ingested.
+          DIGEST=$(sha256sum schemas/control/work.yaff | cut -d' ' -f1)
+          test -f "$MOUNT/Artifacts/$DIGEST.json" \
+            || { echo "::error::no artifact projected for digest $DIGEST"; \
+                 ls -1 "$MOUNT/Artifacts"; fusermount -u "$MOUNT"; exit 1; }
+
+          fusermount -u "$MOUNT"
+
+  native-commands:
+    name: cmd/Bonfyre* build and answer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libsqlite3-dev pkg-config
+
+      - name: Build every command that has a Makefile
+        id: build
+        run: |
+          set -uo pipefail
+          built=0; failed=0
+          : > "$RUNNER_TEMP/failures.txt"
+          for dir in cmd/Bonfyre*/; do
+            [ -f "$dir/Makefile" ] || continue
+            if make -C "$dir" >/dev/null 2>>"$RUNNER_TEMP/failures.txt"; then
+              built=$((built+1))
+            else
+              failed=$((failed+1))
+              echo "$dir" >> "$RUNNER_TEMP/failed-dirs.txt"
+            fi
+          done
+          echo "built=$built failed=$failed"
+          echo "built=$built" >> "$GITHUB_OUTPUT"
+          echo "failed=$failed" >> "$GITHUB_OUTPUT"
+          if [ -s "$RUNNER_TEMP/failed-dirs.txt" ]; then
+            echo "::group::commands that did not build"
+            cat "$RUNNER_TEMP/failed-dirs.txt"
+            echo "::endgroup::"
+          fi
+
+      # Reported rather than gating, because the current baseline is unknown --
+      # nothing has ever built these in CI. Once a green baseline exists this
+      # should fail on any regression.
+      - name: Summary
+        run: |
+          {
+            echo "### Native command build"
+            echo
+            echo "built: ${{ steps.build.outputs.built }}"
+            echo "failed: ${{ steps.build.outputs.failed }}"
+          } >> "$GITHUB_STEP_SUMMARY"

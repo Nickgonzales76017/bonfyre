@@ -1,0 +1,103 @@
+schema WorkNode
+generation control-1
+authority native-kernel
+absorbs 10-Code/BonfyreControlPlane/work_graph.py
+absorbs 10-Code/BonfyreControlPlane/scheduling.py
+note cooling is a property of a work edge, not a second scheduler
+
+field id
+  type u64
+  role identity
+  generated true
+
+field kind
+  type text
+  required true
+
+field source_plane
+  type text
+  required true
+
+field target_plane
+  type text
+  required true
+  references Plane.plane_id
+  note unroutable work is refused at insert, not counted afterward
+
+field subject_ref
+  type text
+  required true
+
+field source_ref
+  type text
+  default ""
+
+field priority
+  type f64
+  default 0
+
+field state
+  type enum
+  values open leased effected satisfied blocked_external superseded invalidated failed
+  default open
+
+field lease_holder
+  type text
+  nullable true
+
+field lease_expires_at
+  type timestamp
+  nullable true
+  note an expired lease returns the work; planes die
+
+field attention
+  type enum
+  values hot cooled dormant
+  default hot
+
+field reheat_at
+  type timestamp
+  nullable true
+
+field reheat_on
+  type text
+  default ""
+  note named evidence transition that revives a dormant node
+
+field unchanged_checks
+  type u32
+  default 0
+
+field superseded_by
+  type u64
+  nullable true
+
+field closed_at
+  type timestamp
+  nullable true
+
+transition open leased effected satisfied
+transition open blocked_external
+transition leased open
+transition leased effected
+transition blocked_external open
+transition any superseded
+transition any invalidated
+transition any failed
+
+terminal satisfied superseded invalidated failed
+
+invariant satisfaction-requires-receipt
+  statement a move to satisfied carries a receipt reference
+
+invariant illegal-transitions-raise
+  statement an undefined move is an error, never a silent no-op
+  derived-from run6 queue 242 rows all open
+
+invariant cooling-needs-a-way-back
+  statement attention may leave hot only with reheat_at or reheat_on set
+  derived-from run6 proton attention burn
+
+policy cool-after-unchanged
+  threshold 3
+  note unchanged checks before a node stops riding in the context cut

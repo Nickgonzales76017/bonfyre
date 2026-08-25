@@ -14,6 +14,27 @@ pub fn build(b: *std.Build) void {
     fabric.addCSourceFiles(.{ .files = &.{ "engine/core/src/fabric.c", "engine/core/src/fabric_exec.c", "engine/core/src/workgraph.c", "engine/core/src/workgraph_schema.c", "engine/core/src/workgraph_events.c", "engine/core/src/workgraph_scheduler.c", "engine/core/src/workgraph_effects.c", "engine/core/src/filesystem_projection.c", "engine/core/src/process_operator.c", "engine/core/src/operator_contract.c", "lib/libbonfyre/src/bf_sha256.c", "lib/libbonfyre/src/bf_catalog_generation.c" }, .flags = &.{ "-std=c11", "-Wall", "-Wextra", "-Werror" } });
     b.installArtifact(fabric);
 
+    // Replays the control-plane vectors generated from the frozen Python
+    // reference. Parity here is what lets the runtime drop that dependency.
+    const control_conformance = b.addExecutable(.{ .name = "control_conformance", .target = target, .optimize = optimize });
+    control_conformance.linkLibC();
+    control_conformance.addIncludePath(b.path("engine/core/include"));
+    control_conformance.addCSourceFiles(.{ .files = &.{ "tests/conformance/control/run_native.c", "engine/core/src/control_provider.c", "engine/core/src/control_admission.c", "engine/core/src/control_attention.c", "engine/core/src/control_capability.c" }, .flags = &.{ "-std=c11", "-Wall", "-Wextra", "-Werror" } });
+    const run_control_conformance = b.addRunArtifact(control_conformance);
+    run_control_conformance.addArg("tests/conformance/control/vectors/control.vec");
+
+    const control_conformance_step = b.step("test-control", "Replay control-plane vectors against the native kernel");
+    control_conformance_step.dependOn(&run_control_conformance.step);
+
+    const agent_contract_test = b.addExecutable(.{ .name = "agent_contract_test", .target = target, .optimize = optimize });
+    agent_contract_test.linkLibC();
+    agent_contract_test.addIncludePath(b.path("engine/core/include"));
+    agent_contract_test.addCSourceFiles(.{ .files = &.{ "engine/core/tests/agent_contract_test.c", "engine/core/src/agent_contract.c" }, .flags = &.{ "-std=c11", "-Wall", "-Wextra", "-Werror" } });
+    const run_agent_contract_test = b.addRunArtifact(agent_contract_test);
+
+    const agent_contract_test_step = b.step("test-agent-contract", "Validate AgentSession and ReceiptEnvelope provider fidelity");
+    agent_contract_test_step.dependOn(&run_agent_contract_test.step);
+
     const probe_test = b.addExecutable(.{ .name = "probe_contract_test", .target = target, .optimize = optimize });
     probe_test.linkLibC();
     probe_test.linkSystemLibrary("sqlite3");

@@ -1,0 +1,91 @@
+pack adjacent-opportunity-round2
+generation control-1
+source_plane run2_relationship_adoption
+item_kind adjacent_opportunity
+source_ref research:2026-08-14-dependency-scan
+note Found by reading PR bodies rather than issue titles. The useful structure was not a list of unclaimed issues but a critical path we are already standing on.
+
+work agentguard_213_critical_path
+  target_plane run2_relationship_adoption
+  priority 9.0
+  reason PR 213, the deterministic external-verifier projection, names four merge dependencies: 214, 216, 217, 218. All four are ours. 214 is rebased onto 93140726 and awaiting final review, so it is the nearest domino. Merging it does not just close 203 -- it advances a chain that ends in the largest piece of work we have open there
+
+work agentguard_216_217_218_status_sweep
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason 216, 217 and 218 have had no attention this session while 214 consumed it. Each closes a named dependency of 213. Check whether any is waiting on us rather than on the maintainer -- an unanswered review comment on any of them stalls the whole chain
+
+work agentguard_209_attested_toolchain
+  target_plane run2_relationship_adoption
+  priority 6.0
+  reason Build releases with a locked and attested toolchain. Unassigned, supply-chain provenance, adjacent to the evidence work already merged there. Not claimed while the 213 chain is live
+
+work agentguard_184_bound_static_summaries
+  target_plane run2_relationship_adoption
+  priority 5.5
+  reason Stream and bound static-site trace summaries. Same bounding discipline as 214, applied to a different surface
+
+work verify_pr_issue_linkage_habit
+  target_plane run5_recursive_external
+  priority 4.0
+  reason A hypothesis that our PRs were not linked to their issues turned out false -- every one carries Closes. Worth keeping as a check rather than an assumption, since an unlinked PR is invisible to a maintainer triaging by issue
+
+work map_dependency_chains_before_claiming
+  target_plane run5_recursive_external
+  priority 7.0
+  reason Reading PR bodies for stated merge dependencies found more than scanning issue titles did. Before claiming anything new, map what our open work already blocks or is blocked by. Claiming a fresh issue while a four-PR chain of ours stalls is the wrong allocation
+
+work agentguard_218_portable_path_regression
+  target_plane run2_relationship_adoption
+  priority 9.0
+  reason CORRECTED diagnosis. Not validation ordering -- _result_from_report is byte-identical on main and the branch. 218 portabilises repo_dir in the run report and the reader cannot rehydrate it, so any consumer reading the report from outside the original run directory fails. 229's test found it first. Two options given to the maintainer; branch unpushed until they pick
+
+work agentguard_portable_paths_has_no_inverse
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason provenance/portable_paths.py exposes portable_reference, portable_text and portable_value and nothing resolves back. A portable reference is a one-way sanitiser, not a round trip, so anything persisted through it becomes unreadable to a relocated consumer. Offered to open this as its own issue and take it
+
+work diagnosis_depth_discipline
+  target_plane run5_recursive_external
+  priority 7.0
+  reason The first 218 diagnosis -- validation ordering -- was wrong and was posted to a maintainer before being checked against main. Diffing the function against main took one command and showed it unchanged. Compare the suspected code against the base before naming a cause
+
+work proactive_rebase_as_courtesy
+  target_plane run5_recursive_external
+  priority 6.0
+  reason The maintainer asked for a rebase on 214 before reviewing. Applying that unasked to 216 and 217 removed the same friction from two more PRs and cost nothing. It also found the 218 conflict early, before a reviewer hit it. Worth making standard when a maintainer signals they review against current main
+
+work deepeval_3056_placement_decision
+  target_plane run2_relationship_adoption
+  priority 7.5
+  reason 3056 is draft for a stated reason, not neglect: the alignment layer is finished and reviewable, only the wrapper placement question (ArenaTestCase versus community metric) is open. Split into two independent unblocks and handed back. lostmartian is a named collaborator on the agreed split and is not yet in the actor graph
+
+work draft_status_hides_ready_work
+  target_plane run5_recursive_external
+  priority 6.5
+  reason A draft PR does not enter a review queue, so completed work can sit indefinitely behind a flag set for an unrelated reason. Two hypotheses about 3056 were wrong before reading the body -- it was neither an oversight nor bot noise. Check why a PR is draft before assuming it is unfinished
+
+work add_lostmartian_to_actor_graph
+  target_plane run2_relationship_adoption
+  priority 5.5
+  reason Named collaborator on the deepeval 3019/3056 split, with an agreed division of work. That is a real working relationship and it is absent from the actor graph entirely
+
+work bernstein_3701_pr2_upgrade_executor
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason PR1 is up as 3840 with the observe default. PR2 wires the same admission service into core.config.UpgradeExecutor, closing the reviewer-approval auto-execute bypass at upgrade_executor.py:322-326 -- the path that being ungated is the exact bypass 3701 exists to close
+
+work agentguard_230_portable_inverse
+  target_plane run2_relationship_adoption
+  priority 7.5
+  reason Opened as agentguard#230 with the round-trip properties a fix must assert, including failing closed when a root is absent rather than resolving to a wrong path. Offered to take it; unclaimed until the maintainer responds
+
+work bernstein_3701_complete_both_prs
+  target_plane run2_relationship_adoption
+  priority 7.0
+  reason Both halves are in review: 3840 (admission service + FileUpgradeExecutor) and 3843 (reviewer auto-execute bypass, stacked). The sequencing chernistry set out is fully delivered. Remaining decision is the observe-versus-enforce default, which applies to both
+
+work admission_protocol_generalization
+  target_plane run5_recursive_external
+  priority 6.0
+  reason PR2 generalized AdmissionPolicy.evaluate to a structural protocol rather than a concrete type, so two unrelated lineages share one service without a base class. Same shape as the pack loader knowing about actors and work without knowing about any campaign. Worth reusing wherever a second caller appears

@@ -1,0 +1,76 @@
+schema Capability
+generation control-1
+authority native-kernel
+absorbs 10-Code/BonfyreControlPlane/capability_catalog.py
+note generated, never hand-maintained; the 91 public identities are the namespace
+
+field public_identity
+  type text
+  role identity
+  required true
+  note the constitutional name, stable across implementation factorization
+
+field materializations
+  type list
+  note zero materializations is a legal state and means declared-not-callable
+
+field location
+  type text
+  default ""
+
+field transport
+  type enum
+  values in-process process service remote
+  default in-process
+
+field maturity
+  type enum
+  values defined implemented built installed resolvable version_aligned health_probed activated workload_proven quality_proven promoted
+  default defined
+  note shared ladder with estate/catalog.yaff
+
+field callable_floor
+  type enum
+  value resolvable
+  note at or above this rung there is something to invoke
+
+field proven_floor
+  type enum
+  value workload_proven
+  note help working means nothing; proof is four rungs higher
+
+field effect_classes
+  type list
+  values pure-read local-derived-state reversible-external-write irreversible-external-write
+
+field authority
+  type enum
+  values ordinary mission-scoped explicit-approval
+  default mission-scoped
+
+field cost_class
+  type text
+  default ""
+
+field placement
+  type text
+  default local
+
+field health
+  type text
+  default unprobed
+
+field proof_ref
+  type text
+  default ""
+
+invariant identity-is-not-callability
+  statement a declared identity never implies an invokable materialization
+  derived-from run6 91 identities against 0 compiled tools
+
+invariant no-path-probing
+  statement the context cut carries callable and non-callable names so no executor probes PATH
+  derived-from run6 planes probing BonfyreQueue BonfyreOffer
+
+invariant demotion-on-vanish
+  statement a name that stops resolving falls below the callable floor

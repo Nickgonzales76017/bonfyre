@@ -1,0 +1,2046 @@
+<title>Aurekai Township</title>
+<style>
+  :root {
+    --bg: #0c1610;
+    --ink: #eef4ec;
+    --muted: #9db3a0;
+    --panel: #1b2a1f;
+    --panel-2: #24371f;
+    --panel-border: #4a6b4a;
+    --accent: #e8b25f;
+    --held: #e8b25f;
+    --draft: #7f92b8;
+    --trusted: #7ecb9f;
+    --engaged: #7fc9e0;
+    --responded: #b7c4b8;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #dce8dc;
+      --ink: #1c2b1e;
+      --muted: #4d6350;
+      --panel: #f4f1e4;
+      --panel-2: #e8e2cc;
+      --panel-border: #b7a983;
+      --accent: #a5651d;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #dce8dc;
+    --ink: #1c2b1e;
+    --muted: #4d6350;
+    --panel: #f4f1e4;
+    --panel-2: #e8e2cc;
+    --panel-border: #b7a983;
+    --accent: #a5651d;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    padding: 24px 14px 36px;
+  }
+  .stack { width: 100%; max-width: 1040px; display: flex; flex-direction: column; gap: 12px; }
+  header { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px 24px; }
+  h1 {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 19px; letter-spacing: 0.02em; margin: 0; text-wrap: balance;
+  }
+  header p { margin: 0; color: var(--muted); font-size: 12.5px; max-width: 54ch; }
+  .frame {
+    position: relative;
+    border: 3px solid var(--panel-border);
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.3);
+    line-height: 0;
+  }
+  canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; background: #2c4a2e; }
+  .hint {
+    position: absolute; left: 10px; bottom: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; color: #f2f7ee;
+    background: rgba(8,14,10,0.78);
+    padding: 5px 9px; border-radius: 3px; letter-spacing: 0.02em;
+    pointer-events: none;
+  }
+  .compass {
+    position: absolute; right: 10px; top: 10px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 10px; color: #f2f7ee;
+    background: rgba(8,14,10,0.78);
+    padding: 4px 8px; border-radius: 3px;
+    pointer-events: none;
+  }
+  .foot {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 20px;
+    font-size: 11px; color: var(--muted);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  .foot code { color: var(--ink); }
+
+  .keys {
+    display: flex; flex-wrap: wrap; gap: 6px 14px;
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; color: var(--muted);
+  }
+  kbd {
+    display: inline-block; font: inherit;
+    background: var(--panel-2); border: 1px solid var(--panel-border);
+    border-bottom-width: 2px; border-radius: 3px;
+    padding: 0 4px; margin-right: 3px; color: var(--ink);
+  }
+  .law {
+    background: var(--panel); border: 1px solid var(--panel-border);
+    border-radius: 6px; padding: 14px 16px;
+  }
+  .law h2 { font-size: 13px; margin: 0 0 8px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+  .law p { font-size: 12px; margin: 0 0 8px; color: var(--muted); line-height: 1.5; }
+  .law .fine { font-size: 11px; margin-bottom: 0; opacity: 0.85; }
+  .intents { list-style: none; padding: 0; margin: 0 0 10px; display: grid; gap: 4px; }
+  .intents li {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 8px;
+  }
+  .intents i { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+  .intents b { color: var(--ink); font-weight: 600; }
+</style>
+
+<div class="stack">
+  <header>
+    <h1>Aurekai Township</h1>
+    <p>A spatial projection of real Bonfyre graph state. Every building, gate, stall, stone and resident is compiled from a specific database row — walk up to anything and it will tell you which one.</p>
+  </header>
+  <div class="frame">
+    <canvas id="game" width="960" height="540" tabindex="0"></canvas>
+    <div class="hint" id="hint"></div>
+    <div class="compass" id="mini"></div>
+  </div>
+
+  <div class="keys">
+    <span><kbd>WASD</kbd> walk</span>
+    <span><kbd>E</kbd> inspect record</span>
+    <span><kbd>1</kbd><kbd>2</kbd><kbd>3</kbd> invoke interaction port</span>
+    <span><kbd>V</kbd> show as (cycle embodiment)</span>
+    <span><kbd>F</kbd> pick up / place</span>
+    <span><kbd>N</kbd> narrate zone</span>
+    <span><kbd>M</kbd> acoustic grammar</span>
+    <span><kbd>Z</kbd> zone boundaries</span>
+    <span><kbd>Tab</kbd> intent log</span>
+  </div>
+
+  <section class="law">
+    <h2>The rule this world runs on</h2>
+    <p><b>A spatial action is an intent signal, never an automatic authoritative mutation.</b> Every interaction port is classified, and the class is shown before you act:</p>
+    <ul class="intents">
+      <li><i style="background:#9aa79a"></i><b>decorative</b> — personal arrangement, never leaves the habitat</li>
+      <li><i style="background:#8fb4d0"></i><b>projection</b> — changes how it is shown, not what it is</li>
+      <li><i style="background:#d0c48a"></i><b>attachment</b> — proposes a candidate relation, not yet canonical</li>
+      <li><i style="background:#d0a84a"></i><b>work intent</b> — opens a WorkGraph intent, queued not executed</li>
+      <li><i style="background:#c88a8a"></i><b>authoritative</b> — cannot execute from the world at all; opens a Review Gate a human must answer</li>
+    </ul>
+    <p class="fine">The world is a projection, and a projection does not own the record it projects. Confirming a Review Gate here records the intent — it does not write to <code>capital.db</code> or <code>fabric.db</code>.</p>
+  </section>
+
+  <div class="foot">
+    <span>Compiled from real rows in <code>fabric.db</code> · <code>bonfyre_cms.db</code> · <code>capital.db</code>. Empty tables produce empty ground, never placeholder scenery.</span>
+    <span><code>scripts/bonfyre_habitat_compiler.py</code></span>
+  </div>
+</div>
+
+<script>
+const SCENE = {"schema_version": "bonfyre.habitat.scene.v0", "compiled_at": "2026-08-13T07:09:33Z", "note": "Prototype scene, not full HabitatCompiler. Every room/object/path/character has a `source` pointing at the real row it was compiled from -- nothing here is invented.", "buildings": [{"id": "building-aurekai-research", "label": "Aurekai Research Wing", "rooms": ["room-bernstein-3616-research-episode", "room-agentguard-213-research-episode", "room-hqq-claim-invalidation-episode"]}], "rooms": [{"id": "room-bernstein-3616-research-episode", "kind": "research-room", "label": "bernstein-3616-research-episode", "state": "locked", "workgraph_cursor": "awaiting-pr-merge", "position": {"x": 0, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "bernstein-3616-research-episode"}}, {"id": "room-agentguard-213-research-episode", "kind": "research-room", "label": "agentguard-213-research-episode", "state": "under-construction", "workgraph_cursor": "5-prs-open-sequential-review", "position": {"x": 4, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "agentguard-213-research-episode"}}, {"id": "room-hqq-claim-invalidation-episode", "kind": "research-room", "label": "hqq-claim-invalidation-episode", "state": "under-construction", "workgraph_cursor": "ready-to-write-not-yet-written", "position": {"x": 8, "y": 0, "z": 0}, "source": {"db": "fabric.db", "table": "missions", "id": "hqq-claim-invalidation-episode"}}], "objects": [{"id": "object-sha256:0513aab72", "kind": "document", "label": "maintainer-review-verbatim.md", "room": "room-bernstein-3616-research-episode", "bytes": 2904, "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3"}}, {"id": "object-sha256:9283848af", "kind": "document", "label": "case-study-source.md", "room": "room-agentguard-213-research-episode", "bytes": 1543, "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6"}}, {"id": "object-sha256:227d466f9", "kind": "document", "label": "case-study-source.md", "room": "room-hqq-claim-invalidation-episode", "bytes": 1459, "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a", "source": {"db": "fabric.db", "table": "artifacts", "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a"}}, {"id": "wiki-page-1", "kind": "wiki-page", "label": "Bernstein: Identity Continuity Case Study", "room": "room-bernstein-3616-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 1}}, {"id": "wiki-page-2", "kind": "wiki-page", "label": "AgentGuard: Dependency Closure Case Study", "room": "room-agentguard-213-research-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 2}}, {"id": "wiki-page-3", "kind": "wiki-page", "label": "HQQ/WikiText-2: Claim Invalidation Case Study", "room": "room-hqq-claim-invalidation-episode", "state": "held", "source": {"db": "bonfyre_cms.db", "table": "wiki_page", "id": 3}}, {"id": "course-lesson-1", "kind": "lesson-board", "label": "Primitive: Identity Continuity", "room": null, "note": "shared across rooms via example_of relations, not owned by one room", "source": {"db": "bonfyre_cms.db", "table": "course_lesson", "id": 1}}], "paths": [{"id": "path-5", "from": "room-bernstein-3616-research-episode", "to": "room-agentguard-213-research-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 5}}, {"id": "path-6", "from": "room-bernstein-3616-research-episode", "to": "room-hqq-claim-invalidation-episode", "relation": "related_relationship_pattern", "source": {"db": "bonfyre_cms.db", "table": "_relations", "id": 6}}], "characters": [{"id": "character-1", "label": "chernistry", "role": "collaborator/reviewer", "relationship_state": "TRUSTED_INTERACTION", "embodiment": {"embodiment": "visiting-advisor", "presence": "external", "form": "visiting-avatar"}, "home_room": "room-bernstein-3616-research-episode", "visit_history": [{"kind": "review", "direction": "inbound", "at": "2026-08-12 10:54:47"}, {"kind": "collaboration", "direction": "outbound", "at": "2026-08-12 21:52:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 1}}, {"id": "character-2", "label": "richinmrudul", "role": "maintainer", "relationship_state": "TECHNICAL_ENGAGEMENT", "embodiment": {"embodiment": "workshop-operator", "presence": "external", "form": "resident"}, "home_room": "room-agentguard-213-research-episode", "visit_history": [{"kind": "correction", "direction": "inbound", "at": "2026-08-12 16:15:19"}, {"kind": "correction", "direction": "outbound", "at": "2026-08-12 21:30:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 2}}, {"id": "character-3", "label": "rajeshl8", "role": "community/issue participant", "relationship_state": "RESPONDED", "embodiment": {"embodiment": "person", "presence": "external", "form": "portrait"}, "home_room": null, "visit_history": [{"kind": "reply", "direction": "inbound", "at": "2026-08-12 16:18:39"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 3}}, {"id": "character-4", "label": "Melvin0070", "role": "adjacent maintainer (Amberfork)", "relationship_state": "RESPONDED", "embodiment": {"embodiment": "workshop-operator", "presence": "external", "form": "resident"}, "home_room": null, "visit_history": [{"kind": "introduction", "direction": "inbound", "at": "2026-08-12 18:34:15"}, {"kind": "proposal", "direction": "outbound", "at": "2026-08-12 22:10:00"}], "source": {"db": "capital.db", "table": "relationships", "id": 4}}], "gates": [{"id": "gate-6", "label": "Execute Rank 1 then Rank 2 in HUMAN_GATES.md: establish a truthfully controlled domain and monitored domain mailbox, verify send/receive, then submit only truthfully unlocked Anyscale, Modal, Fireworks, and Cloudflare paths.", "opportunity": "Ranked owner session: domain/mailbox, unlocked asks and credits, funding send, distribution, sell-side enrollment", "gate_class": "consolidated_owner_identity_authentication_captcha_financial", "status": "open", "value_at_stake": 32500.0, "external_ref": "/Users/nickgonzales/Library/Application Support/Bonfyre/CapitalGym/HUMAN_GATES.md", "blocks": "Five discovery-ordered gates converted into one timed, ranked, exact-URL runbook. Underlying opportunities and safety boundaries preserved.", "source": {"db": "capital.db", "table": "human_gates", "id": 6}}, {"id": "gate-2", "label": "Owner reruns aws login --profile bonfyre-login and completes same-device browser authorization, then provides truthful personal, company, billing, payment, identity, tax, banking, eligibility, website/domain-email, or agreement facts only where required; submit Cloudflare/AWS/Google/Microsoft credit paths and sell-side routes only when eligibility and authority are confirmed.", "opportunity": "Batched AWS, Google Cloud, and Microsoft credit plus sell-side enrollment session", "gate_class": "authentication_identity_legal_financial", "status": "consolidated", "value_at_stake": 13200.0, "external_ref": "https://www.cloudflare.com/startups/ | https://www.partners.cloudflare.com/partners/s/signup?locale=us | https://startups.aws.com/join?destination=%2Fcredits%2Fapply | https://cloud.google.com/startup/apply | https://portal.azure.com/?homeview=startup#home", "blocks": "Official entry points, values, and prerequisites verified. Round 18 preserved the legacy bonfyre profile and proved a separate bonfyre-login profile reaches AWS same-device browser authorization; no owner identity completed sign-in, no profile was created, and no application was submitted.", "source": {"db": "capital.db", "table": "human_gates", "id": 2}}, {"id": "gate-3", "label": "Open the official Partner Network form, use the prepared truthful identity/project fields and USD 7,500 bounded proposal, complete reCAPTCHA, then click Send Message.", "opportunity": "Fireworks AI Technology Partner FPQ proposal", "gate_class": "captcha", "status": "consolidated", "value_at_stake": 7500.0, "external_ref": "https://fireworks.ai/partner-submit", "blocks": "Verified Technology Partner program, form schema, internal recipient routing, and prepared all non-CAPTCHA fields; safe automated attempt returned reCAPTCHA verification failed.", "source": {"db": "capital.db", "table": "human_gates", "id": 3}}, {"id": "gate-5", "label": "Existing routes: Baseten CAPTCHA; Runpod Turnstile or configured monitored sender; Modal truthful organization email. Round 15 routes: Anyscale truthful domain-qualified business email; Cerebrium reCAPTCHA; Beam Typeform reCAPTCHA.", "opportunity": "AI infrastructure buyer and model-partner pilot submissions", "gate_class": "captcha_turnstile_organization_email", "status": "consolidated", "value_at_stake": 7500.0, "external_ref": "https://www.baseten.co/talk-to-us/ ; https://www.runpod.io/contact ; https://modal.com/partners ; https://www.anyscale.com/contact-sales ; https://cerebrium.ai/contact ; https://form.typeform.com/to/XFaCSAub", "blocks": "Bounded USD 7,500 one-model/one-target proposal and public evidence prepared. Baseten returned FORM_HAS_RECAPTCHA_ENABLED. Runpod Turnstile and sales route verified. Modal organization-email rule verified. Anyscale form had CAPTCHA disabled but returned BLOCKED_EMAIL, correlation 019ff3f2-aa5c-799e-abbf-5c0dd6aec7c5. Cerebrium and Beam reCAPTCHA requirements verified.", "source": {"db": "capital.db", "table": "human_gates", "id": 5}}, {"id": "gate-1", "label": "Obtain a Hugging Face credential with write-repos scope, then publish the prepared Space; current connector OAuth is authenticated but read-only.", "opportunity": "Hugging Face Space distribution for Agent Trace Verifier", "gate_class": "authentication", "status": "consolidated", "value_at_stake": 0.0, "external_ref": "https://huggingface.co/settings/tokens", "blocks": "Connector identity verified as NICKO with aurekai organization membership. Current OAuth token is valid through 2026-08-12T11:03:01Z but grants only jobs, openid, profile, read-mcp, and read-repos; no Space write is possible. Existing verifier, audit intake, directory placements, and Statement Import distribution remain live.", "source": {"db": "capital.db", "table": "human_gates", "id": 1}}, {"id": "gate-4", "label": "Open the v1.2.0 release edit page; accept the Marketplace Developer Agreement if prompted; enable Publish this Action to the GitHub Marketplace; select Security; update the release; complete 2FA.", "opportunity": "GitHub Marketplace publication for Bonfyre Agent Trace Verifier", "gate_class": "authentication_agreement_2fa", "status": "consolidated", "value_at_stake": 0.0, "external_ref": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/releases/edit/v1.2.0", "blocks": "Verified public single-action repository, root metadata, unique name, branding, stable v1 tag, v1.2.0 release, and separate awesome-actions PR #891.", "source": {"db": "capital.db", "table": "human_gates", "id": 4}}], "notices": [{"id": "notice-1", "claim": "PR #3695's finding-identity implementation is stable across CRLF/NFC/path-separator variance", "evidence_type": "test", "ref": "https://github.com/sipyourdrink-ltd/bernstein/pull/3695", "verified": true, "verification_method": "chernistry: local run against .semgrep.yml (0 findings/1861 files) plus 10 new tests / 30 cases for the two normal-form bugs", "room": "room-bernstein-3616-research-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 1}}, {"id": "notice-2", "claim": "AgentGuard #214's info-leak fix and boundary-test coverage introduce no regressions", "evidence_type": "test", "ref": "https://github.com/richinmrudul/agentguard/pull/214#issuecomment", "verified": true, "verification_method": "full unit suite: 1402 passed on rebased main; ruff check: identical 58 pre-existing findings before/after diff (zero new)", "room": "room-agentguard-213-research-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 2}}, {"id": "notice-3", "claim": "The retired FPQ-v8 994-token HQQ comparison was correctly superseded, not just replaced", "evidence_type": "benchmark", "ref": "https://github.com/Nickgonzales76017/bonfyre-fpq-benchmark/pull/1", "verified": true, "verification_method": "full WikiText-2 pass, 299,078-token shared stream, checksummed FP32/HQQ receipts, verifier asserts identical token digests and loss counts", "room": "room-hqq-claim-invalidation-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 3}}, {"id": "notice-4", "claim": "The maintainer-review receipt for the Bernstein episode is exactly this content, unaltered", "evidence_type": "artifact", "ref": "content/research-episodes/bernstein-3616/receipts/maintainer-review-verbatim.md", "verified": true, "verification_method": "akai canon hash --algorithm sha256: sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3 (2904 bytes)", "room": "room-bernstein-3616-research-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 4}}, {"id": "notice-5", "claim": "The Identity Continuity lesson content is exactly this content, unaltered", "evidence_type": "artifact", "ref": "content/primitives/identity-continuity.md", "verified": true, "verification_method": "akai canon hash --algorithm sha256: sha256:35f4aa27c3d118da69d55a23cef650262df67b5da8a629e03a04a1df1fb8edd0 (3631 bytes) -- recomputed 2026-08-13 after removing the non-canonical 'ProvenanceGraph' term (real canonical graph list has no such graph; ArtifactGraph is the correct one)", "room": null, "source": {"db": "capital.db", "table": "evidence_ledger", "id": 5}}, {"id": "notice-6", "claim": "The full brief -> narrate -> render -> surface-publish chain runs cleanly end to end on real Bernstein episode content", "evidence_type": "artifact", "ref": "~/.aurekai/surfaces/bernstein-held/bernstein-identity-continuity-render.md", "verified": true, "verification_method": "akai publish chain --surface bernstein-held --json: all 5 checks passed (brief_written, narration_written, render_written, publish_written, publish_matches_render), verdict=PASS. sha256:e2bcef66f5fb7ba0da8b4070ccbf196e97b33acd2a11391c20e7fc5d82e292b5", "room": "room-bernstein-3616-research-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 6}}, {"id": "notice-7", "claim": "The full brief->narrate->render->publish chain runs cleanly on the AgentGuard dependency-closure episode", "evidence_type": "artifact", "ref": "~/.aurekai/surfaces/agentguard-draft/agentguard-dependency-closure-render.md", "verified": true, "verification_method": "akai publish chain --surface agentguard-draft --json: verdict=PASS, all 5 checks true", "room": "room-agentguard-213-research-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 7}}, {"id": "notice-8", "claim": "The full brief->narrate->render->publish chain runs cleanly on the HQQ claim-invalidation episode", "evidence_type": "artifact", "ref": "~/.aurekai/surfaces/hqq-draft/hqq-claim-invalidation-render.md", "verified": true, "verification_method": "akai publish chain --surface hqq-draft --json: verdict=PASS, all 5 checks true", "room": "room-hqq-claim-invalidation-episode", "source": {"db": "capital.db", "table": "evidence_ledger", "id": 8}}], "monuments": [{"id": "monument-1", "learning_type": "new_deterministic_rule", "description": "is_hard_capacity_stop() matched 'usage limit reached' but not 'hit your usage limit' -- the actual Codex message. One-word regex gap let 1,366 rounds over ~13 hours retry against a provider that had already stated its recovery date (Aug 18). Rule widened to match stable phrases regardless of verb; stop path now records the provider's stated retry time.", "occurred_at": "2026-08-12 21:00:00", "adopted": true, "source_ref": "scripts/bonfyre_capital_gym_full.sh:is_hard_capacity_stop", "source": {"db": "capital.db", "table": "learning_ledger", "id": 1}}, {"id": "monument-2", "learning_type": "new_deterministic_rule", "description": "Session-rollover request was handled by the manager side-car polling codex_turn_active() externally -- a race it can only win if it happens to poll during a between-turn gap that collapses to sub-second during productive runs (turns 106-134 ran unbroken on one thread despite a pending rollover request, 579M tokens). Moved the check synchronously into the executor's own round loop, at the only point it deterministically knows no turn is active.", "occurred_at": "2026-08-12 21:15:00", "adopted": true, "source_ref": "scripts/bonfyre_capital_gym_full.sh (round-boundary check, before SESSION_ID read) / scripts/bonfyre_claude_capital_manager.sh:attempt_session_rollover", "source": {"db": "capital.db", "table": "learning_ledger", "id": 2}}, {"id": "monument-3", "learning_type": "correction", "description": "RESOLVED, not a metering bug: inspected real per-turn input_tokens for successive turns in the same resumed session (turns 151-155, round 52-56): 172.86M -> 174.14M -> 175.39M -> 177.19M -> 183.36M, steadily growing turn over turn. This is a resumed session (codex exec resume) re-sending its entire accumulated conversation as input context every turn, so input_tokens is a real cumulative total, not a double-counted or fabricated figure -- summing across turns correctly reflects real billed cost across a session's lifetime, however wasteful. The ~4.24B sum across 1444 turns is therefore plausible and real, and is the same mechanism already fixed tonight (session-rollover race, learning_ledger id=2): every turn the rollover failed to fire, the session kept re-billing its whole growing history.", "occurred_at": "2026-08-13 05:00:00", "adopted": true, "source_ref": "scripts/bonfyre_capital_gym_full.sh:record_usage", "source": {"db": "capital.db", "table": "learning_ledger", "id": 3}}], "stalls": [{"id": "stall-1", "label": "Agent Workflow Safety Audit", "offer_class": "paid_diagnostic", "status": "published", "asking_price": 1500.0, "currency": "USD", "target_customer": "teams deploying agents into business workflows", "backing_asset": "Bonfyre Agent Trace Verifier", "backing_asset_status": "published", "experiments_run": 12, "experiments_answered": 12, "source": {"db": "capital.db", "table": "offers", "id": 1}}, {"id": "stall-2", "label": "Statement Import Pack", "offer_class": "bounded_implementation", "status": "delivered", "asking_price": 750.0, "currency": "USD", "target_customer": "bookkeepers, finance teams, and ERP implementers needing private/offline statement import", "backing_asset": "Bonfyre Statement Import", "backing_asset_status": "published", "experiments_run": 4, "experiments_answered": 4, "source": {"db": "capital.db", "table": "offers", "id": 2}}, {"id": "stall-3", "label": "Single-model FPQ Compatibility Conversion Pilot", "offer_class": "fixed_price_pilot", "status": "delivered", "asking_price": 7500.0, "currency": "USD", "target_customer": "model vendors and deployment teams needing one bounded openly licensed transformer conversion up to 1B parameters", "backing_asset": "Bonfyre FPQ Qwen 0.5B Benchmark and Compatibility Pilot", "backing_asset_status": "published", "experiments_run": 7, "experiments_answered": 7, "source": {"db": "capital.db", "table": "offers", "id": 3}}, {"id": "stall-4", "label": "Edge Deployment Evidence Diagnostic", "offer_class": "bounded_diagnostic", "status": "delivered", "asking_price": 1750.0, "currency": "USD", "target_customer": "edge and embedded deployment teams needing one measured model-to-device/runtime go/no-go before full conversion", "backing_asset": "Bonfyre FPQ Qwen 0.5B Benchmark and Compatibility Pilot", "backing_asset_status": "published", "experiments_run": 4, "experiments_answered": 4, "source": {"db": "capital.db", "table": "offers", "id": 4}}], "timeline": [{"id": "bernstein-episode-recorded", "kind": "event", "actor": "claude-code", "effect_class": "content.publish_hold", "status": "complete", "mission": "bernstein-3616-research-episode", "room": "room-bernstein-3616-research-episode", "at": "2026-08-12T10:54:47Z", "source": {"db": "fabric.db", "table": "events", "id": "bernstein-episode-recorded"}}, {"id": "bernstein-episode-receipt-1", "kind": "receipt", "subject_kind": "mission", "subject_id": "bernstein-3616-research-episode", "content_hash": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3", "chained_to": null, "at": "2026-08-13T04:55:24Z", "source": {"db": "fabric.db", "table": "receipts", "id": "bernstein-episode-receipt-1"}}, {"id": "agentguard-213-research-episode-receipt-1", "kind": "receipt", "subject_kind": "mission", "subject_id": "agentguard-213-research-episode", "content_hash": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6", "chained_to": null, "at": "2026-08-13T05:18:30Z", "source": {"db": "fabric.db", "table": "receipts", "id": "agentguard-213-research-episode-receipt-1"}}, {"id": "agentguard-213-research-episode-recorded", "kind": "event", "actor": "claude-code", "effect_class": "content.publish_draft", "status": "complete", "mission": "agentguard-213-research-episode", "room": "room-agentguard-213-research-episode", "at": "2026-08-13T05:18:30Z", "source": {"db": "fabric.db", "table": "events", "id": "agentguard-213-research-episode-recorded"}}, {"id": "hqq-claim-invalidation-episode-receipt-1", "kind": "receipt", "subject_kind": "mission", "subject_id": "hqq-claim-invalidation-episode", "content_hash": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a", "chained_to": null, "at": "2026-08-13T05:18:30Z", "source": {"db": "fabric.db", "table": "receipts", "id": "hqq-claim-invalidation-episode-receipt-1"}}, {"id": "hqq-claim-invalidation-episode-recorded", "kind": "event", "actor": "claude-code", "effect_class": "content.publish_draft", "status": "complete", "mission": "hqq-claim-invalidation-episode", "room": "room-hqq-claim-invalidation-episode", "at": "2026-08-13T05:18:30Z", "source": {"db": "fabric.db", "table": "events", "id": "hqq-claim-invalidation-episode-recorded"}}], "foundations": [{"id": "foundation-artifacts", "label": "artifacts", "kind": "artifact", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/artifacts", "authority_class": "content-addressed", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "artifacts"}}, {"id": "foundation-generated", "label": "generated", "kind": "generated", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/generated", "authority_class": "fabric-core", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "generated"}}, {"id": "foundation-historical-archive", "label": "historical-archive", "kind": "archive", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/historical-archive", "authority_class": "retention-policy", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "historical-archive"}}, {"id": "foundation-historical-laboratory", "label": "historical-laboratory", "kind": "source", "locator": "/Users/nickgonzales/Documents/Bonfyre/.", "authority_class": "frozen-history", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-only-by-policy", "source": {"db": "fabric.db", "table": "roots", "id": "historical-laboratory"}}, {"id": "foundation-model-vault", "label": "model-vault", "kind": "model", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/model-vault", "authority_class": "model-plane", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "model-vault"}}, {"id": "foundation-native-engine", "label": "native-engine", "kind": "source", "locator": "/Users/nickgonzales/Documents/Bonfyre/engine", "authority_class": "native-fabric", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "native-engine"}}, {"id": "foundation-provider-runtime", "label": "provider-runtime", "kind": "provider", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/provider-runtime", "authority_class": "runtime-image", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "provider-runtime"}}, {"id": "foundation-runtime-state", "label": "runtime-state", "kind": "state", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre", "authority_class": "fabric-core", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "runtime-state"}}, {"id": "foundation-secrets", "label": "secrets", "kind": "secret", "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/secrets", "authority_class": "isolated-credentials", "durability": "durable", "trust_level": "local", "sensitivity": "standard", "access_mode": "read-write", "source": {"db": "fabric.db", "table": "roots", "id": "secrets"}}], "workboard": [{"status": "rejected", "count": 24, "face_value": 22240.0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "submitted", "count": 21, "face_value": 0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "blocked", "count": 20, "face_value": 67450.0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "completed", "count": 10, "face_value": 0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "delivered", "count": 7, "face_value": 25750.0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "published", "count": 7, "face_value": 0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "lost", "count": 2, "face_value": 3000.0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "packaged", "count": 1, "face_value": 0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}, {"status": "qualified", "count": 1, "face_value": 0, "realized_value": 0, "source": {"db": "capital.db", "table": "capital_actions", "group_by": "status"}}], "embodiment_profiles": {"research-room": {"canonical_kind": "Mission", "spatial_forms": ["mission-wall", "workshop", "study"], "interaction_ports": [{"port": "enter", "intent": "projection", "verb": "walk"}, {"port": "inspect", "intent": "projection", "verb": "look"}, {"port": "assign-work", "intent": "work", "verb": "work"}], "visual_weight": 1.0, "attention_weight": 0.8, "audio_signature": "mechanical-hum", "narration_policy": "on-enter", "surface_fallback": "mission detail surface"}, "document": {"canonical_kind": "Artifact", "spatial_forms": ["desk-paper", "pinned-note", "filed-folder"], "interaction_ports": [{"port": "read", "intent": "projection", "verb": "look"}, {"port": "place-on-desk", "intent": "attachment", "verb": "place"}, {"port": "file-to-ledger", "intent": "authority", "verb": "give"}], "visual_weight": 0.5, "attention_weight": 0.4, "audio_signature": "paper-rustle", "narration_policy": "on-change", "surface_fallback": "artifact digest view"}, "wiki-page": {"canonical_kind": "KnowledgeNode", "spatial_forms": ["corkboard", "wall-plaque", "open-book"], "interaction_ports": [{"port": "read", "intent": "projection", "verb": "look"}, {"port": "link-to", "intent": "attachment", "verb": "place"}, {"port": "publish", "intent": "authority", "verb": "give"}], "visual_weight": 0.6, "attention_weight": 0.6, "audio_signature": "paper-rustle", "narration_policy": "on-change", "surface_fallback": "wiki page"}, "lesson-board": {"canonical_kind": "Primitive", "spatial_forms": ["bookcase", "lectern", "teaching-board"], "interaction_ports": [{"port": "study", "intent": "projection", "verb": "look"}, {"port": "cite", "intent": "attachment", "verb": "place"}], "visual_weight": 0.7, "attention_weight": 0.5, "audio_signature": "paper-rustle", "narration_policy": "on-change", "surface_fallback": "LMS lesson"}, "gate": {"canonical_kind": "HumanGate", "spatial_forms": ["road-gate", "turnstile", "sealed-door"], "interaction_ports": [{"port": "inspect", "intent": "projection", "verb": "look"}, {"port": "request-open", "intent": "work", "verb": "speak"}, {"port": "mark-cleared", "intent": "authority", "verb": "give"}], "visual_weight": 0.9, "attention_weight": 1.0, "audio_signature": "radio-static", "narration_policy": "always", "surface_fallback": "gate checklist"}, "stall": {"canonical_kind": "Offer", "spatial_forms": ["market-stall", "notice-board", "shopfront"], "interaction_ports": [{"port": "inspect", "intent": "projection", "verb": "look"}, {"port": "run-experiment", "intent": "work", "verb": "work"}, {"port": "record-sale", "intent": "authority", "verb": "give"}], "visual_weight": 0.8, "attention_weight": 0.7, "audio_signature": "cash-register", "narration_policy": "on-change", "surface_fallback": "offer record"}, "notices": {"canonical_kind": "EvidenceGraph", "spatial_forms": ["investigation-board", "archive-room"], "interaction_ports": [{"port": "read", "intent": "projection", "verb": "look"}, {"port": "pin-claim", "intent": "attachment", "verb": "place"}, {"port": "invalidate", "intent": "authority", "verb": "give"}], "visual_weight": 0.9, "attention_weight": 0.9, "audio_signature": "radio-static", "narration_policy": "always", "surface_fallback": "evidence ledger"}, "monument": {"canonical_kind": "Learning", "spatial_forms": ["standing-stone", "plaque", "landmark"], "interaction_ports": [{"port": "remember", "intent": "projection", "verb": "remember"}], "visual_weight": 0.7, "attention_weight": 0.3, "audio_signature": "none", "narration_policy": "on-enter", "surface_fallback": "learning ledger entry"}, "workboard": {"canonical_kind": "WorkGraph", "spatial_forms": ["mission-wall", "assembly-line", "path"], "interaction_ports": [{"port": "review", "intent": "projection", "verb": "look"}, {"port": "take-work", "intent": "work", "verb": "work"}], "visual_weight": 1.0, "attention_weight": 0.9, "audio_signature": "mechanical-hum", "narration_policy": "always", "surface_fallback": "capital action list"}, "obelisk": {"canonical_kind": "ReceiptChain", "spatial_forms": ["obelisk", "ledger-column"], "interaction_ports": [{"port": "replay", "intent": "projection", "verb": "remember"}], "visual_weight": 0.9, "attention_weight": 0.4, "audio_signature": "distant-bell", "narration_policy": "on-change", "surface_fallback": "receipt replay"}, "foundation": {"canonical_kind": "StorageRoot", "spatial_forms": ["foundation-stone", "cellar-door"], "interaction_ports": [{"port": "inspect", "intent": "projection", "verb": "look"}], "visual_weight": 0.4, "attention_weight": 0.2, "audio_signature": "none", "narration_policy": "never", "surface_fallback": "root registry"}, "character": {"canonical_kind": "Actor", "spatial_forms": ["resident", "visiting-avatar", "portrait", "booth"], "interaction_ports": [{"port": "talk", "intent": "projection", "verb": "speak"}, {"port": "invite", "intent": "work", "verb": "invite"}, {"port": "grant-passport", "intent": "authority", "verb": "give"}], "visual_weight": 0.8, "attention_weight": 0.9, "audio_signature": "none", "narration_policy": "on-change", "surface_fallback": "relationship record"}}, "zones": [{"id": "zone-work", "label": "Research Wing", "class": "work", "contains": ["room-bernstein-3616-research-episode", "room-agentguard-213-research-episode", "room-hqq-claim-invalidation-episode"], "federation_boundary": {"discoverable": false, "visible_to": ["owner"], "copyable": false, "referenceable": true, "actionable_by": ["owner"], "requires_approval": ["publish", "grant-passport"]}, "reason": "3 content genomes still held/draft in capital.db", "source": {"db": "capital.db", "table": "content_genomes", "group_by": "status"}}, {"id": "zone-public", "label": "Market Row & Gate Road", "class": "public", "contains": ["stall-*", "gate-*"], "federation_boundary": {"discoverable": true, "visible_to": ["owner", "visitor"], "copyable": false, "referenceable": true, "actionable_by": ["owner"], "requires_approval": ["record-sale", "mark-cleared"]}, "reason": "offers and human gates already reference external parties", "source": {"db": "capital.db", "table": "offers"}}, {"id": "zone-shared", "label": "Civic Square", "class": "shared", "contains": ["notice-board", "work-board", "timeline-obelisk", "monument-*"], "federation_boundary": {"discoverable": true, "visible_to": ["owner", "visitor"], "copyable": true, "referenceable": true, "actionable_by": ["owner"], "requires_approval": ["invalidate"]}, "reason": "0 wiki pages published; evidence board is citable", "source": {"db": "bonfyre_cms.db", "table": "wiki_page"}}, {"id": "zone-private", "label": "Foundation Yard", "class": "private", "contains": ["foundation-*"], "federation_boundary": {"discoverable": false, "visible_to": ["owner"], "copyable": false, "referenceable": false, "actionable_by": ["owner"], "requires_approval": ["inspect"]}, "reason": "storage roots carry sensitivity and access_mode from fabric.db", "source": {"db": "fabric.db", "table": "roots"}}], "landmarks": [{"id": "landmark-1", "label": "bernstein-identity-continuity", "tier": "landmark", "placement": "permanent", "importance": 8, "evidence_count": 3, "episode_count": 2, "status": "held", "room": "room-bernstein-3616-research-episode", "source": {"db": "capital.db", "table": "content_genomes", "id": 1}}, {"id": "landmark-2", "label": "agentguard-dependency-closure", "tier": "landmark", "placement": "permanent", "importance": 6, "evidence_count": 2, "episode_count": 2, "status": "draft", "room": "room-agentguard-213-research-episode", "source": {"db": "capital.db", "table": "content_genomes", "id": 2}}, {"id": "landmark-3", "label": "hqq-claim-invalidation", "tier": "wall", "placement": "room-wall", "importance": 4, "evidence_count": 2, "episode_count": 0, "status": "draft", "room": "room-hqq-claim-invalidation-episode", "source": {"db": "capital.db", "table": "content_genomes", "id": 3}}], "latent_compositions": [{"id": "latent-publish-2", "kind": "door", "composition": "ContentGenome + verified Evidence -> publishable article", "label": "publish: agentguard-dependency-closure", "blocked_by": "Wait until at least one of #214/#216/#217/#218 merges, or #213 moves off draft -- currently mid-review, story isn't resolved yet.", "verified_evidence": 2, "room": "room-agentguard-213-research-episode", "source": {"db": "capital.db", "table": "content_genomes", "id": 2}}, {"id": "latent-publish-3", "kind": "door", "composition": "ContentGenome + verified Evidence -> publishable article", "label": "publish: hqq-claim-invalidation", "blocked_by": "No blocker -- this episode is already resolved (correction published, PR #1 merged on bonfyre-fpq-benchmark). Ready to move from draft to ready when article is actually written.", "verified_evidence": 2, "room": "room-hqq-claim-invalidation-episode", "source": {"db": "capital.db", "table": "content_genomes", "id": 3}}, {"id": "latent-publish-1", "kind": "door", "composition": "ContentGenome + verified Evidence -> publishable article", "label": "publish: bernstein-identity-continuity", "blocked_by": "Hold until PR #3695 merges (per CURRENT_DIRECTIVE.md). Draft may be written now; do not publish before merge.", "verified_evidence": 3, "room": "room-bernstein-3616-research-episode", "source": {"db": "capital.db", "table": "content_genomes", "id": 1}}, {"id": "latent-offer-1", "kind": "trail", "composition": "Relationship(trusted) + Asset -> qualified paid ask", "label": "unopened path: chernistry", "relationship_state": "TRUSTED_INTERACTION", "ecosystem": "agent evidence / SARIF / provenance", "source": {"db": "capital.db", "table": "relationships", "id": 1}}, {"id": "latent-offer-2", "kind": "trail", "composition": "Relationship(trusted) + Asset -> qualified paid ask", "label": "unopened path: richinmrudul", "relationship_state": "TECHNICAL_ENGAGEMENT", "ecosystem": "agent evidence / SARIF / provenance", "source": {"db": "capital.db", "table": "relationships", "id": 2}}, {"id": "latent-gate-6", "kind": "door", "composition": "HumanGate + completed prerequisite -> openable", "label": "openable: Execute Rank 1 then Rank 2 in HUMAN_GATES.md: establish a truthfully controlled domain and monitored domain mailbox, verify send/receive, then submit only truthfully unlocked Anyscale, Modal, Fireworks, and Cloudflare paths.", "opportunity": "Ranked owner session: domain/mailbox, unlocked asks and credits, funding send, distribution, sell-side enrollment", "source": {"db": "capital.db", "table": "human_gates", "id": 6}}], "narration": [{"at": "2026-08-13T05:18:30Z", "channel": "work", "text": "claude-code content.publish_draft on agentguard-213-research-episode (complete)", "room": "room-agentguard-213-research-episode", "source": {"db": "fabric.db", "table": "events"}}, {"at": "2026-08-13T05:18:30Z", "channel": "work", "text": "claude-code content.publish_draft on hqq-claim-invalidation-episode (complete)", "room": "room-hqq-claim-invalidation-episode", "source": {"db": "fabric.db", "table": "events"}}, {"at": "2026-08-12T10:54:47Z", "channel": "work", "text": "claude-code content.publish_hold on bernstein-3616-research-episode (complete)", "room": "room-bernstein-3616-research-episode", "source": {"db": "fabric.db", "table": "events"}}, {"at": "2026-08-12 22:10:00", "channel": "relationship", "text": "outbound proposal: Replied differentiating scope (deepeval-native metric contract vs. Amberfork standalone tool) and asked to compare alignment approaches before proceeding.", "source": {"db": "capital.db", "table": "relationship_episodes"}}, {"at": "2026-08-12 22:10:00", "channel": "relationship", "text": "outbound proposal: Replied accepting the offer to help, scoped to fixture design specifically.", "source": {"db": "capital.db", "table": "relationship_episodes"}}, {"at": "2026-08-12 21:52:00", "channel": "relationship", "text": "outbound collaboration: Flipped PR #3695 out of draft to ready-for-review, acting on the reviewer's explicit invitation.", "source": {"db": "capital.db", "table": "relationship_episodes"}}, {"at": "2026-08-12 21:30:00", "channel": "relationship", "text": "outbound correction: Fixed all 3 requested-change items same night: sanitized diagnostics to stop echoing untrusted content, added exact-boundary/one-above/fake-canary regression coverage, rebased onto current main. Pushed and posted summary comment.", "source": {"db": "capital.db", "table": "relationship_episodes"}}, {"at": "2026-08-12 18:34:15", "channel": "relationship", "text": "inbound introduction: Melvin0070 introduced Amberfork, a related/possibly overlapping open-source project, into the same thread.", "source": {"db": "capital.db", "table": "relationship_episodes"}}, {"at": "2026-08-12 16:18:39", "channel": "relationship", "text": "inbound reply: rajeshl8 endorsed the trace-divergence metric proposal, offered to help implement.", "source": {"db": "capital.db", "table": "relationship_episodes"}}], "semantic_gravity": [{"district": "research", "weight": 10, "members": 3, "share": 0.1887}, {"district": "gates", "weight": 6, "members": 6, "share": 0.1132}, {"district": "market", "weight": 8, "members": 4, "share": 0.1509}, {"district": "civic", "weight": 20, "members": 5, "share": 0.3774}, {"district": "foundation", "weight": 9, "members": 9, "share": 0.1698}]};
+
+/* -----------------------------------------------------------------
+   Hand-rolled top-down engine, no external assets/CDNs. Follows the
+   interaction shape of github.com/nmatter1/smallville (Generative
+   Agents for video games): a scrolling world larger than the
+   viewport, a camera that follows the player, Y-sorted depth so
+   sprites overlap correctly, residents that carry an always-visible
+   name+status tag, and an RPG-style dialog box on interact. Their
+   LimeZu tileset is licensed art and isn't reproduced here -- every
+   tile and sprite below is drawn procedurally.
+-------------------------------------------------------------------- */
+
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const VW = canvas.width, VH = canvas.height;
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name.replace('var(', '').replace(')', '')).trim() || name;
+}
+
+// ---------------------------------------------------------------
+// World layout: buildings spaced out like town lots along a main
+// path, with a plaza in the middle. World is bigger than the
+// viewport so the camera has room to follow the player.
+// ---------------------------------------------------------------
+const WORLD_W = 1700, WORLD_H = 1320;
+// Civic district band Y positions, below the research wing lots
+const Y_GATES = 560, Y_MARKET = 760, Y_CIVIC = 980, Y_FOUNDATION = 1180;
+// TOP has to clear the full structure above the floor (WALL_H + ROOF_RISE
+// + chimney), otherwise the roof peak renders at a negative world Y and
+// gets clipped off the top of the world by the camera clamp.
+const BUILD_W = 300, BUILD_H = 230, LOT_GAP = 160, TOP = 230;
+
+const rooms = SCENE.rooms.map((r, i) => ({
+  ...r,
+  x: 90 + i * (BUILD_W + LOT_GAP),
+  y: TOP,
+  w: BUILD_W,
+  h: BUILD_H,
+}));
+const roomById = Object.fromEntries(rooms.map(r => [r.id, r]));
+
+const STATE_KEY = { held: 'held', locked: 'held', draft: 'draft', 'under-construction': 'draft' };
+function stateColor(state) { return cssVar('var(--' + (STATE_KEY[state] || 'draft') + ')'); }
+const REL_KEY = { TRUSTED_INTERACTION: 'trusted', TECHNICAL_ENGAGEMENT: 'engaged', RESPONDED: 'responded' };
+function relColor(state) { return cssVar('var(--' + (REL_KEY[state] || 'responded') + ')'); }
+
+function doorPos(room) { return { x: room.x + room.w / 2, y: room.y + room.h + 6 }; }
+
+// deterministic pseudo-random so decoration doesn't flicker per frame
+function seeded(seed) {
+  let s = seed;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+}
+
+// ground decoration: trees/bushes/flowers scattered around lots, seeded once
+const rng = seeded(42);
+const decorations = [];
+for (let i = 0; i < 90; i++) {
+  const x = rng() * WORLD_W, y = 40 + rng() * (WORLD_H - 80);
+  // keep clear of building interiors
+  const inBuilding = rooms.some(r => x > r.x - 30 && x < r.x + r.w + 30 && y > r.y - 40 && y < r.y + r.h + 30);
+  if (inBuilding) continue;
+  const kind = rng() < 0.18 ? 'lamp' : rng() < 0.55 ? 'tree' : rng() < 0.8 ? 'bush' : 'flower';
+  decorations.push({ x, y, kind, seed: rng() });
+}
+
+// ---------------------------------------------------------------
+// Entities
+// ---------------------------------------------------------------
+let entities = [];
+
+const player = {
+  x: 90 + BUILD_W / 2, y: TOP + BUILD_H + 140,
+  w: 15, h: 26, speed: 2.6, dir: 'down', frame: 0, moving: false,
+  hair: '#3c2a1e', shirt: cssVar('var(--accent)'), skin: '#f0c9a0',
+};
+
+SCENE.characters.forEach((ch, i) => {
+  const room = roomById[ch.home_room];
+  const base = room
+    ? { x: room.x + 60 + (i % 2) * 130, y: room.y + room.h - 50 }
+    : { x: WORLD_W - 160 - i * 60, y: TOP - 60 };
+  const palette = [
+    { hair: '#7a3b2e', shirt: '#4c7d6b' },
+    { hair: '#caa24a', shirt: '#5a6ea8' },
+    { hair: '#2b2320', shirt: '#a8674c' },
+    { hair: '#8a5a3c', shirt: '#7a5a9c' },
+  ][i % 4];
+  entities.push({
+    id: ch.id, kind: 'character',
+    x: base.x, y: base.y, homeX: base.x, homeY: base.y,
+    w: 15, h: 26,
+    label: ch.label, sub: ch.relationship_state,
+    color: relColor(ch.relationship_state),
+    hair: palette.hair, shirt: palette.shirt, skin: '#f0c9a0',
+    wanderPhase: rng() * Math.PI * 2,
+    data: ch,
+  });
+});
+
+// ---------------------------------------------------------------
+// Civic district: the rest of real Bonfyre state, given the spatial
+// form its semantics already imply. human_gates are literal gates on
+// the road, evidence_ledger is a notice board, learning_ledger are
+// monuments, offers/assets are market stalls, fabric roots are
+// foundation stones, capital_actions rolls up onto the work board,
+// and the receipt/event chain is the timeline obelisk. Every one is
+// a real row; nothing is scenery.
+// ---------------------------------------------------------------
+function civic(id, sub, x, y, w, h, label, note, data) {
+  entities.push({ id, kind: 'civic', civic: sub, x, y, w, h, label, sub: note, data });
+}
+
+(SCENE.gates || []).forEach((g, i) => {
+  civic(g.id, 'gate', 170 + i * 250, Y_GATES, 54, 40, g.label,
+    g.status + ' · ' + g.gate_class, g);
+});
+(SCENE.stalls || []).forEach((s, i) => {
+  civic(s.id, 'stall', 200 + i * 250, Y_MARKET, 60, 42, s.label,
+    s.status + (s.asking_price ? ' · ' + s.currency + ' ' + s.asking_price : ''), s);
+});
+if ((SCENE.notices || []).length) {
+  civic('notice-board', 'notices', 1290, Y_MARKET, 76, 48, 'Evidence Board',
+    (SCENE.notices || []).length + ' claims on the ledger', { notices: SCENE.notices });
+}
+(SCENE.monuments || []).forEach((m, i) => {
+  civic(m.id, 'monument', 980 + i * 130, Y_CIVIC, 34, 44, m.learning_type,
+    m.adopted ? 'adopted' : 'recorded', m);
+});
+if ((SCENE.workboard || []).length) {
+  civic('work-board', 'workboard', 300, Y_CIVIC, 82, 50, 'Work Board',
+    (SCENE.workboard || []).reduce((a, r) => a + r.count, 0) + ' capital actions', { workboard: SCENE.workboard });
+}
+if ((SCENE.timeline || []).length) {
+  civic('timeline-obelisk', 'obelisk', 660, Y_CIVIC, 34, 56, 'Receipt Chain',
+    (SCENE.timeline || []).length + ' chained entries', { timeline: SCENE.timeline });
+}
+(SCENE.foundations || []).forEach((f, i) => {
+  civic(f.id, 'foundation', 150 + i * 170, Y_FOUNDATION, 40, 26, f.kind,
+    f.durability + ' · ' + f.trust_level, f);
+});
+
+const FURNITURE = {
+  document: { icon: 'desk' },
+  'wiki-page': { icon: 'board' },
+  'lesson-board': { icon: 'shelf' },
+};
+SCENE.objects.forEach((obj, i) => {
+  const room = roomById[obj.room];
+  const pos = room
+    ? { x: room.x + 46 + (i % 3) * 90, y: room.y + 56 + Math.floor(i / 3) * 60 }
+    : { x: 120 + i * 60, y: 60 };
+  entities.push({
+    id: obj.id, kind: 'object',
+    x: pos.x, y: pos.y, w: 22, h: 20,
+    label: obj.label,
+    furniture: FURNITURE[obj.kind]?.icon || 'crate',
+    data: obj,
+  });
+});
+
+// ---------------------------------------------------------------
+// Input
+// ---------------------------------------------------------------
+const keys = {};
+window.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  keys[k] = true;
+  // review gate takes priority over everything -- an authoritative
+  // intent must be answered before the world accepts other input
+  if (reviewGate) {
+    if (k === 'y') confirmReviewGate(true);
+    if (k === 'n' || k === 'escape') confirmReviewGate(false);
+    e.preventDefault();
+    return;
+  }
+  if (k === 'e') tryInteract();
+  if (k === 'v' && hoverTarget) cycleForm(hoverTarget);          // Show as
+  if (k === 'f') togglePlace();                                  // place / Use with
+  if (k === 'n' && lastZone) narrateZone(lastZone);              // narrate
+  if (k === 'm') AUDIO.start();                                  // acoustic grammar
+  if (k === 'tab') { showLog = !showLog; e.preventDefault(); }
+  if (k === 'z') showZones = !showZones;
+  // 1..3 invoke the hovered object's real interaction ports
+  if (hoverTarget && ['1', '2', '3'].includes(k)) {
+    const p = portsFor(hoverTarget)[Number(k) - 1];
+    if (p) invokePort(hoverTarget, p);
+  }
+  if (['arrowup','arrowdown','arrowleft','arrowright'].includes(k)) e.preventDefault();
+});
+let showLog = false, showZones = true;
+window.addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+canvas.addEventListener('click', e => {
+  canvas.focus();
+  const rect = canvas.getBoundingClientRect();
+  const scale = VW / rect.width;
+  const mx = (e.clientX - rect.left) * scale + camera.x, my = (e.clientY - rect.top) * scale + camera.y;
+  const hit = entities.find(en => Math.hypot(en.x - mx, en.y - my) < 26);
+  if (hit) openDialog(hit);
+  else if (dialogOpen) closeDialog();
+});
+canvas.setAttribute('tabindex', '0');
+
+// ---------------------------------------------------------------
+// Collision
+// ---------------------------------------------------------------
+function collides(nx, ny) {
+  for (const room of rooms) {
+    const inX = nx > room.x - 6 && nx < room.x + room.w + 6;
+    const inY = ny > room.y - 6 && ny < room.y + room.h + 6;
+    if (!inX || !inY) continue;
+    const door = doorPos(room);
+    const nearDoor = Math.abs(nx - door.x) < 26 && ny > room.y + room.h - 34;
+    if (nearDoor) continue;
+    return true;
+  }
+  return nx < 20 || nx > WORLD_W - 20 || ny < 30 || ny > WORLD_H - 20;
+}
+
+// ---------------------------------------------------------------
+// Dialog / interaction
+// ---------------------------------------------------------------
+let dialogOpen = null, hoverTarget = null;
+function openDialog(entity) { dialogOpen = entity; }
+function closeDialog() { dialogOpen = null; }
+function tryInteract() {
+  if (dialogOpen) { closeDialog(); return; }
+  if (hoverTarget) openDialog(hoverTarget);
+}
+function nearestEntity() {
+  let best = null, bestD = 40;
+  for (const en of entities) {
+    const d = Math.hypot(en.x - player.x, en.y - player.y);
+    if (d < bestD) { best = en; bestD = d; }
+  }
+  for (const room of rooms) {
+    const door = doorPos(room);
+    const d = Math.hypot(door.x - player.x, door.y - player.y);
+    if (d < 34) { best = { kind: 'room', label: room.label, data: room, x: room.x + room.w / 2, y: room.y + room.h / 2 }; bestD = d; }
+  }
+  return best;
+}
+
+// ---------------------------------------------------------------
+// Camera
+// ---------------------------------------------------------------
+const camera = { x: 0, y: 0 };
+function updateCamera() {
+  const tx = Math.max(0, Math.min(WORLD_W - VW, player.x - VW / 2));
+  const ty = Math.max(0, Math.min(WORLD_H - VH, player.y - VH / 2));
+  camera.x += (tx - camera.x) * 0.14;
+  camera.y += (ty - camera.y) * 0.14;
+}
+
+// ===============================================================
+// WORLD TIME. "Time makes the world alive without needing AI."
+// Driven by the real wall clock plus the real timestamps already in
+// the scene -- not a scripted day/night cycle.
+// ===============================================================
+const PHASES = [
+  { until: 5,  name: 'night',     tint: 'rgba(18,26,60,0.52)', lamps: true },
+  { until: 8,  name: 'dawn',      tint: 'rgba(190,120,80,0.20)', lamps: true },
+  { until: 12, name: 'morning',   tint: 'rgba(255,240,200,0.06)', lamps: false },
+  { until: 17, name: 'afternoon', tint: 'rgba(0,0,0,0)', lamps: false },
+  { until: 20, name: 'evening',   tint: 'rgba(200,110,60,0.22)', lamps: true },
+  { until: 24, name: 'night',     tint: 'rgba(18,26,60,0.52)', lamps: true },
+];
+function worldPhase() {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  return PHASES.find(p => h < p.until) || PHASES[PHASES.length - 1];
+}
+
+// ===============================================================
+// ACOUSTIC GRAMMAR. Sound as a real computational dimension, not
+// gamification noise: each signature means one specific system
+// state, and it only plays when you are actually near the thing
+// whose state it reports. All procedural (WebAudio), no assets.
+// ===============================================================
+const AUDIO = {
+  ctx: null, on: false, nodes: {},
+  legend: {
+    'mechanical-hum': 'local work running',
+    'cash-register': 'settled economic event',
+    'distant-bell': 'WorkGraph completion',
+    'radio-static': 'unresolved external evidence',
+    'paper-rustle': 'documents at hand',
+    'fireplace': 'healthy idle system',
+  },
+  start() {
+    if (this.ctx) { this.on = !this.on; if (this.master) this.master.gain.value = this.on ? 0.5 : 0; return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+    this.master = this.ctx.createGain();
+    this.master.gain.value = 0.5;
+    this.master.connect(this.ctx.destination);
+    this.on = true;
+    // continuous bed: fireplace crackle = healthy idle system
+    const noise = this.ctx.createBufferSource();
+    const buf = this.ctx.createBuffer(1, this.ctx.sampleRate * 2, this.ctx.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(Math.random(), 3);
+    noise.buffer = buf; noise.loop = true;
+    const lp = this.ctx.createBiquadFilter();
+    lp.type = 'lowpass'; lp.frequency.value = 620;
+    this.bed = this.ctx.createGain(); this.bed.gain.value = 0.06;
+    noise.connect(lp); lp.connect(this.bed); this.bed.connect(this.master);
+    noise.start();
+    // proximity hum = a system actually running near you
+    const osc = this.ctx.createOscillator();
+    osc.type = 'sawtooth'; osc.frequency.value = 58;
+    const hlp = this.ctx.createBiquadFilter();
+    hlp.type = 'lowpass'; hlp.frequency.value = 240;
+    this.hum = this.ctx.createGain(); this.hum.gain.value = 0;
+    osc.connect(hlp); hlp.connect(this.hum); this.hum.connect(this.master);
+    osc.start();
+    // static = unresolved external evidence nearby
+    const sn = this.ctx.createBufferSource();
+    sn.buffer = buf; sn.loop = true;
+    const hp = this.ctx.createBiquadFilter();
+    hp.type = 'highpass'; hp.frequency.value = 2600;
+    this.static = this.ctx.createGain(); this.static.gain.value = 0;
+    sn.connect(hp); hp.connect(this.static); this.static.connect(this.master);
+    sn.start();
+  },
+  // one-shots
+  ping(kind) {
+    if (!this.ctx || !this.on) return;
+    const t = this.ctx.now = this.ctx.currentTime;
+    const o = this.ctx.createOscillator(), g = this.ctx.createGain();
+    o.connect(g); g.connect(this.master);
+    if (kind === 'distant-bell') {
+      o.type = 'sine'; o.frequency.setValueAtTime(880, t);
+      o.frequency.exponentialRampToValueAtTime(440, t + 1.2);
+      g.gain.setValueAtTime(0.22, t); g.gain.exponentialRampToValueAtTime(0.001, t + 1.4);
+      o.start(t); o.stop(t + 1.5);
+    } else if (kind === 'cash-register') {
+      o.type = 'square'; o.frequency.setValueAtTime(1400, t);
+      g.gain.setValueAtTime(0.10, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+      o.start(t); o.stop(t + 0.16);
+    } else if (kind === 'mailbox-clunk') {
+      o.type = 'triangle'; o.frequency.setValueAtTime(150, t);
+      o.frequency.exponentialRampToValueAtTime(60, t + 0.18);
+      g.gain.setValueAtTime(0.24, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.22);
+      o.start(t); o.stop(t + 0.24);
+    } else {
+      o.type = 'sine'; o.frequency.setValueAtTime(560, t);
+      g.gain.setValueAtTime(0.07, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+      o.start(t); o.stop(t + 0.22);
+    }
+  },
+  // continuous signatures follow proximity to the real thing
+  updateProximity(near) {
+    if (!this.ctx || !this.on) return;
+    const sig = near ? (PROFILES[near.civic || near.kind] || {}).audio_signature : null;
+    this.hum.gain.value += (((sig === 'mechanical-hum') ? 0.05 : 0) - this.hum.gain.value) * 0.08;
+    this.static.gain.value += (((sig === 'radio-static') ? 0.035 : 0) - this.static.gain.value) * 0.08;
+  },
+};
+
+// ===============================================================
+// EMBODIMENT. An object does not have "a sprite" -- it has legal
+// spatial FORMS and the world picks one. "Show as" cycles it. This
+// is a PROJECTION change: it never touches the underlying record.
+// ===============================================================
+const PROFILES = SCENE.embodiment_profiles || {};
+function profileFor(en) { return PROFILES[en.civic || en.kind] || null; }
+const formChoice = {};   // entity id -> index into spatial_forms
+function currentForm(en) {
+  const p = profileFor(en);
+  if (!p) return null;
+  return p.spatial_forms[(formChoice[en.id] || 0) % p.spatial_forms.length];
+}
+function cycleForm(en) {
+  const p = profileFor(en);
+  if (!p || p.spatial_forms.length < 2) return null;
+  formChoice[en.id] = ((formChoice[en.id] || 0) + 1) % p.spatial_forms.length;
+  logAct('projection', `Show as — ${en.label} now embodied as "${currentForm(en)}" (projection only; record unchanged)`);
+  AUDIO.ping('paper-rustle');
+  return currentForm(en);
+}
+
+// ===============================================================
+// INTENT CLASSIFICATION + REVIEW GATE. The load-bearing safety rule
+// from the vision doc: a spatial action is an INTENT SIGNAL, never
+// an automatic authoritative mutation. Every action resolves to one
+// of five classes, and `authority` can never execute from the world
+// -- it can only open a ReviewGate that a human confirms.
+// ===============================================================
+const INTENT_CLASS = {
+  decorative: { color: '#9aa79a', label: 'decorative', note: 'personal arrangement — never leaves the habitat' },
+  projection: { color: '#8fb4d0', label: 'projection', note: 'changes how it is shown, not what it is' },
+  attachment: { color: '#d0c48a', label: 'attachment', note: 'proposes a candidate relation — not yet canonical' },
+  work:       { color: '#d0a84a', label: 'work intent', note: 'opens a WorkGraph intent for review' },
+  authority:  { color: '#c88a8a', label: 'AUTHORITATIVE', note: 'would mutate real state — requires explicit confirmation' },
+};
+const actLog = [];
+function logAct(cls, text) {
+  actLog.unshift({ cls, text, at: new Date().toLocaleTimeString() });
+  if (actLog.length > 7) actLog.pop();
+}
+let reviewGate = null;   // { entity, port, intent }
+let carrying = null;     // entity currently picked up ("place" verb)
+
+function portsFor(en) { return (profileFor(en) || {}).interaction_ports || []; }
+
+function invokePort(en, port) {
+  const cls = port.intent;
+  if (cls === 'authority') {
+    // NEVER executes from the world. Opens a gate a human must confirm.
+    reviewGate = { entity: en, port };
+    AUDIO.ping('mailbox-clunk');
+    return;
+  }
+  if (cls === 'projection') { cycleForm(en); return; }
+  if (cls === 'attachment') {
+    logAct('attachment', `Candidate relation proposed: ${en.label} — "${port.port}". Not canonical until accepted.`);
+    AUDIO.ping('paper-rustle');
+    return;
+  }
+  if (cls === 'work') {
+    logAct('work', `WorkGraph intent opened: "${port.port}" on ${en.label}. Queued, not executed.`);
+    AUDIO.ping('distant-bell');
+    return;
+  }
+  logAct('decorative', `Arranged ${en.label}.`);
+}
+
+function confirmReviewGate(yes) {
+  if (!reviewGate) return;
+  const { entity, port } = reviewGate;
+  if (yes) {
+    // Even on confirm, the prototype records an INTENT. It does not
+    // write to capital.db/fabric.db -- the world is a projection, and
+    // projections do not own authoritative state.
+    logAct('authority', `CONFIRMED intent "${port.port}" on ${entity.label} — recorded for review, no ledger write from Habitat.`);
+    AUDIO.ping('cash-register');
+  } else {
+    logAct('authority', `Declined "${port.port}" on ${entity.label}. Nothing changed.`);
+  }
+  reviewGate = null;
+}
+
+// pick up / place: the embodied verb "place" compiles to `Add` or
+// `Use with` depending on what it lands on
+function togglePlace() {
+  if (carrying) {
+    const target = nearestEntity();
+    if (target && target !== carrying && target.kind !== 'room') {
+      logAct('attachment', `Use with — ${carrying.label} placed on ${target.label}. Candidate composition, awaiting acceptance.`);
+      AUDIO.ping('paper-rustle');
+    } else {
+      logAct('decorative', `Put down ${carrying.label}.`);
+    }
+    carrying = null;
+    return;
+  }
+  const t = hoverTarget;
+  if (t && (t.kind === 'object' || t.kind === 'civic')) {
+    carrying = t;
+    logAct('decorative', `Picked up ${t.label} — carrying is arrangement only.`);
+  }
+}
+
+// ===============================================================
+// NARRATION. BonfyreNarrate as world narrator: walking into a zone
+// gets you "what changed while you were away" compiled from real
+// timestamps, not a card list.
+// ===============================================================
+const NARRATION = SCENE.narration || [];
+let narrationLines = [], narrationUntil = 0, lastZone = null;
+function narrateZone(zone) {
+  const items = NARRATION.slice(0, 3);
+  narrationLines = [
+    `${zone.label} — ${items.length} things changed while you were away:`,
+    ...items.map(n => `  · ${n.text.length > 84 ? n.text.slice(0, 82) + '…' : n.text}`),
+  ];
+  narrationUntil = performance.now() + 7000;
+  AUDIO.ping('distant-bell');
+}
+
+// ===============================================================
+// ZONES + FEDERATION BOUNDARY. Real zones with real boundaries, so
+// the world shows what a visitor could and could not see.
+// ===============================================================
+const ZONES = SCENE.zones || [];
+const ZONE_BANDS = [
+  { id: 'zone-work',      y0: TOP - 120,      y1: TOP + BUILD_H + 60 },
+  { id: 'zone-public',    y0: Y_GATES - 120,  y1: Y_MARKET + 60 },
+  { id: 'zone-shared',    y0: Y_CIVIC - 120,  y1: Y_CIVIC + 60 },
+  { id: 'zone-private',   y0: Y_FOUNDATION - 90, y1: Y_FOUNDATION + 60 },
+];
+function zoneAt(y) {
+  const band = ZONE_BANDS.find(b => y >= b.y0 && y < b.y1);
+  return band ? ZONES.find(z => z.id === band.id) : null;
+}
+
+// ===============================================================
+// LATENT COMPOSITIONS. "Discovery as world growth" -- a door or
+// trail appears because a real composition already became valid,
+// never because something was invented to fill space.
+// ===============================================================
+const LATENT = SCENE.latent_compositions || [];
+LATENT.forEach((l, i) => {
+  const isDoor = l.kind === 'door';
+  entities.push({
+    id: l.id, kind: 'civic', civic: isDoor ? 'latent-door' : 'latent-trail',
+    x: 1420, y: (isDoor ? Y_GATES : Y_MARKET) + (i % 3) * 62 - 60,
+    w: 40, h: 46, label: l.label, sub: l.composition, data: l,
+  });
+});
+
+// ===============================================================
+// LANDMARKS. "The world remembers" -- importance decides whether a
+// thing sits on a shelf, moves to the wall, or becomes a permanent
+// landmark. Importance is computed from real evidence and episode
+// counts, not authored.
+// ===============================================================
+(SCENE.landmarks || []).forEach((l, i) => {
+  entities.push({
+    id: l.id, kind: 'civic', civic: 'landmark',
+    x: 760 + i * 120, y: Y_FOUNDATION - 150,
+    w: 36, h: 20 + l.importance * 5,
+    label: l.label, sub: `${l.tier} · importance ${l.importance}`, data: l,
+  });
+});
+
+// ---------------------------------------------------------------
+// Update
+// ---------------------------------------------------------------
+function update() {
+  let dx = 0, dy = 0;
+  if (keys['arrowup'] || keys['w']) dy -= 1;
+  if (keys['arrowdown'] || keys['s']) dy += 1;
+  if (keys['arrowleft'] || keys['a']) dx -= 1;
+  if (keys['arrowright'] || keys['d']) dx += 1;
+  player.moving = dx !== 0 || dy !== 0;
+  if (player.moving) {
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = player.x + (dx / len) * player.speed;
+    const ny = player.y + (dy / len) * player.speed;
+    if (Math.abs(dx) > Math.abs(dy)) player.dir = dx > 0 ? 'right' : 'left';
+    else if (dy !== 0) player.dir = dy > 0 ? 'down' : 'up';
+    if (!collides(nx, player.y)) player.x = nx;
+    if (!collides(player.x, ny)) player.y = ny;
+    player.frame += 0.2;
+  }
+
+  const t = performance.now() / 1000;
+  for (const en of entities) {
+    if (en.kind !== 'character') continue;
+    en.x = en.homeX + Math.sin(t * 0.5 + en.wanderPhase) * 14;
+    en.y = en.homeY + Math.cos(t * 0.35 + en.wanderPhase) * 6;
+  }
+
+  updateCamera();
+  hoverTarget = (dialogOpen || reviewGate) ? null : nearestEntity();
+
+  // zone entry narrates what actually changed
+  const z = zoneAt(player.y);
+  if (z && z !== lastZone) { lastZone = z; narrateZone(z); }
+  if (!z) lastZone = null;
+
+  AUDIO.updateProximity(hoverTarget);
+
+  // carried object follows the player -- arrangement only
+  if (carrying) { carrying.x = player.x + 14; carrying.y = player.y - 6; }
+
+  const ports = hoverTarget ? portsFor(hoverTarget) : [];
+  document.getElementById('hint').textContent = reviewGate
+    ? 'REVIEW GATE — Y to confirm, N to decline'
+    : dialogOpen ? 'E / click to close'
+    : carrying ? `carrying ${carrying.label} — F to place`
+    : hoverTarget
+      ? `${hoverTarget.label} — E inspect` + (ports.length ? ' · 1-3 act' : '') + ' · V show as · F pick up'
+      : 'WASD walk · N narrate · M sound · Tab log';
+  const phase = worldPhase();
+  document.getElementById('mini').textContent =
+    `${phase.name} · ` + (z ? `${z.label} [${z.class}]` : 'open ground') +
+    ` · ${entities.length} real objects`;
+}
+
+// ---------------------------------------------------------------
+// Draw: ground
+// ---------------------------------------------------------------
+function drawGround() {
+  ctx.fillStyle = '#3a6440';
+  ctx.fillRect(0, 0, WORLD_W, WORLD_H);
+  // grass tuft texture, seeded
+  const g = seeded(7);
+  ctx.fillStyle = '#356138';
+  for (let i = 0; i < 2200; i++) {
+    const x = g() * WORLD_W, y = g() * WORLD_H;
+    ctx.fillRect(x, y, 3, 2);
+  }
+  ctx.fillStyle = '#457048';
+  for (let i = 0; i < 1400; i++) {
+    const x = g() * WORLD_W, y = g() * WORLD_H;
+    ctx.fillRect(x, y, 2, 2);
+  }
+}
+
+function drawPaths() {
+  ctx.lineCap = 'round';
+  function pathStroke(from, to, width, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.bezierCurveTo(from.x, from.y + 60, to.x, to.y - 60, to.x, to.y);
+    ctx.stroke();
+  }
+  SCENE.paths.forEach(p => {
+    const a = roomById[p.from], b = roomById[p.to];
+    if (!a || !b) return;
+    const ad = doorPos(a), bd = doorPos(b);
+    pathStroke(ad, { x: bd.x, y: bd.y + 40 }, 22, '#8a7350');
+    pathStroke(ad, { x: bd.x, y: bd.y + 40 }, 16, '#a08a63');
+  });
+  // spawn path
+  ctx.strokeStyle = '#a08a63';
+  ctx.lineWidth = 16;
+  ctx.beginPath();
+  ctx.moveTo(player.x, player.y + 40);
+  ctx.lineTo(player.x, doorPos(rooms[0]).y);
+  ctx.stroke();
+}
+
+function drawDecorations(filterY) {
+  decorations.filter(d => Math.floor(d.y) === filterY || (filterY === undefined)).forEach(d => drawProp(d));
+}
+
+function drawProp(d) {
+  const s = 0.8 + d.seed * 0.5;
+  ctx.save();
+  ctx.translate(d.x, d.y);
+  ctx.scale(s, s);
+  if (d.kind === 'tree') {
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath(); ctx.ellipse(0, 6, 10, 3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#5a3d28';
+    ctx.fillRect(-3, -6, 6, 14);
+    ctx.fillStyle = '#2f6b3a';
+    ctx.beginPath(); ctx.arc(0, -16, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3c8248';
+    ctx.beginPath(); ctx.arc(-5, -20, 9, 0, Math.PI * 2); ctx.fill();
+  } else if (d.kind === 'bush') {
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    ctx.beginPath(); ctx.ellipse(0, 4, 9, 2.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#3c7a42';
+    ctx.beginPath(); ctx.arc(-4, 0, 6, 0, Math.PI * 2); ctx.arc(4, 0, 6, 0, Math.PI * 2); ctx.arc(0, -4, 6, 0, Math.PI * 2); ctx.fill();
+  } else if (d.kind === 'flower') {
+    const colors = ['#e0688a', '#e8c85f', '#8f7fe0'];
+    ctx.fillStyle = colors[Math.floor(d.seed * 3)];
+    for (let a = 0; a < 4; a++) {
+      ctx.beginPath();
+      ctx.arc(Math.cos(a * 1.57) * 2.4, Math.sin(a * 1.57) * 2.4, 2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#f4e07a';
+    ctx.beginPath(); ctx.arc(0, 0, 1.6, 0, Math.PI * 2); ctx.fill();
+  } else if (d.kind === 'lamp') {
+    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+    ctx.beginPath(); ctx.ellipse(0, 2, 5, 2, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#2c2620';
+    ctx.fillRect(-1.5, -22, 3, 24);
+    ctx.fillStyle = '#e8c85f';
+    ctx.beginPath(); ctx.arc(0, -25, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = 'rgba(232,200,95,0.25)';
+    ctx.beginPath(); ctx.arc(0, -25, 16, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Draw: buildings
+// ---------------------------------------------------------------
+// Wall height (the back wall's visible vertical face) -- this is the piece
+// that was missing for the oblique/dimetric look real 16-32bit-era top-down
+// RPGs use (Stardew Valley, RPG Maker VX, Secret of Mana): the roof and a
+// real, tall, textured wall face are one continuous structure, not a roof
+// icon floating over a flat blueprint with a thin line for a "wall."
+// Wall height must be a real fraction of the room depth to read as a
+// structure. At WALL_H=30 against a 230px-deep floor the wall band was a
+// hairline and the building still read as a floor plan with a roof over
+// it. 16-bit dimetric top-down (Stardew, Secret of Mana) puts the wall
+// face at roughly 40% of the visible building depth, with the roof rise
+// on the same order.
+const WALL_H = 88;
+const ROOF_RISE = 64;
+
+// Building rendering is deliberately ONE function, drawn in one call per
+// room, all coordinates derived from the same (x, y, w, h, wallTopY,
+// peakY) locals -- roof and wall used to be two separate functions run in
+// two separate passes across all rooms (all roofs, then all walls), which
+// is exactly the kind of split that lets the numbers drift apart without
+// either function itself being wrong. There is now no code path that can
+// draw a wall without the roof that sits on it, or vice versa.
+function drawBuilding(room) {
+  const { x, y, w, h, label, state, workgraph_cursor } = room;
+  const wallTopY = y - WALL_H; // roof eave meets wall top, exactly, always
+  const peakX = x + w / 2, peakY = wallTopY - ROOF_RISE, baseY = wallTopY;
+  const roofColor = '#6b4530', roofDark = '#523320', roofLight = '#7c5238';
+
+  // interior floor -- tight 2-tone checker
+  ctx.fillStyle = '#957a56';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#846a4a';
+  const TILE_SZ = 16;
+  for (let fx = x; fx < x + w; fx += TILE_SZ) {
+    for (let fy = y; fy < y + h; fy += TILE_SZ) {
+      if ((Math.round((fx - x) / TILE_SZ) + Math.round((fy - y) / TILE_SZ)) % 2 === 0) ctx.fillRect(fx, fy, TILE_SZ, TILE_SZ);
+    }
+  }
+  ctx.fillStyle = stateColor(state) + '33';
+  ctx.fillRect(x + 18, y + 18, w - 36, h - 60);
+  ctx.strokeStyle = stateColor(state) + '66';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 18, y + 18, w - 36, h - 60);
+
+  drawRoomAmenities(room);
+
+  // back wall: real, tall, textured vertical face -- drawn first, then the
+  // roof is drawn directly on top of its exact top edge (baseY === wallTopY,
+  // same variable, not two functions computing the same number twice)
+  ctx.fillStyle = '#6b5138';
+  ctx.fillRect(x - 6, wallTopY, w + 12, WALL_H + 6);
+  // horizontal siding courses: at this wall height the face needs real
+  // material, otherwise it reads as one flat brown slab
+  ctx.fillStyle = 'rgba(0,0,0,0.10)';
+  for (let py = wallTopY + 9; py < wallTopY + WALL_H + 6; py += 9) ctx.fillRect(x - 6, py, w + 12, 2);
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  for (let py = wallTopY + 11; py < wallTopY + WALL_H + 6; py += 9) ctx.fillRect(x - 6, py, w + 12, 1);
+  // vertical stud shadows, wider spaced than the old 16px so they don't
+  // fight the siding courses
+  ctx.fillStyle = 'rgba(0,0,0,0.10)';
+  for (let px = x + 26; px < x + w - 6; px += 52) ctx.fillRect(px, wallTopY, 2, WALL_H + 6);
+  // top light-catch under the eave, and a dark baseboard where the wall
+  // face meets the floor -- the junction line that sells the 90-degree turn
+  ctx.fillStyle = 'rgba(255,255,255,0.07)';
+  ctx.fillRect(x - 6, wallTopY, w + 12, 3);
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(x - 6, wallTopY + WALL_H, w + 12, 6);
+  ctx.fillStyle = '#4a3625';
+  ctx.fillRect(x - 6, wallTopY + WALL_H + 2, w + 12, 4);
+
+  // side walls: corner posts plus a lit/shaded return pair, so the box
+  // has a readable left and right face rather than two thin lines
+  ctx.fillStyle = '#5a4530';
+  ctx.fillRect(x - 6, wallTopY, 10, h + WALL_H + 10);
+  ctx.fillStyle = '#4a3828';
+  ctx.fillRect(x + w - 4, wallTopY, 10, h + WALL_H + 10);
+  ctx.fillStyle = 'rgba(255,255,255,0.06)';
+  ctx.fillRect(x - 6, wallTopY, 3, h + WALL_H + 10);
+  // low front sill (the near/open side the player walks through)
+  ctx.fillRect(x - 6, y + h - 4, 10, 10);
+  ctx.fillRect(x + w - 4, y + h - 4, 10, 10);
+
+  // roof: base edge is baseY, the *same* variable the wall was just drawn
+  // to, with no gap and no separate computation
+  ctx.fillStyle = roofDark;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, baseY + 4); ctx.lineTo(peakX, peakY + 4); ctx.lineTo(x + w + 14, baseY + 4);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = roofColor;
+  ctx.beginPath();
+  ctx.moveTo(x - 14, baseY); ctx.lineTo(peakX, peakY); ctx.lineTo(x + w + 14, baseY);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = roofLight;
+  ctx.lineWidth = 1;
+  const courses = 5;
+  for (let i = 1; i < courses; i++) {
+    const t = i / courses;
+    const yy = baseY - (baseY - peakY) * t;
+    const leftSpan = (peakX - (x - 14)) * (1 - t);
+    ctx.beginPath(); ctx.moveTo(peakX - leftSpan, yy); ctx.lineTo(peakX - leftSpan * 0.15, yy); ctx.stroke();
+    const rightSpan = ((x + w + 14) - peakX) * (1 - t);
+    ctx.beginPath(); ctx.moveTo(peakX + rightSpan * 0.15, yy); ctx.lineTo(peakX + rightSpan, yy); ctx.stroke();
+  }
+  ctx.strokeStyle = roofDark;
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(peakX, peakY); ctx.lineTo(peakX, baseY); ctx.stroke();
+  // eave shadow, drawn last, directly over the roof/wall seam -- the seam
+  // itself is always covered by this stroke, so it can never show as a gap
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.fillRect(x - 6, baseY - 1, w + 12, 6);
+
+  // chimney with a little idle smoke puff
+  const chimX = x + w * 0.72;
+  ctx.fillStyle = '#8a7460';
+  ctx.fillRect(chimX, peakY + 6, 12, 24);
+  ctx.fillStyle = '#6f5c49';
+  ctx.fillRect(chimX - 1, peakY + 4, 14, 5);
+  const tSmoke = performance.now() / 900;
+  ctx.fillStyle = 'rgba(230,230,230,0.35)';
+  for (let i = 0; i < 3; i++) {
+    const puffT = (tSmoke + i / 3) % 1;
+    ctx.beginPath();
+    ctx.arc(chimX + 6 + Math.sin((tSmoke + i) * 2) * 4, peakY - puffT * 26, 3 + puffT * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // door: plank panel with visible board seams, arched top, round handle
+  const door = doorPos(room);
+  ctx.fillStyle = '#3d2f20';
+  ctx.fillRect(door.x - 26, y + h - 4, 52, 10);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(door.x - 22, y + h - 30, 44, 36);
+  ctx.clip();
+  ctx.fillStyle = '#6b4a30';
+  ctx.fillRect(door.x - 22, y + h - 30, 44, 36);
+  ctx.strokeStyle = '#4a3220';
+  ctx.lineWidth = 1.5;
+  for (let px = door.x - 14; px < door.x + 20; px += 8) {
+    ctx.beginPath(); ctx.moveTo(px, y + h - 30); ctx.lineTo(px, y + h + 6); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(door.x, y + h - 30, 22, Math.PI, Math.PI * 2); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#e8c85f';
+  ctx.beginPath(); ctx.arc(door.x + 14, y + h - 12, 2, 0, Math.PI * 2); ctx.fill();
+
+  // window: set into the back wall face, mullioned panes, shutters,
+  // flower box on the sill beneath -- this is where the reference's
+  // Fig. 2/3 windows actually sit, on the tall back wall under the roof
+  // a 300px-wide wall carries a pair of windows, not one; each is sized
+  // to the wall face rather than stretched to fill it
+  const winW = 46, winH = 52, winY = wallTopY + 18;
+  for (const winX of [x + w * 0.24 - winW / 2, x + w * 0.76 - winW / 2]) {
+    ctx.fillStyle = '#4a3a26';
+    ctx.fillRect(winX - 4, winY - 4, winW + 8, winH + 8);
+    ctx.fillStyle = '#8fd0dc';
+    ctx.fillRect(winX, winY, winW, winH);
+    ctx.fillStyle = '#bfe8ee';
+    ctx.fillRect(winX + 2, winY + 2, winW / 2 - 3, winH / 2 - 3);
+    ctx.strokeStyle = '#3d2f20';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(winX, winY, winW, winH);
+    ctx.beginPath();
+    ctx.moveTo(winX + winW / 2, winY); ctx.lineTo(winX + winW / 2, winY + winH);
+    ctx.moveTo(winX, winY + winH / 2); ctx.lineTo(winX + winW, winY + winH / 2);
+    ctx.stroke();
+    ctx.fillStyle = '#3d5a3d';
+    ctx.fillRect(winX - 13, winY - 4, 8, winH + 8);
+    ctx.fillRect(winX + winW + 5, winY - 4, 8, winH + 8);
+    ctx.fillStyle = '#6b4a30';
+    ctx.fillRect(winX - 4, winY + winH + 4, winW + 8, 6);
+    const boxColors = ['#e0688a', '#e8c85f', '#8f7fe0', '#e0688a'];
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = boxColors[i];
+      ctx.beginPath();
+      ctx.arc(winX + 5 + i * (winW / 3.4), winY + winH + 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // sign post at the door
+  ctx.fillStyle = '#3d2f20';
+  ctx.fillRect(door.x - 1.5, door.y + 4, 3, 22);
+  const signLabel = label.length > 24 ? label.slice(0, 22) + '…' : label;
+  ctx.font = '10px ui-monospace, monospace';
+  const tw = ctx.measureText(signLabel).width;
+  ctx.fillStyle = '#f4ecd8';
+  ctx.strokeStyle = '#3d2f20';
+  ctx.lineWidth = 2;
+  const plateX = door.x - tw / 2 - 8, plateY = door.y + 2;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(plateX, plateY, tw + 16, 16, 3) : ctx.rect(plateX, plateY, tw + 16, 16);
+  ctx.fill(); ctx.stroke();
+  ctx.fillStyle = '#2b2320';
+  ctx.textAlign = 'left';
+  ctx.fillText(signLabel, plateX + 8, plateY + 11);
+
+  // status pennant on the roof peak
+  const peakYFront = peakY;
+  ctx.fillStyle = stateColor(state);
+  ctx.beginPath();
+  ctx.moveTo(x + w / 2, peakYFront);
+  ctx.lineTo(x + w / 2 + 16, peakYFront + 6);
+  ctx.lineTo(x + w / 2, peakYFront + 12);
+  ctx.closePath();
+  ctx.fill();
+
+  // cursor caption, small, top-left of interior
+  ctx.font = '9px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(43,35,32,0.65)';
+  ctx.fillText(workgraph_cursor.length > 34 ? workgraph_cursor.slice(0, 32) + '…' : workgraph_cursor, x + 18, y + 16);
+}
+
+// ---------------------------------------------------------------
+// Pixel-grid rendering. Real detail comes from individually placed
+// pixels with a hard 1px outline (classic pixel-art technique), not
+// from smooth canvas primitives -- every sprite below is built as a
+// list of (col, row, paletteKey) cells at PX-unit resolution, drawn
+// with image-rendering:pixelated so it stays crisp when scaled up.
+// ---------------------------------------------------------------
+const PX = 3; // pixel-grid unit size in canvas px
+
+function plotPixels(cells, palette, originX, originY, outlineColor) {
+  // outline pass: every filled cell casts a 1px shadow onto its four
+  // neighbors first, so the whole silhouette gets a clean dark rim
+  ctx.fillStyle = outlineColor;
+  for (const [gx, gy] of cells) {
+    ctx.fillRect(originX + (gx - 1) * PX, originY + gy * PX, PX, PX);
+    ctx.fillRect(originX + (gx + 1) * PX, originY + gy * PX, PX, PX);
+    ctx.fillRect(originX + gx * PX, originY + (gy - 1) * PX, PX, PX);
+    ctx.fillRect(originX + gx * PX, originY + (gy + 1) * PX, PX, PX);
+  }
+  // color pass
+  for (const [gx, gy, key] of cells) {
+    ctx.fillStyle = palette[key];
+    ctx.fillRect(originX + gx * PX, originY + gy * PX, PX, PX);
+  }
+}
+
+// ---------------------------------------------------------------
+// Draw: furniture (objects) -- distinct detailed pixel icon per
+// real object kind, not one generic box.
+// ---------------------------------------------------------------
+function deskCells() {
+  const cells = [];
+  // desk top
+  for (let gx = -5; gx <= 5; gx++) for (let gy = -1; gy <= 1; gy++) cells.push([gx, gy, gx === 5 ? 'O' : 'D']);
+  // legs
+  for (const lx of [-5, 4]) for (let gy = 2; gy <= 4; gy++) { cells.push([lx, gy, 'L']); cells.push([lx + 1, gy, 'L']); }
+  // paper on top with visible text lines
+  for (let gx = -3; gx <= 1; gx++) for (let gy = -4; gy <= -2; gy++) cells.push([gx, gy, 'F']);
+  cells.push([-3, -4, 'B']); // dog-ear corner
+  cells.push([-2, -3, 'T']); cells.push([-1, -3, 'T']);
+  cells.push([-2, -2, 'T']);
+  return cells;
+}
+function boardCells() {
+  const cells = [];
+  // post
+  for (let gy = -1; gy <= 4; gy++) { cells.push([0, gy, 'D']); cells.push([1, gy, 'D']); }
+  // corkboard
+  for (let gx = -5; gx <= 6; gx++) for (let gy = -9; gy <= -2; gy++) cells.push([gx, gy, gx === -5 || gx === 6 || gy === -9 || gy === -2 ? 'K' : 'F']);
+  // pinned note + pin
+  for (let gx = -3; gx <= 0; gx++) for (let gy = -7; gy <= -5; gy++) cells.push([gx, gy, 'T']);
+  cells.push([-2, -8, 'R']);
+  for (let gx = 1; gx <= 4; gx++) for (let gy = -6; gy <= -4; gy++) cells.push([gx, gy, 'B']);
+  cells.push([2, -8, 'R']);
+  return cells;
+}
+function shelfCells() {
+  const cells = [];
+  // case
+  for (let gx = -6; gx <= 6; gx++) for (let gy = -9; gy <= 3; gy++) {
+    const edge = gx === -6 || gx === 6 || gy === -9 || gy === 3;
+    cells.push([gx, gy, edge ? 'D' : 'L']);
+  }
+  // shelf boards
+  for (let gy of [-6, -2]) for (let gx = -5; gx <= 5; gx++) cells.push([gx, gy, 'D']);
+  // book spines, varying color/height
+  const spineColors = ['R', 'B', 'T', 'O', 'R', 'B'];
+  let gx = -5;
+  spineColors.forEach((c, i) => {
+    const h = i % 2 === 0 ? 2 : 3;
+    for (let gy = -8; gy <= -8 + h; gy++) cells.push([gx, gy, c]);
+    gx += 2;
+  });
+  return cells;
+}
+const FURNITURE_BUILDERS = { desk: deskCells, board: boardCells, shelf: shelfCells };
+const FURNITURE_PALETTE = {
+  D: '#5a3e26', L: '#7a5636', O: '#3f2a19',
+  F: '#f1ead2', B: '#d8cfa8', T: '#7d6b45',
+  K: '#8a6a48', R: '#b04a3f', G: '#4a7a4e', G2: '#5c9660', P2: '#7a5636',
+};
+
+// Fixed decorative pieces every room gets regardless of its real data --
+// matches the reference figures' density (bed+nightstand, stove+counter+
+// table in every interior) rather than one or two objects floating in an
+// empty box. Purely visual, not tied to a real row, so kept off the
+// interactive/dialog path.
+function wallShelfCells() {
+  const cells = [];
+  for (let gx = -1; gx <= 7; gx++) for (let gy = -2; gy <= 0; gy++) cells.push([gx, gy, gy === -2 || gy === 0 ? 'D' : 'L']);
+  const spineColors = ['R', 'B', 'T', 'G'];
+  for (let i = 0; i < 4; i++) for (let gy = -1; gy <= -1; gy++) cells.push([i * 2, gy, spineColors[i]]);
+  return cells;
+}
+function cabinetCells() {
+  const cells = [];
+  for (let gx = -3; gx <= 3; gx++) for (let gy = -6; gy <= 0; gy++) cells.push([gx, gy, gx === -3 || gx === 3 || gy === -6 ? 'D' : 'L']);
+  for (let gy of [-4, -1]) for (let gx = -2; gx <= 2; gx++) cells.push([gx, gy, 'K']);
+  cells.push([0, -4, 'F']); cells.push([0, -1, 'F']);
+  return cells;
+}
+function plantCells() {
+  const cells = [];
+  for (let gx = -2; gx <= 2; gx++) for (let gy = -1; gy <= 1; gy++) cells.push([gx, gy, 'T']);
+  for (let gy = -6; gy <= -2; gy++) {
+    const spread = Math.max(1, 4 - Math.abs(gy + 4));
+    for (let gx = -spread; gx <= spread; gx++) cells.push([gx, gy, (gx + gy) % 2 === 0 ? 'G' : 'G2']);
+  }
+  return cells;
+}
+function chairCells() {
+  const cells = [];
+  for (let gx = -2; gx <= 2; gx++) for (let gy = -1; gy <= 0; gy++) cells.push([gx, gy, 'D']);
+  cells.push([-2, -4, 'D']); cells.push([-2, -3, 'D']); cells.push([-2, -2, 'D']);
+  cells.push([2, -4, 'D']); cells.push([2, -3, 'D']); cells.push([2, -2, 'D']);
+  for (let gx = -1; gx <= 1; gx++) for (let gy = -4; gy <= -3; gy++) cells.push([gx, gy, 'D']);
+  return cells;
+}
+function drawRoomAmenities(room) {
+  const { x, y, w, h } = room;
+  ctx.save();
+  // wall bookshelf, back wall, right of center
+  plotPixels(wallShelfCells(), FURNITURE_PALETTE, x + w - 60, y + 18, '#241a10');
+  // filing cabinet, back-left corner
+  plotPixels(cabinetCells(), FURNITURE_PALETTE, x + 24, y + 30, '#241a10');
+  // potted plant, front-right near the door
+  plotPixels(plantCells(), FURNITURE_PALETTE, x + w - 26, y + h - 30, '#241a10');
+  // a small chair pair flanking the real desk/board items
+  plotPixels(chairCells(), FURNITURE_PALETTE, x + 70, y + h - 44, '#241a10');
+  ctx.restore();
+}
+
+function drawFurniture(en) {
+  const { x, y, furniture } = en;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath(); ctx.ellipse(x, y + 12, 17, 4, 0, 0, Math.PI * 2); ctx.fill();
+  const build = FURNITURE_BUILDERS[furniture] || deskCells;
+  plotPixels(build(), FURNITURE_PALETTE, Math.round(x), Math.round(y), '#241a10');
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Draw: civic structures. Each real table gets the built form its
+// semantics imply, drawn in the same dimetric convention as the
+// buildings -- a visible vertical face with a top, never a flat
+// top-down footprint.
+// ---------------------------------------------------------------
+function postAndBoard(x, y, w, h, boardFill, boardEdge) {
+  ctx.fillStyle = '#3d2f20';
+  ctx.fillRect(x - w / 2 - 3, y - h - 4, 5, h + 20);
+  ctx.fillRect(x + w / 2 - 2, y - h - 4, 5, h + 20);
+  ctx.fillStyle = boardFill;
+  ctx.fillRect(x - w / 2, y - h, w, h);
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  ctx.fillRect(x - w / 2, y - h, w, 3);
+  ctx.strokeStyle = boardEdge;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x - w / 2, y - h, w, h);
+}
+
+function drawCivic(en) {
+  const { x, y, w, h, civic: sub, data } = en;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.24)';
+  ctx.beginPath(); ctx.ellipse(x, y + 10, w * 0.55, 5, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.textAlign = 'center';
+
+  if (sub === 'gate') {
+    // an open gate stands open; a closed/blocked one is barred shut
+    const open = (data.status || '').toLowerCase() === 'open';
+    const gh = 54;
+    ctx.fillStyle = '#5c4630';
+    ctx.fillRect(x - w / 2 - 5, y - gh, 10, gh + 10);
+    ctx.fillRect(x + w / 2 - 5, y - gh, 10, gh + 10);
+    ctx.fillStyle = '#6b5138';
+    ctx.fillRect(x - w / 2 - 9, y - gh - 12, w + 18, 14);
+    ctx.fillStyle = 'rgba(255,255,255,0.08)';
+    ctx.fillRect(x - w / 2 - 9, y - gh - 12, w + 18, 3);
+    ctx.strokeStyle = open ? 'rgba(140,200,150,0.55)' : '#8a4a3a';
+    ctx.lineWidth = 4;
+    if (open) {
+      ctx.beginPath(); ctx.moveTo(x - w / 2, y - gh + 8); ctx.lineTo(x - w / 2 + 12, y - 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x + w / 2, y - gh + 8); ctx.lineTo(x + w / 2 - 12, y - 4); ctx.stroke();
+    } else {
+      for (let i = 0; i < 3; i++) {
+        const yy = y - gh + 14 + i * 14;
+        ctx.beginPath(); ctx.moveTo(x - w / 2, yy); ctx.lineTo(x + w / 2, yy); ctx.stroke();
+      }
+    }
+    // value at stake reads as a hanging coin plaque
+    if (data.value_at_stake) {
+      ctx.fillStyle = '#e8c85f';
+      ctx.beginPath(); ctx.arc(x, y - gh - 20, 6, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#3d2f20'; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+  } else if (sub === 'stall') {
+    // market stall: counter with a striped awning, awning color by status
+    const sold = /sold|closed|won/i.test(data.status || '');
+    ctx.fillStyle = '#6b4a30';
+    ctx.fillRect(x - w / 2, y - 26, w, 30);
+    ctx.fillStyle = 'rgba(0,0,0,0.18)';
+    for (let px = x - w / 2 + 6; px < x + w / 2; px += 12) ctx.fillRect(px, y - 26, 2, 30);
+    ctx.fillStyle = '#3d2f20';
+    ctx.fillRect(x - w / 2 - 2, y - 62, 4, 40);
+    ctx.fillRect(x + w / 2 - 2, y - 62, 4, 40);
+    const a1 = sold ? '#7b8a72' : '#c85a4a', a2 = '#f4ecd8';
+    for (let i = 0; i < 6; i++) {
+      ctx.fillStyle = i % 2 ? a2 : a1;
+      ctx.fillRect(x - w / 2 - 6 + i * ((w + 12) / 6), y - 64, (w + 12) / 6, 14);
+    }
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fillRect(x - w / 2 - 6, y - 50, w + 12, 4);
+    // one crate per experiment actually run against this offer
+    const crates = Math.min(4, data.experiments_run || 0);
+    for (let i = 0; i < crates; i++) {
+      ctx.fillStyle = '#8a6a44';
+      ctx.fillRect(x - w / 2 + 4 + i * 13, y - 38, 11, 11);
+      ctx.strokeStyle = '#4a3420'; ctx.lineWidth = 1;
+      ctx.strokeRect(x - w / 2 + 4 + i * 13, y - 38, 11, 11);
+    }
+  } else if (sub === 'notices') {
+    postAndBoard(x, y, w, h, '#7a5a3a', '#3d2f20');
+    // one pinned slip per real evidence row, verified ones pinned green
+    (data.notices || []).slice(0, 8).forEach((n, i) => {
+      const cx = x - w / 2 + 8 + (i % 4) * ((w - 12) / 4);
+      const cy = y - h + 7 + Math.floor(i / 4) * ((h - 8) / 2);
+      ctx.fillStyle = '#f4ecd8';
+      ctx.fillRect(cx, cy, 12, 14);
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(cx + 2, cy + 3, 8, 1);
+      ctx.fillRect(cx + 2, cy + 6, 8, 1);
+      ctx.fillStyle = n.verified ? '#8fd08a' : '#d0a84a';
+      ctx.beginPath(); ctx.arc(cx + 6, cy + 1, 2, 0, Math.PI * 2); ctx.fill();
+    });
+  } else if (sub === 'workboard') {
+    postAndBoard(x, y, w, h, '#4a5a6b', '#2b3a46');
+    // a stacked bar of real capital_actions grouped by status
+    const rowsW = (data.workboard || []);
+    const total = rowsW.reduce((a, r) => a + r.count, 0) || 1;
+    let bx = x - w / 2 + 5;
+    const barY = y - h + 10, barW = w - 10;
+    const hues = ['#8fd08a', '#d0a84a', '#8fb4d0', '#c88a8a', '#a89ad0', '#d0c48a'];
+    rowsW.forEach((r, i) => {
+      const seg = (r.count / total) * barW;
+      ctx.fillStyle = hues[i % hues.length];
+      ctx.fillRect(bx, barY, Math.max(1, seg - 1), 10);
+      bx += seg;
+    });
+    ctx.fillStyle = 'rgba(244,236,216,0.85)';
+    ctx.font = '8px ui-monospace, monospace';
+    ctx.fillText(total + ' actions', x, y - h + 32);
+  } else if (sub === 'monument') {
+    // standing stone, adopted learnings get a lit inlay
+    ctx.fillStyle = '#6f6a60';
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y + 4);
+    ctx.lineTo(x - w / 2 + 4, y - h);
+    ctx.lineTo(x + w / 2 - 4, y - h);
+    ctx.lineTo(x + w / 2, y + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.fillRect(x - w / 2 + 4, y - h, 5, h);
+    ctx.fillStyle = 'rgba(0,0,0,0.22)';
+    ctx.fillRect(x + w / 2 - 9, y - h, 5, h);
+    ctx.fillStyle = data.adopted ? '#8fd08a' : '#5a544c';
+    ctx.fillRect(x - 6, y - h + 12, 12, 12);
+    ctx.fillStyle = 'rgba(0,0,0,0.30)';
+    for (let i = 0; i < 3; i++) ctx.fillRect(x - 8, y - h + 30 + i * 5, 16, 2);
+  } else if (sub === 'obelisk') {
+    // receipt chain: one lit ring per chained entry, stacked upward
+    const n = Math.min(8, (data.timeline || []).length);
+    ctx.fillStyle = '#4a4a56';
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y + 4); ctx.lineTo(x - 5, y - h);
+    ctx.lineTo(x + 5, y - h); ctx.lineTo(x + w / 2, y + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y + 4); ctx.lineTo(x - 5, y - h);
+    ctx.lineTo(x, y - h); ctx.lineTo(x, y + 4);
+    ctx.closePath(); ctx.fill();
+    for (let i = 0; i < n; i++) {
+      const t = i / Math.max(1, n - 1);
+      ctx.fillStyle = 'rgba(160,210,240,' + (0.30 + 0.55 * (1 - t)) + ')';
+      ctx.fillRect(x - (w / 2 - 3) * (1 - t) - 2, y - 6 - i * ((h - 8) / n), (w - 6) * (1 - t) + 4, 3);
+    }
+  } else if (sub === 'latent-door') {
+    // a door that appeared because a real composition became valid.
+    // Drawn half-real: it is a possibility, not yet a fact.
+    const pulse = 0.55 + 0.45 * Math.sin(performance.now() / 600);
+    ctx.globalAlpha = 0.45 + 0.35 * pulse;
+    ctx.fillStyle = '#5a4a6b';
+    ctx.fillRect(x - w / 2, y - 60, w, 64);
+    ctx.fillStyle = '#7a6a8b';
+    ctx.fillRect(x - w / 2 + 4, y - 54, w - 8, 56);
+    ctx.strokeStyle = 'rgba(200,180,240,' + pulse + ')';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x - w / 2, y - 60, w, 64);
+    ctx.fillStyle = '#e8c85f';
+    ctx.beginPath(); ctx.arc(x + w / 4, y - 28, 2.5, 0, Math.PI * 2); ctx.fill();
+    ctx.globalAlpha = 1;
+  } else if (sub === 'latent-trail') {
+    // a trail: OpportunityGraph gained a real supported path
+    const pulse = 0.5 + 0.5 * Math.sin(performance.now() / 700);
+    ctx.globalAlpha = 0.30 + 0.35 * pulse;
+    ctx.fillStyle = '#c8b47a';
+    for (let i = 0; i < 5; i++) {
+      const sx = x - 18 + i * 9, sy = y - i * 11;
+      ctx.beginPath(); ctx.ellipse(sx, sy, 6 - i * 0.6, 3, 0.3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(200,180,120,0.8)';
+    ctx.fillRect(x - 1, y - 60, 2, 22);
+    ctx.fillStyle = '#c8b47a';
+    ctx.beginPath(); ctx.moveTo(x, y - 62); ctx.lineTo(x + 16, y - 55); ctx.lineTo(x, y - 48);
+    ctx.closePath(); ctx.fill();
+  } else if (sub === 'landmark') {
+    // the world remembers: shelf -> wall -> permanent landmark, by
+    // real importance. Taller stone = more evidence and episodes.
+    const tier = data.tier;
+    const th = tier === 'landmark' ? h : tier === 'wall' ? h * 0.7 : h * 0.45;
+    ctx.fillStyle = tier === 'landmark' ? '#8a8276' : '#6f6a60';
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y + 4);
+    ctx.lineTo(x - w / 2 + 5, y - th);
+    ctx.lineTo(x + w / 2 - 5, y - th);
+    ctx.lineTo(x + w / 2, y + 4);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.fillRect(x - w / 2 + 5, y - th, 6, th);
+    // one carved notch per real evidence row
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    for (let i = 0; i < Math.min(6, data.evidence_count); i++) {
+      ctx.fillRect(x - 9, y - th + 10 + i * 6, 18, 2);
+    }
+    if (tier === 'landmark') {
+      const glow = 0.4 + 0.3 * Math.sin(performance.now() / 800);
+      ctx.fillStyle = 'rgba(230,210,140,' + glow + ')';
+      ctx.beginPath(); ctx.arc(x, y - th - 8, 5, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (sub === 'foundation') {
+    // storage root: a cut foundation stone, height by durability
+    const dh = /perm|durable|forever/i.test(data.durability || '') ? 22 : 14;
+    ctx.fillStyle = '#7a736a';
+    ctx.fillRect(x - w / 2, y - dh, w, dh);
+    ctx.fillStyle = '#918a80';
+    ctx.fillRect(x - w / 2, y - dh - 5, w, 6);
+    ctx.fillStyle = 'rgba(0,0,0,0.20)';
+    ctx.fillRect(x - w / 2, y - dh + Math.round(dh / 2), w, 2);
+    ctx.fillRect(x - 1, y - dh, 2, dh);
+    // trust level shows as an inset seal
+    ctx.fillStyle = /trusted|high/i.test(data.trust_level || '') ? '#8fd08a' : '#c0b48a';
+    ctx.fillRect(x - 4, y - dh - 3, 8, 3);
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Draw: characters -- programmatically generated pixel-grid chibi
+// sprite (14x22 units): shaped hair with bangs and side coverage,
+// round face with direction-aware eyes, tapered shirt with a shaded
+// side seam, skin-toned arms, two-frame alternating-stride legs,
+// and boots. Palette-swapped per resident so each is recognizable
+// while sharing one rig -- the same technique real sprite sheets use.
+// ---------------------------------------------------------------
+function characterCells(dir, walking, frame) {
+  const cells = [];
+  const cx = 6.5;
+
+  // --- head + hair ---
+  for (let gy = 0; gy <= 8; gy++) {
+    for (let gx = 0; gx <= 13; gx++) {
+      const dx = gx - cx, dy = (gy - 4.3) * 1.15;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist > 4.5) continue;
+      const isBangs = gy <= 2;
+      const isSide = Math.abs(dx) >= 3.1;
+      const isCrown = gy <= 1;
+      if (isBangs || isSide || isCrown) cells.push([gx, gy, 'H']);
+      else cells.push([gx, gy, 'S']);
+    }
+  }
+  // eyes -- direction aware
+  if (dir === 'down') { cells.push([4, 5, 'E']); cells.push([9, 5, 'E']); }
+  else if (dir === 'up') { /* back of head, no face */ }
+  else { const ex = dir === 'left' ? 3 : 10; cells.push([ex, 5, 'E']); }
+
+  // --- neck ---
+  for (let gx = 5; gx <= 8; gx++) cells.push([gx, 9, 'S']);
+
+  // --- body / shirt, tapered, shaded far side ---
+  const bodyRows = [
+    { gy: 10, from: 2, to: 11 },
+    { gy: 11, from: 2, to: 11 },
+    { gy: 12, from: 3, to: 10 },
+    { gy: 13, from: 3, to: 10 },
+    { gy: 14, from: 3, to: 10 },
+    { gy: 15, from: 4, to: 9 },
+  ];
+  bodyRows.forEach(({ gy, from, to }) => {
+    for (let gx = from; gx <= to; gx++) cells.push([gx, gy, gx >= to - 1 ? 'O' : 'C']);
+  });
+
+  // --- arms: sleeve then hand ---
+  const armSwing = walking ? Math.round(Math.sin(frame) * 1.4) : 0;
+  for (let gy = 11; gy <= 12; gy++) { cells.push([0, gy, 'C']); cells.push([13, gy, 'C']); }
+  for (let gy = 13; gy <= 14; gy++) {
+    cells.push([0, gy + (dir === 'left' ? armSwing : -armSwing), 'S']);
+    cells.push([13, gy + (dir === 'right' ? armSwing : -armSwing), 'S']);
+  }
+
+  // --- legs: two-frame alternating stride ---
+  const stride = walking && frame % 2 === 1 ? 1 : 0;
+  for (let gy = 16; gy <= 18; gy++) {
+    cells.push([4, gy - stride, 'P']); cells.push([5, gy - stride, 'P']);
+    cells.push([8, gy + stride, 'P']); cells.push([9, gy + stride, 'P']);
+  }
+  // --- boots ---
+  for (const [bx1, bx2, off] of [[4, 5, -stride], [8, 9, stride]]) {
+    cells.push([bx1, 19 + off, 'B']); cells.push([bx2, 19 + off, 'B']);
+  }
+
+  return cells;
+}
+
+function drawCharacter(x, y, hair, shirt, skin, dir, frame, w, h, accent) {
+  const walking = frame !== 0;
+  const stepFrame = Math.floor((frame || 0) * 1.6) % 2;
+  const bob = walking ? Math.round(Math.sin(frame) * 1) : 0;
+  const palette = {
+    H: hair, S: skin, E: '#26201c', C: shirt,
+    O: shadeColor(shirt, -0.28), P: '#33261a', B: '#221a12',
+  };
+  const originX = Math.round(x - 7 * PX);
+  const originY = Math.round(y - 22 * PX + bob);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath(); ctx.ellipse(x, y + 1, 12, 3, 0, 0, Math.PI * 2); ctx.fill();
+
+  plotPixels(characterCells(dir, walking, stepFrame), palette, originX, originY, '#1c1712');
+
+  if (accent) {
+    ctx.strokeStyle = accent;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(x, y - 22 * PX + 4 * PX, 4.9 * PX, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+}
+
+// Zone bands with their real FederationBoundary rendered as ground
+// treatment -- a private zone is visibly hatched-off, a public zone is
+// open. Visitors would see only what the boundary allows.
+function drawZoneBands() {
+  if (!showZones) return;
+  ctx.save();
+  ZONE_BANDS.forEach(b => {
+    const z = ZONES.find(zz => zz.id === b.id);
+    if (!z) return;
+    const fb = z.federation_boundary;
+    const tone = z.class === 'private' ? '#6b4a4a'
+      : z.class === 'public' ? '#4a6b52'
+      : z.class === 'shared' ? '#4a5f6b' : '#5f5a4a';
+    ctx.globalAlpha = 0.10;
+    ctx.fillStyle = tone;
+    ctx.fillRect(40, b.y0, WORLD_W - 80, b.y1 - b.y0);
+    ctx.globalAlpha = 0.5;
+    ctx.strokeStyle = tone;
+    ctx.lineWidth = 2;
+    ctx.setLineDash(fb.discoverable ? [] : [7, 6]);
+    ctx.strokeRect(40, b.y0, WORLD_W - 80, b.y1 - b.y0);
+    ctx.setLineDash([]);
+    // boundary plaque on the right edge
+    ctx.globalAlpha = 0.9;
+    ctx.font = '9px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = 'rgba(240,246,232,0.55)';
+    const rules = [
+      (fb.discoverable ? 'discoverable' : 'not discoverable'),
+      'visible: ' + fb.visible_to.join('+'),
+      (fb.copyable ? 'copyable' : 'no copy'),
+      (fb.referenceable ? 'referenceable' : 'no reference'),
+      'approval: ' + (fb.requires_approval || []).join(', '),
+    ];
+    rules.forEach((r, i) => ctx.fillText(r, WORLD_W - 50, b.y0 + 14 + i * 11));
+    ctx.textAlign = 'left';
+    ctx.fillStyle = 'rgba(240,246,232,0.62)';
+    ctx.font = 'bold 10px ui-monospace, monospace';
+    ctx.fillText(`ZONE ${z.class.toUpperCase()} — ${z.reason}`, 50, b.y0 + 14);
+  });
+  ctx.restore();
+}
+
+const DISTRICTS = [
+  { y: TOP - 96, label: 'RESEARCH WING', sub: 'fabric.db missions · bonfyre_cms.db pages' },
+  { y: Y_GATES - 108, label: 'GATE ROAD', sub: 'capital.db human_gates' },
+  { y: Y_MARKET - 112, label: 'MARKET ROW', sub: 'capital.db offers · assets · commercial_experiments' },
+  { y: Y_CIVIC - 104, label: 'CIVIC SQUARE', sub: 'capital_actions · learning_ledger · fabric receipts' },
+  { y: Y_FOUNDATION - 76, label: 'FOUNDATION YARD', sub: 'fabric.db roots' },
+];
+
+function drawDistrictSigns() {
+  ctx.save();
+  ctx.textAlign = 'left';
+  DISTRICTS.forEach(d => {
+    ctx.fillStyle = 'rgba(20,30,20,0.30)';
+    ctx.fillRect(60, d.y - 2, 640, 2);
+    ctx.font = 'bold 13px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(240,246,232,0.72)';
+    ctx.fillText(d.label, 62, d.y - 22);
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(240,246,232,0.42)';
+    ctx.fillText(d.sub, 62, d.y - 8);
+  });
+  ctx.restore();
+}
+
+function shadeColor(hex, amt) {
+  const c = hex.replace('#', '');
+  const num = parseInt(c.length === 3 ? c.split('').map(ch => ch + ch).join('') : c, 16);
+  let r = (num >> 16) & 0xff, g = (num >> 8) & 0xff, b = num & 0xff;
+  const f = amt < 0 ? (1 + amt) : 1;
+  const add = amt > 0 ? Math.round(255 * amt) : 0;
+  r = Math.max(0, Math.min(255, Math.round(r * f) + add));
+  g = Math.max(0, Math.min(255, Math.round(g * f) + add));
+  b = Math.max(0, Math.min(255, Math.round(b * f) + add));
+  return `rgb(${r},${g},${b})`;
+}
+
+// Speech-bubble callout matching the Generative Agents figures directly
+// (Fig. 4: "ML:", "IR: 😊", "GR: 💬" -- initials + a small status glyph in
+// a white rounded bubble with a tail, sitting right over the head) rather
+// than a plain name tag.
+const STATE_EMOJI = {
+  TRUSTED_INTERACTION: '🤝',
+  TECHNICAL_ENGAGEMENT: '🔧',
+  RESPONDED: '💬',
+};
+function initials(label) {
+  return label.replace(/[^A-Za-z]/g, '').slice(0, 2).toUpperCase();
+}
+function latestVisit(ch) {
+  const hist = ch.visit_history || [];
+  return hist.length ? hist[hist.length - 1] : null;
+}
+// Role-based embodiment. The doc insists avatars are NOT uniform and
+// that `agent != model != provider != person` must survive projection.
+// The real `role` string on each capital.db relationship decides the
+// mark: a workshop operator carries a tool, a visiting advisor carries
+// a lantern and stands on a visitor plinth, a plain person carries
+// neither. This is a visual distinction with a real source.
+function drawEmbodimentMark(c) {
+  const emb = (c.data && c.data.embodiment) || {};
+  const x = c.x, y = c.y;
+  ctx.save();
+  if (emb.form === 'visiting-avatar') {
+    // visitor plinth: they are present, but this is not their habitat
+    ctx.strokeStyle = 'rgba(180,210,240,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.ellipse(x, y + 3, 16, 5, 0, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  if (emb.embodiment === 'workshop-operator') {
+    // held tool: this actor operates on the work, they don't advise it
+    ctx.fillStyle = '#6b5a44';
+    ctx.fillRect(x + 11, y - 20, 2, 15);
+    ctx.fillStyle = '#a8a8b4';
+    ctx.fillRect(x + 8, y - 23, 8, 5);
+  } else if (emb.embodiment === 'visiting-advisor') {
+    // lantern: advisory presence, occasional, brings light not labor
+    const glow = 0.45 + 0.25 * Math.sin(performance.now() / 500 + x);
+    ctx.fillStyle = '#5a4a30';
+    ctx.fillRect(x + 11, y - 21, 2, 9);
+    ctx.fillStyle = 'rgba(240,210,120,' + glow + ')';
+    ctx.beginPath(); ctx.arc(x + 12, y - 10, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e8c85f';
+    ctx.fillRect(x + 9, y - 13, 6, 6);
+  }
+  ctx.restore();
+}
+
+function drawSpeechTag(x, y, label, sub, color, data) {
+  const glyph = STATE_EMOJI[sub] || '💬';
+  const text = `${initials(label)}: ${glyph}`;
+  ctx.font = '11px ui-monospace, monospace';
+  const tw = ctx.measureText(text).width;
+  const bw = tw + 16, bh = 20;
+  const bx = x - bw / 2, by = y - 66;
+
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  if (ctx.roundRect) { ctx.beginPath(); ctx.roundRect(bx + 1, by + 2, bw, bh, 6); ctx.fill(); }
+
+  ctx.fillStyle = '#f6f2e4';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 6); else ctx.rect(bx, by, bw, bh);
+  ctx.fill(); ctx.stroke();
+  // tail
+  ctx.beginPath();
+  ctx.moveTo(x - 5, by + bh - 1);
+  ctx.lineTo(x + 5, by + bh - 1);
+  ctx.lineTo(x, by + bh + 6);
+  ctx.closePath();
+  ctx.fillStyle = '#f6f2e4';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(x - 5, by + bh - 1); ctx.lineTo(x, by + bh + 6); ctx.lineTo(x + 5, by + bh - 1);
+  ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.stroke();
+
+  ctx.fillStyle = '#2b2320';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, x, by + bh / 2 + 1);
+  ctx.textBaseline = 'alphabetic';
+
+  // full name, small, above the bubble, shown only while this resident is targeted
+  if (data && hoverTarget && hoverTarget.id === data.id) {
+    ctx.font = '9px ui-monospace, monospace';
+    ctx.fillStyle = 'rgba(242,247,238,0.9)';
+    ctx.fillText(label, x, by - 4);
+  }
+}
+
+// ---------------------------------------------------------------
+// Draw: dialog box (RPG textbox)
+// ---------------------------------------------------------------
+function wrapText(text, maxWidth) {
+  const words = text.split(' ');
+  const lines = []; let cur = '';
+  for (const word of words) {
+    const test = cur ? cur + ' ' + word : word;
+    if (ctx.measureText(test).width > maxWidth && cur) { lines.push(cur); cur = word; } else cur = test;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
+
+// ===============================================================
+// HUD overlays: time-of-day light, embodiment/port menu, narration,
+// intent log, and the review gate. All screen-space.
+// ===============================================================
+function drawTimeOfDay() {
+  const phase = worldPhase();
+  if (phase.tint === 'rgba(0,0,0,0)') return;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = phase.tint;
+  ctx.fillRect(0, 0, VW, VH);
+  ctx.restore();
+}
+
+function drawPortMenu() {
+  if (!hoverTarget || dialogOpen || reviewGate) return;
+  const p = profileFor(hoverTarget);
+  if (!p) return;
+  const ports = p.interaction_ports;
+  const bw = 320, bh = 30 + ports.length * 17 + 16;
+  const bx = VW - bw - 16, by = 60;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = 'rgba(12,18,13,0.90)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 6); else ctx.rect(bx, by, bw, bh);
+  ctx.fill(); ctx.stroke();
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 11px ui-monospace, monospace';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText(p.canonical_kind + ' — ' + (currentForm(hoverTarget) || ''), bx + 12, by + 18);
+  ctx.font = '9px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(207,224,208,0.6)';
+  ctx.fillText('forms: ' + p.spatial_forms.join(' / ') + '   [V]', bx + 12, by + 31);
+  ports.forEach((port, i) => {
+    const c = INTENT_CLASS[port.intent];
+    const yy = by + 48 + i * 17;
+    ctx.fillStyle = c.color;
+    ctx.fillRect(bx + 12, yy - 8, 4, 11);
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.fillStyle = '#e6efe4';
+    ctx.fillText(`[${i + 1}] ${port.port}`, bx + 22, yy);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = c.color;
+    ctx.fillText(c.label, bx + bw - 12, yy);
+    ctx.textAlign = 'left';
+  });
+  ctx.font = '9px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(207,224,208,0.45)';
+  ctx.fillText('fallback: ' + p.surface_fallback, bx + 12, by + bh - 6);
+  ctx.restore();
+}
+
+function drawNarration() {
+  if (performance.now() > narrationUntil || !narrationLines.length) return;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const bw = 520, bh = 22 + narrationLines.length * 15;
+  const bx = 16, by = 60;
+  const fade = Math.min(1, (narrationUntil - performance.now()) / 900);
+  ctx.globalAlpha = fade;
+  ctx.fillStyle = 'rgba(12,18,13,0.90)';
+  ctx.strokeStyle = cssVar('var(--accent)');
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 6); else ctx.rect(bx, by, bw, bh);
+  ctx.fill(); ctx.stroke();
+  ctx.textAlign = 'left';
+  narrationLines.forEach((l, i) => {
+    ctx.font = i === 0 ? 'bold 11px ui-monospace, monospace' : '10px ui-monospace, monospace';
+    ctx.fillStyle = i === 0 ? '#f2f7ee' : '#cfe0d0';
+    ctx.fillText(l, bx + 12, by + 18 + i * 15);
+  });
+  ctx.restore();
+}
+
+function drawActLog() {
+  if (!showLog || !actLog.length) return;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const bw = 560, bh = 26 + actLog.length * 15;
+  const bx = 16, by = VH - bh - 16;
+  ctx.fillStyle = 'rgba(12,18,13,0.92)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 6); else ctx.rect(bx, by, bw, bh);
+  ctx.fill(); ctx.stroke();
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 10px ui-monospace, monospace';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText('INTENT LOG — nothing here mutated authoritative state', bx + 12, by + 16);
+  actLog.forEach((a, i) => {
+    const c = INTENT_CLASS[a.cls];
+    const yy = by + 32 + i * 15;
+    ctx.fillStyle = c.color;
+    ctx.fillRect(bx + 12, yy - 8, 4, 10);
+    ctx.font = '9px ui-monospace, monospace';
+    ctx.fillStyle = '#cfe0d0';
+    ctx.fillText(`${a.at}  ${a.text}`.slice(0, 96), bx + 22, yy);
+  });
+  ctx.restore();
+}
+
+function drawReviewGate() {
+  if (!reviewGate) return;
+  const { entity, port } = reviewGate;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = 'rgba(8,10,8,0.72)';
+  ctx.fillRect(0, 0, VW, VH);
+  const bw = 560, bh = 210, bx = (VW - bw) / 2, by = (VH - bh) / 2;
+  ctx.fillStyle = 'rgba(20,14,14,0.98)';
+  ctx.strokeStyle = INTENT_CLASS.authority.color;
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 8); else ctx.rect(bx, by, bw, bh);
+  ctx.fill(); ctx.stroke();
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 14px ui-monospace, monospace';
+  ctx.fillStyle = INTENT_CLASS.authority.color;
+  ctx.fillText('REVIEW GATE', bx + 20, by + 30);
+  ctx.font = '11px ui-monospace, monospace';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText(`"${port.port}"  on  ${entity.label}`, bx + 20, by + 54);
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.fillStyle = '#cfe0d0';
+  const body = [
+    'This interaction is classified AUTHORITATIVE.',
+    '',
+    'A spatial action in Habitat is an intent signal. It never mutates',
+    'authoritative state on its own — the world is a projection, and a',
+    'projection does not own the record it projects.',
+    '',
+    'Confirming records the intent for review. It does not write to',
+    'capital.db or fabric.db from here.',
+  ];
+  body.forEach((l, i) => ctx.fillText(l, bx + 20, by + 78 + i * 14));
+  ctx.font = 'bold 12px ui-monospace, monospace';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText('[Y] confirm intent', bx + 20, by + bh - 16);
+  ctx.fillText('[N] decline', bx + 220, by + bh - 16);
+  ctx.restore();
+}
+
+function drawAudioLegend() {
+  if (!AUDIO.on) return;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  const keysL = Object.keys(AUDIO.legend);
+  const bw = 250, bh = 20 + keysL.length * 13;
+  const bx = VW - bw - 16, by = VH - bh - 16;
+  ctx.fillStyle = 'rgba(12,18,13,0.88)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, bw, bh, 6); else ctx.rect(bx, by, bw, bh);
+  ctx.fill();
+  ctx.textAlign = 'left';
+  ctx.font = 'bold 9px ui-monospace, monospace';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText('ACOUSTIC GRAMMAR [M]', bx + 10, by + 14);
+  ctx.font = '8px ui-monospace, monospace';
+  ctx.fillStyle = 'rgba(207,224,208,0.72)';
+  keysL.forEach((k, i) => ctx.fillText(`${k} = ${AUDIO.legend[k]}`, bx + 10, by + 27 + i * 13));
+  ctx.restore();
+}
+
+function drawDialog(entity) {
+  const boxW = 660, boxH = 268;
+  const bx = (VW - boxW) / 2, by = VH - boxH - 20;
+  ctx.save();
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+  ctx.fillStyle = 'rgba(12,18,13,0.94)';
+  ctx.strokeStyle = cssVar('var(--accent)');
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx, by, boxW, boxH, 8); else ctx.rect(bx, by, boxW, boxH);
+  ctx.fill(); ctx.stroke();
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(bx + 5, by + 5, boxW - 10, boxH - 10, 5); else ctx.rect(bx+5, by+5, boxW-10, boxH-10);
+  ctx.stroke();
+
+  let title = entity.label, lines = [], tagColor = cssVar('var(--accent)');
+  if (entity.kind === 'character') {
+    const c = entity.data;
+    title = `${c.label} — ${c.role}`;
+    tagColor = relColor(c.relationship_state);
+    lines.push(`state  ${c.relationship_state}`);
+    lines.push(`source  capital.db / relationships / id ${c.source.id}`);
+    lines.push('');
+    lines.push('visit history:');
+    c.visit_history.forEach(v => lines.push(`  ${v.at}   ${v.direction.padEnd(8)} ${v.kind}`));
+  } else if (entity.kind === 'object') {
+    const o = entity.data;
+    title = o.label;
+    if (o.bytes) lines.push(`bytes  ${o.bytes}`);
+    if (o.digest) lines.push(`digest  ${o.digest}`);
+    if (o.state) lines.push(`state  ${o.state}`);
+    if (o.note) lines.push(...wrapText(o.note, boxW - 44));
+    lines.push('');
+    lines.push(`source  ${o.source.db} / ${o.source.table} / ${o.source.id ?? o.source.digest}`);
+  } else if (entity.kind === 'room') {
+    const r = entity.data;
+    title = r.label;
+    tagColor = stateColor(r.state);
+    lines.push(`state  ${r.state}`);
+    lines.push(`workgraph_cursor  ${r.workgraph_cursor}`);
+    lines.push(`source  ${r.source.db} / ${r.source.table} / ${r.source.id}`);
+  } else if (entity.kind === 'civic') {
+    const d = entity.data;
+    const src = s => s ? `source  ${s.db} / ${s.table} / ${s.id ?? s.group_by}` : null;
+    if (entity.civic === 'gate') {
+      title = `Gate — ${d.label}`;
+      lines.push(`opportunity  ${d.opportunity}`);
+      lines.push(`class  ${d.gate_class}      status  ${d.status}`);
+      if (d.value_at_stake) lines.push(`value at stake  ${d.value_at_stake}`);
+      if (d.external_ref) lines.push(`ref  ${d.external_ref}`);
+      if (d.blocks) lines.push(...wrapText('completed before gate: ' + d.blocks, boxW - 44));
+    } else if (entity.civic === 'stall') {
+      title = `Offer — ${d.label}`;
+      lines.push(`class  ${d.offer_class}      status  ${d.status}`);
+      if (d.asking_price) lines.push(`asking  ${d.currency} ${d.asking_price}`);
+      if (d.target_customer) lines.push(`target  ${d.target_customer}`);
+      if (d.backing_asset) lines.push(`backed by  ${d.backing_asset} (${d.backing_asset_status})`);
+      lines.push(`experiments  ${d.experiments_run} run, ${d.experiments_answered} answered`);
+    } else if (entity.civic === 'monument') {
+      title = `Learning — ${d.learning_type}`;
+      lines.push(...wrapText(d.description, boxW - 44));
+      lines.push(`occurred  ${d.occurred_at}      adopted  ${d.adopted ? 'yes' : 'not yet'}`);
+      if (d.source_ref) lines.push(`ref  ${d.source_ref}`);
+    } else if (entity.civic === 'foundation') {
+      title = `Storage root — ${d.label}`;
+      lines.push(`kind  ${d.kind}      authority  ${d.authority_class}`);
+      lines.push(`durability  ${d.durability}      trust  ${d.trust_level}`);
+      lines.push(`sensitivity  ${d.sensitivity}      access  ${d.access_mode}`);
+      lines.push(...wrapText('locator: ' + d.locator, boxW - 44));
+    } else if (entity.civic === 'notices') {
+      title = 'Evidence Board';
+      (d.notices || []).slice(0, 7).forEach(n => lines.push(
+        `  ${n.verified ? '✔' : '·'} [${n.evidence_type}] ${n.claim}`.slice(0, 88)));
+    } else if (entity.civic === 'workboard') {
+      title = 'Work Board — capital_actions by status';
+      (d.workboard || []).forEach(r => lines.push(
+        `  ${String(r.count).padStart(3)}  ${r.status.padEnd(22)} face ${r.face_value}  realized ${r.realized_value}`));
+    } else if (entity.civic === 'obelisk') {
+      title = 'Receipt Chain — fabric.db';
+      (d.timeline || []).slice(0, 7).forEach(t => lines.push(
+        `  ${t.at}  ${t.kind.padEnd(8)} ${(t.subject_id || t.effect_class || '')}`.slice(0, 88)));
+    } else if (entity.civic === 'latent-door' || entity.civic === 'latent-trail') {
+      title = `Latent composition — ${d.label}`;
+      tagColor = '#b9a8e0';
+      lines.push(...wrapText(d.composition, boxW - 44));
+      lines.push('');
+      lines.push('This appeared because the composition is ALREADY VALID in the');
+      lines.push('real graph — not because something was invented to fill space.');
+      if (d.blocked_by) lines.push(`blocked by  ${d.blocked_by}`);
+      if (d.verified_evidence) lines.push(`verified evidence rows  ${d.verified_evidence}`);
+      if (d.relationship_state) lines.push(`relationship state  ${d.relationship_state}`);
+      if (d.opportunity) lines.push(`opportunity  ${d.opportunity}`);
+    } else if (entity.civic === 'landmark') {
+      title = `The world remembers — ${d.label}`;
+      lines.push(`tier  ${d.tier}   placement  ${d.placement}`);
+      lines.push(`importance  ${d.importance}  (evidence ${d.evidence_count} x2 + episodes ${d.episode_count})`);
+      lines.push(`status  ${d.status}`);
+      lines.push('');
+      lines.push('Importance is computed from real evidence and episode counts.');
+      lines.push('Higher importance rises shelf -> wall -> permanent landmark.');
+    }
+    const p = profileFor(entity);
+    if (p) {
+      lines.push('');
+      lines.push(`embodied as  ${currentForm(entity)}   (of ${p.spatial_forms.join(', ')})`);
+      lines.push(`ports  ${p.interaction_ports.map(x => x.port + ':' + x.intent).join('  ')}`);
+    }
+    const s = src(d.source);
+    if (s) { lines.push(''); lines.push(s); }
+  }
+
+  ctx.fillStyle = tagColor;
+  ctx.fillRect(bx + 16, by + 14, 5, 20);
+  ctx.font = 'bold 14px ui-monospace, monospace';
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#f2f7ee';
+  ctx.fillText(title.length > 62 ? title.slice(0, 60) + '…' : title, bx + 28, by + 29);
+
+  ctx.font = '12px ui-monospace, monospace';
+  ctx.fillStyle = '#cfe0d0';
+  lines.forEach((l, i) => ctx.fillText(l, bx + 20, by + 54 + i * 16));
+
+  ctx.fillStyle = 'rgba(207,224,208,0.55)';
+  ctx.font = '10px ui-monospace, monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('E / click to close', bx + boxW - 16, by + boxH - 12);
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------
+// Main render: everything Y-sorted so overlaps read correctly
+// ---------------------------------------------------------------
+function render() {
+  ctx.save();
+  ctx.translate(-Math.round(camera.x), -Math.round(camera.y));
+
+  drawGround();
+  drawPaths();
+  drawZoneBands();
+  decorations.forEach(drawProp);
+  drawDistrictSigns();
+  rooms.forEach(drawBuilding);
+
+  const drawables = [
+    ...entities.filter(e => e.kind === 'object').map(o => ({ y: o.y, draw: () => drawFurniture(o) })),
+    ...entities.filter(e => e.kind === 'civic').map(c => ({ y: c.y, draw: () => drawCivic(c) })),
+    ...entities.filter(e => e.kind === 'character').map(c => ({
+      y: c.y,
+      draw: () => {
+        drawCharacter(c.x, c.y, c.hair, c.shirt, c.skin, 'down', performance.now() / 260 + c.wanderPhase, c.w, c.h, c.color);
+        drawEmbodimentMark(c);
+        drawSpeechTag(c.x, c.y - c.h / 2, c.label, c.sub, c.color, c);
+      },
+    })),
+    {
+      y: player.y,
+      draw: () => drawCharacter(player.x, player.y, player.hair, player.shirt, player.skin, player.dir, player.moving ? player.frame : 0, player.w, player.h, null),
+    },
+  ];
+  drawables.sort((a, b) => a.y - b.y).forEach(d => d.draw());
+
+  if (hoverTarget && !dialogOpen) {
+    ctx.save();
+    ctx.strokeStyle = '#f2f7ee';
+    ctx.lineWidth = 1.5;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.arc(hoverTarget.x, hoverTarget.y, 26, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  ctx.restore(); // back to screen space
+
+  drawTimeOfDay();
+  drawNarration();
+  drawPortMenu();
+  drawActLog();
+  drawAudioLegend();
+  if (dialogOpen) drawDialog(dialogOpen);
+  drawReviewGate();
+}
+
+function loop() { update(); render(); requestAnimationFrame(loop); }
+canvas.focus();
+loop();
+</script>
