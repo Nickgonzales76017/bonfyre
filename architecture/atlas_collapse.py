@@ -44,13 +44,23 @@ class MaturityAudit:
 
 
 def witness_kind(path: str) -> str:
-    """Classify a witness pointer: 'external' (deliberately cross-repo, honest but
-    not locally verifiable), 'local' (a file/dir that exists on disk), or
-    'missing' (points nowhere we can find). Only 'missing' is laundering."""
+    """Classify a witness pointer.
+
+    ``local`` means the current checkout can verify the witness directly.
+    ``external`` means the pointer is deliberate evidence that lives outside the
+    repository checkout (another repo, or Bonfÿre host state). ``missing`` is
+    reserved for a repository-local pointer that should exist here but does not.
+
+    This distinction matters in CI: ``~/.bonfyre`` is runtime/host evidence by
+    design. A clean GitHub runner not having another machine's substrate proof is
+    not evidence that the measured claim was fabricated.
+    """
     if path.startswith("external:"):
         return "external"
     expanded = os.path.expanduser(path)
-    if os.path.isabs(expanded) or expanded != path:  # absolute or ~-expanded
+    if path.startswith("~/.bonfyre/"):
+        return "local" if os.path.exists(expanded) else "external"
+    if os.path.isabs(expanded) or expanded != path:  # other absolute / ~ paths
         return "local" if os.path.exists(expanded) else "missing"
     return "local" if os.path.exists(os.path.join(REPO_ROOT, path)) else "missing"
 
