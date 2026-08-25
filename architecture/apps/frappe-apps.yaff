@@ -5,7 +5,9 @@ atlas apps
 # (consumes), per the wiring riff SS5. The Frappe apps are REAL installed products
 # under integrations/frappe-bench/apps (hundreds of DocTypes each, extracted by
 # cmd/BonfyreFrappeCompiler) -- maturity implemented, each app fact grounded in a
-# real DocType (witness_frappe_apps.py). The remaining wiring per app is the
+# real DocType (witness_frappe_apps.py). The native compiler also carries the
+# lineage ownership catalog, so store-backed facts have a compiled owner rather
+# than becoming Python-only authority. The remaining wiring per app is the
 # runtime write-back of its facts into fabric.db. `atlas.py wiring` shows which
 # app<->fabric feedback loops close (CRM<->actor, HRMS<->work, ERPNext<->provider).
 
@@ -19,6 +21,7 @@ architecture frappe-core
   maturity implemented
   source_path integrations/frappe-bench/apps/frappe
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns DocType
   consumes Authority
@@ -38,6 +41,7 @@ architecture erpnext
   maturity implemented
   source_path integrations/frappe-bench/apps/erpnext
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns Value
   owns Receipt
@@ -59,6 +63,7 @@ architecture crm
   maturity implemented
   source_path integrations/frappe-bench/apps/crm
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   consumes Actor
   consumes Relation
@@ -79,6 +84,7 @@ architecture hrms
   maturity implemented
   source_path integrations/frappe-bench/apps/hrms
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns HumanCapacity
   consumes Actor
@@ -98,6 +104,7 @@ architecture helpdesk
   maturity implemented
   source_path integrations/frappe-bench/apps/helpdesk
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns TicketState
   consumes Actor
@@ -118,6 +125,7 @@ architecture lms
   maturity implemented
   source_path integrations/frappe-bench/apps/lms
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns Credential
   consumes Actor
@@ -137,6 +145,7 @@ architecture wiki
   maturity implemented
   source_path integrations/frappe-bench/apps/wiki
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns KnowledgeClaim
   consumes Evidence
@@ -156,6 +165,7 @@ architecture drive
   maturity implemented
   source_path integrations/frappe-bench/apps/drive
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   consumes Artifact
   consumes Authority
@@ -178,6 +188,7 @@ architecture insights
   maturity implemented
   source_path integrations/frappe-bench/apps/insights
   source_path cmd/BonfyreFrappeCompiler/frappe_schema_parser.py
+  source_path cmd/BonfyreFrappeCompiler/src/main.c
   witness components/BonfyreControlPlane/witness_frappe_apps.py
   owns DerivedView
   consumes ReachableCapacity
