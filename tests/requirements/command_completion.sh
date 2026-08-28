@@ -8,15 +8,35 @@ state="$shared/state"
 matrix="$shared/command-evidence.tsv"
 db="$state/fabric.db"
 
+# Command completion crosses two build authorities. The Fabric may need bounded
+# hosted-runner warning penetration, but native Powers must retain each
+# Makefile's private CFLAGS/OPTFLAGS/include contract. Never leak a test-level
+# CFLAGS override into the 93-command workload build.
+fabric_cflags=${BONFYRE_FABRIC_TEST_CFLAGS:-${CFLAGS:-}}
+command_cc=${CC:-cc}
+case " $command_cc " in
+  *" -D_GNU_SOURCE "*) ;;
+  *) command_cc="$command_cc -D_GNU_SOURCE" ;;
+esac
+case " $command_cc " in
+  *" -D_DEFAULT_SOURCE "*) ;;
+  *) command_cc="$command_cc -D_DEFAULT_SOURCE" ;;
+esac
+
 generate_matrix() {
   rm -rf "$shared"
   mkdir -p "$shared"
-  BONFYRE_STATE_DIR="$shared" sh "$root/tests/fabric_smoke.sh" >/dev/null
+  if [ -n "$fabric_cflags" ]; then
+    CFLAGS="$fabric_cflags" BONFYRE_STATE_DIR="$shared" sh "$root/tests/fabric_smoke.sh" >/dev/null
+  else
+    BONFYRE_STATE_DIR="$shared" sh "$root/tests/fabric_smoke.sh" >/dev/null
+  fi
   test -x "$root/scripts/bonfyre-command-workloads" || {
     echo 'missing production command workload runner' >&2
     return 1
   }
-  BONFYRE_STATE_DIR="$state" "$root/scripts/bonfyre-command-workloads"
+  env -u CFLAGS -u OPTFLAGS CC="$command_cc" BONFYRE_STATE_DIR="$state" \
+    "$root/scripts/bonfyre-command-workloads"
   BONFYRE_STATE_DIR="$state" BONFYRE_COMMAND_EVIDENCE="$matrix" \
     "$root/scripts/bonfyre-command-evidence" >/dev/null
 }

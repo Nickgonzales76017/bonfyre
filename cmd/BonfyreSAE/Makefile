@@ -1,16 +1,12 @@
-CC      = cc
-CFLAGS  = -std=c11 -O2 -Wall -Wextra -Wpedantic
+CC      ?= cc
+CFLAGS  ?= -std=c11 -O2 -Wall -Wextra -Wpedantic
 LOCAL_CFLAGS = -I../../lib/libbonfyre/include
-LDFLAGS = -L$(HOME)/.local/lib -lbonfyre -lsqlite3 -lm
+LDFLAGS = -L../../lib/libbonfyre -lbonfyre -lsqlite3 -lm -lpthread
 TARGET  = bonfyre-sae
 SRC     = src/main.c
 
 $(TARGET): $(SRC)
-	@mkdir -p $(HOME)/.local/lib
-	@cp ../../lib/libbonfyre/libbonfyre.dylib $(HOME)/.local/lib/libbonfyre.dylib
-		@install_name_tool -id $(HOME)/.local/lib/libbonfyre.dylib $(HOME)/.local/lib/libbonfyre.dylib
-	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $@ $(SRC) $(LDFLAGS) \
-		-Wl,-rpath,$(HOME)/.local/lib
+	$(CC) $(CFLAGS) $(LOCAL_CFLAGS) -o $@ $(SRC) $(LDFLAGS)
 
 install: $(TARGET)
 	install -m 755 $(TARGET) ~/.local/bin/$(TARGET)
