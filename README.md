@@ -38,6 +38,17 @@ keep using, and the links between systems that already exist.
 The samples use public or made-up data. Paid memberships and card payments are
 not part of the training sample.
 
+## Use a smaller piece
+
+You can also start without building the whole system:
+
+| Independently scoped source | The job it does | What to inspect |
+|---|---|---|
+| **[Statement Import](https://github.com/Nickgonzales76017/bonfyre-statement-import)** | Convert normalized bank-statement text into CSV and refuse a result when running balances fail to reconcile | [C source and pack fixtures](https://github.com/Nickgonzales76017/bonfyre-statement-import) |
+| **[Agent Trace Verifier](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier)** | Evaluate agent-execution evidence through a deterministic, source-addressed receipt | [Standalone verifier and examples](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier) |
+
+Those tools have their own repositories and licenses. For more involved deployments, [the client operations portfolio](docs/client-operations-portfolio.md) shows how local software and public applications fit WordPress, ERPNext, source documents, creator publishing, agency work and commerce. The [operating-products guide](https://docs.aurekai.work/operating-products) describes broader customer and partner applications.
+
 ## Building blocks
 
 Nine areas of the development codebase are being cut into independently usable
