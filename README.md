@@ -9,6 +9,7 @@
 <a href="#core-laws">Core laws</a> ·
 <a href="#operator-model">Operator model</a> ·
 <a href="#native-powers">Native Powers</a> ·
+<a href="docs/client-operations-portfolio.md">Client Work</a> ·
 <a href="#repository-map">Repository map</a> ·
 <a href="#quick-start">Quick start</a> ·
 <a href="#licensing">Licensing</a>
