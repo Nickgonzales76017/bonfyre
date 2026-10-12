@@ -34,3 +34,6 @@ jobs:
           bash scripts/federated_modules.sh verify all
           bash scripts/federated_modules.sh verify products
           bash scripts/federated_modules.sh verify aurekai
+          bash scripts/federated_modules.sh verify frappe
+          bash scripts/federated_modules.sh verify interfaces
+          bash scripts/federated_modules.sh verify one integrations/federated/interfaces/opentui

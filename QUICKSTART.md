@@ -30,7 +30,7 @@ being an alternative source root.
 
 ### Optional: work across the other repositories
 
-The default clone does **not** fetch the 30 pinned public companion
+The default clone does **not** fetch the 47 pinned public companion
 submodules. You can select only the repositories relevant to a job:
 
 ```bash
@@ -41,8 +41,21 @@ bash scripts/federated_modules.sh status products
 ```
 
 Profiles are `products`, `extractions`, `examples`, `aurekai`, `lineage`,
-`upstream` and `all`. Run `init lineage` or `init all` only when you really
-need older source histories; they can use substantial disk space. No
+`upstream`, `frappe`, `interfaces`, `one PATH`, and `all`. Run `init lineage` only
+for older source histories. The Frappe and interface donor families are large
+and source-only; fetch just one project when possible:
+
+```bash
+bash scripts/federated_modules.sh init one integrations/federated/interfaces/opentui
+```
+
+To deliberately fetch an entire large family, set the opt-in explicitly:
+
+```bash
+BONFYRE_ALLOW_LARGE_MODULES=1 bash scripts/federated_modules.sh init frappe
+```
+
+Avoid `init all` on a storage-constrained machine. No
 submodule contents are needed for the top-level native `make` target.
 
 Submodule SHAs are pinned in Git, not pulled from `main` on every run. To
