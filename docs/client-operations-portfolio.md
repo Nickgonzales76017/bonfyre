@@ -6,6 +6,32 @@ I develop software that turns existing business systems, documents, APIs and hum
 
 **The full engine:** [Bonfÿre](../README.md) is the native execution and institutional substrate within Aurekai. The [standalone agent-trace verifier](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier) is one early, separately distributed component—not the scope of the full engineering work.
 
+## Start with the work, not the stack
+
+These are working public examples or published walkthroughs. The sample businesses, studio members and shipment records are illustrative; they don't represent customer contracts or access to external accounts.
+
+| Business decision | What you can see or try | Current example |
+|---|---|---|
+| **Plan a new retail space** | Move real catalogue fixtures, compare source prices and assemble a reviewable brief | [Retail planner](https://aurekai-work-samples.pages.dev/red3-planner/) |
+| **Prepare a product catalogue change** | Review editable fields, preserve originals, save and submit a proposal without changing the merchant's source | [Product workspace](https://aurekai-work-samples.pages.dev/catalogue/) |
+| **Hand messy records to an operator** | Reconcile fictional shipment files, spot duplicates and missing proofs, prepare the receiving list | [Shipment document handoff](https://aurekai-work-samples.pages.dev/archive/) |
+| **Operate separate customer identities** | Compare a ceramics studio, bicycle workshop and bakery with individual styles and offers from a shared site system | [Three businesses](https://docs.aurekai.work/three-businesses) |
+| **Publish reviewed member programs** | See creator-side requests, versioned programs and member views across sample studios | [Studio application](https://aurekai-work-samples.pages.dev/training/) |
+| **Find a source, not an invented answer** | Retrieve local document passages and source-linked notes | [Document search workspace](https://aurekai-work-samples.pages.dev/documents/) |
+
+## Work that compounds across industries
+
+Aurekai takes on an individual business problem, but the software below it is reusable. The same source/authority/work/receipt pattern is useful in:
+
+- **ERP, agencies and international trade:** supplier or customer documents, typed imports, localized fields, approval queues, ERPNext/Frappe/WordPress synchronization and actual receiving-system readback.
+- **Professional services and finance:** scoped proposals, CRM follow-up, statement reconciliation, exceptions, invoices and separate evidence of settlement.
+- **Content, audio and creator businesses:** recording intake, editorial review, reusable media, audience-specific publishing and subscription operations with separate payment authority.
+- **Community and institutional operations:** membership, proposals, governance, events, education, shared resources, and role-specific sites.
+- **Local business and property workflows:** sourced observations, intake, inspections, appointments, procurement and handoffs to the responsible operator.
+- **Developer and agent platforms:** native libraries, typed tool contracts, local model/data operations, CLI, web, MCP and agent-host interfaces over the same operation.
+
+[Operating product families](https://docs.aurekai.work/operating-products) explores the customer side. The [Bonfÿre native source](../README.md) and the [broader developer guides](https://docs.aurekai.work/building-blocks) explain the implementation side. Not every industry path is a separately delivered app, and the current research catalogues candidate library cuts rather than released packages.
+
 ## Selected implementation evidence
 
 | Customer problem | Relevant implementation and verified behavior | Evidence |
