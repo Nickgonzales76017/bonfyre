@@ -58,6 +58,10 @@ BONFYRE_ALLOW_LARGE_MODULES=1 bash scripts/federated_modules.sh init frappe
 Avoid `init all` on a storage-constrained machine. No
 submodule contents are needed for the top-level native `make` target.
 
+The `extractions` group follows the reviewed nested `bonfyre-core` and
+Lambda Tensors gitlinks, so the extracted command sources have their shared
+library dependencies. All other profiles remain non-recursive by default.
+
 Submodule SHAs are pinned in Git, not pulled from `main` on every run. To
 change a pin, review the referenced repository and commit its new gitlink in
 a focused PR. Each companion retains its own license and build contract.
