@@ -1,0 +1,31 @@
+pack utd-vdc-actors
+generation control-1
+provenance inbound-email:2026-08-14 (eligibility clarification, business manager CCed)
+authority asserted
+note First local physical-institution edge. Only first names were given in the reply; surnames and titles are unconfirmed and must be resolved before outbound use.
+
+actor org:utd-vdc
+  node_kind organization
+  display_name UT Dallas Venture Development Center
+  detail Startup support and commercially available lab/office space. Eligibility question resolved: non-UTD-affiliated startups are welcome. The university research-lab restriction is a separate thing from the commercial startup space.
+
+actor person:utd-vdc-steve
+  node_kind person
+  display_name Steve
+  role VDC contact (surname unknown)
+  org_id org:utd-vdc
+  detail Answered the eligibility question and CCed the business manager. Surname not stated in the reply.
+
+actor person:utd-vdc-kathy
+  node_kind person
+  display_name Kathy
+  role Business manager (surname unknown)
+  org_id org:utd-vdc
+  detail Introduced as the person to answer further questions and to help promote the directory once complete.
+
+edge org:utd-vdc employs person:utd-vdc-steve
+edge org:utd-vdc employs person:utd-vdc-kathy
+edge person:utd-vdc-kathy authority_over org:utd-vdc
+  detail business/operations questions and directory promotion
+edge org:utd-vdc opportunity_unlock org:utd-vdc
+  detail commercial workspace and lab access in DFW; a physical foothold rather than a software integration

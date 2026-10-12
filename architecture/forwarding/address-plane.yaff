@@ -1,0 +1,79 @@
+atlas forwarding
+
+architecture address-plane
+  subscribes EligibleProviders
+  subscribes ReachableCapacity
+  consumes Authority
+  consumes ProviderState
+  consumes SurfaceCandidate
+  consumes FPQRepresentation
+  consumes KVPassport
+  consumes Capability
+  publishes RouteAdvertisement
+  canonical_name AddressPlane
+  family forwarding
+  domain Forwarding / Eligibility
+  layer forwarding
+  semantic_question Of all the state available, what is even eligible to participate in this operation?
+  purpose A compiled bit-mask and ternary forwarding plane under the plural semantic estate. Rejects vast populations with (have & need)==need before any graph is walked, so semantic richness never becomes slow.
+  maturity implemented
+  node_types BitRegistry
+  node_types Mask
+  node_types TernaryState
+  node_types Route
+  edge_types eligible_for
+  edge_types blackholes
+  internal_calculus bitwise eligibility (have & need)==need
+  internal_calculus ternary proof vector (+1 proven / 0 unresolved / -1 KnownNonCause)
+  internal_calculus authority mask compiled from non-revoked in-window grants
+  invariant bits are a compiled machine index, not meaning
+  invariant eligibility rejects the impossible; it never grants authority or proves anything
+  invariant a blackholed hypothesis is negative forwarding state, not a permanent truth
+  forbidden_inference eligible -> authorized
+  forbidden_inference a mask match -> a semantic match
+  forbidden_inference a blackholed hypothesis -> permanently false (a reheat reopens it)
+  native_format graf
+  source_path components/BonfyreControlPlane/address_plane.py
+  witness components/BonfyreControlPlane/tests/test_address_plane.py
+  internal_calculus route funnel: capability -> authority -> proof rejection over the real estate
+  internal_calculus CID prefix routing: longest-prefix placement partitions over content digests
+  internal_calculus SID SimHash: angle-preserving LSH over real Bonfyre embeddings (bonfyre-embed)
+  internal_calculus route advertise/withdraw: routes maintained by DBSP; a provider-down -1 withdraws its routes, alternates survive (anycast failover)
+  forbidden_inference a CID prefix -> a semantic category (hashes are random w.r.t. meaning)
+  forbidden_inference a small SID Hamming distance -> identity or evidence (locality suggests, never establishes)
+  native_format graf
+  interacts authority-graph
+  interacts proof-frontier
+  interacts capability-lattice
+  interacts capability-closure
+  interacts lance
+  interacts hash-identity
+  source_path components/BonfyreControlPlane/bonfyre_sid.py
+  source_path components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
+  witness components/BonfyreControlPlane/tests/test_cid_sid.py
+  witness ~/.bonfyre/substrates/v6.1/feldera/route-set-proof.jsonl
+  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py
+  source_lineage AddressPlane / institutional packet-switching vision
+  known_gap SID ANN via bonfyre-vec awaits the sqlite-vec extension; the learned-optimizer layer is built (see route-ranker)
+
+architecture route-ranker
+  canonical_name RouteRanker
+  family forwarding
+  domain Forwarding / Learned Optimization
+  layer forwarding
+  semantic_question Of the eligible survivors, which few are most likely to succeed?
+  purpose A tiny ternary model (weights in {-1,0,+1}, a BitNet-shaped linear head) that ranks the funnel's survivors by predicted success, trained on the routing outcomes the system already produces. It sits after deterministic pruning; it reorders eligibles and overrides nothing.
+  maturity implemented
+  node_types TernaryRanker
+  node_types RouteRecord
+  edge_types ranks
+  internal_calculus ternary linear score; weights = correlation sign thresholded to {-1,0,+1}
+  invariant the ranker only reorders eligible survivors; it never changes eligibility, grants authority, or proves anything
+  invariant a feature's weak signal collapses to 0 rather than pretending to matter
+  forbidden_inference a high rank -> a correct or authorized route (the exact closure still verifies the top choice)
+  forbidden_inference a learned weight -> a large training set (currently ~10 real workload_proven successes)
+  source_path components/BonfyreControlPlane/route_ranker.py
+  witness components/BonfyreControlPlane/tests/test_route_ranker.py
+  interacts address-plane
+  source_lineage AddressPlane / BitNet learned-forwarding vision
+  known_gap richer structural features (SID / masks / cost buckets / prior similar-route outcomes) and more routing-outcome records; a real BitNet backend when one exists in Bonfyre

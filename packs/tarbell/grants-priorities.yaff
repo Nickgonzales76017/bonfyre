@@ -1,0 +1,37 @@
+pack tarbell-grants-priorities
+generation control-1
+source_plane run3_four_economies_campaign
+item_kind tarbell_grants
+source_ref campaign:tarbell
+provenance tarbellcenter.org/grants, fetched 2026-08-14
+note July round closed. Six priority areas mapped to evidence we already hold, so a future pitch cites reproducible work rather than proposing from scratch. $1k-$20k, up to three pitches, teams allowed, no outlet required at application.
+
+work tarbell_map_evidence_to_priorities
+  target_plane run3_four_economies_campaign
+  priority 8.0
+  reason The strongest fit is priority 1, accountability reporting on frontier AI companies -- and priority 3, explainers grounded in reproducible technical work. Our celld A/B measurements, the SARIF fingerprint findings, the admission-gate work, and the whole autonomous-contribution record are inspectable evidence most pitches cannot offer. Map each to a priority before the next round opens
+
+work tarbell_watch_next_grant_round
+  target_plane run3_four_economies_campaign
+  priority 7.0
+  reason The July round is closed and the only stated way in is to subscribe for the next. This is a cool watch with a real reheat condition: the grants page announcing a new round. Do not poll it
+
+work tarbell_grant_judge_distribution_map
+  target_plane run2_relationship_adoption
+  priority 6.0
+  reason The judging panel is a distribution network in itself: Scott Rosenberg (Axios), Casey Newton (Platformer), Timothy B. Lee (Understanding AI), Sharon Weinberger (WSJ), plus Shakeel who we already know. A pitch is read by working journalists at named outlets, so it should be written to survive that scrutiny, not to a generic reviewer
+
+work tarbell_ai_labor_angle_from_run6
+  target_plane run3_four_economies_campaign
+  priority 5.5
+  reason Priority 5 is AI labor impacts through original reporting. Run 6 is itself primary evidence of what autonomous agents can and cannot do to knowledge work -- 3h22m, real external actions, real failures, $0 realized. That is a labor story with reproducible data behind it, which almost no pitch has
+
+work tarbell_shakeel_is_the_dense_node
+  target_plane run2_relationship_adoption
+  priority 6.5
+  reason Shakeel Hashim sits on both the Transformer editorial side and the grant-judging panel. He is the single densest relationship node in the institution. Any contact should route through the editorial evidence path, not a funding ask, consistent with the contribution-first doctrine
+
+work tarbell_promote_five_to_verified
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason The five originally-asserted Tarbell people were confirmed exactly against the live directory. They should move asserted to verified. This is also a clean test of whether the actor graph can upgrade a node's confidence in place when evidence arrives, rather than only ever adding

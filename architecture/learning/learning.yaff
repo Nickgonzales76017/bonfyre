@@ -1,0 +1,35 @@
+atlas learning
+# Harvested run6/run7 learning/promotion path (Aurekai): the recursive loop that
+# learns how the graph itself should evolve. Registered architectural until built.
+
+architecture pattern-graph
+  canonical_name PatternGraph
+  family learning
+  domain Learning / Patterns
+  layer learning
+  semantic_question What recurring pattern do these action traces and residuals cluster into?
+  purpose Action traces -> residuals -> pattern clusters, the raw material of promotion. Above Bonfyre's operation, Aurekai's learning.
+  maturity architectural
+  node_types ActionTrace
+  node_types PatternCluster
+  edge_types clusters_into
+  forbidden_inference a pattern observed -> a validated primitive
+  source_lineage run6/run7 Aurekai learning path
+  known_gap not built; the route-ranker learns route ordering, a first learned organ
+
+architecture capability-genome
+  canonical_name CapabilityGenome
+  family learning
+  domain Learning / Promotion
+  layer learning
+  semantic_question What structural change to the graph does this pattern justify, and has it been proven?
+  purpose Pattern cluster -> LambdaTensor motif -> CapabilityGenome -> candidate primitive -> proof -> promotion into the registry. The learned router may improve constantly without mutating constitutional state.
+  maturity architectural
+  node_types LambdaTensor
+  node_types CandidatePrimitive
+  edge_types promotes_to
+  forbidden_inference a learned candidate -> a promoted primitive (proof and validation gate promotion)
+  interacts proof-frontier
+  interacts route-ranker
+  source_lineage run6/run7 Aurekai learning path
+  known_gap not built

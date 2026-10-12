@@ -1,0 +1,49 @@
+atlas forms
+
+architecture form-graph
+  canonical_name FormGraph
+  family forms
+  domain Forms
+  layer forms
+  semantic_question What is the structure of this human-boundary form, independent of any one submission?
+  purpose The form as a graph -- fields, dependencies, evidence slots, attachments, approvals -- distinct from AtomicForm, which compiles it against state.
+  maturity implemented
+  node_types FormNode
+  node_types FieldNode
+  node_types FieldDependency
+  edge_types field_depends_on
+  edge_types required_when
+  internal_calculus conditional-requirement resolution against values
+  invariant AtomicForm = compile(FormGraph, state), never AtomicForm == FormGraph
+  invariant a conditionally-required field is a blocker only when its condition holds
+  forbidden_inference AtomicForm == FormGraph
+  forbidden_inference a field in the graph -> a field required for this submission
+  native_format graf
+  source_path components/BonfyreControlPlane/form_graph.py
+  witness components/BonfyreControlPlane/tests/test_form_graph.py
+  source_lineage SEED-A recursive organ document
+
+architecture atomic-form
+  canonical_name AtomicForm
+  family forms
+  domain Forms
+  layer forms/compile
+  semantic_question Is this form submit-ready, and if not, exactly what blocks it?
+  purpose compile(FormGraph, institutional/actor/evidence/capability/economic/authority state, purpose) -> obligation machine. Fields autofill only from VERIFIED actors; never self-submits.
+  maturity implemented
+  node_types Field
+  node_types EvidenceSlot
+  node_types SubmitReadiness
+  edge_types autofills_from
+  edge_types backed_by
+  invariant a field autofills only from a VERIFIED actor
+  invariant submit_ready returns exact blockers; never a false green
+  invariant the form never crosses the human submit line
+  forbidden_inference asserted-via-email actor -> verified_for(profile) autofill
+  forbidden_inference evidence slot filled by position -> evidence requirement satisfied
+  command BonfyreBrief
+  source_path components/BonfyreControlPlane/atomic_forms.py
+  source_path components/BonfyreControlPlane/institution_loop.py
+  witness components/BonfyreControlPlane/tests/test_atomic_forms.py
+  witness components/BonfyreControlPlane/tests/test_institution_loop.py
+  source_lineage AtomicForm human-boundary compiler

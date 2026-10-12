@@ -122,6 +122,12 @@ void bf_workgraph_close(BfWorkgraph *graph);
 int bf_workgraph_migrate_database(void *sqlite_database, FILE *err);
 BfWorkgraphResult bf_workgraph_create_mission(BfWorkgraph *graph, const char *mission_id);
 
+/* Register a routable node family. Once any family is registered, bf_workgraph_add_node
+ * rejects a node whose family is neither "default" nor registered -- closing the gap
+ * where the native WorkGraph accepted an unroutable target (e.g. "coordinator") that
+ * the Python reference rejects. With no families registered, behavior is unchanged. */
+BfWorkgraphResult bf_workgraph_register_family(BfWorkgraph *graph, const char *family);
+
 BfWorkgraphResult bf_workgraph_add_node(BfWorkgraph *graph, const BfWorkgraphNodeSpec *spec);
 BfWorkgraphResult bf_workgraph_add_dependency(BfWorkgraph *graph, const char *mission_id,
                                                const char *node_id, const char *depends_on_node_id,

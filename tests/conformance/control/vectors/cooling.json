@@ -1,0 +1,36 @@
+{
+  "suite": "cooling",
+  "vectors": [
+    {
+      "name": "static_blocker_leaves_the_context_cut",
+      "derived_from": "run6: proton re-read on every pass while never changing",
+      "reheat_on": "bridge credentials appear",
+      "unchanged_checks": 3,
+      "expect": {
+        "attention": "cool",
+        "in_frontier": false
+      }
+    },
+    {
+      "name": "cooled_watch_reheats_on_its_signal",
+      "derived_from": "run6: no way to express reheat",
+      "reheat_on": "bridge credentials appear",
+      "unchanged_checks": 3,
+      "reheat": true,
+      "expect": {
+        "attention": "hot",
+        "in_frontier": true
+      }
+    },
+    {
+      "name": "no_condition_stays_warm_rather_than_vanishing",
+      "derived_from": "cooling without a way back is forgetting",
+      "reheat_on": "",
+      "unchanged_checks": 5,
+      "expect": {
+        "attention": "warm",
+        "in_frontier": true
+      }
+    }
+  ]
+}

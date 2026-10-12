@@ -1,0 +1,160 @@
+atlas opportunity
+
+architecture blocker-graph
+  canonical_name BlockerGraph
+  family opportunity
+  domain Opportunity / Institutional Capacity
+  layer opportunity
+  semantic_question What is currently preventing this opportunity from being reachable?
+  purpose Missing identity verification, evidence, authority, budget, service, qualification, relationship, field; external wait; human approval.
+  maturity implemented
+  node_types Blocker
+  edge_types blocks
+  state_types resolved
+  state_types open
+  invariant a blocker with no substrate to decide it is open, never assumed satisfied
+  forbidden_inference blocker removed -> opportunity won
+  source_lineage SEED-A recursive organ document
+  source_path components/BonfyreControlPlane/opportunity.py
+  witness components/BonfyreControlPlane/tests/test_opportunity.py
+
+architecture unlock-graph
+  canonical_name UnlockGraph
+  owns OpportunityEligibility
+  derived OpportunityEligibility
+  consumes ProofFrontier
+  consumes Actor
+  subscribes ReachableCapacity
+  consumes ResourceActivation
+  consumes Credential
+  publishes OpportunityEligibility
+  family opportunity
+  domain Opportunity / Institutional Capacity
+  layer opportunity
+  semantic_question What reachable action would unlock institutional capacity that is currently out of reach?
+  purpose Models reachable institutional capacity: relationship -> reviewer access, grant -> equipment, training -> human capability, evidence -> eligibility, service activation -> executable capacity. May be conditional and non-monotonic.
+  maturity implemented
+  node_types Unlock
+  node_types Opportunity
+  edge_types unlocks
+  edge_types requires
+  state_types reachable_now
+  state_types unlockable
+  state_types blocked
+  internal_calculus reachability fixpoint over blockers and opportunity dependencies
+  invariant unlock may be conditional and non-monotonic
+  invariant an unauthorized unlock does not remove its blocker
+  invariant reachability stops at the human/external commit line; reachable is not won
+  forbidden_inference an unlock exists -> the unlock is authorized or free
+  forbidden_inference all blockers resolved -> opportunity won
+  source_lineage SEED-A recursive organ document
+  source_path components/BonfyreControlPlane/opportunity.py
+  source_path components/BonfyreControlPlane/reachability_publish.py
+  source_path components/BonfyreControlPlane/reachability_watch.py
+  source_path components/BonfyreControlPlane/reachability_bridge.py
+  witness components/BonfyreControlPlane/tests/test_opportunity.py
+  witness packs/institutional-opportunities/opportunities.yaff
+  witness components/BonfyreControlPlane/tests/test_loop_reachability.py
+  native_format graf
+  known_gap unlockable (not yet reachable) opportunities are refused; auto-executing their unlocks is the next step
+
+architecture collapse-front
+  canonical_name CollapseFront
+  owns SupportStructure
+  derived SupportStructure
+  consumes Actor
+  consumes Relation
+  publishes SupportStructure
+  family opportunity
+  domain Opportunity / Provenance Structure
+  layer opportunity
+  semantic_question If this fact is withdrawn, which conclusions lose all support -- and which single facts is a given conclusion load-bearing on?
+  purpose The retraction dual of reachability. UnlockGraph computes what is reachable forward; CollapseFront computes the inverse over a monotone AND/OR support lattice: collapse_front(fact) = conclusions that go dark if that fact alone is retracted; critical_support(conclusion) = the facts whose solo retraction collapses it. The two are exact transposes of one boolean collapse matrix. This makes the constitution's no-maturity-laundering rule a runtime query: retract a witness and CollapseFront names every claim that had no independent support.
+  maturity measured
+  node_types Ground
+  node_types Conclusion
+  edge_types supported_by
+  edge_types collapses
+  internal_calculus monotone AND/OR support fixpoint; single-retraction propagation over the collapse matrix
+  invariant collapse_front and critical_support are exact transposes of one boolean matrix M[conclusion][ground]
+  invariant support is monotone (support only, no negation): adding a fact never removes a conclusion, so the fixpoint is order-independent
+  invariant a conclusion survives losing any single ground iff it has at least two independent supports
+  forbidden_inference collapses under retraction -> the conclusion was false (it means no surviving independent support, not incorrectness)
+  forbidden_inference single-retraction collapse -> that fact is the sole cause (co-critical grounds may each be independently solo-critical)
+  forbidden_inference absent from every collapse front -> the conclusion is true (robust support is not truth; it may also be already unsupported)
+  interacts actor-graph
+  source_path components/BonfyreControlPlane/support_lattice.py
+  source_path architecture/atlas_collapse.py
+  witness components/BonfyreControlPlane/tests/test_support_lattice.py
+  witness architecture/tests/test_atlas_collapse.py
+  source_lineage retraction dual harvested from run6/run7 DBSP retraction algebra
+  known_gap runs over the actor graph (measured on the real 68-actor control plane: org:tarbell-center is load-bearing for 279 of 338 conclusions). Self-applied to the atlas's own maturity claims (atlas_collapse.py): 21 measured/proven claims audited, zero laundered against the real witness files, 13 single-witness fragile. Extending grounds to occurrences/evidence witnesses and maintaining the collapse matrix incrementally in DBSP is the next step
+
+architecture fortification-plan
+  canonical_name FortificationPlan
+  owns FortificationPlan
+  derived FortificationPlan
+  consumes SupportStructure
+  consumes Actor
+  consumes Corroboration
+  publishes FortificationPlan
+  family opportunity
+  domain Opportunity / Institutional Capacity
+  layer opportunity
+  semantic_question Which single real-world action most increases robust reachable capacity right now?
+  purpose Composes CollapseFront with reachability into ranked action over the real relationship graph. VERIFY: an asserted actor many live conclusions rest on (leverage = its CollapseFront) -- confirm the assumption before acting on it. DIVERSIFY: a high-value conclusion (funding/authority/opportunity) standing on a single actor -- add a second independent path. Emits the next moves ranked by leverage and publishes the plan into the live fabric, so the loop and a human read the priorities BonfyreFS serves. Not an audit; an action list.
+  maturity measured
+  node_types Action
+  edge_types prioritizes
+  state_types verify
+  state_types diversify
+  internal_calculus leverage rank over the CollapseFront collapse matrix, split by actor confidence
+  invariant a verified actor is never a verification target; leverage counts only value-bearing conclusions
+  invariant the plan ranks moves, never executes them; reachability stops at the human/external commit line
+  forbidden_inference high leverage -> the action is authorized or free
+  forbidden_inference fragile support -> the relationship is false (fragility is structural, not truth)
+  forbidden_inference published plan -> the action was taken
+  interacts collapse-front
+  interacts actor-graph
+  interacts unlock-graph
+  source_path components/BonfyreControlPlane/fortification.py
+  witness components/BonfyreControlPlane/tests/test_fortification.py
+  source_lineage CollapseFront applied to real institutional prioritization
+  known_gap measured on the live 68-actor graph: Tarbell Center is the top verify target (279 live conclusions rest on an only-asserted actor), then the funder set at 15 each; plan published to the live fabric as fortification-plan.v1. Feeding the leverage signal back into reachable_capacity so the loop pursues fragile-but-reachable capacity before it collapses is the next step
+
+architecture resource-activation
+  canonical_name ResourceActivationGraph
+  owns ResourceActivation
+  consumes Authority
+  consumes ProviderState
+  publishes ResourceActivation
+  family opportunity
+  domain Opportunity / Resource
+  layer opportunity
+  semantic_question How does a currently-unavailable resource become reachable and usable?
+  purpose World-expansion: capability gap -> candidate -> qualification -> eligibility -> authority -> activation mechanism (service lease, GPU, human commitment, voucher, credential). Only after activation does ProviderGraph see a usable resource.
+  maturity implemented
+  node_types CapabilityGap
+  node_types ResourceCandidate
+  node_types ActivationMechanism
+  edge_types qualifies
+  edge_types activates
+  state_types gap
+  state_types candidate
+  state_types qualified
+  state_types eligible
+  state_types authorized
+  state_types activated
+  internal_calculus ordered activation state machine, authority-gated
+  invariant only a resource at activated is usable; available is not activated
+  invariant activate authority is never short-circuited by qualification or binding
+  forbidden_inference provider available -> resource activation bypassed
+  forbidden_inference resource eligible -> resource authorized
+  native_format graf
+  source_path components/BonfyreControlPlane/resource_activation.py
+  source_path engine/core/src/activation.c
+  source_path engine/core/include/bf_activation.h
+  witness components/BonfyreControlPlane/tests/test_resource_activation.py
+  witness engine/core/tests/activation_test.c
+  source_lineage SEED-A recursive organ document
+  known_gap native state machine derives gap<candidate<qualified<eligible<authorized<activated on the shared resource_candidates store; the activate-authority gate is un-short-circuitable (authority result is an input -- authority stays its own fact); python reads native-written candidates -- parity proven

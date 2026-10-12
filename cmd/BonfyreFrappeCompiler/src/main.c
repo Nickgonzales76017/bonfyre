@@ -18,13 +18,14 @@ static void print_usage(const char *prog) {
     printf("BonfyreFrappeCompiler — Universal Uplift Runtime Compiler\n\n");
     printf("Usage: %s [options] <app_path>\n\n", prog);
     printf("Options:\n");
-    printf("  -o, --output DIR         Output directory (default: ./output)\n");
+    printf("  -o, --output DIR         Output directory (default: ./generated/projections/frappe)\n");
     printf("  -r, --root DIR           Bonfyre root directory (default: $BONFYRE_ROOT or ..)\n");
     printf("  --dry-run                Parse and analyze only, don't generate output\n");
     printf("  --emit-schema-ir FILE    Emit schema intermediate representation JSON\n");
     printf("  --emit-bindings FILE     Emit binding derivations JSON\n");
     printf("  --emit-rule-universes FILE  Emit rule universes JSON\n");
     printf("  --emit-pack FILE         Emit complete app pack\n");
+    printf("  --emit-lineage-catalog FILE  Emit the registered Frappe lineage catalog ('-' for stdout)\n");
     printf("  --phase PHASE            Run up to specified phase (0-12)\n");
     printf("  -v, --verbose            Verbose output\n");
     printf("  -h, --help               Show this help\n");
@@ -50,6 +51,34 @@ static void print_usage(const char *prog) {
     printf("\n");
 }
 
+typedef struct {
+    const char *lineage;
+    const char *app_dir;
+    const char *flow_stage;
+    const char *representative_doctype;
+    const char *company_flow_after;
+    const char *owns;
+    const char *consumes;
+    const char *publishes;
+} BfFrappeLineageSpec;
+
+/* The compiler owns this registry. Downstream gauntlets and smoke tests read
+ * it through --emit-lineage-catalog rather than carrying another nine-app list. */
+static const BfFrappeLineageSpec BF_FRAPPE_LINEAGES[] = {
+    {"frappe-core", "frappe", "platform", "DocType", "", "DocType", "Authority", "SurfaceGrammar|Policy"},
+    {"crm", "crm", "customer", "CRM Deal", "frappe-core", "", "Actor|Relation|OccurrenceProjection", "CommunicationEvent|DealState"},
+    {"helpdesk", "helpdesk", "support", "HD Ticket", "crm", "TicketState", "Actor|WorkState|OccurrenceProjection", "TicketState"},
+    {"erpnext", "erpnext", "commercial-fulfillment-accounting", "Sales Order", "helpdesk", "Value|Receipt", "WorkState|ProviderState", "Value|Receipt"},
+    {"hrms", "hrms", "people", "Attendance", "erpnext", "HumanCapacity", "Actor|WorkState", "HumanCapacity"},
+    {"lms", "lms", "capability", "LMS Course", "hrms", "Credential", "Actor", "Credential|Evidence"},
+    {"wiki", "wiki", "knowledge", "Wiki Document", "lms", "KnowledgeClaim", "Evidence|ProofFrontier", "KnowledgeClaim"},
+    {"insights", "insights", "analytics", "Insights Query", "wiki", "DerivedView", "ReachableCapacity|Value|OpportunityEligibility|ResourcePressure", "DerivedView"},
+    {"drive", "drive", "content", "Drive Permission", "insights", "", "Artifact|Authority|RouteAdvertisement|NamespaceProjection|QueryDirectory", "ShareGrant|RepresentationHistory"},
+};
+
+static const size_t BF_FRAPPE_LINEAGE_COUNT =
+    sizeof(BF_FRAPPE_LINEAGES) / sizeof(BF_FRAPPE_LINEAGES[0]);
+
 static void json_string(FILE *file, const char *value) {
     fputc('"', file);
     for (const unsigned char *cursor = (const unsigned char *)(value ? value : ""); *cursor; cursor++) {
@@ -57,6 +86,53 @@ static void json_string(FILE *file, const char *value) {
         if (*cursor >= 0x20) fputc(*cursor, file);
     }
     fputc('"', file);
+}
+
+static void json_pipe_array(FILE *file, const char *values) {
+    fputc('[', file);
+    const char *cursor = values ? values : "";
+    int first = 1;
+    while (*cursor) {
+        const char *end = strchr(cursor, '|');
+        size_t length = end ? (size_t)(end - cursor) : strlen(cursor);
+        char value[128];
+        if (length >= sizeof(value)) length = sizeof(value) - 1;
+        memcpy(value, cursor, length);
+        value[length] = '\0';
+        if (!first) fputc(',', file);
+        json_string(file, value);
+        first = 0;
+        if (!end) break;
+        cursor = end + 1;
+    }
+    fputc(']', file);
+}
+
+static int emit_lineage_catalog(const char *path) {
+    FILE *file = !strcmp(path, "-") ? stdout : fopen(path, "wb");
+    if (!file) {
+        fprintf(stderr, "Error: cannot emit lineage catalog to %s\n", path);
+        return -1;
+    }
+    fprintf(file, "{\"schema\":\"bonfyre.frappe-lineage-catalog.v1\",\"lineages\":[");
+    for (size_t i = 0; i < BF_FRAPPE_LINEAGE_COUNT; ++i) {
+        const BfFrappeLineageSpec *spec = &BF_FRAPPE_LINEAGES[i];
+        if (i) fputc(',', file);
+        fprintf(file, "{\"lineage\":"); json_string(file, spec->lineage);
+        fprintf(file, ",\"app_dir\":"); json_string(file, spec->app_dir);
+        fprintf(file, ",\"flow_stage\":"); json_string(file, spec->flow_stage);
+        fprintf(file, ",\"representative_doctype\":"); json_string(file, spec->representative_doctype);
+        fprintf(file, ",\"company_flow_after\":");
+        if (spec->company_flow_after[0]) json_string(file, spec->company_flow_after); else fprintf(file, "null");
+        fprintf(file, ",\"owns\":"); json_pipe_array(file, spec->owns);
+        fprintf(file, ",\"consumes\":"); json_pipe_array(file, spec->consumes);
+        fprintf(file, ",\"publishes\":"); json_pipe_array(file, spec->publishes);
+        fputc('}', file);
+    }
+    fprintf(file, "]}\n");
+    int ok = ferror(file) ? -1 : 0;
+    if (file != stdout && fclose(file) != 0) ok = -1;
+    return ok;
 }
 
 static void json_pack_revision(FILE *file, const BfAppPack *pack) {
@@ -159,12 +235,13 @@ static int emit_projection(const char *path, const char *kind, const BfAppPack *
 
 int main(int argc, char **argv) {
     char *app_path = NULL;
-    char *output_dir = "output";
+    char *output_dir = "generated/projections/frappe";
     char *bonfyre_root = NULL;
     char *emit_schema_ir = NULL;
     char *emit_bindings = NULL;
     char *emit_rule_universes = NULL;
     char *emit_pack = NULL;
+    char *emit_lineage_catalog_path = NULL;
     int max_phase = 12;
     bool dry_run = false;
     bool verbose __attribute__((unused)) = false;
@@ -179,6 +256,7 @@ int main(int argc, char **argv) {
         {"emit-rule-universes", required_argument, 0, 4},
         {"emit-pack", required_argument, 0, 5},
         {"phase", required_argument, 0, 6},
+        {"emit-lineage-catalog", required_argument, 0, 7},
         {"verbose", no_argument, 0, 'v'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
@@ -223,11 +301,21 @@ int main(int argc, char **argv) {
                     return 1;
                 }
                 break;
+            case 7:  /* --emit-lineage-catalog */
+                emit_lineage_catalog_path = optarg;
+                break;
             default:
                 print_usage(argv[0]);
                 return 1;
         }
     }
+
+    if (emit_lineage_catalog_path && emit_lineage_catalog(emit_lineage_catalog_path) != 0) {
+        return 1;
+    }
+
+    /* Catalog inspection is a complete read-only operation and needs no app. */
+    if (optind >= argc && emit_lineage_catalog_path) return 0;
 
     /* Get app path */
     if (optind >= argc) {

@@ -1,0 +1,272 @@
+atlas substrate
+# The 14 Reality Foundry substrates. Constitutional restriction (atlas README):
+# a substrate OWNS MECHANICS. It may not inherit the semantics of the
+# architectures that ride it. Every entry states that as a forbidden_inference.
+#
+# Maturity is real, not aspirational: 13 substrates are vendored, built and
+# probed under ~/.bonfyre/substrates/v6.1, each with a recorded live-upstream
+# semantic proof (state=passed, output_digest) -- consumed by
+# components/BonfyreControlPlane/substrate_evidence.py, never re-derived. They are
+# measured. HVM4 is implemented via a real hvm reduction (substrate_hvm.py); its
+# HVM2->HVM4 upgrade is the one open gap.
+
+architecture yaff
+  canonical_name YaFF
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the semantic contract for a trial's artifacts, effects, and expected witnesses?
+  purpose Semantic contract / IR for the trial: artifacts, effects, expected witnesses.
+  maturity measured
+  internal_calculus block-and-field contract representation
+  internal_calculus probe: yaff-columnar-encode-decode-merkle-hash
+  invariant a contract representation owns encoding, not the meaning of what it encodes
+  forbidden_inference two architectures sharing YaFF -> the same semantics
+  native_format yaff
+  source_path architecture/atlas.py
+  source_path components/BonfyreControlPlane/substrate_evidence.py
+  source_path ~/.bonfyre/substrates/v6.1/yaff/source
+  witness architecture/tests/test_atlas.py
+  witness ~/.bonfyre/substrates/v6.1/yaff/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture hvm4
+  canonical_name HVM4
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the bounded reduction of this selected symbolic or computational structure?
+  purpose Bounded recursive reduction of selected symbolic/computational structures.
+  maturity implemented
+  internal_calculus interaction-net reduction
+  invariant owns reduction mechanics, not the meaning of the structure reduced
+  forbidden_inference a reduction completing -> the reduced structure is correct
+  native_format helix
+  interacts fpq-seed
+  source_path components/BonfyreControlPlane/substrate_hvm.py
+  witness components/BonfyreControlPlane/tests/test_substrate_hvm.py
+  source_lineage Reality Foundry 14-substrate
+  known_gap installed binary is HVM2 (2.0.22); HVM4 upgrade + hvm-lang front-end still pending
+
+architecture automerge
+  canonical_name Automerge
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question How do many agents and humans mutate candidate state without contaminating Actual?
+  purpose Collaborative candidate state; Possible may be mutated freely without touching Actual.
+  maturity measured
+  internal_calculus CRDT merge mechanics
+  internal_calculus probe: crdt-concurrent-conflict-convergence
+  invariant owns conflict-free merge, not the meaning of any candidate it holds
+  forbidden_inference a candidate merged in Possible -> a change to Actual
+  source_path ~/.bonfyre/substrates/v6.1/automerge/source
+  witness ~/.bonfyre/substrates/v6.1/automerge/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture feldera
+  owns ReachableCapacity
+  consumes ProofFrontier
+  subscribes ProofFrontier
+  publishes ReachableCapacity
+  canonical_name Feldera
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What are the incremental consequences of a change to events, tests, CMS, ledgers, or form readiness?
+  purpose Incremental maintenance of consequences over GitHub events, test results, CMS changes, ledger updates, form readiness, live queries.
+  maturity measured
+  internal_calculus incremental view maintenance
+  internal_calculus probe: dbsp-five-transaction-integral
+  internal_calculus reachability view: fpq-sli-kv organism route under insert+retract
+  internal_calculus ReachableCapacity relation: opportunities antijoin resolved-blocker facts
+  invariant owns incremental recomputation, not the semantics of the views maintained
+  invariant a retraction propagates; an independent proven fact survives a dependent one's withdrawal
+  invariant an opportunity is withdrawn from reachable the instant a resolving fact retracts
+  forbidden_inference a maintained view -> authority over what it summarizes
+  interacts proof-frontier
+  interacts unlock-graph
+  command BonfyreProof
+  source_path ~/.bonfyre/substrates/v6.1/feldera/source
+  source_path components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_reachable_capacity.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_reachable_capacity_live.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_route_set_daemon.rs
+  source_path components/BonfyreControlPlane/substrate/feldera_maintained_relations.rs
+  witness components/BonfyreControlPlane/substrate/full_retraction_cascade.sh
+  witness components/BonfyreControlPlane/substrate/maintained_relations_witness.sh
+  source_path components/BonfyreControlPlane/substrate_feldera.py
+  source_path components/BonfyreControlPlane/reachability_bridge.py
+  witness ~/.bonfyre/substrates/v6.1/feldera/semantic-proof.json
+  witness ~/.bonfyre/substrates/v6.1/feldera/reachability-proof.json
+  witness ~/.bonfyre/substrates/v6.1/feldera/reachable-capacity-proof.json
+  witness components/BonfyreControlPlane/tests/test_substrate_feldera.py
+  witness components/BonfyreControlPlane/tests/test_reachability_bridge.py
+  source_lineage Reality Foundry 14-substrate
+  known_gap live-fabric relations now feed the DBSP engine via reachability_bridge (backfilled from real state, DBSP reproduces the Python answer exactly); remaining is a persistent long-lived circuit fed by fabric change-deltas rather than a per-tick reseed
+
+architecture egglog
+  canonical_name egglog
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What are the equivalent alternatives to this plan, rewrite, representation, or composition?
+  purpose Equivalence search over execution plans, rewrites, data representations, API compositions, patch transformations.
+  maturity measured
+  internal_calculus e-graph equality saturation
+  internal_calculus probe: bounded-equality-saturation-and-check
+  invariant owns equivalence-search machinery, not the correctness of a chosen alternative
+  forbidden_inference two forms found equivalent by search -> equivalent under every architecture's algebra
+  source_path ~/.bonfyre/substrates/v6.1/egglog/source
+  witness ~/.bonfyre/substrates/v6.1/egglog/semantic-proof.json
+  witness ~/.bonfyre/substrates/v6.1/egglog/target/release/egglog
+  source_lineage Reality Foundry 14-substrate
+
+architecture gigatoken
+  canonical_name GigaToken
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question From the giant source, what purpose-specific mission context should be compiled?
+  purpose Giant-source/context substrate from which purpose-specific mission contexts are compiled. The token/context-reduction engine.
+  maturity measured
+  internal_calculus high-throughput token substrate + context compilation
+  internal_calculus probe: gigatoken-bpe-real-training-learns-correct-merges
+  invariant owns context compilation, not the sufficiency of a compiled cut
+  forbidden_inference a compiled context -> all evidence the mission needs is present
+  source_path ~/.bonfyre/substrates/v6.1/gigatoken/source
+  witness ~/.bonfyre/substrates/v6.1/gigatoken/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture lance
+  canonical_name Lance
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question Where is the multimodal/vector body of code, traces, docs, images, transcripts, review artifacts?
+  purpose Multimodal / vector body for code, traces, docs, images, transcripts, review artifacts.
+  maturity measured
+  internal_calculus columnar vector storage + ANN index
+  internal_calculus probe: lance-dataset-write-read-roundtrip
+  invariant owns vector storage, not the identity or authority of what is embedded
+  forbidden_inference vector similarity -> same actor or same claim
+  source_path ~/.bonfyre/substrates/v6.1/lance/source
+  witness ~/.bonfyre/substrates/v6.1/lance/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture daft
+  canonical_name Daft
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question How are large mixed-data transformations run across these corpora?
+  purpose Large mixed-data transformations across the corpora.
+  maturity measured
+  internal_calculus distributed dataframe execution
+  internal_calculus probe: daft-core-int64array-arithmetic-workspace
+  invariant owns bulk transformation, not the provenance of its inputs or outputs
+  forbidden_inference a transformed corpus -> provenance preserved without a witness
+  source_path ~/.bonfyre/substrates/v6.1/daft/source
+  witness ~/.bonfyre/substrates/v6.1/daft/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture tract
+  canonical_name Tract
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the lightweight local model execution phenotype?
+  purpose Lightweight local model execution phenotype.
+  maturity measured
+  internal_calculus local inference runtime
+  internal_calculus probe: tract-core-typedmodel-elementwise-inference
+  invariant an execution phenotype, not a model identity or representation
+  forbidden_inference runs locally -> the representation it runs is authorized or correct
+  interacts kv-temporal
+  source_path ~/.bonfyre/substrates/v6.1/tract/source
+  witness ~/.bonfyre/substrates/v6.1/tract/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture burn
+  canonical_name Burn
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the trainable tensor/model phenotype?
+  purpose Trainable tensor/model phenotype.
+  maturity measured
+  internal_calculus autodiff training runtime
+  internal_calculus probe: burn-ndarray-tensor-add-and-matmul
+  invariant a training phenotype, not the identity of the model trained
+  forbidden_inference trained -> generation quality good (the FPQ lesson generalizes)
+  source_path ~/.bonfyre/substrates/v6.1/burn/source
+  witness ~/.bonfyre/substrates/v6.1/burn/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture cubecl
+  canonical_name CubeCL
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question When a learned or fused operation warrants it, what is the accelerated generated-kernel phenotype?
+  purpose Accelerated generated-kernel phenotype where a learned/fused operation warrants it.
+  maturity measured
+  internal_calculus generated GPU kernels
+  internal_calculus probe: cubecl-cpu-portable-kernel-test-suite
+  invariant owns kernel generation, not the correctness of the fused operation
+  forbidden_inference a generated kernel is fast -> the fused operation is valid
+  source_path ~/.bonfyre/substrates/v6.1/cubecl/source
+  witness ~/.bonfyre/substrates/v6.1/cubecl/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture hydro
+  canonical_name Hydro
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question What is the distributed placement/dataflow phenotype for this work?
+  purpose Distributed placement / dataflow phenotype.
+  maturity measured
+  internal_calculus distributed dataflow placement
+  internal_calculus probe: hydro-upstream-deterministic-placement
+  invariant a placement phenotype, not the authority to run what it places
+  forbidden_inference placeable -> authorized to execute there
+  interacts service-lifecycle
+  source_path ~/.bonfyre/substrates/v6.1/hydro/source
+  witness ~/.bonfyre/substrates/v6.1/hydro/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture restate
+  canonical_name Restate
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question How does the trial durably wait hours or days on external reality?
+  purpose Durable long-lived execution when the trial waits on external reality.
+  maturity measured
+  internal_calculus durable execution + journaling
+  internal_calculus probe: restate-bifrost-durable-log-append-and-lookup
+  invariant owns durability, not the meaning of the work it keeps alive
+  forbidden_inference durably waiting -> the external event will occur
+  interacts work-graph
+  source_path ~/.bonfyre/substrates/v6.1/restate/source
+  witness ~/.bonfyre/substrates/v6.1/restate/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate
+
+architecture verus
+  canonical_name Verus
+  family substrate
+  domain Reality Foundry
+  layer substrate
+  semantic_question Which invariants are worth proving, and does the proof hold within bounds?
+  purpose Bounded formal verification for invariants worth proving.
+  maturity measured
+  internal_calculus bounded SMT verification
+  internal_calculus probe: smt-backed-formal-verification-positive-and-negative-control
+  invariant a proof of a stated invariant is not a proof of an unstated one
+  forbidden_inference one invariant proven -> the system is correct
+  native_format crux
+  interacts proof-frontier
+  source_path ~/.bonfyre/substrates/v6.1/verus/source
+  witness ~/.bonfyre/substrates/v6.1/verus/semantic-proof.json
+  source_lineage Reality Foundry 14-substrate

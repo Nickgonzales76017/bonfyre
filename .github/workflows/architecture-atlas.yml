@@ -1,0 +1,47 @@
+name: Architecture Atlas
+
+# The atlas constitution is code (architecture/atlas.py). This runs it on every
+# change so a maturity-laundering claim, a view that swallows its children, or an
+# interaction to a non-existent architecture fails the build -- the atlas cannot
+# rot into prose without CI noticing.
+
+on:
+  push:
+    paths:
+      - "architecture/**"
+      - ".github/workflows/architecture-atlas.yml"
+  pull_request:
+    paths:
+      - "architecture/**"
+  workflow_dispatch:
+
+jobs:
+  atlas:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate the atlas constitution
+        run: python3 architecture/atlas.py validate
+
+      - name: Report architecture loss (informational)
+        run: python3 architecture/atlas.py loss
+
+      - name: Honest maturity rollup (informational)
+        run: python3 architecture/atlas.py maturity
+
+      - name: Refresh the consumable index
+        run: |
+          python3 architecture/atlas.py export
+          if ! git diff --quiet architecture/atlas.index.json; then
+            echo "::warning::atlas.index.json is stale; run 'python3 architecture/atlas.py export' and commit."
+          fi
+
+      - name: Atlas self-tests
+        run: |
+          python3 -m pip install --quiet pytest
+          python3 -m pytest architecture/tests/ -q

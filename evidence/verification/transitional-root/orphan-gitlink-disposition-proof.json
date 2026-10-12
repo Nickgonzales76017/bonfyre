@@ -1,0 +1,87 @@
+{
+  "dispositions": [
+    {
+      "candidate_remote_observation": {
+        "repository": "https://github.com/Nickgonzales76017/BonfyreCMS.git",
+        "result": "repository_not_found"
+      },
+      "current_owner": {
+        "kind": "native_command",
+        "path": "cmd/BonfyreCMS",
+        "source_observations": {
+          "Makefile": "25036c61372f3731738e3779ac32a35d864d08bc641d48fee24aa9a09f8dec2f",
+          "src/main.c": "b2184f19b5cbd3a859c753b953d70f74a74c98de981688175fe4299db6d07de9"
+        }
+      },
+      "disposition": "remove",
+      "gitlink": {
+        "mode": "160000",
+        "object_id": "00f2b86b77f90b0359c1fce3633d3c44e5aaf71c",
+        "object_present_in_superproject": false,
+        "path_after_root_relocation": "components/BonfyreCMS",
+        "path_at_introduction": "10-Code/BonfyreCMS",
+        "registered_in_gitmodules": false,
+        "working_tree_repository_present": false
+      },
+      "reason": "The gitlink cannot be populated from local object state or registration metadata. The stable BonfyreCMS capability remains owned by the current cmd implementation, so only the unrecoverable compatibility reference is removed."
+    },
+    {
+      "candidate_remote_observation": {
+        "advertised_head": "7a1975d966d9ed821c241b6322a09e3f37477b13",
+        "recorded_object_fetch": "not_our_ref",
+        "repository": "https://github.com/Nickgonzales76017/bf-adjusters-pipeline.git"
+      },
+      "current_owner": null,
+      "disposition": "remove",
+      "gitlink": {
+        "mode": "160000",
+        "object_id": "b9dd2c57d5afc860f4e7c155c2fa30530c43dace",
+        "object_present_in_superproject": false,
+        "path_after_root_relocation": "components/bf-adjusters-pipeline",
+        "path_at_introduction": "10-Code/bf-adjusters-pipeline",
+        "registered_in_gitmodules": false,
+        "working_tree_repository_present": false
+      },
+      "reason": "No tracked live source calls or owns this exact compatibility reference. A similarly named remote exists but cannot serve the recorded object; replacing the pin with its current HEAD would be identity substitution, not repair."
+    },
+    {
+      "candidate_remote_observation": {
+        "advertised_head": "e9fce699cde77839928f38e43711b0d276656dbb",
+        "recorded_object_fetch": "not_our_ref",
+        "repository": "https://github.com/Nickgonzales76017/liblambda-tensors.git"
+      },
+      "current_owner": {
+        "kind": "shared_library",
+        "path": "lib/liblambda-tensors",
+        "source_observations": {
+          "Makefile": "57eff306677d66538e57a5e1787163b74aa2db7e25155bc244e70f6c95cebe9e",
+          "include/lambda_tensors.h": "58608a17779496c787399433d4240770551dfb30afdfa140dca5150b91ea8fa3",
+          "src/lt_core.c": "59dec2a588bf210ce60afb7ebce443a5e8076b746a9f351d81d978b4ee0d2064",
+          "test/test_lambda_tensors.c": "65b4890a8ff839640d852b083e42d7b8e4012a8bc4d411eaf80557981c47b6d0"
+        },
+        "test_observation": "make -C lib/liblambda-tensors test passed"
+      },
+      "disposition": "remove",
+      "gitlink": {
+        "mode": "160000",
+        "object_id": "0a3bdce2986116cb45d5dacad6c65dcc862d9365",
+        "object_present_in_superproject": false,
+        "path_after_root_relocation": "components/liblambda-tensors",
+        "path_at_introduction": "10-Code/liblambda-tensors",
+        "registered_in_gitmodules": false,
+        "working_tree_repository_present": false
+      },
+      "reason": "The exact gitlink cannot be populated, while the current in-repository library owns and tests Lambda Tensors. Removing the orphan reference leaves the current owner intact and does not substitute a different remote commit."
+    }
+  ],
+  "first_seen_commits": [
+    "740ace25322a14c61202b1802daeadf7f9c0ca9d",
+    "af4b0401ed5dfb9f4d74d875f5c2d318b964db9f"
+  ],
+  "kind": "orphan-compatibility-gitlink-disposition",
+  "observed_on": "2026-08-21",
+  "recovery": "Superproject history retains each gitlink mode, path, and object identity. It does not contain the referenced objects, so this proof makes no claim that their inaccessible contents were empty or absorbed.",
+  "root_digest_input": "160000 00f2b86b77f90b0359c1fce3633d3c44e5aaf71c 10-Code/BonfyreCMS -> remove\n160000 b9dd2c57d5afc860f4e7c155c2fa30530c43dace 10-Code/bf-adjusters-pipeline -> remove\n160000 0a3bdce2986116cb45d5dacad6c65dcc862d9365 10-Code/liblambda-tensors -> remove\n",
+  "root_digest_sha256": "3e4be4cb1db9d776c54473f4f31f90d689ff80ecfc11dfc75a972443f4f49f1c",
+  "schema": "bonfyre.gitlink-disposition-proof.v1"
+}

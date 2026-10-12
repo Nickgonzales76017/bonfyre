@@ -1,0 +1,842 @@
+{
+  "build_products": [],
+  "children": [
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreFinance/src/main.c"
+      ],
+      "name": "AIOverseasLaborPipeline",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 4
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "AcousticClassifier",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "AmbientLogisticsLayer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreGraph/src/main.c"
+      ],
+      "name": "ArtifactManifest",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 9
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "AudioIntakeNormalizer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "BatchFailureQueue",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "BatchJobRunner",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreBrief",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreBrief",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreBrief/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreBrief/outputs/pickfu-brief/brief-meta.json",
+        "components/BonfyreBrief/outputs/pickfu-brief/brief.md"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "current_owner": "cmd/BonfyreCLI",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreCLI",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreCompress",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreCompress",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "fate": "retain_until_native_parity",
+      "name": "BonfyreControlPlane",
+      "reason": "cited by the mandatory control-plane suite, the native-kernel workflow and live atlas witnesses; native parity is unproven",
+      "tracked_files": 129,
+      "witnesses": [
+        ".github/workflows/native-kernel.yml",
+        "components/BonfyreControlPlane/tests"
+      ]
+    },
+    {
+      "current_owner": "cmd/BonfyreDistribute",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreDistribute",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreDistribute/README.md"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreEmbed",
+      "fate": "absorb_required",
+      "name": "BonfyreEmbed",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_documentation": [
+        "components/BonfyreEmbed/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreEmbed/outputs/smoke/status.json",
+        "components/BonfyreEmbed/outputs/smoke/transcript-embedding.json",
+        "components/BonfyreEmbed/outputs/smoke/transcript-embedding.json.json"
+      ],
+      "residue_symbols": [
+        "build_embedding"
+      ],
+      "tracked_files": 6
+    },
+    {
+      "current_owner": "cmd/BonfyreEmit",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreEmit",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreFinance",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreFinance",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreGate",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreGate",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreGraph",
+      "fate": "absorb_required",
+      "name": "BonfyreGraph",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_symbols": [
+        "json_get_str_array",
+        "sha256_transform"
+      ],
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreHash",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreHash",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "residue_scratch": [
+        "components/BonfyreHash/src/main.c.bak",
+        "components/BonfyreHash/src/main.c.new"
+      ],
+      "tracked_files": 4
+    },
+    {
+      "current_owner": "cmd/BonfyreIndex",
+      "fate": "absorb_required",
+      "name": "BonfyreIndex",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_scratch": [
+        "components/BonfyreIndex/src/main.c.bak"
+      ],
+      "residue_source": [
+        "components/BonfyreIndex/tools/generate_equivalence_corpus.py"
+      ],
+      "tracked_files": 4
+    },
+    {
+      "current_owner": "cmd/BonfyreIngest",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreIngest",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreLedger",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreLedger",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreMFADict",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreMFADict",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreMFADict/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreMFADict/outputs/smoke/sample.dict",
+        "components/BonfyreMFADict/outputs/smoke/status.json"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "current_owner": "cmd/BonfyreMediaPrep",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreMediaPrep",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreMediaPrep/README.md"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreMeter",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreMeter",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreNarrate",
+      "fate": "absorb_required",
+      "name": "BonfyreNarrate",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_documentation": [
+        "components/BonfyreNarrate/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreNarrate/outputs/smoke/artifact.manifest.json",
+        "components/BonfyreNarrate/outputs/smoke/narration.txt"
+      ],
+      "residue_symbols": [
+        "normalize_for_narration"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "current_owner": "cmd/BonfyreOffer",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreOffer",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreOffer/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreOffer/outputs/founder-sample-pickfu/offer.json",
+        "components/BonfyreOffer/outputs/founder-sample-pickfu/offer.md",
+        "components/BonfyreOffer/outputs/founder-sample-pickfu/outreach.md"
+      ],
+      "tracked_files": 6
+    },
+    {
+      "current_owner": "cmd/BonfyreOutreach",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreOutreach",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyrePack",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyrePack",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyrePack/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyrePack/outputs/founder-sample-pickfu/deliverable.md",
+        "components/BonfyrePack/outputs/founder-sample-pickfu/offer.json",
+        "components/BonfyrePack/outputs/founder-sample-pickfu/offer.md",
+        "components/BonfyrePack/outputs/founder-sample-pickfu/outreach.md",
+        "components/BonfyrePack/outputs/founder-sample-pickfu/package-manifest.txt",
+        "components/BonfyrePack/outputs/founder-sample-pickfu/proof-bundle.json",
+        "components/BonfyrePack/outputs/founder-sample-pickfu/transcript.txt"
+      ],
+      "tracked_files": 10
+    },
+    {
+      "current_owner": "cmd/BonfyreParagraph",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreParagraph",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreParagraph/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreParagraph/outputs/smoke/paragraphed.md",
+        "components/BonfyreParagraph/outputs/smoke/status.json"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "current_owner": "cmd/BonfyrePipeline",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyrePipeline",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "residue_scratch": [
+        "components/BonfyrePipeline/src/main.c.bak",
+        "components/BonfyrePipeline/src/main.c.new"
+      ],
+      "tracked_files": 4
+    },
+    {
+      "current_owner": "cmd/BonfyreProject",
+      "fate": "absorb_required",
+      "name": "BonfyreProject",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_documentation": [
+        "components/BonfyreProject/README.md"
+      ],
+      "residue_source": [
+        "components/BonfyreProject/tests/smoke.sh"
+      ],
+      "residue_symbols": [
+        "derive_robots_url",
+        "fetch_to_file",
+        "is_http_url",
+        "observe_foreign",
+        "read_child_stdout",
+        "robots_disallow_source",
+        "robots_pattern_matches",
+        "robots_user_agent_score",
+        "trim_ascii",
+        "write_policy_receipt"
+      ],
+      "tracked_files": 4
+    },
+    {
+      "current_owner": "cmd/BonfyreProof",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreProof",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreProof/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreProof/outputs/founder-sample-pickfu/deliverable.md",
+        "components/BonfyreProof/outputs/founder-sample-pickfu/proof-bundle.json",
+        "components/BonfyreProof/outputs/founder-sample-pickfu/proof-bundle.md",
+        "components/BonfyreProof/outputs/founder-sample-pickfu/transcript.txt"
+      ],
+      "tracked_files": 7
+    },
+    {
+      "current_owner": "cmd/BonfyreQueue",
+      "fate": "absorb_required",
+      "name": "BonfyreQueue",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_documentation": [
+        "components/BonfyreQueue/README.md"
+      ],
+      "residue_symbols": [
+        "command_claim",
+        "command_enqueue",
+        "command_list",
+        "command_stats",
+        "compare_claim_order",
+        "load_records",
+        "next_id",
+        "parse_record",
+        "save_records",
+        "update_record_status"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreRender",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreRender",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreRender/README.md"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreRuntime",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreRuntime",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreRuntime/README.md"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreStitch",
+      "fate": "superseded_by_cmd",
+      "name": "BonfyreStitch",
+      "reason": "every legacy symbol and durable file is provided by the current owner",
+      "tracked_files": 2
+    },
+    {
+      "current_owner": "cmd/BonfyreSync",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreSync",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreSync/README.md"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreTranscribe",
+      "fate": "absorb_required",
+      "name": "BonfyreTranscribe",
+      "reason": "the current owner does not provide every symbol and source file this legacy tree still holds",
+      "residue_documentation": [
+        "components/BonfyreTranscribe/README.md"
+      ],
+      "residue_scratch": [
+        "components/BonfyreTranscribe/.gitignore"
+      ],
+      "residue_source": [
+        "components/BonfyreTranscribe/src/hcp_subword_freq.h"
+      ],
+      "residue_symbols": [
+        "cpx_add",
+        "cpx_from_polar",
+        "cpx_mag",
+        "cpx_mul",
+        "cpx_phase",
+        "cpx_sub",
+        "fft_radix2",
+        "fnv_to_phase",
+        "hcp_free",
+        "hcp_process",
+        "load_audio_wav",
+        "ms_now",
+        "quantize_dt",
+        "quantize_vlen",
+        "redecode_flagged_segments",
+        "repetition_penalty_cb"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "current_owner": "cmd/BonfyreTranscriptClean",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreTranscriptClean",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreTranscriptClean/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreTranscriptClean/outputs/smoke/cleaned.txt",
+        "components/BonfyreTranscriptClean/outputs/smoke/status.json"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "current_owner": "cmd/BonfyreTranscriptFamily",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreTranscriptFamily",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreTranscriptFamily/README.md"
+      ],
+      "tracked_files": 3
+    },
+    {
+      "current_owner": "cmd/BonfyreWeaviateIndex",
+      "fate": "absorb_docs_and_fixtures",
+      "name": "BonfyreWeaviateIndex",
+      "reason": "executable semantics are covered by the current owner; only documentation or recorded sample runs remain",
+      "residue_documentation": [
+        "components/BonfyreWeaviateIndex/README.md"
+      ],
+      "residue_sample_output": [
+        "components/BonfyreWeaviateIndex/outputs/smoke/status.json",
+        "components/BonfyreWeaviateIndex/outputs/smoke/weaviate-batch.json"
+      ],
+      "tracked_files": 5
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "DeliverableFormatterEngine",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "DiarizationRESTService",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 4
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "DuckDBAnalytics",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "FaissLocalSearch",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "FswatchReactor",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "ImageMagickOps",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "JqCanon",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "LanguageRouting",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        ".bonfyre-runtime/local-ai-transcription-queue.json",
+        ".bonfyre-runtime/sync-transcription-notes.py",
+        "services/queue-dispatcher/drain_transcription_queue.pl"
+      ],
+      "name": "LocalAITranscriptionService",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 38
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "LocalBootstrapKit",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "MFA_DictBuilder",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "ONNXEmbedder",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "PandocFormatter",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "PersonalDataEngine",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "PersonalMarketLayer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 17
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "PredictionMarketDataTool",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "ProductPipelines",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 10
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "PublishAudio",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "QualityBenchmarkPack",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "QualityScoringLoop",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreOutreach/src/main.c"
+      ],
+      "name": "QuietDistributionEngine",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 4
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "RNNTGrpcServer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 4
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreFinance/src/main.c"
+      ],
+      "name": "RepackagedServiceMarketplace",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreGraph/src/main.c"
+      ],
+      "name": "SQLiteGraphStore",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreFinance/src/main.c"
+      ],
+      "name": "ServiceArbitrageHub",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 4
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "cmd/BonfyreTranscribe/src/main.c"
+      ],
+      "name": "SileroVADCLI",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 6
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "SimpleIntakePortal",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "SoxAudioOps",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "SpeakerDiarization",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "SpeakerSegmentationLayer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "StreamingASR",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "SummaryPromptPack",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TesseractOCR",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TokenizerLayer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TranscriptAssetStore",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TranscriptCleanupLayer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TranscriptParagraphizer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TranscriptQACleaner",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 6
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "TreeSitterCanon",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "WeaviateIndexer",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "WebWorkerSaaS",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 9
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "WhisperAlignment",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 4
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "WhisperFFmpegWrapperKit",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 6
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "WhisperModelCacheManager",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 2
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "YtdlpIngest",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_evidence",
+      "live_references": [],
+      "name": "ZstdFamilyCompressor",
+      "reason": "laboratory-era material with no current executable owner and no live caller",
+      "tracked_files": 3
+    },
+    {
+      "fate": "absorb_to_current_runtime",
+      "live_references": [
+        "bin/bonfyre-qwen-fpq"
+      ],
+      "name": "_shared",
+      "reason": "no cmd/ owner exists, but live source still names it, so it needs a runtime owner before it can move to evidence",
+      "tracked_files": 1
+    }
+  ],
+  "deleted_pending_commit": [],
+  "fate_counts": {
+    "absorb_docs_and_fixtures": 14,
+    "absorb_required": 7,
+    "absorb_to_current_runtime": 9,
+    "absorb_to_evidence": 45,
+    "retain_until_native_parity": 1,
+    "superseded_by_cmd": 12
+  },
+  "root_files": [
+    "components/Makefile",
+    "components/README.md",
+    "components/demo-pipeline.sh",
+    "components/install.sh"
+  ],
+  "schema": "bonfyre.transitional-root-absorption.v1",
+  "transitional_root": "components"
+}

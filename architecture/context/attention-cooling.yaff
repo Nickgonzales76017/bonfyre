@@ -1,0 +1,25 @@
+atlas context
+
+architecture attention-cooling
+  canonical_name AttentionCoolingGraph
+  family context
+  domain Context / Attention
+  layer context
+  semantic_question What deserves attention now, and what has cooled until a named signal reheats it?
+  purpose Scheduling as reheat conditions, not a cron table. Run 6's scheduling unit was "all five planes finished supercycle N", so a static blocker (Proton) kept consuming frontier attention forever. This cools a subject against a named reheat condition; only a matching signal reheats it. The same discipline the ProofFrontier applies to knowledge, applied to attention.
+  maturity implemented
+  node_types Subject
+  node_types Temperature
+  edge_types cools
+  edge_types reheats
+  state_types hot
+  state_types warm
+  state_types cold
+  internal_calculus temperature with named reheat conditions
+  invariant a cooled subject must name what reheats it, or it consumes attention forever
+  invariant only a signal matching a named reheat condition may reheat a cooled subject
+  forbidden_inference a symptom -> attention (only a named reheat signal warms a cooled subject)
+  source_path components/BonfyreControlPlane/scheduling.py
+  interacts proof-frontier
+  interacts work-graph
+  source_lineage run6 control-plane retrospective -- the Proton attention-drain fix

@@ -1,0 +1,2271 @@
+{
+  "schema_version": "bonfyre.habitat.scene.v0",
+  "compiled_at": "2026-08-13T07:58:28Z",
+  "note": "Prototype scene, not full HabitatCompiler. Every room/object/path/character has a `source` pointing at the real row it was compiled from -- nothing here is invented.",
+  "buildings": [
+    {
+      "id": "building-aurekai-research",
+      "label": "Aurekai Research Wing",
+      "rooms": [
+        "room-bernstein-3616-research-episode",
+        "room-agentguard-213-research-episode",
+        "room-hqq-claim-invalidation-episode"
+      ]
+    }
+  ],
+  "rooms": [
+    {
+      "id": "room-bernstein-3616-research-episode",
+      "kind": "research-room",
+      "label": "bernstein-3616-research-episode",
+      "state": "locked",
+      "workgraph_cursor": "awaiting-pr-merge",
+      "position": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "source": {
+        "db": "fabric.db",
+        "table": "missions",
+        "id": "bernstein-3616-research-episode"
+      }
+    },
+    {
+      "id": "room-agentguard-213-research-episode",
+      "kind": "research-room",
+      "label": "agentguard-213-research-episode",
+      "state": "under-construction",
+      "workgraph_cursor": "5-prs-open-sequential-review",
+      "position": {
+        "x": 4,
+        "y": 0,
+        "z": 0
+      },
+      "source": {
+        "db": "fabric.db",
+        "table": "missions",
+        "id": "agentguard-213-research-episode"
+      }
+    },
+    {
+      "id": "room-hqq-claim-invalidation-episode",
+      "kind": "research-room",
+      "label": "hqq-claim-invalidation-episode",
+      "state": "under-construction",
+      "workgraph_cursor": "ready-to-write-not-yet-written",
+      "position": {
+        "x": 8,
+        "y": 0,
+        "z": 0
+      },
+      "source": {
+        "db": "fabric.db",
+        "table": "missions",
+        "id": "hqq-claim-invalidation-episode"
+      }
+    }
+  ],
+  "objects": [
+    {
+      "id": "object-sha256:0513aab72",
+      "kind": "document",
+      "label": "maintainer-review-verbatim.md",
+      "room": "room-bernstein-3616-research-episode",
+      "bytes": 2904,
+      "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3",
+      "source": {
+        "db": "fabric.db",
+        "table": "artifacts",
+        "digest": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3"
+      }
+    },
+    {
+      "id": "object-sha256:9283848af",
+      "kind": "document",
+      "label": "case-study-source.md",
+      "room": "room-agentguard-213-research-episode",
+      "bytes": 1543,
+      "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6",
+      "source": {
+        "db": "fabric.db",
+        "table": "artifacts",
+        "digest": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6"
+      }
+    },
+    {
+      "id": "object-sha256:227d466f9",
+      "kind": "document",
+      "label": "case-study-source.md",
+      "room": "room-hqq-claim-invalidation-episode",
+      "bytes": 1459,
+      "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a",
+      "source": {
+        "db": "fabric.db",
+        "table": "artifacts",
+        "digest": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a"
+      }
+    },
+    {
+      "id": "wiki-page-1",
+      "kind": "wiki-page",
+      "label": "Bernstein: Identity Continuity Case Study",
+      "room": "room-bernstein-3616-research-episode",
+      "state": "held",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page",
+        "id": 1
+      }
+    },
+    {
+      "id": "wiki-page-2",
+      "kind": "wiki-page",
+      "label": "AgentGuard: Dependency Closure Case Study",
+      "room": "room-agentguard-213-research-episode",
+      "state": "held",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page",
+        "id": 2
+      }
+    },
+    {
+      "id": "wiki-page-3",
+      "kind": "wiki-page",
+      "label": "HQQ/WikiText-2: Claim Invalidation Case Study",
+      "room": "room-hqq-claim-invalidation-episode",
+      "state": "held",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page",
+        "id": 3
+      }
+    },
+    {
+      "id": "course-lesson-1",
+      "kind": "lesson-board",
+      "label": "Primitive: Identity Continuity",
+      "room": null,
+      "note": "shared across rooms via example_of relations, not owned by one room",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "course_lesson",
+        "id": 1
+      }
+    }
+  ],
+  "paths": [
+    {
+      "id": "path-5",
+      "from": "room-bernstein-3616-research-episode",
+      "to": "room-agentguard-213-research-episode",
+      "relation": "related_relationship_pattern",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "_relations",
+        "id": 5
+      }
+    },
+    {
+      "id": "path-6",
+      "from": "room-bernstein-3616-research-episode",
+      "to": "room-hqq-claim-invalidation-episode",
+      "relation": "related_relationship_pattern",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "_relations",
+        "id": 6
+      }
+    }
+  ],
+  "characters": [
+    {
+      "id": "character-1",
+      "label": "chernistry",
+      "role": "collaborator/reviewer",
+      "relationship_state": "TRUSTED_INTERACTION",
+      "embodiment": {
+        "embodiment": "visiting-advisor",
+        "presence": "external",
+        "form": "visiting-avatar"
+      },
+      "home_room": "room-bernstein-3616-research-episode",
+      "visit_history": [
+        {
+          "kind": "review",
+          "direction": "inbound",
+          "at": "2026-08-12 10:54:47"
+        },
+        {
+          "kind": "collaboration",
+          "direction": "outbound",
+          "at": "2026-08-12 21:52:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 1
+      }
+    },
+    {
+      "id": "character-2",
+      "label": "richinmrudul",
+      "role": "maintainer",
+      "relationship_state": "TECHNICAL_ENGAGEMENT",
+      "embodiment": {
+        "embodiment": "workshop-operator",
+        "presence": "external",
+        "form": "resident"
+      },
+      "home_room": "room-agentguard-213-research-episode",
+      "visit_history": [
+        {
+          "kind": "correction",
+          "direction": "inbound",
+          "at": "2026-08-12 16:15:19"
+        },
+        {
+          "kind": "correction",
+          "direction": "outbound",
+          "at": "2026-08-12 21:30:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 2
+      }
+    },
+    {
+      "id": "character-3",
+      "label": "rajeshl8",
+      "role": "community/issue participant",
+      "relationship_state": "RESPONDED",
+      "embodiment": {
+        "embodiment": "person",
+        "presence": "external",
+        "form": "portrait"
+      },
+      "home_room": null,
+      "visit_history": [
+        {
+          "kind": "reply",
+          "direction": "inbound",
+          "at": "2026-08-12 16:18:39"
+        },
+        {
+          "kind": "proposal",
+          "direction": "outbound",
+          "at": "2026-08-12 22:10:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 3
+      }
+    },
+    {
+      "id": "character-4",
+      "label": "Melvin0070",
+      "role": "adjacent maintainer (Amberfork)",
+      "relationship_state": "RESPONDED",
+      "embodiment": {
+        "embodiment": "workshop-operator",
+        "presence": "external",
+        "form": "resident"
+      },
+      "home_room": null,
+      "visit_history": [
+        {
+          "kind": "introduction",
+          "direction": "inbound",
+          "at": "2026-08-12 18:34:15"
+        },
+        {
+          "kind": "proposal",
+          "direction": "outbound",
+          "at": "2026-08-12 22:10:00"
+        }
+      ],
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 4
+      }
+    }
+  ],
+  "gates": [
+    {
+      "id": "gate-6",
+      "label": "Execute Rank 1 then Rank 2 in HUMAN_GATES.md: establish a truthfully controlled domain and monitored domain mailbox, verify send/receive, then submit only truthfully unlocked Anyscale, Modal, Fireworks, and Cloudflare paths.",
+      "opportunity": "Ranked owner session: domain/mailbox, unlocked asks and credits, funding send, distribution, sell-side enrollment",
+      "gate_class": "consolidated_owner_identity_authentication_captcha_financial",
+      "status": "open",
+      "value_at_stake": 32500.0,
+      "external_ref": "/Users/nickgonzales/Library/Application Support/Bonfyre/CapitalGym/HUMAN_GATES.md",
+      "blocks": "Five discovery-ordered gates converted into one timed, ranked, exact-URL runbook. Underlying opportunities and safety boundaries preserved.",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 6
+      }
+    },
+    {
+      "id": "gate-2",
+      "label": "Owner reruns aws login --profile bonfyre-login and completes same-device browser authorization, then provides truthful personal, company, billing, payment, identity, tax, banking, eligibility, website/domain-email, or agreement facts only where required; submit Cloudflare/AWS/Google/Microsoft credit paths and sell-side routes only when eligibility and authority are confirmed.",
+      "opportunity": "Batched AWS, Google Cloud, and Microsoft credit plus sell-side enrollment session",
+      "gate_class": "authentication_identity_legal_financial",
+      "status": "consolidated",
+      "value_at_stake": 13200.0,
+      "external_ref": "https://www.cloudflare.com/startups/ | https://www.partners.cloudflare.com/partners/s/signup?locale=us | https://startups.aws.com/join?destination=%2Fcredits%2Fapply | https://cloud.google.com/startup/apply | https://portal.azure.com/?homeview=startup#home",
+      "blocks": "Official entry points, values, and prerequisites verified. Round 18 preserved the legacy bonfyre profile and proved a separate bonfyre-login profile reaches AWS same-device browser authorization; no owner identity completed sign-in, no profile was created, and no application was submitted.",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 2
+      }
+    },
+    {
+      "id": "gate-3",
+      "label": "Open the official Partner Network form, use the prepared truthful identity/project fields and USD 7,500 bounded proposal, complete reCAPTCHA, then click Send Message.",
+      "opportunity": "Fireworks AI Technology Partner FPQ proposal",
+      "gate_class": "captcha",
+      "status": "consolidated",
+      "value_at_stake": 7500.0,
+      "external_ref": "https://fireworks.ai/partner-submit",
+      "blocks": "Verified Technology Partner program, form schema, internal recipient routing, and prepared all non-CAPTCHA fields; safe automated attempt returned reCAPTCHA verification failed.",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 3
+      }
+    },
+    {
+      "id": "gate-5",
+      "label": "Existing routes: Baseten CAPTCHA; Runpod Turnstile or configured monitored sender; Modal truthful organization email. Round 15 routes: Anyscale truthful domain-qualified business email; Cerebrium reCAPTCHA; Beam Typeform reCAPTCHA.",
+      "opportunity": "AI infrastructure buyer and model-partner pilot submissions",
+      "gate_class": "captcha_turnstile_organization_email",
+      "status": "consolidated",
+      "value_at_stake": 7500.0,
+      "external_ref": "https://www.baseten.co/talk-to-us/ ; https://www.runpod.io/contact ; https://modal.com/partners ; https://www.anyscale.com/contact-sales ; https://cerebrium.ai/contact ; https://form.typeform.com/to/XFaCSAub",
+      "blocks": "Bounded USD 7,500 one-model/one-target proposal and public evidence prepared. Baseten returned FORM_HAS_RECAPTCHA_ENABLED. Runpod Turnstile and sales route verified. Modal organization-email rule verified. Anyscale form had CAPTCHA disabled but returned BLOCKED_EMAIL, correlation 019ff3f2-aa5c-799e-abbf-5c0dd6aec7c5. Cerebrium and Beam reCAPTCHA requirements verified.",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 5
+      }
+    },
+    {
+      "id": "gate-1",
+      "label": "Obtain a Hugging Face credential with write-repos scope, then publish the prepared Space; current connector OAuth is authenticated but read-only.",
+      "opportunity": "Hugging Face Space distribution for Agent Trace Verifier",
+      "gate_class": "authentication",
+      "status": "consolidated",
+      "value_at_stake": 0.0,
+      "external_ref": "https://huggingface.co/settings/tokens",
+      "blocks": "Connector identity verified as NICKO with aurekai organization membership. Current OAuth token is valid through 2026-08-12T11:03:01Z but grants only jobs, openid, profile, read-mcp, and read-repos; no Space write is possible. Existing verifier, audit intake, directory placements, and Statement Import distribution remain live.",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 1
+      }
+    },
+    {
+      "id": "gate-4",
+      "label": "Open the v1.2.0 release edit page; accept the Marketplace Developer Agreement if prompted; enable Publish this Action to the GitHub Marketplace; select Security; update the release; complete 2FA.",
+      "opportunity": "GitHub Marketplace publication for Bonfyre Agent Trace Verifier",
+      "gate_class": "authentication_agreement_2fa",
+      "status": "consolidated",
+      "value_at_stake": 0.0,
+      "external_ref": "https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/releases/edit/v1.2.0",
+      "blocks": "Verified public single-action repository, root metadata, unique name, branding, stable v1 tag, v1.2.0 release, and separate awesome-actions PR #891.",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 4
+      }
+    },
+    {
+      "id": "gate-app-bonfyre_erpnext",
+      "label": "bonfyre_erpnext: coverage audit failed",
+      "opportunity": "native app compilation",
+      "gate_class": "proof",
+      "status": "blocked",
+      "value_at_stake": 0,
+      "external_ref": "integrations/frappe-bench/apps/bonfyre_erpnext",
+      "blocks": "BonfyreFrappeCompiler phase 12 reports 4 of 12 theorems violated; the binary reports the count, not which.",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 9
+      }
+    }
+  ],
+  "notices": [
+    {
+      "id": "notice-1",
+      "claim": "PR #3695's finding-identity implementation is stable across CRLF/NFC/path-separator variance",
+      "evidence_type": "test",
+      "ref": "https://github.com/sipyourdrink-ltd/bernstein/pull/3695",
+      "verified": true,
+      "verification_method": "chernistry: local run against .semgrep.yml (0 findings/1861 files) plus 10 new tests / 30 cases for the two normal-form bugs",
+      "room": "room-bernstein-3616-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 1
+      }
+    },
+    {
+      "id": "notice-2",
+      "claim": "AgentGuard #214's info-leak fix and boundary-test coverage introduce no regressions",
+      "evidence_type": "test",
+      "ref": "https://github.com/richinmrudul/agentguard/pull/214#issuecomment",
+      "verified": true,
+      "verification_method": "full unit suite: 1402 passed on rebased main; ruff check: identical 58 pre-existing findings before/after diff (zero new)",
+      "room": "room-agentguard-213-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 2
+      }
+    },
+    {
+      "id": "notice-3",
+      "claim": "The retired FPQ-v8 994-token HQQ comparison was correctly superseded, not just replaced",
+      "evidence_type": "benchmark",
+      "ref": "https://github.com/Nickgonzales76017/bonfyre-fpq-benchmark/pull/1",
+      "verified": true,
+      "verification_method": "full WikiText-2 pass, 299,078-token shared stream, checksummed FP32/HQQ receipts, verifier asserts identical token digests and loss counts",
+      "room": "room-hqq-claim-invalidation-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 3
+      }
+    },
+    {
+      "id": "notice-4",
+      "claim": "The maintainer-review receipt for the Bernstein episode is exactly this content, unaltered",
+      "evidence_type": "artifact",
+      "ref": "content/research-episodes/bernstein-3616/receipts/maintainer-review-verbatim.md",
+      "verified": true,
+      "verification_method": "akai canon hash --algorithm sha256: sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3 (2904 bytes)",
+      "room": "room-bernstein-3616-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 4
+      }
+    },
+    {
+      "id": "notice-5",
+      "claim": "The Identity Continuity lesson content is exactly this content, unaltered",
+      "evidence_type": "artifact",
+      "ref": "content/primitives/identity-continuity.md",
+      "verified": true,
+      "verification_method": "akai canon hash --algorithm sha256: sha256:35f4aa27c3d118da69d55a23cef650262df67b5da8a629e03a04a1df1fb8edd0 (3631 bytes) -- recomputed 2026-08-13 after removing the non-canonical 'ProvenanceGraph' term (real canonical graph list has no such graph; ArtifactGraph is the correct one)",
+      "room": null,
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 5
+      }
+    },
+    {
+      "id": "notice-6",
+      "claim": "The full brief -> narrate -> render -> surface-publish chain runs cleanly end to end on real Bernstein episode content",
+      "evidence_type": "artifact",
+      "ref": "~/.aurekai/surfaces/bernstein-held/bernstein-identity-continuity-render.md",
+      "verified": true,
+      "verification_method": "akai publish chain --surface bernstein-held --json: all 5 checks passed (brief_written, narration_written, render_written, publish_written, publish_matches_render), verdict=PASS. sha256:e2bcef66f5fb7ba0da8b4070ccbf196e97b33acd2a11391c20e7fc5d82e292b5",
+      "room": "room-bernstein-3616-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 6
+      }
+    },
+    {
+      "id": "notice-7",
+      "claim": "The full brief->narrate->render->publish chain runs cleanly on the AgentGuard dependency-closure episode",
+      "evidence_type": "artifact",
+      "ref": "~/.aurekai/surfaces/agentguard-draft/agentguard-dependency-closure-render.md",
+      "verified": true,
+      "verification_method": "akai publish chain --surface agentguard-draft --json: verdict=PASS, all 5 checks true",
+      "room": "room-agentguard-213-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 7
+      }
+    },
+    {
+      "id": "notice-8",
+      "claim": "The full brief->narrate->render->publish chain runs cleanly on the HQQ claim-invalidation episode",
+      "evidence_type": "artifact",
+      "ref": "~/.aurekai/surfaces/hqq-draft/hqq-claim-invalidation-render.md",
+      "verified": true,
+      "verification_method": "akai publish chain --surface hqq-draft --json: verdict=PASS, all 5 checks true",
+      "room": "room-hqq-claim-invalidation-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "evidence_ledger",
+        "id": 8
+      }
+    }
+  ],
+  "monuments": [
+    {
+      "id": "monument-1",
+      "learning_type": "new_deterministic_rule",
+      "description": "is_hard_capacity_stop() matched 'usage limit reached' but not 'hit your usage limit' -- the actual Codex message. One-word regex gap let 1,366 rounds over ~13 hours retry against a provider that had already stated its recovery date (Aug 18). Rule widened to match stable phrases regardless of verb; stop path now records the provider's stated retry time.",
+      "occurred_at": "2026-08-12 21:00:00",
+      "adopted": true,
+      "source_ref": "scripts/bonfyre_capital_gym_full.sh:is_hard_capacity_stop",
+      "source": {
+        "db": "capital.db",
+        "table": "learning_ledger",
+        "id": 1
+      }
+    },
+    {
+      "id": "monument-2",
+      "learning_type": "new_deterministic_rule",
+      "description": "Session-rollover request was handled by the manager side-car polling codex_turn_active() externally -- a race it can only win if it happens to poll during a between-turn gap that collapses to sub-second during productive runs (turns 106-134 ran unbroken on one thread despite a pending rollover request, 579M tokens). Moved the check synchronously into the executor's own round loop, at the only point it deterministically knows no turn is active.",
+      "occurred_at": "2026-08-12 21:15:00",
+      "adopted": true,
+      "source_ref": "scripts/bonfyre_capital_gym_full.sh (round-boundary check, before SESSION_ID read) / scripts/bonfyre_claude_capital_manager.sh:attempt_session_rollover",
+      "source": {
+        "db": "capital.db",
+        "table": "learning_ledger",
+        "id": 2
+      }
+    },
+    {
+      "id": "monument-3",
+      "learning_type": "correction",
+      "description": "RESOLVED, not a metering bug: inspected real per-turn input_tokens for successive turns in the same resumed session (turns 151-155, round 52-56): 172.86M -> 174.14M -> 175.39M -> 177.19M -> 183.36M, steadily growing turn over turn. This is a resumed session (codex exec resume) re-sending its entire accumulated conversation as input context every turn, so input_tokens is a real cumulative total, not a double-counted or fabricated figure -- summing across turns correctly reflects real billed cost across a session's lifetime, however wasteful. The ~4.24B sum across 1444 turns is therefore plausible and real, and is the same mechanism already fixed tonight (session-rollover race, learning_ledger id=2): every turn the rollover failed to fire, the session kept re-billing its whole growing history.",
+      "occurred_at": "2026-08-13 05:00:00",
+      "adopted": true,
+      "source_ref": "scripts/bonfyre_capital_gym_full.sh:record_usage",
+      "source": {
+        "db": "capital.db",
+        "table": "learning_ledger",
+        "id": 3
+      }
+    }
+  ],
+  "stalls": [
+    {
+      "id": "stall-1",
+      "label": "Agent Workflow Safety Audit",
+      "offer_class": "paid_diagnostic",
+      "status": "published",
+      "asking_price": 1500.0,
+      "currency": "USD",
+      "target_customer": "teams deploying agents into business workflows",
+      "backing_asset": "Bonfyre Agent Trace Verifier",
+      "backing_asset_status": "published",
+      "experiments_run": 12,
+      "experiments_answered": 12,
+      "source": {
+        "db": "capital.db",
+        "table": "offers",
+        "id": 1
+      }
+    },
+    {
+      "id": "stall-2",
+      "label": "Statement Import Pack",
+      "offer_class": "bounded_implementation",
+      "status": "delivered",
+      "asking_price": 750.0,
+      "currency": "USD",
+      "target_customer": "bookkeepers, finance teams, and ERP implementers needing private/offline statement import",
+      "backing_asset": "Bonfyre Statement Import",
+      "backing_asset_status": "published",
+      "experiments_run": 4,
+      "experiments_answered": 4,
+      "source": {
+        "db": "capital.db",
+        "table": "offers",
+        "id": 2
+      }
+    },
+    {
+      "id": "stall-3",
+      "label": "Single-model FPQ Compatibility Conversion Pilot",
+      "offer_class": "fixed_price_pilot",
+      "status": "delivered",
+      "asking_price": 7500.0,
+      "currency": "USD",
+      "target_customer": "model vendors and deployment teams needing one bounded openly licensed transformer conversion up to 1B parameters",
+      "backing_asset": "Bonfyre FPQ Qwen 0.5B Benchmark and Compatibility Pilot",
+      "backing_asset_status": "published",
+      "experiments_run": 7,
+      "experiments_answered": 7,
+      "source": {
+        "db": "capital.db",
+        "table": "offers",
+        "id": 3
+      }
+    },
+    {
+      "id": "stall-4",
+      "label": "Edge Deployment Evidence Diagnostic",
+      "offer_class": "bounded_diagnostic",
+      "status": "delivered",
+      "asking_price": 1750.0,
+      "currency": "USD",
+      "target_customer": "edge and embedded deployment teams needing one measured model-to-device/runtime go/no-go before full conversion",
+      "backing_asset": "Bonfyre FPQ Qwen 0.5B Benchmark and Compatibility Pilot",
+      "backing_asset_status": "published",
+      "experiments_run": 4,
+      "experiments_answered": 4,
+      "source": {
+        "db": "capital.db",
+        "table": "offers",
+        "id": 4
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "id": "bernstein-episode-recorded",
+      "kind": "event",
+      "actor": "claude-code",
+      "effect_class": "content.publish_hold",
+      "status": "complete",
+      "mission": "bernstein-3616-research-episode",
+      "room": "room-bernstein-3616-research-episode",
+      "at": "2026-08-12T10:54:47Z",
+      "source": {
+        "db": "fabric.db",
+        "table": "events",
+        "id": "bernstein-episode-recorded"
+      }
+    },
+    {
+      "id": "bernstein-episode-receipt-1",
+      "kind": "receipt",
+      "subject_kind": "mission",
+      "subject_id": "bernstein-3616-research-episode",
+      "content_hash": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3",
+      "chained_to": null,
+      "at": "2026-08-13T04:55:24Z",
+      "source": {
+        "db": "fabric.db",
+        "table": "receipts",
+        "id": "bernstein-episode-receipt-1"
+      }
+    },
+    {
+      "id": "agentguard-213-research-episode-receipt-1",
+      "kind": "receipt",
+      "subject_kind": "mission",
+      "subject_id": "agentguard-213-research-episode",
+      "content_hash": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6",
+      "chained_to": null,
+      "at": "2026-08-13T05:18:30Z",
+      "source": {
+        "db": "fabric.db",
+        "table": "receipts",
+        "id": "agentguard-213-research-episode-receipt-1"
+      }
+    },
+    {
+      "id": "agentguard-213-research-episode-recorded",
+      "kind": "event",
+      "actor": "claude-code",
+      "effect_class": "content.publish_draft",
+      "status": "complete",
+      "mission": "agentguard-213-research-episode",
+      "room": "room-agentguard-213-research-episode",
+      "at": "2026-08-13T05:18:30Z",
+      "source": {
+        "db": "fabric.db",
+        "table": "events",
+        "id": "agentguard-213-research-episode-recorded"
+      }
+    },
+    {
+      "id": "hqq-claim-invalidation-episode-receipt-1",
+      "kind": "receipt",
+      "subject_kind": "mission",
+      "subject_id": "hqq-claim-invalidation-episode",
+      "content_hash": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a",
+      "chained_to": null,
+      "at": "2026-08-13T05:18:30Z",
+      "source": {
+        "db": "fabric.db",
+        "table": "receipts",
+        "id": "hqq-claim-invalidation-episode-receipt-1"
+      }
+    },
+    {
+      "id": "hqq-claim-invalidation-episode-recorded",
+      "kind": "event",
+      "actor": "claude-code",
+      "effect_class": "content.publish_draft",
+      "status": "complete",
+      "mission": "hqq-claim-invalidation-episode",
+      "room": "room-hqq-claim-invalidation-episode",
+      "at": "2026-08-13T05:18:30Z",
+      "source": {
+        "db": "fabric.db",
+        "table": "events",
+        "id": "hqq-claim-invalidation-episode-recorded"
+      }
+    }
+  ],
+  "foundations": [
+    {
+      "id": "foundation-artifacts",
+      "label": "artifacts",
+      "kind": "artifact",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/artifacts",
+      "authority_class": "content-addressed",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "artifacts"
+      }
+    },
+    {
+      "id": "foundation-generated",
+      "label": "generated",
+      "kind": "generated",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/generated",
+      "authority_class": "fabric-core",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "generated"
+      }
+    },
+    {
+      "id": "foundation-historical-archive",
+      "label": "historical-archive",
+      "kind": "archive",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/historical-archive",
+      "authority_class": "retention-policy",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "historical-archive"
+      }
+    },
+    {
+      "id": "foundation-historical-laboratory",
+      "label": "historical-laboratory",
+      "kind": "source",
+      "locator": "/Users/nickgonzales/Documents/Bonfyre/.",
+      "authority_class": "frozen-history",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-only-by-policy",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "historical-laboratory"
+      }
+    },
+    {
+      "id": "foundation-model-vault",
+      "label": "model-vault",
+      "kind": "model",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/model-vault",
+      "authority_class": "model-plane",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "model-vault"
+      }
+    },
+    {
+      "id": "foundation-native-engine",
+      "label": "native-engine",
+      "kind": "source",
+      "locator": "/Users/nickgonzales/Documents/Bonfyre/engine",
+      "authority_class": "native-fabric",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "native-engine"
+      }
+    },
+    {
+      "id": "foundation-provider-runtime",
+      "label": "provider-runtime",
+      "kind": "provider",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/provider-runtime",
+      "authority_class": "runtime-image",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "provider-runtime"
+      }
+    },
+    {
+      "id": "foundation-runtime-state",
+      "label": "runtime-state",
+      "kind": "state",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre",
+      "authority_class": "fabric-core",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "runtime-state"
+      }
+    },
+    {
+      "id": "foundation-secrets",
+      "label": "secrets",
+      "kind": "secret",
+      "locator": "/Users/nickgonzales/Library/Application Support/Bonfyre/secrets",
+      "authority_class": "isolated-credentials",
+      "durability": "durable",
+      "trust_level": "local",
+      "sensitivity": "standard",
+      "access_mode": "read-write",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots",
+        "id": "secrets"
+      }
+    }
+  ],
+  "workboard": [
+    {
+      "status": "rejected",
+      "count": 24,
+      "face_value": 22240.0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "submitted",
+      "count": 21,
+      "face_value": 0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "blocked",
+      "count": 20,
+      "face_value": 67450.0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "completed",
+      "count": 10,
+      "face_value": 0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "delivered",
+      "count": 7,
+      "face_value": 25750.0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "published",
+      "count": 7,
+      "face_value": 0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "lost",
+      "count": 2,
+      "face_value": 3000.0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "packaged",
+      "count": 1,
+      "face_value": 0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    },
+    {
+      "status": "qualified",
+      "count": 1,
+      "face_value": 0,
+      "realized_value": 0,
+      "source": {
+        "db": "capital.db",
+        "table": "capital_actions",
+        "group_by": "status"
+      }
+    }
+  ],
+  "embodiment_profiles": {
+    "research-room": {
+      "canonical_kind": "Mission",
+      "spatial_forms": [
+        "mission-wall",
+        "workshop",
+        "study"
+      ],
+      "interaction_ports": [
+        {
+          "port": "enter",
+          "intent": "projection",
+          "verb": "walk"
+        },
+        {
+          "port": "inspect",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "assign-work",
+          "intent": "work",
+          "verb": "work"
+        }
+      ],
+      "visual_weight": 1.0,
+      "attention_weight": 0.8,
+      "audio_signature": "mechanical-hum",
+      "narration_policy": "on-enter",
+      "surface_fallback": "mission detail surface"
+    },
+    "document": {
+      "canonical_kind": "Artifact",
+      "spatial_forms": [
+        "desk-paper",
+        "pinned-note",
+        "filed-folder"
+      ],
+      "interaction_ports": [
+        {
+          "port": "read",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "place-on-desk",
+          "intent": "attachment",
+          "verb": "place"
+        },
+        {
+          "port": "file-to-ledger",
+          "intent": "authority",
+          "verb": "give"
+        }
+      ],
+      "visual_weight": 0.5,
+      "attention_weight": 0.4,
+      "audio_signature": "paper-rustle",
+      "narration_policy": "on-change",
+      "surface_fallback": "artifact digest view"
+    },
+    "wiki-page": {
+      "canonical_kind": "KnowledgeNode",
+      "spatial_forms": [
+        "corkboard",
+        "wall-plaque",
+        "open-book"
+      ],
+      "interaction_ports": [
+        {
+          "port": "read",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "link-to",
+          "intent": "attachment",
+          "verb": "place"
+        },
+        {
+          "port": "publish",
+          "intent": "authority",
+          "verb": "give"
+        }
+      ],
+      "visual_weight": 0.6,
+      "attention_weight": 0.6,
+      "audio_signature": "paper-rustle",
+      "narration_policy": "on-change",
+      "surface_fallback": "wiki page"
+    },
+    "lesson-board": {
+      "canonical_kind": "Primitive",
+      "spatial_forms": [
+        "bookcase",
+        "lectern",
+        "teaching-board"
+      ],
+      "interaction_ports": [
+        {
+          "port": "study",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "cite",
+          "intent": "attachment",
+          "verb": "place"
+        }
+      ],
+      "visual_weight": 0.7,
+      "attention_weight": 0.5,
+      "audio_signature": "paper-rustle",
+      "narration_policy": "on-change",
+      "surface_fallback": "LMS lesson"
+    },
+    "gate": {
+      "canonical_kind": "HumanGate",
+      "spatial_forms": [
+        "road-gate",
+        "turnstile",
+        "sealed-door"
+      ],
+      "interaction_ports": [
+        {
+          "port": "inspect",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "request-open",
+          "intent": "work",
+          "verb": "speak"
+        },
+        {
+          "port": "mark-cleared",
+          "intent": "authority",
+          "verb": "give"
+        }
+      ],
+      "visual_weight": 0.9,
+      "attention_weight": 1.0,
+      "audio_signature": "radio-static",
+      "narration_policy": "always",
+      "surface_fallback": "gate checklist"
+    },
+    "stall": {
+      "canonical_kind": "Offer",
+      "spatial_forms": [
+        "market-stall",
+        "notice-board",
+        "shopfront"
+      ],
+      "interaction_ports": [
+        {
+          "port": "inspect",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "run-experiment",
+          "intent": "work",
+          "verb": "work"
+        },
+        {
+          "port": "record-sale",
+          "intent": "authority",
+          "verb": "give"
+        }
+      ],
+      "visual_weight": 0.8,
+      "attention_weight": 0.7,
+      "audio_signature": "cash-register",
+      "narration_policy": "on-change",
+      "surface_fallback": "offer record"
+    },
+    "notices": {
+      "canonical_kind": "EvidenceGraph",
+      "spatial_forms": [
+        "investigation-board",
+        "archive-room"
+      ],
+      "interaction_ports": [
+        {
+          "port": "read",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "pin-claim",
+          "intent": "attachment",
+          "verb": "place"
+        },
+        {
+          "port": "invalidate",
+          "intent": "authority",
+          "verb": "give"
+        }
+      ],
+      "visual_weight": 0.9,
+      "attention_weight": 0.9,
+      "audio_signature": "radio-static",
+      "narration_policy": "always",
+      "surface_fallback": "evidence ledger"
+    },
+    "monument": {
+      "canonical_kind": "Learning",
+      "spatial_forms": [
+        "standing-stone",
+        "plaque",
+        "landmark"
+      ],
+      "interaction_ports": [
+        {
+          "port": "remember",
+          "intent": "projection",
+          "verb": "remember"
+        }
+      ],
+      "visual_weight": 0.7,
+      "attention_weight": 0.3,
+      "audio_signature": "none",
+      "narration_policy": "on-enter",
+      "surface_fallback": "learning ledger entry"
+    },
+    "workboard": {
+      "canonical_kind": "WorkGraph",
+      "spatial_forms": [
+        "mission-wall",
+        "assembly-line",
+        "path"
+      ],
+      "interaction_ports": [
+        {
+          "port": "review",
+          "intent": "projection",
+          "verb": "look"
+        },
+        {
+          "port": "take-work",
+          "intent": "work",
+          "verb": "work"
+        }
+      ],
+      "visual_weight": 1.0,
+      "attention_weight": 0.9,
+      "audio_signature": "mechanical-hum",
+      "narration_policy": "always",
+      "surface_fallback": "capital action list"
+    },
+    "obelisk": {
+      "canonical_kind": "ReceiptChain",
+      "spatial_forms": [
+        "obelisk",
+        "ledger-column"
+      ],
+      "interaction_ports": [
+        {
+          "port": "replay",
+          "intent": "projection",
+          "verb": "remember"
+        }
+      ],
+      "visual_weight": 0.9,
+      "attention_weight": 0.4,
+      "audio_signature": "distant-bell",
+      "narration_policy": "on-change",
+      "surface_fallback": "receipt replay"
+    },
+    "foundation": {
+      "canonical_kind": "StorageRoot",
+      "spatial_forms": [
+        "foundation-stone",
+        "cellar-door"
+      ],
+      "interaction_ports": [
+        {
+          "port": "inspect",
+          "intent": "projection",
+          "verb": "look"
+        }
+      ],
+      "visual_weight": 0.4,
+      "attention_weight": 0.2,
+      "audio_signature": "none",
+      "narration_policy": "never",
+      "surface_fallback": "root registry"
+    },
+    "character": {
+      "canonical_kind": "Actor",
+      "spatial_forms": [
+        "resident",
+        "visiting-avatar",
+        "portrait",
+        "booth"
+      ],
+      "interaction_ports": [
+        {
+          "port": "talk",
+          "intent": "projection",
+          "verb": "speak"
+        },
+        {
+          "port": "invite",
+          "intent": "work",
+          "verb": "invite"
+        },
+        {
+          "port": "grant-passport",
+          "intent": "authority",
+          "verb": "give"
+        }
+      ],
+      "visual_weight": 0.8,
+      "attention_weight": 0.9,
+      "audio_signature": "none",
+      "narration_policy": "on-change",
+      "surface_fallback": "relationship record"
+    }
+  },
+  "zones": [
+    {
+      "id": "zone-work",
+      "label": "Research Wing",
+      "class": "work",
+      "contains": [
+        "room-bernstein-3616-research-episode",
+        "room-agentguard-213-research-episode",
+        "room-hqq-claim-invalidation-episode"
+      ],
+      "federation_boundary": {
+        "discoverable": false,
+        "visible_to": [
+          "owner"
+        ],
+        "copyable": false,
+        "referenceable": true,
+        "actionable_by": [
+          "owner"
+        ],
+        "requires_approval": [
+          "publish",
+          "grant-passport"
+        ]
+      },
+      "reason": "3 content genomes still held/draft in capital.db",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "group_by": "status"
+      }
+    },
+    {
+      "id": "zone-public",
+      "label": "Market Row & Gate Road",
+      "class": "public",
+      "contains": [
+        "stall-*",
+        "gate-*"
+      ],
+      "federation_boundary": {
+        "discoverable": true,
+        "visible_to": [
+          "owner",
+          "visitor"
+        ],
+        "copyable": false,
+        "referenceable": true,
+        "actionable_by": [
+          "owner"
+        ],
+        "requires_approval": [
+          "record-sale",
+          "mark-cleared"
+        ]
+      },
+      "reason": "offers and human gates already reference external parties",
+      "source": {
+        "db": "capital.db",
+        "table": "offers"
+      }
+    },
+    {
+      "id": "zone-shared",
+      "label": "Civic Square",
+      "class": "shared",
+      "contains": [
+        "notice-board",
+        "work-board",
+        "timeline-obelisk",
+        "monument-*"
+      ],
+      "federation_boundary": {
+        "discoverable": true,
+        "visible_to": [
+          "owner",
+          "visitor"
+        ],
+        "copyable": true,
+        "referenceable": true,
+        "actionable_by": [
+          "owner"
+        ],
+        "requires_approval": [
+          "invalidate"
+        ]
+      },
+      "reason": "0 wiki pages published; evidence board is citable",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "wiki_page"
+      }
+    },
+    {
+      "id": "zone-private",
+      "label": "Foundation Yard",
+      "class": "private",
+      "contains": [
+        "foundation-*"
+      ],
+      "federation_boundary": {
+        "discoverable": false,
+        "visible_to": [
+          "owner"
+        ],
+        "copyable": false,
+        "referenceable": false,
+        "actionable_by": [
+          "owner"
+        ],
+        "requires_approval": [
+          "inspect"
+        ]
+      },
+      "reason": "storage roots carry sensitivity and access_mode from fabric.db",
+      "source": {
+        "db": "fabric.db",
+        "table": "roots"
+      }
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "landmark-1",
+      "label": "bernstein-identity-continuity",
+      "tier": "landmark",
+      "placement": "permanent",
+      "importance": 8,
+      "evidence_count": 3,
+      "episode_count": 2,
+      "status": "held",
+      "room": "room-bernstein-3616-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "id": 1
+      }
+    },
+    {
+      "id": "landmark-2",
+      "label": "agentguard-dependency-closure",
+      "tier": "landmark",
+      "placement": "permanent",
+      "importance": 6,
+      "evidence_count": 2,
+      "episode_count": 2,
+      "status": "draft",
+      "room": "room-agentguard-213-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "id": 2
+      }
+    },
+    {
+      "id": "landmark-3",
+      "label": "hqq-claim-invalidation",
+      "tier": "wall",
+      "placement": "room-wall",
+      "importance": 4,
+      "evidence_count": 2,
+      "episode_count": 0,
+      "status": "draft",
+      "room": "room-hqq-claim-invalidation-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "id": 3
+      }
+    }
+  ],
+  "latent_compositions": [
+    {
+      "id": "latent-publish-2",
+      "kind": "door",
+      "composition": "ContentGenome + verified Evidence -> publishable article",
+      "label": "publish: agentguard-dependency-closure",
+      "blocked_by": "Wait until at least one of #214/#216/#217/#218 merges, or #213 moves off draft -- currently mid-review, story isn't resolved yet.",
+      "verified_evidence": 2,
+      "room": "room-agentguard-213-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "id": 2
+      }
+    },
+    {
+      "id": "latent-publish-3",
+      "kind": "door",
+      "composition": "ContentGenome + verified Evidence -> publishable article",
+      "label": "publish: hqq-claim-invalidation",
+      "blocked_by": "No blocker -- this episode is already resolved (correction published, PR #1 merged on bonfyre-fpq-benchmark). Ready to move from draft to ready when article is actually written.",
+      "verified_evidence": 2,
+      "room": "room-hqq-claim-invalidation-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "id": 3
+      }
+    },
+    {
+      "id": "latent-publish-1",
+      "kind": "door",
+      "composition": "ContentGenome + verified Evidence -> publishable article",
+      "label": "publish: bernstein-identity-continuity",
+      "blocked_by": "Hold until PR #3695 merges (per CURRENT_DIRECTIVE.md). Draft may be written now; do not publish before merge.",
+      "verified_evidence": 3,
+      "room": "room-bernstein-3616-research-episode",
+      "source": {
+        "db": "capital.db",
+        "table": "content_genomes",
+        "id": 1
+      }
+    },
+    {
+      "id": "latent-offer-1",
+      "kind": "trail",
+      "composition": "Relationship(trusted) + Asset -> qualified paid ask",
+      "label": "unopened path: chernistry",
+      "relationship_state": "TRUSTED_INTERACTION",
+      "ecosystem": "agent evidence / SARIF / provenance",
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 1
+      }
+    },
+    {
+      "id": "latent-offer-2",
+      "kind": "trail",
+      "composition": "Relationship(trusted) + Asset -> qualified paid ask",
+      "label": "unopened path: richinmrudul",
+      "relationship_state": "TECHNICAL_ENGAGEMENT",
+      "ecosystem": "agent evidence / SARIF / provenance",
+      "source": {
+        "db": "capital.db",
+        "table": "relationships",
+        "id": 2
+      }
+    },
+    {
+      "id": "latent-gate-6",
+      "kind": "door",
+      "composition": "HumanGate + completed prerequisite -> openable",
+      "label": "openable: Execute Rank 1 then Rank 2 in HUMAN_GATES.md: establish a truthfully controlled domain and monitored domain mailbox, verify send/receive, then submit only truthfully unlocked Anyscale, Modal, Fireworks, and Cloudflare paths.",
+      "opportunity": "Ranked owner session: domain/mailbox, unlocked asks and credits, funding send, distribution, sell-side enrollment",
+      "source": {
+        "db": "capital.db",
+        "table": "human_gates",
+        "id": 6
+      }
+    }
+  ],
+  "narration": [
+    {
+      "at": "2026-08-13T05:18:30Z",
+      "channel": "work",
+      "text": "claude-code content.publish_draft on agentguard-213-research-episode (complete)",
+      "room": "room-agentguard-213-research-episode",
+      "source": {
+        "db": "fabric.db",
+        "table": "events"
+      }
+    },
+    {
+      "at": "2026-08-13T05:18:30Z",
+      "channel": "work",
+      "text": "claude-code content.publish_draft on hqq-claim-invalidation-episode (complete)",
+      "room": "room-hqq-claim-invalidation-episode",
+      "source": {
+        "db": "fabric.db",
+        "table": "events"
+      }
+    },
+    {
+      "at": "2026-08-12T10:54:47Z",
+      "channel": "work",
+      "text": "claude-code content.publish_hold on bernstein-3616-research-episode (complete)",
+      "room": "room-bernstein-3616-research-episode",
+      "source": {
+        "db": "fabric.db",
+        "table": "events"
+      }
+    },
+    {
+      "at": "2026-08-12 22:10:00",
+      "channel": "relationship",
+      "text": "outbound proposal: Replied differentiating scope (deepeval-native metric contract vs. Amberfork standalone tool) and asked to compare alignment approaches before proceeding.",
+      "source": {
+        "db": "capital.db",
+        "table": "relationship_episodes"
+      }
+    },
+    {
+      "at": "2026-08-12 22:10:00",
+      "channel": "relationship",
+      "text": "outbound proposal: Replied accepting the offer to help, scoped to fixture design specifically.",
+      "source": {
+        "db": "capital.db",
+        "table": "relationship_episodes"
+      }
+    },
+    {
+      "at": "2026-08-12 21:52:00",
+      "channel": "relationship",
+      "text": "outbound collaboration: Flipped PR #3695 out of draft to ready-for-review, acting on the reviewer's explicit invitation.",
+      "source": {
+        "db": "capital.db",
+        "table": "relationship_episodes"
+      }
+    },
+    {
+      "at": "2026-08-12 21:30:00",
+      "channel": "relationship",
+      "text": "outbound correction: Fixed all 3 requested-change items same night: sanitized diagnostics to stop echoing untrusted content, added exact-boundary/one-above/fake-canary regression coverage, rebased onto current main. Pushed and posted summary comment.",
+      "source": {
+        "db": "capital.db",
+        "table": "relationship_episodes"
+      }
+    },
+    {
+      "at": "2026-08-12 18:34:15",
+      "channel": "relationship",
+      "text": "inbound introduction: Melvin0070 introduced Amberfork, a related/possibly overlapping open-source project, into the same thread.",
+      "source": {
+        "db": "capital.db",
+        "table": "relationship_episodes"
+      }
+    },
+    {
+      "at": "2026-08-12 16:18:39",
+      "channel": "relationship",
+      "text": "inbound reply: rajeshl8 endorsed the trace-divergence metric proposal, offered to help implement.",
+      "source": {
+        "db": "capital.db",
+        "table": "relationship_episodes"
+      }
+    }
+  ],
+  "semantic_gravity": [
+    {
+      "district": "apps",
+      "weight": 56,
+      "members": 9,
+      "share": 0.5091
+    },
+    {
+      "district": "research",
+      "weight": 10,
+      "members": 3,
+      "share": 0.0909
+    },
+    {
+      "district": "gates",
+      "weight": 7,
+      "members": 7,
+      "share": 0.0636
+    },
+    {
+      "district": "market",
+      "weight": 8,
+      "members": 4,
+      "share": 0.0727
+    },
+    {
+      "district": "civic",
+      "weight": 20,
+      "members": 5,
+      "share": 0.1818
+    },
+    {
+      "district": "foundation",
+      "weight": 9,
+      "members": 9,
+      "share": 0.0818
+    }
+  ],
+  "decay": [
+    {
+      "target": "room-bernstein-3616-research-episode",
+      "decay_state": "fresh",
+      "age_hours": 21.1,
+      "last_touch": "2026-08-12T10:54:47+00:00",
+      "source": {
+        "db": "fabric.db",
+        "table": "events+receipts",
+        "id": "room-bernstein-3616-research-episode"
+      }
+    },
+    {
+      "target": "room-agentguard-213-research-episode",
+      "decay_state": "fresh",
+      "age_hours": 2.7,
+      "last_touch": "2026-08-13T05:18:30+00:00",
+      "source": {
+        "db": "fabric.db",
+        "table": "events+receipts",
+        "id": "room-agentguard-213-research-episode"
+      }
+    },
+    {
+      "target": "room-hqq-claim-invalidation-episode",
+      "decay_state": "fresh",
+      "age_hours": 2.7,
+      "last_touch": "2026-08-13T05:18:30+00:00",
+      "source": {
+        "db": "fabric.db",
+        "table": "events+receipts",
+        "id": "room-hqq-claim-invalidation-episode"
+      }
+    }
+  ],
+  "habitat_basis": [
+    {
+      "id": "basis-DocumentWikiHabitatBasis",
+      "name": "DocumentWikiHabitatBasis",
+      "signature": [
+        "document",
+        "wiki-page"
+      ],
+      "occurrences": 3,
+      "bindings": [
+        {
+          "room": "room-bernstein-3616-research-episode",
+          "state": "locked",
+          "cursor": "awaiting-pr-merge"
+        },
+        {
+          "room": "room-agentguard-213-research-episode",
+          "state": "under-construction",
+          "cursor": "5-prs-open-sequential-review"
+        },
+        {
+          "room": "room-hqq-claim-invalidation-episode",
+          "state": "under-construction",
+          "cursor": "ready-to-write-not-yet-written"
+        }
+      ],
+      "exceptions": [],
+      "note": "Detected by structural recurrence across real rooms, not authored. basis + bindings + exceptions, the same factoring LambdaTensor applies elsewhere.",
+      "source": {
+        "db": "fabric.db+bonfyre_cms.db",
+        "table": "missions x artifacts/wiki_page"
+      }
+    }
+  ],
+  "visitor_projection": {
+    "note": "What a visiting Bonfyre would actually be allowed to see, computed by applying each zone's FederationBoundary. No peer exists yet -- this makes the boundary auditable rather than assumed.",
+    "visible_count": 14,
+    "withheld_count": 19,
+    "visible": [
+      {
+        "id": "gate-6",
+        "label": "Execute Rank 1 then Rank 2 in HUMAN_GATES.md: establish a truthfully controlled domain and monitored domain mailbox, verify send/receive, then submit only truthfully unlocked Anyscale, Modal, Fireworks, and Cloudflare paths.",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "gate-2",
+        "label": "Owner reruns aws login --profile bonfyre-login and completes same-device browser authorization, then provides truthful personal, company, billing, payment, identity, tax, banking, eligibility, website/domain-email, or agreement facts only where required; submit Cloudflare/AWS/Google/Microsoft credit paths and sell-side routes only when eligibility and authority are confirmed.",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "gate-3",
+        "label": "Open the official Partner Network form, use the prepared truthful identity/project fields and USD 7,500 bounded proposal, complete reCAPTCHA, then click Send Message.",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "gate-5",
+        "label": "Existing routes: Baseten CAPTCHA; Runpod Turnstile or configured monitored sender; Modal truthful organization email. Round 15 routes: Anyscale truthful domain-qualified business email; Cerebrium reCAPTCHA; Beam Typeform reCAPTCHA.",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "gate-1",
+        "label": "Obtain a Hugging Face credential with write-repos scope, then publish the prepared Space; current connector OAuth is authenticated but read-only.",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "gate-4",
+        "label": "Open the v1.2.0 release edit page; accept the Marketplace Developer Agreement if prompted; enable Publish this Action to the GitHub Marketplace; select Security; update the release; complete 2FA.",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "gate-app-bonfyre_erpnext",
+        "label": "bonfyre_erpnext: coverage audit failed",
+        "kind": "gate",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "stall-1",
+        "label": "Agent Workflow Safety Audit",
+        "kind": "stall",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "stall-2",
+        "label": "Statement Import Pack",
+        "kind": "stall",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "stall-3",
+        "label": "Single-model FPQ Compatibility Conversion Pilot",
+        "kind": "stall",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "stall-4",
+        "label": "Edge Deployment Evidence Diagnostic",
+        "kind": "stall",
+        "zone": "zone-public",
+        "copyable": false,
+        "referenceable": true
+      },
+      {
+        "id": "monument-1",
+        "label": "new_deterministic_rule",
+        "kind": "monument",
+        "zone": "zone-shared",
+        "copyable": true,
+        "referenceable": true
+      },
+      {
+        "id": "monument-2",
+        "label": "new_deterministic_rule",
+        "kind": "monument",
+        "zone": "zone-shared",
+        "copyable": true,
+        "referenceable": true
+      },
+      {
+        "id": "monument-3",
+        "label": "correction",
+        "kind": "monument",
+        "zone": "zone-shared",
+        "copyable": true,
+        "referenceable": true
+      }
+    ],
+    "withheld": [
+      {
+        "id": "room-bernstein-3616-research-episode",
+        "label": "bernstein-3616-research-episode",
+        "kind": "room",
+        "zone": "zone-work",
+        "withheld_by": "work zone: visible_to=['owner']"
+      },
+      {
+        "id": "room-agentguard-213-research-episode",
+        "label": "agentguard-213-research-episode",
+        "kind": "room",
+        "zone": "zone-work",
+        "withheld_by": "work zone: visible_to=['owner']"
+      },
+      {
+        "id": "room-hqq-claim-invalidation-episode",
+        "label": "hqq-claim-invalidation-episode",
+        "kind": "room",
+        "zone": "zone-work",
+        "withheld_by": "work zone: visible_to=['owner']"
+      },
+      {
+        "id": "object-sha256:0513aab72",
+        "label": "maintainer-review-verbatim.md",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "object-sha256:9283848af",
+        "label": "case-study-source.md",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "object-sha256:227d466f9",
+        "label": "case-study-source.md",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "wiki-page-1",
+        "label": "Bernstein: Identity Continuity Case Study",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "wiki-page-2",
+        "label": "AgentGuard: Dependency Closure Case Study",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "wiki-page-3",
+        "label": "HQQ/WikiText-2: Claim Invalidation Case Study",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "course-lesson-1",
+        "label": "Primitive: Identity Continuity",
+        "kind": "object",
+        "zone": "unzoned",
+        "withheld_by": "no zone declares this node visible to visitors"
+      },
+      {
+        "id": "foundation-artifacts",
+        "label": "artifacts",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-generated",
+        "label": "generated",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-historical-archive",
+        "label": "historical-archive",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-historical-laboratory",
+        "label": "historical-laboratory",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-model-vault",
+        "label": "model-vault",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-native-engine",
+        "label": "native-engine",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-provider-runtime",
+        "label": "provider-runtime",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-runtime-state",
+        "label": "runtime-state",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      },
+      {
+        "id": "foundation-secrets",
+        "label": "secrets",
+        "kind": "foundation",
+        "zone": "zone-private",
+        "withheld_by": "private zone: visible_to=['owner']"
+      }
+    ],
+    "asset_passport": {
+      "note": "A passport offers bounded rights, never raw data.",
+      "grants": [
+        "copy",
+        "reference"
+      ],
+      "never_granted": [
+        "authoritative mutation",
+        "credential delegation"
+      ]
+    }
+  },
+  "bonfyrefs": [
+    {
+      "path": "/Missions/agentguard-213-research-episode.json",
+      "kind": "mission",
+      "key": "agentguard-213-research-episode",
+      "bytes": 116,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    },
+    {
+      "path": "/Missions/bernstein-3616-research-episode.json",
+      "kind": "mission",
+      "key": "bernstein-3616-research-episode",
+      "bytes": 104,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    },
+    {
+      "path": "/Missions/hqq-claim-invalidation-episode.json",
+      "kind": "mission",
+      "key": "hqq-claim-invalidation-episode",
+      "bytes": 117,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    },
+    {
+      "path": "/Artifacts/sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3.json",
+      "kind": "artifact",
+      "key": "sha256:0513aab72c346e8eb1e0ad966c635f140944041a6b513990d5d237ba8a7878b3",
+      "bytes": 260,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    },
+    {
+      "path": "/Artifacts/sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a.json",
+      "kind": "artifact",
+      "key": "sha256:227d466f9cf41de5cf7e627c0b0df063319bee2c49647d2a7612461ea8a3b59a",
+      "bytes": 256,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    },
+    {
+      "path": "/Artifacts/sha256:35f4aa27c3d118da69d55a23cef650262df67b5da8a629e03a04a1df1fb8edd0.json",
+      "kind": "artifact",
+      "key": "sha256:35f4aa27c3d118da69d55a23cef650262df67b5da8a629e03a04a1df1fb8edd0",
+      "bytes": 222,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    },
+    {
+      "path": "/Artifacts/sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6.json",
+      "kind": "artifact",
+      "key": "sha256:9283848af4aafeea9ce3665cba98da4c3bb894980ce2a82857875228bf941cf6",
+      "bytes": 248,
+      "source": {
+        "fs": "BonfyreFS",
+        "mount": "/tmp/bfs"
+      }
+    }
+  ],
+  "families": [
+    {
+      "id": "family-2",
+      "family_hash": "4f3e0e4f8a873243",
+      "content_type": "wiki_page",
+      "member_count": 3,
+      "basis_fields": [
+        "allow_guest",
+        "content",
+        "created_at",
+        "meta_description",
+        "namespace",
+        "published",
+        "published_at",
+        "route",
+        "status",
+        "title",
+        "updated_at"
+      ],
+      "members": [
+        {
+          "target_type": "wiki_page",
+          "target_id": 1
+        },
+        {
+          "target_type": "wiki_page",
+          "target_id": 2
+        },
+        {
+          "target_type": "wiki_page",
+          "target_id": 3
+        }
+      ],
+      "note": "Structural family already detected by BonfyreCMS: shared field-shape basis plus per-entry bindings.",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "_families",
+        "id": 2
+      }
+    },
+    {
+      "id": "family-1",
+      "family_hash": "52a3fea31a5190f7",
+      "content_type": "course_lesson",
+      "member_count": 1,
+      "basis_fields": [
+        "body",
+        "content",
+        "created_at",
+        "instructor_notes",
+        "namespace",
+        "published_at",
+        "status",
+        "title",
+        "updated_at"
+      ],
+      "members": [
+        {
+          "target_type": "course_lesson",
+          "target_id": 1
+        }
+      ],
+      "note": "Structural family already detected by BonfyreCMS: shared field-shape basis plus per-entry bindings.",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "_families",
+        "id": 1
+      }
+    }
+  ],
+  "content_types": [
+    "cms_article",
+    "cms_generation",
+    "course_lesson",
+    "frappe_app",
+    "wiki_page"
+  ],
+  "apps": [
+    {
+      "id": "app-7",
+      "app": "erpnext",
+      "dir": "integrations/frappe-bench/apps/erpnext",
+      "doctypes": 502,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 7
+      }
+    },
+    {
+      "id": "app-8",
+      "app": "frappe",
+      "dir": "integrations/frappe-bench/apps/frappe",
+      "doctypes": 271,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 8
+      }
+    },
+    {
+      "id": "app-4",
+      "app": "hrms",
+      "dir": "integrations/frappe-bench/apps/hrms",
+      "doctypes": 160,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 4
+      }
+    },
+    {
+      "id": "app-1",
+      "app": "lms",
+      "dir": "integrations/frappe-bench/apps/lms",
+      "doctypes": 69,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 1
+      }
+    },
+    {
+      "id": "app-2",
+      "app": "crm",
+      "dir": "integrations/frappe-bench/apps/crm",
+      "doctypes": 44,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 2
+      }
+    },
+    {
+      "id": "app-5",
+      "app": "insights",
+      "dir": "integrations/frappe-bench/apps/insights",
+      "doctypes": 37,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 5
+      }
+    },
+    {
+      "id": "app-3",
+      "app": "helpdesk",
+      "dir": "integrations/frappe-bench/apps/helpdesk",
+      "doctypes": 36,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 3
+      }
+    },
+    {
+      "id": "app-6",
+      "app": "drive",
+      "dir": "integrations/frappe-bench/apps/drive",
+      "doctypes": 12,
+      "status": "compiled",
+      "audit": "12/12 theorems",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 6
+      }
+    },
+    {
+      "id": "app-9",
+      "app": "bonfyre_erpnext",
+      "dir": "integrations/frappe-bench/apps/bonfyre_erpnext",
+      "doctypes": 0,
+      "status": "audit_failed",
+      "audit": "coverage audit failed: 4 of 12 theorems violated",
+      "source": {
+        "db": "bonfyre_cms.db",
+        "table": "frappe_app",
+        "id": 9
+      }
+    }
+  ]
+}

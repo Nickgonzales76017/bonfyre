@@ -1,0 +1,65 @@
+pack institutional-opportunities
+generation control-1
+source_plane run5_recursive_external
+source_ref campaign:reachable-capacity
+note Real opportunities as data, not code. Reachability is decided by opportunity.py against live control_plane.db state -- actor verification, the proof frontier, work items. Blockers reference real subjects. Nothing here is marked reachable by assertion; the engine computes it.
+
+opportunity fpq-reconstruction-evidence
+  title Publish the FPQ reconstruction measured witness
+  eligibility a deterministic golden fixture reconstructs within tolerance
+
+blocker fpq-recon-proven
+  opportunity fpq-reconstruction-evidence
+  kind proof_layer
+  subject model:fpq-fixture-tiny-f16
+  profile fpq-v3-coord-qjl
+  layer reconstruction
+  detail the reconstruction layer must be proven on the fixture
+
+opportunity acm-identity-continuity
+  title Submit the ACM identity-continuity case study
+  eligibility an ACM editor relationship verified for the editor profile
+
+blocker acm-editor-verified
+  opportunity acm-identity-continuity
+  kind identity_verification
+  subject acm-editor
+  detail the editor contact must be verified, not merely asserted
+
+blocker acm-human-submit
+  opportunity acm-identity-continuity
+  kind human_approval
+  subject acm-submit-line
+  detail a human crosses the external submit line
+
+unlock verify-acm-editor
+  removes_kind identity_verification
+  removes_subject acm-editor
+  action establish and verify a relationship with an ACM editor
+  authorized false
+
+opportunity bernstein-receipt-adoption
+  title Bernstein adopts the result-receipt bundle (PR 3903)
+  eligibility the PR verifies in the maintainer's CI
+
+blocker bernstein-pr-merged
+  opportunity bernstein-receipt-adoption
+  kind human_approval
+  subject bernstein-3903-merge
+  detail the maintainer merges the PR
+
+opportunity celld-upstream-series
+  title Send the celld patch series upstream
+  eligibility clean-room verified patches with authorization to assign IP
+
+blocker celld-ip-authority
+  opportunity celld-upstream-series
+  kind authority
+  subject celld-ip-assignment
+  detail explicit IP-assignment authorization is required before sending
+
+unlock authorize-celld-ip
+  removes_kind authority
+  removes_subject celld-ip-assignment
+  action obtain explicit IP-assignment authorization
+  authorized false

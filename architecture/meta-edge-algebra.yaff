@@ -1,0 +1,88 @@
+atlas meta-edge-algebra
+# The typed meta-edge algebra. A generic `A -> B` edge is prohibited. Every edge
+# in the plural graph estate specializes exactly one of these bounded meta-classes,
+# so the graph may hold millions of domain edge types while the machinery only
+# has to understand ~16 edge classes. Domain edges declare their class; the class
+# fixes the algebra (transitivity, symmetry, causality, temporality, authority,
+# proof obligations) the machinery may assume.
+
+edge_class IDENTITY
+  meaning are these the same object (byte / structural / derivational / real-world)?
+  specialized_by hashes_to
+  specialized_by canon_equivalent
+  specialized_by same_actor
+
+edge_class SEMANTIC
+  meaning what does this mean in relation to that (typed, not transitive by default)?
+  specialized_by is_a
+  specialized_by part_of
+
+edge_class AUTHORITY
+  meaning who may do what, to what, for what purpose, until when?
+  specialized_by may_approve
+  specialized_by delegates
+  specialized_by revokes
+
+edge_class EVIDENCE
+  meaning does this support / contradict / reproduce that claim?
+  specialized_by supports_claim
+  specialized_by contradicts
+
+edge_class CAUSAL
+  meaning does this cause / enable / unlock that (possibly non-monotonic)?
+  specialized_by unlocks
+  specialized_by triggers
+
+edge_class DEPENDENCY
+  meaning does this require that to proceed?
+  specialized_by depends_on
+  specialized_by blocked_by
+
+edge_class CAPABILITY
+  meaning does this require / provide that capability?
+  specialized_by requires_capability
+  specialized_by provides_capability
+
+edge_class PROVIDER
+  meaning can this realize that capability, at what metric?
+  specialized_by realizes
+  specialized_by falls_back_to
+
+edge_class PLACEMENT
+  meaning where does this run / reside?
+  specialized_by placed_on
+  specialized_by resident_in
+
+edge_class TEMPORAL
+  meaning how do these order in time (event / effective / retrieval / supersession)?
+  specialized_by precedes
+  specialized_by supersedes
+
+edge_class ECONOMIC
+  meaning what value / cost / commitment flows here (no implicit cash conversion)?
+  specialized_by funds
+  specialized_by commits
+
+edge_class INSTITUTIONAL
+  meaning what institutional membership / scope / delegation holds?
+  specialized_by member_of
+  specialized_by scoped_to
+
+edge_class PROVENANCE
+  meaning where did this come from, through what path?
+  specialized_by derived_from
+  specialized_by produced_by
+
+edge_class PROJECTION
+  meaning how does this project into another estate / app without becoming it?
+  specialized_by projects_to
+
+edge_class EXECUTION
+  meaning what actually ran this, producing what witness?
+  specialized_by executed_by
+  specialized_by carried_by
+
+edge_class LEARNING
+  meaning what pattern / promotion / structural change does this feed?
+  specialized_by clusters_into
+  specialized_by promotes_to

@@ -1,0 +1,21 @@
+pack tarbell-watches
+generation control-1
+note closed rounds are cooled with a reheat condition, never polled
+
+watch tarbell-summit-2026
+  subject Tarbell Summit 2026 (Bay Area) then fellows begin newsroom placements
+  temperature hot
+  reheat_at 2026-08-17T00:00:00+00:00
+  detail Runs 2026-08-17 to 2026-08-21; do not cold-contact fellows before or during
+
+watch tarbell-grants-reopen
+  subject Tarbell grant round reopening in the 1k to 20k band
+  temperature cool
+  reheat_on grants page announces a new round
+  detail July 12 round closed; cooled deliberately because nothing changes until they announce
+
+watch tarbell-fellowship-reopen
+  subject Tarbell fellowship applications reopening
+  temperature cool
+  reheat_on fellowship page announces 2027 applications
+  detail 2026 cycle closed

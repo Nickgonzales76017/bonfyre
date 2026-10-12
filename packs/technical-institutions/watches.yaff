@@ -1,0 +1,51 @@
+pack technical-institution-watches
+generation control-1
+note Threads where we are the ones waiting. Each carries a reheat condition, because a watch without one is just forgetting.
+
+watch agentguard-214-final-review
+  subject agentguard#214 final review after rebase onto 93140726
+  temperature hot
+  reheat_on maintainer comments or review state changes on PR 214
+  detail Rebased to c6578f8 and handed back. Ball is theirs.
+
+watch bernstein-3701-default-decision
+  subject bernstein#3701 observe-vs-enforce default for the admission gate
+  temperature hot
+  reheat_on chernistry answers the default question on 3701
+  detail PR1 is built and green locally but unpushed; the default is the one thing that changes behaviour on merge.
+
+watch bernstein-3783-review
+  subject bernstein#3783 dormant cycle_runner deletion
+  temperature warm
+  reheat_on review or merge on PR 3783
+  detail Pure deletion, acceptance evidence in the PR body.
+
+watch deputy-283-decision
+  subject deputy#283 fingerprint decision confirmation
+  temperature warm
+  reheat_on picatz responds to the option-1-plus-secret-coordinates answer
+  detail Offered to take the bounded output-side patch on confirm.
+
+watch deputy-228-convergence
+  subject deputy#228 assessment model Deputy owns
+  temperature cool
+  reheat_on movement on 228 or a decision on 283 that implicates it
+  detail Converges with 283; no separate action until one of them moves.
+
+watch deepeval-3056
+  subject deepeval#3056 deterministic trace alignment layer
+  temperature cool
+  reheat_on any non-bot comment or review on 3056
+  detail Open, draft, mergeable. Only bot traffic so far; cooled deliberately.
+
+watch agent-inspect-229
+  subject agent-inspect#229 tracefacts parity across public surfaces
+  temperature cool
+  reheat_on any non-bot comment or review on 229
+  detail Open, mergeable, one commit. Only bot traffic so far.
+
+watch celld-upstream-submission
+  subject celld four-patch series awaiting IP authorization
+  temperature cool
+  reheat_on operator authorizes submission under Deno contribution terms
+  detail Series is clean-room verified at 3f22aed and unsent. Blocked on a human rights-assignment decision, not on work.

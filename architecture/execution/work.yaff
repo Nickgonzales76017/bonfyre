@@ -1,0 +1,89 @@
+atlas execution
+
+architecture work-graph
+  canonical_name WorkGraph
+  owns WorkState
+  consumes Occurrence
+  consumes ResourceActivation
+  consumes HumanCapacity
+  consumes DerivedCapability
+  publishes WorkState
+  family execution
+  domain Execution
+  layer execution
+  semantic_question What durable work exists, with what dependencies and lifecycle?
+  purpose WorkGraph-backed durable missions with causal dependency semantics; distinct from queue scheduling.
+  maturity implemented
+  node_types WorkItem
+  node_types Mission
+  edge_types depends_on
+  state_types queued
+  state_types running
+  state_types done
+  state_types failed
+  invariant dependency carries causal execution semantics, not mere ordering
+  invariant a node's family must be registered as routable, or it is rejected (native + python parity)
+  forbidden_inference queue priority -> durability guarantee
+  command BonfyreQueue
+  source_path components/BonfyreControlPlane/work_graph.py
+  source_path engine/core/src/workgraph.c
+  source_path engine/core/include/bf_workgraph.h
+  witness engine/core/tests/routable_family_test.c
+  known_gap native WorkGraph is mature and now family-routing-checked; native Occurrence and Resource/Actor persistence, plane replay, and supervisor call-site replacement are the open native-absorption items (Python authority not yet retired)
+  witness components/BonfyreControlPlane/tests/test_work_graph.py
+  source_lineage run6 control-plane retrospective
+
+architecture occurrence-spine
+  canonical_name OccurrenceSpine
+  owns Occurrence
+  consumes ExternalEvent
+  publishes Occurrence
+  publishes OccurrenceProjection
+  family execution
+  domain Execution / Causal Time
+  layer execution
+  semantic_question What actually happened, when, as an ordered causal spine?
+  purpose External events and occurrences folded into an ordered spine; the backbone the control plane reasons over.
+  maturity implemented
+  node_types Occurrence
+  node_types ExternalEvent
+  edge_types precedes
+  forbidden_inference retrieval time -> event time (timestamps must not collapse)
+  invariant observation identity = sha256(source|actor|kind|subject|observed_at)[:32]; native and python dedup against each other on the shared external_event_log store
+  source_path components/BonfyreControlPlane/external_events.py
+  source_path components/BonfyreControlPlane/ingest_github_notifications.py
+  source_path components/BonfyreControlPlane/migrate_run6.py
+  source_path engine/core/src/occurrence.c
+  source_path engine/core/include/bf_occurrence.h
+  witness components/BonfyreControlPlane/tests/test_external_events.py
+  witness engine/core/tests/occurrence_spine_test.c
+  witness engine/core/tests/run6_replay.sh
+  witness engine/core/tests/occurrence_correction_test.c
+  witness engine/core/tests/p0_loop_test.c
+  invariant a correction supersedes a prior occurrence (the -1 retraction): the fold withdraws the stale status while the correction's stands; append-only and auditable (nothing deleted)
+  source_lineage run6 control-plane retrospective
+  known_gap native writer records + dedups on the shared store (byte-identical digest), enforces the two-clock + kind gate, AND folds pending occurrences via a total kind->status projection into the shared occurrence_projection table; run6 replay over the real 9 recorded occurrences matches the python fold row-for-row (RUN6 REPLAY PARITY: MATCH). Remaining native-absorption item: native watchers (the observe side is driven by python ingest)
+
+architecture transport-phenotype
+  canonical_name TransportPhenotypeGraph
+  consumes RouteAdvertisement
+  consumes ExecutionReceipt
+  consumes Authority
+  publishes TransportReceipt
+  family execution
+  domain Execution / Transport
+  layer execution/transport
+  semantic_question By which carrier does a hop run, and what does each carrier add?
+  purpose Direct subprocess, MCP (adds a signed receipt), external HTTP (ForeignTwin, rights-gated). Transport is orthogonal to computational form.
+  maturity measured
+  node_types Transport
+  node_types Hop
+  edge_types carries
+  internal_calculus direct|mcp|external carrier selection
+  invariant the same hop yields a byte-identical digest across direct and MCP; MCP adds a receipt
+  forbidden_inference MCP receipt present -> different computation occurred
+  computational_form durable
+  command BonfyreProject
+  source_path components/BonfyreControlPlane/transport.py
+  witness components/BonfyreControlPlane/tests/test_transport.py
+  source_lineage MCP native_tool_invoke work

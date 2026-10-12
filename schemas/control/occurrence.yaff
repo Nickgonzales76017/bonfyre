@@ -1,0 +1,76 @@
+schema Occurrence
+generation control-1
+authority native-kernel
+absorbs 10-Code/BonfyreControlPlane/external_events.py
+
+field id
+  type u64
+  role identity
+  generated true
+
+field digest
+  type text
+  role dedup-identity
+  note stable hash of source actor kind subject observed_at
+  unique true
+
+field kind
+  type enum
+  values inbound_reply declined accepted acknowledged redirected outbound_sent state_changed
+  required true
+
+field subject
+  type text
+  role what-it-is-about
+
+field actor
+  type text
+  role actor-resource-id
+  required true
+
+field scope
+  type text
+  note run/campaign scope; workloads are scopes not code trees
+
+field observed_at
+  type timestamp
+  required true
+  note when the world changed, not when we noticed
+
+field recorded_at
+  type timestamp
+  required true
+
+field source
+  type enum
+  values gmail github web provider filesystem operator
+  required true
+
+field evidence
+  type text
+  role evidence-ref
+  note empty evidence is legal but marks the occurrence unverifiable
+
+field authority
+  type enum
+  values verified asserted inferred
+  default asserted
+
+field payload
+  type json
+  default {}
+
+field projected_at
+  type timestamp
+  nullable true
+  note null means projectors have not folded it yet
+
+invariant append-only
+  statement no update or delete of a committed occurrence
+
+invariant commit-before-reason
+  statement an occurrence is durable before any model is asked what it means
+  derived-from run6 W&B loss to ENOSPC
+
+invariant replayable-projection
+  statement projected_at is set only after the projection write succeeds

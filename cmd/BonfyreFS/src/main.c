@@ -290,11 +290,40 @@ static int bfs_read(const char *path, char *buf, size_t size, off_t offset,
     return result;
 }
 
+/* FUSE daemonises inside fuse_main, and a SQLite connection does not survive
+ * that fork: the child inherits a handle whose locking state belongs to the
+ * parent, and every query then returns zero rows instead of an error. The
+ * mount succeeded, so the filesystem looked like an empty fabric rather than a
+ * broken one. Opening here runs after the fork, in the process that actually
+ * serves requests. */
+static void *bfs_init(struct fuse_conn_info *connection) {
+    (void)connection;
+    if (open_database() != 0) {
+        /* Serving an empty tree would reproduce the original failure, so stop
+         * instead of mounting something that lies. */
+        struct fuse_context *context = fuse_get_context();
+        if (context && context->fuse) {
+            fuse_exit(context->fuse);
+        }
+    }
+    return NULL;
+}
+
+static void bfs_destroy(void *private_data) {
+    (void)private_data;
+    if (g_db) {
+        sqlite3_close(g_db);
+        g_db = NULL;
+    }
+}
+
 static struct fuse_operations bfs_ops = {
     .getattr = bfs_getattr,
     .readdir = bfs_readdir,
     .open = bfs_open,
     .read = bfs_read,
+    .init = bfs_init,
+    .destroy = bfs_destroy,
 };
 
 int main(int argc, char *argv[]) {
@@ -319,8 +348,14 @@ int main(int argc, char *argv[]) {
     }
 
     g_mount_time = time(NULL);
+    /* Validate configuration before mounting so a bad BONFYRE_STATE_DIR is a
+     * clear error rather than a mounted-but-empty tree. The handle is closed
+     * again immediately; bfs_init reopens it after the daemon fork. */
     if (open_database() != 0) {
         return 1;
     }
+    sqlite3_close(g_db);
+    g_db = NULL;
+
     return fuse_main(filtered_argc, filtered, &bfs_ops, NULL);
 }

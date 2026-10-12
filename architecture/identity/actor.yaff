@@ -1,0 +1,95 @@
+atlas identity
+
+architecture actor-graph
+  canonical_name ActorGraph
+  owns Actor
+  owns Relation
+  consumes Corroboration
+  consumes Occurrence
+  consumes CommunicationEvent
+  publishes Actor
+  publishes Relation
+  family identity
+  domain Identity / Institutional Capacity
+  layer identity
+  semantic_question Who is this real-world actor, and for which profile is that identity verified?
+  purpose Real actors with identifier assertions, observations, corroboration, and per-profile verification. The verified-for law is the point.
+  maturity implemented
+  node_types Actor
+  node_types IdentifierAssertion
+  node_types Corroboration
+  node_types VerificationProfile
+  edge_types asserts
+  edge_types corroborates
+  edge_types affiliated_with
+  state_types asserted
+  state_types observed
+  state_types corroborated
+  state_types verified_for
+  state_types contradicted
+  invariant asserted_via_email is not verified_for(ACM.editor)
+  forbidden_inference email sender -> verified institutional role
+  forbidden_inference affiliation -> authority
+  forbidden_inference identity similarity -> same actor
+  invariant provenance is mandatory on every actor and edge; confidence tier {verified,asserted,inferred} never collapses (native + python parity on the shared actor_nodes/actor_edges store)
+  native_format graf
+  command BonfyreEntity
+  source_path components/BonfyreControlPlane/actors.py
+  source_path components/BonfyreControlPlane/pack_loader.py
+  source_path engine/core/src/actor.c
+  source_path engine/core/include/bf_actor.h
+  witness components/BonfyreControlPlane/tests/test_actors.py
+  witness engine/core/tests/actor_graph_test.c
+  source_lineage capitalgym crm relationships
+  known_gap native writer records actors/edges on the shared store with the declared-kind, mandatory-provenance and non-collapsing-confidence gates (python reads native-written rows, tier preserved -- proven); native corroboration/verification-profile promotion logic is the remaining native-absorption item
+
+architecture verification-ledger
+  canonical_name VerificationLedger
+  owns Corroboration
+  consumes Actor
+  consumes FortificationPlan
+  publishes Corroboration
+  publishes Actor
+  family identity
+  domain Identity / Institutional Capacity
+  layer identity
+  semantic_question Is this actor independently corroborated enough to promote asserted -> verified?
+  purpose The gated mechanism a fortification "verify" action executes against. Records corroborations (actor, source, evidence) and promotes asserted -> verified only at a threshold of INDEPENDENT sources, never on the actor's own say-so. Closes the feedback loop: a load-bearing asserted actor is a fortification target; once independently corroborated and promoted, it drops off the CollapseFront verify plan -- risk actually retired, not merely noted.
+  maturity measured
+  node_types Corroboration
+  edge_types corroborates
+  state_types asserted
+  state_types verified
+  internal_calculus distinct-source count gate; monotone promotion at threshold k (default 2)
+  invariant independence is by distinct source; a repeated source is one corroboration, so an actor cannot bootstrap its own verification
+  invariant promotion is monotone -- never demotes, never promotes below threshold
+  invariant promotion writes back through actors.upsert_actor, so the confidence change is a normal graph write, not a side channel
+  forbidden_inference a corroboration was recorded -> the actor is verified (below threshold it stays asserted)
+  forbidden_inference promoted to verified -> the claim is true (independently attested is not proven)
+  interacts actor-graph
+  interacts collapse-front
+  interacts fortification-plan
+  source_path components/BonfyreControlPlane/verification.py
+  source_path engine/core/src/corroboration.c
+  source_path engine/core/include/bf_corroboration.h
+  witness components/BonfyreControlPlane/tests/test_verification.py
+  witness engine/core/tests/corroboration_test.c
+  source_lineage fortification verify action needs a real gated mechanism
+  known_gap native ledger records corroborations on the shared actor_corroborations store with distinct-source independence (python reads native-written rows -- parity proven); the promotion gate stays python/human (native never promotes -- the human line)
+
+architecture hash-identity
+  canonical_name HashIdentityGraph
+  family identity
+  domain Identity
+  layer identity
+  semantic_question Are these byte/content objects identical?
+  purpose Content-addressed identity: bytes -> digest -> Merkle membership. Used by artifacts, packs, model weights, receipts.
+  maturity implemented
+  node_types ContentObject
+  edge_types hashes_to
+  edge_types merkle_member_of
+  forbidden_inference same bytes -> same derivational meaning
+  native_format graf
+  command BonfyreHash
+  source_path cmd/BonfyreHash
+  source_lineage identity federation seed

@@ -1,0 +1,31 @@
+atlas fabric
+# BonfyreFS -- the universal resource namespace, served live (FUSE, read-only)
+# over fabric.db. Real and running: the atlas index, substrate proofs and the
+# fortification plan are published into it and browsable under the mount. It
+# resolves files, records, artifacts and Feldera-maintained sets as one
+# namespace; Drive is its visual grammar (riff SS2, SS11, SS38).
+
+architecture bonfyre-fs
+  canonical_name BonfyreFS
+  family fabric
+  domain Fabric / Namespace
+  layer fabric
+  semantic_question What is the universal namespace, and how is any addressable resource resolved and served?
+  purpose The resource namespace projection served live over fabric.db. Files, Frappe records, queries, artifacts and Feldera-maintained sets appear as one namespace rather than requiring everything to be a physical file. Drive renders it; the AddressPlane resolves candidates into it.
+  maturity implemented
+  owns NamespaceProjection
+  consumes Artifact
+  consumes ReachableCapacity
+  consumes OpportunityEligibility
+  consumes RouteAdvertisement
+  consumes Authority
+  publishes NamespaceProjection
+  forbidden_inference a path resolves -> the resource is authorized to read (Authority gates; the namespace only locates)
+  forbidden_inference a virtual query directory -> stored state (it is a maintained set projected as folders, not a directory on disk)
+  publishes QueryDirectory
+  source_path engine/core/src/filesystem_projection.c
+  source_path components/BonfyreControlPlane/fabric_publish.py
+  source_path components/BonfyreControlPlane/fabric_queries.py
+  witness components/BonfyreControlPlane/tests/test_fabric_queries.py
+  source_lineage fabric.db served live by bonfyre-fs; virtual query directories (riff SS38)
+  known_gap virtual query directories are implemented as maintained sets computed from live state (Unverified-Actors, Load-Bearing, Ready-To-Verify, Pending-Occurrences, Fragile-Capacity, Wiring-Gaps) and materialized as a browsable tree; fabric.db namespace registration is opt-in (the live daemon holds the db for writes, so register_in_fabric runs when it is idle -- never force-unmount)

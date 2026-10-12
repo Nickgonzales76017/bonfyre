@@ -1,0 +1,62 @@
+schema Resource
+generation control-1
+authority native-kernel
+absorbs 10-Code/BonfyreControlPlane/actors.py
+absorbs 10-Code/BonfyreControlPlane/provider_state.py
+absorbs 10-Code/BonfyreControlPlane/resource_admission.py
+note one identity substrate; Actor Relationship Provider Admission are components
+
+field resource_id
+  type text
+  role identity
+  required true
+
+field components
+  type list
+  values actor institution relationship evidence opportunity repository communication contribution provider capacity
+
+field authority
+  type enum
+  values verified asserted inferred
+  default asserted
+  note provenance is mandatory; a model guess never reads as a fact
+
+field provenance
+  type text
+  required true
+
+component ActorComponent
+  field display_name text
+  field node_kind enum organization person publication program
+  field role text
+  field org_id text
+
+component RelationshipComponent
+  edge_kinds employs authority_over evidence_for funds publishes_in contact_of opportunity_unlock
+  invariant edge-meaning-is-typed
+    statement edges sharing a from relation to shape are not interchangeable
+    derived-from operating-model law 2
+
+component ProviderComponent
+  derivation fold-over-occurrences
+  states ready cooling capacity_exhausted manual_pause
+  invariant hard-capacity-dominates
+    statement a transient observation never shortens a stated hard-capacity window
+    derived-from run6 codex relaunch at 22:43 into a window resetting Aug 19
+  invariant success-does-not-clear-capacity
+    statement one served response is not evidence that capacity returned
+
+component CapacityComponent
+  field protected_floor_bytes u64
+  field per_plane_quota_bytes u64
+  field max_grant_bytes u64
+  invariant grants-are-subtracted
+    statement concurrent claimants never see the same free bytes twice
+    derived-from run6 five planes and ENOSPC
+  invariant admission-precedes-work
+    statement footprint is compared against headroom before work starts
+  invariant stale-grants-age-out
+    statement a grant from a killed holder is reclaimed on a deadline
+
+verdicts admit defer reject
+  note defer means waiting could help; reject means it could not

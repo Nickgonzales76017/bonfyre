@@ -1,0 +1,95 @@
+atlas evidence
+
+architecture proof-frontier
+  owns ProofFrontier
+  consumes Evidence
+  consumes WorkState
+  publishes ProofFrontier
+  canonical_name ProofFrontierGraph
+  family evidence
+  domain Evidence / Anti-Amnesia
+  layer governance/proof
+  semantic_question Given what is already settled, may this mutation touch this layer?
+  purpose Orders a subject's correctness layers so the first open one is unambiguous; cools proven layers against reheat conditions. Governs FPQ, Bernstein adapters, Habitat equally.
+  maturity measured
+  node_types SolvedInvariant
+  node_types KnownNonCause
+  node_types FrontierLayer
+  edge_types cools
+  edge_types reheats
+  edge_types below_frontier
+  state_types cooled
+  state_types challenged
+  state_types invalidated
+  internal_calculus RegressionFence decision
+  internal_calculus first-open-layer derivation
+  invariant a cooled invariant must name what reheats it or it is settled forever against reality
+  invariant only a signal matching a named reheat condition may challenge a cooled invariant
+  invariant a layer below the first open layer is proven ground and off-limits
+  forbidden_inference a garbage symptom at a high layer -> authorization to reopen a low proven layer
+  forbidden_inference measured cosine -> proof of behavioural equivalence
+  forbidden_inference a docstring claiming isomorphism -> a proof of one
+  native_format crux
+  command BonfyreProof
+  source_path components/BonfyreControlPlane/proof_frontier.py
+  source_path components/BonfyreControlPlane/seed_fpq_frontier.py
+  source_path schemas/control/proof-frontier.yaff
+  source_path engine/core/src/proof.c
+  source_path engine/core/include/bf_proof.h
+  witness components/BonfyreControlPlane/tests/test_fpq_evidence.py
+  witness packs/fpq-proof-frontier/measured-witness.yaff
+  witness engine/core/tests/proof_test.c
+  source_lineage run4_institutional_fabric anti-amnesia campaign
+  known_gap native peer owns the frontier_layers / solved_invariants / known_noncauses stores; it preserves the FPQ discipline (a measured invariant is never proven -- proven requires truth_plane=proven and not challenged/invalidated), challenge retracts proof, and a KnownNonCause blackholes a hypothesis in scope. Python reads native-written rows with the discipline intact -- parity proven. The DBSP incremental maintenance of ReachableCapacity from this frontier stays in Feldera (P1).
+  reheat_condition a named reheat signal satisfies a cooled invariant on a proven layer
+
+architecture evidence-binding
+  canonical_name EvidenceBindingGraph
+  family evidence
+  domain Evidence
+  layer evidence
+  semantic_question Does this candidate artifact actually satisfy this evidence requirement?
+  purpose The binding relation is itself an object: requirement -> candidate retrieval -> semantic test -> binding -> witness.
+  maturity implemented
+  node_types EvidenceRequirement
+  node_types EvidenceCandidate
+  node_types EvidenceBinding
+  node_types EvidenceBindingWitness
+  edge_types retrieves
+  edge_types binds
+  internal_calculus semantic-test matching, most-constrained-first, unique
+  invariant a requirement with no matcher binds nothing; position is never a reason to bind
+  invariant a candidate binds at most one requirement (a matching, not a broadcast)
+  invariant every binding carries a witness saying why it matched
+  forbidden_inference artifact exists -> supports the claim
+  forbidden_inference positional slot fill -> semantic evidence match
+  native_format graf
+  source_path components/BonfyreControlPlane/evidence_binding.py
+  source_path components/BonfyreControlPlane/institution_loop.py
+  witness components/BonfyreControlPlane/tests/test_evidence_binding.py
+  witness components/BonfyreControlPlane/tests/test_loop_evidence_binding.py
+  source_lineage SEED-A recursive organ document
+
+architecture serm
+  canonical_name SERMReductionGraph
+  family evidence
+  domain Evidence / Measurement
+  layer evidence
+  semantic_question What measurement plan, reduced honestly, produces sufficient evidence for this capability demand?
+  purpose Measurement contract -> plan -> provider contract -> reduction -> sufficiency + honesty audit -> ledger. Produces EvidenceGraph/ProofFrontier consequences; is not those structures.
+  maturity implemented
+  node_types MeasurementContract
+  node_types Measurement
+  node_types SufficiencyAudit
+  node_types ProviderHonestyAudit
+  edge_types reduces
+  edge_types audits
+  internal_calculus reduction over recorded frontier measurements (no re-running mature substrate)
+  invariant a required layer counts as covered only by a witness-backed measurement
+  invariant a measured/proven claim with no witness fails the honesty audit (laundering)
+  forbidden_inference provider confidence -> evidence
+  forbidden_inference a claimed plane -> a witnessed measurement
+  source_path components/BonfyreControlPlane/serm.py
+  witness components/BonfyreControlPlane/tests/test_serm.py
+  source_lineage SEED-A recursive organ document
+  known_gap consumes proof-frontier measurements; the full measurement-plan / HVM-reduction front-end is future

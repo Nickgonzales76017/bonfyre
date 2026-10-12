@@ -1,0 +1,664 @@
+{
+  "live": 87,
+  "results": [
+    {
+      "binary": "bonfyre-api",
+      "bytes": 590,
+      "command": "BonfyreAPI",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-auth",
+      "bytes": 727,
+      "command": "BonfyreAuth",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-brief",
+      "bytes": 68,
+      "command": "BonfyreBrief",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreCLI",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    },
+    {
+      "binary": "bonfyre-cms",
+      "bytes": 1285,
+      "command": "BonfyreCMS",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-canon",
+      "bytes": 269,
+      "command": "BonfyreCanon",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-capability",
+      "bytes": 853,
+      "command": "BonfyreCapability",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-clips",
+      "bytes": 360,
+      "command": "BonfyreClips",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-compete",
+      "bytes": 1014,
+      "command": "BonfyreCompete",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-compress",
+      "bytes": 475,
+      "command": "BonfyreCompress",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-control",
+      "bytes": 1887,
+      "command": "BonfyreControl",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreDetectObjects",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    },
+    {
+      "binary": "bonfyre-discipl",
+      "bytes": 493,
+      "command": "BonfyreDiscipl",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-distribute",
+      "bytes": 285,
+      "command": "BonfyreDistribute",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-economy",
+      "bytes": 1029,
+      "command": "BonfyreEconomy",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-embed",
+      "bytes": 1490,
+      "command": "BonfyreEmbed",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-emit",
+      "bytes": 397,
+      "command": "BonfyreEmit",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-entity",
+      "bytes": 1018,
+      "command": "BonfyreEntity",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-fpq",
+      "bytes": 557,
+      "command": "BonfyreFPQ",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-fpqx",
+      "bytes": 383,
+      "command": "BonfyreFPQx",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-fs",
+      "bytes": 41,
+      "command": "BonfyreFS",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreFamily",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    },
+    {
+      "binary": "bonfyre-finance",
+      "bytes": 1033,
+      "command": "BonfyreFinance",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-flashqla",
+      "bytes": 1345,
+      "command": "BonfyreFlashQLA",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-flow",
+      "bytes": 1065,
+      "command": "BonfyreFlow",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreFragment",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    },
+    {
+      "binary": "bonfyre-frame-extract",
+      "bytes": 134,
+      "command": "BonfyreFrameExtract",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-frappe-compiler",
+      "bytes": 1457,
+      "command": "BonfyreFrappeCompiler",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-gate",
+      "bytes": 303,
+      "command": "BonfyreGate",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-gen",
+      "bytes": 777,
+      "command": "BonfyreGen",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-graph",
+      "bytes": 729,
+      "command": "BonfyreGraph",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-hash",
+      "bytes": 515,
+      "command": "BonfyreHash",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-index",
+      "bytes": 1261,
+      "command": "BonfyreIndex",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-infer",
+      "bytes": 1704,
+      "command": "BonfyreInfer",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-ingest",
+      "bytes": 88,
+      "command": "BonfyreIngest",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-kvcache",
+      "bytes": 4296,
+      "command": "BonfyreKVCache",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-layer",
+      "bytes": 919,
+      "command": "BonfyreLayer",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-leapfrog",
+      "bytes": 64,
+      "command": "BonfyreLeapfrog",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-learn",
+      "bytes": 1024,
+      "command": "BonfyreLearn",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-ledger",
+      "bytes": 416,
+      "command": "BonfyreLedger",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-mfa-dict",
+      "bytes": 69,
+      "command": "BonfyreMFADict",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-media-prep",
+      "bytes": 432,
+      "command": "BonfyreMediaPrep",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-meter",
+      "bytes": 323,
+      "command": "BonfyreMeter",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-moe",
+      "bytes": 2931,
+      "command": "BonfyreMoE",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-moq",
+      "bytes": 654,
+      "command": "BonfyreMoQ",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-model",
+      "bytes": 1968,
+      "command": "BonfyreModel",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-narrate",
+      "bytes": 1163,
+      "command": "BonfyreNarrate",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-net",
+      "bytes": 2045,
+      "command": "BonfyreNet",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-offer",
+      "bytes": 65,
+      "command": "BonfyreOffer",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-orchestrate",
+      "bytes": 504,
+      "command": "BonfyreOrchestrate",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-outreach",
+      "bytes": 518,
+      "command": "BonfyreOutreach",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-pack",
+      "bytes": 192,
+      "command": "BonfyrePack",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-paragraph",
+      "bytes": 82,
+      "command": "BonfyreParagraph",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-pay",
+      "bytes": 611,
+      "command": "BonfyrePay",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-physics",
+      "bytes": 2837,
+      "command": "BonfyrePhysics",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-pipeline",
+      "bytes": 415,
+      "command": "BonfyrePipeline",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-project",
+      "bytes": 195,
+      "command": "BonfyreProject",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-proof",
+      "bytes": 218,
+      "command": "BonfyreProof",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-proxy",
+      "bytes": 24,
+      "command": "BonfyreProxy",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-quant",
+      "bytes": 439,
+      "command": "BonfyreQuant",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-query",
+      "bytes": 402,
+      "command": "BonfyreQuery",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-queue",
+      "bytes": 450,
+      "command": "BonfyreQueue",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-qwen-fpq",
+      "bytes": 4224,
+      "command": "BonfyreQwenFPQ",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-reason",
+      "bytes": 1521,
+      "command": "BonfyreReason",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreRecipe",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    },
+    {
+      "binary": "bonfyre-render",
+      "bytes": 158,
+      "command": "BonfyreRender",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-repurpose",
+      "bytes": 491,
+      "command": "BonfyreRepurpose",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreRun",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    },
+    {
+      "binary": "bonfyre-runtime",
+      "bytes": 2358,
+      "command": "BonfyreRuntime",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-sae",
+      "bytes": 1142,
+      "command": "BonfyreSAE",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-sli",
+      "bytes": 1063,
+      "command": "BonfyreSLI",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-scene-detect",
+      "bytes": 124,
+      "command": "BonfyreSceneDetect",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-segment",
+      "bytes": 442,
+      "command": "BonfyreSegment",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-space",
+      "bytes": 967,
+      "command": "BonfyreSpace",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-speechloop",
+      "bytes": 439,
+      "command": "BonfyreSpeechLoop",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-stitch",
+      "bytes": 591,
+      "command": "BonfyreStitch",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-surface",
+      "bytes": 166,
+      "command": "BonfyreSurface",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-swarm",
+      "bytes": 188,
+      "command": "BonfyreSwarm",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-sync",
+      "bytes": 257,
+      "command": "BonfyreSync",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-tag",
+      "bytes": 310,
+      "command": "BonfyreTag",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-tel",
+      "bytes": 1475,
+      "command": "BonfyreTel",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-tier",
+      "bytes": 1126,
+      "command": "BonfyreTier",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-time",
+      "bytes": 1043,
+      "command": "BonfyreTime",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-tone",
+      "bytes": 237,
+      "command": "BonfyreTone",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-transcribe",
+      "bytes": 1882,
+      "command": "BonfyreTranscribe",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-transcript-clean",
+      "bytes": 99,
+      "command": "BonfyreTranscriptClean",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-transcript-family",
+      "bytes": 128,
+      "command": "BonfyreTranscriptFamily",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-vec",
+      "bytes": 494,
+      "command": "BonfyreVec",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-video-demux",
+      "bytes": 101,
+      "command": "BonfyreVideoDemux",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-violence",
+      "bytes": 64,
+      "command": "BonfyreViolence",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-watch",
+      "bytes": 282,
+      "command": "BonfyreWatch",
+      "probe": "(no args)",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-weaviate-index",
+      "bytes": 106,
+      "command": "BonfyreWeaviateIndex",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "bonfyre-wire",
+      "bytes": 2143,
+      "command": "BonfyreWire",
+      "probe": "--help",
+      "responds": true
+    },
+    {
+      "binary": "",
+      "command": "BonfyreWorkflow",
+      "probe": "",
+      "reason": "no binary",
+      "responds": false
+    }
+  ],
+  "total": 94
+}

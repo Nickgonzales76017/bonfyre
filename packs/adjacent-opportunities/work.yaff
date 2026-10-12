@@ -1,0 +1,41 @@
+pack adjacent-opportunity-work
+generation control-1
+source_plane run5_recursive_external
+item_kind adjacent_opportunity
+source_ref research:2026-08-14-issue-scan
+note Unassigned upstream issues on surfaces we already have merged evidence for. Scanned live via the GitHub API, not inferred. None are claimed; claiming competes with current commitments and needs a decision per item.
+
+work bernstein_3763_capability_profile_provenance
+  target_plane run2_relationship_adoption
+  priority 8.5
+  reason Nothing turns probe evidence into a capability profile with per-field provenance. This is the exact thing built for Bonfyre today -- a probe manifest that distinguishes probed-and-empty from never-probed -- including the failure modes it cost to learn. Strongest transferable-evidence match found
+
+work bernstein_3762_cli_output_as_evidence
+  target_plane run2_relationship_adoption
+  priority 8.0
+  reason No probe step turns an installed CLI's own output into evidence. Same shape as 3763 and same code. Carries the hard-won constraints: never invoke unknown binaries bare, process-group kill not timeout, and commands that ignore --help
+
+work bernstein_3810_log_redact_overmatch
+  target_plane run2_relationship_adoption
+  priority 7.5
+  reason log_redact treats any sixteen consecutive digits as a card number. Directly adjacent to the merged 3734 redaction work, where entropy detection was deliberately gated on credential-shaped field names so ordinary hashes and UUIDs survive. Same lesson, unapplied here
+
+work bernstein_3760_receipt_rederivation
+  target_plane run2_relationship_adoption
+  priority 6.5
+  reason A sealed run-graph receipt is never re-derived, only trusted. Same discipline as verifying a patch series clean-room rather than trusting a prior run
+
+work deputy_259_tests_are_not_evidence
+  target_plane run2_relationship_adoption
+  priority 7.0
+  reason A test's string literals are not evidence that a symbol is reachable. This is the mutation-testing discipline applied all session -- a green assertion proves nothing until it fails on a seeded defect. Strong philosophical fit with picatz's stated positions on 228 and 283
+
+work deputy_278_canonical_ecosystem_identity
+  target_plane run2_relationship_adoption
+  priority 6.0
+  reason --ecosystems rejects the canonical name and accepts a plugin alias. Identity-vs-alias, the same class as the primaryLocationLineHash question already in dialogue on 283
+
+work research_maintainer_context
+  target_plane run2_relationship_adoption
+  priority 4.0
+  reason chernistry is at Sip Your Drink with a public site; picatz has 226 public repos and a strong stated position on provenance. Understanding their wider work would sharpen which adjacent issues are worth offering to take, rather than scanning titles

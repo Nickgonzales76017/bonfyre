@@ -1,0 +1,104 @@
+{
+  "suite": "provider",
+  "vectors": [
+    {
+      "name": "hard_capacity_survives_a_later_transient",
+      "derived_from": "run6: codex relaunched at 22:43 into a window resetting Aug 19",
+      "provider": "codex",
+      "events": [
+        {
+          "kind": "hard_capacity",
+          "at": "2026-08-13T22:23:23+00:00",
+          "raw": "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Aug 19th, 2026 10:53 PM."
+        },
+        {
+          "kind": "transient_failure",
+          "at": "2026-08-13T22:30:00+00:00",
+          "detail": "local pipe failure"
+        }
+      ],
+      "query_at": "2026-08-13T22:43:48+00:00",
+      "expect": {
+        "status": "capacity_exhausted",
+        "circuit_until": "2026-08-19T22:53:00+00:00",
+        "available": false
+      }
+    },
+    {
+      "name": "success_does_not_clear_capacity",
+      "derived_from": "run6: a served response is not returned capacity",
+      "provider": "codex",
+      "events": [
+        {
+          "kind": "hard_capacity",
+          "at": "2026-08-13T22:00:00+00:00",
+          "raw": "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Aug 19th, 2026 10:53 PM."
+        },
+        {
+          "kind": "success",
+          "at": "2026-08-13T23:00:00+00:00"
+        }
+      ],
+      "query_at": "2026-08-14T00:00:00+00:00",
+      "expect": {
+        "status": "capacity_exhausted",
+        "circuit_until": "2026-08-19T22:53:00+00:00",
+        "available": false
+      }
+    },
+    {
+      "name": "capacity_returns_at_the_stated_reset",
+      "derived_from": "run6: circuit length was guessed because the reset was discarded",
+      "provider": "codex",
+      "events": [
+        {
+          "kind": "hard_capacity",
+          "at": "2026-08-13T22:00:00+00:00",
+          "raw": "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at Aug 19th, 2026 10:53 PM."
+        }
+      ],
+      "query_at": "2026-08-19T22:54:00+00:00",
+      "expect": {
+        "status": "ready",
+        "circuit_until": null,
+        "available": true
+      }
+    },
+    {
+      "name": "claude_wall_clock_reset_is_recovered",
+      "derived_from": "run6: claude states a local time with no date",
+      "provider": "claude",
+      "events": [
+        {
+          "kind": "hard_capacity",
+          "at": "2026-08-13T22:23:00+00:00",
+          "raw": "session limit \u00b7 resets 7:20pm (America/Chicago)"
+        }
+      ],
+      "query_at": "2026-08-13T23:00:00+00:00",
+      "expect": {
+        "status": "capacity_exhausted",
+        "circuit_until": "2026-08-14T00:20:00+00:00",
+        "available": false
+      }
+    },
+    {
+      "name": "manual_pause_needs_explicit_resume",
+      "derived_from": "run6 freeze: providers manually paused",
+      "provider": "codex",
+      "events": [
+        {
+          "kind": "manual_pause",
+          "at": "2026-08-13T22:46:00+00:00",
+          "detail": "run6 freeze"
+        }
+      ],
+      "query_at": "2026-08-25T00:00:00+00:00",
+      "expect": {
+        "status": "manual_pause",
+        "circuit_until": null,
+        "available": false
+      }
+    }
+  ]
+}

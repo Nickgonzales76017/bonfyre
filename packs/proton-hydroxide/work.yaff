@@ -1,0 +1,111 @@
+pack proton-hydroxide-work
+generation control-1
+source_plane run1_capital_conversion
+item_kind proton_transport
+source_ref campaign:proton-hydroxide
+note Reopens a path I closed wrongly. The invalidated receipt_recursion items said "transport never obtained", which was true of official Proton Bridge and says nothing about hydroxide. Those items stay invalidated because that state is terminal; these supersede them in practice.
+
+work proton_correct_the_wrong_closure
+  target_plane run5_recursive_external
+  priority 9.0
+  reason I invalidated the Proton items on the Run 6 narrative rather than on technical state, one message after warning against exactly that. Bridge requires a paid account we do not have, so it was never the available path. Hydroxide is, it is open source, and it can be maintained by us. The closure was wrong and the reasoning was the failure
+
+work proton_docker_vm_deleted_during_cleanup
+  target_plane run5_recursive_external
+  priority 9.0
+  reason The Docker VM disk was deleted during disk cleanup this session and took the headless hydroxide container with it. It was approved, but described only as "wipes local images/containers" -- the link to the Proton deficit was not made despite that deficit having been read the same morning. Docker Data is freshly recreated with only log dirs and no compose file survives anywhere on disk
+
+work proton_reinstall_docker_runtime
+  target_plane run1_capital_conversion
+  priority 8.5
+  reason Docker is not running and its VM is gone. Reinstalling is the prerequisite for everything below. No Go toolchain is present either, so a source build is a second prerequisite if the container route is abandoned
+
+work proton_rebuild_headless_hydroxide
+  target_plane run1_capital_conversion
+  priority 8.5
+  reason Rebuild the headless hydroxide container. The exact previous invocation was not recoverable from the Codex transcripts or from disk, so this needs reconstructing from the hydroxide project rather than restored
+
+work proton_client_already_supports_hydroxide
+  target_plane run1_capital_conversion
+  priority 7.0
+  reason bonfyre_run5_external_io.py already branches on PROTON_TRANSPORT_MODE, using plain IMAP and SMTP on localhost for hydroxide and STARTTLS only for Bridge. The client side is done; only the transport is missing. Ports 1143 and 1025 are the expected endpoints and neither is listening
+
+work proton_credentials_present_unread
+  target_plane run1_capital_conversion
+  priority 6.0
+  reason Proton account credentials exist. Files are present under the secrets directory and were deliberately not opened. Whoever wires the transport needs them; nothing here should copy them into a pack or a log
+
+work proton_maintain_hydroxide_ourselves
+  target_plane run2_relationship_adoption
+  priority 5.5
+  reason The stated intent is to maintain hydroxide once our end is fixed. That converts a blocked capability into an upstream relationship of the same kind as bernstein and agentguard -- a dependency we contribute to rather than merely consume
+
+work terminal_states_make_wrong_triage_irreversible
+  target_plane run4_institutional_fabric
+  priority 8.0
+  reason invalidated is terminal by design, so a mistaken closure cannot be undone -- these items had to be recreated instead. The design is right for honesty and wrong for recovery. A reopened item should be able to cite what it supersedes, or triage needs a reversible provisional state distinct from invalidated
+
+work proton_hydroxide_built_installed
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason DONE. hydroxide v0.2.32 built from source and installed at ~/.bonfyre/bin/hydroxide, 13.8 MB. Go toolchain installed, used, and removed; build caches were pointed at /tmp and deleted. Net disk went from 576 MB free to 11 GB free, so the transport cost nothing and the cleanup paid for itself
+
+work proton_hydroxide_auth_next
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason Next action is `hydroxide auth <username>` using the credentials under the secrets directory, which were deliberately not opened here. Auth writes a bridge password that the IMAP and SMTP servers then require. Nothing else can proceed until this is done by someone willing to handle the secret
+
+work proton_hydroxide_serve_under_launchd
+  target_plane run1_capital_conversion
+  priority 8.0
+  reason After auth, `hydroxide serve` runs IMAP on 1143 and SMTP on 1025, which is exactly what run5_external_io already expects with PROTON_TRANSPORT_MODE=hydroxide. Should run as a launchd agent alongside the other Bonfyre daemons rather than a foreground process
+
+work hydroxide_is_a_dependency_not_a_command
+  target_plane run4_institutional_fabric
+  priority 6.0
+  reason Registering hydroxide in the family manifest was wrong and the MCP guard rejected it -- native_tool_invoke requires a Bonfyre family. That guard enforced the no-command-proliferation law correctly. Vendored dependencies live in the managed bin directory without entering the capability constitution, and the manifest should probably distinguish the two rather than relying on a name prefix
+
+work proton_captcha_blocks_headless_auth
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason hydroxide auth reached Proton and got [9001] "please complete CAPTCHA". Credentials are valid enough to hit the auth endpoint; Proton is challenging the login. This is a human browser step, not a code problem. Known hydroxide behaviour for new or unusual clients -- commonly clears after a successful web login from the same IP, then a retry. Precise blocker, unlike the Run 6 "transport never obtained"
+
+work proton_auth_retry_after_web_login
+  target_plane run1_capital_conversion
+  priority 8.5
+  reason Next attempt: log into mail.proton.me in a browser from this machine, complete the CAPTCHA there, then rerun hydroxide auth. hydroxide auth also requires a real TTY -- it opens /dev/tty directly and ignores piped stdin, so it needs script -q or an interactive shell
+
+work proton_captcha_exhausted_code_paths
+  target_plane run1_capital_conversion
+  priority 9.5
+  reason Three attempts all returned [9001]: plain auth, an immediate retry, and -app-version web-mail@5.0.124.7. hydroxide contains no CAPTCHA handling at all -- strings shows nothing. Upstream PR 354 tried exactly the app-version approach and emersion rejected it, noting it only helps lower-risk accounts. This account is flagged. No code change on our side clears it
+
+work proton_needs_one_browser_verification
+  target_plane run1_capital_conversion
+  priority 9.5
+  reason The remaining path is a human step: sign in at mail.proton.me in a browser from this machine, complete the CAPTCHA there, then rerun hydroxide auth from a real terminal. Proton is asking for human verification of a flagged account, which is what the challenge is for. If it still fails, the appeal link in the error is the sanctioned route
+
+work hydroxide_is_archived_upstream
+  target_plane run2_relationship_adoption
+  priority 8.5
+  reason emersion archived hydroxide on 2026-08-02. It is read-only and unmaintained, so there is no upstream to contribute a fix to and no releases coming. Maintaining it ourselves is now a fork decision rather than a contribution one -- and it makes the free-account Proton path dependent on software nobody is maintaining
+
+work proton_transport_alternatives_if_fork_rejected
+  target_plane run1_capital_conversion
+  priority 7.0
+  reason If forking an archived client is unattractive, the alternatives are worth pricing before committing: a paid Proton account with official Bridge, a different provider for outbound business mail, or Gmail which already has working authenticated transport. The requirement is reliable mail, not Proton specifically
+
+work proton_block_is_client_specific_confirmed
+  target_plane run1_capital_conversion
+  priority 9.5
+  reason Decisive diagnosis. The browser is already logged into Proton as the account on this exact IP -- a healthy authenticated human session. hydroxide API auth still returns 9001 CAPTCHA at the same time. So the block is NOT account or IP reputation that a web login clears; it is hydroxide-specific. Proton challenges the unrecognized client and demands a human-verification token that archived hydroxide cannot present. /auth/info returns Code 1000 with SRP material and no challenge; 9001 fires only at /auth after the SRP proof
+
+work proton_hv_token_client_options
+  target_plane run1_capital_conversion
+  priority 9.0
+  reason The fix must present an HV token on the /auth request, which means a client that supports it. Options, cheapest first: (a) proton-python-client / gopenpgp-based clients that implement HV token flow -- not on PyPI under that name, needs sourcing from Proton's repos; (b) fork hydroxide to add the X-Pm-Human-Verification-Token headers, since it already does SRP correctly and only lacks the HV step; (c) protonmail-bridge official client, but that is the paid path. Option b is the smallest real change and matches the stated intent to maintain hydroxide
+
+work proton_password_entry_is_operator_step
+  target_plane run1_capital_conversion
+  priority 8.0
+  reason Typing the account password into a web login form to authenticate is a hard prohibition regardless of authorization, so the browser-verification step -- password plus CAPTCHA at account.proton.me -- is the operator's to perform. Everything around it can be automated; that one field cannot

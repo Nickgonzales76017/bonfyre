@@ -1,0 +1,170 @@
+pack tarbell-team-verified
+generation control-1
+provenance tarbellcenter.org/team and /grants, fetched 2026-08-14
+authority verified
+note Read from Tarbell's own live directory, so verified rather than asserted. Confirms the five people the earlier asserted pack guessed -- Cillian Crosson, Vincent Manancourt, Shakeel Hashim, Libby Nelson, Jasper Jackson -- all exact. Those five should be promoted from asserted to verified.
+
+actor person:cillian-crosson
+  node_kind person
+  display_name Cillian Crosson
+  role Executive Director and President; also Board of Directors
+  org_id org:tarbell-center
+  detail Confirmed against the live team page. Owns the institutional/partnership relationship.
+
+actor person:vincent-manancourt
+  node_kind person
+  display_name Vincent Manancourt
+  role Program Director, Grants
+  org_id org:tarbell-center
+
+actor person:michel-justen
+  node_kind person
+  display_name Michel Justen
+  role Senior Program Associate, Grants
+  org_id org:tarbell-center
+  detail Second grants-side contact under Vincent. New from the directory.
+
+actor person:shakeel-hashim
+  node_kind person
+  display_name Shakeel Hashim
+  role Editor, Transformer; also a grants judge
+  org_id org:tarbell-center
+  detail Sits on both the editorial and the grant-judging side, which makes him the densest single node.
+
+actor person:jasper-jackson
+  node_kind person
+  display_name Jasper Jackson
+  role Managing Editor, Transformer
+  org_id org:tarbell-center
+
+actor person:libby-nelson
+  node_kind person
+  display_name Libby Nelson
+  role Program Director, Fellowship
+  org_id org:tarbell-center
+
+actor person:anna-gordon
+  node_kind person
+  display_name Anna Gordon
+  role Senior Program Associate, Fellowship
+  org_id org:tarbell-center
+
+actor person:joshua-turner
+  node_kind person
+  display_name Joshua Turner
+  role Senior Program Associate, Fellowship
+  org_id org:tarbell-center
+
+actor person:celia-ford
+  node_kind person
+  display_name Celia Ford
+  role Reporter, Transformer
+  org_id org:tarbell-center
+
+actor person:veronica-irwin
+  node_kind person
+  display_name Veronica Irwin
+  role Senior Policy Reporter, Transformer
+  org_id org:tarbell-center
+
+actor person:oliver-kemp
+  node_kind person
+  display_name Oliver Kemp
+  role Head of Audience, Transformer
+  org_id org:tarbell-center
+  detail Audience/distribution. Relevant if a piece lands and needs reach.
+
+actor person:yi-ling-liu
+  node_kind person
+  display_name Yi-Ling Liu
+  role Journalist in Residence
+  org_id org:tarbell-center
+
+actor person:sawyer-bernath
+  node_kind person
+  display_name Sawyer Bernath
+  role Operations Director and Treasurer
+  org_id org:tarbell-center
+
+actor person:elizabeth-seger
+  node_kind person
+  display_name Elizabeth Seger
+  role Board of Directors
+  org_id org:tarbell-center
+
+actor person:mikko-jarvenpaa
+  node_kind person
+  display_name Mikko Jarvenpaa
+  role Board of Directors
+  org_id org:tarbell-center
+
+actor person:dick-tofel
+  node_kind person
+  display_name Dick Tofel
+  role Advisor
+  org_id org:tarbell-center
+  detail Founding ProPublica figure; advisor. High-credibility accountability-journalism node.
+
+actor org:axios
+  node_kind organization
+  display_name Axios
+actor org:platformer
+  node_kind organization
+  display_name Platformer
+actor org:understanding-ai
+  node_kind organization
+  display_name Understanding AI
+actor org:wsj
+  node_kind organization
+  display_name Wall Street Journal
+
+actor person:scott-rosenberg
+  node_kind person
+  display_name Scott Rosenberg
+  role Grants judge; Axios
+  org_id org:axios
+actor person:casey-newton
+  node_kind person
+  display_name Casey Newton
+  role Grants judge; Platformer
+  org_id org:platformer
+actor person:timothy-b-lee
+  node_kind person
+  display_name Timothy B. Lee
+  role Grants judge; Understanding AI
+  org_id org:understanding-ai
+actor person:sharon-weinberger
+  node_kind person
+  display_name Sharon Weinberger
+  role Grants judge; Wall Street Journal
+  org_id org:wsj
+
+edge org:tarbell-center employs person:michel-justen
+edge org:tarbell-center employs person:anna-gordon
+edge org:tarbell-center employs person:joshua-turner
+edge org:tarbell-center employs person:celia-ford
+edge org:tarbell-center employs person:veronica-irwin
+edge org:tarbell-center employs person:oliver-kemp
+edge org:tarbell-center employs person:yi-ling-liu
+edge org:tarbell-center employs person:sawyer-bernath
+
+edge person:elizabeth-seger authority_over org:tarbell-center
+  detail board
+edge person:mikko-jarvenpaa authority_over org:tarbell-center
+  detail board
+
+edge person:scott-rosenberg authority_over org:tarbell-center
+  detail grant judging panel
+edge person:casey-newton authority_over org:tarbell-center
+  detail grant judging panel
+edge person:timothy-b-lee authority_over org:tarbell-center
+  detail grant judging panel
+edge person:sharon-weinberger authority_over org:tarbell-center
+  detail grant judging panel
+
+edge org:axios funds org:tarbell-center
+  detail via judge, not literal funding; distribution relevance
+edge org:platformer funds org:tarbell-center
+  detail via judge
+edge org:wsj funds org:tarbell-center
+  detail via judge

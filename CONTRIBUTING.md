@@ -1,6 +1,27 @@
-# Contributing to Bonfyre
+# Contributing to Bonfÿre
 
 Thanks for your interest. Here's how you can help.
+
+## Constitutional rule: where semantics may live
+
+**No new authoritative Bonfÿre semantic may be introduced solely in Python.**
+Every new semantic must either extend the native kernel, or begin as an
+explicitly temporary reference implementation with a named native absorption
+target recorded in `schemas/`.
+
+Python is permitted for Frappe-native app code, migration and import tooling,
+reference implementations and conformance oracles, and adapters to the external
+Python ecosystem. It is not the authoritative implementation of work lifecycle,
+occurrences, receipts, actor and relationship semantics, capability closure,
+provider state, resource admission, structural cooling, context-cut compilation,
+plane scheduling, authority transitions, or projection and replay. Those are
+kernel concepts.
+
+**A campaign is data, not a source tree.** Instantiating a workload should add a
+directory under `packs/`, never a module. If a campaign needs new runtime code,
+the kernel is missing a primitive — that is the bug to fix, not the campaign.
+`run4/`, `run5/`, `run6/`, `capitalgym/` and similar are scopes; their state
+belongs in packs and databases, not in a new implementation tree each time.
 
 ## The basics
 

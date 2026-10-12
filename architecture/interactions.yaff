@@ -1,0 +1,426 @@
+atlas interactions
+# Cross-architecture contracts. Often more important than architecture interiors:
+# the hardest bugs live in the bridges. Each names what it preserves, what it
+# drops, and what it must NOT promote.
+
+interaction feldera-maintains-reachability
+  source feldera
+  destination proof-frontier
+  relation incremental_maintenance
+  preserves the proven-layer set and its retractions
+  drops the need to recompute the whole answer on a change
+  forbidden_inference an organism route withdrawn -> its independent members retracted
+  invalidates_on a proof fact is inserted or retracted (reheat)
+  witness reachability-proof.json (organism 1,2,3,2; fpq_present 1,1,1,1)
+  binding components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+
+interaction verus-verifies-frontier-invariant
+  source verus
+  destination proof-frontier
+  relation formal_verification
+  preserves the exact invariant stated
+  drops invariants not stated to the verifier
+  forbidden_inference one invariant proven -> the layer or system is correct
+  witness a bounded proof artifact
+  binding architecture/substrate/foundry.yaff
+
+interaction restate-durably-runs-work
+  source restate
+  destination work-graph
+  relation durable_execution
+  preserves the work item identity across long waits
+  drops the meaning of the work (Restate owns durability, not semantics)
+  forbidden_inference durably waiting -> the external event will occur
+  witness a journaled durable handle
+  binding architecture/substrate/foundry.yaff
+
+interaction hvm4-reduces-fpq-seed
+  source hvm4
+  destination fpq-seed
+  relation bounded_reduction
+  preserves the seed program structure
+  drops nothing
+  forbidden_inference a reduction completes -> the seed reconstructs the tensor
+  witness a bounded reduction result
+  binding architecture/substrate/foundry.yaff
+
+interaction address-plane-feeds-closure
+  source address-plane
+  destination capability-closure
+  relation eligibility_prefilter
+  preserves the surviving eligible command families
+  drops candidates rejected by capability, authority, or proof masks
+  forbidden_inference a survivor -> a runnable or authorized binding (it is only eligible)
+  witness RouteResult
+  binding components/BonfyreControlPlane/address_plane.py
+
+interaction authority-compiles-to-mask
+  source authority-graph
+  destination address-plane
+  relation mask_compilation
+  preserves the current permission cut for an actor over a subject
+  drops revoked and expired grants
+  forbidden_inference a mask bit set -> authority to act (the mask is a compiled cut, not the grant)
+  invalidates_on a grant is revoked or expires
+  witness authority_have_mask
+  binding components/BonfyreControlPlane/address_plane.py
+
+interaction frontier-compiles-to-ternary
+  source proof-frontier
+  destination address-plane
+  relation ternary_compilation
+  preserves proven layers as +1 and KnownNonCauses as -1 blackholes
+  drops nothing
+  forbidden_inference a -1 blackhole -> a permanent truth (a reheat signal reopens it)
+  invalidates_on a reheat signal satisfies a cooled invariant
+  witness proof_ternary
+  binding components/BonfyreControlPlane/address_plane.py
+
+interaction capability-compiles-to-mask
+  source capability-lattice
+  destination address-plane
+  relation mask_compilation
+  preserves the estate's real capability families as bit positions
+  drops nothing
+  forbidden_inference a capability mask match -> a runnable binding
+  witness capability_mask
+  binding components/BonfyreControlPlane/address_plane.py
+
+interaction closure-gated-by-frontier
+  source capability-closure
+  destination proof-frontier
+  relation mutation_gate
+  preserves target layer identity
+  preserves observed failure
+  drops unrelated composition state
+  forbidden_inference a high-layer symptom -> authorization to touch a proven low layer
+  authority the fence decision is binding, not advisory
+  invalidates_on a named reheat signal satisfies a cooled invariant
+  witness FenceDecision
+  binding components/BonfyreControlPlane/capability_closure.py
+
+interaction lattice-feeds-discipl
+  source capability-lattice
+  destination discipl-composition
+  relation binding_source
+  preserves family identity
+  preserves estate and law
+  drops maturity claims of unrelated commands
+  forbidden_inference classified estate -> single-estate binding
+  witness command binding source_ref
+  binding components/BonfyreControlPlane/capability_closure.py
+
+interaction discipl-composes-into-closure
+  source discipl-composition
+  destination capability-closure
+  relation composition
+  preserves per-hop confidence and semantic loss
+  drops nothing
+  forbidden_inference proposed chain -> runnable chain
+  witness ExecutionOrganism
+  binding components/BonfyreControlPlane/capability_closure.py
+
+interaction serm-reduces-to-sufficiency
+  source serm
+  destination proof-frontier
+  relation sufficiency_consequence
+  preserves the covered layers and their witnesses
+  drops measurements with no witness (they fail the honesty audit)
+  forbidden_inference a required layer named -> a required layer proven
+  invalidates_on a covered layer is reheated
+  witness serm.sufficiency invariant
+  binding components/BonfyreControlPlane/serm.py
+
+interaction fpq-run-feeds-frontier
+  source fpq-transform
+  destination proof-frontier
+  relation execution_is_evidence
+  preserves fixture identity (gguf sha256)
+  preserves report digest
+  drops nothing
+  forbidden_inference reconstruction within tolerance -> semantic behaviour proven
+  authority a real run may only cool the reconstruction layer, never semantic_behavior
+  invalidates_on fixture mse exceeds ceiling
+  invalidates_on fixture gguf hash changes
+  witness fpq.reconstruction.fixture.tiny_f16
+  binding components/BonfyreControlPlane/fpq_evidence.py
+
+interaction representation-feeds-sli
+  source fpq-transform
+  destination sli-execution
+  relation representation_to_execution
+  preserves model representation identity
+  drops reconstruction-layer proof
+  forbidden_inference reconstruction proven -> SLI execution proven
+  witness SLIExecutionWitness
+  binding packs/fpq-proof-frontier/work.yaff
+
+interaction actor-autofills-form
+  source actor-graph
+  destination atomic-form
+  relation verified_autofill
+  preserves actor identity for the named profile
+  drops asserted-only identity
+  forbidden_inference asserted-via-email actor -> autofilled verified field
+  authority only a verified_for(profile) actor may fill a field
+  invalidates_on the actor's identifier profile changes
+  witness Field.autofill_actor
+  binding components/BonfyreControlPlane/atomic_forms.py
+
+interaction formgraph-compiles-to-atomicform
+  source form-graph
+  destination atomic-form
+  relation compile
+  preserves field structure, evidence matchers, authority requirements
+  drops conditional fields whose condition does not hold for this submission
+  forbidden_inference a field in the graph -> a required field in the compiled form
+  witness compile(FormGraph, values)
+  binding components/BonfyreControlPlane/form_graph.py
+
+interaction binding-fills-form-evidence
+  source evidence-binding
+  destination atomic-form
+  relation evidence_fill
+  preserves the requirement -> candidate match and its witness
+  drops candidates that fail the semantic test
+  forbidden_inference an artifact in a slot -> the requirement satisfied
+  forbidden_inference positional order -> a valid binding
+  invalidates_on the bound artifact's digest changes
+  witness EvidenceBinding.witness
+  binding components/BonfyreControlPlane/institution_loop.py
+
+interaction twin-materializes-into-evidence
+  source foreign-twin
+  destination atomic-form
+  relation evidence_materialization
+  preserves content-addressed artifact identity
+  drops remote authority
+  forbidden_inference cached projection -> remote truth
+  authority materialize requires at least the reference right
+  invalidates_on the foreign projection changes
+  witness EvidenceSlot.artifact_digest
+  binding components/BonfyreControlPlane/foreign.py
+
+interaction closure-submits-work
+  source capability-closure
+  destination work-graph
+  relation durable_submission
+  preserves organism goal and per-hop binding
+  drops non-durable form routing
+  forbidden_inference blocked organism -> submitted work
+  witness native mission id
+  binding components/BonfyreControlPlane/capability_closure.py
+
+interaction transport-carries-hop
+  source transport-phenotype
+  destination capability-closure
+  relation carrier
+  preserves the hop's computed digest
+  drops nothing
+  forbidden_inference MCP receipt -> a different computation ran
+  witness signed receipt
+  binding components/BonfyreControlPlane/transport.py
+
+interaction service-backs-work
+  source service-lifecycle
+  destination work-graph
+  relation service_binding
+  preserves service instance identity
+  drops released instances
+  forbidden_inference service active -> bind authority
+  invalidates_on the service lease goes stale
+  witness ProvisionBinding
+  binding components/BonfyreControlPlane/service_lifecycle.py
+
+interaction unlock-activates-resource
+  source unlock-graph
+  destination resource-activation
+  relation capacity_unlock
+  preserves the unlock condition
+  drops nothing
+  forbidden_inference an unlock exists -> the resource is free or authorized
+  witness ActivationMechanism
+
+interaction verification-resolves-identity-blocker
+  source actor-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves verified_for(profile)
+  drops asserted-only identity
+  forbidden_inference asserted actor -> resolved identity blocker
+  invalidates_on the actor's confidence drops below verified
+  witness actor_nodes.confidence
+  binding components/BonfyreControlPlane/opportunity.py
+
+interaction proof-resolves-layer-blocker
+  source proof-frontier
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the proven layer identity
+  drops non-proven layers
+  forbidden_inference an open layer -> a resolved proof_layer blocker
+  invalidates_on the frontier layer is reheated
+  witness frontier_layers.status
+  binding components/BonfyreControlPlane/opportunity.py
+
+interaction work-resolves-dependency-blocker
+  source work-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the satisfied work item identity
+  drops unsatisfied or failed items
+  forbidden_inference an open work item -> a resolved work_done blocker
+  witness work_items.state
+  binding components/BonfyreControlPlane/opportunity.py
+
+interaction authority-gates-activation
+  source authority-graph
+  destination resource-activation
+  relation activation_gate
+  preserves the activate grant over the resource
+  drops eligibility that lacks authority
+  forbidden_inference resource eligible -> resource activated
+  invalidates_on the activate grant is revoked or expires
+  witness has_authority(ACTIVATE)
+  binding components/BonfyreControlPlane/resource_activation.py
+
+interaction service-binding-activates-resource
+  source service-lifecycle
+  destination resource-activation
+  relation mechanism_binding
+  preserves the bound service instance identity
+  drops unbound or released instances
+  forbidden_inference service provisioned -> resource activated
+  invalidates_on the service is released
+  witness bound_services
+  binding components/BonfyreControlPlane/resource_activation.py
+
+interaction activation-resolves-resource-blocker
+  source resource-activation
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the activated resource identity
+  drops resources short of activated
+  forbidden_inference a candidate resource -> a resolved resource_active blocker
+  witness is_activated
+  binding components/BonfyreControlPlane/opportunity.py
+
+interaction relationship-resolves-stage-blocker
+  source relationship-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the relationship stage and its evidence, per profile
+  drops relationships under other profiles
+  forbidden_inference collaboration on one profile -> a resolved stage blocker on another
+  invalidates_on the relationship is corrected below the required stage
+  witness stage_at_least
+  binding components/BonfyreControlPlane/opportunity.py
+
+interaction shadow-converts-via-relationship
+  source relationship-graph
+  destination shadow-institution
+  relation conversion_gate
+  preserves the contact and profile the relationship advanced under
+  drops observation detail that no relationship backs
+  forbidden_inference public structure mapped -> shadow institution active
+  invalidates_on the relationship is corrected below engaged
+  witness conversion_stage
+  binding components/BonfyreControlPlane/shadow_institution.py
+
+interaction relationship-earns-verification
+  source relationship-graph
+  destination actor-graph
+  relation verification_basis
+  preserves the profile the relationship advanced under
+  drops asserted-only identity
+  forbidden_inference relationship engaged -> actor automatically verified (verification is a deliberate act)
+  witness relationship trajectory
+  binding components/BonfyreControlPlane/relationship.py
+
+interaction authority-resolves-authority-blocker
+  source authority-graph
+  destination unlock-graph
+  relation blocker_resolution
+  preserves the granting edge (actor, permission, subject, purpose)
+  drops expired and revoked edges
+  forbidden_inference an unlock exists -> authority to take it
+  invalidates_on the granting edge expires or is revoked
+  witness has_authority
+  binding components/BonfyreControlPlane/opportunity.py
+
+interaction reachability-gates-form-pipeline
+  source unlock-graph
+  destination atomic-form
+  relation reachability_gate
+  preserves the opportunity's reachable_now status
+  drops blocked and merely-unlockable opportunities
+  forbidden_inference all blockers resolved -> submit the form (loop stops at a draft)
+  authority only a reachable_now opportunity may drive the submit-ready loop
+  invalidates_on any blocker reopens
+  witness OpportunityLoopResult
+  binding components/BonfyreControlPlane/institution_loop.py
+
+interaction service-bind-is-an-unlock
+  source unlock-graph
+  destination service-lifecycle
+  relation activation_mechanism
+  preserves the service_bound blocker subject
+  drops nothing
+  forbidden_inference service catalogued -> service_bound blocker resolved
+  authority binding a service requires the bind right
+  witness ServiceProfile.state
+  binding components/BonfyreControlPlane/service_lifecycle.py
+
+interaction address-plane-ranks-survivors
+  source address-plane
+  destination route-ranker
+  relation learned_ranking
+  preserves the eligible survivor set (only its order changes)
+  drops nothing (ranking never removes an eligible candidate)
+  forbidden_inference a top rank -> a correct, authorized, or runnable route (the fence and closure still run)
+  witness rank_commands
+  binding components/BonfyreControlPlane/route_ranker.py
+
+interaction proof-frontier-reheats-feldera
+  source proof-frontier
+  destination feldera
+  relation change_notification
+  preserves the identity of the proof facts that changed (inserted or retracted)
+  drops the conclusions that did not change -- only the delta reheats
+  forbidden_inference a reheat occurred -> the maintained answer changed (a reheat may reconfirm the same set)
+  invalidates_on the maintained relation is read while a proof fact write is in flight
+  witness reachability-proof.json (the retraction that withdrew organism 2 and reheated the fold)
+  binding components/BonfyreControlPlane/substrate/feldera_reachability_incremental.rs
+
+interaction partner-commons-projects-foreign-twin
+  source partner-commons
+  destination foreign-twin
+  relation rights_limited_projection
+  preserves partner identity, source institution, and observe/reference rights
+  drops remote mutation rights and any claim that cached state is current remote truth
+  forbidden_inference a partner observation -> bind or act authority
+  witness partner_state_is_a_rights_limited_foreign_twin
+  binding components/BonfyreControlPlane/partner_commons.py
+
+interaction blogger-receipt-feeds-evidence
+  source blogger-publication-surface
+  destination evidence-graph
+  relation receipt_projection
+  preserves external post identity, public URL, publication time, source lineage, and API acknowledgement
+  drops OAuth credentials, access tokens, refresh tokens, and unneeded Blogger response fields
+  forbidden_inference an API acknowledgement -> the article's substantive claims are true
+  invalidates_on the public URL becomes unavailable or the receipt no longer matches the external post identity
+  evidence the safe Blogger API response supports only api-acknowledged and publicly-addressable publication claims
+  witness test_safe_blogger_receipt_projects_once_into_occurrence_and_evidence
+  binding components/BonfyreControlPlane/blogger_receipts.py
+
+interaction resource-pressure-triggers-metabolism
+  source resource-admission
+  destination resource-metabolism
+  relation bounded_capacity_recovery
+  preserves the measured free-space state, hard emergency floor, and configured target
+  drops any implication that a target shortfall justifies unbounded maintenance
+  forbidden_inference disk below the configured target -> every reclaim candidate is worth scanning or deleting
+  invalidates_on free-space state, inventory fingerprint, yield policy, or backoff deadline changes
+  witness components/BonfyreControlPlane/tests/test_resource_metabolism.py
+  binding components/BonfyreControlPlane/resource_metabolism.py

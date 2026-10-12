@@ -1057,23 +1057,15 @@ static void handle_webhook_create(HttpRequest *req, HttpResponse *resp) {
         wid, url, events);
 }
 
-/* GET /api/binaries/:name/... — proxy to any bonfyre binary */
-static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
-                                const char *binary_name, int nseg,
-                                char segs[][256]) {
-    char bin[64]; snprintf(bin, sizeof(bin), "bonfyre-%s", binary_name);
-    char *args[32]; int ac = 0;
-    for (int i = 3; i < nseg && ac < 30; i++) args[ac++] = segs[i];
-    if (req->body && req->body_len > 0 && ac < 30) args[ac++] = req->body;
-
+/* Proxy: run a Bonfyre command and return its output as JSON. */
+static void handle_proxy(HttpResponse *resp, const char *binary, int argc, char **argv) {
     char *run_argv[64];
-    run_argv[0] = (char *)bin;
-    for (int i = 0; i < ac && i < 62; i++) run_argv[i + 1] = args[i];
-    run_argv[ac + 1] = NULL;
+    run_argv[0] = (char *)binary;
+    for (int i = 0; i < argc && i < 62; i++) run_argv[i + 1] = argv[i];
+    run_argv[argc + 1] = NULL;
 
     char result[MAX_RESULT];
-    int rc = run_binary(bin, run_argv, result, sizeof(result));
-
+    int rc = run_binary(binary, run_argv, result, sizeof(result));
     if (rc == 0) {
         const char *p = result; while (*p == ' ' || *p == '\n' || *p == '\t') p++;
         if (*p == '{' || *p == '[') {
@@ -1089,6 +1081,17 @@ static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
     } else {
         http_resp_json(resp, 500, "{\"error\":\"binary failed\",\"code\":%d}", rc);
     }
+}
+
+/* GET /api/binaries/:name/... — proxy to any bonfyre binary */
+static void handle_binary_proxy(HttpRequest *req, HttpResponse *resp,
+                                const char *binary_name, int nseg,
+                                char segs[][256]) {
+    char bin[64]; snprintf(bin, sizeof(bin), "bonfyre-%s", binary_name);
+    char *args[32]; int ac = 0;
+    for (int i = 3; i < nseg && ac < 30; i++) args[ac++] = segs[i];
+    if (req->body && req->body_len > 0 && ac < 30) args[ac++] = req->body;
+    handle_proxy(resp, bin, ac, args);
 }
 
 /* ── Main router ──────────────────────────────────────────────────── */

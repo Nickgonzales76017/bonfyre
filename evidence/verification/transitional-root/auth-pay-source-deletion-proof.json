@@ -1,0 +1,44 @@
+{
+  "current_owners": [
+    {
+      "makefile_sha256": "ede45ec2800f4031c62b8c4ea6740a72d7b7cf52f7abde51a2efdc14689c4e2d",
+      "path": "cmd/BonfyreAuth",
+      "source_sha256": "9ef1b8c3c6c969e650b16643e198e2e8503edef89a1fdbee5aee7515b7f0e206"
+    },
+    {
+      "makefile_sha256": "636519120b76df9df6da2b318ce912c1e02731943835fb5e5c5baf25038ad7cd",
+      "path": "cmd/BonfyrePay",
+      "source_sha256": "7197e49de8747506788ac2828bc2488e7bf64cb38f03a1bc2e916695ae9132c6"
+    }
+  ],
+  "file_count": 4,
+  "files": [
+    {
+      "bytes": 182,
+      "path": "components/BonfyreAuth/Makefile",
+      "sha256": "9d4caadd757e16f7552fd2ae786cbced03f160ef4aa5f5ae30085958c1f89250"
+    },
+    {
+      "bytes": 22693,
+      "path": "components/BonfyreAuth/src/main.c",
+      "sha256": "d819a7b878b10360c98594b9fd71d53c3e59c550a6a92048dc10707de43e226f"
+    },
+    {
+      "bytes": 181,
+      "path": "components/BonfyrePay/Makefile",
+      "sha256": "e7c53d295e400b2ff9fe5409107c1b020e1bc38ab5a77e60f1620247018a22e6"
+    },
+    {
+      "bytes": 19557,
+      "path": "components/BonfyrePay/src/main.c",
+      "sha256": "87e60a3ada1badf72a468a06c4103cac76f83edeaa87abe0a67edcceefc23b21"
+    }
+  ],
+  "kind": "transitional-root-superseded-source",
+  "reason": "Every measured symbol and durable path is provided by the current cmd owners; the current implementations are tested supersets and the deleted compatibility copies remain recoverable from git history.",
+  "recovery": "git-history",
+  "root_digest_sha256": "551e832de6648c53146e735b51b12fe93c266896fc41f09a249e5d3c689e7ad3",
+  "schema": "bonfyre.deletion-proof.v1",
+  "total_bytes": 42613,
+  "transitional_root": "components"
+}

@@ -1,0 +1,35 @@
+pack fpq-proof-frontier-measured-witness
+generation control-1
+source_plane run5_recursive_external
+item_kind proof_witness
+source_ref campaign:anti-amnesia
+note Answers the standing work item fpq_verify_archive_claims_before_promoting. The archive's reconstruction claim was recorded at MEASURED on the strength of an experiment this process never re-ran, and the reheat condition "reconstruction fixture fails" had no fixture behind it. This makes it real: a deterministic golden GGUF, a real bonfyre-fpq roundtrip, and a measured invariant whose reheat is a number verify_fixture re-checks on demand. Still MEASURED, not PROVEN -- the FPQ math claims stay absent because no proof artifact backs them.
+
+witness fpq_tiny_f16_roundtrip
+  subject model:fpq-fixture-tiny-f16
+  profile fpq-v3-coord-qjl
+  fixture packs/fpq-proof-frontier/fixtures/tiny-f16.gguf
+  fixture_sha256 a8f07e6aca696d9545dedf784078f61f1b9121ed938311292b27a697509dc6a6
+  command bonfyre-fpq roundtrip <fixture> --report
+  deterministic byte-identical report across repeated runs
+  tensor blk.0.attn_norm.weight mse 0.00397285 cosine 0.984000 mode COORD@3+QJL ratio 9.1x status GOOD
+  tensor blk.0.ffn_gate.weight  mse 0.00239773 mode COORD@3+QJL status GOOD
+  tensor blk.0.attn_q.weight    mse 0.00146343 mode COORD status GOOD
+  worst_mse 0.00397285
+  mse_ceiling 0.005
+  invariant fpq.reconstruction.fixture.tiny_f16 layer reconstruction plane measured status cooled
+  reheat reconstruction-fixture-mse-exceeds-ceiling
+  reheat fixture-gguf-hash-changes
+  note Reproduced by 10-Code/BonfyreControlPlane/fpq_evidence.py; verified live by tests/test_fpq_evidence.py (mutated fixture reheats the layer, unrelated symptom does not).
+
+work fpq_verify_archive_claims_before_promoting
+  target_plane run5_recursive_external
+  priority 3.0
+  status partially_satisfied
+  reason The reconstruction layer now has a re-runnable measured fixture, not just an archive citation, and a reheat condition that is a number. What remains before any PROVEN promotion: a fixture cut from the real qwen2.5-0.5b tensors (this fixture is synthetic-but-structured), and the FP16-passthrough / Q-K-V-bypass experiments turned into golden fixtures the same way. Priority dropped because the mechanism now exists; only coverage remains.
+
+work fpq_execution_is_evidence_in_the_closure
+  target_plane run4_institutional_fabric
+  priority 4.0
+  status delivered
+  reason capability_closure now executes real FPQ when a fused representation organism dispatches. The composed chain T_FPQ -> T_SLI -> T_KVCACHE binds 3/3 to real binaries, selects the fused_pipeline form, runs bonfyre-fpq on the fixture, and promotes BonfyreFPQ health_probed -> workload_proven cited by the report digest. The loop uses FPQ, it does not only guard it.

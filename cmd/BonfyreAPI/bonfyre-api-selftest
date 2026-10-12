@@ -16,7 +16,7 @@ log="$run_dir/server.log"
 
 port=$(python3 -c "import socket; s=socket.socket(); s.bind(('127.0.0.1',0)); print(s.getsockname()[1]); s.close()")
 
-"$root_dir/bonfyre-api" serve --port "$port" --db "$db" </dev/null >"$log" 2>&1 &
+"$root_dir/bonfyre-api" serve --port "$port" --db "$db" --static "$root_dir/static" </dev/null >"$log" 2>&1 &
 server_pid=$!
 
 cleanup() {
@@ -51,7 +51,8 @@ sqlite3 "$db" "INSERT INTO api_keys (key, label, active, created_at) VALUES ('$k
 
 authenticated_status=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $key" "http://127.0.0.1:$port/api/status")
 rejected_status=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer invalid-key-does-not-exist" "http://127.0.0.1:$port/api/status")
+static_title=$(curl -s "http://127.0.0.1:$port/" | grep -c '<title>Bonfyre')
 logged=$(sqlite3 "$db" "SELECT COUNT(*) FROM request_log WHERE api_key='$key';")
 
-printf '{"ready":true,"port":%s,"authenticated_status":%s,"rejected_status":%s,"authenticated_requests_logged":%s}\n' \
-    "$port" "$authenticated_status" "$rejected_status" "$logged"
+printf '{"ready":true,"port":%s,"authenticated_status":%s,"rejected_status":%s,"static_surface_served":%s,"authenticated_requests_logged":%s}\n' \
+    "$port" "$authenticated_status" "$rejected_status" "$static_title" "$logged"
