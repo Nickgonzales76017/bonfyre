@@ -95,3 +95,41 @@ models/
 
 # Generated Frappe bench (framework + venv, not source) — never track
 integrations/frappe-bench/
+
+# Local operator state, hooks and run receipts are not source.
+# These patterns only cover untracked files; private release scanning is
+# still required, and existing Git history is not affected.
+/.bonfyre/
+/.run6/
+/.bonfyre-runtime/agent-sessions/
+/.bonfyre-runtime/patch-backups/
+/.bonfyre-runtime/connection-bin/
+.claude/settings.local.json
+
+# Rebuildable output and transient delivery artifacts.
+/output/
+/generated/projections/**
+!/generated/projections/estate/
+!/generated/projections/estate/**
+!/generated/projections/inventory/
+!/generated/projections/inventory/**
+!/generated/projections/lang.json
+services/*/target/
+deploy/fly/seed/*.tar.gz
+site/matrix/duckdb-eh.wasm
+
+# Retained external observation bodies and sampled pipeline bulk.
+# Source receipts belong in Git; bulk external bodies generally do not.
+cmd/*/generated/*.body
+cmd/*/generated/*.jsonl
+cmd/*/generated/*.tsv
+cmd/*/generated/*.txt
+cmd/*/generated/ingest_*/
+estate/generated/**/*.jsonl
+.bonfyre/**/household/*/bodies/
+
+# Local environment overrides and authentication settings.
+**/.env.local
+**/.env.development
+**/.env.production
+**/.env.test.local
