@@ -86,11 +86,16 @@ The `frappe`, `interfaces`, and `all` groups can pull **gigabytes** of source
 history and require `BONFYRE_ALLOW_LARGE_MODULES=1` before initializing.
 Neither the optional donors nor historical lineage is cloned by default. The script verifies the exact gitlink
 commit and public URL before fetching, **never advances to a remote branch
-without review**, and does not recurse into older nested repositories.
+without review**, and recurses only into the reviewed native extraction dependencies.
 
 The Frappe pins are source references, **not a tested nine-app compatible bench**;
 `frappe/drive` is archived upstream. The interface repos are source/design
 references, **not bundled components or an implicit right to reuse assets**.
+
+The CMS, Intake, Pipeline and Embed extraction repos now use pinned
+`bonfyre-core` dependencies rather than copying `libbonfyre`; CMS also pins
+Lambda Tensors. `init extractions` initializes these small nested dependencies,
+while larger donor and historical lineages do not recurse.
 
 These are *references to independently owned source histories*, not a second
 owner for Bonfÿre facts or an assertion that old extracted code matches the

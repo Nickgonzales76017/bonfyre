@@ -20,7 +20,7 @@ The normal Bonfyre checkout and build need none of the optional groups.
 Use "init products" first. "one PATH" selects one exact module.
 Large donor trees require BONFYRE_ALLOW_LARGE_MODULES=1 when initializing
 all, frappe or interfaces. No large group is fetched by default.
-Init is explicit; no automatic remote-head upgrades or recursive nested clones.
+Init is explicit; no remote-head upgrades. Only extraction dependencies recurse.
 HELP
 }
 
@@ -119,7 +119,22 @@ case "$action" in
   init)
     printf "Initializing %s verified, pinned public submodules in %s\n" "${#paths[@]}" "$group"
     git -C "$root" submodule sync -- "${paths[@]}"
-    git -C "$root" submodule update --init --jobs 4 -- "${paths[@]}"
+    # Only vetted extraction repos need nested pinned core/Lambda source.
+    # Never recurse into the older lineage or large upstream donors.
+    recursive=false
+    case "$group" in
+      extractions) recursive=true ;;
+      one)
+        case "$only_path" in
+          integrations/federated/extractions/*) recursive=true ;;
+        esac
+        ;;
+    esac
+    if [[ "$recursive" == true ]]; then
+      git -C "$root" submodule update --init --recursive --jobs 4 -- "${paths[@]}"
+    else
+      git -C "$root" submodule update --init --jobs 4 -- "${paths[@]}"
+    fi
     git -C "$root" submodule status -- "${paths[@]}"
     ;;
 esac
