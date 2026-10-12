@@ -1,0 +1,36 @@
+name: Federated submodules
+
+on:
+  pull_request:
+    paths:
+      - '.gitmodules'
+      - 'integrations/federated/**'
+      - 'examples/federated/**'
+      - 'scripts/federated_modules.sh'
+      - '.github/workflows/federated-submodules.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.gitmodules'
+      - 'integrations/federated/**'
+      - 'examples/federated/**'
+      - 'scripts/federated_modules.sh'
+      - '.github/workflows/federated-submodules.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-pins:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - name: Validate script and pinned public source references without fetching
+        run: |
+          bash -n scripts/federated_modules.sh
+          bash scripts/federated_modules.sh verify all
+          bash scripts/federated_modules.sh verify products
+          bash scripts/federated_modules.sh verify aurekai

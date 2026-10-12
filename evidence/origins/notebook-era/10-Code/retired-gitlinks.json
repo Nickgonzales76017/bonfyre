@@ -1,0 +1,19 @@
+{
+  "schema": "bonfyre.archived-gitlinks.v1",
+  "note": "These three gitlinks were already present inside notebook-era history without matching .gitmodules URLs; their remote origins cannot be inferred. Historic commits retain the original gitlinks. Do not initialize them or equate the SHA with a current independent source release.",
+  "original_tree": "6d38ab6677e5fe1547e017673f4e91dfe751dd89",
+  "pointers": [
+    {
+      "path": "evidence/origins/notebook-era/10-Code/BonfyreCMS",
+      "sha": "00f2b86b77f90b0359c1fce3633d3c44e5aaf71c"
+    },
+    {
+      "path": "evidence/origins/notebook-era/10-Code/bf-adjusters-pipeline",
+      "sha": "b9dd2c57d5afc860f4e7c155c2fa30530c43dace"
+    },
+    {
+      "path": "evidence/origins/notebook-era/10-Code/liblambda-tensors",
+      "sha": "0a3bdce2986116cb45d5dacad6c65dcc862d9365"
+    }
+  ]
+}

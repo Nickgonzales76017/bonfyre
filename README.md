@@ -10,6 +10,7 @@
 <p align="center">
   <a href="#see-it-running">See it running</a> ·
   <a href="#building-blocks">Building blocks</a> ·
+  <a href="#federated-workspace">Federated workspace</a> ·
   <a href="#start-here">Start here</a> ·
   <a href="#the-whole-machine">Whole machine</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
@@ -48,6 +49,47 @@ You can also start without building the whole system:
 | **[Agent Trace Verifier](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier)** | Evaluate agent-execution evidence through a deterministic, source-addressed receipt | [Standalone verifier and examples](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier) |
 
 Those tools have their own repositories and licenses. For more involved deployments, [the client operations portfolio](docs/client-operations-portfolio.md) shows how local software and public applications fit WordPress, ERPNext, source documents, creator publishing, agency work and commerce. The [operating-products guide](https://docs.aurekai.work/operating-products) describes broader customer and partner applications.
+
+## Federated workspace
+
+The integrated native engine stays here. **30 public companion repositories are now
+pinned as real Git submodules**, alongside the existing HVM4 dependency. They
+are grouped under [`integrations/federated/`](integrations/federated/) and
+[`examples/federated/`](examples/federated/), not added as thirty more root
+directories.
+
+| Profile | Modules | What lives there |
+|---|---:|---|
+| `products` | 2 | Independent Statement Import and Agent Trace Verifier |
+| `extractions` | 7 | Earlier native library/CLI extractions, including Lambda Tensors |
+| `examples` | 7 | Demonstrations, creator scaffold and the real recipe collection |
+| `aurekai` | 12 | The earlier Aurekai platform, native runtime, CI, IDE, data and workflow adapters |
+| `lineage` | 2 | Historical bonfyre-oss and HCP work, deliberately not active runtime replacements |
+| `upstream` | 1 | Existing independently maintained HVM4 |
+
+A normal clone remains small and builds without these optional groups. To get
+only the separately usable tools:
+
+```bash
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
+bash scripts/federated_modules.sh list
+bash scripts/federated_modules.sh init products
+bash scripts/federated_modules.sh status products
+```
+
+Use `init extractions`, `init examples`, or `init aurekai` only for the work
+you need. `init lineage` and `init all` can download substantially more
+history; neither runs automatically. The script verifies the exact gitlink
+commit and public URL before fetching, **never advances to a remote branch
+without review**, and does not recurse into older nested repositories.
+
+These are *references to independently owned source histories*, not a second
+owner for Bonfÿre facts or an assertion that old extracted code matches the
+live `cmd/` implementation. No private client repository is included.
+Review the license in each companion repo separately. The three unusable
+archived gitlink coordinates remain documented in their evidence history
+rather than blocking normal submodule initialization.
 
 ## Building blocks
 

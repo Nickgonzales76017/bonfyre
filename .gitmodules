@@ -1,3 +1,123 @@
 [submodule "vendor/hvm4"]
 	path = vendor/hvm4
 	url = https://github.com/HigherOrderCO/HVM4.git
+
+[submodule "integrations/federated/extractions/core"]
+	path = integrations/federated/extractions/core
+	url = https://github.com/Nickgonzales76017/bonfyre-core.git
+
+[submodule "integrations/federated/extractions/embed"]
+	path = integrations/federated/extractions/embed
+	url = https://github.com/Nickgonzales76017/bonfyre-embed.git
+
+[submodule "integrations/federated/extractions/intake"]
+	path = integrations/federated/extractions/intake
+	url = https://github.com/Nickgonzales76017/bonfyre-intake.git
+
+[submodule "integrations/federated/extractions/cms"]
+	path = integrations/federated/extractions/cms
+	url = https://github.com/Nickgonzales76017/bonfyre-cms.git
+
+[submodule "integrations/federated/extractions/pipeline"]
+	path = integrations/federated/extractions/pipeline
+	url = https://github.com/Nickgonzales76017/bonfyre-pipeline.git
+
+[submodule "integrations/federated/extractions/tel"]
+	path = integrations/federated/extractions/tel
+	url = https://github.com/Nickgonzales76017/bonfyre-tel.git
+
+[submodule "integrations/federated/extractions/lambda-tensors"]
+	path = integrations/federated/extractions/lambda-tensors
+	url = https://github.com/Nickgonzales76017/liblambda-tensors.git
+
+[submodule "integrations/federated/products/statement-import"]
+	path = integrations/federated/products/statement-import
+	url = https://github.com/Nickgonzales76017/bonfyre-statement-import.git
+
+[submodule "integrations/federated/products/agent-trace-verifier"]
+	path = integrations/federated/products/agent-trace-verifier
+	url = https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier.git
+
+[submodule "examples/federated/quickstart"]
+	path = examples/federated/quickstart
+	url = https://github.com/Nickgonzales76017/bonfyre-example-quickstart.git
+
+[submodule "examples/federated/semantic-search"]
+	path = examples/federated/semantic-search
+	url = https://github.com/Nickgonzales76017/bonfyre-example-semantic-search.git
+
+[submodule "examples/federated/transcribe"]
+	path = examples/federated/transcribe
+	url = https://github.com/Nickgonzales76017/bonfyre-example-transcribe.git
+
+[submodule "examples/federated/compress"]
+	path = examples/federated/compress
+	url = https://github.com/Nickgonzales76017/bonfyre-example-compress.git
+
+[submodule "examples/federated/saas-stack"]
+	path = examples/federated/saas-stack
+	url = https://github.com/Nickgonzales76017/bonfyre-example-saas-stack.git
+
+[submodule "examples/federated/creator-starter"]
+	path = examples/federated/creator-starter
+	url = https://github.com/Nickgonzales76017/bonfyre-creator-starter.git
+
+[submodule "examples/federated/recipes"]
+	path = examples/federated/recipes
+	url = https://github.com/Nickgonzales76017/bonfyre-recipes.git
+
+[submodule "integrations/federated/lineage/bonfyre-oss"]
+	path = integrations/federated/lineage/bonfyre-oss
+	url = https://github.com/Nickgonzales76017/bonfyre-oss.git
+
+[submodule "integrations/federated/lineage/hcp-whisper"]
+	path = integrations/federated/lineage/hcp-whisper
+	url = https://github.com/Nickgonzales76017/hcp-whisper.git
+
+[submodule "integrations/federated/aurekai/platform"]
+	path = integrations/federated/aurekai/platform
+	url = https://github.com/aurekai/aurekai.git
+
+[submodule "integrations/federated/aurekai/native-runtime"]
+	path = integrations/federated/aurekai/native-runtime
+	url = https://github.com/aurekai/native-runtime.git
+
+[submodule "integrations/federated/aurekai/setup-action"]
+	path = integrations/federated/aurekai/setup-action
+	url = https://github.com/aurekai/setup-aurekai.git
+
+[submodule "integrations/federated/aurekai/vscode"]
+	path = integrations/federated/aurekai/vscode
+	url = https://github.com/aurekai/aurekai-vscode.git
+
+[submodule "integrations/federated/aurekai/dvc"]
+	path = integrations/federated/aurekai/dvc
+	url = https://github.com/aurekai/aurekai-dvc.git
+
+[submodule "integrations/federated/aurekai/mlflow"]
+	path = integrations/federated/aurekai/mlflow
+	url = https://github.com/aurekai/aurekai-mlflow.git
+
+[submodule "integrations/federated/aurekai/nix"]
+	path = integrations/federated/aurekai/nix
+	url = https://github.com/aurekai/aurekai-nix.git
+
+[submodule "integrations/federated/aurekai/kestra"]
+	path = integrations/federated/aurekai/kestra
+	url = https://github.com/aurekai/aurekai-kestra.git
+
+[submodule "integrations/federated/aurekai/argo-workflows"]
+	path = integrations/federated/aurekai/argo-workflows
+	url = https://github.com/aurekai/aurekai-argo-workflows.git
+
+[submodule "integrations/federated/aurekai/pulumi"]
+	path = integrations/federated/aurekai/pulumi
+	url = https://github.com/aurekai/aurekai-pulumi.git
+
+[submodule "integrations/federated/aurekai/semantic-kernel"]
+	path = integrations/federated/aurekai/semantic-kernel
+	url = https://github.com/aurekai/aurekai-semantic-kernel.git
+
+[submodule "integrations/federated/aurekai/openvsx"]
+	path = integrations/federated/aurekai/openvsx
+	url = https://github.com/aurekai/aurekai-openvsx.git

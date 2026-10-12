@@ -28,6 +28,27 @@ The present source is organized under `cmd/`, `lib/`, `engine/` and
 [`evidence/origins/notebook-era/`](evidence/origins/notebook-era/), rather than
 being an alternative source root.
 
+### Optional: work across the other repositories
+
+The default clone does **not** fetch the 30 pinned public companion
+submodules. You can select only the repositories relevant to a job:
+
+```bash
+bash scripts/federated_modules.sh list
+bash scripts/federated_modules.sh init products
+bash scripts/federated_modules.sh init extractions
+bash scripts/federated_modules.sh status products
+```
+
+Profiles are `products`, `extractions`, `examples`, `aurekai`, `lineage`,
+`upstream` and `all`. Run `init lineage` or `init all` only when you really
+need older source histories; they can use substantial disk space. No
+submodule contents are needed for the top-level native `make` target.
+
+Submodule SHAs are pinned in Git, not pulled from `main` on every run. To
+change a pin, review the referenced repository and commit its new gitlink in
+a focused PR. Each companion retains its own license and build contract.
+
 ## 3. Build and inspect a native command
 
 With a C toolchain and the dependencies specified by the [Makefile](Makefile):
