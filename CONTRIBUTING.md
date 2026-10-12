@@ -1,4 +1,4 @@
-# Contributing to Bonfyre
+# Contributing to Bonfÿre
 
 Thanks for your interest. Here's how you can help.
 
@@ -62,4 +62,4 @@ Open an issue with:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+Review the repository [license](LICENSE) and any component-specific notices before contributing. This guide does not create a separate contributor license or override an existing license.
