@@ -52,7 +52,7 @@ Those tools have their own repositories and licenses. For more involved deployme
 
 ## Federated workspace
 
-The integrated native engine stays here. **30 public companion repositories are now
+The integrated native engine stays here. **47 public companion repositories are now
 pinned as real Git submodules**, alongside the existing HVM4 dependency. They
 are grouped under [`integrations/federated/`](integrations/federated/) and
 [`examples/federated/`](examples/federated/), not added as thirty more root
@@ -64,6 +64,8 @@ directories.
 | `extractions` | 7 | Earlier native library/CLI extractions, including Lambda Tensors |
 | `examples` | 7 | Demonstrations, creator scaffold and the real recipe collection |
 | `aurekai` | 12 | The earlier Aurekai platform, native runtime, CI, IDE, data and workflow adapters |
+| `frappe` | 9 | Pinned source of Frappe, ERPNext, LMS, HRMS, CRM, Helpdesk, Insights, Wiki and archived Drive |
+| `interfaces` | 8 | OpenTUI, MCP Apps, A2UI, json-render, Bubble Tea, Lip Gloss, Ratatui and Ghost design/source references |
 | `lineage` | 2 | Historical bonfyre-oss and HCP work, deliberately not active runtime replacements |
 | `upstream` | 1 | Existing independently maintained HVM4 |
 
@@ -79,10 +81,16 @@ bash scripts/federated_modules.sh status products
 ```
 
 Use `init extractions`, `init examples`, or `init aurekai` only for the work
-you need. `init lineage` and `init all` can download substantially more
-history; neither runs automatically. The script verifies the exact gitlink
+you need. For one specific donor, use `init one integrations/federated/interfaces/opentui`.
+The `frappe`, `interfaces`, and `all` groups can pull **gigabytes** of source
+history and require `BONFYRE_ALLOW_LARGE_MODULES=1` before initializing.
+Neither the optional donors nor historical lineage is cloned by default. The script verifies the exact gitlink
 commit and public URL before fetching, **never advances to a remote branch
 without review**, and does not recurse into older nested repositories.
+
+The Frappe pins are source references, **not a tested nine-app compatible bench**;
+`frappe/drive` is archived upstream. The interface repos are source/design
+references, **not bundled components or an implicit right to reuse assets**.
 
 These are *references to independently owned source histories*, not a second
 owner for Bonfÿre facts or an assertion that old extracted code matches the

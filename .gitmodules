@@ -121,3 +121,71 @@
 [submodule "integrations/federated/aurekai/openvsx"]
 	path = integrations/federated/aurekai/openvsx
 	url = https://github.com/aurekai/aurekai-openvsx.git
+
+[submodule "integrations/federated/frappe/frappe"]
+	path = integrations/federated/frappe/frappe
+	url = https://github.com/frappe/frappe.git
+
+[submodule "integrations/federated/frappe/erpnext"]
+	path = integrations/federated/frappe/erpnext
+	url = https://github.com/frappe/erpnext.git
+
+[submodule "integrations/federated/frappe/lms"]
+	path = integrations/federated/frappe/lms
+	url = https://github.com/frappe/lms.git
+
+[submodule "integrations/federated/frappe/hrms"]
+	path = integrations/federated/frappe/hrms
+	url = https://github.com/frappe/hrms.git
+
+[submodule "integrations/federated/frappe/crm"]
+	path = integrations/federated/frappe/crm
+	url = https://github.com/frappe/crm.git
+
+[submodule "integrations/federated/frappe/helpdesk"]
+	path = integrations/federated/frappe/helpdesk
+	url = https://github.com/frappe/helpdesk.git
+
+[submodule "integrations/federated/frappe/insights"]
+	path = integrations/federated/frappe/insights
+	url = https://github.com/frappe/insights.git
+
+[submodule "integrations/federated/frappe/wiki"]
+	path = integrations/federated/frappe/wiki
+	url = https://github.com/frappe/wiki.git
+
+[submodule "integrations/federated/frappe/drive"]
+	path = integrations/federated/frappe/drive
+	url = https://github.com/frappe/drive.git
+
+[submodule "integrations/federated/interfaces/opentui"]
+	path = integrations/federated/interfaces/opentui
+	url = https://github.com/anomalyco/opentui.git
+
+[submodule "integrations/federated/interfaces/mcp-apps"]
+	path = integrations/federated/interfaces/mcp-apps
+	url = https://github.com/modelcontextprotocol/ext-apps.git
+
+[submodule "integrations/federated/interfaces/a2ui"]
+	path = integrations/federated/interfaces/a2ui
+	url = https://github.com/a2ui-project/a2ui.git
+
+[submodule "integrations/federated/interfaces/json-render"]
+	path = integrations/federated/interfaces/json-render
+	url = https://github.com/vercel-labs/json-render.git
+
+[submodule "integrations/federated/interfaces/bubbletea"]
+	path = integrations/federated/interfaces/bubbletea
+	url = https://github.com/charmbracelet/bubbletea.git
+
+[submodule "integrations/federated/interfaces/lipgloss"]
+	path = integrations/federated/interfaces/lipgloss
+	url = https://github.com/charmbracelet/lipgloss.git
+
+[submodule "integrations/federated/interfaces/ratatui"]
+	path = integrations/federated/interfaces/ratatui
+	url = https://github.com/ratatui/ratatui.git
+
+[submodule "integrations/federated/interfaces/ghost"]
+	path = integrations/federated/interfaces/ghost
+	url = https://github.com/TryGhost/Ghost.git
