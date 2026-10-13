@@ -141,6 +141,90 @@ jobs:
             echo 'Missing native root was incorrectly accepted' >&2
             exit 1
           fi
+      - name: Exact prior-vs-current PCM parity across 64 overlapping stems
+        run: |
+          set -eu
+          original=07bd6ce41d57a7bef709fb6e248609c894491cad
+          git fetch --no-tags --depth=1 origin "$original"
+          sandbox="$RUNNER_TEMP/rea-creator-legacy-parity"
+          mkdir -p "$sandbox/base" "$sandbox/new"
+          for path in mix.c mix_kernel.c mix_kernel.h; do
+            git show "$original:Aurekai/native/creator/$path" > "$sandbox/base/$path"
+            cp "Aurekai/native/creator/$path" "$sandbox/new/$path"
+          done
+          for version in base new; do
+            cc -O3 -std=c11 -ffp-contract=off -Wall -Wextra -Wpedantic -Werror \
+              "$sandbox/$version/mix.c" "$sandbox/$version/mix_kernel.c" -lm \
+              -o "$sandbox/$version/creator-mix"
+          done
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {mkdtempSync,writeFileSync,readFileSync,unlinkSync,rmSync} from 'node:fs';
+          import {spawnSync} from 'node:child_process';
+          import {tmpdir} from 'node:os';
+          import {join} from 'node:path';
+          import {performance} from 'node:perf_hooks';
+          import {createHash} from 'node:crypto';
+          const dir=join(process.env.RUNNER_TEMP,'rea-creator-legacy-parity');
+          const fixture=mkdtempSync(join(tmpdir(),'rea-creator-parity-'));
+          try {
+            const src=join(fixture,'source;.f32');
+            const bytes=Buffer.alloc(8192*4);
+            for(let i=0;i<8192;i++) bytes.writeFloatLE(((i*13)%251-125)/151,i*4);
+            writeFileSync(src,bytes);
+            const gains=['1','-1','0','0.25','0.5','-0.75','1.5'];
+            const cases=[
+              {name:'sparse64',samples:1_000_000,coords:i=>[i*12*1024,32]},
+              {name:'dense64',samples:4096,coords:i=>[i%37,1024+(i%29)]},
+              {name:'cross-boundary',samples:200_000,
+                coords:i=>[i*3000+1012+(i%10),128+(i%13)]},
+              {name:'short-and-late',samples:9000,
+                coords:i=>[Math.min(8191,(i*127)%8550),5+(i%120)]}
+            ];
+            const receipts=[];
+            for(const work of cases){
+              const args=['--samples',String(work.samples),'--channels','1'];
+              for(let i=0;i<64;i++){
+                const [at,frames]=work.coords(i);
+                assert(at+frames<=work.samples);
+                args.push('--stem',src,String(at),String(i*29),String(frames),gains[i%gains.length]);
+              }
+              const results=[];
+              for(const tag of ['base','new']){
+                const dest=join(fixture,work.name+'-'+tag+'.f32');
+                const argv=[...args.slice(0,4),'--output',dest,...args.slice(4)];
+                const started=performance.now();
+                const run=spawnSync(join(dir,tag,'creator-mix'),argv,{encoding:'utf8'});
+                const duration=performance.now()-started;
+                assert.equal(run.status,0,tag+' '+work.name+': '+run.stderr);
+                const receipt=JSON.parse(run.stdout);
+                const rendered=readFileSync(dest);
+                results.push({tag,receipt,rendered,duration});
+                unlinkSync(dest);
+              }
+              assert(results[0].rendered.equals(results[1].rendered),
+                'native bytes changed: '+work.name);
+              for(const key of ['sample_frames','channels','bytes','stems','source_read_calls',
+                'source_explicit_seek_calls','sequential_seek_elisions','source_bytes_read',
+                'execution_authority_inferred']){
+                  assert.deepEqual(results[0].receipt[key],results[1].receipt[key],
+                    work.name+' changed existing receipt: '+key);
+              }
+              assert(results[1].receipt.stem_overlap_probes_avoided>=0);
+              receipts.push({workload:work.name,
+                source_sha256:createHash('sha256').update(results[1].rendered).digest('hex'),
+                source_bytes:results[1].rendered.length,
+                legacy_overlap_probes:results[1].receipt.legacy_stem_overlap_probes,
+                active_overlap_probes:results[1].receipt.stem_overlap_probes,
+                baseline_elapsed_ms:+results[0].duration.toFixed(3),
+                active_elapsed_ms:+results[1].duration.toFixed(3),
+                exact_f32_parity:true});
+            }
+            console.log(JSON.stringify({schema:'bonfyre.creator.scheduling-parity.v1',
+              source:'public prior native mixer commit',scenario_count:receipts.length,
+              results:receipts,elapsed_speeds_are_non_gating_observations:true}));
+          } finally {rmSync(fixture,{recursive:true,force:true});}
+          JS
       - name: Verify native float32 composer on real macOS runner
         run: node --test Aurekai/tests/creator-native-mix.test.mjs
       - name: Check optional provider and external application discovery
