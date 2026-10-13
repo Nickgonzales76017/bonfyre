@@ -80,6 +80,24 @@ jobs:
               if not match or match.group(2) != path:
                   raise SystemExit(f"Not a pinned Gitlink: {path}")
               expected[path] = match.group(1)
+          # The visible PIN label and its source URL must agree with the
+          # Gitlink; updating only data-pin once left a stale human label.
+          blocks = re.findall(r'<article class="module".*?</article>', catalog, re.S)
+          if len(blocks) != len(expected):
+              raise SystemExit("Source atlas module rows are missing or duplicated")
+          for block in blocks:
+              marker = re.search(r'data-path="([^"]+)" data-pin="([0-9a-f]{40})"', block)
+              shown = re.search(r'>PIN ([0-9a-f]{12}) ↗</a>', block)
+              if not marker or not shown or shown.group(1) != marker.group(2)[:12]:
+                  raise SystemExit("Source atlas has a stale visible PIN label")
+              path, pin = marker.groups()
+              submodule_url = subprocess.check_output(
+                  ["git", "config", "-f", ".gitmodules", f"submodule.{path}.url"], text=True
+              ).strip()
+              if submodule_url.endswith(".git"):
+                  submodule_url = submodule_url[:-4]
+              if f'href="{submodule_url}/tree/{pin}"' not in block:
+                  raise SystemExit(f"Source atlas pinned URL mismatch: {path}")
           if pins != expected:
               missing = sorted(set(expected) - set(pins))
               extra = sorted(set(pins) - set(expected))
