@@ -3,11 +3,15 @@ on:
   pull_request:
     paths:
       - 'scripts/rea-local.sh'
+      - 'Aurekai/native/creator/**'
+      - 'Aurekai/tests/creator-native-mix.test.mjs'
       - '.github/workflows/rea-mac-local.yml'
   push:
     branches: [main]
     paths:
       - 'scripts/rea-local.sh'
+      - 'Aurekai/native/creator/**'
+      - 'Aurekai/tests/creator-native-mix.test.mjs'
       - '.github/workflows/rea-mac-local.yml'
   workflow_dispatch:
 
@@ -41,6 +45,8 @@ jobs:
           test -d "$BONFYRE_REA_ROOT/npm-cache"
       - name: Inspect synthetic JavaScript locally through actual REA
         run: bash scripts/rea-local.sh smoke
+      - name: Verify native float32 composer on real macOS runner
+        run: node --test Aurekai/tests/creator-native-mix.test.mjs
       - name: Check optional provider and external application discovery
         run: |
           bash scripts/rea-local.sh targets
