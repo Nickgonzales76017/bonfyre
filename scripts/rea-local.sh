@@ -291,10 +291,56 @@ case "$action" in
     ;;
   doctor)
     need_rea
-    printf 'REA prefix: %s\nNode: %s (%s)\n' "$prefix" "$("$rea_node" --version)" "$rea_node"
-    if ! rea doctor --json; then
-      echo "REA doctor reported an unavailable optional capability (check provider configuration)" >&2
+    # The upstream doctor carries the entire tool catalog twice and is often
+    # >7,000 lines. Preserve it through the existing "rea doctor --json" escape
+    # hatch, but make the operator-facing path an admitted, bounded projection.
+    scratch="$(mktemp -d "${TMPDIR:-/tmp}/rea-doctor.XXXXXXXX")"
+    trap 'rm -rf -- "$scratch"' EXIT
+    if ! rea doctor --json > "$scratch/doctor.json"; then
+      # The REA doctor may return a nonzero status when optional providers are
+      # unavailable. We still inspect its actual JSON without inventing health.
+      echo "REA doctor reported unavailable capabilities; inspecting its receipt" >&2
     fi
+    "$rea_node" - "$scratch/doctor.json" "$prefix" "$rea_node" <<'JS'
+const fs=require('node:fs');
+let data;
+try{data=JSON.parse(fs.readFileSync(process.argv[2],'utf8'))}
+catch(err){console.error('REA doctor returned no valid JSON: '+err.message);process.exit(1)}
+const walk=(root,key)=>{
+  if(!root||typeof root!=='object')return null;
+  if(Object.prototype.hasOwnProperty.call(root,key))return root[key];
+  for(const name of ['result','normalized_result','doctor','diagnostics','data']){
+    const value=root[name];if(value&&typeof value==='object'){
+      const found=walk(value,key);if(found!==null)return found;
+    }
+  }
+  return null;
+};
+const providers=walk(data,'analysis_provider_candidates')??[];
+const regs=walk(data,'registrations')??[];
+const identity=walk(data,'server_identity')??{};
+const catalog=identity.catalog?.counts??{};
+const installed=identity.package?.version??identity.server?.version??null;
+const summary={
+  schema:'bonfyre.rea.local-doctor.v1',
+  package_version:installed,selected_node:process.argv[4],
+  install_prefix:process.argv[3],
+  catalog:{cli_commands:catalog.cli_commands??null,mcp_tools:catalog.mcp_tools??null},
+  native_providers:Array.isArray(providers)?providers.map(x=>({
+    id:x.provider?.id??null,status:x.availability?.status??'unknown',
+    reason:x.availability?.reason??null
+  })):[],
+  agent_registrations:Array.isArray(regs)?regs.map(x=>({
+    client:x.client??null,state:x.state??'unknown'
+  })):[],
+  live_server_state:walk(data,'live_server')?.state??'unknown'
+};
+if(!summary.package_version||!Array.isArray(providers)) {
+  console.error('REA doctor schema is not recognized; inspect original with: rea doctor --json');
+  process.exit(1);
+}
+console.log(JSON.stringify(summary,null,2));
+JS
     ;;
   targets)
     # Discover actual installed creative application bundles by name only.
