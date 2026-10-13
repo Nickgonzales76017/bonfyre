@@ -46,7 +46,7 @@ function printHelp() {
   console.log("  akai integrate:presets [--target NAME] [--json]");
   console.log("  akai integrate:templates [--target NAME] [--environment NAME] [--json]");
   console.log("  akai integrate:validate-event --target NAME [--input-file FILE|--event-json JSON] [--json]");
-  console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--json]");
+  console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -422,6 +422,8 @@ if (rawArgs[0] === "integrate:scaffold-repos" || (rawArgs[0] === "integrate" && 
   const outDir = getFlagValue(args, "--out-dir");
   const asJson = args.includes("--json");
   const all = args.includes("--all");
+  const virtual = args.includes("--virtual"), verify = args.includes("--verify");
+  if (virtual && verify) { console.error("--virtual and --verify are exclusive"); process.exit(2); }
 
   if (!target && !all) {
     console.error("Missing --target or --all for integrate:scaffold-repos");
@@ -432,6 +434,7 @@ if (rawArgs[0] === "integrate:scaffold-repos" || (rawArgs[0] === "integrate" && 
     const result = scaffoldIntegrationRepos(repoRoot, {
       target: all ? null : target,
       outDir,
+      mode: virtual ? "virtual" : verify ? "verify" : "materialize",
     });
     printPayload(result, asJson);
     process.exit(0);
