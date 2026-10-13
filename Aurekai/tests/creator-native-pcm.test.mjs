@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {compileCreatorProgram} from '../src/creator-render-program.mjs';
-import {planNativePcmWindow} from '../src/creator-native-pcm.mjs';
+import {planNativePcmWindow,planNativePcmBatch} from '../src/creator-native-pcm.mjs';
 const h=x=>x.repeat(64);
 const fixture=()=>({schema:'aurekai.creator.timeline.v1',
   scope:{owner:'synthetic',purpose:'offline',authority_digest:h('a'),frontier_digest:h('b')},
@@ -74,4 +74,59 @@ test('native PCM candidate refuses unbound source claims and changed scope',()=>
   assert.throws(()=>planNativePcmWindow({...p,windows:p.windows.map(w=>({
     ...w,segments:w.segments.map(s=>({...s,samples:'9999999'}))
   }))},bindings,opts));
+});
+
+
+test('128 repeated Creator PCM tiles collapse to one exact physical candidate',()=>{
+  const t=fixture();
+  t.frames=384;
+  t.fps={num:30,den:1};
+  t.sources=[{id:'a',kind:'audio',sha256:h('c'),frames:3}];
+  t.tracks=[{id:'beats',kind:'audio',clips:Array.from({length:128},(_,i)=>({
+    id:'beat'+i,source_id:'a',at:i*3,in:0,frames:3,gain:0.5
+  }))}];
+  const plan=compileCreatorProgram(t,{shardFrames:3,sourceProjection:'used'});
+  const bindings={a:{path:'/tmp/creator-verified-when-owner-checks.f32',sha256:h('c')}};
+  const batch=planNativePcmBatch(plan,bindings,{
+    channels:1,outputDirectory:'/tmp/creator-reuse-candidates'});
+  assert.equal(batch.requested_windows,128);
+  assert.equal(batch.unique_render_candidates,1);
+  assert.equal(batch.reuse_candidates,127);
+  assert.equal(batch.media_bytes_materialized,0);
+  assert.equal(batch.execution_authority_inferred,false);
+  assert.equal(batch.source_file_digest_verified,false);
+  assert.equal(batch.renders[0].window_index,0);
+  assert(batch.reuse.every(row=>row.reuse_window_index===0 &&
+    row.window_body_key===batch.renders[0].window_body_key &&
+    row.execution_authority_inferred===false));
+  const sparse=planNativePcmBatch(plan,bindings,{channels:1,
+    outputDirectory:'/tmp/creator-reuse-candidates',sparseSilence:true});
+  assert.equal(sparse.unique_render_candidates,1);
+  assert.equal(sparse.renders[0].argv.at(-1),'--sparse-silence');
+  for(const invalid of [{windowIndices:[0,0]},{windowIndices:[0,129]},
+      {channels:0},{outputDirectory:'relative'}])
+    assert.throws(()=>planNativePcmBatch(plan,bindings,{
+      channels:1,outputDirectory:'/tmp/creator-reuse-candidates',...invalid}));
+  console.log(JSON.stringify({workload:'128 repeated clips from one exact source',
+    candidate_windows:batch.requested_windows,physical_render_demands:1,
+    reuse_candidates:127,materialized_bytes:0,owner_approval_required:true}));
+});
+
+test('same render-body digest cannot hide differing physical binding paths',()=>{
+  const t=fixture();t.frames=6;t.fps={num:30,den:1};
+  t.sources=[{id:'a',kind:'audio',sha256:h('c'),frames:3},
+    {id:'b',kind:'audio',sha256:h('c'),frames:3}];
+  t.tracks=[{id:'beats',kind:'audio',clips:[
+    {id:'beat-a',source_id:'a',at:0,in:0,frames:3,gain:1},
+    {id:'beat-b',source_id:'b',at:3,in:0,frames:3,gain:1}
+  ]}];
+  const plan=compileCreatorProgram(t,{shardFrames:3});
+  assert.equal(plan.windows[0].body_key,plan.windows[1].body_key);
+  const bindings={a:{sha256:h('c'),path:'/tmp/source-a.f32'},
+    b:{sha256:h('c'),path:'/tmp/source-b.f32'}};
+  const batch=planNativePcmBatch(plan,bindings,{channels:1,outputDirectory:'/tmp/reuse'});
+  assert.equal(batch.unique_render_candidates,2);
+  assert.equal(batch.reuse_candidates,0);
+  assert.throws(()=>planNativePcmBatch(plan,{...bindings,b:{...bindings.b,sha256:h('d')}},{
+    channels:1,outputDirectory:'/tmp/reuse'}));
 });

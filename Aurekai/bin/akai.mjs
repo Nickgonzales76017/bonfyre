@@ -19,7 +19,7 @@ import {
 } from "../src/integration-connectors.mjs";
 import { scaffoldIntegrationRepos } from "../src/integration-repo-scaffold.mjs";
 import { compileCreatorProgram, editCreatorTimeline } from "../src/creator-render-program.mjs";
-import { planNativePcmWindow } from "../src/creator-native-pcm.mjs";
+import { planNativePcmWindow, planNativePcmBatch } from "../src/creator-native-pcm.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(__dirname);
@@ -52,6 +52,7 @@ function printHelp() {
   console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--source-projection used] [--json]");
   console.log("  akai creator:edit --input TIMELINE.json --edit EDIT.json [--json]  # candidate only");
   console.log("  akai creator:pcm-plan --plan CUT.json --bindings SOURCE.json --window-index N --channels N --output FILE [--sparse-silence]  # uncommitted");
+  console.log("  akai creator:pcm-batch --plan CUT.json --bindings SOURCE.json --channels N --output-directory DIR [--sparse-silence]  # candidates only");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -245,6 +246,28 @@ if (rawArgs[0] === "creator:pcm-plan") {
     printPayload(result,true);
     process.exit(0);
   } catch(error) {
+    console.error(error?.message||String(error));
+    process.exit(1);
+  }
+}
+
+if (rawArgs[0] === "creator:pcm-batch") {
+  const args=rawArgs.slice(1);
+  const bounded=flag=>{
+    const path=getFlagValue(args,flag);
+    if(!path||!existsSync(path)||!statSync(path).isFile()||statSync(path).size>16*1024*1024)
+      throw Error('creator PCM batch metadata is missing or too large: '+flag);
+    return JSON.parse(readFileSync(path,'utf8'));
+  };
+  try{
+    const n=getFlagValue(args,'--channels');
+    if(!/^[1-8]$/.test(n||''))throw Error('creator PCM batch requires channels 1–8');
+    const result=planNativePcmBatch(bounded('--plan'),bounded('--bindings'),{
+      channels:Number(n),outputDirectory:getFlagValue(args,'--output-directory'),
+      sparseSilence:args.includes('--sparse-silence')});
+    printPayload(result,true);
+    process.exit(0);
+  }catch(error){
     console.error(error?.message||String(error));
     process.exit(1);
   }

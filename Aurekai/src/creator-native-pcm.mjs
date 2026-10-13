@@ -1,6 +1,6 @@
 // Pure lowering of an existing Creator cut to a bounded offline f32le mix
 // candidate. Source-byte, effect and distribution authority stay with owners.
-import {isAbsolute} from 'node:path';
+import {isAbsolute,join} from 'node:path';
 const HEX=/^[0-9a-f]{64}$/;
 const NUM=/^(0|[1-9][0-9]*)$/;
 const invalid=message=>{throw new Error('creator native pcm: '+message);};
@@ -64,4 +64,68 @@ export function planNativePcmWindow(plan,bindings,{windowIndex,channels,output,s
     execution_authority_inferred:false,
     cannot_infer:'Source binding claims are not byte verification or media rights; an authorized owner must check source bodies and effects before invoking native execution.'
   };
+}
+
+
+/**
+ * Collapse physically identical Creator PCM demands without rendering any
+ * source body, writing a cache, or promoting a candidate to execution.
+ * A render body digest is not by itself a proof of output equivalence:
+ * require identical full native argv after removing only --output's path.
+ */
+export function planNativePcmBatch(plan,bindings,
+    {windowIndices,channels,outputDirectory,sparseSilence=false}={}) {
+  if(typeof outputDirectory!=='string'||!isAbsolute(outputDirectory)||
+     outputDirectory.length>3800||outputDirectory.includes('\0'))
+    invalid('absolute outputDirectory required');
+  if(typeof sparseSilence!=='boolean')invalid('sparseSilence must be a boolean');
+  if(!Array.isArray(plan?.windows))invalid('windows required');
+  const indices=windowIndices??plan.windows.map(w=>w.index);
+  if(!Array.isArray(indices)||!indices.length||indices.length>65536)
+    invalid('invalid windowIndices');
+  // Resolve the authored window index once; repeated Array.filter for each
+  // window would make a 65k-tile batch quadratic even before any PCM work.
+  const byIndex=new Map();
+  for(const window of plan.windows){
+    if(!Number.isSafeInteger(window?.index)||window.index<0||byIndex.has(window.index))
+      invalid('duplicate or invalid plan window index');
+    byIndex.set(window.index,window);
+  }
+  const seen=new Set(),byRecipe=new Map(),renders=[],reuse=[];
+  for(const index of indices) {
+    if(!Number.isSafeInteger(index)||index<0||seen.has(index))
+      invalid('invalid or duplicate window index');
+    seen.add(index);
+    const window=byIndex.get(index);
+    if(!window)invalid('missing selected window');
+    // Reuse the single-window guard unchanged, with only the exact selected
+    // object from the original plan. No owned data, grants or identities change.
+    const candidate=planNativePcmWindow({...plan,windows:[window]},bindings,{
+      windowIndex:index,channels,output:join(outputDirectory,index+'.f32'),sparseSilence
+    });
+    // Compare the full physical recipe rather than relying solely on a
+    // possibly stale body_key, an unverified binding claim, or a SHA collision.
+    const argv=candidate.argv;
+    const key=JSON.stringify([candidate.scope_digest,candidate.window_body_key,
+      candidate.format,argv.slice(0,argv.indexOf('--output')),
+      argv.slice(argv.indexOf('--output')+2)]);
+    const canonical=byRecipe.get(key);
+    if(canonical===undefined){
+      byRecipe.set(key,index);renders.push(candidate);
+    }else{
+      reuse.push({window_index:index,reuse_window_index:canonical,
+        window_body_key:candidate.window_body_key,
+        state:'candidate_reuse_requires_owner_approval',
+        output:join(outputDirectory,index+'.f32'),
+        source_file_digest_verified:false,execution_authority_inferred:false});
+    }
+  }
+  return {schema:'aurekai.creator.native-pcm-batch.v1',
+    state:'candidate_requires_owner_approval',
+    timeline_digest:plan.timeline_digest,scope_digest:plan.scope_digest,
+    requested_windows:indices.length,unique_render_candidates:renders.length,
+    reuse_candidates:reuse.length,renders,reuse,
+    media_bytes_materialized:0,source_file_digest_verified:false,
+    execution_authority_inferred:false,
+    cannot_infer:'Reuse is a candidate only. An authorized owner must independently verify source bytes and render outputs before admitting reuse, materialization or publication.'};
 }

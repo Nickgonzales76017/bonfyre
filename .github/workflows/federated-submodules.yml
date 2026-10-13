@@ -183,7 +183,7 @@ jobs:
           JS
       - name: Verify exact nonmaterializing Creator render plans and akai route
         run: |
-          node --test Aurekai/tests/creator-render-program.test.mjs
+          node --test Aurekai/tests/creator-render-program.test.mjs Aurekai/tests/creator-native-pcm.test.mjs
           node --input-type=module <<'JS'
           import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
           import {tmpdir} from 'node:os';
@@ -244,6 +244,16 @@ jobs:
                sparseCandidate.sparse_silence_requested!==true||
                sparseCandidate.argv.at(-1)!=='--sparse-silence')
               throw Error('akai sparse PCM candidate changed authority or source');
+            const pcmBatch=cli('creator:pcm-batch','--plan',program,'--bindings',bound,
+              '--channels','1','--output-directory',dir,'--sparse-silence');
+            if(pcmBatch.status!==0)throw Error('akai PCM batch refusal: '+pcmBatch.stderr);
+            const grouped=JSON.parse(pcmBatch.stdout);
+            if(grouped.state!=='candidate_requires_owner_approval'||
+               grouped.execution_authority_inferred!==false||
+               grouped.media_bytes_materialized!==0||
+               grouped.requested_windows!==planned.windows.length||
+               grouped.unique_render_candidates<1)
+              throw Error('akai PCM batch changed owner or execution boundary');
             const edit=join(dir,'edit.json');
             writeFileSync(edit,JSON.stringify({expected_digest:planned.timeline_digest,op:'gain',
               track_id:'t',clip_id:'c',value:0.7}));
