@@ -118,6 +118,8 @@ jobs:
           const r=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
           if(r.schema!=='bonfyre.rea.native-map.v1'||
              !r.evidence_id?.startsWith('ev_')||
+             !/^[a-f0-9]{64}$/.test(r.target_sha256??'')||
+             !Number.isInteger(r.image_count)||!Number.isInteger(r.dependency_edge_count)||
              r.state!=='static_native_observation_not_runtime_proof')process.exit(1);
           console.log(JSON.stringify(r));
           JS
