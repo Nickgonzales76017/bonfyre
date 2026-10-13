@@ -70,7 +70,7 @@ static int gain_arg(const char *value, float *out) {
 
 static void usage(void) {
   fputs("usage: creator-mix --samples N --channels C --output FILE "
-        "--stem FILE AT FROM FRAMES GAIN [--stem ...]\n"
+        "--stem FILE AT FROM FRAMES GAIN [--stem ...] [--sparse-silence]\n"
         "Coordinates are integer sample frames; all bodies are interleaved f32le.\n", stderr);
 }
 
@@ -102,6 +102,7 @@ int main(int argc, char **argv) {
   }
   uint64_t samples = 0, channels = 0;
   const char *output = NULL;
+  int sparse_silence = 0; // opt-in: use sparse file holes for silent blocks
   Stem stems[MAX_STEMS] = {{0}};
   size_t count = 0;
   RenderStats stats = {0};
@@ -121,6 +122,8 @@ int main(int argc, char **argv) {
         && uint_arg(argv[i+4], MAX_SAMPLES, &s->frames)
         && gain_arg(argv[i+5], &s->gain);
       i += 6;
+    } else if (!strcmp(argv[i], "--sparse-silence")) {
+      sparse_silence = 1; i++;
     } else valid = 0;
   }
   if (!valid || !samples || !channels || !count || !output || !*output) {
@@ -173,6 +176,7 @@ int main(int argc, char **argv) {
     fputs("out of memory\n", stderr); goto close_output;
   }
   uint64_t active_stems = 0, block_count = 0;
+  uint64_t pending_zero_frames = 0, omitted_zero_frames = 0, output_data_bytes = 0;
   size_t start_event = 0, end_event = 0;
   for (uint64_t at = 0; at < samples; at += BLOCK_SAMPLES) {
     const size_t nframes = (size_t)((samples-at)<BLOCK_SAMPLES ? samples-at : BLOCK_SAMPLES);
@@ -183,6 +187,20 @@ int main(int argc, char **argv) {
     }
     while (start_event < count && starts[start_event].frame < block_end) {
       active_stems |= UINT64_C(1) << starts[start_event++].stem_index;
+    }
+    if (sparse_silence && !active_stems) {
+      // An unoccupied window is exactly all +0.0 f32le bytes. A file hole
+      // reconstructs those bytes without materializing or writing them.
+      // Keep a single pending run so many zero blocks need only one seek.
+      pending_zero_frames += nframes;
+      omitted_zero_frames += nframes;
+      continue;
+    }
+    if (pending_zero_frames) {
+      if (fseeko(destination, (off_t)(pending_zero_frames * stride), SEEK_CUR) != 0) {
+        perror("seek silent region"); goto close_output;
+      }
+      pending_zero_frames = 0;
     }
     memset(dst, 0, nframes * (size_t)channels * sizeof(float));
     /* GCC/Clang ctz is defined here because candidates is never zero.
@@ -206,8 +224,13 @@ int main(int argc, char **argv) {
     if (fwrite(dst, sizeof(float), nframes * (size_t)channels, destination) != nframes * (size_t)channels) {
       perror("write output"); goto close_output;
     }
+    output_data_bytes += nframes * stride;
   }
-  if (fflush(destination) != 0 || fsync(fileno(destination)) != 0) {
+  // fseeko does not extend through a trailing hole. ftruncate admits the
+  // complete exact logical byte length before the existing durability fsync.
+  if (fflush(destination) != 0 ||
+      (sparse_silence && ftruncate(fileno(destination), (off_t)(samples * stride)) != 0) ||
+      fsync(fileno(destination)) != 0) {
     perror("flush output"); goto close_output;
   }
   if (fclose(destination) != 0) {
@@ -225,13 +248,21 @@ int main(int argc, char **argv) {
          "\"source_bytes_read\":%" PRIu64 ","
          "\"stem_overlap_probes\":%" PRIu64 ","
          "\"stem_overlap_probes_avoided\":%" PRIu64 ","
-         "\"legacy_stem_overlap_probes\":%" PRIu64 ","
-         "\"execution_authority_inferred\":false}\n",
+         "\"legacy_stem_overlap_probes\":%" PRIu64,
          samples, channels, samples * stride, count,
          stats.source_reads, stats.explicit_seeks,
          stats.source_reads - stats.explicit_seeks, stats.source_bytes_read,
          stats.overlap_probes, block_count * count - stats.overlap_probes,
          block_count * count);
+  // Default JSON bytes remain identical. Sparse file semantics and counters
+  // are visible only to callers that explicitly requested this representation.
+  if (sparse_silence) {
+    printf(",\"sparse_silence\":true,\"silent_zero_frames_elided\":%" PRIu64 ","
+           "\"logical_silence_bytes_elided\":%" PRIu64 ","
+           "\"output_fwrite_bytes\":%" PRIu64,
+           omitted_zero_frames, omitted_zero_frames * stride, output_data_bytes);
+  }
+  puts(",\"execution_authority_inferred\":false}");
   result = 0;
 close_output:
   free(dst); free(source);

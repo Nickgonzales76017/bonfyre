@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync,statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -58,6 +58,9 @@ test('native refuses truncated, nonfinite, out-of-range and malformed audio with
     }
     writeFileSync(file,encode([1,NaN,3]));
     assert.notEqual(spawnSync(exe,[...args,'--stem',file,'0','0','3','1']).status,0);
+    // Even zero-gain active samples must not suppress nonfinite refusal.
+    assert.notEqual(spawnSync(exe,[...args,'--stem',file,'0','0','3','0',
+      '--sparse-silence']).status,0);
     assert.equal(existsSync(out),false);
     const wrong=join(dir,'non-f32');writeFileSync(wrong,Buffer.alloc(7));
     assert.notEqual(spawnSync(exe,[...args,'--stem',wrong,'0','0','1','1']).status,0);
@@ -170,6 +173,27 @@ test('event-driven 64-stem schedule preserves byte-exact mixing while eliminatin
         expected.writeFloatLE(Math.fround(sourceSamples[j]*0.5),(i*12*block+j)*4);
     }
     assert.equal(readFileSync(out).equals(expected),true);
+    const sparseOut=join(dir,'out-sparse.f32'),argsSparse=[...argv];
+    argsSparse[argsSparse.indexOf('--output')+1]=sparseOut;
+    argsSparse.push('--sparse-silence');
+    const sparseRun=spawnSync(exe,argsSparse,{encoding:'utf8'});
+    assert.equal(sparseRun.status,0,sparseRun.stderr);
+    const sparseReceipt=JSON.parse(sparseRun.stdout);
+    assert.equal(sparseReceipt.sparse_silence,true);
+    assert.equal(sparseReceipt.silent_zero_frames_elided,frames-stems*block);
+    assert.equal(sparseReceipt.logical_silence_bytes_elided,(frames-stems*block)*4);
+    assert.equal(sparseReceipt.output_fwrite_bytes,stems*block*4);
+    assert.equal(sparseReceipt.source_read_calls,receipt.source_read_calls);
+    assert.equal(readFileSync(sparseOut).equals(expected),true);
+    const denseStorage=statSync(out),sparseStorage=statSync(sparseOut);
+    assert.equal(denseStorage.size,sparseStorage.size);
+    console.log(JSON.stringify({workload:'sparse logical PCM representation',
+      exact_logical_bytes:denseStorage.size,
+      dense_allocated_bytes:denseStorage.blocks*512,
+      sparse_allocated_bytes:sparseStorage.blocks*512,
+      actual_pcm_fwrite_bytes:sparseReceipt.output_fwrite_bytes,
+      elided_silent_bytes:sparseReceipt.logical_silence_bytes_elided,
+      output_byte_parity:true,client_data_included:false}));
     console.log(JSON.stringify({workload:'synthetic 64 sparse stems / one million samples',
       legacy_overlap_probes:legacy,actual_overlap_probes:stems,
       overlap_probes_avoided:legacy-stems,source_f32_bytes_exact:true,

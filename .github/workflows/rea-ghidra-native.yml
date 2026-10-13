@@ -72,7 +72,7 @@ jobs:
             Aurekai/native/creator/mix.c Aurekai/native/creator/mix_kernel.c \
             -lm -o "$target"
           set +e
-          bash scripts/rea-local.sh rea function "$target" main \
+          bash scripts/rea-local.sh rea function "$target" _main \
             --provider ghidra --json > "$RUNNER_TEMP/rea-creator-main-dossier.json" \
             2> "$RUNNER_TEMP/rea-creator-function-stderr.txt"
           status=$?
@@ -98,7 +98,7 @@ jobs:
           console.log(JSON.stringify({schema:'bonfyre.rea.native-creator-function.v1',
             executable_sha256:createHash('sha256').update(bytes).digest('hex'),
             evidence_id:record.evidence_id,
-            function_requested:'main',provider:'ghidra',
+            function_requested:'_main',provider:'ghidra',
             facets:Object.keys(record.normalized_result).slice(0,24),
             original_binary_modified:false,independent_runtime_equivalence_proven:false}));
           JS
