@@ -24,7 +24,7 @@
     "aurekai": "bin/akai.mjs"
   },
   "dependencies": {
-    "@aurekai/continuity-core": "file:../aurekai-continuity-core"
+    "@aurekai/continuity-core": "file:./kernel"
   },
   "exports": {
     ".": "./src/continuity-core.mjs",
@@ -43,6 +43,7 @@
     "access": "public"
   },
   "scripts": {
+    "test": "node --test tests/*.test.mjs",
     "help": "node ./bin/akai.mjs --help",
     "doctor": "node ./bin/akai.mjs doctor --deep",
     "dashboard": "node ./bin/akai.mjs dashboard",
