@@ -11,7 +11,7 @@
   <a href="#see-it-running">See it running</a> ·
   <a href="#building-blocks">Building blocks</a> ·
   <a href="#federated-workspace">Federated workspace</a> ·
-  <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (48)</a> ·
+  <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (70)</a> ·
   <a href="#start-here">Start here</a> ·
   <a href="#the-whole-machine">Whole machine</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
@@ -35,6 +35,7 @@ keep using, and the links between systems that already exist.
 | A training app for a studio, for members and coaches | [Walk-through](https://aurekai-work-samples.pages.dev/training/) |
 | Search over your own documents, on your own computer | [Walk-through](https://aurekai-work-samples.pages.dev/documents/) |
 | Step-by-step guides: white-label delivery, recordings, requests to books, migration | [Guides](https://docs.aurekai.work/) |
+| Public calendar source → LIVE homepage and Stage, read-only receipt with preserved unknown costs | [Source-to-customer witness](.github/workflows/source-customer-closure.yml) |
 | What this looks like for a service network, a media business, a community project and others | [Product families](https://docs.aurekai.work/operating-products) |
 
 The samples use public or made-up data. Paid memberships and card payments are
@@ -56,7 +57,7 @@ Those tools have their own repositories and licenses. For more involved deployme
 The integrated native engine stays here. **69 public companion repositories are now
 pinned as real Git submodules**, alongside the existing HVM4 dependency. They
 are grouped under [`integrations/federated/`](integrations/federated/) and
-[`examples/federated/`](examples/federated/), not added as 47 new root
+[`examples/federated/`](examples/federated/), not added as 69 new root
 directories.
 
 **[Explore the complete, searchable source atlas →](https://nickgonzales76017.github.io/bonfyre/modules/)**
