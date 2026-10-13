@@ -19,3 +19,6 @@ node_modules/
 # Bun lockfile (keep bun.lockb)
 yarn.lock
 package-lock.json
+
+# Independently regenerable adapter scaffolds, not published repositories.
+/generated/integration-repos/

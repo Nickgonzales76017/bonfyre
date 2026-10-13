@@ -133,3 +133,8 @@ estate/generated/**/*.jsonl
 **/.env.development
 **/.env.production
 **/.env.test.local
+
+# May 2026 integration repo stubs are generated templates, never actual Gitlinks.
+# Regenerate them on demand from Aurekai/registry instead of tracking hundreds
+# of JSON manifests as pretend source repositories.
+Aurekai/generated/integration-repos/
