@@ -147,6 +147,10 @@ test('demand-selected source bases preserve rendered meaning with bounded carrie
   const compactBytes=Buffer.byteLength(JSON.stringify(compact));
   const fullBytes=Buffer.byteLength(JSON.stringify(full));
   assert(compactBytes < fullBytes/25);
+  console.log(JSON.stringify({workload:'synthetic 6000 unrelated sources, one viewport',
+    full_carrier_bytes:fullBytes,demand_carrier_bytes:compactBytes,
+    sources_declared:full.source_bases.length,sources_carried:compact.source_bases.length,
+    render_body_keys_identical:true,client_data_included:false}));
   assert.deepEqual(prepareCreatorCompiler(t).compile({...options,sourceProjection:'used'}),compact);
   assert.throws(()=>compileCreatorProgram(t,{...options,sourceProjection:'unsafe'}),/sourceProjection/);
   // Empty windows require no body references and therefore no carried bases.
