@@ -81,12 +81,14 @@ jobs:
           fixture="$RUNNER_TEMP/rea-creative-targets"
           mkdir -p "$fixture/Ableton Live 99 Suite.app" "$fixture/FL Studio 99.app"
           mkdir -p "$fixture/Adobe/Adobe After Effects 99.app" "$fixture/Personal Notes.app"
+          mkdir -p "$fixture/Obsidian.app/Contents/Frameworks/Obsidian Helper (GPU).app"
           observed="$(BONFYRE_REA_APP_ROOT="$fixture" bash scripts/rea-local.sh targets)"
           echo "$observed"
           case "$observed" in *"Ableton Live 99 Suite.app"*) ;; *) exit 1 ;; esac
           case "$observed" in *"FL Studio 99.app"*) ;; *) exit 1 ;; esac
           case "$observed" in *"Adobe After Effects 99.app"*) ;; *) exit 1 ;; esac
           case "$observed" in *"Personal Notes.app"*) exit 1 ;; esac
+          case "$observed" in *"Obsidian"*) exit 1 ;; esac
           test "$(printf '%s\n' "$observed" | grep -c '^available ')" -eq 3
       - name: Verify native float32 composer on real macOS runner
         run: node --test Aurekai/tests/creator-native-mix.test.mjs
