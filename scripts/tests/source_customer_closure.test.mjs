@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {analyze,attributedTitles,canonical,parseIcs,PUBLIC} from '../source_customer_closure.mjs';
+import {analyze,attributedTitles,canonical,parseIcs,PUBLIC,receivingScene} from '../source_customer_closure.mjs';
 const ics=[
  'BEGIN:VCALENDAR','VERSION:2.0','BEGIN:VEVENT',
  'UID:one@example.com','SUMMARY:Rain\\, Wind & Tea','END:VEVENT',
@@ -50,4 +50,27 @@ test('rejects malformed feeds and hidden content',()=>{
 test('featured event articles are rendered content, not invisible scene metadata',()=>{
  const markup='<main><article><h2>Rain, Wind &amp; Tea</h2><p>wanderatlasguides.com</p></article></main>';
  assert.deepEqual(attributedTitles(markup),['rain, wind & tea']);
+});
+
+test('public receiving owner SurfaceScene is recorded without confusing feed digest',()=>{
+ const scene={schema:'bonfyre-surface-scene.v1',source_digest:'a'.repeat(64),
+   focus:{subject_address:'route:live:/',actor_scope:'public',intent:'read'},
+   fragments:[{renderer_family:'PageComposition'},{renderer_family:'PageComposition'}]};
+ const html='<main><li><b>Rain, Wind &amp; Tea</b>wanderatlasguides.com</li>'
+   +'<template>'+JSON.stringify(scene)+'</template></main>';
+ const result=receivingScene(html);
+ assert.deepEqual(result.renderer_families,['PageComposition']);
+ assert.equal(result.source_digest,'a'.repeat(64));
+ assert.equal(result.actor_scope,'public');
+ assert.equal(analyze(ics,{...pages,[PUBLIC.surfaces[0]]:html}).verdict,
+   'source_titles_observed_on_customer_surfaces');
+});
+test('private actor scope and unreadable SurfaceScene refuse public-owner evidence',()=>{
+ const scene={schema:'bonfyre-surface-scene.v1',source_digest:'a'.repeat(64),
+   focus:{subject_address:'route:live:/',actor_scope:'restricted',intent:'read'},fragments:[]};
+ const html='<main><li><b>Rain, Wind &amp; Tea</b>wanderatlasguides.com</li>'
+   +'<template>'+JSON.stringify(scene)+'</template></main>';
+ assert.equal(receivingScene(html).state,'non_public_or_invalid_scene');
+ assert.equal(analyze(ics,{...pages,[PUBLIC.surfaces[0]]:html}).verdict,
+   'receiving_surface_scene_invalid');
 });

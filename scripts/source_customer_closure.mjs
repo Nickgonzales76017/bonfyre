@@ -63,6 +63,30 @@ export function attributedTitles(html,domain=PUBLIC.publisher_domain){
   return [...titles].filter(Boolean);
 }
 
+/** Extract only the public, read-focused receiving SurfaceScene coordinate.
+ * Its digest identifies the rendered source material, not the original ICS.
+ * If a page has no scene, the report says so instead of inventing one.
+ */
+export function receivingScene(html){
+  const marker='"schema":"bonfyre-surface-scene.v1"';
+  const where=html.indexOf(marker);
+  if(where<0)return {state:'not_observed'};
+  const start=html.lastIndexOf('<template',where);
+  const begin=start<0?-1:html.indexOf('>',start);
+  const end=html.indexOf('</template>',where);
+  if(begin<0||end<=begin)return {state:'invalid_template_bounds'};
+  let scene;
+  try{scene=JSON.parse(entities(html.slice(begin+1,end)));}
+  catch{return {state:'invalid_scene_json'};}
+  if(scene?.schema!=='bonfyre-surface-scene.v1'||!(/^[a-f0-9]{64}$/.test(scene?.source_digest??''))||
+     scene.focus?.actor_scope!=='public'||scene.focus?.intent!=='read'||
+     typeof scene.focus?.subject_address!=='string'||!scene.focus.subject_address)
+    return {state:'non_public_or_invalid_scene'};
+  return {state:'observed',schema:scene.schema,source_digest:scene.source_digest,
+    focus_subject_address:scene.focus.subject_address,actor_scope:'public',intent:'read',
+    renderer_families:[...new Set((scene.fragments||[]).map(x=>x.renderer_family).filter(x=>typeof x==='string'))]};
+}
+
 export function analyze(feedText,pages,timings={}){
   const events=parseIcs(feedText),sourceTitles=new Set(events.map(x=>x.summary));
   const consumers=PUBLIC.surfaces.map(url=>{
@@ -70,6 +94,7 @@ export function analyze(feedText,pages,timings={}){
     if(typeof body!=='string'||!body)throw Error('missing customer surface '+url);
     const attributed=attributedTitles(body),matched=attributed.filter(t=>sourceTitles.has(t));
     return {url,body_bytes:byteLen(body),body_sha256:sha(body),
+      receiving_scene:receivingScene(body),
       source_attributed_titles:attributed.length,source_matched_titles:matched.length,
       matched_titles:matched,not_in_current_feed:attributed.filter(t=>!sourceTitles.has(t)),
       client_get_wall_ms:timings[url]?.wall_ms??null};
@@ -93,9 +118,11 @@ export function analyze(feedText,pages,timings={}){
       avoided_fetches:null,physical_bytes_reused:null,provider_cost_usd:null,
       economic_measure:'unpriced',resource_admission:'not_observed',
       materialization_receipts:'not_observed',receiving_owner_effect:'none'},
-    verdict:consumers.every(x=>x.source_matched_titles>0)?
+    verdict:consumers.some(x=>x.receiving_scene.state!=='observed'&&x.receiving_scene.state!=='not_observed')?
+      'receiving_surface_scene_invalid':consumers.every(x=>x.source_matched_titles>0)?
       'source_titles_observed_on_customer_surfaces':'insufficient_current_source_overlap',
     cannot_infer:[
+      'SurfaceScene source_digest is an exact receiving-page digest, not an ICS feed digest',
       'title equality proves identical source occurrence UID or freshness',
       'CMS declaration remains published without current owner readback',
       'shared rendered material proves one physical download or cache hit',
