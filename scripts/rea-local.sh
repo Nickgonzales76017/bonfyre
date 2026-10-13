@@ -161,22 +161,34 @@ case "$action" in
     fi
     ;;
   targets)
-    # Only existence/readability checks. No application launched or inspected.
-    for app in \
-      "/Applications/FL Studio.app" \
-      "/Applications/Ableton Live 12 Suite.app" \
-      "/Applications/Ableton Live 12 Standard.app" \
-      "/Applications/Bitwig Studio.app" \
-      "/Applications/REAPER.app" \
-      "/Applications/Logic Pro.app" \
-      "/Applications/Blender.app" \
-      "/Applications/DaVinci Resolve/DaVinci Resolve.app" \
-      "/Applications/Adobe Premiere Pro 2026/Adobe Premiere Pro 2026.app" \
-      "/Applications/Adobe After Effects 2026/Adobe After Effects 2026.app" \
-      "/Applications/OBS.app"; do
-      if [ -d "$app" ]; then printf 'available %s\n' "$app"
-      else printf 'unavailable %s\n' "$app"; fi
+    # Discover actual installed creative application bundles by name only.
+    # Paths may contain spaces; never launch, open bundles, or read app data.
+    # BONFYRE_REA_APP_ROOT scopes this to a disposable synthetic CI fixture.
+    if [ -n "${BONFYRE_REA_APP_ROOT:-}" ]; then
+      [ -d "$BONFYRE_REA_APP_ROOT" ] || { echo "creative app root missing" >&2; exit 2; }
+      app_roots=("$BONFYRE_REA_APP_ROOT")
+    else
+      app_roots=("/Applications" "$HOME/Applications")
+    fi
+    matches=0
+    for app_root in "${app_roots[@]}"; do
+      [ -d "$app_root" ] || continue
+      while IFS= read -r -d '' candidate; do
+        app_name="$(basename "$candidate" | tr '[:upper:]' '[:lower:]')"
+        case "$app_name" in
+          "fl studio"*.app|"ableton live"*.app|"bitwig studio"*.app|reaper*.app|\
+          "logic pro"*.app|blender*.app|"davinci resolve"*.app|\
+          "adobe premiere pro"*.app|"adobe after effects"*.app|\
+          obs*.app|"obs studio"*.app)
+            printf 'available %s\n' "$candidate"
+            matches=$((matches+1))
+            ;;
+        esac
+      done < <(find "$app_root" -maxdepth 4 \( -type d -o -type l \) -iname '*.app' -print0 2>/dev/null)
     done
+    if [ "$matches" -eq 0 ]; then
+      printf 'no recognized creative application bundles in selected locations\n'
+    fi
     ;;
   static-js)
     need_rea
