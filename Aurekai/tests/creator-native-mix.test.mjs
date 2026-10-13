@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,rmSync,existsSync,statSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {spawnSync} from 'node:child_process';
@@ -58,6 +58,9 @@ test('native refuses truncated, nonfinite, out-of-range and malformed audio with
     }
     writeFileSync(file,encode([1,NaN,3]));
     assert.notEqual(spawnSync(exe,[...args,'--stem',file,'0','0','3','1']).status,0);
+    // Even zero-gain active samples must not suppress nonfinite refusal.
+    assert.notEqual(spawnSync(exe,[...args,'--stem',file,'0','0','3','0',
+      '--sparse-silence']).status,0);
     assert.equal(existsSync(out),false);
     const wrong=join(dir,'non-f32');writeFileSync(wrong,Buffer.alloc(7));
     assert.notEqual(spawnSync(exe,[...args,'--stem',wrong,'0','0','1','1']).status,0);
@@ -142,5 +145,93 @@ test('per-stem sequential cursors preserve ordered overlapping source windows',(
     assert.equal(receipt.source_explicit_seek_calls,2);
     assert.equal(receipt.sequential_seek_elisions,
       receipt.source_read_calls-receipt.source_explicit_seek_calls);
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+test('event-driven 64-stem schedule preserves byte-exact mixing while eliminating inactive probes',()=>{
+  const {dir,exe}=make();
+  try {
+    const frames=1_000_000,block=1024,stems=64,source=join(dir,'source.f32'),out=join(dir,'out.f32');
+    const sourceSamples=Array.from({length:32},(_,i)=>(i-16)/32);
+    writeFileSync(source,encode(sourceSamples));
+    const argv=['--samples',String(frames),'--channels','1','--output',out];
+    for(let i=0;i<stems;i++){
+      argv.push('--stem',source,String(i*12*block),'0','32','0.5');
+    }
+    const result=spawnSync(exe,argv,{encoding:'utf8'});
+    assert.equal(result.status,0,result.stderr);
+    const receipt=JSON.parse(result.stdout);
+    const legacy=Math.ceil(frames/block)*stems;
+    assert.equal(receipt.stems,64);
+    assert.equal(receipt.legacy_stem_overlap_probes,legacy);
+    assert.equal(receipt.stem_overlap_probes,stems);
+    assert.equal(receipt.stem_overlap_probes_avoided,legacy-stems);
+    assert.equal(receipt.source_read_calls,stems);
+    const expected=Buffer.alloc(frames*4);
+    for(let i=0;i<stems;i++){
+      for(let j=0;j<sourceSamples.length;j++)
+        expected.writeFloatLE(Math.fround(sourceSamples[j]*0.5),(i*12*block+j)*4);
+    }
+    assert.equal(readFileSync(out).equals(expected),true);
+    const sparseOut=join(dir,'out-sparse.f32'),argsSparse=[...argv];
+    argsSparse[argsSparse.indexOf('--output')+1]=sparseOut;
+    argsSparse.push('--sparse-silence');
+    const sparseRun=spawnSync(exe,argsSparse,{encoding:'utf8'});
+    assert.equal(sparseRun.status,0,sparseRun.stderr);
+    const sparseReceipt=JSON.parse(sparseRun.stdout);
+    assert.equal(sparseReceipt.sparse_silence,true);
+    assert.equal(sparseReceipt.silent_zero_frames_elided,frames-stems*block);
+    assert.equal(sparseReceipt.logical_silence_bytes_elided,(frames-stems*block)*4);
+    assert.equal(sparseReceipt.output_fwrite_bytes,stems*block*4);
+    assert.equal(sparseReceipt.source_read_calls,receipt.source_read_calls);
+    assert.equal(readFileSync(sparseOut).equals(expected),true);
+    const denseStorage=statSync(out),sparseStorage=statSync(sparseOut);
+    assert.equal(denseStorage.size,sparseStorage.size);
+    console.log(JSON.stringify({workload:'sparse logical PCM representation',
+      exact_logical_bytes:denseStorage.size,
+      dense_allocated_bytes:denseStorage.blocks*512,
+      sparse_allocated_bytes:sparseStorage.blocks*512,
+      actual_pcm_fwrite_bytes:sparseReceipt.output_fwrite_bytes,
+      elided_silent_bytes:sparseReceipt.logical_silence_bytes_elided,
+      output_byte_parity:true,client_data_included:false}));
+    console.log(JSON.stringify({workload:'synthetic 64 sparse stems / one million samples',
+      legacy_overlap_probes:legacy,actual_overlap_probes:stems,
+      overlap_probes_avoided:legacy-stems,source_f32_bytes_exact:true,
+      elapsed_time_speedup_proven:false}));
+  } finally {rmSync(dir,{recursive:true,force:true});}
+});
+
+test('stems inside the same block retain original accumulation order and boundaries',()=>{
+  const {dir,exe}=make();
+  try {
+    const frames=2049,body=encode(Array.from({length:2049},(_,i)=>(i%17-8)/9));
+    const source=join(dir,'source.f32'),out=join(dir,'out.f32');
+    writeFileSync(source,body);
+    const args=['--samples',String(frames),'--channels','1','--output',out,
+      '--stem',source,'900','100','400','0.5',
+      '--stem',source,'902','150','7','-0.25',
+      '--stem',source,'903','90','3','1.5',
+      '--stem',source,'1024','400','1025','0.125'];
+    const r=spawnSync(exe,args,{encoding:'utf8'});
+    assert.equal(r.status,0,r.stderr);
+    const expected=Buffer.alloc(frames*4);
+    const active=[
+      {at:900,from:100,n:400,gain:0.5},
+      {at:902,from:150,n:7,gain:-0.25},
+      {at:903,from:90,n:3,gain:1.5},
+      {at:1024,from:400,n:1025,gain:0.125}
+    ];
+    for(let pos=0;pos<frames;pos++){
+      let outSample=0;
+      for(const item of active){
+        if(pos>=item.at&&pos<item.at+item.n) {
+          const read=body.readFloatLE((item.from+pos-item.at)*4);
+          outSample=Math.fround(outSample+Math.fround(read*item.gain));
+        }
+      }
+      expected.writeFloatLE(outSample,pos*4);
+    }
+    assert.equal(readFileSync(out).equals(expected),true);
+    assert(JSON.parse(r.stdout).stem_overlap_probes>0);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });

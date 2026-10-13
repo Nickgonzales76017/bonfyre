@@ -11,7 +11,7 @@ const count=(value,ceiling,name)=>{
 };
 
 /** No IO, no decoder, no execution: it compiles the native CLI demand only. */
-export function planNativePcmWindow(plan,bindings,{windowIndex,channels,output}={}) {
+export function planNativePcmWindow(plan,bindings,{windowIndex,channels,output,sparseSilence=false}={}) {
   if(!plan||plan.schema!=='aurekai.creator.render-program.v1'||
      plan.state!=='planned_unexecuted'||plan.effect_authorized!==false||
      plan.media_bytes_materialized!==0)invalid('unadmitted plan');
@@ -21,6 +21,7 @@ export function planNativePcmWindow(plan,bindings,{windowIndex,channels,output}=
   if(!Number.isSafeInteger(channels)||channels<1||channels>8)invalid('invalid channel count');
   if(typeof output!=='string'||!isAbsolute(output)||output.length>4000||output.includes('\0'))
     invalid('absolute output required');
+  if(typeof sparseSilence!=='boolean')invalid('sparseSilence must be a boolean');
   if(!bindings||typeof bindings!=='object'||Array.isArray(bindings))
     invalid('explicit source bindings required');
   const matching=plan.windows?.filter(row=>row.index===windowIndex);
@@ -50,9 +51,12 @@ export function planNativePcmWindow(plan,bindings,{windowIndex,channels,output}=
     argv.push('--stem',binding.path,String(at),String(from),String(n),String(segment.gain));
     required.set(source.id,{id:source.id,sha256:source.sha256,path:binding.path});
   }
+  if(sparseSilence)argv.push('--sparse-silence');
   return {
     schema:'aurekai.creator.native-pcm-candidate.v1',
     state:'candidate_requires_owner_approval',format:'interleaved-f32le',
+    ...(sparseSilence?{output_representation:'sparse_file_holes_candidate',
+      sparse_silence_requested:true}:{}),
     timeline_digest:plan.timeline_digest,scope_digest:plan.scope_digest,
     window_body_key:window.body_key,window_index:windowIndex,
     source_bindings:[...required.values()],argv,

@@ -51,7 +51,7 @@ function printHelp() {
   console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
   console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--source-projection used] [--json]");
   console.log("  akai creator:edit --input TIMELINE.json --edit EDIT.json [--json]  # candidate only");
-  console.log("  akai creator:pcm-plan --plan CUT.json --bindings SOURCE.json --window-index N --channels N --output FILE  # uncommitted");
+  console.log("  akai creator:pcm-plan --plan CUT.json --bindings SOURCE.json --window-index N --channels N --output FILE [--sparse-silence]  # uncommitted");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -239,7 +239,8 @@ if (rawArgs[0] === "creator:pcm-plan") {
   try {
     const result=planNativePcmWindow(bounded("--plan"),bounded("--bindings"),{
       windowIndex:numeric("--window-index"),channels:numeric("--channels"),
-      output:getFlagValue(args,"--output")
+      output:getFlagValue(args,"--output"),
+      sparseSilence:args.includes("--sparse-silence")
     });
     printPayload(result,true);
     process.exit(0);
