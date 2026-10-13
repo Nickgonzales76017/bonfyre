@@ -1,0 +1,197 @@
+name: REA Creator evidence
+
+# Investigate only public, source-owned Creator code in an isolated synthetic
+# artifact. Never analyze or upload connected client/estate/private state.
+on:
+  pull_request:
+    paths:
+      - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/tests/creator-render-program.test.mjs'
+      - '.github/workflows/creator-rea-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/tests/creator-render-program.test.mjs'
+      - '.github/workflows/creator-rea-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Exact Creator unit and agent-edit parity
+        run: node --test Aurekai/tests/creator-render-program.test.mjs
+      - name: Exact old-versus-new render parity and repeated-view performance
+        run: |
+          set -eu
+          # PR #31 is the witnessed original implementation. Fetch just that
+          # public source revision; no private Mac checkout or customer fixtures.
+          original=a04aaaf2f5c6d32dfddb407a49e1b8b7cfa4fc77
+          git fetch --no-tags --depth=1 origin "$original"
+          git show "$original:Aurekai/src/creator-render-program.mjs" > "$RUNNER_TEMP/creator-baseline.mjs"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {performance} from 'node:perf_hooks';
+          import {pathToFileURL} from 'node:url';
+          import {join} from 'node:path';
+          import {compileCreatorProgram,prepareCreatorCompiler} from './Aurekai/src/creator-render-program.mjs';
+          const old=await import(pathToFileURL(join(process.env.RUNNER_TEMP,'creator-baseline.mjs')).href);
+          const hex=ch=>ch.repeat(64);
+          const fixture={
+            schema:'aurekai.creator.timeline.v1',
+            scope:{owner:'creator-synthetic',purpose:'preview',
+              authority_digest:hex('a'),frontier_digest:hex('b')},
+            fps:{num:30000,den:1001},sample_rate:48000,frames:1000000,
+            sources:[{id:'tone',kind:'audio',sha256:hex('c'),frames:1000000},
+              {id:'visual',kind:'video',sha256:hex('d'),frames:1000000}],
+            tracks:[{id:'audio',kind:'audio',clips:[]},{id:'video',kind:'video',clips:[]}]
+          };
+          for(let i=0;i<10000;i++) {
+            const track=fixture.tracks[i%2];
+            track.clips.push({id:'clip-'+i,source_id:i%2?'visual':'tone',
+              at:i*83,in:i%521,frames:25,gain:i%2?1:0.75});
+          }
+          const options=Array.from({length:32},(_,i)=>({
+            shardFrames:256,range:{start:360000+i*12000,end:360100+i*12000}
+          }));
+          const preparedAt=performance.now();
+          const prepared=prepareCreatorCompiler(fixture);
+          const preparedBuildMs=performance.now()-preparedAt;
+          for(const opt of options){
+            const expected=old.compileCreatorProgram(fixture,opt);
+            assert.deepEqual(compileCreatorProgram(fixture,opt),expected);
+            assert.deepEqual(prepared.compile(opt),expected);
+          }
+          for(let i=0;i<3;i++){
+            old.compileCreatorProgram(fixture,options[i]);
+            prepared.compile(options[i]);
+          }
+          let oldMs=0,preparedMs=0;
+          for(let i=0;i<32;i++) {
+            const opt=options[i];
+            let t=performance.now();
+            const original=old.compileCreatorProgram(fixture,opt);
+            oldMs+=performance.now()-t;
+            t=performance.now();
+            const actual=prepared.compile(opt);
+            preparedMs+=performance.now()-t;
+            assert.deepEqual(actual,original);
+          }
+          console.log(JSON.stringify({
+            workload:'synthetic 10000 clips; 32 changed viewport requests',
+            original_compile_total_ms:+oldMs.toFixed(3),
+            prepared_build_once_ms:+preparedBuildMs.toFixed(3),
+            prepared_view_total_ms:+preparedMs.toFixed(3),
+            prepared_total_ms:+(preparedBuildMs+preparedMs).toFixed(3),
+            output_parity:'exact-for-all-32',benchmark_host:'GitHub Actions Node 24',
+            production_speedup_proven:false,client_data_included:false
+          }));
+          JS
+      - name: Build public-only, disposable REA inspection target
+        run: |
+          set -eu
+          target="$RUNNER_TEMP/rea-creator-public"
+          mkdir -p "$target/src"
+          cp Aurekai/src/creator-render-program.mjs "$target/src/creator-render-program.mjs"
+          printf '{"name":"bonfyre-creator-public-rea-fixture","private":true,"type":"module","main":"src/creator-render-program.mjs"}\n' > "$target/package.json"
+          echo "REA_CREATOR_TARGET=$target" >> "$GITHUB_ENV"
+          sha256sum "$target/src/creator-render-program.mjs" | cut -d ' ' -f 1 > "$RUNNER_TEMP/rea-creator-source-sha256"
+      - name: REA 6.4.0 static application graph (no native provider)
+        env:
+          npm_config_audit: 'false'
+          npm_config_fund: 'false'
+          npm_config_update_notifier: 'false'
+        run: |
+          set -eu
+          # Pin an upstream released version; setup, GUI attachment, privilege
+          # changes and native provider installation are not permitted here.
+          set +e
+          timeout 360s npm exec --yes --package=rea-agents@6.4.0 -- rea \
+            analyze-javascript-application "$REA_CREATOR_TARGET" --json \
+            > "$RUNNER_TEMP/rea-creator-evidence.json" \
+            2> "$RUNNER_TEMP/rea-creator-stderr.txt"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "REA returned nonzero: $status"
+            head -c 4000 "$RUNNER_TEMP/rea-creator-stderr.txt"
+            echo
+            # Only public synthetic source was inspected; print the bounded
+            # tool error so real integration failures can be diagnosed.
+            head -c 4000 "$RUNNER_TEMP/rea-creator-evidence.json"
+            echo
+            exit "$status"
+          fi
+      - name: REA trace Creator render-schema origin in the inspected graph
+        env:
+          npm_config_audit: 'false'
+          npm_config_fund: 'false'
+        run: |
+          set -eu
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const dir=process.env.RUNNER_TEMP;
+          const application=JSON.parse(readFileSync(join(dir,'rea-creator-evidence.json'),'utf8'));
+          if (typeof application.evidence_id !== 'string') throw Error('REA Evidence identity missing');
+          writeFileSync(join(dir,'rea-creator-trace-input.json'),JSON.stringify({
+            application,seed:{kind:'string',value:'aurekai.creator.render-program.v1'},direction:'both'
+          }));
+          JS
+          timeout 180s npm exec --yes --package=rea-agents@6.4.0 -- rea \
+            trace-application-feature "$RUNNER_TEMP/rea-creator-trace-input.json" --json \
+            > "$RUNNER_TEMP/rea-creator-trace.json"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const body=readFileSync(join(process.env.RUNNER_TEMP,'rea-creator-trace.json'),'utf8');
+          const trace=JSON.parse(body);
+          if (!trace || typeof trace.evidence_id !== 'string')
+            throw Error('REA feature trace lacks an Evidence identity');
+          console.log(JSON.stringify({rea_trace_evidence_id:trace.evidence_id,
+            source_literal:'aurekai.creator.render-program.v1',trace_bytes:Buffer.byteLength(body),
+            state:'static_feature_trace_not_runtime_proof'}));
+          JS
+      - name: Verify analyzed source and Evidence provenance
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import { join } from 'node:path';
+          const root = process.env.RUNNER_TEMP;
+          const raw = readFileSync(join(root,'rea-creator-evidence.json'),'utf8');
+          const result = JSON.parse(raw);
+          const original = readFileSync('Aurekai/src/creator-render-program.mjs');
+          const selected = readFileSync(join(process.env.REA_CREATOR_TARGET,'src/creator-render-program.mjs'));
+          const hash = value => createHash('sha256').update(value).digest('hex');
+          if (!original.equals(selected)) throw Error('REA target differs from owner source');
+          if (hash(original) !== readFileSync(join(root,'rea-creator-source-sha256'),'utf8').trim())
+            throw Error('REA target changed after copy');
+          if (!result || typeof result !== 'object' || !raw.includes('creator-render-program.mjs'))
+            throw Error('REA did not return a creator application graph');
+          const marker = result.evidence_id ?? result.normalized_result?.parent_evidence_id ??
+            result.structuredContent?.evidence_id ?? null;
+          if (marker !== null && typeof marker !== 'string') throw Error('Invalid REA Evidence identity');
+          const facts = {
+            source_sha256:hash(original),
+            rea_version:'6.4.0',
+            rea_evidence_id:marker,
+            bytes_of_rea_evidence:Buffer.byteLength(raw),
+            state:'static_evidence_not_execution',
+            executable_perf_verified:false,
+            client_data_included:false
+          };
+          console.log(JSON.stringify(facts));
+          JS

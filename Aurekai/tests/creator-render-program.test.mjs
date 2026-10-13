@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {compileCreatorProgram,creatorTimelineDigest,editCreatorTimeline,
-  creatorInvalidations,samplesAtFrame} from '../src/creator-render-program.mjs';
+  creatorInvalidations,samplesAtFrame,prepareCreatorCompiler} from '../src/creator-render-program.mjs';
 const hex = ch => ch.repeat(64);
 const timeline = () => ({
   schema:'aurekai.creator.timeline.v1',
@@ -78,4 +78,43 @@ test('10k-clip synthetic viewport stays local and reports unmeasured physical co
   assert.equal(p.metrics.clip_count,10000);
   assert.equal(p.metrics.measured_cpu_ms,null);
   assert.equal(p.metrics.observed_peak_memory_bytes,null);
+});
+
+test('immutable prepared revision reuses a clip index across viewports without state aliasing', () => {
+  const t=timeline(), original=JSON.stringify(t);
+  const prepared=prepareCreatorCompiler(t);
+  assert.equal(prepared.timeline_digest,creatorTimelineDigest(t));
+  const options={shardFrames:60,range:{start:125,end:151}};
+  const expected=compileCreatorProgram(t,options);
+  const first=prepared.compile(options);
+  assert.deepEqual(first,expected);
+  assert.equal(JSON.stringify(t),original);
+  // Neither caller-owned timeline mutation nor edits to a returned JSON plan
+  // can rewrite the prepared source bases, authority scope or clip priority.
+  t.scope.purpose='another-purpose';
+  t.tracks[0].clips[0].gain=0.2;
+  first.source_bases[0].sha256=hex('e');
+  first.windows[0].segments[0].priority[0]=100;
+  assert.deepEqual(prepared.compile(options),expected);
+  assert.notEqual(compileCreatorProgram(t,options).scope_digest,expected.scope_digest);
+  assert.throws(()=>prepared.compile({range:{start:600,end:601}}),/range/);
+});
+
+test('late sharded view keeps clip order and exact sparse overlap', () => {
+  const t=timeline();
+  t.frames=1_000_000;
+  t.sources=[{id:'tone',kind:'audio',sha256:hex('e'),frames:1_000_000}];
+  t.tracks=[{id:'beats',kind:'audio',clips:[
+    {id:'long',source_id:'tone',at:0,in:0,frames:1_000_000},
+    ...Array.from({length:10_000},(_,i)=>({
+      id:'short'+i,source_id:'tone',at:i*90+1,in:0,frames:4}))
+  ]}];
+  const engine=prepareCreatorCompiler(t);
+  const cut=engine.compile({shardFrames:256,range:{start:950_000,end:950_010}});
+  assert.equal(cut.windows.length,1);
+  assert.deepEqual(cut.windows[0].segments.map(v=>v.clip),['long']);
+  assert.equal(cut.windows[0].segments[0].sample_offset,'0');
+  assert.equal(cut.media_bytes_materialized,0);
+  assert.equal(cut.effect_authorized,false);
+  assert.deepEqual(cut,compileCreatorProgram(t,{shardFrames:256,range:{start:950_000,end:950_010}}));
 });
