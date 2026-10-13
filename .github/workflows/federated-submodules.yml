@@ -21,6 +21,7 @@ on:
       - 'Aurekai/kernel/package.json'
       - 'Aurekai/kernel/src/**'
       - 'Aurekai/src/continuity-core.mjs'
+      - 'Aurekai/src/creator-render-program.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
       - 'Aurekai/src/integration-connectors.mjs'
@@ -50,6 +51,7 @@ on:
       - 'Aurekai/kernel/package.json'
       - 'Aurekai/kernel/src/**'
       - 'Aurekai/src/continuity-core.mjs'
+      - 'Aurekai/src/creator-render-program.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
       - 'Aurekai/src/integration-connectors.mjs'
@@ -177,6 +179,8 @@ jobs:
           }
           console.log('Bundled kernel and all declared subpath exports verified');
           JS
+      - name: Verify exact nonmaterializing Creator render plans
+        run: node --test Aurekai/tests/creator-render-program.test.mjs
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
