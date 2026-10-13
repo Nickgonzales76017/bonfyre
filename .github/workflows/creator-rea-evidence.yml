@@ -33,6 +33,72 @@ jobs:
           node-version: '24.11.0'
       - name: Exact Creator unit and agent-edit parity
         run: node --test Aurekai/tests/creator-render-program.test.mjs
+      - name: Exact old-versus-new render parity and repeated-view performance
+        run: |
+          set -eu
+          # PR #31 is the witnessed original implementation. Fetch just that
+          # public source revision; no private Mac checkout or customer fixtures.
+          original=a04aaaf2f5c6d32dfddb407a49e1b8b7cfa4fc77
+          git fetch --no-tags --depth=1 origin "$original"
+          git show "$original:Aurekai/src/creator-render-program.mjs" > "$RUNNER_TEMP/creator-baseline.mjs"
+          node --input-type=module <<'JS'
+          import assert from 'node:assert/strict';
+          import {performance} from 'node:perf_hooks';
+          import {pathToFileURL} from 'node:url';
+          import {join} from 'node:path';
+          import {compileCreatorProgram,prepareCreatorCompiler} from './Aurekai/src/creator-render-program.mjs';
+          const old=await import(pathToFileURL(join(process.env.RUNNER_TEMP,'creator-baseline.mjs')).href);
+          const hex=ch=>ch.repeat(64);
+          const fixture={
+            schema:'aurekai.creator.timeline.v1',
+            scope:{owner:'creator-synthetic',purpose:'preview',
+              authority_digest:hex('a'),frontier_digest:hex('b')},
+            fps:{num:30000,den:1001},sample_rate:48000,frames:1000000,
+            sources:[{id:'tone',kind:'audio',sha256:hex('c'),frames:1000000},
+              {id:'visual',kind:'video',sha256:hex('d'),frames:1000000}],
+            tracks:[{id:'audio',kind:'audio',clips:[]},{id:'video',kind:'video',clips:[]}]
+          };
+          for(let i=0;i<10000;i++) {
+            const track=fixture.tracks[i%2];
+            track.clips.push({id:'clip-'+i,source_id:i%2?'visual':'tone',
+              at:i*83,in:i%521,frames:25,gain:i%2?1:0.75});
+          }
+          const options=Array.from({length:32},(_,i)=>({
+            shardFrames:256,range:{start:360000+i*12000,end:360100+i*12000}
+          }));
+          const preparedAt=performance.now();
+          const prepared=prepareCreatorCompiler(fixture);
+          const preparedBuildMs=performance.now()-preparedAt;
+          for(const opt of options){
+            const expected=old.compileCreatorProgram(fixture,opt);
+            assert.deepEqual(compileCreatorProgram(fixture,opt),expected);
+            assert.deepEqual(prepared.compile(opt),expected);
+          }
+          for(let i=0;i<3;i++){
+            old.compileCreatorProgram(fixture,options[i]);
+            prepared.compile(options[i]);
+          }
+          let oldMs=0,preparedMs=0;
+          for(let i=0;i<32;i++) {
+            const opt=options[i];
+            let t=performance.now();
+            const original=old.compileCreatorProgram(fixture,opt);
+            oldMs+=performance.now()-t;
+            t=performance.now();
+            const actual=prepared.compile(opt);
+            preparedMs+=performance.now()-t;
+            assert.deepEqual(actual,original);
+          }
+          console.log(JSON.stringify({
+            workload:'synthetic 10000 clips; 32 changed viewport requests',
+            original_compile_total_ms:+oldMs.toFixed(3),
+            prepared_build_once_ms:+preparedBuildMs.toFixed(3),
+            prepared_view_total_ms:+preparedMs.toFixed(3),
+            prepared_total_ms:+(preparedBuildMs+preparedMs).toFixed(3),
+            output_parity:'exact-for-all-32',benchmark_host:'GitHub Actions Node 24',
+            production_speedup_proven:false,client_data_included:false
+          }));
+          JS
       - name: Build public-only, disposable REA inspection target
         run: |
           set -eu
