@@ -229,7 +229,7 @@ jobs:
             const demand=JSON.parse(pcm.stdout);
             if(demand.state!=='candidate_requires_owner_approval'||
                demand.execution_authority_inferred!==false||
-               demand.source_file_digest_verified!==false||demand.argv[1]!=='4800'||
+               demand.source_file_digest_verified!==false||demand.argv[1]!==planned.windows[0].samples||
                demand.window_body_key!==planned.windows[0].body_key)
               throw Error('akai changed authority or exact audio demand');
             const edit=join(dir,'edit.json');
