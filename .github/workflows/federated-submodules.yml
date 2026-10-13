@@ -195,10 +195,10 @@ jobs:
                r"^submodule\..*\.(path|url)$"]
           )
           definitions = {}
-          for entry in config.split(b"\\0"):
+          for entry in config.split(b"\0"):
               if not entry:
                   continue
-              name, sep, value = entry.partition(b"\\n")
+              name, sep, value = entry.partition(b"\n")
               if not sep:
                   raise SystemExit("Malformed submodule manifest entry")
               key = name.decode("utf-8")
@@ -208,10 +208,10 @@ jobs:
               definitions.setdefault(item.group(1), {})[item.group(2)] = value.decode("utf-8")
           tree = subprocess.check_output(["git", "ls-tree", "-rz", "HEAD"])
           tracked = {}
-          for entry in tree.split(b"\\0"):
+          for entry in tree.split(b"\0"):
               if not entry:
                   continue
-              metadata, sep, path_bytes = entry.partition(b"\\t")
+              metadata, sep, path_bytes = entry.partition(b"\t")
               if not sep:
                   raise SystemExit("Malformed Git tree entry")
               mode, kind, digest = metadata.decode("ascii").split(" ")
