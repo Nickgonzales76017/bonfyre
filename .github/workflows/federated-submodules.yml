@@ -19,6 +19,7 @@ on:
       - 'Aurekai/bin/akai.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/src/integration-connectors.mjs'
       - 'Aurekai/src/policy-family-evaluator.mjs'
       - 'Aurekai/src/residual-calibrator.mjs'
       - 'Aurekai/tests/**'
@@ -43,6 +44,7 @@ on:
       - 'Aurekai/bin/akai.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/src/integration-connectors.mjs'
       - 'Aurekai/src/policy-family-evaluator.mjs'
       - 'Aurekai/src/residual-calibrator.mjs'
       - 'Aurekai/tests/**'
@@ -147,6 +149,8 @@ jobs:
           JS
       - name: Verify one policy cut per batch with exact target parity
         run: node --test Aurekai/tests/integration-batch-parity.test.mjs
+      - name: Verify connector fan-out reuses owner inputs without changing receipts
+        run: node --test Aurekai/tests/integration-ingest-batch-parity.test.mjs
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
