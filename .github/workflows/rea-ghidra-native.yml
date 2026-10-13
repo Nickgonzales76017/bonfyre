@@ -5,6 +5,8 @@ on:
   pull_request:
     paths:
       - 'scripts/rea-local.sh'
+      - 'Aurekai/native/creator/mix.c'
+      - 'Aurekai/native/creator/mix_kernel.c'
       - '.github/workflows/rea-ghidra-native.yml'
   push:
     branches: [main]
@@ -61,6 +63,33 @@ jobs:
           test -d "$BONFYRE_REA_NATIVE_ROOT/toolchains/gradle-cache"
           test ! -e "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC"
           test ! -e "$BONFYRE_REA_ROOT/toolchains/jdk-21.0.12.1+1"
+      - name: REA Ghidra function dossier on actual event-driven Creator PCM
+        run: |
+          set -eu
+          target="$RUNNER_TEMP/rea-public-creator-mix"
+          cc -O2 -g -std=c11 -ffp-contract=off \
+            -Wall -Wextra -Wpedantic -Werror \
+            Aurekai/native/creator/mix.c Aurekai/native/creator/mix_kernel.c \
+            -lm -o "$target"
+          bash scripts/rea-local.sh rea function "$target" main \
+            --provider ghidra --json > "$RUNNER_TEMP/rea-creator-main-dossier.json"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const root=process.env.RUNNER_TEMP;
+          const bytes=readFileSync(join(root,'rea-public-creator-mix'));
+          const record=JSON.parse(readFileSync(join(root,'rea-creator-main-dossier.json'),'utf8'));
+          if(typeof record?.evidence_id!=='string'||!record.evidence_id.startsWith('ev_')||
+             !record.normalized_result||typeof record.normalized_result!=='object')
+            throw Error('REA did not return a native function Evidence dossier');
+          console.log(JSON.stringify({schema:'bonfyre.rea.native-creator-function.v1',
+            executable_sha256:createHash('sha256').update(bytes).digest('hex'),
+            evidence_id:record.evidence_id,
+            function_requested:'main',provider:'ghidra',
+            facets:Object.keys(record.normalized_result).slice(0,24),
+            original_binary_modified:false,independent_runtime_equivalence_proven:false}));
+          JS
       - name: REA actually analyzes a compiled Bonfyre-owned Mach-O
         run: |
           set -eu
