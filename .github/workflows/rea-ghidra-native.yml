@@ -1,0 +1,75 @@
+name: REA Apple Silicon native decompiler proof
+
+# One real owned Mach-O fixture, not customer/client binaries or a private estate.
+on:
+  pull_request:
+    paths:
+      - 'scripts/rea-local.sh'
+      - '.github/workflows/rea-ghidra-native.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rea-ghidra-native.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native-arm64-ghidra:
+    runs-on: macos-15
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Validate installer and selected architecture
+        run: |
+          set -eu
+          bash -n scripts/rea-local.sh
+          test "$(uname -m)" = arm64
+      - name: Isolate REA runtime, full JDK 21, and Ghidra 12.1.4
+        run: |
+          set -eu
+          echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/rea-owned-ghidra" >> "$GITHUB_ENV"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-owned-ghidra"
+          bash scripts/rea-local.sh install
+          bash scripts/rea-local.sh install-native > "$RUNNER_TEMP/rea-ghidra-install.json"
+          test -x "$BONFYRE_REA_ROOT/toolchains/jdk-21.0.12.1+1/Contents/Home/bin/javac"
+          test -x "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/os/mac_arm_64/decompile"
+          test -x "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/os/mac_arm_64/sleigh"
+          bash scripts/rea-local.sh install-native > /dev/null
+      - name: REA actually analyzes a compiled Bonfyre-owned Mach-O
+        run: |
+          set -eu
+          test -n "$BONFYRE_REA_ROOT"
+          cat > "$RUNNER_TEMP/rea-native-fixture.c" <<'C'
+          #include <stdint.h>
+          __attribute__((noinline))
+          int32_t bonfyre_owned_mix_probe(int32_t a, int32_t b) {
+            return ((a ^ b) + (a & b)) - (a >> 3);
+          }
+          int main(void) { return bonfyre_owned_mix_probe(17,23) == 0; }
+          C
+          cc -O0 -g -std=c11 -Wall -Werror             "$RUNNER_TEMP/rea-native-fixture.c" -o "$RUNNER_TEMP/rea-native-fixture"
+          shasum -a 256 "$RUNNER_TEMP/rea-native-fixture"
+          bash scripts/rea-local.sh native ghidra             "$RUNNER_TEMP/rea-native-fixture" > "$RUNNER_TEMP/rea-ghidra-evidence.json"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const base=process.env.RUNNER_TEMP;
+          const record=JSON.parse(readFileSync(join(base,'rea-ghidra-evidence.json'),'utf8'));
+          const bytes=readFileSync(join(base,'rea-native-fixture'));
+          if(typeof record.evidence_id!=='string' || !record.evidence_id.startsWith('ev_'))
+            throw Error('REA native investigation produced no authentic Evidence receipt');
+          console.log(JSON.stringify({state:'macos-arm64-ghidra-analyzed-actual-owned-binary',
+            engine:'ghidra-12.1.4',jdk:'21.0.12.1+1',rea:'6.4.0',
+            binary_sha256:createHash('sha256').update(bytes).digest('hex'),
+            evidence_id:record.evidence_id,
+            client_data_included:false,production_performance_inferred:false}));
+          JS
