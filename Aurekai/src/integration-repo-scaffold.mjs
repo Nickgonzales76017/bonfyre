@@ -1,5 +1,6 @@
-import { existsSync, mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { createHash } from "node:crypto";
 import { listIntegrationTargets } from "./integration-engine.mjs";
 
 function normalizeKey(value) {
@@ -208,17 +209,31 @@ function readmeForTarget(targetInfo) {
   return `${lines.join("\n")}`;
 }
 
-function writeTargetScaffold(baseDir, targetInfo) {
+function writeTargetScaffold(baseDir, targetInfo, mode) {
   const repoDir = join(baseDir, targetInfo.slug);
-  ensureDirectory(repoDir);
-  ensureDirectory(join(repoDir, "src"));
-  ensureDirectory(join(repoDir, "test-vectors"));
+  if (mode === "materialize") {
+    ensureDirectory(repoDir);
+    ensureDirectory(join(repoDir, "src"));
+    ensureDirectory(join(repoDir, "test-vectors"));
+  }
+  const artifacts = [];
+  const emit = (path, content) => {
+    const bytes = Buffer.from(content, "utf8");
+    const sha256 = createHash("sha256").update(bytes).digest("hex");
+    if (mode === "verify") {
+      if (!existsSync(path) || !lstatSync(path).isFile() || !readFileSync(path).equals(bytes))
+        throw new Error("integration scaffold differs or is missing: " + path);
+    } else if (mode === "materialize") {
+      writeFileSync(path, content);
+    }
+    artifacts.push({ path: relative(repoDir, path), bytes: bytes.length, sha256 });
+  };
 
-  writeFileSync(join(repoDir, "package.json"), `${JSON.stringify(packageJsonForTarget(targetInfo), null, 2)}\n`);
-  writeFileSync(join(repoDir, "integration.manifest.json"), `${JSON.stringify(manifestForTarget(targetInfo), null, 2)}\n`);
-  writeFileSync(join(repoDir, "README.md"), `${readmeForTarget(targetInfo)}\n`);
-  writeFileSync(join(repoDir, "src", "index.mjs"), `import {\n  createStateSnapshot,\n  createTransitionSequence,\n  createTrajectory,\n  createContinuityClaim,\n} from "@aurekai/continuity-core";\n\nexport function mapHostEventToKernel(event) {\n  const committedState = createStateSnapshot({\n    chart_family: ${JSON.stringify(targetInfo.chart_families[0] || "generic")},\n    policy_family: ${JSON.stringify(targetInfo.policy_families[0] || "finality")},\n    payload: { target: ${JSON.stringify(targetInfo.target)}, event },\n  });\n\n  const transitions = createTransitionSequence(["prepare", "commit"], {\n    transition_type: "continuity-projection",\n    predecessor_state_hash: committedState.commitment_ref,\n    metadata: { target: ${JSON.stringify(targetInfo.target)} },\n  });\n\n  const trajectory = createTrajectory({\n    target: ${JSON.stringify(targetInfo.target)},\n    transitions,\n    lineage_edges: [],\n  });\n\n  const claim = createContinuityClaim({\n    target_commitment: committedState.commitment_ref,\n    proof_ref: trajectory.folded_witness,\n    threshold: 0.7,\n    value: Number(event?.deformation_score || 0),\n  });\n\n  return {\n    committed_state: committedState,\n    transitions,\n    trajectory,\n    policies: [],\n    lineage_edges: [],\n    export_projections: [],\n    functional_claims: [claim],\n  };\n}\n`);
-  writeFileSync(join(repoDir, "test-vectors", "continuity-pass.json"), `${JSON.stringify({
+  emit(join(repoDir, "package.json"), `${JSON.stringify(packageJsonForTarget(targetInfo), null, 2)}\n`);
+  emit(join(repoDir, "integration.manifest.json"), `${JSON.stringify(manifestForTarget(targetInfo), null, 2)}\n`);
+  emit(join(repoDir, "README.md"), `${readmeForTarget(targetInfo)}\n`);
+  emit(join(repoDir, "src", "index.mjs"), `import {\n  createStateSnapshot,\n  createTransitionSequence,\n  createTrajectory,\n  createContinuityClaim,\n} from "@aurekai/continuity-core";\n\nexport function mapHostEventToKernel(event) {\n  const committedState = createStateSnapshot({\n    chart_family: ${JSON.stringify(targetInfo.chart_families[0] || "generic")},\n    policy_family: ${JSON.stringify(targetInfo.policy_families[0] || "finality")},\n    payload: { target: ${JSON.stringify(targetInfo.target)}, event },\n  });\n\n  const transitions = createTransitionSequence(["prepare", "commit"], {\n    transition_type: "continuity-projection",\n    predecessor_state_hash: committedState.commitment_ref,\n    metadata: { target: ${JSON.stringify(targetInfo.target)} },\n  });\n\n  const trajectory = createTrajectory({\n    target: ${JSON.stringify(targetInfo.target)},\n    transitions,\n    lineage_edges: [],\n  });\n\n  const claim = createContinuityClaim({\n    target_commitment: committedState.commitment_ref,\n    proof_ref: trajectory.folded_witness,\n    threshold: 0.7,\n    value: Number(event?.deformation_score || 0),\n  });\n\n  return {\n    committed_state: committedState,\n    transitions,\n    trajectory,\n    policies: [],\n    lineage_edges: [],\n    export_projections: [],\n    functional_claims: [claim],\n  };\n}\n`);
+  emit(join(repoDir, "test-vectors", "continuity-pass.json"), `${JSON.stringify({
     schema_version: "aurekai.integration_test_vector.v1",
     target: targetInfo.target,
     case: "continuity-pass",
@@ -232,7 +247,7 @@ function writeTargetScaffold(baseDir, targetInfo) {
       functional_claim_result: "pass",
     },
   }, null, 2)}\n`);
-  writeFileSync(join(repoDir, "test-vectors", "continuity-fail.json"), `${JSON.stringify({
+  emit(join(repoDir, "test-vectors", "continuity-fail.json"), `${JSON.stringify({
     schema_version: "aurekai.integration_test_vector.v1",
     target: targetInfo.target,
     case: "continuity-fail",
@@ -247,13 +262,15 @@ function writeTargetScaffold(baseDir, targetInfo) {
     },
   }, null, 2)}\n`);
 
-  return repoDir;
+  return mode === "materialize" ? repoDir : { path: repoDir, artifacts };
 }
 
 export function scaffoldIntegrationRepos(repoRoot, options = {}) {
   const targets = groupTargets(repoRoot, options);
   const baseDir = options.outDir || join(repoRoot, "generated", "integration-repos");
-  ensureDirectory(baseDir);
+  const mode = options.mode ?? "materialize";
+  if (!["materialize", "virtual", "verify"].includes(mode)) throw new Error("unsupported scaffold mode");
+  if (mode === "materialize") ensureDirectory(baseDir);
 
   const selected = options.target
     ? targets.filter((item) => normalizeKey(item.target) === normalizeKey(options.target))
@@ -263,13 +280,17 @@ export function scaffoldIntegrationRepos(repoRoot, options = {}) {
     throw new Error(`No integration targets matched for scaffold generation${options.target ? `: ${options.target}` : ""}.`);
   }
 
-  const repos = selected.map((item) => ({
-    target: item.target,
-    slug: item.slug,
-    path: writeTargetScaffold(baseDir, item),
-    surfaces: item.surfaces,
-    categories: item.categories,
-  }));
+  const repos = selected.map((item) => {
+    const result = writeTargetScaffold(baseDir, item, mode);
+    return {
+      target: item.target,
+      slug: item.slug,
+      path: typeof result === "string" ? result : result.path,
+      surfaces: item.surfaces,
+      categories: item.categories,
+      ...(mode === "materialize" ? {} : { artifacts: result.artifacts }),
+    };
+  });
 
   const index = {
     schema_version: "aurekai.integration_repo_catalog.v1",
@@ -279,6 +300,14 @@ export function scaffoldIntegrationRepos(repoRoot, options = {}) {
     repos,
   };
 
-  writeFileSync(join(baseDir, "catalog.json"), `${JSON.stringify(index, null, 2)}\n`);
+  if (mode === "materialize") {
+    writeFileSync(join(baseDir, "catalog.json"), `${JSON.stringify(index, null, 2)}\n`);
+  } else {
+    index.mode = mode;
+    index.recipe_sha256 = createHash("sha256").update(JSON.stringify(
+      repos.map(({ slug, artifacts }) => [slug, artifacts])
+    )).digest("hex");
+    index.catalog_checked = false; // timestamped catalog is not reproducible
+  }
   return index;
 }
