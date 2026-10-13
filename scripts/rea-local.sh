@@ -116,9 +116,45 @@ need_rea() {
 rea() { auto_native_env; "$rea_node" "$cli" "$@"; }
 
 # Private, opt-in REA native analysis dependencies: no system installations.
-ghidra_dir="$root/engines/ghidra_12.1.4_PUBLIC"
-jdk_dir="$root/toolchains/jdk-21.0.12.1+1"
+# Native decompilation needs substantially more disk than the installed REA
+# runtime. An optional existing volume keeps the 4-GiB admission test intact
+# without moving/reinstalling REA or touching the dirty Bonfyre checkout.
+native_root="${BONFYRE_REA_NATIVE_ROOT:-$root}"
+ghidra_dir="$native_root/engines/ghidra_12.1.4_PUBLIC"
+jdk_dir="$native_root/toolchains/jdk-21.0.12.1+1"
 ghidra_native=mac_arm_64
+
+check_native_root() {
+  if [ -n "${BONFYRE_REA_NATIVE_ROOT:-}" ]; then
+    case "$native_root" in
+      /*) ;;
+      *) echo "BONFYRE_REA_NATIVE_ROOT must be an existing absolute directory" >&2; return 2 ;;
+    esac
+    if [ ! -d "$native_root" ] || [ -L "$native_root" ]; then
+      echo "native analysis root absent or symlinked; refusing to create a new volume path" >&2
+      return 2
+    fi
+    # /Volumes/Name can be a plain directory when the real drive is not mounted:
+    # never download several gigabytes into such a fallback on the system disk.
+    case "$native_root" in
+      /Volumes/*)
+        local suffix volume root_device home_device
+        suffix="${native_root#/Volumes/}"
+        volume="/Volumes/${suffix%%/*}"
+        if [ ! -d "$volume" ] || [ -L "$volume" ]; then
+          echo "selected external volume is not mounted" >&2; return 2
+        fi
+        root_device="$(stat -f %d "$volume")" || return 2
+        home_device="$(stat -f %d "$HOME")" || return 2
+        if [ "$root_device" = "$home_device" ]; then
+          echo "selected /Volumes path is on the system disk, not a mounted external drive" >&2
+          return 2
+        fi
+        ;;
+    esac
+  fi
+}
+
 
 auto_native_env() {
   if [ -z "${GHIDRA_INSTALL_DIR:-}" ] && [ -f "$ghidra_dir/Ghidra/application.properties" ]; then
@@ -158,16 +194,18 @@ install_native_ghidra() {
   for cmd in curl shasum tar unzip make clang++; do
     command -v "$cmd" >/dev/null || { echo "Ghidra prerequisite missing: $cmd" >&2; return 2; }
   done
-  if [ -L "$root" ] || [ -L "$root/toolchains" ] || [ -L "$root/engines" ] ||
-     [ -L "$ghidra_dir" ] || [ -L "$jdk_dir" ]; then
+  check_native_root || return 2
+  if [ -L "$native_root" ] || [ -L "$native_root/toolchains" ] ||
+     [ -L "$native_root/engines" ] || [ -L "$ghidra_dir" ] ||
+     [ -L "$jdk_dir" ]; then
     echo "refusing symlinked private native-toolchain roots" >&2; return 2
   fi
-  mkdir -p "$root/toolchains" "$root/engines"
+  mkdir -p "$native_root/toolchains" "$native_root/engines"
   if [ ! -x "$jdk_dir/Contents/Home/bin/javac" ] || [ ! -d "$ghidra_dir" ]; then
     # The GitHub ZIP, full JDK, native build and Gradle workspace expand well
     # beyond download size. Refuse an unsafe low-disk bootstrap before fetching.
     local available_kib
-    available_kib="$(df -Pk "$root" | awk 'END {print $4}')"
+    available_kib="$(df -Pk "$native_root" | awk 'END {print $4}')"
     case "$available_kib" in ''|*[!0-9]*) echo "unable to measure native bootstrap free disk" >&2; return 2;; esac
     if [ "$available_kib" -lt 4194304 ]; then
       echo "native REA setup requires 4 GiB available disk; no downloads started" >&2
@@ -178,7 +216,7 @@ install_native_ghidra() {
     [ ! -e "$jdk_dir" ] || { echo "incomplete private JDK; refusing overwrite" >&2; return 2; }
     (
       set -e
-      stage="$(mktemp -d "$root/toolchains/.jdk-stage.XXXXXXXX")"
+      stage="$(mktemp -d "$native_root/toolchains/.jdk-stage.XXXXXXXX")"
       trap 'rm -rf -- "$stage"' EXIT
       archive=OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.12.1_1.tar.gz
       fetch_verified "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/$archive" \
@@ -199,7 +237,7 @@ install_native_ghidra() {
   else
     (
       set -e
-      stage="$(mktemp -d "$root/engines/.ghidra-stage.XXXXXXXX")"
+      stage="$(mktemp -d "$native_root/engines/.ghidra-stage.XXXXXXXX")"
       trap 'rm -rf -- "$stage"' EXIT
       archive=ghidra_12.1.4_PUBLIC_20260921.zip
       fetch_verified "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/$archive" \
@@ -211,7 +249,7 @@ install_native_ghidra() {
       if ! native_ready "$target"; then
         echo "Building macOS arm64 decompiler through supported Ghidra buildNatives"
         (cd "$target/support/gradle"; \
-          GRADLE_USER_HOME="$root/toolchains/gradle-cache" \
+          GRADLE_USER_HOME="$native_root/toolchains/gradle-cache" \
           JAVA_HOME="$JAVA_HOME" bash ./gradlew --no-daemon buildNatives)
       fi
       native_ready "$target" || {
@@ -270,10 +308,66 @@ case "$action" in
     stage=""
     printf 'REA %s installed in %s\n' "$version" "$prefix"
     ;;
+  native-preflight)
+    need_rea
+    check_native_root
+    if [ ! -d "$native_root" ]; then
+      echo "native analysis root does not exist; no downloads started" >&2; exit 2
+    fi
+    free_kib="$(df -Pk "$native_root" | awk 'END {print $4}')"
+    case "$free_kib" in ''|*[!0-9]*) echo "unable to measure native disk" >&2; exit 2;; esac
+    "$rea_node" - "$native_root" "$free_kib" "$ghidra_dir" "$jdk_dir" <<'JS'
+const fs=require('node:fs'),[nativeRoot,free,ghidra,jdk]=process.argv.slice(2);
+const fullJdk=fs.existsSync(jdk+'/Contents/Home/bin/javac');
+const nativeFiles=[
+  ghidra+'/Ghidra/Features/Decompiler/os/mac_arm_64/decompile',
+  ghidra+'/Ghidra/Features/Decompiler/build/os/mac_arm_64/decompile'
+];
+const availableBytes=Number(free)*1024;
+console.log(JSON.stringify({schema:'bonfyre.rea.native-preflight.v1',native_root:nativeRoot,
+  free_bytes:availableBytes,full_jdk_present:fullJdk,
+  native_decompiler_present:nativeFiles.some(x=>fs.existsSync(x)),
+  conservative_build_requirement_bytes:4194304*1024,
+  conservative_space_admitted:Number(free)>=4194304,
+  state:'read_only_preflight_no_downloads'},null,2));
+JS
+    ;;
   install-native)
     need_rea
     install_native_ghidra
     rea providers --json
+    ;;
+  native-map)
+    # Available without Ghidra, Java or license-protected binary providers.
+    # It reads exactly the caller-selected Mach-O or application bundle and
+    # records an immutable REA static evidence identity (not runtime profiling).
+    need_rea
+    if [ "$#" -ne 1 ]; then
+      echo "usage: rea-local.sh native-map /absolute/authorized/Mach-O-or-App" >&2; exit 2
+    fi
+    case "$1" in /*) ;; *) echo "native-map requires an absolute target" >&2; exit 2;; esac
+    if [ ! -f "$1" ] && [ ! -d "$1" ]; then
+      echo "native-map target is not a local file or application directory" >&2; exit 2
+    fi
+    scratch="$(mktemp -d "${TMPDIR:-/tmp}/rea-native-map.XXXXXXXX")"
+    trap 'rm -rf -- "$scratch"' EXIT
+    rea trace-dylib-resolution "$1" --json > "$scratch/evidence.json"
+    "$rea_node" - "$scratch/evidence.json" <<'JS'
+const fs=require('node:fs');
+const data=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+if(!data||typeof data.evidence_id!=='string'||!data.evidence_id.startsWith('ev_'))
+  throw Error('REA native dylib trace returned no sealed Evidence identity');
+const normalized=data.normalized_result??{};
+const size=value=>Array.isArray(value)?value.length:null;
+console.log(JSON.stringify({schema:'bonfyre.rea.native-map.v1',
+  evidence_id:data.evidence_id,inspection:'trace_dylib_resolution',
+  target_sha256:normalized.target_sha256??null,
+  image_count:size(normalized.images),dependency_edge_count:size(normalized.edges),
+  finding_count:size(normalized.findings),
+  result_facets:Object.keys(normalized).slice(0,24),
+  coverage:normalized.coverage??null,
+  state:'static_native_observation_not_runtime_proof'},null,2));
+JS
     ;;
   smoke)
     need_rea
@@ -291,10 +385,58 @@ case "$action" in
     ;;
   doctor)
     need_rea
-    printf 'REA prefix: %s\nNode: %s (%s)\n' "$prefix" "$("$rea_node" --version)" "$rea_node"
-    if ! rea doctor --json; then
-      echo "REA doctor reported an unavailable optional capability (check provider configuration)" >&2
+    # REA doctor owns health, while providers exposes its large catalog and
+    # capability inventory. Preserve both full upstream CLI commands, but make
+    # this operator-facing readback a bounded, source-derived projection.
+    scratch="$(mktemp -d "${TMPDIR:-/tmp}/rea-doctor.XXXXXXXX")"
+    trap 'rm -rf -- "$scratch"' EXIT
+    if ! rea doctor --json > "$scratch/doctor.json"; then
+      # The REA doctor may return a nonzero status when optional providers are
+      # unavailable. We still inspect its actual JSON without inventing health.
+      echo "REA doctor reported unavailable capabilities; inspecting its receipt" >&2
     fi
+    # REA's doctor and providers are separate contracts. Doctor owns health
+    # checks; providers owns native capabilities, server identity and client
+    # registration status. Neither can substitute for the other.
+    if ! rea providers --json > "$scratch/providers.json"; then
+      echo "REA providers did not produce a usable capability inventory" >&2
+      exit 1
+    fi
+    "$rea_node" - "$scratch/doctor.json" "$scratch/providers.json" "$prefix" "$rea_node" <<'JS'
+const fs=require('node:fs');
+const read=path=>{try{return JSON.parse(fs.readFileSync(path,'utf8'))}
+  catch(err){console.error('REA returned invalid JSON: '+err.message);process.exit(1)}};
+const doctor=read(process.argv[2]),inventory=read(process.argv[3]);
+const identity=inventory.server_identity??inventory.identity??{};
+const providers=inventory.analysis_provider_candidates;
+const regs=inventory.registrations??[];
+const installed=identity.package?.version??identity.server?.version??null;
+if(typeof installed!=='string'||!Array.isArray(providers)||!doctor||typeof doctor!=='object'){
+  console.error(JSON.stringify({error:'unrecognized REA doctor/providers contracts',
+    doctor_keys:Object.keys(doctor??{}).slice(0,12),
+    inventory_keys:Object.keys(inventory??{}).slice(0,12)}));
+  process.exit(1);
+}
+const checks=Array.isArray(doctor.checks)?doctor.checks:[];
+const summary={
+  schema:'bonfyre.rea.local-doctor.v1',
+  package_version:installed,selected_node:process.argv[5],
+  install_prefix:process.argv[4],
+  health:{healthy:doctor.healthy??null,environment_healthy:doctor.environment_healthy??null,
+    checked:checks.length,failed:checks.filter(x=>x.ok===false||x.healthy===false).length},
+  catalog:{cli_commands:identity.catalog?.counts?.cli_commands??null,
+    mcp_tools:identity.catalog?.counts?.mcp_tools??null},
+  native_providers:providers.map(x=>({
+    id:x.provider?.id??null,status:x.availability?.status??'unknown',
+    reason:x.availability?.reason??null
+  })),
+  agent_registrations:Array.isArray(regs)?regs.map(x=>({
+    client:x.client??null,state:x.state??'unknown'
+  })):[],
+  live_server_state:inventory.live_server?.state??'unknown'
+};
+console.log(JSON.stringify(summary,null,2));
+JS
     ;;
   targets)
     # Discover actual installed creative application bundles by name only.
@@ -378,7 +520,10 @@ Bonfyre-local REA 6.4.0 (pinned, isolated; no global npm or auto-inspection)
   bash scripts/rea-local.sh smoke
   bash scripts/rea-local.sh doctor
   bash scripts/rea-local.sh targets
+  bash scripts/rea-local.sh native-preflight  # no downloads; reports disk gate
+  bash scripts/rea-local.sh native-map /absolute/path  # no Ghidra/JDK needed
   bash scripts/rea-local.sh install-native   # private full JDK21 + ARM64 Ghidra
+  # optional: BONFYRE_REA_NATIVE_ROOT=/Volumes/MOUNT/rea-native (existing dir)
   bash scripts/rea-local.sh static-js /explicit/authorized/source-directory
   bash scripts/rea-local.sh native ghidra|hopper /explicit/authorized/binary-or-app
   bash scripts/rea-local.sh setup-preview

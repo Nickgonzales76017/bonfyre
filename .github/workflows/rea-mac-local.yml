@@ -75,6 +75,20 @@ jobs:
           bash scripts/rea-local.sh install
       - name: Inspect synthetic JavaScript locally through actual REA
         run: bash scripts/rea-local.sh smoke
+      - name: Verify compact local REA doctor projection
+        run: |
+          set -eu
+          result="$(bash scripts/rea-local.sh doctor)"
+          printf '%s\n' "$result"
+          REA_DOCTOR_RESULT="$result" node --input-type=module <<'JS'
+          const report=JSON.parse(process.env.REA_DOCTOR_RESULT);
+          if(report.schema!=='bonfyre.rea.local-doctor.v1'||report.package_version!=='6.4.0')
+            throw Error('REA compact doctor lacks verified identity');
+          if(!Array.isArray(report.native_providers)||!Array.isArray(report.agent_registrations))
+            throw Error('REA compact doctor lost provider/registration availability');
+          if(Buffer.byteLength(process.env.REA_DOCTOR_RESULT)>32768)
+            throw Error('REA doctor returned an unbounded catalog instead of status');
+          JS
       - name: Discover explicit versioned creative app targets without opening them
         run: |
           set -eu
@@ -90,6 +104,43 @@ jobs:
           case "$observed" in *"Personal Notes.app"*) exit 1 ;; esac
           case "$observed" in *"Obsidian"*) exit 1 ;; esac
           test "$(printf '%s\n' "$observed" | grep -c '^available ')" -eq 3
+      - name: Verify no-Ghidra REA on a real Creator Mach-O
+        run: |
+          set -eu
+          sandbox="$RUNNER_TEMP/rea-creator-native-fastpath"
+          mkdir -p "$sandbox"
+          cc -O2 -std=c11 -ffp-contract=off \
+            Aurekai/native/creator/mix.c Aurekai/native/creator/mix_kernel.c \
+            -lm -o "$sandbox/creator-mix"
+          bash scripts/rea-local.sh native-map "$sandbox/creator-mix" > "$sandbox/map.json"
+          node - "$sandbox/map.json" <<'JS'
+          const fs=require('node:fs');
+          const r=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(r.schema!=='bonfyre.rea.native-map.v1'||
+             !r.evidence_id?.startsWith('ev_')||
+             !/^[a-f0-9]{64}$/.test(r.target_sha256??'')||
+             !Number.isInteger(r.image_count)||!Number.isInteger(r.dependency_edge_count)||
+             r.state!=='static_native_observation_not_runtime_proof')process.exit(1);
+          console.log(JSON.stringify(r));
+          JS
+      - name: Verify user-selected external native root preflight
+        run: |
+          set -eu
+          mount="$RUNNER_TEMP/rea native tools"
+          mkdir -p "$mount"
+          BONFYRE_REA_NATIVE_ROOT="$mount" bash scripts/rea-local.sh native-preflight > "$RUNNER_TEMP/native-preflight.json"
+          node - "$RUNNER_TEMP/native-preflight.json" "$mount" <<'JS'
+          const fs=require('node:fs');
+          const v=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(v.schema!=='bonfyre.rea.native-preflight.v1'||
+             v.native_root!==process.argv[3]||
+             v.state!=='read_only_preflight_no_downloads')process.exit(1);
+          console.log(JSON.stringify(v));
+          JS
+          if BONFYRE_REA_NATIVE_ROOT="$RUNNER_TEMP/unmounted target" bash scripts/rea-local.sh native-preflight; then
+            echo 'Missing native root was incorrectly accepted' >&2
+            exit 1
+          fi
       - name: Verify native float32 composer on real macOS runner
         run: node --test Aurekai/tests/creator-native-mix.test.mjs
       - name: Check optional provider and external application discovery
