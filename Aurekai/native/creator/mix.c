@@ -226,11 +226,19 @@ int main(int argc, char **argv) {
     }
     output_data_bytes += nframes * stride;
   }
-  // fseeko does not extend through a trailing hole. ftruncate admits the
-  // complete exact logical byte length before the existing durability fsync.
-  if (fflush(destination) != 0 ||
-      (sparse_silence && ftruncate(fileno(destination), (off_t)(samples * stride)) != 0) ||
-      fsync(fileno(destination)) != 0) {
+  // A sparse file's trailing seek alone does not extend its length.
+  // Write one explicit zero byte at the final logical offset instead of
+  // calling ftruncate on the full body: macOS can otherwise account a full
+  // allocation for the extension even when interior runs were skipped.
+  // Existing output blocks always contain exact f32le bytes; this extra byte
+  // belongs to a trailing +0.0 sample and is therefore byte-equivalent.
+  if (sparse_silence && pending_zero_frames) {
+    if (fseeko(destination, (off_t)(samples * stride - 1), SEEK_SET) != 0 ||
+        fputc(0, destination) == EOF) {
+      perror("extend trailing sparse silence"); goto close_output;
+    }
+  }
+  if (fflush(destination) != 0 || fsync(fileno(destination)) != 0) {
     perror("flush output"); goto close_output;
   }
   if (fclose(destination) != 0) {
