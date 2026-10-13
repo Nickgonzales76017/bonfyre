@@ -17,6 +17,8 @@ on:
       - 'Aurekai/.gitignore'
       - 'Aurekai/README.md'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
+      - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/registry/**'
       - 'Aurekai/generated/integration-repos/**'
   push:
     branches: [main]
@@ -35,6 +37,8 @@ on:
       - 'Aurekai/.gitignore'
       - 'Aurekai/README.md'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
+      - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/registry/**'
       - 'Aurekai/generated/integration-repos/**'
 
 permissions:
@@ -94,8 +98,24 @@ jobs:
                 throw Error('Incomplete generated scaffold ' + repo.slug);
               }
             }
+            // The same source contract must yield exact artifact digests
+            // through both virtual (zero emitted files) and physical cuts.
+            const virtualDest = join(destination, 'never-created-virtual-cut');
+            const virtualCut = scaffoldIntegrationRepos(resolve('Aurekai'), { outDir: virtualDest, mode: 'virtual' });
+            if (existsSync(virtualDest)) throw Error('Virtual integration cut materialized files');
+            if (virtualCut.count !== index.count) throw Error('Virtual cut lost integration targets');
+            const checked = scaffoldIntegrationRepos(resolve('Aurekai'), { outDir: destination, mode: 'verify' });
+            if (checked.recipe_sha256 !== virtualCut.recipe_sha256) {
+              throw Error('Virtual and physical regeneration differ in byte-level recipe');
+            }
+            const scoped = scaffoldIntegrationRepos(resolve('Aurekai'), {
+              outDir: virtualDest, mode: 'virtual', target: virtualCut.repos[0].slug
+            });
+            if (scoped.count !== 1 || scoped.repos[0].slug !== virtualCut.repos[0].slug || existsSync(virtualDest)) {
+              throw Error('Scoped virtual integration cut expanded or mutated');
+            }
             if (existsSync('Aurekai/generated/integration-repos')) throw Error('Generator wrote into tracked checkout');
-            console.log('Regenerated ' + index.count + ' independent template cuts without checked-in pseudo-repositories');
+            console.log('Verified ' + index.count + ' exact virtual-to-physical template cuts and one scoped virtual cut');
           } finally {
             rmSync(destination, { recursive: true, force: true });
           }
