@@ -1,0 +1,45 @@
+name: Public source to customer
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'scripts/source_customer_closure.mjs'
+      - 'scripts/tests/source_customer_closure.test.mjs'
+      - '.github/workflows/source-customer-closure.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/source_customer_closure.mjs'
+      - 'scripts/tests/source_customer_closure.test.mjs'
+      - '.github/workflows/source-customer-closure.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  public-witness:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check iCalendar and rendered attribution semantics
+        run: node --test scripts/tests/source_customer_closure.test.mjs
+      - name: Read the public calendar and two Aurekai LIVE experiences
+        run: |
+          node scripts/source_customer_closure.mjs --output source-customer-witness.json > /dev/null
+          node -e "const r=require('./source-customer-witness.json'); console.log(JSON.stringify({verdict:r.verdict,calendar_events:r.source.vevents,matched:r.consumers.map(x=>[x.url,x.source_matched_titles]),overlap:r.overlap.exact_titles_visible_on_both_surfaces,physical_reuse:r.observations.physical_bytes_reused,cost:r.observations.provider_cost_usd}))"
+      - name: Preserve no-effect public observation
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: source-to-customer-public-witness
+          path: source-customer-witness.json
+          if-no-files-found: ignore
+          retention-days: 14
