@@ -19,6 +19,9 @@ on:
       - 'Aurekai/bin/akai.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/src/policy-family-evaluator.mjs'
+      - 'Aurekai/src/residual-calibrator.mjs'
+      - 'Aurekai/tests/**'
       - 'Aurekai/registry/**'
       - 'Aurekai/generated/integration-repos/**'
   push:
@@ -40,6 +43,9 @@ on:
       - 'Aurekai/bin/akai.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
+      - 'Aurekai/src/policy-family-evaluator.mjs'
+      - 'Aurekai/src/residual-calibrator.mjs'
+      - 'Aurekai/tests/**'
       - 'Aurekai/registry/**'
       - 'Aurekai/generated/integration-repos/**'
 
@@ -139,6 +145,8 @@ jobs:
             rmSync(destination, { recursive: true, force: true });
           }
           JS
+      - name: Verify one policy cut per batch with exact target parity
+        run: node --test Aurekai/tests/integration-batch-parity.test.mjs
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'

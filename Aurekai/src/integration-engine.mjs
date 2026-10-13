@@ -1,8 +1,8 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { evaluatePolicyFamily } from "./policy-family-evaluator.mjs";
-import { calibrateResidual } from "./residual-calibrator.mjs";
+import { evaluatePolicyFamily, loadPolicyFamilies } from "./policy-family-evaluator.mjs";
+import { calibrateResidual, loadCalibrationContext } from "./residual-calibrator.mjs";
 import { buildTrajectoryCalculus } from "../kernel/src/trajectory-calculus.mjs";
 
 function normalizeKey(value) {
@@ -165,8 +165,8 @@ function hasBoundaryAffinity(descriptor, boundary) {
   return tokens.some((token) => targetKey.includes(token));
 }
 
-function resolveMutationBoundary(repoRoot, descriptor) {
-  const boundaries = readMutationBoundaries(repoRoot);
+function resolveMutationBoundary(repoRoot, descriptor, providedBoundaries = null) {
+  const boundaries = providedBoundaries ?? readMutationBoundaries(repoRoot);
   let winner = null;
   let winnerScore = 0;
 
@@ -629,7 +629,7 @@ function makeSpecializedClaims(descriptor, event, committedState, policyDecision
   return claims;
 }
 
-function makeContinuityPolicy(repoRoot, descriptor, event, residualAssessment, committedState, transitionWitnessHash) {
+function makeContinuityPolicy(repoRoot, descriptor, event, residualAssessment, committedState, transitionWitnessHash, executionContext = null) {
   const profile = buildProtocolProfile(descriptor);
   const evaluation = evaluatePolicyFamily(repoRoot, {
     policyFamily: profile.policy_family,
@@ -637,6 +637,7 @@ function makeContinuityPolicy(repoRoot, descriptor, event, residualAssessment, c
     event,
     residual: residualAssessment,
     surface: descriptor.surface,
+    policyFamilies: executionContext?.policyFamilies,
   });
 
   return {
@@ -1233,9 +1234,7 @@ function resolveRunId(target, event) {
   return stableHash(source).slice(0, 16);
 }
 
-export function listIntegrationTargets(repoRoot, options = {}) {
-  const registry = readRegistry(repoRoot);
-  const index = buildTargetIndex(repoRoot, registry);
+function targetRows(index, options = {}) {
   const rows = [];
 
   for (const descriptor of index.values()) {
@@ -1269,22 +1268,37 @@ export function listIntegrationTargets(repoRoot, options = {}) {
   return result;
 }
 
-function executeWithDescriptor(repoRoot, descriptor, input) {
+// Keep list and execution on one canonical target-index compiler.
+export function listIntegrationTargets(repoRoot, options = {}) {
+  const registry = readRegistry(repoRoot);
+  return targetRows(buildTargetIndex(repoRoot, registry), options);
+}
+
+function batchExecutionContext(repoRoot) {
+  return {
+    boundaries: readMutationBoundaries(repoRoot),
+    policyFamilies: loadPolicyFamilies(repoRoot),
+    calibration: loadCalibrationContext(repoRoot),
+  };
+}
+
+function executeWithDescriptor(repoRoot, descriptor, input, executionContext = null) {
   const event = input.event || {};
   const runId = resolveRunId(descriptor.target, event);
   const runContext = makeRunContext(runId);
   const profile = buildProtocolProfile(descriptor);
-  const mutationBoundary = resolveMutationBoundary(repoRoot, descriptor);
+  const mutationBoundary = resolveMutationBoundary(repoRoot, descriptor, executionContext?.boundaries);
   const residualAssessment = calibrateResidual(repoRoot, {
     chartFamily: descriptor.chartFamily,
     surface: descriptor.surface,
     target: descriptor.target,
     event,
+    calibrationContext: executionContext?.calibration,
   });
 
   const committedState = makeCommittedState(descriptor, event, residualAssessment, mutationBoundary, runContext);
   const { transitions, witnessHash } = makeTransitions(descriptor, event, committedState, mutationBoundary, runContext);
-  const policyDecision = makeContinuityPolicy(repoRoot, descriptor, event, residualAssessment, committedState, witnessHash);
+  const policyDecision = makeContinuityPolicy(repoRoot, descriptor, event, residualAssessment, committedState, witnessHash, executionContext);
   const lineageEdges = makeLineageEdges(descriptor, event, committedState, transitions, mutationBoundary, runContext);
   const trajectory = makeTrajectory(descriptor, transitions, lineageEdges, mutationBoundary, runContext);
   const transportSemantics = makeTransportSemantics(descriptor, event, mutationBoundary, policyDecision, transitions, runContext);
@@ -1385,15 +1399,21 @@ export function executeIntegration(repoRoot, input) {
 }
 
 export function executeSurfaceBatch(repoRoot, input) {
-  const targets = listIntegrationTargets(repoRoot, { surface: input.surface });
+  const registry = readRegistry(repoRoot);
+  const index = buildTargetIndex(repoRoot, registry);
+  const targets = targetRows(index, { surface: input.surface });
   const executions = [];
+  // Snapshot each owned registry/calibration input once per batch; nothing
+  // is cached between requests and standalone execution remains unchanged.
+  const context = targets.length ? batchExecutionContext(repoRoot) : null;
   for (const item of targets) {
-    const result = executeIntegration(repoRoot, {
+    const descriptor = index.get(normalizeKey(item.target));
+    const result = executeWithDescriptor(repoRoot, descriptor, {
       target: item.target,
       event: input.event,
       persist: input.persist,
       enforceDoctrine: input.enforceDoctrine,
-    });
+    }, context);
     executions.push({
       target: item.target,
       surface: item.surface,
@@ -1429,6 +1449,7 @@ export function executeStateMachineBatch(repoRoot, input) {
 
   const index = buildTargetIndex(repoRoot, registry);
   const executions = [];
+  const context = targets.length ? batchExecutionContext(repoRoot) : null;
 
   for (const target of targets) {
     const descriptor = index.get(normalizeKey(target)) || {
@@ -1447,7 +1468,7 @@ export function executeStateMachineBatch(repoRoot, input) {
       event: input.event,
       persist: input.persist,
       enforceDoctrine: input.enforceDoctrine,
-    });
+    }, context);
 
     executions.push({
       target: descriptor.target,

@@ -16,7 +16,7 @@ function getPath(payload, path) {
   return cur;
 }
 
-function readPolicyFamilies(repoRoot) {
+export function loadPolicyFamilies(repoRoot) {
   const path = join(repoRoot, "registry", "continuity-policy-families.json");
   try {
     const parsed = JSON.parse(readFileSync(path, "utf8"));
@@ -106,7 +106,7 @@ function evaluateFailCondition(condition, event, thresholds, residual) {
 }
 
 export function evaluatePolicyFamily(repoRoot, input) {
-  const families = readPolicyFamilies(repoRoot);
+  const families = Array.isArray(input.policyFamilies) ? input.policyFamilies : loadPolicyFamilies(repoRoot);
   const family = families.find((item) => item?.id === input.policyFamily) || {
     id: input.policyFamily || "default",
     residual_thresholds: { gate: 0.7, halt: 0.9 },
