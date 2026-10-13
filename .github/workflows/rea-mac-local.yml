@@ -43,6 +43,17 @@ jobs:
           bash scripts/rea-local.sh install
           test -f "$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
           test -d "$BONFYRE_REA_ROOT/npm-cache"
+      - name: Prove portable private Node bootstrap on a real Mac
+        run: |
+          set -eu
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-private-node-regression"
+          export BONFYRE_REA_FORCE_PRIVATE_NODE=1
+          bash scripts/rea-local.sh install
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
+          test ! -L "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0"
+          bash scripts/rea-local.sh smoke
+          bash scripts/rea-local.sh install
+          test "$("$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node" --version)" = v24.11.0
       - name: Inspect synthetic JavaScript locally through actual REA
         run: bash scripts/rea-local.sh smoke
       - name: Verify native float32 composer on real macOS runner
