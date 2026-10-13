@@ -301,50 +301,46 @@ case "$action" in
       # unavailable. We still inspect its actual JSON without inventing health.
       echo "REA doctor reported unavailable capabilities; inspecting its receipt" >&2
     fi
-    "$rea_node" - "$scratch/doctor.json" "$prefix" "$rea_node" <<'JS'
+    # REA's doctor and providers are separate contracts. Doctor owns health
+    # checks; providers owns native capabilities, server identity and client
+    # registration status. Neither can substitute for the other.
+    if ! rea providers --json > "$scratch/providers.json"; then
+      echo "REA providers did not produce a usable capability inventory" >&2
+      exit 1
+    fi
+    "$rea_node" - "$scratch/doctor.json" "$scratch/providers.json" "$prefix" "$rea_node" <<'JS'
 const fs=require('node:fs');
-let data;
-try{data=JSON.parse(fs.readFileSync(process.argv[2],'utf8'))}
-catch(err){console.error('REA doctor returned no valid JSON: '+err.message);process.exit(1)}
-const walk=(root,key)=>{
-  if(!root||typeof root!=='object')return null;
-  if(Object.prototype.hasOwnProperty.call(root,key))return root[key];
-  for(const name of ['result','normalized_result','doctor','diagnostics','data']){
-    const value=root[name];if(value&&typeof value==='object'){
-      const found=walk(value,key);if(found!==null)return found;
-    }
-  }
-  return null;
-};
-const providers=walk(data,'analysis_provider_candidates')??[];
-const regs=walk(data,'registrations')??[];
-const identity=walk(data,'server_identity')??{};
-const catalog=identity.catalog?.counts??{};
+const read=path=>{try{return JSON.parse(fs.readFileSync(path,'utf8'))}
+  catch(err){console.error('REA returned invalid JSON: '+err.message);process.exit(1)}};
+const doctor=read(process.argv[2]),inventory=read(process.argv[3]);
+const identity=inventory.server_identity??inventory.identity??{};
+const providers=inventory.analysis_provider_candidates;
+const regs=inventory.registrations??[];
 const installed=identity.package?.version??identity.server?.version??null;
+if(typeof installed!=='string'||!Array.isArray(providers)||!doctor||typeof doctor!=='object'){
+  console.error(JSON.stringify({error:'unrecognized REA doctor/providers contracts',
+    doctor_keys:Object.keys(doctor??{}).slice(0,12),
+    inventory_keys:Object.keys(inventory??{}).slice(0,12)}));
+  process.exit(1);
+}
+const checks=Array.isArray(doctor.checks)?doctor.checks:[];
 const summary={
   schema:'bonfyre.rea.local-doctor.v1',
-  package_version:installed,selected_node:process.argv[4],
-  install_prefix:process.argv[3],
-  catalog:{cli_commands:catalog.cli_commands??null,mcp_tools:catalog.mcp_tools??null},
-  native_providers:Array.isArray(providers)?providers.map(x=>({
+  package_version:installed,selected_node:process.argv[5],
+  install_prefix:process.argv[4],
+  health:{healthy:doctor.healthy??null,environment_healthy:doctor.environment_healthy??null,
+    checked:checks.length,failed:checks.filter(x=>x.ok===false||x.healthy===false).length},
+  catalog:{cli_commands:identity.catalog?.counts?.cli_commands??null,
+    mcp_tools:identity.catalog?.counts?.mcp_tools??null},
+  native_providers:providers.map(x=>({
     id:x.provider?.id??null,status:x.availability?.status??'unknown',
     reason:x.availability?.reason??null
-  })):[],
+  })),
   agent_registrations:Array.isArray(regs)?regs.map(x=>({
     client:x.client??null,state:x.state??'unknown'
   })):[],
-  live_server_state:walk(data,'live_server')?.state??'unknown'
+  live_server_state:inventory.live_server?.state??'unknown'
 };
-if(!summary.package_version||!Array.isArray(providers)) {
-  const keys=o=>o&&typeof o==='object'?Object.keys(o).slice(0,30):[];
-  console.error(JSON.stringify({
-    error:'REA doctor schema not recognized',root_keys:keys(data),
-    result_keys:keys(data.result),normalized_keys:keys(data.normalized_result),
-    doctor_keys:keys(data.doctor),identity_keys:keys(identity),
-    missing_version:!summary.package_version
-  }));
-  process.exit(1);
-}
 console.log(JSON.stringify(summary,null,2));
 JS
     ;;
