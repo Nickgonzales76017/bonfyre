@@ -183,7 +183,7 @@ jobs:
           JS
       - name: Verify exact nonmaterializing Creator render plans and akai route
         run: |
-          node --test Aurekai/tests/creator-render-program.test.mjs
+          node --test Aurekai/tests/creator-render-program.test.mjs Aurekai/tests/creator-native-pcm.test.mjs
           node --input-type=module <<'JS'
           import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
           import {tmpdir} from 'node:os';
