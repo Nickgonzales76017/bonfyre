@@ -19,6 +19,7 @@ import {
 } from "../src/integration-connectors.mjs";
 import { scaffoldIntegrationRepos } from "../src/integration-repo-scaffold.mjs";
 import { compileCreatorProgram, editCreatorTimeline } from "../src/creator-render-program.mjs";
+import { planNativePcmWindow } from "../src/creator-native-pcm.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(__dirname);
@@ -50,6 +51,7 @@ function printHelp() {
   console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
   console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--source-projection used] [--json]");
   console.log("  akai creator:edit --input TIMELINE.json --edit EDIT.json [--json]  # candidate only");
+  console.log("  akai creator:pcm-plan --plan CUT.json --bindings SOURCE.json --window-index N --channels N --output FILE  # uncommitted");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -214,6 +216,34 @@ if (rawArgs[0] === "creator:compile" || rawArgs[0] === "creator:edit") {
     }
     process.exit(0);
   } catch (error) {
+    console.error(error?.message||String(error));
+    process.exit(1);
+  }
+}
+
+/* Native PCM lowering is a pure candidate. The CLI does not read source PCM,
+ * execute the mixer or borrow authority from a caller-supplied render plan. */
+if (rawArgs[0] === "creator:pcm-plan") {
+  const args=rawArgs.slice(1);
+  const bounded=(flag)=>{
+    const path=getFlagValue(args,flag);
+    if(!path||!existsSync(path)||!statSync(path).isFile()||statSync(path).size>16*1024*1024)
+      throw Error("creator PCM plan metadata is missing or too large: "+flag);
+    return JSON.parse(readFileSync(path,"utf8"));
+  };
+  const numeric=flag=>{
+    const raw=getFlagValue(args,flag);
+    if(!raw||!/^[0-9]+$/.test(raw))throw Error("creator PCM plan requires "+flag);
+    return Number(raw);
+  };
+  try {
+    const result=planNativePcmWindow(bounded("--plan"),bounded("--bindings"),{
+      windowIndex:numeric("--window-index"),channels:numeric("--channels"),
+      output:getFlagValue(args,"--output")
+    });
+    printPayload(result,true);
+    process.exit(0);
+  } catch(error) {
     console.error(error?.message||String(error));
     process.exit(1);
   }
