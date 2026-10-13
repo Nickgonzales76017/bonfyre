@@ -6,13 +6,17 @@ on:
   pull_request:
     paths:
       - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/src/creator-native-pcm.mjs'
       - 'Aurekai/tests/creator-render-program.test.mjs'
+      - 'Aurekai/tests/creator-native-pcm.test.mjs'
       - '.github/workflows/creator-rea-evidence.yml'
   push:
     branches: [main]
     paths:
       - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/src/creator-native-pcm.mjs'
       - 'Aurekai/tests/creator-render-program.test.mjs'
+      - 'Aurekai/tests/creator-native-pcm.test.mjs'
       - '.github/workflows/creator-rea-evidence.yml'
   workflow_dispatch:
 
@@ -32,7 +36,7 @@ jobs:
         with:
           node-version: '24.11.0'
       - name: Exact Creator unit and agent-edit parity
-        run: node --test Aurekai/tests/creator-render-program.test.mjs
+        run: node --test Aurekai/tests/creator-render-program.test.mjs Aurekai/tests/creator-native-pcm.test.mjs
       - name: Exact old-versus-new render parity and repeated-view performance
         run: |
           set -eu
@@ -105,6 +109,7 @@ jobs:
           target="$RUNNER_TEMP/rea-creator-public"
           mkdir -p "$target/src"
           cp Aurekai/src/creator-render-program.mjs "$target/src/creator-render-program.mjs"
+          cp Aurekai/src/creator-native-pcm.mjs "$target/src/creator-native-pcm.mjs"
           printf '{"name":"bonfyre-creator-public-rea-fixture","private":true,"type":"module","main":"src/creator-render-program.mjs"}\n' > "$target/package.json"
           echo "REA_CREATOR_TARGET=$target" >> "$GITHUB_ENV"
           sha256sum "$target/src/creator-render-program.mjs" | cut -d ' ' -f 1 > "$RUNNER_TEMP/rea-creator-source-sha256"
@@ -175,6 +180,9 @@ jobs:
           const result = JSON.parse(raw);
           const original = readFileSync('Aurekai/src/creator-render-program.mjs');
           const selected = readFileSync(join(process.env.REA_CREATOR_TARGET,'src/creator-render-program.mjs'));
+          const nativeOriginal=readFileSync('Aurekai/src/creator-native-pcm.mjs');
+          const nativeSelected=readFileSync(join(process.env.REA_CREATOR_TARGET,'src/creator-native-pcm.mjs'));
+          if(!nativeOriginal.equals(nativeSelected))throw Error('REA native PCM source changed during snapshot');
           const hash = value => createHash('sha256').update(value).digest('hex');
           if (!original.equals(selected)) throw Error('REA target differs from owner source');
           if (hash(original) !== readFileSync(join(root,'rea-creator-source-sha256'),'utf8').trim())
@@ -185,7 +193,7 @@ jobs:
             result.structuredContent?.evidence_id ?? null;
           if (marker !== null && typeof marker !== 'string') throw Error('Invalid REA Evidence identity');
           const facts = {
-            source_sha256:hash(original),
+            source_sha256:hash(original),native_pcm_source_sha256:hash(nativeOriginal),
             rea_version:'6.4.0',
             rea_evidence_id:marker,
             bytes_of_rea_evidence:Buffer.byteLength(raw),
