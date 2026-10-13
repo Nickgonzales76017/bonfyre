@@ -37,6 +37,9 @@ jobs:
           set -eu
           echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/rea-owned-ghidra" >> "$GITHUB_ENV"
           export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-owned-ghidra"
+          # Prove the bundled JDK works; a hosted Java must not accidentally
+          # satisfy a missing dependency on the user's physical Mac.
+          unset JAVA_HOME || true
           bash scripts/rea-local.sh install
           if ! bash scripts/rea-local.sh install-native > "$RUNNER_TEMP/rea-ghidra-install.log" 2>&1; then
             echo "Native Ghidra prerequisite setup failed; bounded terminal diagnostics:"
@@ -49,10 +52,12 @@ jobs:
           test -x "$decompiler/build/os/mac_arm_64/decompile" || test -x "$decompiler/os/mac_arm_64/decompile"
           test -x "$decompiler/build/os/mac_arm_64/sleigh" || test -x "$decompiler/os/mac_arm_64/sleigh"
           bash scripts/rea-local.sh install-native > /dev/null
+          test -d "$BONFYRE_REA_ROOT/toolchains/gradle-cache"
       - name: REA actually analyzes a compiled Bonfyre-owned Mach-O
         run: |
           set -eu
           test -n "$BONFYRE_REA_ROOT"
+          unset JAVA_HOME || true
           cat > "$RUNNER_TEMP/rea-native-fixture.c" <<'C'
           #include <stdint.h>
           __attribute__((noinline))
