@@ -83,12 +83,24 @@ export function planNativePcmBatch(plan,bindings,
   const indices=windowIndices??plan.windows.map(w=>w.index);
   if(!Array.isArray(indices)||!indices.length||indices.length>65536)
     invalid('invalid windowIndices');
+  // Resolve the authored window index once; repeated Array.filter for each
+  // window would make a 65k-tile batch quadratic even before any PCM work.
+  const byIndex=new Map();
+  for(const window of plan.windows){
+    if(!Number.isSafeInteger(window?.index)||window.index<0||byIndex.has(window.index))
+      invalid('duplicate or invalid plan window index');
+    byIndex.set(window.index,window);
+  }
   const seen=new Set(),byRecipe=new Map(),renders=[],reuse=[];
   for(const index of indices) {
     if(!Number.isSafeInteger(index)||index<0||seen.has(index))
       invalid('invalid or duplicate window index');
     seen.add(index);
-    const candidate=planNativePcmWindow(plan,bindings,{
+    const window=byIndex.get(index);
+    if(!window)invalid('missing selected window');
+    // Reuse the single-window guard unchanged, with only the exact selected
+    // object from the original plan. No owned data, grants or identities change.
+    const candidate=planNativePcmWindow({...plan,windows:[window]},bindings,{
       windowIndex:index,channels,output:join(outputDirectory,index+'.f32'),sparseSilence
     });
     // Compare the full physical recipe rather than relying solely on a
