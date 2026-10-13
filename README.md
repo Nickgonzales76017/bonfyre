@@ -97,6 +97,8 @@ Neither the optional donors nor historical lineage is cloned by default. The scr
 commit and public URL before fetching, **never advances to a remote branch
 without review**, and recurses only into the reviewed native extraction dependencies.
 
+For any proposed optimization, the [read-only performance equivalence reviewer](scripts/performance_equivalence.mjs) compares source digests, original functionality, exact final outcomes, authorization scope, observed resource effects, priced-provider costs and rollback evidence. A pass means **eligible for human promotion review**, never deployed, and missing evidence retains the exact baseline. Owner receipts must still be independently read back; donor benchmarks are not production evidence.
+
 The 22 performance donors are *reference implementations* only: no automatic linking, runtime replacement, no copying third-party assets or new quantization claims. Some are large Rust/Python/C++ systems and some use platform-specific interfaces; `init one integrations/federated/performance/memory/nanoarrow` fetches only one exact pin. Promotion requires compatible licenses, independently measured behavior, full feature parity and a fallback route.
 
 The Frappe pins are source references, **not a tested nine-app compatible bench**;
