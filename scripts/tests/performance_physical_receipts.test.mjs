@@ -119,3 +119,114 @@ test('readback leaves existing native receipt rows unchanged',()=>{
   assert.equal(x.prepare('SELECT COUNT(*) AS n FROM representation_passport').get().n,2);x.close();
  }finally{db.close();}
 });
+
+function historicFixture(){
+  const f=fixture();
+  const db=new DatabaseSync(f.path);
+  db.exec('CREATE TABLE physical_generation(name TEXT PRIMARY KEY,source_digest TEXT NOT NULL);');
+  const former=sha('1').slice(7),present=sha('2').slice(7);
+  db.prepare('INSERT INTO physical_generation(name,source_digest) VALUES (?,?)').run('passport',present);
+  db.exec('CREATE TABLE compression_receipt_history(archive_row INTEGER PRIMARY KEY,'
+    +'generation_digest TEXT NOT NULL,receipt_id TEXT NOT NULL,passport_identity TEXT NOT NULL,'
+    +'subject_family TEXT NOT NULL,semantic_digest TEXT NOT NULL,physical_digest TEXT NOT NULL,'
+    +'exactness_class TEXT NOT NULL,'+keys.map(k=>k+' INTEGER NOT NULL').join(',')+');');
+  const col='generation_digest,receipt_id,passport_identity,subject_family,semantic_digest,physical_digest,exactness_class,'+keys.join(',');
+  const select='SELECT ?,r.receipt_id,p.identity,p.subject_family,p.semantic_digest,?,p.exactness_class,'
+    +keys.map(k=>'r.'+k).join(',')+' FROM compression_receipt r '
+    +'JOIN representation_passport p ON p.handle=r.passport_handle WHERE r.receipt_id=?';
+  db.prepare('INSERT INTO compression_receipt_history('+col+') '+select).run(former,'physical:before','physical-before');
+  db.prepare("DELETE FROM compression_receipt WHERE receipt_id='physical-before'").run();
+  db.close();
+  return {...f,former,present};
+}
+test('historic baseline and current candidate can be compared with generation binding',()=>{
+  const f=historicFixture();try{
+    const p=paired();
+    p.baseline.physical_source='archive';
+    p.baseline.physical_generation_digest=f.former;
+    p.candidate.physical_generation_digest=f.present;
+    const v=reviewPhysicalReceipts(p,f.path);
+    assert.equal(v.decision,'eligible-for-human-promotion-review',v.problems.join(','));
+    assert.equal(v.physical.baseline.source,'archive');
+    assert.equal(v.physical.baseline.generation_digest,f.former);
+    assert.equal(v.physical.candidate.generation_digest,f.present);
+    assert.equal(v.physical.measured_copy_delta.copied.saved_units,8000);
+    assert.equal(v.admitted_for_execution,false);
+  }finally{f.close();}
+});
+test('archived measurements require digest AND passport, no implicit historical fallback',()=>{
+  const f=historicFixture();try{
+    const p=paired();p.baseline.physical_source='archive';
+    hold(p,f.path,/historical-generation-and-passport-required/);
+    p.baseline.physical_generation_digest=f.former;
+    assert.equal(reviewPhysicalReceipts(p,f.path).decision,'eligible-for-human-promotion-review');
+    p.baseline.physical_generation_digest=sha('3').slice(7);
+    hold(p,f.path,/native-physical-receipt-not-found/);
+  }finally{f.close();}
+});
+test('wrong active generation and stale historical identity both refuse',()=>{
+  const f=historicFixture();try{
+    const p=paired();p.baseline.physical_source='archive';
+    p.baseline.physical_generation_digest=f.former;
+    p.candidate.physical_generation_digest=f.former;
+    hold(p,f.path,/physical-generation-drift/);
+    p.candidate.physical_generation_digest=f.present;
+    p.baseline.physical_passport='claimed-other-passport';
+    hold(p,f.path,/physical-passport-mismatch/);
+  }finally{f.close();}
+});
+test('reused receipt IDs require separate generation identity and preserve both records',()=>{
+  const f=historicFixture();try{
+    const db=new DatabaseSync(f.path);
+    db.prepare("UPDATE compression_receipt SET receipt_id='physical-before' WHERE receipt_id='physical-after'").run();
+    db.close();
+    const p=paired();
+    p.baseline.physical_source='archive';
+    p.baseline.physical_generation_digest=f.former;
+    p.candidate.physical_generation_digest=f.present;
+    p.candidate.physical_receipt_id='physical-before';
+    assert.equal(reviewPhysicalReceipts(p,f.path).decision,'eligible-for-human-promotion-review');
+    delete p.baseline.physical_generation_digest;
+    hold(p,f.path,/historical-generation-and-passport-required/);
+  }finally{f.close();}
+});
+test('ambiguous history for the same generation and receipt refuses silently selecting one',()=>{
+  const f=historicFixture();try{
+    const db=new DatabaseSync(f.path);
+    db.exec('INSERT INTO compression_receipt_history(generation_digest,receipt_id,passport_identity,'
+     +'subject_family,semantic_digest,physical_digest,exactness_class,'+keys.join(',')+') '
+     +'SELECT generation_digest,receipt_id,passport_identity,subject_family,semantic_digest,'
+     +'physical_digest,exactness_class,'+keys.join(',')+' FROM compression_receipt_history');
+    db.close();
+    const p=paired();p.baseline.physical_source='archive';p.baseline.physical_generation_digest=f.former;
+    hold(p,f.path,/ambiguous-historical-receipt-generation/);
+  }finally{f.close();}
+});
+test('a legacy active snapshot can still pass, but cannot forge a generation label',()=>{
+  const f=fixture();try{
+    assert.equal(reviewPhysicalReceipts(paired(),f.path).decision,'eligible-for-human-promotion-review');
+    const p=paired();p.baseline.physical_generation_digest=sha('1').slice(7);
+    hold(p,f.path,/physical-generation-drift/);
+  }finally{f.close();}
+});
+test('history lookup neither creates a store nor writes or deletes archived rows',()=>{
+  const f=historicFixture();try{
+    const p=paired();p.baseline.physical_source='archive';p.baseline.physical_generation_digest=f.former;
+    const x=new DatabaseSync(f.path,{readOnly:true});
+    const before=x.prepare('SELECT COUNT(*) AS n FROM compression_receipt_history').get().n;
+    x.close();
+    reviewPhysicalReceipts(p,f.path);
+    const y=new DatabaseSync(f.path,{readOnly:true});
+    assert.equal(y.prepare('SELECT COUNT(*) AS n FROM compression_receipt_history').get().n,before);
+    y.close();
+  }finally{f.close();}
+});
+test('historical CopyReceipts must match the semantic family and useful-work count',()=>{
+  const f=historicFixture();try{
+    const p=paired();p.baseline.physical_source='archive';p.baseline.physical_generation_digest=f.former;
+    const db=new DatabaseSync(f.path);
+    db.prepare("UPDATE compression_receipt_history SET useful_bytes=500 WHERE receipt_id='physical-before'").run();
+    db.close();
+    hold(p,f.path,/unequal-or-empty-useful-work/);
+  }finally{f.close();}
+});
