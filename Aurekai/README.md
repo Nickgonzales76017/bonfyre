@@ -127,6 +127,9 @@ akai integrate:list --surface state-machine --group transport_continuity --json
 akai integrate:scaffold-repos --all --out-dir ./generated/integration-repos --json
 ```
 
+
+The `integrate:scaffold-repos` command produces **local, reproducible starter templates**, not 108 connected GitHub repositories or released apps. Its May 7, 2026 output was removed from the active Git tree to avoid duplicate JSON and false repo visibility; the original exact snapshot remains in Git history at [the prior tracked tree](https://github.com/Nickgonzales76017/bonfyre/tree/2a53854ed3b26fbe40ded039712f09cee73ca013/Aurekai/generated/integration-repos). Running the documented command still recreates the templates locally. Independently pinned real repositories are in the [federated Source Atlas](https://nickgonzales76017.github.io/bonfyre/modules/).
+
 Connector ingestion modes:
 
 - `--event-json` direct payload injection

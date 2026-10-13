@@ -13,6 +13,11 @@ on:
       - 'scripts/tests/performance_equivalence.test.mjs'
       - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
+      - '.gitignore'
+      - 'Aurekai/.gitignore'
+      - 'Aurekai/README.md'
+      - 'Aurekai/src/integration-repo-scaffold.mjs'
+      - 'Aurekai/generated/integration-repos/**'
   push:
     branches: [main]
     paths:
@@ -26,6 +31,11 @@ on:
       - 'scripts/tests/performance_equivalence.test.mjs'
       - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
+      - '.gitignore'
+      - 'Aurekai/.gitignore'
+      - 'Aurekai/README.md'
+      - 'Aurekai/src/integration-repo-scaffold.mjs'
+      - 'Aurekai/generated/integration-repos/**'
 
 permissions:
   contents: read
@@ -57,6 +67,39 @@ jobs:
         run: node --test scripts/tests/performance_equivalence.test.mjs
       - name: Read back native physical CopyReceipts without mutations
         run: node --test scripts/tests/performance_physical_receipts.test.mjs
+      - name: Verify generated integration stubs are reproducible, not tracked pseudo-repositories
+        run: |
+          test ! -e Aurekai/generated/integration-repos
+          git check-ignore -q Aurekai/generated/integration-repos/autogen/integration.manifest.json
+          node --input-type=module <<'JS'
+          import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs';
+          import { tmpdir } from 'node:os';
+          import { join, resolve } from 'node:path';
+          import { scaffoldIntegrationRepos } from './Aurekai/src/integration-repo-scaffold.mjs';
+          const destination = mkdtempSync(join(tmpdir(), 'aurekai-integration-scaffolds-'));
+          try {
+            const index = scaffoldIntegrationRepos(resolve('Aurekai'), { outDir: destination });
+            if (index.count !== 108 || index.repos.length !== index.count) {
+              throw Error('Expected the 108 declared May-2026 starter targets to regenerate');
+            }
+            const names = new Set();
+            for (const repo of index.repos) {
+              if (names.has(repo.slug)) throw Error('Duplicate scaffold slug ' + repo.slug);
+              names.add(repo.slug);
+              const manifest = JSON.parse(readFileSync(join(destination, repo.slug, 'integration.manifest.json'), 'utf8'));
+              if (manifest.slug !== repo.slug || manifest.repo_name !== 'aurekai-integration-' + repo.slug ||
+                  !existsSync(join(destination, repo.slug, 'src/index.mjs')) ||
+                  !existsSync(join(destination, repo.slug, 'test-vectors/continuity-pass.json')) ||
+                  !existsSync(join(destination, repo.slug, 'test-vectors/continuity-fail.json'))) {
+                throw Error('Incomplete generated scaffold ' + repo.slug);
+              }
+            }
+            if (existsSync('Aurekai/generated/integration-repos')) throw Error('Generator wrote into tracked checkout');
+            console.log('Regenerated ' + index.count + ' independent template cuts without checked-in pseudo-repositories');
+          } finally {
+            rmSync(destination, { recursive: true, force: true });
+          }
+          JS
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
