@@ -113,7 +113,118 @@ need_rea() {
     exit 2
   fi
 }
-rea() { "$rea_node" "$cli" "$@"; }
+rea() { auto_native_env; "$rea_node" "$cli" "$@"; }
+
+# Private, opt-in REA native analysis dependencies: no system installations.
+ghidra_dir="$root/engines/ghidra_12.1.4_PUBLIC"
+jdk_dir="$root/toolchains/jdk-21.0.12.1+1"
+ghidra_native=mac_arm_64
+
+auto_native_env() {
+  if [ -z "${GHIDRA_INSTALL_DIR:-}" ] && [ -f "$ghidra_dir/Ghidra/application.properties" ]; then
+    export GHIDRA_INSTALL_DIR="$ghidra_dir"
+  fi
+  if [ -z "${JAVA_HOME:-}" ] && [ -x "$jdk_dir/Contents/Home/bin/javac" ]; then
+    export JAVA_HOME="$jdk_dir/Contents/Home"
+  fi
+}
+
+fetch_verified() {
+  local url="$1" expected="$2" path="$3" actual
+  curl --proto '=https' --proto-redir '=https' --tlsv1.2 -fsSL --retry 3 \
+    --connect-timeout 20 --max-time 1200 "$url" -o "$path"
+  actual="$(shasum -a 256 "$path" | awk '{print $1}')"
+  [ "$actual" = "$expected" ] || {
+    echo "REA native dependency SHA-256 mismatch: $(basename "$path")" >&2
+    return 2
+  }
+}
+
+# Ghidra's supported buildNatives task emits into build/os; REA admits both
+# that source-owned location and prebuilt os. Never duplicate built binaries.
+native_ready() {
+  local dir="$1/Ghidra/Features/Decompiler" platform="$ghidra_native"
+  { [ -x "$dir/os/$platform/decompile" ] || [ -x "$dir/build/os/$platform/decompile" ]; } &&
+  { [ -x "$dir/os/$platform/sleigh" ] || [ -x "$dir/build/os/$platform/sleigh" ]; }
+}
+
+# This explicit action downloads pinned vendor releases, then uses Ghidra's
+# supported native build task for macOS ARM64. The public zip alone cannot
+# satisfy REA's decompiler check on this host.
+install_native_ghidra() {
+  [ "$(uname -s):$(uname -m)" = Darwin:arm64 ] || {
+    echo "private Ghidra setup currently supports macOS arm64" >&2; return 2
+  }
+  for cmd in curl shasum tar unzip make clang++; do
+    command -v "$cmd" >/dev/null || { echo "Ghidra prerequisite missing: $cmd" >&2; return 2; }
+  done
+  if [ -L "$root" ] || [ -L "$root/toolchains" ] || [ -L "$root/engines" ] ||
+     [ -L "$ghidra_dir" ] || [ -L "$jdk_dir" ]; then
+    echo "refusing symlinked private native-toolchain roots" >&2; return 2
+  fi
+  mkdir -p "$root/toolchains" "$root/engines"
+  if [ ! -x "$jdk_dir/Contents/Home/bin/javac" ] || [ ! -d "$ghidra_dir" ]; then
+    # The GitHub ZIP, full JDK, native build and Gradle workspace expand well
+    # beyond download size. Refuse an unsafe low-disk bootstrap before fetching.
+    local available_kib
+    available_kib="$(df -Pk "$root" | awk 'END {print $4}')"
+    case "$available_kib" in ''|*[!0-9]*) echo "unable to measure native bootstrap free disk" >&2; return 2;; esac
+    if [ "$available_kib" -lt 4194304 ]; then
+      echo "native REA setup requires 4 GiB available disk; no downloads started" >&2
+      return 2
+    fi
+  fi
+  if [ ! -x "$jdk_dir/Contents/Home/bin/javac" ]; then
+    [ ! -e "$jdk_dir" ] || { echo "incomplete private JDK; refusing overwrite" >&2; return 2; }
+    (
+      set -e
+      stage="$(mktemp -d "$root/toolchains/.jdk-stage.XXXXXXXX")"
+      trap 'rm -rf -- "$stage"' EXIT
+      archive=OpenJDK21U-jdk_aarch64_mac_hotspot_21.0.12.1_1.tar.gz
+      fetch_verified "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/$archive" \
+        3623232f33a9c3baadf304480b2535f9a3cba8a58d42ecbb438ba267315d9998 "$stage/$archive"
+      tar -xzf "$stage/$archive" -C "$stage"
+      test -x "$stage/jdk-21.0.12.1+1/Contents/Home/bin/java"
+      test -x "$stage/jdk-21.0.12.1+1/Contents/Home/bin/javac"
+      "$stage/jdk-21.0.12.1+1/Contents/Home/bin/javac" -version
+      mv "$stage/jdk-21.0.12.1+1" "$jdk_dir"
+    )
+  fi
+  auto_native_env
+  [ -x "$JAVA_HOME/bin/javac" ] || { echo "full JDK 21 required" >&2; return 2; }
+  if [ -e "$ghidra_dir" ]; then
+    native_ready "$ghidra_dir" || {
+      echo "incomplete private Ghidra; refusing overwrite" >&2; return 2
+    }
+  else
+    (
+      set -e
+      stage="$(mktemp -d "$root/engines/.ghidra-stage.XXXXXXXX")"
+      trap 'rm -rf -- "$stage"' EXIT
+      archive=ghidra_12.1.4_PUBLIC_20260921.zip
+      fetch_verified "https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_12.1.4_build/$archive" \
+        ddac49f903da9d5bac833e5cc79395098b9c33cfd3279be5f31bd00387d2d4db "$stage/$archive"
+      unzip -q "$stage/$archive" -d "$stage"
+      target="$stage/ghidra_12.1.4_PUBLIC"
+      test -f "$target/Ghidra/application.properties"
+      test -f "$target/support/analyzeHeadless"
+      if ! native_ready "$target"; then
+        echo "Building macOS arm64 decompiler through supported Ghidra buildNatives"
+        (cd "$target/support/gradle"; \
+          GRADLE_USER_HOME="$root/toolchains/gradle-cache" \
+          JAVA_HOME="$JAVA_HOME" bash ./gradlew --no-daemon buildNatives)
+      fi
+      native_ready "$target" || {
+        echo "Ghidra Gradle native build succeeded without a runnable ARM64 decompiler" >&2
+        exit 1
+      }
+      mv "$target" "$ghidra_dir"
+    )
+  fi
+  auto_native_env
+  printf 'REA Ghidra native ready: %s\nFull JDK: %s\n' "$ghidra_dir" "$JAVA_HOME"
+}
+
 
 case "$action" in
   install)
@@ -159,6 +270,11 @@ case "$action" in
     stage=""
     printf 'REA %s installed in %s\n' "$version" "$prefix"
     ;;
+  install-native)
+    need_rea
+    install_native_ghidra
+    rea providers --json
+    ;;
   smoke)
     need_rea
     mkdir -p "$root"
@@ -199,12 +315,12 @@ case "$action" in
           "fl studio"*.app|"ableton live"*.app|"bitwig studio"*.app|reaper*.app|\
           "logic pro"*.app|blender*.app|"davinci resolve"*.app|\
           "adobe premiere pro"*.app|"adobe after effects"*.app|\
-          obs*.app|"obs studio"*.app)
+          obs.app|"obs studio"*.app)
             printf 'available %s\n' "$candidate"
             matches=$((matches+1))
             ;;
         esac
-      done < <(find "$app_root" -maxdepth 4 \( -type d -o -type l \) -iname '*.app' -print0 2>/dev/null)
+      done < <(find "$app_root" -maxdepth 4 \( -type d -o -type l \) -iname '*.app' -print0 -prune 2>/dev/null)
     done
     if [ "$matches" -eq 0 ]; then
       printf 'no recognized creative application bundles in selected locations\n'
@@ -242,6 +358,7 @@ Bonfyre-local REA 6.4.0 (pinned, isolated; no global npm or auto-inspection)
   bash scripts/rea-local.sh smoke
   bash scripts/rea-local.sh doctor
   bash scripts/rea-local.sh targets
+  bash scripts/rea-local.sh install-native   # private full JDK21 + ARM64 Ghidra
   bash scripts/rea-local.sh static-js /explicit/authorized/source-directory
   bash scripts/rea-local.sh native ghidra|hopper /explicit/authorized/binary-or-app
   bash scripts/rea-local.sh setup-preview
