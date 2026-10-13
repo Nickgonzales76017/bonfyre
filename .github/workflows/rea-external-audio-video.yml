@@ -1,0 +1,116 @@
+name: REA external audio-video implementation evidence
+
+# Source-only investigation. No external app binaries or customer media are
+# fetched, executed, committed, uploaded or treated as performance truth.
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/rea-external-audio-video.yml'
+      - 'scripts/rea-local.sh'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/rea-external-audio-video.yml'
+      - 'scripts/rea-local.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-packaged-external-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Install pinned REA in disposable home
+        run: |
+          echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/rea-workstation" >> "$GITHUB_ENV"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-workstation"
+          bash scripts/rea-local.sh install
+          bash scripts/rea-local.sh smoke
+      - name: Inspect real Tone transport and FFmpeg browser-worker artifacts
+        env:
+          npm_config_audit: 'false'
+          npm_config_fund: 'false'
+          npm_config_update_notifier: 'false'
+        run: |
+          set -euo pipefail
+          rea="$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          # Versions are exact; npm pack's integrity is recorded as source
+          # provenance. No npm lifecycle scripts or third-party code executes.
+          for name in tone ffmpeg; do
+            if [ "$name" = tone ]; then spec=tone@15.1.22; else spec=@ffmpeg/ffmpeg@0.12.15; fi
+            job="$RUNNER_TEMP/rea-external-$name"
+            mkdir -p "$job/packed" "$job/source" "$job/fixture"
+            npm pack --ignore-scripts --json --pack-destination "$job/packed" "$spec" > "$job/metadata.json"
+            archive="$(node -e 'const fs=require("node:fs");let p=JSON.parse(fs.readFileSync(process.argv[1]));if(p.length!==1||!p[0].integrity)process.exit(1);console.log(p[0].filename)' "$job/metadata.json")"
+            tar -xzf "$job/packed/$archive" -C "$job/source" --strip-components=1
+            export REA_EXT_ROOT="$job"
+            export REA_EXT_NAME="$name"
+            node --input-type=module <<'JS'
+          import {existsSync,statSync,readdirSync,mkdirSync,copyFileSync,writeFileSync,readFileSync} from 'node:fs';
+          import {join,basename,extname} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const base=process.env.REA_EXT_ROOT, name=process.env.REA_EXT_NAME;
+          const pkg=JSON.parse(readFileSync(join(base,'metadata.json'),'utf8'))[0];
+          const entries=[],queue=[join(base,'source')];
+          while(queue.length){
+            const dir=queue.shift();
+            for(const child of readdirSync(dir,{withFileTypes:true})){
+              const file=join(dir,child.name);
+              if(child.isDirectory())queue.push(file);
+              else if(child.isFile()&&/\.(m?js|cjs)$/.test(child.name)&&!child.name.includes('.min.')&&
+                !child.name.includes('.map.')&&statSync(file).size>100&&statSync(file).size<=524288)entries.push(file);
+            }
+          }
+          // Prefer actual transport, clock, worker and codec dispatch code to
+          // generated sourcemaps or docs. A missing name is not fabricated.
+          const relevance=file=>(/transport|ticker|clock|scheduler|worklet|worker|ffmpeg|classes|context/i.test(file)?0:1);
+          entries.sort((a,b)=>relevance(a)-relevance(b)||a.localeCompare(b));
+          if(!entries.length)throw Error('No real JavaScript artifact available for '+name);
+          const chosen=entries.slice(0,8);
+          mkdirSync(join(base,'fixture/src'),{recursive:true});
+          const manifest=chosen.map((file,i)=>{
+            const out=join(base,'fixture/src',String(i).padStart(2,'0')+'-'+basename(file));
+            copyFileSync(file,out);
+            const body=readFileSync(file);
+            return {source_rel:file.slice(join(base,'source').length+1),
+              bytes:body.length,sha256:createHash('sha256').update(body).digest('hex')};
+          });
+          writeFileSync(join(base,'fixture/package.json'),JSON.stringify({
+            name:'aurekai-rea-external-'+name,private:true,type:'module',
+            observed_npm_package:pkg.name,observed_npm_version:pkg.version
+          }));
+          writeFileSync(join(base,'selected.json'),JSON.stringify({
+            npm_integrity:pkg.integrity,package:pkg.name,version:pkg.version,files:manifest
+          }));
+          console.log(JSON.stringify({package:pkg.name,version:pkg.version,
+            candidate_js_artifacts:entries.length,analyzed_files:chosen.length,
+            bytes_analyzed:manifest.reduce((sum,x)=>sum+x.bytes,0),mode:'static_only'}));
+          JS
+            timeout 240s node "$rea" analyze-javascript-application "$job/fixture" --json > "$job/rea-evidence.json"
+            node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const dir=process.env.REA_EXT_ROOT;
+          const source=JSON.parse(readFileSync(join(dir,'selected.json'),'utf8'));
+          const evidence=JSON.parse(readFileSync(join(dir,'rea-evidence.json'),'utf8'));
+          if(typeof evidence.evidence_id!=='string'||!evidence.evidence_id.startsWith('ev_'))
+            throw Error('REA did not authenticate a static Evidence identity');
+          if(!source.files.length||source.files.some(x=>x.sha256.length!==64))
+            throw Error('Incomplete selected source-body identities');
+          console.log(JSON.stringify({external_package:source.package,version:source.version,
+            npm_integrity:source.npm_integrity,rea_evidence_id:evidence.evidence_id,
+            selected_files:source.files.length,source_hashes:source.files.map(x=>x.sha256),
+            analysis_state:'static_source_evidence_only',commercial_binaries_used:false,
+            client_data_used:false,performance_gain_proven:false}));
+          JS
+            rm -rf -- "$job"
+          done
