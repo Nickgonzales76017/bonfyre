@@ -8,6 +8,8 @@ on:
       - 'examples/federated/**'
       - 'scripts/federated_modules.sh'
       - 'scripts/performance_equivalence.mjs'
+      - 'scripts/performance_physical_receipts.mjs'
+      - 'scripts/tests/performance_physical_receipts.test.mjs'
       - 'scripts/tests/performance_equivalence.test.mjs'
       - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
@@ -19,6 +21,8 @@ on:
       - 'examples/federated/**'
       - 'scripts/federated_modules.sh'
       - 'scripts/performance_equivalence.mjs'
+      - 'scripts/performance_physical_receipts.mjs'
+      - 'scripts/tests/performance_physical_receipts.test.mjs'
       - 'scripts/tests/performance_equivalence.test.mjs'
       - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
@@ -46,8 +50,13 @@ jobs:
           bash scripts/federated_modules.sh verify perf-memory
           bash scripts/federated_modules.sh verify perf-model
           bash scripts/federated_modules.sh verify one integrations/federated/interfaces/opentui
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Validate read-only no-loss performance receipt review
         run: node --test scripts/tests/performance_equivalence.test.mjs
+      - name: Read back native physical CopyReceipts without mutations
+        run: node --test scripts/tests/performance_physical_receipts.test.mjs
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
