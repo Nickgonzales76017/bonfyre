@@ -41,6 +41,17 @@ test('Creator source cut lowers to exact native PCM and mixes under synthetic ap
     const run=spawnSync(join(dir,'mix'),candidate.argv,{encoding:'utf8'});
     assert.equal(run.status,0,run.stderr);
     const buffer=readFileSync(out);assert.equal(buffer.length,4800*4);
+    const sparseCandidate=planNativePcmWindow(p,bindings,{
+      windowIndex:0,channels:1,output:join(dir,'mixed-sparse.f32'),sparseSilence:true
+    });
+    assert.equal(sparseCandidate.output_representation,'sparse_file_holes_candidate');
+    assert.equal(sparseCandidate.sparse_silence_requested,true);
+    assert.equal(sparseCandidate.argv.at(-1),'--sparse-silence');
+    assert.equal(sparseCandidate.execution_authority_inferred,false);
+    const sparseRun=spawnSync(join(dir,'mix'),sparseCandidate.argv,{encoding:'utf8'});
+    assert.equal(sparseRun.status,0,sparseRun.stderr);
+    assert.equal(JSON.parse(sparseRun.stdout).sparse_silence,true);
+    assert.equal(readFileSync(join(dir,'mixed-sparse.f32')).equals(buffer),true);
     for(const [at,expected] of [[0,.5],[1599,.5],[1600,1.5],[3199,1.5],[3200,1],[4799,1]])
       assert.equal(buffer.readFloatLE(at*4),expected);
     assert.equal(JSON.parse(run.stdout).execution_authority_inferred,false);
@@ -54,7 +65,8 @@ test('native PCM candidate refuses unbound source claims and changed scope',()=>
   const bindings={a:{path:'/tmp/a.f32',sha256:h('c')},b:{path:'/tmp/b.f32',sha256:h('d')}};
   const opts={windowIndex:0,channels:1,output:'/tmp/render.f32'};
   assert.equal(planNativePcmWindow(p,bindings,opts).source_bindings.length,2);
-  for(const patch of [{channels:0},{windowIndex:99},{output:'relative.f32'}])
+  for(const patch of [{channels:0},{windowIndex:99},{output:'relative.f32'},
+    {sparseSilence:'true'}])
     assert.throws(()=>planNativePcmWindow(p,bindings,{...opts,...patch}));
   assert.throws(()=>planNativePcmWindow(p,{...bindings,b:{...bindings.b,sha256:h('f')}},opts));
   assert.throws(()=>planNativePcmWindow({...p,effect_authorized:true},bindings,opts));
