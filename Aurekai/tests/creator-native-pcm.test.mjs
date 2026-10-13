@@ -80,6 +80,7 @@ test('native PCM candidate refuses unbound source claims and changed scope',()=>
 test('128 repeated Creator PCM tiles collapse to one exact physical candidate',()=>{
   const t=fixture();
   t.frames=384;
+  t.fps={num:30,den:1};
   t.sources=[{id:'a',kind:'audio',sha256:h('c'),frames:3}];
   t.tracks=[{id:'beats',kind:'audio',clips:Array.from({length:128},(_,i)=>({
     id:'beat'+i,source_id:'a',at:i*3,in:0,frames:3,gain:0.5
