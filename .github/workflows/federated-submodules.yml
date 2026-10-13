@@ -7,6 +7,8 @@ on:
       - 'integrations/federated/**'
       - 'examples/federated/**'
       - 'scripts/federated_modules.sh'
+      - 'scripts/performance_equivalence.mjs'
+      - 'scripts/tests/performance_equivalence.test.mjs'
       - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
   push:
@@ -16,6 +18,8 @@ on:
       - 'integrations/federated/**'
       - 'examples/federated/**'
       - 'scripts/federated_modules.sh'
+      - 'scripts/performance_equivalence.mjs'
+      - 'scripts/tests/performance_equivalence.test.mjs'
       - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
 
@@ -42,6 +46,8 @@ jobs:
           bash scripts/federated_modules.sh verify perf-memory
           bash scripts/federated_modules.sh verify perf-model
           bash scripts/federated_modules.sh verify one integrations/federated/interfaces/opentui
+      - name: Validate read-only no-loss performance receipt review
+        run: node --test scripts/tests/performance_equivalence.test.mjs
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
