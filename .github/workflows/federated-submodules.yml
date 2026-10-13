@@ -179,8 +179,44 @@ jobs:
           }
           console.log('Bundled kernel and all declared subpath exports verified');
           JS
-      - name: Verify exact nonmaterializing Creator render plans
-        run: node --test Aurekai/tests/creator-render-program.test.mjs
+      - name: Verify exact nonmaterializing Creator render plans and akai route
+        run: |
+          node --test Aurekai/tests/creator-render-program.test.mjs
+          node --input-type=module <<'JS'
+          import {mkdtempSync,writeFileSync,rmSync} from 'node:fs';
+          import {tmpdir} from 'node:os';
+          import {join,resolve} from 'node:path';
+          import {spawnSync} from 'node:child_process';
+          const dir=mkdtempSync(join(tmpdir(),'aurekai-creator-'));
+          const hex=ch=>ch.repeat(64);
+          const timeline={
+            schema:'aurekai.creator.timeline.v1',
+            scope:{owner:'fixture',purpose:'preview',authority_digest:hex('a'),frontier_digest:hex('b')},
+            fps:{num:30000,den:1001},sample_rate:48000,frames:8,
+            sources:[{id:'s',kind:'audio',sha256:hex('c'),frames:8}],
+            tracks:[{id:'t',kind:'audio',clips:[{id:'c',source_id:'s',at:0,in:0,frames:8}]}]
+          };
+          try {
+            const input=join(dir,'timeline.json');
+            writeFileSync(input,JSON.stringify(timeline));
+            const cli=(...args)=>spawnSync(process.execPath,[resolve('Aurekai/bin/akai.mjs'),...args],
+              {encoding:'utf8'});
+            const r=cli('creator:compile','--input',input,'--shard-frames','3','--from','3','--to','5','--json');
+            if(r.status!==0)throw Error('Creator compile route failed: '+r.stderr);
+            const planned=JSON.parse(r.stdout);
+            if(planned.windows.length!==1||planned.windows[0].index!==1||planned.state!=='planned_unexecuted')
+              throw Error('Creator CLI did not compile requested exact cut');
+            const edit=join(dir,'edit.json');
+            writeFileSync(edit,JSON.stringify({expected_digest:planned.timeline_digest,op:'gain',
+              track_id:'t',clip_id:'c',value:0.7}));
+            const candidate=cli('creator:edit','--input',input,'--edit',edit,'--json');
+            if(candidate.status!==0||JSON.parse(candidate.stdout).edit.state!=='candidate_uncommitted')
+              throw Error('Creator CLI mutation boundary did not preserve candidate state');
+            const bad=cli('creator:compile','--input',input,'--from','4','--json');
+            if(bad.status===0)throw Error('Creator CLI admitted an incomplete range');
+            console.log('akai Creator typed cut and candidate edit verified');
+          } finally {rmSync(dir,{recursive:true,force:true});}
+          JS
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
