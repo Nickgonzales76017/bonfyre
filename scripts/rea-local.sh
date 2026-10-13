@@ -163,6 +163,17 @@ install_native_ghidra() {
     echo "refusing symlinked private native-toolchain roots" >&2; return 2
   fi
   mkdir -p "$root/toolchains" "$root/engines"
+  if [ ! -x "$jdk_dir/Contents/Home/bin/javac" ] || [ ! -d "$ghidra_dir" ]; then
+    # The GitHub ZIP, full JDK, native build and Gradle workspace expand well
+    # beyond download size. Refuse an unsafe low-disk bootstrap before fetching.
+    local available_kib
+    available_kib="$(df -Pk "$root" | awk 'END {print $4}')"
+    case "$available_kib" in ''|*[!0-9]*) echo "unable to measure native bootstrap free disk" >&2; return 2;; esac
+    if [ "$available_kib" -lt 4194304 ]; then
+      echo "native REA setup requires 4 GiB available disk; no downloads started" >&2
+      return 2
+    fi
+  fi
   if [ ! -x "$jdk_dir/Contents/Home/bin/javac" ]; then
     [ ! -e "$jdk_dir" ] || { echo "incomplete private JDK; refusing overwrite" >&2; return 2; }
     (
@@ -199,7 +210,9 @@ install_native_ghidra() {
       test -f "$target/support/analyzeHeadless"
       if ! native_ready "$target"; then
         echo "Building macOS arm64 decompiler through supported Ghidra buildNatives"
-        (cd "$target/support/gradle"; JAVA_HOME="$JAVA_HOME" bash ./gradlew buildNatives)
+        (cd "$target/support/gradle"; \
+          GRADLE_USER_HOME="$root/toolchains/gradle-cache" \
+          JAVA_HOME="$JAVA_HOME" bash ./gradlew --no-daemon buildNatives)
       fi
       native_ready "$target" || {
         echo "Ghidra Gradle native build succeeded without a runnable ARM64 decompiler" >&2
