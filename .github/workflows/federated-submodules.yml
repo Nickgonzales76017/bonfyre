@@ -16,6 +16,7 @@ on:
       - '.gitignore'
       - 'Aurekai/.gitignore'
       - 'Aurekai/README.md'
+      - 'Aurekai/bin/akai.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
       - 'Aurekai/registry/**'
@@ -36,6 +37,7 @@ on:
       - '.gitignore'
       - 'Aurekai/.gitignore'
       - 'Aurekai/README.md'
+      - 'Aurekai/bin/akai.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
       - 'Aurekai/registry/**'
@@ -76,7 +78,8 @@ jobs:
           test ! -e Aurekai/generated/integration-repos
           git check-ignore -q Aurekai/generated/integration-repos/autogen/integration.manifest.json
           node --input-type=module <<'JS'
-          import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs';
+          import { mkdtempSync, existsSync, readFileSync, rmSync, mkdirSync, symlinkSync } from 'node:fs';
+          import { spawnSync } from 'node:child_process';
           import { tmpdir } from 'node:os';
           import { join, resolve } from 'node:path';
           import { scaffoldIntegrationRepos } from './Aurekai/src/integration-repo-scaffold.mjs';
@@ -114,8 +117,24 @@ jobs:
             if (scoped.count !== 1 || scoped.repos[0].slug !== virtualCut.repos[0].slug || existsSync(virtualDest)) {
               throw Error('Scoped virtual integration cut expanded or mutated');
             }
+            // Exercise the actual public akai front door without installing
+            // the production runtime or exporting generated artifacts.
+            const moduleDir = resolve('Aurekai/node_modules/@aurekai');
+            mkdirSync(moduleDir, { recursive: true });
+            symlinkSync(resolve('Aurekai/kernel'), join(moduleDir, 'continuity-core'), 'dir');
+            const akai = resolve('Aurekai/bin/akai.mjs');
+            const cli = (...args) => spawnSync(process.execPath, [akai, 'integrate:scaffold-repos', ...args],
+              { encoding: 'utf8' });
+            const viaCli = cli('--target', scoped.repos[0].slug,
+              '--out-dir', virtualDest, '--virtual', '--json');
+            if (viaCli.status !== 0) throw Error('akai virtual scaffold failed: ' + viaCli.stderr);
+            const readback = JSON.parse(viaCli.stdout);
+            if (readback.mode !== 'virtual' || readback.recipe_sha256 !== scoped.recipe_sha256 ||
+                existsSync(virtualDest)) throw Error('akai virtual route changed or materialized output');
+            const cannotMix = cli('--target', scoped.repos[0].slug, '--virtual', '--verify');
+            if (cannotMix.status !== 2) throw Error('akai accepted conflicting scaffold modes');
             if (existsSync('Aurekai/generated/integration-repos')) throw Error('Generator wrote into tracked checkout');
-            console.log('Verified ' + index.count + ' exact virtual-to-physical template cuts and one scoped virtual cut');
+            console.log('Verified ' + index.count + ' exact virtual-to-physical template cuts plus akai virtual routing');
           } finally {
             rmSync(destination, { recursive: true, force: true });
           }
