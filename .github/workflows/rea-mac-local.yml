@@ -97,6 +97,38 @@ jobs:
           bash scripts/rea-local.sh targets
           bash scripts/rea-local.sh rea providers --json
           bash scripts/rea-local.sh setup-preview
+      - name: Register REA in disposable Codex and Claude Code profiles
+        run: |
+          set -eu
+          # Explicitly isolate users' real agent configurations and credentials.
+          export HOME="$RUNNER_TEMP/rea-agents-home"
+          mkdir -p "$HOME"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-private-node-regression"
+          export BONFYRE_REA_FORCE_PRIVATE_NODE=1
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
+          bash scripts/rea-local.sh agents-preview > "$RUNNER_TEMP/rea-agents-plan.json"
+          bash scripts/rea-local.sh agents-connect > "$RUNNER_TEMP/rea-agents-applied.json"
+          test -f "$HOME/.codex/config.toml"
+          test -f "$HOME/.claude.json"
+          grep -qi rea "$HOME/.codex/config.toml"
+          grep -qi rea "$HOME/.claude.json"
+          # POSIX upstream REA registers the absolute JS entrypoint, which
+          # uses /usr/bin/env node. Its doctor-compatible format is deliberate;
+          # agents-connect refuses if the host PATH cannot launch REA.
+          entry="$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          grep -Fq "$entry" "$HOME/.codex/config.toml"
+          grep -Fq "$entry" "$HOME/.claude.json"
+          node - <<'JS'
+          const fs=require('node:fs'), path=require('node:path');
+          const root=process.env.RUNNER_TEMP;
+          const installed=JSON.parse(fs.readFileSync(path.join(root,'rea-agents-applied.json'),'utf8'));
+          console.log(JSON.stringify({setup_status:installed.status,
+            applied_actions:installed.appliedActions?.length??null,
+            target_scope:'disposable codex+claude only'}));
+          JS
+          bash scripts/rea-local.sh rea doctor --client codex --json > "$RUNNER_TEMP/rea-agent-codex-health.json"
+          bash scripts/rea-local.sh rea doctor --client claude_code --json > "$RUNNER_TEMP/rea-agent-claude-health.json"
+          echo "REA scoped agent registrations verified without touching real Mac accounts"
       - name: Verify no scanned estate or global npm artifact
         run: |
           set -eu

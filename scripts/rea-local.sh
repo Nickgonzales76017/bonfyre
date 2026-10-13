@@ -346,6 +346,26 @@ case "$action" in
     need_rea
     rea setup --client codex --skill=false --dry-run --json
     ;;
+  agents-preview)
+    need_rea
+    # One reviewed scope: Codex and Claude Code only, never every detected app.
+    rea setup --client codex --client claude_code --dry-run --json
+    ;;
+  agents-connect)
+    need_rea
+    # Upstream REA currently registers the absolute script entry with an
+    # env-node shebang on POSIX, not process.execPath. Do not claim our private
+    # Node can start that MCP in an agent whose PATH exposes only an old Node.
+    # Keep upstream's owned/doctor-compatible registration format unchanged.
+    if ! command -v node >/dev/null || ! supported_node "$(command -v node)"; then
+      echo "REA MCP registration needs compatible Node on agent PATH (22.19+, 24.11+ or 26+)" >&2
+      echo "The private REA Node is usable via the helper, but REA's upstream setup currently emits an env-node launcher. No agent configuration changed." >&2
+      exit 2
+    fi
+    # This command itself is an explicit user request. REA owns backups,
+    # conflict checks, atomic writes and matching skill installation.
+    rea setup --client codex --client claude_code --yes --json
+    ;;
   rea)
     need_rea
     if [ "$#" -lt 1 ]; then echo "provide explicit REA CLI arguments" >&2; exit 2; fi
@@ -362,6 +382,8 @@ Bonfyre-local REA 6.4.0 (pinned, isolated; no global npm or auto-inspection)
   bash scripts/rea-local.sh static-js /explicit/authorized/source-directory
   bash scripts/rea-local.sh native ghidra|hopper /explicit/authorized/binary-or-app
   bash scripts/rea-local.sh setup-preview
+  bash scripts/rea-local.sh agents-preview
+  bash scripts/rea-local.sh agents-connect   # explicit Codex + Claude registration
   bash scripts/rea-local.sh rea providers --json
 REA static analysis is not behavioral equivalence or execution authorization.
 Hopper and Ghidra require independent installation and compatible licenses.
