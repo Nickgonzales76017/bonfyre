@@ -6,6 +6,14 @@
   "license": "MIT",
   "exports": {
     ".": "./src/index.mjs",
-    "./state-runtime": "./src/state-runtime.mjs"
+    "./state": "./src/state-runtime.mjs",
+    "./state-runtime": "./src/state-runtime.mjs",
+    "./transition": "./src/transition-runtime.mjs",
+    "./trajectory": "./src/trajectory-runtime.mjs",
+    "./claim": "./src/claim-runtime.mjs",
+    "./policy": "./src/policy-registry.mjs",
+    "./chart": "./src/chart-registry.mjs",
+    "./schema-registry": "./src/schema-registry.mjs",
+    "./trajectory-calculus": "./src/trajectory-calculus.mjs"
   }
 }
