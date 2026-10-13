@@ -36,7 +36,7 @@ test('unmeasured counters and missing observation receipts refuse',()=>{
 test('no demonstrable gain refuses',()=>{const p=fixture();p.candidate.metrics={...p.baseline.metrics};fails(p,/no-measured-resource-gain/);});
 test('approximation requires equivalent final output and an exact receiving recheck',()=>{
  const p=fixture();p.candidate.kind='approximate-prefilter';fails(p,/exact-recheck-not-witnessed/);
- p.candidate.preservation={axis:p.coordinate.axis,k:5,cohort:'same-input',min_recall:.9,observed_recall:.95,false_prunes:1,final_exact_recheck:true,recheck_receipt_ref:'owner:exact-rerank'};
+ p.candidate.preservation={axis:p.coordinate.axis,k:5,cohort:'same-input',min_recall:.9,observed_recall:.95,false_prunes:0,final_exact_recheck:true,recheck_receipt_ref:'owner:exact-rerank'};
  assert.equal(reviewPerformance(p).decision,'eligible-for-human-promotion-review');
  p.candidate.result_digest=sha('e');fails(p,/final-result-differs/);
 });
@@ -49,7 +49,7 @@ test('approximation can never bypass exact money or identity',()=>{
 test('different axis, k or cohort never borrow each other’s evidence',()=>{
  for(const property of ['axis','k','cohort']){
   const p=fixture();p.candidate.kind='approximate-prefilter';
-  p.candidate.preservation={axis:p.coordinate.axis,k:5,cohort:'same-input',min_recall:.9,observed_recall:.95,false_prunes:1,final_exact_recheck:true,recheck_receipt_ref:'owner:exact-rerank'};
+  p.candidate.preservation={axis:p.coordinate.axis,k:5,cohort:'same-input',min_recall:.9,observed_recall:.95,false_prunes:0,final_exact_recheck:true,recheck_receipt_ref:'owner:exact-rerank'};
   p.candidate.preservation[property]=property==='k'?7:'other';fails(p,/drift/);
  }});
 test('prices are unknown until both rates are evidenced, and priced regressions hold',()=>{
@@ -58,6 +58,21 @@ test('prices are unknown until both rates are evidenced, and priced regressions 
  p.baseline.provider_cost.rate_receipt_ref='provider:rate-1';p.candidate.provider_cost.rate_receipt_ref='provider:rate-1';
  assert.equal(reviewPerformance(p).financial.observed_cost_delta_usd,-1);
  p.candidate.provider_cost.amount_usd=2;fails(p,/priced-provider-cost-regressed/);
+});
+test('any observed false prune disqualifies a no-loss replacement',()=>{
+ const p=fixture();p.candidate.kind='approximate-prefilter';
+ p.candidate.preservation={axis:p.coordinate.axis,k:5,cohort:p.coordinate.cohort,
+   min_recall:.9,observed_recall:.95,false_prunes:1,final_exact_recheck:true,recheck_receipt_ref:'owner:exact-rerank'};
+ fails(p,/false-prune-means-functionality-loss/);
+});
+test('unknown non-effect classification cannot claim approximate authority',()=>{
+ const p=fixture();p.coordinate.work_class='custom-unknown';p.candidate.kind='approximate-prefilter';
+ p.candidate.preservation={axis:p.coordinate.axis,k:5,cohort:p.coordinate.cohort,
+   min_recall:1,observed_recall:1,false_prunes:0,final_exact_recheck:true,recheck_receipt_ref:'owner:exact-rerank'};
+ fails(p,/loss-forbidden-for-exact-work/);
+});
+test('one reused receipt cannot masquerade as a baseline and optimized trial',()=>{
+ const p=fixture();p.candidate.receipt_ref=p.baseline.receipt_ref;fails(p,/candidate-reuses-baseline-receipt/);
 });
 test('missing rollback or unsupported schema refuses',()=>{
  const p=fixture();delete p.rollback;fails(p,/rollback-not-witnessed/);
