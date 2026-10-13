@@ -45,8 +45,9 @@ jobs:
           fi
           tail -n 12 "$RUNNER_TEMP/rea-ghidra-install.log"
           test -x "$BONFYRE_REA_ROOT/toolchains/jdk-21.0.12.1+1/Contents/Home/bin/javac"
-          test -x "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/os/mac_arm_64/decompile"
-          test -x "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/os/mac_arm_64/sleigh"
+          decompiler="$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler"
+          test -x "$decompiler/build/os/mac_arm_64/decompile" || test -x "$decompiler/os/mac_arm_64/decompile"
+          test -x "$decompiler/build/os/mac_arm_64/sleigh" || test -x "$decompiler/os/mac_arm_64/sleigh"
           bash scripts/rea-local.sh install-native > /dev/null
       - name: REA actually analyzes a compiled Bonfyre-owned Mach-O
         run: |
