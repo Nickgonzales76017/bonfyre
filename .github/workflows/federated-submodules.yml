@@ -188,18 +188,47 @@ jobs:
           pins = dict(listed)
           if len(listed) != len(pins):
               raise SystemExit("Duplicate atlas path")
-          rows = subprocess.check_output(
-              ["git", "config", "-f", ".gitmodules", "--get-regexp", r"^submodule\..*\.path$"],
-              text=True,
-          ).splitlines()
-          expected = {}
-          for line in rows:
-              _, path = line.split(" ", 1)
-              tree = subprocess.check_output(["git", "ls-tree", "HEAD", "--", path], text=True).strip()
-              match = re.fullmatch(r"160000 commit ([0-9a-f]{40})\t(.+)", tree)
-              if not match or match.group(2) != path:
-                  raise SystemExit(f"Not a pinned Gitlink: {path}")
-              expected[path] = match.group(1)
+          # Read the manifest and tracked Gitlinks once each, rather than
+          # invoking git twice per module. NUL records preserve literal paths.
+          config = subprocess.check_output(
+              ["git", "config", "-z", "-f", ".gitmodules", "--get-regexp",
+               r"^submodule\..*\.(path|url)$"]
+          )
+          definitions = {}
+          for entry in config.split(b"\0"):
+              if not entry:
+                  continue
+              name, sep, value = entry.partition(b"\n")
+              if not sep:
+                  raise SystemExit("Malformed submodule manifest entry")
+              key = name.decode("utf-8")
+              item = re.fullmatch(r"submodule\.(.+)\.(path|url)", key)
+              if not item:
+                  raise SystemExit(f"Unexpected submodule key {key}")
+              definitions.setdefault(item.group(1), {})[item.group(2)] = value.decode("utf-8")
+          tree = subprocess.check_output(["git", "ls-tree", "-rz", "HEAD"])
+          tracked = {}
+          for entry in tree.split(b"\0"):
+              if not entry:
+                  continue
+              metadata, sep, path_bytes = entry.partition(b"\t")
+              if not sep:
+                  raise SystemExit("Malformed Git tree entry")
+              mode, kind, digest = metadata.decode("ascii").split(" ")
+              if mode == "160000":
+                  if kind != "commit" or not re.fullmatch(r"[0-9a-f]{40}", digest):
+                      raise SystemExit("Invalid Gitlink object")
+                  tracked[path_bytes.decode("utf-8")] = digest
+          expected, urls = {}, {}
+          for name, fields in definitions.items():
+              if set(fields) != {"path", "url"}:
+                  raise SystemExit(f"Incomplete submodule entry: {name}")
+              path, url = fields["path"], fields["url"]
+              if path in expected or path not in tracked:
+                  raise SystemExit(f"Missing or duplicate pinned Gitlink: {path}")
+              expected[path], urls[path] = tracked[path], url
+          if set(expected) != set(tracked):
+              raise SystemExit(f"Unregistered Gitlinks: {sorted(set(tracked)-set(expected))}")
           # The visible PIN label and its source URL must agree with the
           # Gitlink; updating only data-pin once left a stale human label.
           blocks = re.findall(r'<article class="module".*?</article>', catalog, re.S)
@@ -211,9 +240,7 @@ jobs:
               if not marker or not shown or shown.group(1) != marker.group(2)[:12]:
                   raise SystemExit("Source atlas has a stale visible PIN label")
               path, pin = marker.groups()
-              submodule_url = subprocess.check_output(
-                  ["git", "config", "-f", ".gitmodules", f"submodule.{path}.url"], text=True
-              ).strip()
+              submodule_url = urls[path]
               if submodule_url.endswith(".git"):
                   submodule_url = submodule_url[:-4]
               if f'href="{submodule_url}/tree/{pin}"' not in block:
