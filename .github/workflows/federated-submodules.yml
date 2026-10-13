@@ -17,6 +17,10 @@ on:
       - 'Aurekai/.gitignore'
       - 'Aurekai/README.md'
       - 'Aurekai/bin/akai.mjs'
+      - 'Aurekai/package.json'
+      - 'Aurekai/kernel/package.json'
+      - 'Aurekai/kernel/src/**'
+      - 'Aurekai/src/continuity-core.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
       - 'Aurekai/src/integration-connectors.mjs'
@@ -42,6 +46,10 @@ on:
       - 'Aurekai/.gitignore'
       - 'Aurekai/README.md'
       - 'Aurekai/bin/akai.mjs'
+      - 'Aurekai/package.json'
+      - 'Aurekai/kernel/package.json'
+      - 'Aurekai/kernel/src/**'
+      - 'Aurekai/src/continuity-core.mjs'
       - 'Aurekai/src/integration-repo-scaffold.mjs'
       - 'Aurekai/src/integration-engine.mjs'
       - 'Aurekai/src/integration-connectors.mjs'
@@ -77,6 +85,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Install bundled Aurekai kernel offline
+        run: npm install --prefix Aurekai --offline --ignore-scripts --no-audit --no-fund
       - name: Validate read-only no-loss performance receipt review
         run: node --test scripts/tests/performance_equivalence.test.mjs
       - name: Read back native physical CopyReceipts without mutations
@@ -86,7 +96,7 @@ jobs:
           test ! -e Aurekai/generated/integration-repos
           git check-ignore -q Aurekai/generated/integration-repos/autogen/integration.manifest.json
           node --input-type=module <<'JS'
-          import { mkdtempSync, existsSync, readFileSync, rmSync, mkdirSync, symlinkSync } from 'node:fs';
+          import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs';
           import { spawnSync } from 'node:child_process';
           import { tmpdir } from 'node:os';
           import { join, resolve } from 'node:path';
@@ -127,9 +137,6 @@ jobs:
             }
             // Exercise the actual public akai front door without installing
             // the production runtime or exporting generated artifacts.
-            const moduleDir = resolve('Aurekai/node_modules/@aurekai');
-            mkdirSync(moduleDir, { recursive: true });
-            symlinkSync(resolve('Aurekai/kernel'), join(moduleDir, 'continuity-core'), 'dir');
             const akai = resolve('Aurekai/bin/akai.mjs');
             const cli = (...args) => spawnSync(process.execPath, [akai, 'integrate:scaffold-repos', ...args],
               { encoding: 'utf8' });
@@ -147,10 +154,29 @@ jobs:
             rmSync(destination, { recursive: true, force: true });
           }
           JS
-      - name: Verify one policy cut per batch with exact target parity
-        run: node --test Aurekai/tests/integration-batch-parity.test.mjs
-      - name: Verify connector fan-out reuses owner inputs without changing receipts
-        run: node --test Aurekai/tests/integration-ingest-batch-parity.test.mjs
+      - name: Verify Aurekai runtime and connector parity
+        run: npm test --prefix Aurekai
+      - name: Verify bundled kernel subpaths and shared execution cut
+        run: |
+          node --input-type=module <<'JS'
+          import { resolve } from 'node:path';
+          import { compileKernelIntegrationCut } from './Aurekai/src/continuity-core.mjs';
+          const wrappers = [
+            'kernel-state-runtime.mjs', 'kernel-transition-runtime.mjs',
+            'kernel-trajectory-runtime.mjs', 'kernel-claim-runtime.mjs',
+            'kernel-policy-registry.mjs', 'kernel-chart-registry.mjs',
+            'kernel-schema-registry.mjs', 'kernel-trajectory-calculus.mjs'
+          ];
+          for (const name of wrappers) await import('./Aurekai/src/' + name);
+          const cut = compileKernelIntegrationCut(resolve('Aurekai'));
+          const target = cut.targets({surface:'hard-fork'})[0];
+          if (!target) throw Error('Missing compiled integration cut');
+          const result = cut.execute(target.target, {event:{event_id:'synthetic',run_id:'kernel-cut-test'}});
+          if (result.envelope.target !== target.target || !result.envelope.committed_state.state_hash) {
+            throw Error('Bundled kernel did not execute the exact target cut');
+          }
+          console.log('Bundled kernel and all declared subpath exports verified');
+          JS
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |
           python3 - <<'PY'
