@@ -353,6 +353,15 @@ case "$action" in
     ;;
   agents-connect)
     need_rea
+    # Upstream REA currently registers the absolute script entry with an
+    # env-node shebang on POSIX, not process.execPath. Do not claim our private
+    # Node can start that MCP in an agent whose PATH exposes only an old Node.
+    # Keep upstream's owned/doctor-compatible registration format unchanged.
+    if ! command -v node >/dev/null || ! supported_node "$(command -v node)"; then
+      echo "REA MCP registration needs compatible Node on agent PATH (22.19+, 24.11+ or 26+)" >&2
+      echo "The private REA Node is usable via the helper, but REA's upstream setup currently emits an env-node launcher. No agent configuration changed." >&2
+      exit 2
+    fi
     # This command itself is an explicit user request. REA owns backups,
     # conflict checks, atomic writes and matching skill installation.
     rea setup --client codex --client claude_code --yes --json
