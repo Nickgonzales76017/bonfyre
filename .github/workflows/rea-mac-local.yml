@@ -1,0 +1,54 @@
+name: REA Mac workstation proof
+on:
+  pull_request:
+    paths:
+      - 'scripts/rea-local.sh'
+      - '.github/workflows/rea-mac-local.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/rea-local.sh'
+      - '.github/workflows/rea-mac-local.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-isolated-macos:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Validate isolated installer
+        run: |
+          bash -n scripts/rea-local.sh
+          bash scripts/rea-local.sh help
+      - name: Install real REA release into a disposable Mac home
+        run: |
+          set -eu
+          echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/bonfyre-rea-local" >> "$GITHUB_ENV"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/bonfyre-rea-local"
+          bash scripts/rea-local.sh install
+          bash scripts/rea-local.sh install
+          test -f "$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          test -d "$BONFYRE_REA_ROOT/npm-cache"
+      - name: Inspect synthetic JavaScript locally through actual REA
+        run: bash scripts/rea-local.sh smoke
+      - name: Check optional provider and external application discovery
+        run: |
+          bash scripts/rea-local.sh targets
+          bash scripts/rea-local.sh rea providers --json
+          bash scripts/rea-local.sh setup-preview
+      - name: Verify no scanned estate or global npm artifact
+        run: |
+          set -eu
+          test -d "$BONFYRE_REA_ROOT/releases/6.4.0"
+          test ! -e "$HOME/.bonfyre/rea"
+          test ! -e "$HOME/.config/rea/bonfyre-client.json"
