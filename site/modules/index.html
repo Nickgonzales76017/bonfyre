@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bonfÿre — Federated source atlas</title><meta name="description" content="Browse 48 exact pinned public source repositories associated with Bonfÿre: independent tools, native extractions, Aurekai adapters, Frappe applications, interfaces and older lineages.">
+<link rel="canonical" href="https://nickgonzales76017.github.io/bonfyre/modules/"><link rel="icon" type="image/png" href="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05">
+<meta name="theme-color" content="#8c1c13"><meta name="bonfyre-manifest-sha" content="6839af58a2c1088a8e14d9da4dc6765765b518f7">
+<meta property="og:title" content="Bonfÿre / Federated source atlas"><meta property="og:description" content="48 pinned repositories. One navigable public workspace."><meta property="og:type" content="website"><meta property="og:url" content="https://nickgonzales76017.github.io/bonfyre/modules/">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Instrument+Serif:ital@0;1&display=swap');
+:root{--bg:#101313;--ink:#f4f1e9;--muted:#a9b3ae;--line:rgba(238,244,236,.22);--blood:#8c1c13;--bright:#ff7f6f;--sans:'DM Sans',system-ui,sans-serif;--mono:'DM Mono',ui-monospace,monospace;--serif:'Instrument Serif',Georgia,serif}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 var(--sans);-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}button,input{font:inherit}a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--bright);outline-offset:5px}
+.wrap{width:min(1500px,calc(100% - 2*clamp(18px,4vw,72px)));margin:auto}.kicker{font:500 .68rem/1.5 var(--mono);letter-spacing:.14em;text-transform:uppercase}.top{border-bottom:1px solid var(--line);background:#101313}.top .wrap{min-height:76px;display:flex;align-items:center;justify-content:space-between;gap:24px}.brand{display:flex;align-items:center;gap:13px;font-size:1.1rem;font-weight:700;letter-spacing:-.02em}.brand img{width:32px;height:32px;object-fit:contain}.brand small{color:var(--muted);font:400 .75rem var(--mono)}nav{display:flex;align-items:center;gap:clamp(16px,3vw,44px)}nav a{font-size:.8rem;font-weight:600}nav a:hover{color:var(--bright)}
+.hero{background:var(--blood);padding:clamp(74px,9vw,150px) 0 clamp(75px,9vw,145px);position:relative;overflow:hidden}.hero:before,.hero:after{content:"";position:absolute;pointer-events:none;border:1px solid rgba(255,255,255,.17);width:70vw;max-width:1000px;aspect-ratio:1;border-radius:50%;top:-75%;right:-20%;transform:rotate(-22deg)}.hero:after{width:46vw;top:-38%;right:-4%;border-width:2px}.hero>.wrap{position:relative}.hero .kicker{display:flex;align-items:center;gap:16px;color:#ffe6d8}.hero .kicker:before{content:"";height:1px;width:44px;background:#ffe6d8}.hero h1{font:700 clamp(4.1rem,10.5vw,11.2rem)/.84 var(--sans);letter-spacing:-.085em;margin:clamp(32px,5vw,72px) 0 40px;max-width:1200px}.hero h1 em{font-family:var(--serif);font-weight:400;letter-spacing:-.035em}.hero-bottom{display:flex;align-items:end;justify-content:space-between;gap:35px;flex-wrap:wrap}.hero-bottom p{font-size:clamp(1.1rem,1.75vw,1.45rem);line-height:1.45;max-width:640px;margin:0;color:#ffe3d9}.hero-number{text-align:right;font:500 .75rem/1.45 var(--mono);letter-spacing:.08em;color:#fff0e8}.hero-number strong{display:block;font:700 clamp(4rem,9vw,9rem)/.8 var(--sans);letter-spacing:-.09em;color:#fff}
+.proof{border-bottom:1px solid var(--line);background:#181c1b}.proof .wrap{padding:22px 0;display:flex;gap:12px 40px;justify-content:space-between;flex-wrap:wrap;color:var(--muted);font:400 .7rem var(--mono)}.proof b{color:var(--ink);font-weight:500}
+.layout{display:grid;grid-template-columns:minmax(200px,.45fr) minmax(0,1.55fr);gap:clamp(26px,5.5vw,95px);padding-block:clamp(62px,7vw,112px)}.sidebar{position:sticky;top:22px;align-self:start}.sidebar h2{font:500 clamp(2rem,3.2vw,3.5rem)/1 var(--serif);margin:12px 0 22px;letter-spacing:-.025em}.sidebar p{max-width:320px;color:var(--muted);font-size:.9rem}.search{display:block;padding:13px 16px;border:1px solid var(--line);background:transparent;color:var(--ink);width:100%;border-radius:999px;font-size:.9rem}.search::placeholder{color:#929b96}.filters{display:grid;gap:0;border-top:1px solid var(--line);margin-top:22px}.filter{display:flex;justify-content:space-between;padding:11px 0;gap:18px;font-size:.85rem;border-bottom:1px solid var(--line);color:var(--muted);cursor:pointer;text-align:left;background:transparent;border-inline:none;border-top:none}.filter:hover,.filter[aria-pressed="true"]{color:var(--ink)}.filter span{font:400 .7rem var(--mono);color:var(--bright)}.filter[aria-pressed="true"]{border-bottom-color:var(--bright)}.reset{font:500 .72rem var(--mono);border:0;background:transparent;color:var(--bright);padding:17px 0;text-align:left;cursor:pointer}.count{margin-top:12px;font:400 .73rem var(--mono);color:var(--muted)}
+.cluster{margin-bottom:clamp(68px,7vw,110px)}.cluster[hidden],.module[hidden]{display:none}.cluster-head{display:flex;align-items:end;justify-content:space-between;border-bottom:1px solid var(--ink);gap:18px;padding:0 0 23px}.cluster-head .kicker{color:var(--bright);margin-bottom:12px}.cluster-head h2{font:500 clamp(2rem,4.5vw,4.4rem)/.97 var(--serif);letter-spacing:-.03em;margin:0 0 11px}.cluster-head p:not(.kicker){margin:0;color:var(--muted);font-size:.93rem}.cluster-head .number{font:500 clamp(2.5rem,5vw,4.5rem)/1 var(--mono);color:var(--bright);letter-spacing:-.1em}
+.module{display:grid;grid-template-columns:42px minmax(0,1fr) minmax(175px,.72fr) 86px;gap:18px;align-items:center;padding:25px 3px;border-bottom:1px solid var(--line)}.row-number{font:400 .7rem/1 var(--mono);color:var(--muted)}.module h3{font:600 clamp(1.15rem,1.85vw,1.75rem)/1.12 var(--sans);letter-spacing:-.035em;margin:0 0 9px}.module h3 a:hover{color:var(--bright)}.module h3 a span{font-size:.7em;color:var(--bright);font-weight:400}.repo{color:var(--muted);font:.69rem/1.55 var(--mono);overflow-wrap:anywhere}.role{display:block;color:var(--bright);margin-top:5px;letter-spacing:.03em}.pin code{display:block;overflow-wrap:anywhere;font:.67rem/1.45 var(--mono);color:var(--muted)}.pin a{display:inline-block;color:var(--ink);margin-top:10px;font:500 .7rem var(--mono)}.pin a:hover{color:var(--bright)}.copy{border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink);padding:10px 8px;font:500 .63rem var(--mono);white-space:nowrap;cursor:pointer}.copy:hover{border-color:var(--bright);color:var(--bright)}.empty{font:500 clamp(1.2rem,2vw,1.75rem) var(--serif);padding:45px 0;color:var(--muted)}.empty[hidden]{display:none}
+.boundary{background:#212827;padding:clamp(72px,9vw,140px) 0}.boundary-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(30px,6vw,100px)}.boundary-grid>*{min-width:0}.boundary h2{font:500 clamp(2.6rem,5vw,5.2rem)/.97 var(--serif);letter-spacing:-.025em;margin:18px 0}.boundary p{max-width:540px;color:var(--muted);font-size:1rem}.boundary code{font:.75rem var(--mono)}.boundary pre{margin:15px 0 0;padding:19px 20px;max-width:100%;overflow:auto;color:var(--ink);border:1px solid var(--line);border-left:3px solid var(--bright);font:.85rem/1.5 var(--mono)}.boundary a{display:inline-block;color:var(--bright);font-weight:600;font-size:.84rem;margin-top:15px}.foot{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font:.7rem/1.6 var(--mono)}.foot .wrap{display:flex;gap:20px;justify-content:space-between;flex-wrap:wrap}
+@media(max-width:1080px){.layout{grid-template-columns:1fr}.sidebar{position:static}.filters{grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px}.module{grid-template-columns:34px minmax(0,1fr) minmax(165px,.75fr) 86px}}@media(max-width:730px){.hero h1{font-size:clamp(3.3rem,12.4vw,6rem)}.hero-number{text-align:left}.module{grid-template-columns:32px minmax(0,1fr) 84px;gap:10px}.pin{grid-column:2;grid-row:2}.copy{grid-column:3;grid-row:1}.boundary-grid{grid-template-columns:minmax(0,1fr)}nav a:nth-child(2){display:none}}@media(max-width:450px){.filters{grid-template-columns:1fr}.top .wrap{min-height:65px}.brand{font-size:.96rem}.brand small{display:none}.module h3{font-size:1.2rem}.module{padding:18px 0}}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}@media print{.search,.filters,.copy,nav{display:none!important}.layout{grid-template-columns:1fr}.module{break-inside:avoid}.hero{padding:35px 0}.hero h1{font-size:48px}}
+</style></head>
+<body><header class="top"><div class="wrap"><a class="brand" href="../"><img src="https://github.com/user-attachments/assets/7785a8d6-6e28-4892-8958-3daf85414f05" alt=""><strong>BONFŸRE</strong><small>/ THE SOURCE ATLAS</small></a><nav aria-label="Main navigation"><a href="#index">Catalogue</a><a href="https://github.com/Nickgonzales76017/bonfyre">Source ↗</a><a href="https://aurekai-work-samples.pages.dev/">Experiences ↗</a></nav></div></header>
+<main><section class="hero"><div class="wrap"><p class="kicker">FEDERATED / PUBLIC SOURCE REFERENCES</p><h1>Many sources.<br>One <em>working</em><br>estate.</h1><div class="hero-bottom"><p>Explore the software around Bonfÿre: independent tools, native extractions, enterprise applications, interface donors and earlier runtime lineages. Every link has an exact Git revision. None inherits authority from being listed here.</p><div class="hero-number"><strong>48</strong>PINNED REPOSITORIES<br>47 COMPANIONS + 1 UPSTREAM</div></div></div></section>
+<div class="proof"><div class="wrap"><span><b>MANIFEST</b> .gitmodules + gitlink SHAs</span><span><b>MANIFEST SHA</b> 6839af58a2c1</span><span><b>NO AUTO-CLONE</b> selective opt-in</span><span><b>LICENSE</b> per source</span></div></div>
+<div class="wrap layout" id="index"><aside class="sidebar"><p class="kicker">BROWSE / EXACT PINS</p><h2>Find the right source.</h2><p>The host repo carries pointers, not copied source. Search here, then visit the owning repository or its exact commit.</p><input class="search" type="search" id="search" placeholder="Search repos and paths..." aria-label="Search pinned repositories"><div class="filters" role="group" aria-label="Filter by role"><button class="filter" type="button" data-filter="products" aria-pressed="false">Independent tools <span>02</span></button>
+<button class="filter" type="button" data-filter="extractions" aria-pressed="false">Native extractions <span>07</span></button>
+<button class="filter" type="button" data-filter="examples" aria-pressed="false">Examples &amp; recipes <span>07</span></button>
+<button class="filter" type="button" data-filter="aurekai" aria-pressed="false">Aurekai integrations <span>12</span></button>
+<button class="filter" type="button" data-filter="frappe" aria-pressed="false">Frappe application donors <span>09</span></button>
+<button class="filter" type="button" data-filter="interfaces" aria-pressed="false">Interface reference libraries <span>08</span></button>
+<button class="filter" type="button" data-filter="lineage" aria-pressed="false">Historical lineages <span>02</span></button>
+<button class="filter" type="button" data-filter="upstream" aria-pressed="false">Native upstream <span>01</span></button></div><button class="reset" type="button" id="reset">SHOW ALL ↗</button><p class="count" aria-live="polite" id="visible">SHOWING 48 OF 48</p></aside><div><div id="collections"><section class="cluster" id="products" data-cluster="products">
+ <header class="cluster-head"><div><p class="kicker">01 / PRODUCTS</p><h2>Independent tools</h2><p>Two separately usable public products</p></div><span class="number">02</span></header>
+ <div class="rows"><article class="module" data-group="products" data-path="integrations/federated/products/agent-trace-verifier" data-pin="b544076c5444bebaf65f32b533e543984a025c7f" data-terms="nickgonzales76017/bonfyre-agent-trace-verifier integrations/federated/products/agent-trace-verifier independent tools standalone">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier">Agent Trace Verifier <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-agent-trace-verifier <span class="role">STANDALONE</span></div></div>
+ <div class="pin"><code>integrations/federated/products/agent-trace-verifier</code><a href="https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier/tree/b544076c5444bebaf65f32b533e543984a025c7f" aria-label="Pinned commit for Nickgonzales76017/bonfyre-agent-trace-verifier">PIN b544076c5444 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/products/agent-trace-verifier" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-agent-trace-verifier">COPY INIT</button>
+ </article>
+<article class="module" data-group="products" data-path="integrations/federated/products/statement-import" data-pin="323c9aa25a22ba7a18bb6b0fbe4f24524010c1b8" data-terms="nickgonzales76017/bonfyre-statement-import integrations/federated/products/statement-import independent tools standalone">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-statement-import">Statement Import <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-statement-import <span class="role">STANDALONE</span></div></div>
+ <div class="pin"><code>integrations/federated/products/statement-import</code><a href="https://github.com/Nickgonzales76017/bonfyre-statement-import/tree/323c9aa25a22ba7a18bb6b0fbe4f24524010c1b8" aria-label="Pinned commit for Nickgonzales76017/bonfyre-statement-import">PIN 323c9aa25a22 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/products/statement-import" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-statement-import">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="extractions" data-cluster="extractions">
+ <header class="cluster-head"><div><p class="kicker">02 / EXTRACTIONS</p><h2>Native extractions</h2><p>Earlier native source cuts, not replacements for current cmd/ implementations</p></div><span class="number">07</span></header>
+ <div class="rows"><article class="module" data-group="extractions" data-path="integrations/federated/extractions/cms" data-pin="310c273b8cd63d69172c0080c8ce80c350e44143" data-terms="nickgonzales76017/bonfyre-cms integrations/federated/extractions/cms native extractions earlier source">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-cms">Cms <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-cms <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/cms</code><a href="https://github.com/Nickgonzales76017/bonfyre-cms/tree/310c273b8cd63d69172c0080c8ce80c350e44143" aria-label="Pinned commit for Nickgonzales76017/bonfyre-cms">PIN 310c273b8cd6 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/cms" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-cms">COPY INIT</button>
+ </article>
+<article class="module" data-group="extractions" data-path="integrations/federated/extractions/core" data-pin="4fc5306a074cb28430adca791351d3898cf56585" data-terms="nickgonzales76017/bonfyre-core integrations/federated/extractions/core native extractions earlier source">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-core">Core <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-core <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/core</code><a href="https://github.com/Nickgonzales76017/bonfyre-core/tree/4fc5306a074cb28430adca791351d3898cf56585" aria-label="Pinned commit for Nickgonzales76017/bonfyre-core">PIN 4fc5306a074c ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/core" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-core">COPY INIT</button>
+ </article>
+<article class="module" data-group="extractions" data-path="integrations/federated/extractions/embed" data-pin="a6e864bcb9ba9c8cd12a196f6a2729be1e23123b" data-terms="nickgonzales76017/bonfyre-embed integrations/federated/extractions/embed native extractions earlier source">
+ <span class="row-number">03</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-embed">Embed <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-embed <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/embed</code><a href="https://github.com/Nickgonzales76017/bonfyre-embed/tree/a6e864bcb9ba9c8cd12a196f6a2729be1e23123b" aria-label="Pinned commit for Nickgonzales76017/bonfyre-embed">PIN a6e864bcb9ba ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/embed" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-embed">COPY INIT</button>
+ </article>
+<article class="module" data-group="extractions" data-path="integrations/federated/extractions/intake" data-pin="49cd7abf532b44a7a3115b6c95e67f932f8d8e26" data-terms="nickgonzales76017/bonfyre-intake integrations/federated/extractions/intake native extractions earlier source">
+ <span class="row-number">04</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-intake">Intake <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-intake <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/intake</code><a href="https://github.com/Nickgonzales76017/bonfyre-intake/tree/49cd7abf532b44a7a3115b6c95e67f932f8d8e26" aria-label="Pinned commit for Nickgonzales76017/bonfyre-intake">PIN 49cd7abf532b ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/intake" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-intake">COPY INIT</button>
+ </article>
+<article class="module" data-group="extractions" data-path="integrations/federated/extractions/lambda-tensors" data-pin="e9fce699cde77839928f38e43711b0d276656dbb" data-terms="nickgonzales76017/liblambda-tensors integrations/federated/extractions/lambda-tensors native extractions earlier source">
+ <span class="row-number">05</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/liblambda-tensors">Liblambda Tensors <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/liblambda-tensors <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/lambda-tensors</code><a href="https://github.com/Nickgonzales76017/liblambda-tensors/tree/e9fce699cde77839928f38e43711b0d276656dbb" aria-label="Pinned commit for Nickgonzales76017/liblambda-tensors">PIN e9fce699cde7 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/lambda-tensors" aria-label="Copy selective Git init command for Nickgonzales76017/liblambda-tensors">COPY INIT</button>
+ </article>
+<article class="module" data-group="extractions" data-path="integrations/federated/extractions/pipeline" data-pin="59a0d3d47ffe8efbf5a653ecf120b77b845dbb71" data-terms="nickgonzales76017/bonfyre-pipeline integrations/federated/extractions/pipeline native extractions earlier source">
+ <span class="row-number">06</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-pipeline">Pipeline <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-pipeline <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/pipeline</code><a href="https://github.com/Nickgonzales76017/bonfyre-pipeline/tree/59a0d3d47ffe8efbf5a653ecf120b77b845dbb71" aria-label="Pinned commit for Nickgonzales76017/bonfyre-pipeline">PIN 59a0d3d47ffe ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/pipeline" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-pipeline">COPY INIT</button>
+ </article>
+<article class="module" data-group="extractions" data-path="integrations/federated/extractions/tel" data-pin="2cb0c32fda92a028d84618e8f1396aced558baf0" data-terms="nickgonzales76017/bonfyre-tel integrations/federated/extractions/tel native extractions earlier source">
+ <span class="row-number">07</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-tel">Tel <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-tel <span class="role">EARLIER SOURCE</span></div></div>
+ <div class="pin"><code>integrations/federated/extractions/tel</code><a href="https://github.com/Nickgonzales76017/bonfyre-tel/tree/2cb0c32fda92a028d84618e8f1396aced558baf0" aria-label="Pinned commit for Nickgonzales76017/bonfyre-tel">PIN 2cb0c32fda92 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/extractions/tel" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-tel">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="examples" data-cluster="examples">
+ <header class="cluster-head"><div><p class="kicker">03 / EXAMPLES</p><h2>Examples &amp; recipes</h2><p>Historical demonstrations, recipes and creator scaffolds</p></div><span class="number">07</span></header>
+ <div class="rows"><article class="module" data-group="examples" data-path="examples/federated/creator-starter" data-pin="88aa7cb1517b61967d76e9453eb959a24814a3de" data-terms="nickgonzales76017/bonfyre-creator-starter examples/federated/creator-starter examples &amp; recipes example">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-creator-starter">Creator Starter <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-creator-starter <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/creator-starter</code><a href="https://github.com/Nickgonzales76017/bonfyre-creator-starter/tree/88aa7cb1517b61967d76e9453eb959a24814a3de" aria-label="Pinned commit for Nickgonzales76017/bonfyre-creator-starter">PIN 88aa7cb1517b ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/creator-starter" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-creator-starter">COPY INIT</button>
+ </article>
+<article class="module" data-group="examples" data-path="examples/federated/compress" data-pin="33e9f2516d373ed0c20737d89d019d4b53cca9cd" data-terms="nickgonzales76017/bonfyre-example-compress examples/federated/compress examples &amp; recipes example">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-example-compress">Example Compress <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-example-compress <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/compress</code><a href="https://github.com/Nickgonzales76017/bonfyre-example-compress/tree/33e9f2516d373ed0c20737d89d019d4b53cca9cd" aria-label="Pinned commit for Nickgonzales76017/bonfyre-example-compress">PIN 33e9f2516d37 ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/compress" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-example-compress">COPY INIT</button>
+ </article>
+<article class="module" data-group="examples" data-path="examples/federated/quickstart" data-pin="9dea3b60d601ffe97d26d7ea07e71dda73843a10" data-terms="nickgonzales76017/bonfyre-example-quickstart examples/federated/quickstart examples &amp; recipes example">
+ <span class="row-number">03</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-example-quickstart">Example Quickstart <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-example-quickstart <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/quickstart</code><a href="https://github.com/Nickgonzales76017/bonfyre-example-quickstart/tree/9dea3b60d601ffe97d26d7ea07e71dda73843a10" aria-label="Pinned commit for Nickgonzales76017/bonfyre-example-quickstart">PIN 9dea3b60d601 ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/quickstart" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-example-quickstart">COPY INIT</button>
+ </article>
+<article class="module" data-group="examples" data-path="examples/federated/saas-stack" data-pin="dcf90fd08ae27d04595d2832dccac900b93538ab" data-terms="nickgonzales76017/bonfyre-example-saas-stack examples/federated/saas-stack examples &amp; recipes example">
+ <span class="row-number">04</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-example-saas-stack">Example Saas Stack <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-example-saas-stack <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/saas-stack</code><a href="https://github.com/Nickgonzales76017/bonfyre-example-saas-stack/tree/dcf90fd08ae27d04595d2832dccac900b93538ab" aria-label="Pinned commit for Nickgonzales76017/bonfyre-example-saas-stack">PIN dcf90fd08ae2 ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/saas-stack" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-example-saas-stack">COPY INIT</button>
+ </article>
+<article class="module" data-group="examples" data-path="examples/federated/semantic-search" data-pin="5514df64b5c32d04c2c8fa684f5642f35263e001" data-terms="nickgonzales76017/bonfyre-example-semantic-search examples/federated/semantic-search examples &amp; recipes example">
+ <span class="row-number">05</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-example-semantic-search">Example Semantic Search <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-example-semantic-search <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/semantic-search</code><a href="https://github.com/Nickgonzales76017/bonfyre-example-semantic-search/tree/5514df64b5c32d04c2c8fa684f5642f35263e001" aria-label="Pinned commit for Nickgonzales76017/bonfyre-example-semantic-search">PIN 5514df64b5c3 ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/semantic-search" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-example-semantic-search">COPY INIT</button>
+ </article>
+<article class="module" data-group="examples" data-path="examples/federated/transcribe" data-pin="893d1507b4f62b2b29d3b6bec1a4b7ffcf4c031c" data-terms="nickgonzales76017/bonfyre-example-transcribe examples/federated/transcribe examples &amp; recipes example">
+ <span class="row-number">06</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-example-transcribe">Example Transcribe <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-example-transcribe <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/transcribe</code><a href="https://github.com/Nickgonzales76017/bonfyre-example-transcribe/tree/893d1507b4f62b2b29d3b6bec1a4b7ffcf4c031c" aria-label="Pinned commit for Nickgonzales76017/bonfyre-example-transcribe">PIN 893d1507b4f6 ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/transcribe" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-example-transcribe">COPY INIT</button>
+ </article>
+<article class="module" data-group="examples" data-path="examples/federated/recipes" data-pin="b8bf1eeaccba8b7038cb716b912a6643f5f01546" data-terms="nickgonzales76017/bonfyre-recipes examples/federated/recipes examples &amp; recipes example">
+ <span class="row-number">07</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-recipes">Recipes <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-recipes <span class="role">EXAMPLE</span></div></div>
+ <div class="pin"><code>examples/federated/recipes</code><a href="https://github.com/Nickgonzales76017/bonfyre-recipes/tree/b8bf1eeaccba8b7038cb716b912a6643f5f01546" aria-label="Pinned commit for Nickgonzales76017/bonfyre-recipes">PIN b8bf1eeaccba ↗</a></div>
+ <button class="copy" type="button" data-init="examples/federated/recipes" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-recipes">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="aurekai" data-cluster="aurekai">
+ <header class="cluster-head"><div><p class="kicker">04 / AUREKAI</p><h2>Aurekai integrations</h2><p>Runtime lineage and adapters in independently owned repositories</p></div><span class="number">12</span></header>
+ <div class="rows"><article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/argo-workflows" data-pin="35076c8460ef10fd03472da0bbc7e872c0bbe7c7" data-terms="aurekai/aurekai-argo-workflows integrations/federated/aurekai/argo-workflows aurekai integrations historical">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-argo-workflows">Argo Workflows <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-argo-workflows <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/argo-workflows</code><a href="https://github.com/aurekai/aurekai-argo-workflows/tree/35076c8460ef10fd03472da0bbc7e872c0bbe7c7" aria-label="Pinned commit for aurekai/aurekai-argo-workflows">PIN 35076c8460ef ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/argo-workflows" aria-label="Copy selective Git init command for aurekai/aurekai-argo-workflows">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/platform" data-pin="43335dd1390d7406667b13ec300e65d0082cac87" data-terms="aurekai/aurekai integrations/federated/aurekai/platform aurekai integrations historical">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai">Aurekai <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/platform</code><a href="https://github.com/aurekai/aurekai/tree/43335dd1390d7406667b13ec300e65d0082cac87" aria-label="Pinned commit for aurekai/aurekai">PIN 43335dd1390d ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/platform" aria-label="Copy selective Git init command for aurekai/aurekai">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/dvc" data-pin="ee89ad61dfca71715c1d92b8cbbb1e6230195f37" data-terms="aurekai/aurekai-dvc integrations/federated/aurekai/dvc aurekai integrations historical">
+ <span class="row-number">03</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-dvc">Dvc <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-dvc <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/dvc</code><a href="https://github.com/aurekai/aurekai-dvc/tree/ee89ad61dfca71715c1d92b8cbbb1e6230195f37" aria-label="Pinned commit for aurekai/aurekai-dvc">PIN ee89ad61dfca ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/dvc" aria-label="Copy selective Git init command for aurekai/aurekai-dvc">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/kestra" data-pin="ea4dacea0342a85577751e91dd4ae1105d0be40a" data-terms="aurekai/aurekai-kestra integrations/federated/aurekai/kestra aurekai integrations historical">
+ <span class="row-number">04</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-kestra">Kestra <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-kestra <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/kestra</code><a href="https://github.com/aurekai/aurekai-kestra/tree/ea4dacea0342a85577751e91dd4ae1105d0be40a" aria-label="Pinned commit for aurekai/aurekai-kestra">PIN ea4dacea0342 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/kestra" aria-label="Copy selective Git init command for aurekai/aurekai-kestra">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/mlflow" data-pin="0980187ad8c503bbc75035d5125e07aef87fb0cc" data-terms="aurekai/aurekai-mlflow integrations/federated/aurekai/mlflow aurekai integrations historical">
+ <span class="row-number">05</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-mlflow">Mlflow <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-mlflow <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/mlflow</code><a href="https://github.com/aurekai/aurekai-mlflow/tree/0980187ad8c503bbc75035d5125e07aef87fb0cc" aria-label="Pinned commit for aurekai/aurekai-mlflow">PIN 0980187ad8c5 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/mlflow" aria-label="Copy selective Git init command for aurekai/aurekai-mlflow">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/native-runtime" data-pin="5901e495193176324aa6cc7ca3c5f703b21eb7f2" data-terms="aurekai/native-runtime integrations/federated/aurekai/native-runtime aurekai integrations historical">
+ <span class="row-number">06</span>
+ <div><h3><a href="https://github.com/aurekai/native-runtime">Native Runtime <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/native-runtime <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/native-runtime</code><a href="https://github.com/aurekai/native-runtime/tree/5901e495193176324aa6cc7ca3c5f703b21eb7f2" aria-label="Pinned commit for aurekai/native-runtime">PIN 5901e4951931 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/native-runtime" aria-label="Copy selective Git init command for aurekai/native-runtime">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/nix" data-pin="f65a5376569ab6204ff3382827b5cd3ca3fc5efc" data-terms="aurekai/aurekai-nix integrations/federated/aurekai/nix aurekai integrations historical">
+ <span class="row-number">07</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-nix">Nix <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-nix <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/nix</code><a href="https://github.com/aurekai/aurekai-nix/tree/f65a5376569ab6204ff3382827b5cd3ca3fc5efc" aria-label="Pinned commit for aurekai/aurekai-nix">PIN f65a5376569a ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/nix" aria-label="Copy selective Git init command for aurekai/aurekai-nix">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/openvsx" data-pin="a74f29935d9e12e37b191b2c03ed9b68619d942d" data-terms="aurekai/aurekai-openvsx integrations/federated/aurekai/openvsx aurekai integrations historical">
+ <span class="row-number">08</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-openvsx">Openvsx <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-openvsx <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/openvsx</code><a href="https://github.com/aurekai/aurekai-openvsx/tree/a74f29935d9e12e37b191b2c03ed9b68619d942d" aria-label="Pinned commit for aurekai/aurekai-openvsx">PIN a74f29935d9e ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/openvsx" aria-label="Copy selective Git init command for aurekai/aurekai-openvsx">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/pulumi" data-pin="e8a1d4299ef37f2b7cc7e68deb94bf66d273d0db" data-terms="aurekai/aurekai-pulumi integrations/federated/aurekai/pulumi aurekai integrations historical">
+ <span class="row-number">09</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-pulumi">Pulumi <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-pulumi <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/pulumi</code><a href="https://github.com/aurekai/aurekai-pulumi/tree/e8a1d4299ef37f2b7cc7e68deb94bf66d273d0db" aria-label="Pinned commit for aurekai/aurekai-pulumi">PIN e8a1d4299ef3 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/pulumi" aria-label="Copy selective Git init command for aurekai/aurekai-pulumi">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/semantic-kernel" data-pin="359ecdc62573091947bae654ff1d071980bf3f75" data-terms="aurekai/aurekai-semantic-kernel integrations/federated/aurekai/semantic-kernel aurekai integrations historical">
+ <span class="row-number">10</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-semantic-kernel">Semantic Kernel <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-semantic-kernel <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/semantic-kernel</code><a href="https://github.com/aurekai/aurekai-semantic-kernel/tree/359ecdc62573091947bae654ff1d071980bf3f75" aria-label="Pinned commit for aurekai/aurekai-semantic-kernel">PIN 359ecdc62573 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/semantic-kernel" aria-label="Copy selective Git init command for aurekai/aurekai-semantic-kernel">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/setup-action" data-pin="030641047d1915fffa2be2bb7df441460ca2cbc7" data-terms="aurekai/setup-aurekai integrations/federated/aurekai/setup-action aurekai integrations historical">
+ <span class="row-number">11</span>
+ <div><h3><a href="https://github.com/aurekai/setup-aurekai">Setup Aurekai <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/setup-aurekai <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/setup-action</code><a href="https://github.com/aurekai/setup-aurekai/tree/030641047d1915fffa2be2bb7df441460ca2cbc7" aria-label="Pinned commit for aurekai/setup-aurekai">PIN 030641047d19 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/setup-action" aria-label="Copy selective Git init command for aurekai/setup-aurekai">COPY INIT</button>
+ </article>
+<article class="module" data-group="aurekai" data-path="integrations/federated/aurekai/vscode" data-pin="3caf7745eb23582cc9cbd1c5f2624e3b2add2e2b" data-terms="aurekai/aurekai-vscode integrations/federated/aurekai/vscode aurekai integrations historical">
+ <span class="row-number">12</span>
+ <div><h3><a href="https://github.com/aurekai/aurekai-vscode">Vscode <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">aurekai/aurekai-vscode <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/aurekai/vscode</code><a href="https://github.com/aurekai/aurekai-vscode/tree/3caf7745eb23582cc9cbd1c5f2624e3b2add2e2b" aria-label="Pinned commit for aurekai/aurekai-vscode">PIN 3caf7745eb23 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/aurekai/vscode" aria-label="Copy selective Git init command for aurekai/aurekai-vscode">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="frappe" data-cluster="frappe">
+ <header class="cluster-head"><div><p class="kicker">05 / FRAPPE</p><h2>Frappe application donors</h2><p>Enterprise source references; not a tested nine-app compatible bench</p></div><span class="number">09</span></header>
+ <div class="rows"><article class="module" data-group="frappe" data-path="integrations/federated/frappe/crm" data-pin="ef0b4280bcd423b0c29c1c3f212d157eb2dd41a7" data-terms="frappe/crm integrations/federated/frappe/crm frappe application donors source reference">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/frappe/crm">Crm <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/crm <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/crm</code><a href="https://github.com/frappe/crm/tree/ef0b4280bcd423b0c29c1c3f212d157eb2dd41a7" aria-label="Pinned commit for frappe/crm">PIN ef0b4280bcd4 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/crm" aria-label="Copy selective Git init command for frappe/crm">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/drive" data-pin="f12393e8248ebb4e16eff5b7f2e3daa63e5ea92c" data-terms="frappe/drive integrations/federated/frappe/drive frappe application donors source reference">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/frappe/drive">Drive <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/drive <span class="role">SOURCE REFERENCE · ARCHIVED UPSTREAM</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/drive</code><a href="https://github.com/frappe/drive/tree/f12393e8248ebb4e16eff5b7f2e3daa63e5ea92c" aria-label="Pinned commit for frappe/drive">PIN f12393e8248e ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/drive" aria-label="Copy selective Git init command for frappe/drive">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/erpnext" data-pin="5379bbaf49a34c99814286f41160dd10c4b344fc" data-terms="frappe/erpnext integrations/federated/frappe/erpnext frappe application donors source reference">
+ <span class="row-number">03</span>
+ <div><h3><a href="https://github.com/frappe/erpnext">Erpnext <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/erpnext <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/erpnext</code><a href="https://github.com/frappe/erpnext/tree/5379bbaf49a34c99814286f41160dd10c4b344fc" aria-label="Pinned commit for frappe/erpnext">PIN 5379bbaf49a3 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/erpnext" aria-label="Copy selective Git init command for frappe/erpnext">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/frappe" data-pin="ca8daf525df42a01333483decf0d0cd1f317ec63" data-terms="frappe/frappe integrations/federated/frappe/frappe frappe application donors source reference">
+ <span class="row-number">04</span>
+ <div><h3><a href="https://github.com/frappe/frappe">Frappe <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/frappe <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/frappe</code><a href="https://github.com/frappe/frappe/tree/ca8daf525df42a01333483decf0d0cd1f317ec63" aria-label="Pinned commit for frappe/frappe">PIN ca8daf525df4 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/frappe" aria-label="Copy selective Git init command for frappe/frappe">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/helpdesk" data-pin="58b82a6e20f11f2527540f3e41d9f5e4e15669fb" data-terms="frappe/helpdesk integrations/federated/frappe/helpdesk frappe application donors source reference">
+ <span class="row-number">05</span>
+ <div><h3><a href="https://github.com/frappe/helpdesk">Helpdesk <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/helpdesk <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/helpdesk</code><a href="https://github.com/frappe/helpdesk/tree/58b82a6e20f11f2527540f3e41d9f5e4e15669fb" aria-label="Pinned commit for frappe/helpdesk">PIN 58b82a6e20f1 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/helpdesk" aria-label="Copy selective Git init command for frappe/helpdesk">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/hrms" data-pin="953357958e30c30eebe2dece687af8b3151d3169" data-terms="frappe/hrms integrations/federated/frappe/hrms frappe application donors source reference">
+ <span class="row-number">06</span>
+ <div><h3><a href="https://github.com/frappe/hrms">Hrms <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/hrms <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/hrms</code><a href="https://github.com/frappe/hrms/tree/953357958e30c30eebe2dece687af8b3151d3169" aria-label="Pinned commit for frappe/hrms">PIN 953357958e30 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/hrms" aria-label="Copy selective Git init command for frappe/hrms">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/insights" data-pin="10a0c82187136ad9efd967ff202d4a23c678f8f4" data-terms="frappe/insights integrations/federated/frappe/insights frappe application donors source reference">
+ <span class="row-number">07</span>
+ <div><h3><a href="https://github.com/frappe/insights">Insights <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/insights <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/insights</code><a href="https://github.com/frappe/insights/tree/10a0c82187136ad9efd967ff202d4a23c678f8f4" aria-label="Pinned commit for frappe/insights">PIN 10a0c8218713 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/insights" aria-label="Copy selective Git init command for frappe/insights">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/lms" data-pin="e0aa47b32ad139465da5ff2a05bcf0de1ac3e976" data-terms="frappe/lms integrations/federated/frappe/lms frappe application donors source reference">
+ <span class="row-number">08</span>
+ <div><h3><a href="https://github.com/frappe/lms">Lms <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/lms <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/lms</code><a href="https://github.com/frappe/lms/tree/e0aa47b32ad139465da5ff2a05bcf0de1ac3e976" aria-label="Pinned commit for frappe/lms">PIN e0aa47b32ad1 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/lms" aria-label="Copy selective Git init command for frappe/lms">COPY INIT</button>
+ </article>
+<article class="module" data-group="frappe" data-path="integrations/federated/frappe/wiki" data-pin="43b79f3975a853ffb6585ac34794c11a2da3320f" data-terms="frappe/wiki integrations/federated/frappe/wiki frappe application donors source reference">
+ <span class="row-number">09</span>
+ <div><h3><a href="https://github.com/frappe/wiki">Wiki <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">frappe/wiki <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/frappe/wiki</code><a href="https://github.com/frappe/wiki/tree/43b79f3975a853ffb6585ac34794c11a2da3320f" aria-label="Pinned commit for frappe/wiki">PIN 43b79f3975a8 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/frappe/wiki" aria-label="Copy selective Git init command for frappe/wiki">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="interfaces" data-cluster="interfaces">
+ <header class="cluster-head"><div><p class="kicker">06 / INTERFACES</p><h2>Interface reference libraries</h2><p>Source and interaction donors; not bundled implementations or licensed assets</p></div><span class="number">08</span></header>
+ <div class="rows"><article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/a2ui" data-pin="3eafe0bafae3b5d33f7647e5d089bda3e76abf8d" data-terms="a2ui-project/a2ui integrations/federated/interfaces/a2ui interface reference libraries source reference">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/a2ui-project/a2ui">A2ui <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">a2ui-project/a2ui <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/a2ui</code><a href="https://github.com/a2ui-project/a2ui/tree/3eafe0bafae3b5d33f7647e5d089bda3e76abf8d" aria-label="Pinned commit for a2ui-project/a2ui">PIN 3eafe0bafae3 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/a2ui" aria-label="Copy selective Git init command for a2ui-project/a2ui">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/bubbletea" data-pin="f9df43c4f2c021d8740a2628d59cd810a862eb98" data-terms="charmbracelet/bubbletea integrations/federated/interfaces/bubbletea interface reference libraries source reference">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/charmbracelet/bubbletea">Bubbletea <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">charmbracelet/bubbletea <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/bubbletea</code><a href="https://github.com/charmbracelet/bubbletea/tree/f9df43c4f2c021d8740a2628d59cd810a862eb98" aria-label="Pinned commit for charmbracelet/bubbletea">PIN f9df43c4f2c0 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/bubbletea" aria-label="Copy selective Git init command for charmbracelet/bubbletea">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/mcp-apps" data-pin="82221c0c8ce7661efa6771c9d461511b1650495f" data-terms="modelcontextprotocol/ext-apps integrations/federated/interfaces/mcp-apps interface reference libraries source reference">
+ <span class="row-number">03</span>
+ <div><h3><a href="https://github.com/modelcontextprotocol/ext-apps">Ext Apps <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">modelcontextprotocol/ext-apps <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/mcp-apps</code><a href="https://github.com/modelcontextprotocol/ext-apps/tree/82221c0c8ce7661efa6771c9d461511b1650495f" aria-label="Pinned commit for modelcontextprotocol/ext-apps">PIN 82221c0c8ce7 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/mcp-apps" aria-label="Copy selective Git init command for modelcontextprotocol/ext-apps">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/ghost" data-pin="30647e1db800845b59fd7ab78c99481a905508ad" data-terms="tryghost/ghost integrations/federated/interfaces/ghost interface reference libraries source reference">
+ <span class="row-number">04</span>
+ <div><h3><a href="https://github.com/TryGhost/Ghost">Ghost <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">TryGhost/Ghost <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/ghost</code><a href="https://github.com/TryGhost/Ghost/tree/30647e1db800845b59fd7ab78c99481a905508ad" aria-label="Pinned commit for TryGhost/Ghost">PIN 30647e1db800 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/ghost" aria-label="Copy selective Git init command for TryGhost/Ghost">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/json-render" data-pin="5473fe1314cf0a1bf4c685dbf795912211f9c4f6" data-terms="vercel-labs/json-render integrations/federated/interfaces/json-render interface reference libraries source reference">
+ <span class="row-number">05</span>
+ <div><h3><a href="https://github.com/vercel-labs/json-render">Json Render <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">vercel-labs/json-render <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/json-render</code><a href="https://github.com/vercel-labs/json-render/tree/5473fe1314cf0a1bf4c685dbf795912211f9c4f6" aria-label="Pinned commit for vercel-labs/json-render">PIN 5473fe1314cf ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/json-render" aria-label="Copy selective Git init command for vercel-labs/json-render">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/lipgloss" data-pin="19f011f1cc573e5d2bf9d7a9c4f14d429647759e" data-terms="charmbracelet/lipgloss integrations/federated/interfaces/lipgloss interface reference libraries source reference">
+ <span class="row-number">06</span>
+ <div><h3><a href="https://github.com/charmbracelet/lipgloss">Lipgloss <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">charmbracelet/lipgloss <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/lipgloss</code><a href="https://github.com/charmbracelet/lipgloss/tree/19f011f1cc573e5d2bf9d7a9c4f14d429647759e" aria-label="Pinned commit for charmbracelet/lipgloss">PIN 19f011f1cc57 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/lipgloss" aria-label="Copy selective Git init command for charmbracelet/lipgloss">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/opentui" data-pin="aac943066a5c87e7b4ac9953b918bcd5d631bec9" data-terms="anomalyco/opentui integrations/federated/interfaces/opentui interface reference libraries source reference">
+ <span class="row-number">07</span>
+ <div><h3><a href="https://github.com/anomalyco/opentui">Opentui <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">anomalyco/opentui <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/opentui</code><a href="https://github.com/anomalyco/opentui/tree/aac943066a5c87e7b4ac9953b918bcd5d631bec9" aria-label="Pinned commit for anomalyco/opentui">PIN aac943066a5c ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/opentui" aria-label="Copy selective Git init command for anomalyco/opentui">COPY INIT</button>
+ </article>
+<article class="module" data-group="interfaces" data-path="integrations/federated/interfaces/ratatui" data-pin="d1ef782b48ddf0cb825c111d4d8b9adef572c0e1" data-terms="ratatui/ratatui integrations/federated/interfaces/ratatui interface reference libraries source reference">
+ <span class="row-number">08</span>
+ <div><h3><a href="https://github.com/ratatui/ratatui">Ratatui <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">ratatui/ratatui <span class="role">SOURCE REFERENCE</span></div></div>
+ <div class="pin"><code>integrations/federated/interfaces/ratatui</code><a href="https://github.com/ratatui/ratatui/tree/d1ef782b48ddf0cb825c111d4d8b9adef572c0e1" aria-label="Pinned commit for ratatui/ratatui">PIN d1ef782b48dd ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/interfaces/ratatui" aria-label="Copy selective Git init command for ratatui/ratatui">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="lineage" data-cluster="lineage">
+ <header class="cluster-head"><div><p class="kicker">07 / LINEAGE</p><h2>Historical lineages</h2><p>Older Bonfÿre and HCP histories</p></div><span class="number">02</span></header>
+ <div class="rows"><article class="module" data-group="lineage" data-path="integrations/federated/lineage/hcp-whisper" data-pin="20f482810609b22780cbb8165783a9689407cc9f" data-terms="nickgonzales76017/hcp-whisper integrations/federated/lineage/hcp-whisper historical lineages historical">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/hcp-whisper">Hcp Whisper <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/hcp-whisper <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/lineage/hcp-whisper</code><a href="https://github.com/Nickgonzales76017/hcp-whisper/tree/20f482810609b22780cbb8165783a9689407cc9f" aria-label="Pinned commit for Nickgonzales76017/hcp-whisper">PIN 20f482810609 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/lineage/hcp-whisper" aria-label="Copy selective Git init command for Nickgonzales76017/hcp-whisper">COPY INIT</button>
+ </article>
+<article class="module" data-group="lineage" data-path="integrations/federated/lineage/bonfyre-oss" data-pin="b4867b9d4b98cc549aaf71eb15e477abe9bc0976" data-terms="nickgonzales76017/bonfyre-oss integrations/federated/lineage/bonfyre-oss historical lineages historical">
+ <span class="row-number">02</span>
+ <div><h3><a href="https://github.com/Nickgonzales76017/bonfyre-oss">Oss <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">Nickgonzales76017/bonfyre-oss <span class="role">HISTORICAL</span></div></div>
+ <div class="pin"><code>integrations/federated/lineage/bonfyre-oss</code><a href="https://github.com/Nickgonzales76017/bonfyre-oss/tree/b4867b9d4b98cc549aaf71eb15e477abe9bc0976" aria-label="Pinned commit for Nickgonzales76017/bonfyre-oss">PIN b4867b9d4b98 ↗</a></div>
+ <button class="copy" type="button" data-init="integrations/federated/lineage/bonfyre-oss" aria-label="Copy selective Git init command for Nickgonzales76017/bonfyre-oss">COPY INIT</button>
+ </article></div></section>
+<section class="cluster" id="upstream" data-cluster="upstream">
+ <header class="cluster-head"><div><p class="kicker">08 / UPSTREAM</p><h2>Native upstream</h2><p>Existing HVM4 dependency, separate upstream maintenance</p></div><span class="number">01</span></header>
+ <div class="rows"><article class="module" data-group="upstream" data-path="vendor/hvm4" data-pin="6defdfc7dae2a3cca5dd6e74ed0612385b5646a8" data-terms="higherorderco/hvm4 vendor/hvm4 native upstream upstream">
+ <span class="row-number">01</span>
+ <div><h3><a href="https://github.com/HigherOrderCO/HVM4">HVM4 <span aria-hidden="true">↗</span></a></h3>
+ <div class="repo">HigherOrderCO/HVM4 <span class="role">UPSTREAM</span></div></div>
+ <div class="pin"><code>vendor/hvm4</code><a href="https://github.com/HigherOrderCO/HVM4/tree/6defdfc7dae2a3cca5dd6e74ed0612385b5646a8" aria-label="Pinned commit for HigherOrderCO/HVM4">PIN 6defdfc7dae2 ↗</a></div>
+ <button class="copy" type="button" data-init="vendor/hvm4" aria-label="Copy selective Git init command for HigherOrderCO/HVM4">COPY INIT</button>
+ </article></div></section></div><p class="empty" id="empty" hidden>No pinned sources match that search. Try another group.</p></div></div>
+<section class="boundary"><div class="wrap boundary-grid"><div><p class="kicker">REPRODUCIBLE / NOT REPLACEMENT SOURCE</p><h2>Choose only<br>what you need.</h2><p>Source donors are references, not working integrations by default. Frappe's nine apps aren't a tested compatible bench. Interface donors aren't licensed theme bundles. Older native extractions do not replace the active engine.</p><a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/README.md#federated-workspace">Read the workspace boundary ↗</a></div><div><p class="kicker">SAFE / PINNED / EXPLICIT</p><pre>git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
+bash scripts/federated_modules.sh verify all
+bash scripts/federated_modules.sh init products</pre><p>For a single repository use “COPY INIT” above, or <code>init one PATH</code>. Large groups require deliberate opt-in. No remote HEADs are promoted automatically.</p></div></div></section>
+</main><footer class="foot"><div class="wrap"><span>Bonfÿre / Aurekai · exact public Git references as of manifest 6839af58a2c1</span><span><a href="../">Home</a> · <a href="https://docs.aurekai.work/">Guides</a> · <a href="https://github.com/Nickgonzales76017/bonfyre/blob/main/LICENSE">Licensing</a></span></div></footer>
+<script>(()=>{"use strict";const input=document.getElementById("search"),filters=[...document.querySelectorAll(".filter")],rows=[...document.querySelectorAll(".module")],sections=[...document.querySelectorAll(".cluster")],label=document.getElementById("visible"),empty=document.getElementById("empty");let selected="";function render(){let count=0,q=input.value.trim().toLowerCase();for(const row of rows){let ok=(!selected||row.dataset.group===selected)&&(!q||row.dataset.terms.includes(q));row.hidden=!ok;if(ok)count++;}for(const s of sections)s.hidden=!rows.some(r=>r.closest(".cluster")===s&&!r.hidden);for(const f of filters)f.setAttribute("aria-pressed",String(f.dataset.filter===selected));label.textContent="SHOWING "+count+" OF "+rows.length;empty.hidden=count!==0;}filters.forEach(f=>f.addEventListener("click",()=>{selected=selected===f.dataset.filter?"":f.dataset.filter;render()}));input.addEventListener("input",render);document.getElementById("reset").addEventListener("click",()=>{selected="";input.value="";render()});document.addEventListener("click",async e=>{const button=e.target.closest("button.copy");if(!button)return;try{await navigator.clipboard.writeText("bash scripts/federated_modules.sh init one "+button.dataset.init);button.textContent="COPIED ✓"}catch{button.textContent="COPY FAILED"}setTimeout(()=>button.textContent="COPY INIT",1300)});render()})();</script>
+</body></html>

@@ -7,6 +7,7 @@ on:
       - 'integrations/federated/**'
       - 'examples/federated/**'
       - 'scripts/federated_modules.sh'
+      - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
   push:
     branches: [main]
@@ -15,6 +16,7 @@ on:
       - 'integrations/federated/**'
       - 'examples/federated/**'
       - 'scripts/federated_modules.sh'
+      - 'site/modules/**'
       - '.github/workflows/federated-submodules.yml'
 
 permissions:
@@ -37,3 +39,36 @@ jobs:
           bash scripts/federated_modules.sh verify frappe
           bash scripts/federated_modules.sh verify interfaces
           bash scripts/federated_modules.sh verify one integrations/federated/interfaces/opentui
+      - name: Verify atlas reflects pinned Git modules and URLs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, subprocess
+
+          catalog = Path("site/modules/index.html").read_text(encoding="utf-8")
+          listed = re.findall(r'data-path="([^"]+)" data-pin="([0-9a-f]{40})"', catalog)
+          pins = dict(listed)
+          if len(listed) != len(pins):
+              raise SystemExit("Duplicate atlas path")
+          rows = subprocess.check_output(
+              ["git", "config", "-f", ".gitmodules", "--get-regexp", r"^submodule\..*\.path$"],
+              text=True,
+          ).splitlines()
+          expected = {}
+          for line in rows:
+              _, path = line.split(" ", 1)
+              tree = subprocess.check_output(["git", "ls-tree", "HEAD", "--", path], text=True).strip()
+              match = re.fullmatch(r"160000 commit ([0-9a-f]{40})\t(.+)", tree)
+              if not match or match.group(2) != path:
+                  raise SystemExit(f"Not a pinned Gitlink: {path}")
+              expected[path] = match.group(1)
+          if pins != expected:
+              missing = sorted(set(expected) - set(pins))
+              extra = sorted(set(pins) - set(expected))
+              drift = sorted(p for p in pins.keys() & expected.keys() if pins[p] != expected[p])
+              raise SystemExit(f"Stale atlas; missing={missing}, extra={extra}, drift={drift}")
+          manifest_sha = subprocess.check_output(["git", "hash-object", ".gitmodules"], text=True).strip()
+          if f'<meta name="bonfyre-manifest-sha" content="{manifest_sha}">' not in catalog:
+              raise SystemExit("Atlas does not match manifest blob")
+          print(f"Verified {len(expected)} pinned repositories, manifest {manifest_sha[:12]}")
+          PY

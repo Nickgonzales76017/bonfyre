@@ -11,6 +11,7 @@
   <a href="#see-it-running">See it running</a> ·
   <a href="#building-blocks">Building blocks</a> ·
   <a href="#federated-workspace">Federated workspace</a> ·
+  <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (48)</a> ·
   <a href="#start-here">Start here</a> ·
   <a href="#the-whole-machine">Whole machine</a> ·
   <a href="docs/client-operations-portfolio.md">Client work</a> ·
@@ -55,8 +56,15 @@ Those tools have their own repositories and licenses. For more involved deployme
 The integrated native engine stays here. **47 public companion repositories are now
 pinned as real Git submodules**, alongside the existing HVM4 dependency. They
 are grouped under [`integrations/federated/`](integrations/federated/) and
-[`examples/federated/`](examples/federated/), not added as thirty more root
+[`examples/federated/`](examples/federated/), not added as 47 new root
 directories.
+
+**[Explore the complete, searchable source atlas →](https://nickgonzales76017.github.io/bonfyre/modules/)**
+Every entry links to its owning GitHub repository and its exact pinned commit,
+and identifies whether it is a standalone tool, an older source extraction,
+an integration donor, or historical lineage. Gitlinks reference **other**
+repositories; GitHub does not index their files as code within this parent
+repository. Search within the linked owner repository when you need its source.
 
 | Profile | Modules | What lives there |
 |---|---:|---|
