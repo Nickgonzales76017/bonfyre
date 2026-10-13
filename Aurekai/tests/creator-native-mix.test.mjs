@@ -76,7 +76,18 @@ test('native processes a million exact float32 samples using bounded blocks',()=
       '--stem',src,'0','0',String(n),'1'],{encoding:'utf8'});
     assert.equal(r.status,0,r.stderr);
     assert.equal(readFileSync(out).equals(body),true);
-    assert.equal(JSON.parse(r.stdout).sample_frames,n);
+    const receipt=JSON.parse(r.stdout);
+    assert.equal(receipt.sample_frames,n);
+    assert.equal(receipt.source_read_calls,Math.ceil(n/1024));
+    assert.equal(receipt.source_explicit_seek_calls,1);
+    assert.equal(receipt.sequential_seek_elisions,Math.ceil(n/1024)-1);
+    assert.equal(receipt.source_bytes_read,n*4);
+    console.log(JSON.stringify({workload:'synthetic one-million-float sequential stem',
+      source_read_calls:receipt.source_read_calls,
+      explicit_seeks:receipt.source_explicit_seek_calls,
+      seeks_skipped:receipt.sequential_seek_elisions,
+      output_exact_f32_bytes:true,
+      performance_elapsed_gain_proven:false}));
   }finally{rmSync(dir,{recursive:true,force:true});}
 });
 
@@ -102,5 +113,34 @@ test('browser WASM uses the exact allocation-free native f32 mix kernel',async t
     assert.equal(typeof mix,'function');
     console.log(JSON.stringify({kernel:'aurekai_mix_f32',
       backend:'WASM',native_code_shared:true,samples:4}));
+  }finally{rmSync(dir,{recursive:true,force:true});}
+});
+
+test('per-stem sequential cursors preserve ordered overlapping source windows',()=>{
+  const {dir,exe}=make();
+  try{
+    const n=8192,first=join(dir,'one'),second=join(dir,'two'),out=join(dir,'out');
+    const data=Buffer.alloc(n*4);
+    for(let i=0;i<n;i++)data.writeFloatLE((i%128)/128,i*4);
+    writeFileSync(first,data);writeFileSync(second,data);
+    const args=['--samples','6144','--channels','1','--output',out,
+      '--stem',first,'0','100','6144','0.5',
+      '--stem',second,'512','300','4096','0.25'];
+    const run=spawnSync(exe,args,{encoding:'utf8'});
+    assert.equal(run.status,0,run.stderr);
+    const result=readFileSync(out);
+    assert.equal(result.byteLength,6144*4);
+    for(const index of [0,511,512,1023,1024,3072,4607,4608,6143]){
+      const left=(data.readFloatLE((100+index)*4))*0.5;
+      const right=(index>=512&&index<4608)?(data.readFloatLE((300+index-512)*4))*0.25:0;
+      // f32 output performs a float store after each stem, not a double sum.
+      const expected=Math.fround(Math.fround(left)+Math.fround(right));
+      assert.equal(result.readFloatLE(index*4),expected,'sample '+index);
+    }
+    const receipt=JSON.parse(run.stdout);
+    assert(receipt.source_read_calls>receipt.source_explicit_seek_calls);
+    assert.equal(receipt.source_explicit_seek_calls,2);
+    assert.equal(receipt.sequential_seek_elisions,
+      receipt.source_read_calls-receipt.source_explicit_seek_calls);
   }finally{rmSync(dir,{recursive:true,force:true});}
 });
