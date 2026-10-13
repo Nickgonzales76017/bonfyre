@@ -103,12 +103,19 @@ jobs:
           # Explicitly isolate users' real agent configurations and credentials.
           export HOME="$RUNNER_TEMP/rea-agents-home"
           mkdir -p "$HOME"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-private-node-regression"
+          export BONFYRE_REA_FORCE_PRIVATE_NODE=1
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
           bash scripts/rea-local.sh agents-preview > "$RUNNER_TEMP/rea-agents-plan.json"
           bash scripts/rea-local.sh agents-connect > "$RUNNER_TEMP/rea-agents-applied.json"
           test -f "$HOME/.codex/config.toml"
           test -f "$HOME/.claude.json"
           grep -qi rea "$HOME/.codex/config.toml"
           grep -qi rea "$HOME/.claude.json"
+          # A standalone helper must not leave an agent registration pointing
+          # to an incompatible host Node or an npm shim that used Node 20.
+          grep -Fq "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node" "$HOME/.codex/config.toml"
+          grep -Fq "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node" "$HOME/.claude.json"
           bash scripts/rea-local.sh rea doctor --client codex --json > "$RUNNER_TEMP/rea-agent-codex-health.json"
           bash scripts/rea-local.sh rea doctor --client claude_code --json > "$RUNNER_TEMP/rea-agent-claude-health.json"
           echo "REA scoped agent registrations verified without touching real Mac accounts"
