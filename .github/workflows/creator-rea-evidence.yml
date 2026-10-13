@@ -1,0 +1,89 @@
+name: REA Creator evidence
+
+# Investigate only public, source-owned Creator code in an isolated synthetic
+# artifact. Never analyze or upload connected client/estate/private state.
+on:
+  pull_request:
+    paths:
+      - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/tests/creator-render-program.test.mjs'
+      - '.github/workflows/creator-rea-evidence.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'Aurekai/src/creator-render-program.mjs'
+      - 'Aurekai/tests/creator-render-program.test.mjs'
+      - '.github/workflows/creator-rea-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Exact Creator unit and agent-edit parity
+        run: node --test Aurekai/tests/creator-render-program.test.mjs
+      - name: Build public-only, disposable REA inspection target
+        run: |
+          set -eu
+          target="$RUNNER_TEMP/rea-creator-public"
+          mkdir -p "$target/src"
+          cp Aurekai/src/creator-render-program.mjs "$target/src/creator-render-program.mjs"
+          printf '{"name":"bonfyre-creator-public-rea-fixture","private":true,"type":"module","main":"src/creator-render-program.mjs"}\n' > "$target/package.json"
+          echo "REA_CREATOR_TARGET=$target" >> "$GITHUB_ENV"
+          sha256sum "$target/src/creator-render-program.mjs" | cut -d ' ' -f 1 > "$RUNNER_TEMP/rea-creator-source-sha256"
+      - name: REA 6.4.0 static application graph (no native provider)
+        env:
+          npm_config_audit: 'false'
+          npm_config_fund: 'false'
+          npm_config_update_notifier: 'false'
+        run: |
+          set -eu
+          # Pin an upstream released version; setup, GUI attachment, privilege
+          # changes and native provider installation are not permitted here.
+          timeout 360s npm exec --yes --package=rea-agents@6.4.0 -- rea \
+            analyze-javascript-application "$REA_CREATOR_TARGET" \
+            --source-path package.json \
+            --source-path src/creator-render-program.mjs --json \
+            > "$RUNNER_TEMP/rea-creator-evidence.json"
+      - name: Verify analyzed source and Evidence provenance
+        run: |
+          node --input-type=module <<'JS'
+          import { readFileSync } from 'node:fs';
+          import { createHash } from 'node:crypto';
+          import { join } from 'node:path';
+          const root = process.env.RUNNER_TEMP;
+          const raw = readFileSync(join(root,'rea-creator-evidence.json'),'utf8');
+          const result = JSON.parse(raw);
+          const original = readFileSync('Aurekai/src/creator-render-program.mjs');
+          const selected = readFileSync(join(process.env.REA_CREATOR_TARGET,'src/creator-render-program.mjs'));
+          const hash = value => createHash('sha256').update(value).digest('hex');
+          if (!original.equals(selected)) throw Error('REA target differs from owner source');
+          if (hash(original) !== readFileSync(join(root,'rea-creator-source-sha256'),'utf8').trim())
+            throw Error('REA target changed after copy');
+          if (!result || typeof result !== 'object' || !raw.includes('creator-render-program.mjs'))
+            throw Error('REA did not return a creator application graph');
+          const marker = result.evidence_id ?? result.normalized_result?.parent_evidence_id ??
+            result.structuredContent?.evidence_id ?? null;
+          if (marker !== null && typeof marker !== 'string') throw Error('Invalid REA Evidence identity');
+          const facts = {
+            source_sha256:hash(original),
+            rea_version:'6.4.0',
+            rea_evidence_id:marker,
+            bytes_of_rea_evidence:Buffer.byteLength(raw),
+            state:'static_evidence_not_execution',
+            executable_perf_verified:false,
+            client_data_included:false
+          };
+          console.log(JSON.stringify(facts));
+          JS
