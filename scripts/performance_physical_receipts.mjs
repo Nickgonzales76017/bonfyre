@@ -149,11 +149,94 @@ export function reviewPhysicalReceipts(record, dbPath) {
       'one source family and useful-byte equality alone prove end-to-end parity'
     ]};
 }
+
+/** Portable version of the no-loss review for pairs of native read-receipt
+ * JSON outputs. Unlike the SQLite readback above, supplied JSON is not an
+ * authenticated owner record. Consumers must independently witness source,
+ * transport, actor permission and actual effects.
+ */
+export function reviewPhysicalReadbacks(record, readbacks) {
+  const reviewed=reviewPerformance(record);
+  const problems=[...reviewed.problems];
+  const sides=['baseline','candidate'];
+  const validDigest=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
+  const items=sides.map(side=>({claim:record?.[side]||{},raw:readbacks?.[side],side}));
+  for(const {claim,raw,side} of items) {
+    if(!raw||raw.schema!=='bonfyre.copyreceipt.readback.v1'||raw.no_effect!==true) {
+      problems.push(side+':unrecognized-native-readback');continue;
+    }
+    if(!['active','archived'].includes(raw.origin)||!isName(raw.receipt_id)||
+       !validDigest(raw.generation_digest)||!isName(raw.passport_identity)||
+       !isName(raw.subject_family)||!isName(raw.semantic_digest)||
+       !isName(raw.physical_digest)||!['exact','latent'].includes(raw.exactness_class))
+      problems.push(side+':invalid-native-coordinate');
+    const expectedOrigin=claim.physical_source==='archive'?'archived':'active';
+    if(raw.origin!==expectedOrigin)
+      problems.push(side+':native-origin-mismatch');
+    if(!validDigest(claim.physical_generation_digest)||claim.physical_generation_digest!==raw.generation_digest)
+      problems.push(side+':native-generation-not-bound');
+    if(!isName(claim.physical_passport)||claim.physical_passport!==raw.passport_identity)
+      problems.push(side+':native-passport-not-bound');
+    if(!isName(claim.physical_receipt_id)||claim.physical_receipt_id!==raw.receipt_id)
+      problems.push(side+':native-receipt-id-not-bound');
+    for(const metric of counters) {
+      const observed=raw.counters?.[metric];
+      if(!Number.isSafeInteger(observed)||observed<0)
+        problems.push(side+':invalid-native-counter-'+metric);
+      if(claim.physical_counters && claim.physical_counters[metric]!==observed)
+        problems.push(side+':counter-claim-differs-'+metric);
+    }
+    for(const metric of directMetrics)
+      if(claim.metrics?.[metric]!==raw.counters?.[metric])
+        problems.push(side+':claimed-'+metric+'-differs-from-native-readback');
+  }
+  const [before,after]=items.map(x=>x.raw);
+  const usable=items.every(x=>x.raw?.schema==='bonfyre.copyreceipt.readback.v1');
+  if(usable) {
+    if(before.origin===after.origin&&before.generation_digest===after.generation_digest&&
+       before.receipt_id===after.receipt_id)
+      problems.push('not-two-distinct-native-observations');
+    if(before.subject_family!==after.subject_family||
+       before.semantic_digest!==after.semantic_digest)
+      problems.push('native-readbacks-differ-in-semantic-material');
+    if(before.exactness_class!=='exact')
+      problems.push('baseline-native-representation-not-exact');
+    if(after.exactness_class==='latent'&&record?.candidate?.kind!=='approximate-prefilter')
+      problems.push('latent-native-representation-without-approximation-gate');
+    if(!Number.isSafeInteger(before.counters?.useful_bytes)||before.counters.useful_bytes<=0||
+       before.counters.useful_bytes!==after.counters?.useful_bytes)
+      problems.push('unequal-or-empty-native-useful-work');
+  }
+  const physical=usable?{
+    source:'caller-supplied BonfyreCompress read-receipt JSON; external provenance unverified',
+    baseline:before,candidate:after,
+    measured_copy_delta: {
+      copied:relative(before.counters?.bytes_copied,after.counters?.bytes_copied,before.counters?.useful_bytes),
+      hydrated:relative(before.counters?.bytes_hydrated,after.counters?.bytes_hydrated,before.counters?.useful_bytes),
+      allocations:relative(before.counters?.allocations,after.counters?.allocations,before.counters?.useful_bytes),
+      units:'same-work native counter comparison; no inferred provider prices'
+    }
+  }:null;
+  return {...reviewed,decision:problems.length?'hold-baseline':reviewed.decision,
+    problems,physical,admitted_for_execution:false,no_effect:true,
+    cannot_infer:[...reviewed.cannot_infer,
+      'caller-provided native readback JSON is an independently authenticated owner receipt',
+      'a historical generation authorizes the current execution path',
+      'equal native byte counts alone authenticate effects or guarantee future preservation'
+    ]};
+}
+
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
   try{
-    if(process.argv.length!==4)throw Error(
-      'usage: node scripts/performance_physical_receipts.mjs paired-owner-receipts.json physical.sqlite');
-    const verdict=reviewPhysicalReceipts(JSON.parse(readFileSync(process.argv[2],'utf8')),process.argv[3]);
+    const record=JSON.parse(readFileSync(process.argv[2],'utf8'));
+    let verdict;
+    if(process.argv.length===4) {
+      verdict=reviewPhysicalReceipts(record,process.argv[3]);
+    } else if(process.argv.length===6 && process.argv[3]==='--native-readbacks') {
+      verdict=reviewPhysicalReadbacks(record,{
+        baseline:JSON.parse(readFileSync(process.argv[4],'utf8')),
+        candidate:JSON.parse(readFileSync(process.argv[5],'utf8'))});
+    } else throw Error('usage: performance_physical_receipts.mjs RECORD SQLITE | RECORD --native-readbacks BASELINE.json CANDIDATE.json');
     console.log(JSON.stringify(verdict,null,2));
     if(verdict.decision!=='eligible-for-human-promotion-review')process.exitCode=1;
   }catch(e){console.error(e.message);process.exitCode=2}
