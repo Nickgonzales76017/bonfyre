@@ -31,7 +31,22 @@ typedef struct {
   uint64_t source_reads;
   uint64_t explicit_seeks;
   uint64_t source_bytes_read;
+  uint64_t overlap_probes;
 } RenderStats;
+
+/* One future event per validated stem. The event tables are stack-bounded by
+ * MAX_STEMS and do not alter input or output ownership. */
+typedef struct {
+  uint64_t frame;
+  unsigned stem_index;
+} StemEvent;
+
+static int event_compare(const void *left, const void *right) {
+  const StemEvent *a = (const StemEvent *)left, *b = (const StemEvent *)right;
+  if (a->frame < b->frame) return -1;
+  if (a->frame > b->frame) return 1;
+  return (a->stem_index > b->stem_index) - (a->stem_index < b->stem_index);
+}
 
 static int uint_arg(const char *value, uint64_t ceiling, uint64_t *out) {
   char *tail = NULL;
@@ -127,6 +142,18 @@ int main(int argc, char **argv) {
     s->stream = fopen(s->path, "rb");
     if (!s->stream) { perror("open stem"); goto done; }
   }
+  /* Pre-sort timeline events once, not on every 1024-frame output block.
+   * Set bits for any stem entering the current block and clear stems whose
+   * ending frame is at or before its start. Iterate set bits in ascending
+   * original stem index to retain exact float32 accumulation order.
+   * A stem that starts and finishes inside one block is still admitted. */
+  StemEvent starts[MAX_STEMS], ends[MAX_STEMS];
+  for (size_t i = 0; i < count; ++i) {
+    starts[i] = (StemEvent){stems[i].at, (unsigned)i};
+    ends[i] = (StemEvent){stems[i].at + stems[i].frames, (unsigned)i};
+  }
+  qsort(starts, count, sizeof(starts[0]), event_compare);
+  qsort(ends, count, sizeof(ends[0]), event_compare);
   struct stat prior;
   if (lstat(output, &prior) == 0 || errno != ENOENT) {
     fputs("refusing to replace an existing output\n", stderr); goto done;
@@ -145,10 +172,24 @@ int main(int argc, char **argv) {
   if (!dst || !source) {
     fputs("out of memory\n", stderr); goto close_output;
   }
+  uint64_t active_stems = 0, block_count = 0;
+  size_t start_event = 0, end_event = 0;
   for (uint64_t at = 0; at < samples; at += BLOCK_SAMPLES) {
     const size_t nframes = (size_t)((samples-at)<BLOCK_SAMPLES ? samples-at : BLOCK_SAMPLES);
+    const uint64_t block_end = at + nframes;
+    block_count++;
+    while (end_event < count && ends[end_event].frame <= at) {
+      active_stems &= ~(UINT64_C(1) << ends[end_event++].stem_index);
+    }
+    while (start_event < count && starts[start_event].frame < block_end) {
+      active_stems |= UINT64_C(1) << starts[start_event++].stem_index;
+    }
     memset(dst, 0, nframes * (size_t)channels * sizeof(float));
-    for (size_t i = 0; i < count; ++i) {
+    /* GCC/Clang ctz is defined here because candidates is never zero.
+     * The ordering is the same ascending caller-provided index as before. */
+    for (uint64_t candidates = active_stems; candidates; candidates &= (candidates - 1)) {
+      const unsigned i = (unsigned)__builtin_ctzll(candidates);
+      stats.overlap_probes++;
       Stem *s = &stems[i];
       const uint64_t lo = at > s->at ? at : s->at;
       const uint64_t hi = at + nframes < s->at + s->frames ? at + nframes : s->at + s->frames;
@@ -182,10 +223,15 @@ int main(int argc, char **argv) {
          "\"source_explicit_seek_calls\":%" PRIu64 ","
          "\"sequential_seek_elisions\":%" PRIu64 ","
          "\"source_bytes_read\":%" PRIu64 ","
+         "\"stem_overlap_probes\":%" PRIu64 ","
+         "\"stem_overlap_probes_avoided\":%" PRIu64 ","
+         "\"legacy_stem_overlap_probes\":%" PRIu64 ","
          "\"execution_authority_inferred\":false}\n",
          samples, channels, samples * stride, count,
          stats.source_reads, stats.explicit_seeks,
-         stats.source_reads - stats.explicit_seeks, stats.source_bytes_read);
+         stats.source_reads - stats.explicit_seeks, stats.source_bytes_read,
+         stats.overlap_probes, block_count * count - stats.overlap_probes,
+         block_count * count);
   result = 0;
 close_output:
   free(dst); free(source);
