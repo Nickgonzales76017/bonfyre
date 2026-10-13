@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { VERSION } from "../src/version.mjs";
@@ -18,6 +18,7 @@ import {
   validateIntegrationEvent,
 } from "../src/integration-connectors.mjs";
 import { scaffoldIntegrationRepos } from "../src/integration-repo-scaffold.mjs";
+import { compileCreatorProgram, editCreatorTimeline } from "../src/creator-render-program.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const repoRoot = dirname(__dirname);
@@ -47,6 +48,8 @@ function printHelp() {
   console.log("  akai integrate:templates [--target NAME] [--environment NAME] [--json]");
   console.log("  akai integrate:validate-event --target NAME [--input-file FILE|--event-json JSON] [--json]");
   console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
+  console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--json]");
+  console.log("  akai creator:edit --input TIMELINE.json --edit EDIT.json [--json]  # candidate only");
   console.log("");
   console.log("Grouped compatibility commands:");
   console.log("  akai sae activate ...   -> akai sae:activate ...");
@@ -178,6 +181,41 @@ const rawArgs = process.argv.slice(2);
 if (rawArgs.length === 0 || rawArgs[0] === "--help" || rawArgs[0] === "-h" || rawArgs[0] === "help") {
   printHelp();
   process.exit(0);
+}
+
+if (rawArgs[0] === "creator:compile" || rawArgs[0] === "creator:edit") {
+  const args=rawArgs.slice(1), input=getFlagValue(args,"--input");
+  if (!input || !existsSync(input)) {
+    console.error("Creator timeline requires an existing --input JSON file");
+    process.exit(2);
+  }
+  try {
+    // Project metadata only; the media body never enters the CLI heap.
+    const readBounded=path=>{
+      if (!path || !existsSync(path) || !statSync(path).isFile() || statSync(path).size > 16*1024*1024)
+        throw Error("creator input is absent or exceeds the 16 MiB metadata limit");
+      return JSON.parse(readFileSync(path,"utf8"));
+    };
+    const timeline=readBounded(input);
+    if (rawArgs[0] === "creator:edit") {
+      printPayload(editCreatorTimeline(timeline,readBounded(getFlagValue(args,"--edit"))),true);
+    } else {
+      const number=(name,fallback)=>{
+        const raw=getFlagValue(args,name);
+        if (raw===null) return fallback;
+        if (!/^[0-9]+$/.test(raw)) throw Error("creator requires an unsigned integer "+name);
+        return Number(raw);
+      };
+      const from=getFlagValue(args,"--from"),to=getFlagValue(args,"--to");
+      if ((from===null)!==(to===null)) throw Error("--from and --to must be supplied together");
+      const range=from===null?null:{start:number("--from",0),end:number("--to",0)};
+      printPayload(compileCreatorProgram(timeline,{shardFrames:number("--shard-frames",256),range}),true);
+    }
+    process.exit(0);
+  } catch (error) {
+    console.error(error?.message||String(error));
+    process.exit(1);
+  }
 }
 
 if (rawArgs[0] === "manifest:print") {
