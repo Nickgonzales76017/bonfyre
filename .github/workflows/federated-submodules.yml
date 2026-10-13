@@ -38,6 +38,9 @@ jobs:
           bash scripts/federated_modules.sh verify aurekai
           bash scripts/federated_modules.sh verify frappe
           bash scripts/federated_modules.sh verify interfaces
+          bash scripts/federated_modules.sh verify performance
+          bash scripts/federated_modules.sh verify perf-memory
+          bash scripts/federated_modules.sh verify perf-model
           bash scripts/federated_modules.sh verify one integrations/federated/interfaces/opentui
       - name: Verify atlas reflects pinned Git modules and URLs
         run: |

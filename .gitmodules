@@ -189,3 +189,91 @@
 [submodule "integrations/federated/interfaces/ghost"]
 	path = integrations/federated/interfaces/ghost
 	url = https://github.com/TryGhost/Ghost.git
+
+[submodule "integrations/federated/performance/memory/nanoarrow"]
+	path = integrations/federated/performance/memory/nanoarrow
+	url = https://github.com/apache/arrow-nanoarrow.git
+
+[submodule "integrations/federated/performance/memory/simdjson"]
+	path = integrations/federated/performance/memory/simdjson
+	url = https://github.com/simdjson/simdjson.git
+
+[submodule "integrations/federated/performance/memory/simdutf"]
+	path = integrations/federated/performance/memory/simdutf
+	url = https://github.com/simdutf/simdutf.git
+
+[submodule "integrations/federated/performance/memory/blake3"]
+	path = integrations/federated/performance/memory/blake3
+	url = https://github.com/BLAKE3-team/BLAKE3.git
+
+[submodule "integrations/federated/performance/memory/xxhash"]
+	path = integrations/federated/performance/memory/xxhash
+	url = https://github.com/Cyan4973/xxHash.git
+
+[submodule "integrations/federated/performance/memory/zstd"]
+	path = integrations/federated/performance/memory/zstd
+	url = https://github.com/facebook/zstd.git
+
+[submodule "integrations/federated/performance/memory/lz4"]
+	path = integrations/federated/performance/memory/lz4
+	url = https://github.com/lz4/lz4.git
+
+[submodule "integrations/federated/performance/memory/croaring"]
+	path = integrations/federated/performance/memory/croaring
+	url = https://github.com/RoaringBitmap/CRoaring.git
+
+[submodule "integrations/federated/performance/memory/mimalloc"]
+	path = integrations/federated/performance/memory/mimalloc
+	url = https://github.com/microsoft/mimalloc.git
+
+[submodule "integrations/federated/performance/search/usearch"]
+	path = integrations/federated/performance/search/usearch
+	url = https://github.com/unum-cloud/USearch.git
+
+[submodule "integrations/federated/performance/search/diskann"]
+	path = integrations/federated/performance/search/diskann
+	url = https://github.com/microsoft/DiskANN.git
+
+[submodule "integrations/federated/performance/search/hnswlib"]
+	path = integrations/federated/performance/search/hnswlib
+	url = https://github.com/nmslib/hnswlib.git
+
+[submodule "integrations/federated/performance/incremental/duckdb"]
+	path = integrations/federated/performance/incremental/duckdb
+	url = https://github.com/duckdb/duckdb.git
+
+[submodule "integrations/federated/performance/incremental/datafusion"]
+	path = integrations/federated/performance/incremental/datafusion
+	url = https://github.com/apache/datafusion.git
+
+[submodule "integrations/federated/performance/incremental/velox"]
+	path = integrations/federated/performance/incremental/velox
+	url = https://github.com/facebookincubator/velox.git
+
+[submodule "integrations/federated/performance/incremental/feldera"]
+	path = integrations/federated/performance/incremental/feldera
+	url = https://github.com/feldera/feldera.git
+
+[submodule "integrations/federated/performance/edge/liburing"]
+	path = integrations/federated/performance/edge/liburing
+	url = https://github.com/axboe/liburing.git
+
+[submodule "integrations/federated/performance/edge/libbpf"]
+	path = integrations/federated/performance/edge/libbpf
+	url = https://github.com/libbpf/libbpf.git
+
+[submodule "integrations/federated/performance/edge/xdp-tools"]
+	path = integrations/federated/performance/edge/xdp-tools
+	url = https://github.com/xdp-project/xdp-tools.git
+
+[submodule "integrations/federated/performance/model/llama-cpp"]
+	path = integrations/federated/performance/model/llama-cpp
+	url = https://github.com/ggml-org/llama.cpp.git
+
+[submodule "integrations/federated/performance/model/vllm"]
+	path = integrations/federated/performance/model/vllm
+	url = https://github.com/vllm-project/vllm.git
+
+[submodule "integrations/federated/performance/model/sglang"]
+	path = integrations/federated/performance/model/sglang
+	url = https://github.com/sgl-project/sglang.git

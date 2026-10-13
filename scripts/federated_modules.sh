@@ -13,13 +13,13 @@ usage() {
 Usage: scripts/federated_modules.sh list|verify|status|diff [group]
        scripts/federated_modules.sh init GROUP
 
-Groups: products | extractions | examples | aurekai | lineage | frappe | interfaces | upstream | all | one PATH
+Groups: products | extractions | examples | aurekai | lineage | frappe | interfaces | upstream | performance | perf-memory | perf-search | perf-incremental | perf-edge | perf-model | all | one PATH
 
 These are pinned public companion checkouts, NOT replacement runtime owners.
 The normal Bonfyre checkout and build need none of the optional groups.
 Use "init products" first. "one PATH" selects one exact module.
 Large donor trees require BONFYRE_ALLOW_LARGE_MODULES=1 when initializing
-all, frappe or interfaces. No large group is fetched by default.
+all, frappe, interfaces or performance families. No donor group is fetched by default.
 Init is explicit; no remote-head upgrades. Only extraction dependencies recurse.
 HELP
 }
@@ -30,7 +30,7 @@ case "$action" in
   *) usage >&2; exit 2 ;;
 esac
 case "$group" in
-  products|extractions|examples|aurekai|lineage|frappe|interfaces|upstream|one|all) ;;
+  products|extractions|examples|aurekai|lineage|frappe|interfaces|upstream|performance|perf-memory|perf-search|perf-incremental|perf-edge|perf-model|one|all) ;;
   *) printf "Unknown submodule group: %s\n" "$group" >&2; usage >&2; exit 2 ;;
 esac
 if [[ "$action" == init && $# -lt 2 ]]; then
@@ -43,7 +43,7 @@ if [[ "$group" == one ]]; then
 fi
 if [[ "$action" == init ]]; then
   case "$group" in
-    all|frappe|interfaces)
+    all|frappe|interfaces|performance|perf-memory|perf-search|perf-incremental|perf-edge|perf-model)
       [[ "${BONFYRE_ALLOW_LARGE_MODULES:-0}" == 1 ]] || {
         printf "Refused large optional donor checkout. Set BONFYRE_ALLOW_LARGE_MODULES=1 to opt in.\n" >&2
         exit 2
@@ -65,6 +65,12 @@ selected() {
     interfaces) [[ "$path" == integrations/federated/interfaces/* ]] ;;
     one) [[ "$path" == "$only_path" ]] ;;
     upstream) [[ "$path" == vendor/hvm4 ]] ;;
+    performance) [[ "$path" == integrations/federated/performance/* ]] ;;
+    perf-memory) [[ "$path" == integrations/federated/performance/memory/* ]] ;;
+    perf-search) [[ "$path" == integrations/federated/performance/search/* ]] ;;
+    perf-incremental) [[ "$path" == integrations/federated/performance/incremental/* ]] ;;
+    perf-edge) [[ "$path" == integrations/federated/performance/edge/* ]] ;;
+    perf-model) [[ "$path" == integrations/federated/performance/model/* ]] ;;
   esac
 }
 
@@ -89,7 +95,7 @@ for ((i=0; i<${#paths[@]}; i++)); do
   key="${keys[i]%.path}"
   url="$(git -C "$root" config -f "$manifest" --get "$key.url")"
   case "$url" in
-    https://github.com/Nickgonzales76017/*.git|https://github.com/aurekai/*.git|https://github.com/HigherOrderCO/HVM4.git|https://github.com/frappe/*.git|https://github.com/anomalyco/opentui.git|https://github.com/modelcontextprotocol/ext-apps.git|https://github.com/a2ui-project/a2ui.git|https://github.com/vercel-labs/json-render.git|https://github.com/charmbracelet/*.git|https://github.com/ratatui/ratatui.git|https://github.com/TryGhost/Ghost.git) ;;
+    https://github.com/Nickgonzales76017/*.git|https://github.com/aurekai/*.git|https://github.com/HigherOrderCO/HVM4.git|https://github.com/frappe/*.git|https://github.com/anomalyco/opentui.git|https://github.com/modelcontextprotocol/ext-apps.git|https://github.com/a2ui-project/a2ui.git|https://github.com/vercel-labs/json-render.git|https://github.com/charmbracelet/*.git|https://github.com/ratatui/ratatui.git|https://github.com/TryGhost/Ghost.git|https://github.com/apache/arrow-nanoarrow.git|https://github.com/simdjson/simdjson.git|https://github.com/simdutf/simdutf.git|https://github.com/BLAKE3-team/BLAKE3.git|https://github.com/Cyan4973/xxHash.git|https://github.com/facebook/zstd.git|https://github.com/lz4/lz4.git|https://github.com/RoaringBitmap/CRoaring.git|https://github.com/microsoft/mimalloc.git|https://github.com/unum-cloud/USearch.git|https://github.com/microsoft/DiskANN.git|https://github.com/nmslib/hnswlib.git|https://github.com/duckdb/duckdb.git|https://github.com/apache/datafusion.git|https://github.com/facebookincubator/velox.git|https://github.com/feldera/feldera.git|https://github.com/axboe/liburing.git|https://github.com/libbpf/libbpf.git|https://github.com/xdp-project/xdp-tools.git|https://github.com/ggml-org/llama.cpp.git|https://github.com/vllm-project/vllm.git|https://github.com/sgl-project/sglang.git) ;;
     *) printf "Refused unapproved remote for %s: %s\n" "$path" "$url" >&2; exit 2 ;;
   esac
   row="$(git -C "$root" ls-tree -r HEAD -- "$path")"

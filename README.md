@@ -53,7 +53,7 @@ Those tools have their own repositories and licenses. For more involved deployme
 
 ## Federated workspace
 
-The integrated native engine stays here. **47 public companion repositories are now
+The integrated native engine stays here. **69 public companion repositories are now
 pinned as real Git submodules**, alongside the existing HVM4 dependency. They
 are grouped under [`integrations/federated/`](integrations/federated/) and
 [`examples/federated/`](examples/federated/), not added as 47 new root
@@ -74,6 +74,7 @@ repository. Search within the linked owner repository when you need its source.
 | `aurekai` | 12 | The earlier Aurekai platform, native runtime, CI, IDE, data and workflow adapters |
 | `frappe` | 9 | Pinned source of Frappe, ERPNext, LMS, HRMS, CRM, Helpdesk, Insights, Wiki and archived Drive |
 | `interfaces` | 8 | OpenTUI, MCP Apps, A2UI, json-render, Bubble Tea, Lip Gloss, Ratatui and Ghost design/source references |
+| `performance` | 22 | Optional benchmark/reference donors: memory/Arrow, search, incremental engines, Linux edge I/O, model serving |
 | `lineage` | 2 | Historical bonfyre-oss and HCP work, deliberately not active runtime replacements |
 | `upstream` | 1 | Existing independently maintained HVM4 |
 
@@ -90,11 +91,13 @@ bash scripts/federated_modules.sh status products
 
 Use `init extractions`, `init examples`, or `init aurekai` only for the work
 you need. For one specific donor, use `init one integrations/federated/interfaces/opentui`.
-The `frappe`, `interfaces`, and `all` groups can pull **gigabytes** of source
+The `frappe`, `interfaces`, `performance`, and `all` groups can pull **gigabytes** of source
 history and require `BONFYRE_ALLOW_LARGE_MODULES=1` before initializing.
 Neither the optional donors nor historical lineage is cloned by default. The script verifies the exact gitlink
 commit and public URL before fetching, **never advances to a remote branch
 without review**, and recurses only into the reviewed native extraction dependencies.
+
+The 22 performance donors are *reference implementations* only: no automatic linking, runtime replacement, no copying third-party assets or new quantization claims. Some are large Rust/Python/C++ systems and some use platform-specific interfaces; `init one integrations/federated/performance/memory/nanoarrow` fetches only one exact pin. Promotion requires compatible licenses, independently measured behavior, full feature parity and a fallback route.
 
 The Frappe pins are source references, **not a tested nine-app compatible bench**;
 `frappe/drive` is archived upstream. The interface repos are source/design
