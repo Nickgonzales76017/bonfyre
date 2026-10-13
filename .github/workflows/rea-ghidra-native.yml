@@ -37,6 +37,12 @@ jobs:
           set -eu
           echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/rea-owned-ghidra" >> "$GITHUB_ENV"
           export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-owned-ghidra"
+          # Exercise the real override as a different storage *directory*.
+          # It is on the runner's same volume; the /Volumes mount-device refusal
+          # is independently enforced in the helper for the physical Mac.
+          export BONFYRE_REA_NATIVE_ROOT="$RUNNER_TEMP/rea native toolchain"
+          mkdir -p "$BONFYRE_REA_NATIVE_ROOT"
+          echo "BONFYRE_REA_NATIVE_ROOT=$BONFYRE_REA_NATIVE_ROOT" >> "$GITHUB_ENV"
           # Prove the bundled JDK works; a hosted Java must not accidentally
           # satisfy a missing dependency on the user's physical Mac.
           unset JAVA_HOME || true
@@ -47,12 +53,14 @@ jobs:
             exit 1
           fi
           tail -n 12 "$RUNNER_TEMP/rea-ghidra-install.log"
-          test -x "$BONFYRE_REA_ROOT/toolchains/jdk-21.0.12.1+1/Contents/Home/bin/javac"
-          decompiler="$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler"
+          test -x "$BONFYRE_REA_NATIVE_ROOT/toolchains/jdk-21.0.12.1+1/Contents/Home/bin/javac"
+          decompiler="$BONFYRE_REA_NATIVE_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler"
           test -x "$decompiler/build/os/mac_arm_64/decompile" || test -x "$decompiler/os/mac_arm_64/decompile"
           test -x "$decompiler/build/os/mac_arm_64/sleigh" || test -x "$decompiler/os/mac_arm_64/sleigh"
           bash scripts/rea-local.sh install-native > /dev/null
-          test -d "$BONFYRE_REA_ROOT/toolchains/gradle-cache"
+          test -d "$BONFYRE_REA_NATIVE_ROOT/toolchains/gradle-cache"
+          test ! -e "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC"
+          test ! -e "$BONFYRE_REA_ROOT/toolchains/jdk-21.0.12.1+1"
       - name: REA actually analyzes a compiled Bonfyre-owned Mach-O
         run: |
           set -eu
