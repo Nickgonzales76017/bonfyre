@@ -48,7 +48,7 @@ function printHelp() {
   console.log("  akai integrate:templates [--target NAME] [--environment NAME] [--json]");
   console.log("  akai integrate:validate-event --target NAME [--input-file FILE|--event-json JSON] [--json]");
   console.log("  akai integrate:scaffold-repos [--target NAME|--all] [--out-dir DIR] [--virtual|--verify] [--json]");
-  console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--json]");
+  console.log("  akai creator:compile --input TIMELINE.json [--shard-frames N] [--from N --to N] [--source-projection used] [--json]");
   console.log("  akai creator:edit --input TIMELINE.json --edit EDIT.json [--json]  # candidate only");
   console.log("");
   console.log("Grouped compatibility commands:");
@@ -209,7 +209,8 @@ if (rawArgs[0] === "creator:compile" || rawArgs[0] === "creator:edit") {
       const from=getFlagValue(args,"--from"),to=getFlagValue(args,"--to");
       if ((from===null)!==(to===null)) throw Error("--from and --to must be supplied together");
       const range=from===null?null:{start:number("--from",0),end:number("--to",0)};
-      printPayload(compileCreatorProgram(timeline,{shardFrames:number("--shard-frames",256),range}),true);
+      printPayload(compileCreatorProgram(timeline,{shardFrames:number("--shard-frames",256),range,
+        sourceProjection:getFlagValue(args,"--source-projection")??'all'}),true);
     }
     process.exit(0);
   } catch (error) {

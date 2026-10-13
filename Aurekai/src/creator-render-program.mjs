@@ -168,7 +168,8 @@ export function prepareCreatorCompiler(input) {
   let maximum=0;
   for(let i=0;i<all.length;i++){ maximum=Math.max(maximum,all[i].end); maxEnds[i]=maximum; }
   const samplesNumerator=BigInt(fpsDen)*BigInt(sampleRate), samplesDenominator=BigInt(fpsNum);
-  const compile=({shardFrames=256,range=null}={})=>{
+  const compile=({shardFrames=256,range=null,sourceProjection='all'}={})=>{
+    if(!['all','used'].includes(sourceProjection))fail('invalid sourceProjection');
     integer(shardFrames,1,65536,'shardFrames');
     const start=range?.start??0,end=range?.end??extent;
     integer(start,0,extent-1,'range.start');
@@ -227,14 +228,29 @@ export function prepareCreatorCompiler(input) {
       distinct.add(bodyKey);totalSegments+=segments.length;
       for(const [id,item] of active)if(item.end<=we)active.delete(id);
     }
+    // Demand-selected carriers project only the bases referenced by emitted
+    // segments; a stable remap preserves every digest and body key. This
+    // reduces browser/agent wire payload without duplicating media bodies.
+    let projectedBases;
+    if(sourceProjection==='used'){
+      const used=new Set();
+      for(const window of windows)for(const segment of window.segments)used.add(segment.source_basis);
+      const ordered=[...used].sort((a,b)=>a-b);
+      const remap=new Map(ordered.map((original,index)=>[original,index]));
+      projectedBases=ordered.map(index=>({...bases[index]}));
+      for(const window of windows)for(const segment of window.segments)
+        segment.source_basis=remap.get(segment.source_basis);
+    }else projectedBases=bases.map(base=>({...base}));
     return {
       schema:'aurekai.creator.render-program.v1',timeline_digest:fullDigest,scope_digest:scopeKey,
       state:'planned_unexecuted',effect_authorized:false,media_bytes_materialized:0,
       clock:{fps:{num:fpsNum,den:fpsDen},sample_rate:sampleRate},
       extent_frames:extent,shard_frames:shardFrames,
       // Never expose the retained precompiled array by reference.
-      source_bases:bases.map(s=>({...s})),range:{start_frame:start,end_frame:end},
+      source_bases:projectedBases,range:{start_frame:start,end_frame:end},
       windows,
+      ...(sourceProjection==='used'?{source_projection:'used',
+        selected_source_bases:projectedBases.length}:{}),
       metrics:{source_count:sourceIndices.size,clip_count:all.length,selected_windows:windows.length,
         resolved_segments:totalSegments,unique_render_bodies:distinct.size,
         reused_window_bodies:windows.length-distinct.size,

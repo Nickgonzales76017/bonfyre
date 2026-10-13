@@ -118,3 +118,46 @@ test('late sharded view keeps clip order and exact sparse overlap', () => {
   assert.equal(cut.effect_authorized,false);
   assert.deepEqual(cut,compileCreatorProgram(t,{shardFrames:256,range:{start:950_000,end:950_010}}));
 });
+
+test('demand-selected source bases preserve rendered meaning with bounded carrier payloads',()=>{
+  const t=timeline();
+  const extra=Array.from({length:6000},(_,i)=>({
+    id:'unused-'+i,kind:'audio',sha256:hex('e'),frames:600
+  }));
+  t.sources.push(...extra);
+  const options={shardFrames:60,range:{start:124,end:153}};
+  const full=compileCreatorProgram(t,options);
+  const compact=compileCreatorProgram(t,{...options,sourceProjection:'used'});
+  assert.equal(compact.source_projection,'used');
+  assert.equal(compact.selected_source_bases,2);
+  assert.equal(full.source_bases.length,6002);
+  assert.equal(compact.source_bases.length,2);
+  assert.equal(compact.metrics.source_count,full.metrics.source_count);
+  assert.deepEqual(compact.windows.map(w=>w.body_key),full.windows.map(w=>w.body_key));
+  for(let i=0;i<compact.windows.length;i++){
+    const a=compact.windows[i],b=full.windows[i];
+    assert.equal(a.segments.length,b.segments.length);
+    for(let j=0;j<a.segments.length;j++){
+      const actual=a.segments[j],original=b.segments[j];
+      assert.equal(compact.source_bases[actual.source_basis].sha256,
+        full.source_bases[original.source_basis].sha256);
+      assert.deepEqual({...actual,source_basis:original.source_basis},original);
+    }
+  }
+  const compactBytes=Buffer.byteLength(JSON.stringify(compact));
+  const fullBytes=Buffer.byteLength(JSON.stringify(full));
+  assert(compactBytes < fullBytes/25);
+  console.log(JSON.stringify({workload:'synthetic 6000 unrelated sources, one viewport',
+    full_carrier_bytes:fullBytes,demand_carrier_bytes:compactBytes,
+    sources_declared:full.source_bases.length,sources_carried:compact.source_bases.length,
+    render_body_keys_identical:true,client_data_included:false}));
+  assert.deepEqual(prepareCreatorCompiler(t).compile({...options,sourceProjection:'used'}),compact);
+  assert.throws(()=>compileCreatorProgram(t,{...options,sourceProjection:'unsafe'}),/sourceProjection/);
+  // Empty windows require no body references and therefore no carried bases.
+  const isolated={...t,frames:1200,sources:t.sources,
+    tracks:[{id:'quiet',kind:'audio',clips:[{
+      id:'before',source_id:'sound',at:0,in:0,frames:5
+    }]}]};
+  const empty=compileCreatorProgram(isolated,{range:{start:600,end:650},sourceProjection:'used'});
+  assert.equal(empty.source_bases.length,0);
+});

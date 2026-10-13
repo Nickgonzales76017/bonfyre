@@ -193,7 +193,8 @@ jobs:
             schema:'aurekai.creator.timeline.v1',
             scope:{owner:'fixture',purpose:'preview',authority_digest:hex('a'),frontier_digest:hex('b')},
             fps:{num:30000,den:1001},sample_rate:48000,frames:8,
-            sources:[{id:'s',kind:'audio',sha256:hex('c'),frames:8}],
+            sources:[{id:'s',kind:'audio',sha256:hex('c'),frames:8},
+              {id:'unused',kind:'audio',sha256:hex('d'),frames:8}],
             tracks:[{id:'t',kind:'audio',clips:[{id:'c',source_id:'s',at:0,in:0,frames:8}]}]
           };
           try {
@@ -206,6 +207,17 @@ jobs:
             const planned=JSON.parse(r.stdout);
             if(planned.windows.length!==1||planned.windows[0].index!==1||planned.state!=='planned_unexecuted')
               throw Error('Creator CLI did not compile requested exact cut');
+            const compact=cli('creator:compile','--input',input,'--shard-frames','3',
+              '--from','3','--to','5','--source-projection','used','--json');
+            if(compact.status!==0)throw Error('Creator demanded-source route failed: '+compact.stderr);
+            const demanded=JSON.parse(compact.stdout);
+            if(demanded.source_projection!=='used'||demanded.source_bases.length!==1||
+                planned.source_bases.length!==2||
+                demanded.source_bases[demanded.windows[0].segments[0].source_basis].sha256!==hex('c')||
+                demanded.windows[0].body_key!==planned.windows[0].body_key)
+              throw Error('Creator CLI changed render identity or carried unused source bases');
+            const invalidProjection=cli('creator:compile','--input',input,'--source-projection','unknown');
+            if(invalidProjection.status===0)throw Error('Creator CLI accepted unknown source projection');
             const edit=join(dir,'edit.json');
             writeFileSync(edit,JSON.stringify({expected_digest:planned.timeline_digest,op:'gain',
               track_id:'t',clip_id:'c',value:0.7}));
