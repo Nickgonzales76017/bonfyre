@@ -97,6 +97,21 @@ jobs:
           bash scripts/rea-local.sh targets
           bash scripts/rea-local.sh rea providers --json
           bash scripts/rea-local.sh setup-preview
+      - name: Register REA in disposable Codex and Claude Code profiles
+        run: |
+          set -eu
+          # Explicitly isolate users' real agent configurations and credentials.
+          export HOME="$RUNNER_TEMP/rea-agents-home"
+          mkdir -p "$HOME"
+          bash scripts/rea-local.sh agents-preview > "$RUNNER_TEMP/rea-agents-plan.json"
+          bash scripts/rea-local.sh agents-connect > "$RUNNER_TEMP/rea-agents-applied.json"
+          test -f "$HOME/.codex/config.toml"
+          test -f "$HOME/.claude.json"
+          grep -qi rea "$HOME/.codex/config.toml"
+          grep -qi rea "$HOME/.claude.json"
+          bash scripts/rea-local.sh rea doctor --client codex --json > "$RUNNER_TEMP/rea-agent-codex-health.json"
+          bash scripts/rea-local.sh rea doctor --client claude_code --json > "$RUNNER_TEMP/rea-agent-claude-health.json"
+          echo "REA scoped agent registrations verified without touching real Mac accounts"
       - name: Verify no scanned estate or global npm artifact
         run: |
           set -eu
