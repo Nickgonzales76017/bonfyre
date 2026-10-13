@@ -51,11 +51,25 @@ jobs:
           set -eu
           # Pin an upstream released version; setup, GUI attachment, privilege
           # changes and native provider installation are not permitted here.
+          set +e
           timeout 360s npm exec --yes --package=rea-agents@6.4.0 -- rea \
             analyze-javascript-application "$REA_CREATOR_TARGET" \
             --source-path package.json \
             --source-path src/creator-render-program.mjs --json \
-            > "$RUNNER_TEMP/rea-creator-evidence.json"
+            > "$RUNNER_TEMP/rea-creator-evidence.json" \
+            2> "$RUNNER_TEMP/rea-creator-stderr.txt"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "REA returned nonzero: $status"
+            head -c 4000 "$RUNNER_TEMP/rea-creator-stderr.txt"
+            echo
+            # Only public synthetic source was inspected; print the bounded
+            # tool error so real integration failures can be diagnosed.
+            head -c 4000 "$RUNNER_TEMP/rea-creator-evidence.json"
+            echo
+            exit "$status"
+          fi
       - name: Verify analyzed source and Evidence provenance
         run: |
           node --input-type=module <<'JS'
