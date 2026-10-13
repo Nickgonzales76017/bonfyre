@@ -8,10 +8,11 @@ import {pathToFileURL} from 'node:url';
 
 const SHA=/^(?:sha256:)?[a-f0-9]{64}$/i;
 const EXACT=new Set(['authority','identity','money','publication','effect','fulfillment','legal','privacy']);
+const APPROX=new Set(['discovery','retrieval','ranking','exploration','simulation']);
 const METRICS=['p95_ms','peak_resident_bytes','bytes_copied','bytes_hydrated','allocations','external_calls'];
 const str=x=>typeof x==='string'&&x.trim().length>0;
 const measure=x=>typeof x==='number'&&Number.isFinite(x)&&x>=0;
-const features=x=>Array.isArray(x)&&x.every(str)&&new Set(x).size===x.length;
+const features=x=>Array.isArray(x)&&x.length>0&&x.every(str)&&new Set(x).size===x.length;
 const demand=(issues,ok,reason)=>{if(!ok)issues.push(reason);};
 
 export function reviewPerformance(input) {
@@ -36,17 +37,19 @@ export function reviewPerformance(input) {
     demand(problems,label==='baseline'?v.kind==='exact':(v.kind==='exact'||v.kind==='approximate-prefilter'),label+':unknown-kind');
     for(const metric of METRICS)demand(problems,measure(v.metrics?.[metric]),label+':missing-metric-'+metric);
   }
+  demand(problems,str(baseline.receipt_ref)&&str(candidate.receipt_ref)&&baseline.receipt_ref!==candidate.receipt_ref,'candidate-reuses-baseline-receipt');
   demand(problems,baseline.result_digest===candidate.result_digest,'final-result-differs');
   demand(problems,baseline.effect_digest===candidate.effect_digest,'effect-or-authorization-differs');
   if(candidate.kind==='approximate-prefilter'){
     const p=candidate.preservation||{};
-    demand(problems,!EXACT.has(scope.work_class),'loss-forbidden-for-exact-work');
+    demand(problems,APPROX.has(scope.work_class)&&!EXACT.has(scope.work_class),'loss-forbidden-for-exact-work');
     demand(problems,p.final_exact_recheck===true&&str(p.recheck_receipt_ref),'exact-recheck-not-witnessed');
     demand(problems,str(scope.axis)&&p.axis===scope.axis,'representation-axis-drift');
     demand(problems,Number.isInteger(scope.k)&&scope.k>0&&p.k===scope.k,'recall-k-drift');
     demand(problems,p.cohort===scope.cohort,'preservation-cohort-drift');
     demand(problems,measure(p.min_recall)&&p.min_recall<=1&&measure(p.observed_recall)&&p.observed_recall<=1&&p.observed_recall>=p.min_recall,'measured-recall-budget-not-met');
     demand(problems,Number.isInteger(p.false_prunes)&&p.false_prunes>=0,'false-prune-count-missing');
+    demand(problems,p.false_prunes===0,'false-prune-means-functionality-loss');
   }
   const deltas={};
   let better=false;
