@@ -38,7 +38,12 @@ jobs:
           echo "BONFYRE_REA_ROOT=$RUNNER_TEMP/rea-owned-ghidra" >> "$GITHUB_ENV"
           export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-owned-ghidra"
           bash scripts/rea-local.sh install
-          bash scripts/rea-local.sh install-native > "$RUNNER_TEMP/rea-ghidra-install.json"
+          if ! bash scripts/rea-local.sh install-native > "$RUNNER_TEMP/rea-ghidra-install.log" 2>&1; then
+            echo "Native Ghidra prerequisite setup failed; bounded terminal diagnostics:"
+            tail -n 100 "$RUNNER_TEMP/rea-ghidra-install.log"
+            exit 1
+          fi
+          tail -n 12 "$RUNNER_TEMP/rea-ghidra-install.log"
           test -x "$BONFYRE_REA_ROOT/toolchains/jdk-21.0.12.1+1/Contents/Home/bin/javac"
           test -x "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/os/mac_arm_64/decompile"
           test -x "$BONFYRE_REA_ROOT/engines/ghidra_12.1.4_PUBLIC/Ghidra/Features/Decompiler/os/mac_arm_64/sleigh"
