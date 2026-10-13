@@ -294,12 +294,12 @@ case "$action" in
           "fl studio"*.app|"ableton live"*.app|"bitwig studio"*.app|reaper*.app|\
           "logic pro"*.app|blender*.app|"davinci resolve"*.app|\
           "adobe premiere pro"*.app|"adobe after effects"*.app|\
-          obs*.app|"obs studio"*.app)
+          obs.app|"obs studio"*.app)
             printf 'available %s\n' "$candidate"
             matches=$((matches+1))
             ;;
         esac
-      done < <(find "$app_root" -maxdepth 4 \( -type d -o -type l \) -iname '*.app' -print0 2>/dev/null)
+      done < <(find "$app_root" -maxdepth 4 \( -type d -o -type l \) -iname '*.app' -print0 -prune 2>/dev/null)
     done
     if [ "$matches" -eq 0 ]; then
       printf 'no recognized creative application bundles in selected locations\n'
