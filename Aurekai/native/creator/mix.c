@@ -23,7 +23,15 @@ typedef struct {
   uint64_t at, from, frames;
   float gain;
   FILE *stream;
+  uint64_t next_float_offset;
+  int cursor_valid;
 } Stem;
+
+typedef struct {
+  uint64_t source_reads;
+  uint64_t explicit_seeks;
+  uint64_t source_bytes_read;
+} RenderStats;
 
 static int uint_arg(const char *value, uint64_t ceiling, uint64_t *out) {
   char *tail = NULL;
@@ -51,10 +59,22 @@ static void usage(void) {
         "Coordinates are integer sample frames; all bodies are interleaved f32le.\n", stderr);
 }
 
-static int read_stem(Stem *stem, uint64_t from, float *buffer, size_t count) {
-  const off_t offset = (off_t)(from * sizeof(float));
-  if (fseeko(stem->stream, offset, SEEK_SET) != 0) return 0;
-  return fread(buffer, sizeof(float), count, stem->stream) == count;
+static int read_stem(Stem *stem, uint64_t from, float *buffer, size_t count,
+                     RenderStats *stats) {
+  // A stem's source coordinates advance linearly through consecutive output
+  // blocks. Do not seek again when the next body bytes are already at the
+  // stream cursor. Each independent stem preserves its own file position.
+  if (!stem->cursor_valid || from != stem->next_float_offset) {
+    const off_t offset = (off_t)(from * sizeof(float));
+    if (fseeko(stem->stream, offset, SEEK_SET) != 0) return 0;
+    stats->explicit_seeks++;
+  }
+  if (fread(buffer, sizeof(float), count, stem->stream) != count) return 0;
+  stem->next_float_offset = from + count;
+  stem->cursor_valid = 1;
+  stats->source_reads++;
+  stats->source_bytes_read += count * sizeof(float);
+  return 1;
 }
 
 int main(int argc, char **argv) {
@@ -69,6 +89,7 @@ int main(int argc, char **argv) {
   const char *output = NULL;
   Stem stems[MAX_STEMS] = {{0}};
   size_t count = 0;
+  RenderStats stats = {0};
   int valid = 1, result = 1;
   for (int i = 1; i < argc && valid;) {
     if (!strcmp(argv[i], "--samples") && i + 1 < argc) {
@@ -133,7 +154,7 @@ int main(int argc, char **argv) {
       const uint64_t hi = at + nframes < s->at + s->frames ? at + nframes : s->at + s->frames;
       if (lo >= hi) continue;
       const size_t bodyFloats = (size_t)(hi-lo) * (size_t)channels;
-      if (!read_stem(s, (s->from + lo - s->at) * channels, source, bodyFloats)) {
+      if (!read_stem(s, (s->from + lo - s->at) * channels, source, bodyFloats, &stats)) {
         fputs("short or changed input body\n", stderr); goto close_output;
       }
       aurekai_mix_f32(dst + (lo-at)*channels, source, s->gain, bodyFloats);
@@ -157,8 +178,14 @@ int main(int argc, char **argv) {
   if (link(temporary, output) != 0) { perror("publish output"); goto close_output; }
   printf("{\"schema\":\"aurekai.creator.pcm-render.v1\",\"state\":\"materialized_unverified\","
          "\"sample_frames\":%" PRIu64 ",\"channels\":%" PRIu64 ",\"bytes\":%" PRIu64 ","
-         "\"stems\":%zu,\"execution_authority_inferred\":false}\n",
-         samples, channels, samples * stride, count);
+         "\"stems\":%zu,\"source_read_calls\":%" PRIu64 ","
+         "\"source_explicit_seek_calls\":%" PRIu64 ","
+         "\"sequential_seek_elisions\":%" PRIu64 ","
+         "\"source_bytes_read\":%" PRIu64 ","
+         "\"execution_authority_inferred\":false}\n",
+         samples, channels, samples * stride, count,
+         stats.source_reads, stats.explicit_seeks,
+         stats.source_reads - stats.explicit_seeks, stats.source_bytes_read);
   result = 0;
 close_output:
   free(dst); free(source);
