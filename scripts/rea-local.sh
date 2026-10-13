@@ -10,7 +10,7 @@ root="$HOME/.local/share/bonfyre/rea"
 if [ -n "$*" ] && [ "$action" = install ]; then
   echo "install accepts no implicit analysis targets" >&2; exit 2
 fi
-if [ -n "$BONFYRE_REA_ROOT" ]; then root="$BONFYRE_REA_ROOT"; fi
+if [ -n "$(printenv BONFYRE_REA_ROOT || true)" ]; then root="$BONFYRE_REA_ROOT"; fi
 prefix="$root/releases/$version"
 cli="$prefix/node_modules/rea-agents/scripts/rea.mjs"
 
