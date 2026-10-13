@@ -220,6 +220,18 @@ jobs:
               throw Error('Creator CLI changed render identity or carried unused source bases');
             const invalidProjection=cli('creator:compile','--input',input,'--source-projection','unknown');
             if(invalidProjection.status===0)throw Error('Creator CLI accepted unknown source projection');
+            const program=join(dir,'compiled.json'),bound=join(dir,'bound.json'),pcmOut=join(dir,'output.f32');
+            writeFileSync(program,JSON.stringify(planned));
+            writeFileSync(bound,JSON.stringify({s:{path:join(dir,'source.f32'),sha256:hex('c')}}));
+            const pcm=cli('creator:pcm-plan','--plan',program,'--bindings',bound,
+              '--window-index','1','--channels','1','--output',pcmOut);
+            if(pcm.status!==0)throw Error('akai native candidate route failed: '+pcm.stderr);
+            const demand=JSON.parse(pcm.stdout);
+            if(demand.state!=='candidate_requires_owner_approval'||
+               demand.execution_authority_inferred!==false||
+               demand.source_file_digest_verified!==false||demand.argv[1]!==planned.windows[0].samples||
+               demand.window_body_key!==planned.windows[0].body_key)
+              throw Error('akai changed authority or exact audio demand');
             const edit=join(dir,'edit.json');
             writeFileSync(edit,JSON.stringify({expected_digest:planned.timeline_digest,op:'gain',
               track_id:'t',clip_id:'c',value:0.7}));
