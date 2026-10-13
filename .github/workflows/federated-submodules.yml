@@ -192,7 +192,7 @@ jobs:
           # invoking git twice per module. NUL records preserve literal paths.
           config = subprocess.check_output(
               ["git", "config", "-z", "-f", ".gitmodules", "--get-regexp",
-               r"^submodule\\..*\\.(path|url)$"]
+               r"^submodule\..*\.(path|url)$"]
           )
           definitions = {}
           for entry in config.split(b"\\0"):
@@ -202,7 +202,7 @@ jobs:
               if not sep:
                   raise SystemExit("Malformed submodule manifest entry")
               key = name.decode("utf-8")
-              item = re.fullmatch(r"submodule\\.(.+)\\.(path|url)", key)
+              item = re.fullmatch(r"submodule\.(.+)\.(path|url)", key)
               if not item:
                   raise SystemExit(f"Unexpected submodule key {key}")
               definitions.setdefault(item.group(1), {})[item.group(2)] = value.decode("utf-8")
