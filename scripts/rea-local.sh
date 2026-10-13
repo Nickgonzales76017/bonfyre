@@ -140,6 +140,14 @@ fetch_verified() {
   }
 }
 
+# Ghidra's supported buildNatives task emits into build/os; REA admits both
+# that source-owned location and prebuilt os. Never duplicate built binaries.
+native_ready() {
+  local dir="$1/Ghidra/Features/Decompiler" platform="$ghidra_native"
+  { [ -x "$dir/os/$platform/decompile" ] || [ -x "$dir/build/os/$platform/decompile" ]; } &&
+  { [ -x "$dir/os/$platform/sleigh" ] || [ -x "$dir/build/os/$platform/sleigh" ]; }
+}
+
 # This explicit action downloads pinned vendor releases, then uses Ghidra's
 # supported native build task for macOS ARM64. The public zip alone cannot
 # satisfy REA's decompiler check on this host.
@@ -174,8 +182,7 @@ install_native_ghidra() {
   auto_native_env
   [ -x "$JAVA_HOME/bin/javac" ] || { echo "full JDK 21 required" >&2; return 2; }
   if [ -e "$ghidra_dir" ]; then
-    test -x "$ghidra_dir/Ghidra/Features/Decompiler/os/$ghidra_native/decompile" &&
-    test -x "$ghidra_dir/Ghidra/Features/Decompiler/os/$ghidra_native/sleigh" || {
+    native_ready "$ghidra_dir" || {
       echo "incomplete private Ghidra; refusing overwrite" >&2; return 2
     }
   else
@@ -190,13 +197,14 @@ install_native_ghidra() {
       target="$stage/ghidra_12.1.4_PUBLIC"
       test -f "$target/Ghidra/application.properties"
       test -f "$target/support/analyzeHeadless"
-      if [ ! -x "$target/Ghidra/Features/Decompiler/os/$ghidra_native/decompile" ] ||
-         [ ! -x "$target/Ghidra/Features/Decompiler/os/$ghidra_native/sleigh" ]; then
+      if ! native_ready "$target"; then
         echo "Building macOS arm64 decompiler through supported Ghidra buildNatives"
         (cd "$target/support/gradle"; JAVA_HOME="$JAVA_HOME" bash ./gradlew buildNatives)
       fi
-      test -x "$target/Ghidra/Features/Decompiler/os/$ghidra_native/decompile"
-      test -x "$target/Ghidra/Features/Decompiler/os/$ghidra_native/sleigh"
+      native_ready "$target" || {
+        echo "Ghidra Gradle native build succeeded without a runnable ARM64 decompiler" >&2
+        exit 1
+      }
       mv "$target" "$ghidra_dir"
     )
   fi
