@@ -53,9 +53,7 @@ jobs:
           # changes and native provider installation are not permitted here.
           set +e
           timeout 360s npm exec --yes --package=rea-agents@6.4.0 -- rea \
-            analyze-javascript-application "$REA_CREATOR_TARGET" \
-            --source-path package.json \
-            --source-path src/creator-render-program.mjs --json \
+            analyze-javascript-application "$REA_CREATOR_TARGET" --json \
             > "$RUNNER_TEMP/rea-creator-evidence.json" \
             2> "$RUNNER_TEMP/rea-creator-stderr.txt"
           status=$?
