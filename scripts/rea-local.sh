@@ -336,7 +336,13 @@ const summary={
   live_server_state:walk(data,'live_server')?.state??'unknown'
 };
 if(!summary.package_version||!Array.isArray(providers)) {
-  console.error('REA doctor schema is not recognized; inspect original with: rea doctor --json');
+  const keys=o=>o&&typeof o==='object'?Object.keys(o).slice(0,30):[];
+  console.error(JSON.stringify({
+    error:'REA doctor schema not recognized',root_keys:keys(data),
+    result_keys:keys(data.result),normalized_keys:keys(data.normalized_result),
+    doctor_keys:keys(data.doctor),identity_keys:keys(identity),
+    missing_version:!summary.package_version
+  }));
   process.exit(1);
 }
 console.log(JSON.stringify(summary,null,2));
