@@ -71,8 +71,20 @@ jobs:
             -Wall -Wextra -Wpedantic -Werror \
             Aurekai/native/creator/mix.c Aurekai/native/creator/mix_kernel.c \
             -lm -o "$target"
+          set +e
           bash scripts/rea-local.sh rea function "$target" main \
-            --provider ghidra --json > "$RUNNER_TEMP/rea-creator-main-dossier.json"
+            --provider ghidra --json > "$RUNNER_TEMP/rea-creator-main-dossier.json" \
+            2> "$RUNNER_TEMP/rea-creator-function-stderr.txt"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "REA Ghidra Creator function dossier failed: exit $status"
+            head -c 2500 "$RUNNER_TEMP/rea-creator-function-stderr.txt"
+            echo
+            head -c 2500 "$RUNNER_TEMP/rea-creator-main-dossier.json"
+            echo
+            exit "$status"
+          fi
           node --input-type=module <<'JS'
           import {readFileSync} from 'node:fs';
           import {join} from 'node:path';
