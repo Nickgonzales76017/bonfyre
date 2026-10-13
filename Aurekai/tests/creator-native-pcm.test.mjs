@@ -113,7 +113,7 @@ test('128 repeated Creator PCM tiles collapse to one exact physical candidate',(
 });
 
 test('same render-body digest cannot hide differing physical binding paths',()=>{
-  const t=fixture();t.frames=6;
+  const t=fixture();t.frames=6;t.fps={num:30,den:1};
   t.sources=[{id:'a',kind:'audio',sha256:h('c'),frames:3},
     {id:'b',kind:'audio',sha256:h('c'),frames:3}];
   t.tracks=[{id:'beats',kind:'audio',clips:[
