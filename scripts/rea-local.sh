@@ -82,12 +82,18 @@ need_node() {
     rea_node="$BONFYRE_REA_NODE_BIN"
     return
   fi
-  if [ "${BONFYRE_REA_FORCE_PRIVATE_NODE:-0}" != 1 ] && command -v node >/dev/null; then
-    local available
-    available="$(command -v node)"
-    if supported_node "$available"; then rea_node="$available"; return; fi
+  # If the isolated distribution exists, keep runtime and npm ABI on that
+  # same Node instead of silently returning to a differently packaged PATH node.
+  if [ "${BONFYRE_REA_FORCE_PRIVATE_NODE:-0}" = 1 ]; then
+    if supported_node "$private_node"; then rea_node="$private_node"; return; fi
+  else
+    if supported_node "$private_node"; then rea_node="$private_node"; return; fi
+    if command -v node >/dev/null; then
+      local available
+      available="$(command -v node)"
+      if supported_node "$available"; then rea_node="$available"; return; fi
+    fi
   fi
-  if supported_node "$private_node"; then rea_node="$private_node"; return; fi
   if [ "$action" = install ]; then
     bootstrap_node
     supported_node "$private_node" || {
@@ -111,20 +117,34 @@ rea() { "$rea_node" "$cli" "$@"; }
 
 case "$action" in
   install)
-    need_node
-    npm_cli="$(dirname "$rea_node")/../lib/node_modules/npm/bin/npm-cli.js"
-    if [ ! -f "$npm_cli" ]; then
-      echo "selected Node runtime has no bundled npm CLI; set BONFYRE_REA_NODE_BIN to a complete Node installation" >&2; exit 2
-    fi
+    # Check an existing installation before looking for npm. An already
+    # installed REA CLI only needs a compatible Node executable to run.
     if [ -L "$root" ] || [ -L "$root/releases" ] || [ -L "$prefix" ]; then
       echo "refusing symlinked REA installation root" >&2; exit 2
     fi
-    mkdir -p "$root/releases" "$root/npm-cache"
+    need_node
     if [ -e "$prefix" ]; then
       need_rea
       echo "REA $version already installed at $prefix"
       exit 0
     fi
+    npm_cli="$(dirname "$rea_node")/../lib/node_modules/npm/bin/npm-cli.js"
+    if [ ! -f "$npm_cli" ]; then
+      # macOS Homebrew, nvm, asdf and custom Node packages need not keep npm
+      # next to the selected node binary. Never assume a portable npm path.
+      # Switch to the same private, checksum-verified Node distribution already
+      # used when PATH has no supported Node; do not replace the host runtime.
+      if ! supported_node "$private_node"; then
+        echo "Compatible Node lacks adjacent npm; provisioning isolated Node $node_version" >&2
+        bootstrap_node
+      fi
+      rea_node="$private_node"
+      npm_cli="$(dirname "$rea_node")/../lib/node_modules/npm/bin/npm-cli.js"
+    fi
+    if [ ! -f "$npm_cli" ]; then
+      echo "REA private Node is missing npm; refusing an incomplete toolchain" >&2; exit 2
+    fi
+    mkdir -p "$root/releases" "$root/npm-cache"
     stage="$(mktemp -d "$root/releases/.rea-stage.XXXXXXXX")"
     cleanup() { if [ -n "$stage" ] && [ -d "$stage" ]; then rm -rf -- "$stage"; fi; }
     trap cleanup EXIT
@@ -218,7 +238,7 @@ case "$action" in
   help|*)
     cat <<'HELP'
 Bonfyre-local REA 6.4.0 (pinned, isolated; no global npm or auto-inspection)
-  bash scripts/rea-local.sh install     # provisions isolated Node 24 if required
+  bash scripts/rea-local.sh install     # provisions private Node 24 if PATH Node lacks npm
   bash scripts/rea-local.sh smoke
   bash scripts/rea-local.sh doctor
   bash scripts/rea-local.sh targets

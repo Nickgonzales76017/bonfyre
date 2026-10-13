@@ -54,6 +54,25 @@ jobs:
           bash scripts/rea-local.sh smoke
           bash scripts/rea-local.sh install
           test "$("$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node" --version)" = v24.11.0
+      - name: Reproduce macOS Node-without-adjacent-npm layout
+        run: |
+          set -eu
+          # Simulate the actual user failure: a supported Node executable
+          # available on PATH with no colocated lib/node_modules/npm. Do not
+          # use FORCE_PRIVATE here; the installer must detect and heal it.
+          bare="$RUNNER_TEMP/rea-node-without-npm"
+          mkdir -p "$bare/bin"
+          cp "$(command -v node)" "$bare/bin/node"
+          test -x "$bare/bin/node"
+          test ! -f "$bare/lib/node_modules/npm/bin/npm-cli.js"
+          export PATH="$bare/bin:$PATH"
+          export BONFYRE_REA_ROOT="$RUNNER_TEMP/rea-missing-npm-regression"
+          unset BONFYRE_REA_FORCE_PRIVATE_NODE BONFYRE_REA_NODE_BIN || true
+          bash scripts/rea-local.sh install
+          test -x "$BONFYRE_REA_ROOT/toolchains/node-v24.11.0/bin/node"
+          test -f "$BONFYRE_REA_ROOT/releases/6.4.0/node_modules/rea-agents/scripts/rea.mjs"
+          bash scripts/rea-local.sh smoke
+          bash scripts/rea-local.sh install
       - name: Inspect synthetic JavaScript locally through actual REA
         run: bash scripts/rea-local.sh smoke
       - name: Discover explicit versioned creative app targets without opening them
