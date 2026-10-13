@@ -112,5 +112,33 @@ jobs:
             analysis_state:'static_source_evidence_only',commercial_binaries_used:false,
             client_data_used:false,performance_gain_proven:false}));
           JS
+            # Cross-layer feature trace, not merely a successful parser exit.
+            if [ "$name" = tone ]; then seed=Transport; else seed=FFmpeg; fi
+            export REA_EXT_SEED="$seed"
+            node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const dir=process.env.REA_EXT_ROOT;
+          const application=JSON.parse(readFileSync(join(dir,'rea-evidence.json'),'utf8'));
+          writeFileSync(join(dir,'trace-input.json'),JSON.stringify({
+            application,seed:{kind:'string',value:process.env.REA_EXT_SEED},direction:'both'
+          }));
+          JS
+            timeout 120s node "$rea" trace-application-feature "$job/trace-input.json" --json > "$job/rea-trace.json"
+            node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const dir=process.env.REA_EXT_ROOT;
+          const analysis=JSON.parse(readFileSync(join(dir,'rea-evidence.json'),'utf8'));
+          const traced=JSON.parse(readFileSync(join(dir,'rea-trace.json'),'utf8'));
+          if(!traced||typeof traced.evidence_id!=='string'||!traced.evidence_id.startsWith('ev_'))
+            throw Error('REA did not return an authenticated feature trace');
+          console.log(JSON.stringify({
+            external_package:process.env.REA_EXT_NAME,feature_seed:process.env.REA_EXT_SEED,
+            trace_receipt:traced.evidence_id,
+            analysis_statistics:analysis.normalized_result?.statistics??null,
+            trace_state:'static_candidate_not_observed_runtime'
+          }).slice(0,2600));
+          JS
             rm -rf -- "$job"
           done
