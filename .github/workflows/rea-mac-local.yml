@@ -75,6 +75,20 @@ jobs:
           bash scripts/rea-local.sh install
       - name: Inspect synthetic JavaScript locally through actual REA
         run: bash scripts/rea-local.sh smoke
+      - name: Verify compact local REA doctor projection
+        run: |
+          set -eu
+          result="$(bash scripts/rea-local.sh doctor)"
+          printf '%s\n' "$result"
+          REA_DOCTOR_RESULT="$result" node --input-type=module <<'JS'
+          const report=JSON.parse(process.env.REA_DOCTOR_RESULT);
+          if(report.schema!=='bonfyre.rea.local-doctor.v1'||report.package_version!=='6.4.0')
+            throw Error('REA compact doctor lacks verified identity');
+          if(!Array.isArray(report.native_providers)||!Array.isArray(report.agent_registrations))
+            throw Error('REA compact doctor lost provider/registration availability');
+          if(Buffer.byteLength(process.env.REA_DOCTOR_RESULT)>32768)
+            throw Error('REA doctor returned an unbounded catalog instead of status');
+          JS
       - name: Discover explicit versioned creative app targets without opening them
         run: |
           set -eu
