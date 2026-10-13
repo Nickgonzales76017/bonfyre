@@ -358,8 +358,12 @@ const data=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
 if(!data||typeof data.evidence_id!=='string'||!data.evidence_id.startsWith('ev_'))
   throw Error('REA native dylib trace returned no sealed Evidence identity');
 const normalized=data.normalized_result??{};
+const size=value=>Array.isArray(value)?value.length:null;
 console.log(JSON.stringify({schema:'bonfyre.rea.native-map.v1',
   evidence_id:data.evidence_id,inspection:'trace_dylib_resolution',
+  target_sha256:normalized.target_sha256??null,
+  image_count:size(normalized.images),dependency_edge_count:size(normalized.edges),
+  finding_count:size(normalized.findings),
   result_facets:Object.keys(normalized).slice(0,24),
   coverage:normalized.coverage??null,
   state:'static_native_observation_not_runtime_proof'},null,2));
@@ -381,9 +385,9 @@ JS
     ;;
   doctor)
     need_rea
-    # The upstream doctor carries the entire tool catalog twice and is often
-    # >7,000 lines. Preserve it through the existing "rea doctor --json" escape
-    # hatch, but make the operator-facing path an admitted, bounded projection.
+    # REA doctor owns health, while providers exposes its large catalog and
+    # capability inventory. Preserve both full upstream CLI commands, but make
+    # this operator-facing readback a bounded, source-derived projection.
     scratch="$(mktemp -d "${TMPDIR:-/tmp}/rea-doctor.XXXXXXXX")"
     trap 'rm -rf -- "$scratch"' EXIT
     if ! rea doctor --json > "$scratch/doctor.json"; then
