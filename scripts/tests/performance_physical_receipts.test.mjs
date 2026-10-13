@@ -4,7 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {mkdtempSync,existsSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {reviewPhysicalReceipts} from '../performance_physical_receipts.mjs';
+import {reviewPhysicalReceipts, reviewPhysicalReadbacks} from '../performance_physical_receipts.mjs';
 
 const sha=c=>'sha256:'+c.repeat(64);
 const keys=['bytes_read','bytes_borrowed','bytes_copied','bytes_decompressed',
@@ -229,4 +229,76 @@ test('historical CopyReceipts must match the semantic family and useful-work cou
     db.close();
     hold(p,f.path,/unequal-or-empty-useful-work/);
   }finally{f.close();}
+});
+
+function nativeReadbacks(){
+ const p=paired();
+ const former=sha('1').slice(7),present=sha('2').slice(7);
+ p.baseline.physical_source='archive';
+ p.baseline.physical_generation_digest=former;
+ p.candidate.physical_generation_digest=present;
+ const mk=(side,origin,generation,passport)=>{
+   const values={bytes_read:10000,bytes_borrowed:side==='candidate'?8000:0,
+     bytes_copied:p[side].metrics.bytes_copied,bytes_decompressed:0,
+     bytes_reencoded:0,bytes_hydrated:p[side].metrics.bytes_hydrated,
+     allocations:p[side].metrics.allocations,serialize_count:0,
+     deserialize_count:0,materialization_count:0,borrowed_boundaries:0,
+     fused_boundaries:0,useful_bytes:10000};
+   return {schema:'bonfyre.copyreceipt.readback.v1',origin,generation_digest:generation,
+     receipt_id:p[side].physical_receipt_id,passport_identity:passport,
+     subject_family:'occurrence',semantic_digest:'semantic:same',
+     physical_digest:'physical:same',exactness_class:'exact',
+     counters:values,no_effect:true};
+ };
+ return {p,readbacks:{
+   baseline:mk('baseline','archived',former,'passport:before'),
+   candidate:mk('candidate','active',present,'passport:after')}};
+}
+test('portable C readback pair reviews historical vs active without permitting execution',()=>{
+ const {p,readbacks}=nativeReadbacks();
+ const r=reviewPhysicalReadbacks(p,readbacks);
+ assert.equal(r.decision,'eligible-for-human-promotion-review',r.problems.join(','));
+ assert.equal(r.admitted_for_execution,false);
+ assert.equal(r.physical.measured_copy_delta.copied.saved_units,8000);
+ assert.equal(r.physical.baseline.generation_digest,p.baseline.physical_generation_digest);
+});
+test('portable readback requires exact generation, passport, and ID coordinates',()=>{
+ for(const field of ['physical_generation_digest','physical_passport','physical_receipt_id']){
+  const {p,readbacks}=nativeReadbacks();delete p.baseline[field];
+  const r=reviewPhysicalReadbacks(p,readbacks);
+  assert.equal(r.decision,'hold-baseline',field);
+  assert.match(r.problems.join(' '),/not-bound/);
+ }
+});
+test('portable C readbacks preserve no effect and cannot forge exact representation',()=>{
+ const {p,readbacks}=nativeReadbacks();
+ readbacks.baseline.no_effect=false;
+ let r=reviewPhysicalReadbacks(p,readbacks);
+ assert.match(r.problems.join(' '),/unrecognized-native-readback/);
+ readbacks.baseline.no_effect=true;
+ readbacks.baseline.exactness_class='latent';
+ r=reviewPhysicalReadbacks(p,readbacks);
+ assert.match(r.problems.join(' '),/baseline-native-representation-not-exact/);
+});
+test('portable readbacks refuse native counter drift and unequal useful work',()=>{
+ const {p,readbacks}=nativeReadbacks();
+ readbacks.candidate.counters.bytes_copied=0;
+ let r=reviewPhysicalReadbacks(p,readbacks);
+ assert.match(r.problems.join(' '),/claimed-bytes_copied-differs-from-native-readback/);
+ readbacks.candidate.counters.bytes_copied=2000;
+ readbacks.candidate.counters.useful_bytes=9999;
+ r=reviewPhysicalReadbacks(p,readbacks);
+ assert.match(r.problems.join(' '),/unequal-or-empty-native-useful-work/);
+});
+test('portable snapshots refuse changed semantic material and reused observation',()=>{
+ const {p,readbacks}=nativeReadbacks();
+ readbacks.candidate.semantic_digest='other';
+ let r=reviewPhysicalReadbacks(p,readbacks);
+ assert.match(r.problems.join(' '),/differ-in-semantic-material/);
+ readbacks.candidate.semantic_digest='semantic:same';
+ readbacks.candidate.origin=readbacks.baseline.origin;
+ readbacks.candidate.generation_digest=readbacks.baseline.generation_digest;
+ readbacks.candidate.receipt_id=readbacks.baseline.receipt_id;
+ r=reviewPhysicalReadbacks(p,readbacks);
+ assert.match(r.problems.join(' '),/not-two-distinct-native-observations/);
 });
