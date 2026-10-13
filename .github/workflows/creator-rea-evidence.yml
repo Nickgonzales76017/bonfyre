@@ -134,6 +134,36 @@ jobs:
             echo
             exit "$status"
           fi
+      - name: REA trace Creator render-schema origin in the inspected graph
+        env:
+          npm_config_audit: 'false'
+          npm_config_fund: 'false'
+        run: |
+          set -eu
+          node --input-type=module <<'JS'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const dir=process.env.RUNNER_TEMP;
+          const application=JSON.parse(readFileSync(join(dir,'rea-creator-evidence.json'),'utf8'));
+          if (typeof application.evidence_id !== 'string') throw Error('REA Evidence identity missing');
+          writeFileSync(join(dir,'rea-creator-trace-input.json'),JSON.stringify({
+            application,seed:{kind:'string',value:'aurekai.creator.render-program.v1'},direction:'both'
+          }));
+          JS
+          timeout 180s npm exec --yes --package=rea-agents@6.4.0 -- rea \
+            trace-application-feature "$RUNNER_TEMP/rea-creator-trace-input.json" --json \
+            > "$RUNNER_TEMP/rea-creator-trace.json"
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';
+          import {join} from 'node:path';
+          const body=readFileSync(join(process.env.RUNNER_TEMP,'rea-creator-trace.json'),'utf8');
+          const trace=JSON.parse(body);
+          if (!trace || typeof trace.evidence_id !== 'string')
+            throw Error('REA feature trace lacks an Evidence identity');
+          console.log(JSON.stringify({rea_trace_evidence_id:trace.evidence_id,
+            source_literal:'aurekai.creator.render-program.v1',trace_bytes:Buffer.byteLength(body),
+            state:'static_feature_trace_not_runtime_proof'}));
+          JS
       - name: Verify analyzed source and Evidence provenance
         run: |
           node --input-type=module <<'JS'
