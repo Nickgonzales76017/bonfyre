@@ -1384,6 +1384,22 @@ function executeWithDescriptor(repoRoot, descriptor, input, executionContext = n
   };
 }
 
+// One derived read cut for a single fan-out. Callers retain their own
+// authority, endpoint, parser and effect checks; this grants no permissions.
+export function compileIntegrationBatchCut(repoRoot) {
+  const registry = readRegistry(repoRoot);
+  const index = buildTargetIndex(repoRoot, registry);
+  const context = batchExecutionContext(repoRoot);
+  return {
+    targets: (options = {}) => targetRows(index, options),
+    execute(target, input) {
+      const descriptor = index.get(normalizeKey(target));
+      if (!descriptor) throw new Error(`Unknown integration target: ${target}`);
+      return executeWithDescriptor(repoRoot, descriptor, input, context);
+    },
+  };
+}
+
 export function executeIntegration(repoRoot, input) {
   const registry = readRegistry(repoRoot);
   const index = buildTargetIndex(repoRoot, registry);

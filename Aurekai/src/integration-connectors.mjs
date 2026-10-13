@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { createHmac } from "node:crypto";
 import {
   executeIntegration,
+  compileIntegrationBatchCut,
   executeStateMachineBatch,
   executeSurfaceBatch,
   listIntegrationTargets,
@@ -247,8 +248,8 @@ function withQueryParams(url, query) {
   return u.toString();
 }
 
-function selectTemplate(repoRoot, descriptor, preset, options = {}) {
-  const { templates, byId } = buildTemplateIndex(repoRoot);
+function selectTemplate(repoRoot, descriptor, preset, options = {}, prepared = null) {
+  const { templates, byId } = prepared ?? buildTemplateIndex(repoRoot);
   const templateId = normalizeKey(options.templateId || "");
   const envName = normalizeKey(options.environment || "default");
 
@@ -272,8 +273,8 @@ function selectTemplate(repoRoot, descriptor, preset, options = {}) {
   return null;
 }
 
-function resolveEndpointTemplate(repoRoot, descriptor, preset, options = {}) {
-  const template = selectTemplate(repoRoot, descriptor, preset, options);
+function resolveEndpointTemplate(repoRoot, descriptor, preset, options = {}, prepared = null) {
+  const template = selectTemplate(repoRoot, descriptor, preset, options, prepared);
   if (!template) return { template: null, endpoint: null, request: null, unresolvedEnv: [] };
 
   const unresolved = new Set();
@@ -305,8 +306,8 @@ function isPresentValue(value) {
   return value !== undefined && value !== null && value !== "";
 }
 
-function pickValidationProfile(repoRoot, parserName) {
-  const profiles = readValidationProfiles(repoRoot);
+function pickValidationProfile(repoRoot, parserName, preparedProfiles = null) {
+  const profiles = preparedProfiles ?? readValidationProfiles(repoRoot);
   const parserKey = normalizeKey(parserName || "generic");
   return profiles[parserKey] || profiles.generic || null;
 }
@@ -513,8 +514,9 @@ function categoryHints(category) {
   };
 }
 
-function resolveTargetDescriptor(repoRoot, target) {
-  const matches = listIntegrationTargets(repoRoot).filter((item) => normalizeKey(item.target) === normalizeKey(target));
+function resolveTargetDescriptor(repoRoot, target, preparedRows = null) {
+  const matches = (preparedRows ?? listIntegrationTargets(repoRoot))
+    .filter((item) => normalizeKey(item.target) === normalizeKey(target));
   if (!matches.length) {
     throw new Error(`Unknown integration target: ${target}`);
   }
@@ -610,9 +612,9 @@ export async function loadEventFromEndpoint(endpoint, options = {}) {
   }
 }
 
-export async function ingestIntegrationTarget(repoRoot, input) {
-  const descriptor = resolveTargetDescriptor(repoRoot, input.target);
-  const { index } = buildPresetIndex(repoRoot);
+async function ingestTargetWithResources(repoRoot, input, resources = null) {
+  const descriptor = resolveTargetDescriptor(repoRoot, input.target, resources?.targetRows);
+  const { index } = resources?.presets ?? buildPresetIndex(repoRoot);
   const preset = index.get(normalizeKey(descriptor.target)) || null;
 
   const resolvedTemplate = resolveEndpointTemplate(repoRoot, descriptor, preset, {
@@ -620,7 +622,7 @@ export async function ingestIntegrationTarget(repoRoot, input) {
     environment: input.environment,
     timeoutMs: input.timeoutMs,
     requestBody: input.requestBody,
-  });
+  }, resources?.templates);
 
   const resolvedEndpoint = input.endpoint || resolvedTemplate.endpoint || preset?.default_endpoint || null;
   const endpointRequest = resolvedTemplate.request || {
@@ -683,18 +685,17 @@ export async function ingestIntegrationTarget(repoRoot, input) {
   });
 
   const parserName = event?.connector?.parser || preset?.parser || "generic";
-  const profile = pickValidationProfile(repoRoot, parserName);
+  const profile = pickValidationProfile(repoRoot, parserName, resources?.validationProfiles);
   const validation = validateByProfile(event, event.payload || {}, profile);
   const strict = Boolean(input.strict);
   if (strict && !validation.valid) {
     throw new Error(`Strict validation failed for ${descriptor.target}: ${validation.errors.join("; ")}`);
   }
 
-  const result = executeIntegration(repoRoot, {
-    target: descriptor.target,
-    event,
-    persist: input.persist,
-  });
+  const request = { target: descriptor.target, event, persist: input.persist };
+  const result = resources?.executionCut
+    ? resources.executionCut.execute(descriptor.target, request)
+    : executeIntegration(repoRoot, request);
 
   return {
     schema_version: "aurekai.integration_ingest_result.v1",
@@ -737,22 +738,37 @@ export async function ingestIntegrationTarget(repoRoot, input) {
   };
 }
 
-function resolveBatchTargets(repoRoot, options) {
+// Single-target execution retains fresh registry and policy reads.
+export async function ingestIntegrationTarget(repoRoot, input) {
+  return ingestTargetWithResources(repoRoot, input);
+}
+
+function resolveBatchTargets(repoRoot, options, readTargets = (filters) => listIntegrationTargets(repoRoot, filters)) {
   if (options.type) {
-    const all = listIntegrationTargets(repoRoot, { surface: "state-machine", group: options.type });
+    const all = readTargets({ surface: "state-machine", group: options.type });
     return all.map((item) => item.target);
   }
 
-  const all = listIntegrationTargets(repoRoot, { surface: options.surface, group: options.group });
+  const all = readTargets({ surface: options.surface, group: options.group });
   return all.map((item) => item.target);
 }
 
 export async function ingestIntegrationBatch(repoRoot, options) {
-  const targets = resolveBatchTargets(repoRoot, options);
+  // Avoid repeated registry parsing, but preserve per-target ingress validation,
+  // signing, endpoint selection and all pre-existing effect/authority checks.
+  const executionCut = compileIntegrationBatchCut(repoRoot);
+  const targetRows = executionCut.targets();
+  const targets = resolveBatchTargets(repoRoot, options, executionCut.targets);
+  const resources = {
+    executionCut, targetRows,
+    presets: buildPresetIndex(repoRoot),
+    templates: buildTemplateIndex(repoRoot),
+    validationProfiles: readValidationProfiles(repoRoot),
+  };
   const executions = [];
 
   for (const target of targets) {
-    const result = await ingestIntegrationTarget(repoRoot, {
+    const result = await ingestTargetWithResources(repoRoot, {
       target,
       endpoint: options.endpoint,
       file: options.file,
@@ -762,7 +778,7 @@ export async function ingestIntegrationBatch(repoRoot, options) {
       strict: options.strict,
       useTemplate: options.useTemplate,
       environment: options.environment,
-    });
+    }, resources);
 
     executions.push({
       target: result.target,
