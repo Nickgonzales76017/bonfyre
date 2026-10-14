@@ -10,8 +10,22 @@ mkdir -p "$fixtures"
 build_command() {
     command_dir=$1
     if [ -f "$root/cmd/$command_dir/Makefile" ]; then
-        make -C "$root/cmd/$command_dir" >/dev/null
+        command_cc=${BONFYRE_COMMAND_CC:-${CC:-cc}}
+        env -u CFLAGS -u OPTFLAGS -u CPPFLAGS \
+            -u MAKEFLAGS -u MFLAGS -u MAKEOVERRIDES \
+            make -C "$root/cmd/$command_dir" "CC=$command_cc" >/dev/null
     fi
+}
+
+build_foundation() {
+    command_cc=${BONFYRE_COMMAND_CC:-${CC:-cc}}
+    foundation_cflags=${BONFYRE_FOUNDATION_CFLAGS:-'-O2 -Wall -Wextra -std=c11 -D_DEFAULT_SOURCE'}
+    for foundation in lib/liblambda-tensors lib/libbonfyre; do
+        [ -f "$root/$foundation/Makefile" ] || continue
+        env -u CPPFLAGS -u MAKEFLAGS -u MFLAGS -u MAKEOVERRIDES \
+            CFLAGS="$foundation_cflags" OPTFLAGS="$foundation_cflags" \
+            make -C "$root/$foundation" -j2 "CC=$command_cc" >/dev/null
+    done
 }
 
 ingest_artifact() {
@@ -36,6 +50,8 @@ run_operator() {
     printf '%s\n' "$result" | grep -q '^node=execute status=complete output=bonfyre://artifact/'
     printf '%s\n' "$result" | sed -n 's/.* output=\([^ ]*\).*/\1/p'
 }
+
+build_foundation
 
 for command_dir in \
     BonfyreIngest BonfyreMediaPrep BonfyreBrief BonfyreProof BonfyreOffer \
@@ -244,7 +260,7 @@ run_operator pack "$package_uri" >/dev/null
 run_operator render "$text_uri" >/dev/null
 model_prompt="$fixtures/model-prompt.txt"
 printf 'Write exactly one valid Blender Python line that creates a cube.\n' > "$model_prompt"
-model_uri=$(ingest_artifact "$model_prompt" text/plain)
+model_uri=$(ingest_artifact "$fixtures/model-prompt.txt" text/plain)
 run_operator model "$model_uri" >/dev/null
 run_operator quant "$model_uri" >/dev/null
 embedding_uri=$(run_operator embed "$text_uri")
