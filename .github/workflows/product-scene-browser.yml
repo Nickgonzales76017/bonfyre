@@ -1,0 +1,86 @@
+name: Product scene browser verification
+on:
+  push:
+    branches: ['verify/product-scene-20261015']
+    paths:
+      - '.github/workflows/product-scene-browser.yml'
+      - 'verification/product-scene/**'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/download-artifact@v4
+        with:
+          name: product-scene-public-inputs
+          run-id: 38791615713
+          github-token: ${{ github.token }}
+          path: scene-run/inputs
+      - uses: actions/download-artifact@v4
+        with:
+          name: product-scene-browser-inputs
+          run-id: 38792426739
+          github-token: ${{ github.token }}
+          path: scene-run/inputs
+      - name: Verify exact source packet and public input digests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat verification/product-scene/part-{0,1,2,3,4}.b64 | base64 --decode > scene-run/source.tar.xz
+          echo '12ed363dc3cf06c7d03836f1fdf77ad8989b61f68efcc8855557827141b278d2  scene-run/source.tar.xz' | sha256sum --check
+          cd scene-run
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
+          for(const name of ['SHA256SUMS.tsv','SHA256SUMS-extra.tsv'])for(const line of readFileSync('inputs/'+name,'utf8').trim().split('\n').slice(1)){const [path,hash,size]=line.split('\t'),body=readFileSync('inputs/'+path);if(body.length!==Number(size)||createHash('sha256').update(body).digest('hex')!==hash)throw Error('Input mismatch '+path);}
+          console.log('Public input sizes and digests match both retained acquisition artifacts.');
+          JS
+          tar -xJf source.tar.xz
+      - name: Reconstruct published modules and apply reviewed integration patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd scene-run
+          mkdir -p components/BonfyreServiceSite upstream
+          cp inputs/site/data/product-workspace/*.mjs components/BonfyreServiceSite/
+          cp inputs/site/data/red3-fixtures/v-*/*.mjs components/BonfyreServiceSite/
+          git apply --check verification/src/runtime.patch
+          git apply verification/src/runtime.patch
+          tar -xzf inputs/upstream/three-0.180.0.tgz -C upstream
+          mkdir -p upstream/meshoptimizer upstream/draco3dgltf
+          tar -xzf inputs/upstream/meshoptimizer-0.22.0.tgz -C upstream/meshoptimizer
+          tar -xzf inputs/upstream/draco3dgltf-1.5.7.tgz -C upstream/draco3dgltf
+          node components/BonfyreServiceSite/tools/package-product-scene.mjs upstream/package components/BonfyreServiceSite/vendor/three-0.180.0 inputs/upstream
+          node --test components/BonfyreServiceSite/tests/*.mjs | tee verification/contracts.tap
+          node verification/src/build-preview.mjs .
+          node verification/src/make-codec-fixtures.mjs .
+      - name: Install pinned browser driver
+        run: npm install --prefix scene-run/test-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Drive actual desktop and phone workflows
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd scene-run
+          export PLAYWRIGHT_MODULE="$PWD/test-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          "$CHROME_PATH" --version
+          node verification/src/browser.mjs . | tee verification/browser.log
+      - name: Retain test evidence, never browser profile or credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: product-scene-browser-evidence
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            scene-run/verification/contracts.tap
+            scene-run/verification/browser.log
+            scene-run/verification/browser/*.txt
+            scene-run/verification/browser/*.png
+            scene-run/verification/browser/*.http
