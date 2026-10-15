@@ -1,0 +1,42 @@
+name: Product scene browser inputs
+on:
+  push:
+    branches: ['verify/product-scene-20261015']
+    paths: ['.github/workflows/product-scene-fixtures.yml']
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retain public source assets and decoder fixtures
+        run: |
+          node --input-type=module <<'JS'
+          import {mkdir,writeFile} from 'node:fs/promises';
+          import {dirname} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const lines=['path\tsha256\tbytes\tsource'];
+          async function keep(path,url,max=8000000){const r=await fetch(url,{signal:AbortSignal.timeout(60000)});if(!r.ok)throw Error(url+' '+r.status);let size=0,chunks=[];for await(const c of r.body){size+=c.length;if(size>max)throw Error('Too large');chunks.push(c);}const b=Buffer.concat(chunks);await mkdir('inputs/'+dirname(path),{recursive:true});await writeFile('inputs/'+path,b);lines.push([path,createHash('sha256').update(b).digest('hex'),size,url].join('\t'));return b;}
+          const origin='https://aurekai-work-samples.pages.dev';
+          for(let i=0;i<8;i++)await keep('site/data/product-workspace/products-'+i+'.json.gz',origin+'/data/product-workspace/products-'+i+'.json.gz');
+          await keep('site/data/product-workspace/ag-grid-community.min.js',origin+'/data/product-workspace/ag-grid-community.min.js');
+          await keep('fixtures/2d_etc1s.ktx2','https://raw.githubusercontent.com/mrdoob/three.js/r180/examples/textures/ktx2/2d_etc1s.ktx2');
+          await keep('upstream/DRACO-LICENSE','https://raw.githubusercontent.com/google/draco/1.5.7/LICENSE');
+          await keep('upstream/BASIS-LICENSE','https://raw.githubusercontent.com/BinomialLLC/basis_universal/v1_50_0/LICENSE');
+          for(const [name,version] of [['meshoptimizer','0.22.0'],['draco3dgltf','1.5.7']]){
+            const info=JSON.parse((await keep('upstream/'+name+'-registry.txt','https://registry.npmjs.org/'+name+'/'+version)).toString());
+            const body=await keep('upstream/'+name+'-'+version+'.tgz',info.dist.tarball);
+            if('sha512-'+createHash('sha512').update(body).digest('base64')!==info.dist.integrity)throw Error('Package integrity mismatch');
+          }
+          await writeFile('inputs/SHA256SUMS-extra.tsv',lines.join('\n')+'\n');
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-scene-browser-inputs
+          path: inputs
+          retention-days: 7
+          if-no-files-found: error
