@@ -39,8 +39,16 @@ try{page=await browser.newPage({viewport:{width:1440,height:1050}});page.setDefa
   await page.setViewportSize({width:1440,height:1050});await page.goto(origin+'/bonfyre/#experiences');
   await page.waitForFunction(()=>document.querySelectorAll('[data-demo-list] a[data-demo][href*="/bonfyre/spaces/"]').length===2);
   check('both existing public showcase entries open the new release',await page.locator('[data-demo-list] a[data-demo][href*="/bonfyre/spaces/"]').count()===2);
-  await page.waitForFunction(()=>[...document.querySelectorAll('#demo-showcase img[src*="/spaces/shots/"]')].filter(i=>i.complete&&i.naturalWidth>0).length===2);
-  check('showcase uses two loaded captures of the implemented studio',await page.locator('#demo-showcase img[src*="/spaces/shots/"]').count()===2);
+  const captures=page.locator('#demo-showcase img[src*="/spaces/shots/"]');
+  assert.equal(await captures.count(),2,'Both authored studio captures must reach the carousel.');
+  // These images are intentionally lazy-loaded in a horizontal carousel.
+  // Scroll the same visible cards a visitor uses; do not force eager loading.
+  for(let i=0;i<2;i++){
+   const image=captures.nth(i);await image.scrollIntoViewIfNeeded();
+   const src=await image.getAttribute('src');
+   await page.waitForFunction(src=>[...document.querySelectorAll('#demo-showcase img')].some(i=>i.src===src&&i.complete&&i.naturalWidth>0),src);
+  }
+  check('showcase uses two loaded captures of the implemented studio',await captures.evaluateAll(images=>images.length===2&&images.every(i=>i.complete&&i.naturalWidth>0)));
   await page.locator('#experiences').screenshot({path:output+'/showcase.png'});
  }
  check('no application script exceptions',errors.length===0);await writeFile(output+'/RESULTS.txt','origin '+origin+'\nchecks '+checks.length+'\n'+checks.map(s=>'PASS '+s).join('\n')+'\n');
