@@ -80,15 +80,19 @@ jobs:
           export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
+      - name: Connect the existing showcase entries to the tested release
+        run: |
+          node scripts/prepare-spaces-discovery.mjs
+          node --test scripts/tests/showcase-directory.test.mjs
       - name: Retain tested release and helper licences
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- site/spaces vendor/spaces-helpers-20261015
+          git add -- site/spaces site/index.html vendor/spaces-helpers-20261015
           if ! git diff --cached --quiet; then
-            git commit -m 'release(spaces): retain verified studio projection and licensed helpers'
+            git commit -m 'release(spaces): retain verified studio projection and discovery links'
             git push origin HEAD:main
           fi
       - name: Setup Pages
