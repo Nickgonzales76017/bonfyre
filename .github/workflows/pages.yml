@@ -1,45 +1,117 @@
 name: Deploy to GitHub Pages
-
 on:
   push:
     branches: [main]
   workflow_dispatch:
-
 permissions:
-  contents: read
+  contents: write
+  actions: read
   pages: write
   id-token: write
-
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
-
 jobs:
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup directory test runtime
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: '22'
-
       - name: Check application directory and carousel
         run: node --test scripts/tests/showcase-directory.test.mjs
-
+      - name: Detect retained spaces release
+        id: spaces
+        run: |
+          if test -f site/spaces/RELEASE.tsv; then echo 'bootstrap=false' >> "$GITHUB_OUTPUT"; else echo 'bootstrap=true' >> "$GITHUB_OUTPUT"; fi
+      - name: Read exact previously verified scene source
+        if: steps.spaces.outputs.bootstrap == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: 4245f2807b742a0f31fc7e50d86f3a87d4834daf
+          path: .scene-source
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        if: steps.spaces.outputs.bootstrap == 'true'
+        with:
+          name: product-scene-public-inputs
+          run-id: 38791615713
+          github-token: ${{ github.token }}
+          path: scene-run/inputs
+      - uses: actions/download-artifact@v4
+        if: steps.spaces.outputs.bootstrap == 'true'
+        with:
+          name: product-scene-browser-inputs
+          run-id: 38792426739
+          github-token: ${{ github.token }}
+          path: scene-run/inputs
+      - name: Reconstruct exact source and retained public assets
+        if: steps.spaces.outputs.bootstrap == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .scene-source/verification/product-scene/part-{0,1,2,3,4}.b64 | base64 --decode > scene-run/source.tar.xz
+          echo '12ed363dc3cf06c7d03836f1fdf77ad8989b61f68efcc8855557827141b278d2  scene-run/source.tar.xz' | sha256sum --check
+          cd scene-run
+          tar -xJf source.tar.xz
+          mkdir -p components/BonfyreServiceSite upstream
+          cp inputs/site/data/product-workspace/*.mjs components/BonfyreServiceSite/
+          cp inputs/site/data/red3-fixtures/v-*/*.mjs components/BonfyreServiceSite/
+          git apply --check verification/src/runtime.patch
+          git apply verification/src/runtime.patch
+          tar -xzf inputs/upstream/three-0.180.0.tgz -C upstream
+          node components/BonfyreServiceSite/tools/package-product-scene.mjs upstream/package components/BonfyreServiceSite/vendor/three-0.180.0 inputs/upstream
+          node ../.scene-source/verification/product-scene/refine.mjs .
+          node --test components/BonfyreServiceSite/tests/*.mjs
+          node verification/src/build-preview.mjs .
+          cd ..
+          node scripts/build-spaces-release.mjs scene-run/preview site/spaces
+      - name: Install browser driver
+        run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Verify Pages-path browser journey before publication
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/spaces-live-browser.mjs
+      - name: Retain generated release so future deployments do not require expiring artifacts
+        if: steps.spaces.outputs.bootstrap == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- site/spaces
+          git commit -m 'release(spaces): retain browser-verified static application and licensed assets'
+          git push origin HEAD:main
       - name: Setup Pages
         uses: actions/configure-pages@v5
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: site
-
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Verify actual live catalogue and room
+        env:
+          SPACES_ORIGIN: https://nickgonzales76017.github.io
+          SPACES_EVIDENCE: spaces-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/spaces-live-browser.mjs
+      - name: Keep local and live browser results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spaces-release-evidence
+          retention-days: 30
+          path: |
+            spaces-evidence
+            spaces-live-evidence
