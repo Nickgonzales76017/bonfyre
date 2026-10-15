@@ -5,3 +5,10 @@
 .experience-subhead{font:500 clamp(22px,2.8vw,32px)/1.1 Georgia,serif;letter-spacing:-.035em;margin:29px 0 6px;color:var(--forest)}
 .experience-subhead.smaller{margin-top:49px}
 .experience-subcopy{font-size:.82rem;color:var(--muted);margin:0 0 18px;max-width:760px}
+
+.showcase-actions button:disabled{opacity:.35;cursor:default;background:transparent;color:var(--forest)}
+.showcase-actions button:focus-visible,.showcase-scroll:focus-visible{outline:3px solid var(--rust);outline-offset:4px}
+.showcase-card{display:flex;flex-direction:column}
+.showcase-card .card-body{display:flex;flex-direction:column;flex:1;min-height:220px}
+.showcase-card .cta{margin-top:auto;padding-top:12px}
+@media(prefers-reduced-motion:reduce){.showcase-card{transition:none}.showcase-card:hover{transform:none}.showcase-scroll{scroll-behavior:auto}}

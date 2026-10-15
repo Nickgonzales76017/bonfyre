@@ -1,37 +1,87 @@
-/* Exact published experience destinations. Internal docs are not playable demos. */
+/* Progressive enhancement of the authored link list. No second demo registry. */
 (function () {
-  const anchor=document.querySelector('#experiences .items');
-  if (!anchor) return;
-  const entries=[
-    {title:'Acquisition Brief Studio',kind:'Buyer intelligence · interactive',href:'https://nickgonzales76017.github.io/pages-procurement-memory/brief-studio/',image:'assets/shots/brief-studio-preview.svg',alt:'Illustrated visual study, not a screenshot: acquisition questions and costed buyer brief',summary:'Compose ITAD, property, civic and supplier reviews, compare proof costs and export a proposal.',action:'Open the studio'},
-    {title:'Shift Continuity Studio',kind:'Service operations · interactive',href:'https://nickgonzales76017.github.io/pages-shift-handoff/continuity/',image:'assets/shots/shift-continuity-preview.svg',alt:'Accurate illustrated Shift Continuity interface with six source-linked incidents, claim leases and receiving-shift review; not a screenshot',summary:'Investigate six operational handoff issues, claim bounded work, record evidence, review state and prepare shift acknowledgment.',action:'Open Shift Continuity'},
-    {title:'Dallas Council Media',kind:'Civic media · interactive',href:'https://nickgonzales76017.github.io/pages-town-box/civic-council/',image:'assets/shots/council-media-preview.svg',alt:'Illustrated visual study, not a screenshot: exact agenda record joined to video chapter markers',summary:'Explore exact agenda-to-video joins and carry an official file into Brief Studio.',action:'View council records'},
-    {title:'Shift Continuity Studio',kind:'Operator handoff · interactive',href:'https://nickgonzales76017.github.io/pages-shift-handoff/continuity/',image:'assets/shots/shift-continuity-preview.svg',alt:'Illustration of the Shift Continuity source-linked six-item workboard and Alex-to-Morgan handoff; not a screenshot',summary:'Claim work, resolve blockers, review critical incidents and require exact next-shift acknowledgement.',action:'Open continuity workbench'},
-    {title:'Funding & Impact Studio',kind:'Funding operations · interactive',href:'https://nickgonzales76017.github.io/pages-grant-evidence/impact-studio/',image:'assets/shots/funding-impact-preview.svg',alt:'Illustrated editable $48K request, $24K declared match and source-linked $72K impact proposal; not a screenshot',summary:'Balance grants and matching costs, compare public programs, review original sources and track milestone evidence.',action:'Open funding studio'},
-    {title:'Retail Fixture Planner',kind:'Design and costing · interactive',href:'https://aurekai-work-samples.pages.dev/red3-planner/',image:'https://aurekai-work-samples.pages.dev/assets/shots/planner.jpg',alt:'Actual retail planner screenshot with movable fixtures and running costs',summary:'Arrange sourced RED3 fixtures, compare fit and prepare a reviewable supplier brief.',action:'Try retail planning'},
-    {title:'Catalogue Workbench',kind:'Product operations · interactive',href:'https://aurekai-work-samples.pages.dev/catalogue/',image:'https://aurekai-work-samples.pages.dev/assets/shots/catalogue.jpg',alt:'Actual product editor screenshot with variant details',summary:'Inspect a source catalogue, edit variants and compare drafts without publishing.',action:'Try product editing'},
-    {title:'Multitrack Creator Studio',kind:'Native audio · production workstation',href:'https://nickgonzales76017.github.io/pages-podcast-plant/studio/',image:'assets/shots/creator-studio-preview.svg',alt:'Faithful illustrated arrangement view of Creator Studio with four edited voice, music, room and field tracks; not a screenshot',summary:'Arrange imported audio with source trims, fades, pan, markers, native C/WASM rendering, WAV exports and podcast handoff.',action:'Open multitrack studio'},
-    {title:'Narrated Quick Mix',kind:'Voice production · interactive',href:'https://nickgonzales76017.github.io/pages-podcast-plant/studio/quick/',image:'assets/shots/creator-quick-mix-preview.svg',alt:'Illustrated real-audio Quick Mix with four licensed recordings, level controls and dialogue-aware music ducking',summary:'Mix real voice, CC0 music, location sound and credited Foley; create a voiced opener, compare ducking and export a cut.',action:'Try a real voice mix'}
-  ];
-  const section=document.createElement('section');section.className='showcase';section.setAttribute('aria-label','Published interactive demos');
-  const head=document.createElement('div');head.className='showcase-head';
-  const left=document.createElement('div'),eyebrow=document.createElement('div');eyebrow.className='eyebrow';eyebrow.textContent='Featured work / live previews';
-  const subtitle=document.createElement('p');subtitle.textContent='Open working software. Docs, guides and unbuilt concepts are not counted as playable demos.';left.append(eyebrow,subtitle);
-  const actions=document.createElement('div');actions.className='showcase-actions';
-  const prev=document.createElement('button'),next=document.createElement('button');prev.type=next.type='button';prev.setAttribute('aria-label','Scroll to previous demo');next.setAttribute('aria-label','Scroll to next demo');prev.textContent='←';next.textContent='→';actions.append(prev,next);head.append(left,actions);section.append(head);
-  const track=document.createElement('div');track.className='showcase-scroll';track.tabIndex=0;track.setAttribute('aria-label','Interactive demo carousel');
-  entries.forEach(item=>{
-    const a=document.createElement('a');a.className='showcase-card';a.href=item.href;
-    const img=document.createElement('img');img.src=item.image;img.alt=item.alt;img.loading='lazy';img.decoding='async';
-    const body=document.createElement('div');body.className='card-body';
-    for(const [cls,value,tag] of [['card-type',item.kind,'span'],['heading',item.title,'strong'],['summary',item.summary,'span'],['cta',item.action+' ↗','span']]){
-      const node=document.createElement(tag);node.className=cls;node.textContent=value;body.append(node);
-    }
-    a.append(img,body);track.append(a);
+  'use strict';
+  const list = document.querySelector('#experiences [data-demo-list]');
+  if (!list || document.getElementById('demo-showcase')) return;
+  const seen = new Set();
+  const safeURL = value => {
+    try {
+      const url = new URL(value, document.baseURI);
+      return url.protocol === 'https:' && !url.username && !url.password ? url.href : null;
+    } catch { return null; }
+  };
+  const entries = Array.from(list.querySelectorAll('a[data-demo]')).flatMap(source => {
+    const href = safeURL(source.getAttribute('href'));
+    const title = source.querySelector('strong')?.textContent.trim();
+    if (!href || !title || seen.has(href)) return [];
+    seen.add(href);
+    return [{href, title, summary: source.querySelector('.detail')?.textContent.trim() || '',
+      kind: source.dataset.kind || 'Interactive workspace',
+      image: source.dataset.shot ? safeURL(source.dataset.shot) : null,
+      alt: source.dataset.shotAlt || '', action: source.dataset.action || 'Open workspace'}];
   });
-  section.append(track);
-  const note=document.createElement('p');note.className='showcase-note';note.textContent='Illustrated previews are labelled and linked to the applications. Working demos do not imply production integrations, validated external source facts or payments.';section.append(note);
-  anchor.parentNode.insertBefore(section,anchor);
-  const scroll=direction=>track.scrollBy({left:direction*((track.firstElementChild?.getBoundingClientRect().width||350)+16),behavior:'smooth'});
-  prev.addEventListener('click',()=>scroll(-1));next.addEventListener('click',()=>scroll(1));
+  if (!entries.length) return;
+  const node = (tag, className, text) => {
+    const element = document.createElement(tag);
+    element.className = className;
+    if (text !== undefined) element.textContent = text;
+    return element;
+  };
+  const section = node('section', 'showcase');
+  section.id = 'demo-showcase';
+  section.setAttribute('aria-label', 'Featured application previews');
+  const head = node('div', 'showcase-head');
+  const intro = node('div', 'showcase-intro');
+  intro.append(node('div', 'eyebrow', 'Featured work / public previews'),
+    node('p', '', 'Open an application or browse the complete list below.'));
+  const controls = node('div', 'showcase-actions');
+  const previous = node('button', '', '←'), next = node('button', '', '→');
+  for (const [button, label] of [[previous, 'Previous preview'], [next, 'Next preview']]) {
+    button.type = 'button';
+    button.setAttribute('aria-label', label);
+    button.setAttribute('aria-controls', 'demo-preview-track');
+  }
+  controls.append(previous, next); head.append(intro, controls); section.append(head);
+  const track = node('div', 'showcase-scroll');
+  track.id = 'demo-preview-track'; track.tabIndex = 0;
+  track.setAttribute('role', 'region'); track.setAttribute('aria-label', 'Application previews');
+  for (const item of entries) {
+    const card = node('a', 'showcase-card'); card.href = item.href;
+    // Only published captures with an explicit description are eligible. No mock UI.
+    if (item.image && item.alt) {
+      const image = node('img', ''); image.src = item.image; image.alt = item.alt;
+      image.loading = 'lazy'; image.decoding = 'async';
+      image.addEventListener('error', () => image.remove(), {once: true});
+      card.append(image);
+    }
+    const body = node('div', 'card-body');
+    body.append(node('span', 'card-type', item.kind), node('strong', 'heading', item.title),
+      node('span', 'summary', item.summary), node('span', 'cta', item.action + ' ↗'));
+    card.append(body); track.append(card);
+  }
+  section.append(track, node('p', 'showcase-note',
+    'Screenshots appear only where a published capture is available. Preview edits do not authorize purchases, payments or external publication.'));
+  list.parentNode.insertBefore(section, list);
+  const updateControls = () => {
+    const maximum = Math.max(0, track.scrollWidth - track.clientWidth);
+    previous.disabled = track.scrollLeft <= 1;
+    next.disabled = track.scrollLeft >= maximum - 1;
+  };
+  const scroll = direction => {
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const distance = (track.firstElementChild?.getBoundingClientRect().width || 350) + 16;
+    track.scrollBy({left: direction * distance, behavior: reduced ? 'auto' : 'smooth'});
+    updateControls();
+  };
+  previous.addEventListener('click', () => scroll(-1));
+  next.addEventListener('click', () => scroll(1));
+  track.addEventListener('keydown', event => {
+    if (event.target !== track || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault(); scroll(event.key === 'ArrowLeft' ? -1 : 1);
+    }
+  });
+  track.addEventListener('scroll', updateControls, {passive: true});
+  window.addEventListener('resize', updateControls, {passive: true});
+  updateControls();
 })();

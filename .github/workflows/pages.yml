@@ -24,6 +24,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup directory test runtime
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Check application directory and carousel
+        run: node --test scripts/tests/showcase-directory.test.mjs
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
