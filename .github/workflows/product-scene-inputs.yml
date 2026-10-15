@@ -1,0 +1,53 @@
+name: Product scene verification inputs
+on:
+  push:
+    branches: ['verify/product-scene-20261015']
+    paths: ['.github/workflows/product-scene-inputs.yml']
+permissions:
+  contents: read
+jobs:
+  acquire:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fetch bounded public verification inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p inputs/site inputs/models inputs/upstream
+          node --input-type=module <<'JS'
+          import {mkdir,writeFile} from 'node:fs/promises';
+          import {dirname} from 'node:path';
+          import {createHash} from 'node:crypto';
+          const rows=['path\tsha256\tbytes\tsource'];
+          async function read(url,max=40000000){const r=await fetch(url,{signal:AbortSignal.timeout(60000)});if(!r.ok)throw Error(url+' HTTP '+r.status);const chunks=[];let n=0;for await(const chunk of r.body){n+=chunk.length;if(n>max)throw Error('Source exceeds bound');chunks.push(chunk);}return Buffer.concat(chunks);}
+          async function keep(path,url,max){const b=await read(url,max);await mkdir(dirname('inputs/'+path),{recursive:true});await writeFile('inputs/'+path,b);rows.push([path,createHash('sha256').update(b).digest('hex'),b.length,url].join('\t'));return b;}
+          const registry=JSON.parse((await read('https://registry.npmjs.org/three/0.180.0',200000)).toString());
+          const tar=await keep('upstream/three-0.180.0.tgz',registry.dist.tarball);
+          const integrity='sha512-'+createHash('sha512').update(tar).digest('base64');if(integrity!==registry.dist.integrity)throw Error('Registry integrity mismatch');
+          await writeFile('inputs/upstream/three-integrity.txt',integrity+'\n');
+          const commit=JSON.parse((await read('https://api.github.com/repos/KhronosGroup/glTF-Sample-Assets/commits/main',1000000)).toString()).sha;
+          if(!/^[a-f0-9]{40}$/.test(commit))throw Error('Invalid source revision');
+          for(const name of ['SheenChair','IridescenceLamp']){const base='https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/'+commit+'/Models/'+name+'/';await keep('models/'+name+'.glb',base+'glTF-Binary/'+name+'.glb');await keep('models/'+name+'-README.md',base+'README.md',100000);}
+          await writeFile('inputs/models/REVISION.txt',commit+'\n');
+          const origin='https://aurekai-work-samples.pages.dev';
+          const plan=(await keep('site/red3-planner/index.html',origin+'/red3-planner/',2000000)).toString();
+          const cat=(await keep('site/catalogue/index.html',origin+'/catalogue/',2000000)).toString();
+          const starts=[...plan.matchAll(/src="([^\"]+planner-client\.mjs)"/g),...cat.matchAll(/src="([^\"]+catalogue-client\.mjs)"/g)].map(m=>m[1]);
+          const queue=[...starts],seen=new Set();
+          const companions=['planner-client.mjs','planner-model.mjs','planner-projects.mjs','planner-project-client.mjs','planner-spatial.mjs','planner-spatial-model.mjs','workspace-navigation.mjs','store.mjs','catalogue-client.mjs','catalogue-grid.mjs','catalogue-grid-model.mjs','catalogue-model.mjs','catalogue-review.mjs','catalogue-preparation.mjs','catalogue-desk.mjs'];
+          for(const entry of starts){const dir=entry.slice(0,entry.lastIndexOf('/')+1);for(const file of companions.filter(n=>entry.includes('planner-')?n.startsWith('planner-')||['store.mjs','workspace-navigation.mjs'].includes(n):!n.startsWith('planner-')))queue.push(dir+file);}
+          while(queue.length){const path=queue.shift();if(seen.has(path))continue;seen.add(path);if(seen.size>90)throw Error('Asset graph exceeds bound');const u=new URL(path,origin);if(u.origin!==origin||u.pathname.includes('..'))throw Error('Invalid site asset');let b;try{b=await keep('site'+u.pathname,u.href,7000000);}catch(error){if(String(error).includes('HTTP 404'))continue;throw error;}if(!u.pathname.endsWith('.mjs')&&!u.pathname.endsWith('.js'))continue;const text=b.toString();for(const m of text.matchAll(/(?:from\s*|import\s*\(?)['"](\.\.?\/[^'"?]+\.(?:mjs|js))['"]/g))queue.push(new URL(m[1],u).pathname);for(const m of text.matchAll(/(?:\.\/)?vendor\/[a-zA-Z0-9./_-]+\.(?:js|mjs)/g))queue.push(new URL('./'+m[0].replace(/^\.\//,''),u).pathname);}
+          for(const html of [plan,cat])for(const m of html.matchAll(/(?:href|src)="(\/(?:assets|data)\/[^"<>]+)"/g)){const path=m[1];if(/\.(?:css|png|jpg|svg|json|gz)$/.test(path)&&!seen.has(path)){seen.add(path);try{await keep('site'+path,origin+path,6000000);}catch(e){console.log('Optional asset unavailable: '+path);}}}
+          await writeFile('inputs/SHA256SUMS.tsv',rows.join('\n')+'\n');
+          console.log('Acquired '+rows.length+' entries; no private files, site writes, credentials or deployment.');
+          JS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: product-scene-public-inputs
+          path: inputs
+          retention-days: 7
+          if-no-files-found: error
