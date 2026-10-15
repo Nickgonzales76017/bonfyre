@@ -106,3 +106,10 @@ test('controls reflect scroll boundaries and their labels target the track',()=>
   track.scrollLeft=1350;track.emit('scroll');assert.equal(buttons[1].disabled,true);assert.equal(buttons[0].disabled,false);
   buttons[0].emit('click');assert.equal(track.lastScroll.behavior,'smooth');assert.equal(buttons[1].disabled,false);
 });
+test('Aurekai adoption points to the live owner without carrying private context',()=>{
+  const {find}=setup(),link=find('aurekai-adoption'),scope=find('aurekai-adoption-scope');
+  assert.equal(link.href,'https://aurekai.work/packs/setup');
+  assert.equal(new URL(link.href).search,'');
+  assert.equal(link.attrs['aria-describedby'],scope.id);
+  assert.match(scope.textContent,/Demo drafts and application backends remain separate/);
+});
