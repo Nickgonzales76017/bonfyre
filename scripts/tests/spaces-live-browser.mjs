@@ -1,4 +1,4 @@
-// Same browser witness for the local Pages build and its actual public URL.
+// Drive the same catalogue-to-room journey on the build and its public URL.
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
@@ -8,16 +8,16 @@ const output=resolve(process.env.SPACES_EVIDENCE||'spaces-evidence');await mkdir
 let server,origin=process.env.SPACES_ORIGIN;
 if(!origin){const root=resolve('site');server=createServer(async(req,res)=>{try{let path=new URL(req.url,'http://localhost').pathname;if(!path.startsWith('/bonfyre/'))throw Error();path=path.slice('/bonfyre'.length);const file=resolve(root,'.'+path+(path.endsWith('/')?'index.html':''));if(!file.startsWith(root+'/'))throw Error();const body=await readFile(file),types={'.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.html':'text/html','.glb':'model/gltf-binary','.wasm':'application/wasm','.png':'image/png'};res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(body);}catch{res.writeHead(404);res.end('Not found');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));origin='http://127.0.0.1:'+server.address().port;}
 const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
-const checks=[],errors=[],check=(name,truth)=>{assert.ok(truth,name);checks.push(name);console.log('PASS '+name);};
-try{const page=await browser.newPage({viewport:{width:1440,height:1050}});page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.message));
+const checks=[],errors=[],requests=[],check=(name,truth)=>{assert.ok(truth,name);checks.push(name);console.log('PASS '+name);};let page;
+try{page=await browser.newPage({viewport:{width:1440,height:1050}});page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.message));page.on('response',r=>{if(r.status()>=400)requests.push(r.status()+' '+r.url());});
  await page.goto(origin+'/bonfyre/spaces/catalogue/?store=wayfair-reference&workspace=inventory');
- await page.waitForSelector('[row-id]');check('hosted catalogue contains the retained lamp',await page.locator('[data-ui="inventory"]').innerText().then(s=>s.includes('Bonsall')));
- await page.locator('[row-id]').filter({hasText:'Bonsall'}).first().click();
- const configure=page.getByRole('button',{name:/Configure.*place/i});await configure.click();await page.waitForSelector('.cr-dialog[data-ready="true"]');
+ await page.waitForSelector('[data-ui="inventory"][data-ready="true"]');check('hosted catalogue contains the retained lamp',await page.locator('[data-ui="inventory"]').innerText().then(s=>s.includes('Bonsall')));
+ await page.locator('.ag-row [col-id="title"]').first().click();await page.locator('[data-grid-action="inspect-3d"]').click();await page.waitForSelector('.cr-dialog[data-ready="true"]');
  check('actual model renderer opens from the catalogue grid',await page.locator('.cr-dialog canvas').count()>0);
  await page.getByRole('spinbutton',{name:'Quantity to place'}).fill('2');await page.getByRole('spinbutton',{name:'Quantity to place'}).dispatchEvent('input');
  check('two retained units cost 139.98',await page.locator('.cr-status').innerText().then(s=>s.includes('139.98')));
  await page.screenshot({path:output+'/catalogue.png',fullPage:true});
+ if(server){await page.locator('.cr-dialog .ps-viewport').screenshot({path:resolve('site/spaces/assets/product-models/lamp-thumbnail.png')});}
  await page.getByRole('button',{name:'Place in a room',exact:true}).click();await page.waitForSelector('[data-planner][data-ready="true"]');
  check('same saved work opens on the public room route',page.url().includes('/bonfyre/spaces/product-room/')&&page.url().includes('project='));
  check('room subtotal uses retained option cost',await page.locator('[data-ui="subtotal"]').innerText().then(s=>s.includes('139.98')));
@@ -29,4 +29,5 @@ try{const page=await browser.newPage({viewport:{width:1440,height:1050}});page.s
  check('disconnected public release does not collect contact details',await page.locator('[data-ui="submit-form"]').isHidden());await page.locator('[data-ui="close-review"]').click();
  await page.setViewportSize({width:390,height:844});check('room fits 390px without document overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:output+'/room-mobile.png',fullPage:true});
  check('no application script exceptions',errors.length===0);await writeFile(output+'/RESULTS.txt','origin '+origin+'\nchecks '+checks.length+'\n'+checks.map(s=>'PASS '+s).join('\n')+'\n');
+}catch(error){console.error('Browser diagnostics',errors,requests);await writeFile(output+'/FAILURE.txt',String(error)+'\n'+errors.join('\n')+'\n'+requests.join('\n'));if(page){await writeFile(output+'/failure.html',await page.content());await page.screenshot({path:output+'/failure.png',fullPage:true}).catch(()=>{});}throw error;
 }finally{await browser.close();server?.close();}
