@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 600" role="img" aria-labelledby="title desc">
+<title id="title">Aurekai Quick Mix — real spoken-word audio production</title>
+<desc id="desc">Faithful illustrated view of Quick Mix with a human narration, CC0 lo-fi music, licensed café ambience and keyboard Foley, controls for ducking, and a rendered waveform. Not a screenshot.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#101d17"/><stop offset="1" stop-color="#193628"/></linearGradient><linearGradient id="card" x2="1"><stop stop-color="#1b2d23"/><stop offset="1" stop-color="#233d2c"/></linearGradient></defs>
+<rect width="960" height="600" fill="#0b1510"/><rect x="19" y="18" width="922" height="563" rx="12" fill="url(#bg)" stroke="#506d55"/>
+<text x="44" y="55" fill="#c9e5c8" font-family="Arial,sans-serif" font-size="19" letter-spacing="2.5">AUREKAI / QUICK MIX</text><text x="680" y="55" fill="#b2cba9" font-family="Arial,sans-serif" font-size="11">REAL AUDIO · C/WASM</text>
+<text x="43" y="120" fill="#eaf3e8" font-family="Georgia,serif" font-size="42">Make the voice</text><text x="43" y="165" fill="#e2c992" font-family="Georgia,serif" font-style="italic" font-size="44">feel like a story.</text>
+<text x="44" y="196" fill="#abbfac" font-family="Arial,sans-serif" font-size="16">A real reading, sourced music, location audio and Foley.</text>
+<rect x="44" y="222" width="550" height="307" rx="7" fill="#152b1d" stroke="#4e7253"/>
+<text x="66" y="248" fill="#a9cead" font-family="Arial,sans-serif" font-size="12" letter-spacing="1">FOUR SOURCE RECORDINGS</text>
+<g font-family="Arial,sans-serif">
+<g>
+<rect x="63" y="263" width="511" height="55" rx="4" fill="url(#card)"/><text x="79" y="284" fill="#eaf3e7" font-size="17">Human narration</text><text x="79" y="303" fill="#abc8b0" font-size="11">LibriVox · Sara Teasdale</text>
+<rect x="326" y="286" width="197" height="6" rx="3" fill="#456e4c"/><rect x="326" y="286" width="170" height="6" rx="3" fill="#c1e0b3"/><circle cx="495" cy="289" r="7" fill="#e5f4d7"/>
+</g>
+<g>
+<rect x="63" y="326" width="511" height="55" rx="4" fill="url(#card)"/><text x="79" y="347" fill="#eaf3e7" font-size="17">Lo-fi music bed</text><text x="79" y="366" fill="#abc8b0" font-size="11">DURU · CC0 licensed</text>
+<rect x="326" y="350" width="197" height="6" rx="3" fill="#456e4c"/><rect x="326" y="350" width="102" height="6" rx="3" fill="#c1e0b3"/><circle cx="428" cy="353" r="7" fill="#e5f4d7"/>
+</g>
+<g>
+<rect x="63" y="389" width="511" height="55" rx="4" fill="url(#card)"/><text x="79" y="410" fill="#eaf3e7" font-size="17">Café atmosphere</text><text x="79" y="429" fill="#abc8b0" font-size="11">Public-domain room recording</text>
+<rect x="326" y="413" width="197" height="6" rx="3" fill="#456e4c"/><rect x="326" y="413" width="51" height="6" rx="3" fill="#c1e0b3"/><circle cx="377" cy="416" r="7" fill="#e5f4d7"/>
+</g>
+<g>
+<rect x="63" y="452" width="511" height="55" rx="4" fill="url(#card)"/><text x="79" y="473" fill="#eaf3e7" font-size="17">Keyboard Foley</text><text x="79" y="492" fill="#e2c992" font-size="11">C40115 · CC BY 4.0 (credit required)</text>
+<rect x="326" y="476" width="197" height="6" rx="3" fill="#456e4c"/><rect x="326" y="476" width="33" height="6" rx="3" fill="#c1e0b3"/><circle cx="359" cy="479" r="7" fill="#e5f4d7"/>
+</g>
+</g>
+<rect x="612" y="222" width="303" height="307" rx="7" fill="#183123" stroke="#507459"/>
+<text x="630" y="248" fill="#b9d7bc" font-family="Arial,sans-serif" font-size="12" letter-spacing="1">MONITOR &amp; EXPORT</text>
+<circle cx="653" cy="286" r="23" fill="#cce4bc"/><text x="646" y="292" fill="#1b3120" font-family="Arial,sans-serif" font-size="20">▶</text>
+<text x="690" y="292" fill="#e9f4e4" font-family="Arial,sans-serif" font-size="17">Render &amp; listen</text>
+<path d="M629 368H897" stroke="#55745b"/>
+<g stroke="#c9ebce" stroke-linecap="round" stroke-width="1.4">
+<path d="M631 338q5 -15 10 0t10 0q5 -27 10 0t10 0q5 -11 10 0t10 0q5 -34 10 0t10 0q5 -23 10 0t10 0q5 -13 10 0t10 0q5 -21 10 0t10 0q5 -35 10 0t10 0q5 -17 10 0t10 0q5 -27 10 0t10 0q5 -18 10 0t10 0q5 -31 10 0t10 0q5 -16 10 0t10 0"/>
+</g>
+<text x="632" y="399" fill="#bdd7b8" font-family="Arial,sans-serif" font-size="14">Music ducks under the voice</text>
+<rect x="633" y="415" width="265" height="9" rx="4" fill="#476f4d"/><rect x="633" y="415" width="159" height="9" rx="4" fill="#c6e1ae"/>
+<text x="631" y="453" fill="#e3c78e" font-family="Arial,sans-serif" font-size="19">−15 dB duck</text>
+<rect x="632" y="473" width="266" height="35" rx="5" fill="#cce4bc"/><text x="656" y="496" fill="#183022" font-family="Arial,sans-serif" font-weight="bold" font-size="15">EXPORT EDITED WAV ↗</text>
+<text x="44" y="558" fill="#9dbba1" font-family="Arial,sans-serif" font-size="12">Editorial Quick Mix — accurate UI illustration, not a browser screenshot. Real sources are credited.</text>
+</svg>
