@@ -8,7 +8,7 @@
     {title:'Retail Fixture Planner',kind:'Design and costing · interactive',href:'https://aurekai-work-samples.pages.dev/red3-planner/',image:'https://aurekai-work-samples.pages.dev/assets/shots/planner.jpg',alt:'Actual retail planner screenshot with movable fixtures and running costs',summary:'Arrange sourced RED3 fixtures, compare fit and prepare a reviewable supplier brief.',action:'Try retail planning'},
     {title:'Catalogue Workbench',kind:'Product operations · interactive',href:'https://aurekai-work-samples.pages.dev/catalogue/',image:'https://aurekai-work-samples.pages.dev/assets/shots/catalogue.jpg',alt:'Actual product editor screenshot with variant details',summary:'Inspect a source catalogue, edit variants and compare drafts without publishing.',action:'Try product editing'},
     {title:'Multitrack Creator Studio',kind:'Native audio · production workstation',href:'https://nickgonzales76017.github.io/pages-podcast-plant/studio/',image:'assets/shots/creator-studio-preview.svg',alt:'Faithful illustrated arrangement view of Creator Studio with four edited voice, music, room and field tracks; not a screenshot',summary:'Arrange imported audio with source trims, fades, pan, markers, native C/WASM rendering, WAV exports and podcast handoff.',action:'Open multitrack studio'},
-    {title:'Creator Audio Mixer',kind:'Native audio · interactive',href:'https://aurekai-work-samples.pages.dev/audio/',image:'https://aurekai-work-samples.pages.dev/assets/shots/audio.png',alt:'Actual Aurekai audio mixer showing track gain controls',summary:'Mix three tracks, play and stop audio, save levels and export a WAV.',action:'Try the audio mixer'}
+    {title:'Narrated Quick Mix',kind:'Voice production · interactive',href:'https://nickgonzales76017.github.io/pages-podcast-plant/studio/quick/',image:'assets/shots/creator-quick-mix-preview.svg',alt:'Illustrated real-audio Quick Mix with four licensed recordings, level controls and dialogue-aware music ducking',summary:'Mix real voice, CC0 music, location sound and credited Foley; create a voiced opener, compare ducking and export a cut.',action:'Try a real voice mix'}
   ];
   const section=document.createElement('section');section.className='showcase';section.setAttribute('aria-label','Published interactive demos');
   const head=document.createElement('div');head.className='showcase-head';
@@ -27,7 +27,7 @@
     a.append(img,body);track.append(a);
   });
   section.append(track);
-  const note=document.createElement('p');note.className='showcase-note';note.textContent='Creator Studio, Brief Studio and Council illustrations represent their real interfaces; images are labelled visual studies, not screenshots. All destinations link to released applications.';section.append(note);
+  const note=document.createElement('p');note.className='showcase-note';note.textContent='Creator Studio, Quick Mix, Brief Studio and Council use labelled UI illustrations, not screenshots. Each card links to a published working application.';section.append(note);
   anchor.parentNode.insertBefore(section,anchor);
   const scroll=direction=>track.scrollBy({left:direction*((track.firstElementChild?.getBoundingClientRect().width||350)+16),behavior:'smooth'});
   prev.addEventListener('click',()=>scroll(-1));next.addEventListener('click',()=>scroll(1));
