@@ -1,0 +1,16 @@
+source wayfair-W002337865
+url https://www.wayfair.com/lighting/pdp/wrought-studio-bonsell-19-table-lamp-w002337865.html
+observed 2026-10-15
+retention web-reader-factual-extract
+title Bonsall Table Lamp
+alternate_model_title Bonsell 19-inch Table Lamp
+product_sku W002337865
+option_identity product-level-SKU-no-separate-variant-code-observed
+base_color Chrome
+shade_color Gray
+listed_price_usd 69.99
+reported_overall_inches 18.75-H-12-W-5-D
+reported_shade_inches 12-L-12-W-8-H
+geometry_dispute overall-depth-versus-shade-depth
+retained_as_quote false
+shipping_tax_availability unverified

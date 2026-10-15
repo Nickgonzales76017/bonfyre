@@ -1,0 +1,5 @@
+Three.js 0.180.0 / r180; MIT.
+Bundled Draco and Basis transcoders: Apache-2.0 notices retained separately.
+Meshopt decoder: MIT, upstream notice preserved in module.
+Bare imports rewritten to the same local Three.js instance.
+https://github.com/mrdoob/three.js/tree/r180
