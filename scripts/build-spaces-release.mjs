@@ -1,5 +1,5 @@
-// Publish the reviewed ServiceSite browser projection under the existing showcase.
-// This is a static application release. It does not claim native intake or merchant authority.
+// Release the existing browser application under the established showcase.
+// No merchant publication or native intake is implied by this static projection.
 import {readFile,writeFile,readdir,cp,mkdir,rm} from 'node:fs/promises';
 import {join,resolve,extname} from 'node:path';
 import {createHash} from 'node:crypto';
@@ -14,12 +14,14 @@ const setCfg=(html,name,value)=>html.replace(new RegExp('(<script[^>]*'+name+'[^
 await mkdir(output,{recursive:true});await cp(input,output,{recursive:true});
 for(const p of ['scene-check.html','test-config.mjs','codec-fixtures'])await rm(join(output,p),{recursive:true,force:true});
 let cat=await readFile(join(output,'catalogue/index.html'),'utf8'),catalogue=map(cfg(cat,'data-catalogue-config'));
-// Route-local presentation paths participate in the fixture catalogue generation.
+// Static hosting cannot truthfully offer the native intake action.
+// The catalogue already supports a null review contract; preserve that branch.
+catalogue.review=null;
 const generations=new Map();
 for(const route of catalogue.roomRoutes??[]){const c=route.catalogue,old=c.digest;delete c.digest;c.digest=hash(JSON.stringify(c));generations.set(old,c.digest);}
 for(const name of await readdir(join(output,'data/product-workspace'))){
  if(!name.endsWith('.json.gz'))continue;
- const p=join(output,'data/product-workspace',name),before=await readFile(p),rows=JSON.parse(gunzipSync(before)),next=map(rows),body=gzipSync(Buffer.from(JSON.stringify(next)));
+ const p=join(output,'data/product-workspace',name),before=await readFile(p),next=map(JSON.parse(gunzipSync(before))),body=gzipSync(Buffer.from(JSON.stringify(next)));
  await writeFile(p,body);for(const entry of catalogue.entries)if(entry.chunk===name)entry.chunk_sha256=hash(body);
 }
 cat=setCfg(cat,'data-catalogue-config',catalogue);await writeFile(join(output,'catalogue/index.html'),cat);
@@ -32,25 +34,17 @@ async function walk(dir){const result=[];for(const e of await readdir(dir,{withF
 for(const file of await walk(output)){
  if(!['.html','.mjs','.css'].includes(extname(file)))continue;
  let text=await readFile(file,'utf8');
- // Rebase URL literals only. Absolute merchant URLs and source IDs are untouched.
  text=text.replace(/(["'`(=])\/(assets|data|catalogue|red3-planner|product-room)\//g,(_,q,p)=>q+base+p+'/');
  if(file.endsWith('.html')){
-  text=text.replace(/href="\/#ask"/g,'href="https://aurekai-work-samples.pages.dev/#ask"');
-  text=text.replace(/<link\b[^>]*href="[^"]*fonts\.googleapis[^>]*>/g,'');
-  text=text.replace(/<link\b[^>]*rel="canonical"[^>]*>/g,'');
+  text=text.replace(/href="\/#ask"/g,'href="https://aurekai-work-samples.pages.dev/#ask"').replace(/<link\b[^>]*href="[^"]*fonts\.googleapis[^>]*>/g,'').replace(/<link\b[^>]*rel="canonical"[^>]*>/g,'');
   text=text.replace('</head>','<meta name="robots" content="noindex"><link rel="stylesheet" href="'+base+'release.css"></head>');
   text=text.replace('<body>','<body><div class="spaces-release"><a href="/bonfyre/#experiences">Aurekai applications</a><a href="'+base+'catalogue/?store=wayfair-reference&workspace=inventory">Catalogue</a><a href="'+base+'product-room/">Room planner</a><span>Saved on this device · Review preparation</span></div>');
-  text=text.replace(/<form data-ui="submit-form"[\s\S]*?<\/form>/g,'<section class="spaces-review-boundary"><h3>Keep this version for review</h3><p>Download the source-linked brief above. This public release does not submit contact details or send a supplier request.</p></section>');
-  // Existing clients require their form nodes; hide and disable, rather than removing them.
-  // The following hidden inert fields satisfy that contract without accepting personal data.
-  if(pathHasPlanner(file))text=text.replace('</body>','<template id="spaces-unused"></template></body>');
+  text=text.replace(/<form data-ui="submit-form"[\s\S]*?<\/form>/g,'<section class="spaces-review-boundary"><h3>Keep this version for review</h3><p>This public release prepares saved work for review. It does not submit contact details or send a supplier request.</p></section>');
  }
- // Refuse disconnected submission before any network or contact-data write.
  if(file.endsWith('planner-client.mjs'))text=text.replace("const response=await fetch('/api/lead/'+cfg.form", "throw Error('Native review is not connected. Download the brief for review.');const response=await fetch('/api/lead/'+cfg.form");
  await writeFile(file,text);
 }
-function pathHasPlanner(p){return p.endsWith('/product-room/index.html')||p.endsWith('/red3-planner/index.html');}
-// Keep the production client's required nodes inside the planner section, inert and hidden.
+// Keep the original planner's required form nodes inert inside its own section.
 for(const rel of ['product-room/index.html','red3-planner/index.html']){
  const p=join(output,rel);let html=await readFile(p,'utf8');html=html.replace('<section class="spaces-review-boundary">','<form data-ui="submit-form" hidden inert><input data-ui="name" disabled><input data-ui="email" disabled><button data-ui="submit" disabled></button><p data-ui="receipt"></p></form><section class="spaces-review-boundary">');await writeFile(p,html);
 }
