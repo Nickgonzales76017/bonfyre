@@ -1,0 +1,4 @@
+camera-controls 3.1.2 / MIT / https://github.com/yomotsu/camera-controls
+@pmndrs/vanilla 1.25.0 / MIT / https://github.com/pmndrs/drei-vanilla
+Three.js r180 addons / existing MIT release.
+Registry archives verified before extraction. Bare imports use the existing shared Three instance.
