@@ -24,71 +24,73 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check application directory and carousel
-        run: node --test scripts/tests/showcase-directory.test.mjs
-      - name: Detect retained spaces release
-        id: spaces
+      - name: Check application directory and retained release
         run: |
-          if test -f site/spaces/RELEASE.tsv; then echo 'bootstrap=false' >> "$GITHUB_OUTPUT"; else echo 'bootstrap=true' >> "$GITHUB_OUTPUT"; fi
-      - name: Read exact previously verified scene source
-        if: steps.spaces.outputs.bootstrap == 'true'
-        uses: actions/checkout@v4
-        with:
-          ref: 4245f2807b742a0f31fc7e50d86f3a87d4834daf
-          path: .scene-source
-          persist-credentials: false
+          node --test scripts/tests/showcase-directory.test.mjs
+          test -f site/spaces/RELEASE.tsv
+      - name: Detect retained helper dependencies
+        id: helpers
+        run: |
+          if test -f vendor/spaces-helpers-20261015/SOURCE.txt; then echo 'needed=false' >> "$GITHUB_OUTPUT"; else echo 'needed=true' >> "$GITHUB_OUTPUT"; fi
       - uses: actions/download-artifact@v4
-        if: steps.spaces.outputs.bootstrap == 'true'
+        if: steps.helpers.outputs.needed == 'true'
+        with:
+          name: spaces-helper-inputs
+          run-id: 38803211793
+          github-token: ${{ github.token }}
+          path: studio-inputs/archives
+      - uses: actions/download-artifact@v4
+        if: steps.helpers.outputs.needed == 'true'
         with:
           name: product-scene-public-inputs
           run-id: 38791615713
           github-token: ${{ github.token }}
-          path: scene-run/inputs
-      - uses: actions/download-artifact@v4
-        if: steps.spaces.outputs.bootstrap == 'true'
-        with:
-          name: product-scene-browser-inputs
-          run-id: 38792426739
-          github-token: ${{ github.token }}
-          path: scene-run/inputs
-      - name: Reconstruct exact source and retained public assets
-        if: steps.spaces.outputs.bootstrap == 'true'
+          path: studio-inputs/retained
+      - name: Verify archives and extract without installation scripts
+        if: steps.helpers.outputs.needed == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          cat .scene-source/verification/product-scene/part-{0,1,2,3,4}.b64 | base64 --decode > scene-run/source.tar.xz
-          echo '12ed363dc3cf06c7d03836f1fdf77ad8989b61f68efcc8855557827141b278d2  scene-run/source.tar.xz' | sha256sum --check
-          cd scene-run
-          tar -xJf source.tar.xz
-          mkdir -p components/BonfyreServiceSite upstream
-          cp inputs/site/data/product-workspace/*.mjs components/BonfyreServiceSite/
-          cp inputs/site/data/red3-fixtures/v-*/*.mjs components/BonfyreServiceSite/
-          git apply --check verification/src/runtime.patch
-          git apply verification/src/runtime.patch
-          tar -xzf inputs/upstream/three-0.180.0.tgz -C upstream
-          node components/BonfyreServiceSite/tools/package-product-scene.mjs upstream/package components/BonfyreServiceSite/vendor/three-0.180.0 inputs/upstream
-          node ../.scene-source/verification/product-scene/refine.mjs .
-          node --test components/BonfyreServiceSite/tests/*.mjs
-          node verification/src/build-preview.mjs .
-          cd ..
-          node scripts/build-spaces-release.mjs scene-run/preview site/spaces
+          cd studio-inputs/archives
+          echo '489d6e0c991108023d13fa169be53a932a682cc88c4e3b33a30ec494a55d7767  camera-controls-3.1.2.tgz' | sha256sum --check
+          echo '559c47e9bec146242c364f43c542d8f0d8fda839c8fe7348c9011787551fc0ae  pmndrs-vanilla-1.25.0.tgz' | sha256sum --check
+          cd ../..
+          node --input-type=module <<'JS'
+          import {readFileSync} from 'node:fs';import {createHash} from 'node:crypto';
+          const row=readFileSync('studio-inputs/retained/SHA256SUMS.tsv','utf8').split('\n').find(s=>s.startsWith('upstream/three-0.180.0.tgz\t'));
+          if(!row)throw Error('Pinned Three archive receipt missing.');
+          const [path,hash,size]=row.split('\t'),body=readFileSync('studio-inputs/retained/'+path);
+          if(body.length!==Number(size)||createHash('sha256').update(body).digest('hex')!==hash)throw Error('Pinned Three archive changed.');
+          JS
+          mkdir -p studio-inputs/{camera,drei,three}
+          tar -xzf studio-inputs/archives/camera-controls-3.1.2.tgz -C studio-inputs/camera
+          tar -xzf studio-inputs/archives/pmndrs-vanilla-1.25.0.tgz -C studio-inputs/drei
+          tar -xzf studio-inputs/retained/upstream/three-0.180.0.tgz -C studio-inputs/three
+      - name: Build immutable studio UI packages
+        run: |
+          node --check components/BonfyreServiceSite/product-scene-tools.mjs
+          node --check scripts/upgrade-spaces.mjs
+          node scripts/upgrade-spaces.mjs site/spaces studio-inputs
       - name: Install browser driver
         run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
-      - name: Verify Pages-path browser journey before publication
+      - name: Verify rendered product and room interactions before publication
+        env:
+          SPACES_STUDIO_REQUIRED: '1'
         run: |
           export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
-      - name: Retain generated release so future deployments do not require expiring artifacts
-        if: steps.spaces.outputs.bootstrap == 'true'
+      - name: Retain tested release and helper licences
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -- site/spaces
-          git commit -m 'release(spaces): retain browser-verified static application and licensed assets'
-          git push origin HEAD:main
+          git add -- site/spaces vendor/spaces-helpers-20261015
+          if ! git diff --cached --quiet; then
+            git commit -m 'release(spaces): retain verified studio projection and licensed helpers'
+            git push origin HEAD:main
+          fi
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
@@ -98,10 +100,11 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Verify actual live catalogue and room
+      - name: Verify the actual public studio
         env:
           SPACES_ORIGIN: https://nickgonzales76017.github.io
           SPACES_EVIDENCE: spaces-live-evidence
+          SPACES_STUDIO_REQUIRED: '1'
         run: |
           export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
