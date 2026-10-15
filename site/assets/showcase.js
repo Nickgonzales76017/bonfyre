@@ -34,6 +34,13 @@
   const intro = node('div', 'showcase-intro');
   intro.append(node('div', 'eyebrow', 'Featured work / public previews'),
     node('p', '', 'Open an application or browse the complete list below.'));
+  const adoption = node('a', 'action secondary', 'Review Aurekai setup');
+  adoption.id = 'aurekai-adoption';
+  adoption.href = 'https://aurekai.work/packs/setup';
+  adoption.setAttribute('aria-describedby', 'aurekai-adoption-scope');
+  const adoptionScope = node('p', '', 'Keep and share a versioned workflow configuration in your Aurekai account. Demo drafts and application backends remain separate.');
+  adoptionScope.id = 'aurekai-adoption-scope';
+  intro.append(adoption, adoptionScope);
   const controls = node('div', 'showcase-actions');
   const previous = node('button', '', '←'), next = node('button', '', '→');
   for (const [button, label] of [[previous, 'Previous preview'], [next, 'Next preview']]) {
