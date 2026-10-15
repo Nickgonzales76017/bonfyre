@@ -52,6 +52,7 @@ jobs:
           cp inputs/site/data/red3-fixtures/v-*/*.mjs components/BonfyreServiceSite/
           git apply --check verification/src/runtime.patch
           git apply verification/src/runtime.patch
+          node ../verification/product-scene/refine.mjs .
           tar -xzf inputs/upstream/three-0.180.0.tgz -C upstream
           mkdir -p upstream/meshoptimizer upstream/draco3dgltf
           tar -xzf inputs/upstream/meshoptimizer-0.22.0.tgz -C upstream/meshoptimizer
