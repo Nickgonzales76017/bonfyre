@@ -1,0 +1,27 @@
+name: Spaces helper inputs
+on:
+  push:
+    branches: ['verify/product-scene-20261015']
+    paths: ['.github/workflows/spaces-helpers.yml']
+permissions:
+  contents: read
+jobs:
+  helpers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Acquire exact public helper releases without install scripts
+        run: |
+          mkdir -p helpers
+          cd helpers
+          npm pack --ignore-scripts camera-controls@3.1.2 @pmndrs/vanilla@1.25.0
+          npm view camera-controls@3.1.2 dist.integrity > camera-integrity.txt
+          npm view @pmndrs/vanilla@1.25.0 dist.integrity > drei-integrity.txt
+          sha256sum *.tgz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: spaces-helper-inputs
+          path: helpers
+          retention-days: 30
