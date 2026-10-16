@@ -50,7 +50,6 @@ export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = ()
       throw Error('Concurrent release conflict; upstream was not overwritten. ' + (rebased.stderr || '').slice(-2000));
     }
     basis = upstream;
-    // The old browser result cannot certify newly reconciled source.
     verify();
     commitProjection();
   }
@@ -66,7 +65,9 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const verify = () => {
     run(['--check', 'components/BonfyreServiceSite/product-scene-tools.mjs']);
     run(['--check', 'scripts/upgrade-spaces.mjs']);
+    run(['--test', 'scripts/tests/component-contracts.test.mjs']);
     run(['scripts/upgrade-spaces.mjs', 'site/spaces', 'studio-inputs']);
+    run(['scripts/component-release.mjs', 'site/spaces']);
     run(['scripts/tests/spaces-live-browser.mjs']);
     run(['scripts/prepare-spaces-discovery.mjs']);
     run(['--test', 'scripts/tests/showcase-directory.test.mjs']);
