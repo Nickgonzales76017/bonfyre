@@ -17,7 +17,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -28,7 +28,7 @@ jobs:
           node-version: '22'
       - name: Check application directory and retained release
         run: |
-          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs
+          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs
           test -f site/spaces/RELEASE.tsv
       - name: Detect retained helper dependencies
         id: helpers
@@ -98,6 +98,14 @@ jobs:
           export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/retain-tested-pages.mjs
+      - name: Verify final composed workspaces and retained editors
+        env:
+          WORKSPACE_EVIDENCE: workspace-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-composition-browser.mjs
+          node scripts/tests/workspace-docking-browser.mjs
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
@@ -116,6 +124,15 @@ jobs:
           export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
+      - name: Verify the public composed workflows
+        env:
+          WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
+          WORKSPACE_EVIDENCE: workspace-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-composition-browser.mjs
+          node scripts/tests/workspace-docking-browser.mjs
       - name: Keep local and live browser results
         if: always()
         uses: actions/upload-artifact@v4
@@ -125,3 +142,5 @@ jobs:
           path: |
             spaces-evidence
             spaces-live-evidence
+            workspace-evidence
+            workspace-live-evidence
