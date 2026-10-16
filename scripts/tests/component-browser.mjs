@@ -2,17 +2,18 @@ import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
+import {runReuseChecks} from './component-reuse-checks.mjs';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE||'playwright');
 const output=resolve('component-evidence/replacement');await mkdir(output,{recursive:true});
 const checks=[],errors=[],posts=[],records={};
 const check=(name,value)=>{assert.ok(value,name);checks.push(name);console.log('PASS '+name);};
 const browser=await chromium.launch({executablePath:process.env.CHROME_PATH||'/usr/bin/google-chrome',headless:true,args:['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 let activePage;
-async function serve(mode){const catalogue=resolve(mode==='before'?'component-donors/catalogue-before':'site/spaces'),itad=resolve(mode==='before'?'component-donors/itad-before':'component-donors/itad/site');const server=createServer(async(req,res)=>{try{if(req.method!=='GET')throw Error('Read-only test server');let path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);const prefix='/bonfyre/spaces/',base=path.startsWith(prefix)?catalogue:itad;path=path.startsWith(prefix)?path.slice(prefix.length):path.slice(1);const file=resolve(base,path+(path.endsWith('/')?'index.html':''));if(!file.startsWith(base+'/'))throw Error('Outside source');const bytes=await readFile(file);res.writeHead(200,{'Content-Type':({'.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml','.png':'image/png','.glb':'model/gltf-binary','.wasm':'application/wasm'})[extname(file)]||'application/octet-stream'});res.end(bytes);}catch{res.writeHead(404);res.end('Not found');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return {server,origin:'http://127.0.0.1:'+server.address().port};}
-async function cellEdit(page,locator,value){await locator.dblclick();const input=page.locator('.ag-cell-inline-editing input').first();await input.fill(value);await input.press('Enter');}
+async function serve(mode,{mutate=false}={}){const catalogue=resolve(mode==='before'?'component-donors/catalogue-before':'site/spaces'),itad=resolve(mode==='before'?'component-donors/itad-before':'component-donors/itad/site');const server=createServer(async(req,res)=>{try{if(req.method!=='GET')throw Error('Read-only test server');let path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);const prefix='/bonfyre/spaces/',base=path.startsWith(prefix)?catalogue:itad;path=path.startsWith(prefix)?path.slice(prefix.length):path.slice(1);const file=resolve(base,path+(path.endsWith('/')?'index.html':''));if(!file.startsWith(base+'/'))throw Error('Outside source');const bytes=mutate&&path.includes('/interaction-')&&path.endsWith('/record-grid.mjs')?Buffer.from("export function createRecordGrid(){throw Error('Shared renderer deliberately withheld');}"):await readFile(file);res.writeHead(200,{'Content-Type':({'.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.html':'text/html','.svg':'image/svg+xml','.png':'image/png','.glb':'model/gltf-binary','.wasm':'application/wasm'})[extname(file)]||'application/octet-stream'});res.end(bytes);}catch{res.writeHead(404);res.end('Not found');}});await new Promise(r=>server.listen(0,'127.0.0.1',r));return {server,origin:'http://127.0.0.1:'+server.address().port};}
+async function cellEdit(page,locator,value){await locator.dblclick();const input=page.locator('.ag-cell-inline-editing input').first();await input.fill(value);await input.press('Enter');const close=page.locator('[data-grid-action="close-inspector"]');if(await close.isVisible())await close.click();}
 async function catalogueFlow(page,origin,mode){
  await page.goto(origin+'/bonfyre/spaces/catalogue/?store=wayfair-reference&workspace=inventory');await page.waitForSelector('[data-ui="inventory"][data-ready="true"]');
- const host=page.locator('[data-ui="inventory"]'),row=()=>host.locator('.ag-center-cols-container .ag-row').first();
+ const host=page.locator('[data-ui="inventory"]'),row=()=>host.locator('.ag-row').first();
  await host.locator('[data-grid-action="options"]').click();await row().locator('[col-id="price"]').waitFor();
  const before=await row().locator('[col-id="price"]').innerText();
  await cellEdit(page,row().locator('[col-id="price"]'),'79.99');await page.waitForFunction(()=>document.querySelector('[data-grid="changes"]')?.textContent==='1');
@@ -38,7 +39,7 @@ async function itadState(page){return page.evaluate(async()=>{const {openDraft}=
 async function itadFlow(page,origin,mode){
  await page.goto(origin+'/itad-exchange/?lot=houston35#manifest');await page.waitForSelector('#manifestGrid[data-ready="true"]');
  await page.locator('#sampleValues').click();await page.locator('#applySample').click();await page.waitForFunction(()=>document.querySelector('#lineCount')?.textContent==='2');
- const qty=()=>page.locator('#manifestGrid .ag-center-cols-container .ag-row [col-id="qty"]').first();
+ const qty=()=>page.locator('#manifestGrid .ag-row [col-id="qty"]').first();
  await cellEdit(page,qty(),'21');await page.waitForFunction(()=>document.querySelector('#manifestResult').textContent.includes('36 modeled'));
  check(mode+' ITAD quantity edit changes valuation inputs and mismatch',true);
  await page.locator('#undo').click();check(mode+' ITAD undo restores original manifest totals',(await page.locator('#manifestResult').innerText()).includes('35 modeled'));
@@ -60,5 +61,6 @@ try{
  assert.deepEqual(records.before.catalogue,records.after.catalogue);check('generalized catalogue components produce identical source-linked drafts',true);
  assert.deepEqual(records.before.itad,records.after.itad);check('generalized ITAD components produce exactly the original domain record',true);
  check('neither donor workflow sends an external effect',posts.length===0);check('both original and replacement flows run without script errors',errors.length===0);
+ await runReuseChecks({serve,browser,check,edit:cellEdit});
  await writeFile(output+'/RESULTS.txt',checks.map(x=>'PASS '+x).join('\n')+'\n');
 }catch(error){await writeFile(output+'/FAILURE.txt',error.stack+'\n'+errors.join('\n'));throw error;}finally{await browser.close();}
