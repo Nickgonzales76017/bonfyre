@@ -1,0 +1,47 @@
+name: Workspace composition
+on:
+  push:
+    branches: [feat/composed-workspaces-20261016]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: workspace-composition-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retain pinned dependency and original release sources
+        run: |
+          mkdir -p workspace-inputs
+          npm pack dockview@8.5.1 --ignore-scripts --pack-destination workspace-inputs
+          npm pack dockview-core@8.5.1 --ignore-scripts --pack-destination workspace-inputs
+          npm view dockview@8.5.1 dist.integrity > workspace-inputs/dockview.integrity
+          npm view dockview-core@8.5.1 dist.integrity > workspace-inputs/dockview-core.integrity
+          git archive --format=tar HEAD cmd/BonfyreSurfaceScene/runtime components/BonfyreServiceSite scripts site/spaces > workspace-inputs/source.tar
+          git rev-parse HEAD > workspace-inputs/COMMIT.txt
+          sha256sum workspace-inputs/* > workspace-inputs/SHA256SUMS
+      - name: Verify workspace composition
+        if: hashFiles('scripts/workspace-composition.mjs') != ''
+        run: |
+          node --test scripts/tests/workspace-composition.test.mjs
+          node scripts/workspace-composition.mjs
+          npm install --prefix .workspace-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+          export PLAYWRIGHT_MODULE="$PWD/.workspace-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          SPACES_STUDIO_REQUIRED=1 node scripts/tests/spaces-live-browser.mjs
+          node scripts/tests/workspace-composition-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: workspace-composition-material
+          path: |
+            workspace-inputs
+            workspace-evidence
+          retention-days: 14
