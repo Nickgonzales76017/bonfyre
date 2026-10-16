@@ -38,9 +38,7 @@ export function compileWorkspace(scene, contributions) {
       continuity: binding.continuity_key || '', extent: slot.extent, label: adapter.label,
       adapter, ordinal: slot.ordinal ?? panels.length}));
   }
-  for (const slot of slots.values()) {
-    if (slot.max_items != null && (!Number.isSafeInteger(slot.max_items) || slot.max_items < 1 || panels.filter(p=>p.slot===slot.slot_id).length > slot.max_items)) throw Error('Semantic slot capacity exceeded.');
-  }
+  // max_items bounds owner material, not the number of mounted panes.
   const recipes = list(scene.interaction?.desktop_posture?.layouts);
   if (!recipes.length || recipes.length > 12) throw Error('A workspace needs bounded declared layouts.');
   const recipeNames = new Set();

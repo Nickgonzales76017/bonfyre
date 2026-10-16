@@ -1,7 +1,21 @@
 name: Workspace composition
 on:
   push:
-    branches: [feat/composed-workspaces-20261016]
+    branches: [main, feat/composed-workspaces-20261016]
+    paths:
+      - 'cmd/BonfyreSurfaceScene/runtime/**'
+      - 'integrations/browser/adapters/**'
+      - 'scripts/workspace-*.mjs'
+      - 'scripts/component-release.mjs'
+      - 'scripts/tests/workspace-*'
+      - '.github/workflows/workspace-composition.yml'
+  pull_request:
+    paths:
+      - 'cmd/BonfyreSurfaceScene/runtime/**'
+      - 'integrations/browser/adapters/**'
+      - 'scripts/workspace-*.mjs'
+      - 'scripts/component-release.mjs'
+      - 'scripts/tests/workspace-*'
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,20 +31,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Retain pinned dependency and original release sources
+      - name: Retain exact source basis
         run: |
           mkdir -p workspace-inputs
-          npm pack dockview@8.5.1 --ignore-scripts --pack-destination workspace-inputs --quiet
-          npm pack dockview-core@8.5.1 --ignore-scripts --pack-destination workspace-inputs --quiet
-          npm view dockview@8.5.1 dist.integrity > workspace-inputs/dockview.integrity
-          npm view dockview-core@8.5.1 dist.integrity > workspace-inputs/dockview-core.integrity
           git archive --format=tar HEAD cmd/BonfyreSurfaceScene/runtime components/BonfyreServiceSite scripts site/spaces > workspace-inputs/source.tar
           git rev-parse HEAD > workspace-inputs/COMMIT.txt
           sha256sum workspace-inputs/* > workspace-inputs/SHA256SUMS
       - name: Build and test source contracts
         id: build
         run: |
-          node --test scripts/tests/workspace-composition.test.mjs
+          node --test scripts/tests/workspace-composition.test.mjs scripts/tests/component-contracts.test.mjs
           node scripts/workspace-composition.mjs
           npm install --prefix .workspace-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
       - name: Existing catalogue-to-room regression
@@ -48,6 +58,12 @@ jobs:
           export PLAYWRIGHT_MODULE="$PWD/.workspace-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
+      - name: Pointer docking and retained editors
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.workspace-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-docking-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -55,4 +71,5 @@ jobs:
           path: |
             workspace-inputs
             workspace-evidence
+            site/spaces/assets/workspace-docking
           retention-days: 14

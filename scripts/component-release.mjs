@@ -1,4 +1,5 @@
 import {assembleWorkspace} from './workspace-assembly.mjs';
+import {ensureWorkspaceDocking} from './workspace-dependencies.mjs';
 import {readFile,writeFile,readdir,mkdir,access} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,resolve,dirname,relative} from 'node:path';
@@ -22,6 +23,7 @@ const prefix='/bonfyre/spaces/';
 const entryPath=entry=>{if(!/^\/bonfyre\/spaces\/data\/ui-[a-f0-9]{64}\/(catalogue|planner)\/[a-z-]+\.mjs$/.test(entry))throw Error('Invalid release entry coordinate');return entry.slice(prefix.length);};
 export async function replaceSpacesComponents(directory){
  const spaces=resolve(directory),pack=await componentPackage(),report=[],prior=new Map(),nextPins=[];
+ await ensureWorkspaceDocking(spaces);
  const pinsPath=join(spaces,'COMPONENT-DONORS.tsv');
  if(await exists(pinsPath)){
   const text=await readFile(pinsPath,'utf8');if(text.length>4096||!text.startsWith('page\tsource_entry\trendered_entry\n'))throw Error('Invalid component donor coordinates');
