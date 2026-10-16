@@ -31,7 +31,7 @@ export async function composePlannerWorkspace({root,catalogue,read,save,undo,red
       {id:'compare',label:'Compare alternatives',panels:[{id:'comparison'},{id:'projects',relative:'comparison',direction:'left',width:320},{id:'materials',relative:'comparison',direction:'below',height:220}]},
       {id:'cost',label:'Quantities & specification',panels:[{id:'materials'},{id:'collection',relative:'materials',direction:'right',width:480},{id:'details',relative:'materials',direction:'below',height:240}]}
     ]},command_aperture:{shortcut:'Meta+K'}}};
-  const work=createWorkspaceHost(root,{scene,contributions,docking,report:fail});
+  const work=createWorkspaceHost(root,{scene,contributions,docking,before:ui('layout'),report:fail});
   const unused=ui('layout');unused.hidden=true;unused.style.display='none';
   let lastView='layout';
   return {...work,

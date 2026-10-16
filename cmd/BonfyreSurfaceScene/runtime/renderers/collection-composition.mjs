@@ -28,7 +28,7 @@ export async function composeCollectionWorkspace({host,scope,sourceDigests,readR
       {id:'review',label:'Review changes',panels:[{id:'records'},{id:'changes',relative:'records',direction:'below',height:260},{id:'inspector',relative:'records',direction:'right',width:300}]},
       {id:'records',label:'Full-width records',panels:[{id:'records'}]}
     ]}}};
-  const work=createWorkspaceHost(host,{scene,contributions:registry,docking});stage.hidden=true;
+  const work=createWorkspaceHost(host,{scene,contributions:registry,docking,before:stage});stage.hidden=true;
   function refresh(){const rows=changes();deltaBody.innerHTML=rows.length?changeMarkup(rows):'<p>No pending changes. Edits appear here before saving.</p>';confirm.disabled=!rows.length;work.refresh();}
   refresh();
   return {...work,refresh,

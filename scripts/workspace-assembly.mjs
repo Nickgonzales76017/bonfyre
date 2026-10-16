@@ -14,7 +14,8 @@ return import('/bonfyre/spaces/assets/workspace-docking/dockview-8.5.1.mjs');
 })().catch(error=>{pending=null;throw error;});}
 `));
   if(kind==='planner'){
-    files.set('planner-workspace.mjs',Buffer.from(imports(await read('integrations/browser/adapters/planner-workspace.mjs'))));
+    const binding=await read('integrations/browser/adapters/planner-workspace.mjs');
+    files.set('planner-workspace.mjs',Buffer.from(imports(replace(binding,"()=>ui('details')","()=>root.querySelector('.fp-sidebar')"))));
     let client=files.get('planner-client.mjs').toString();
     client="import {composePlannerWorkspace} from './planner-workspace.mjs';\n"+client;
     client=replace(client,'let projectWorkspace, spatial, productScene, lastValid;','let projectWorkspace, spatial, productScene, lastValid, composition;');
@@ -27,6 +28,7 @@ return import('/bonfyre/spaces/assets/workspace-docking/dockview-8.5.1.mjs');
     let projects=files.get('planner-project-client.mjs').toString();
     projects=replace(projects,'canLeave, isBusy, fail})','canLeave, isBusy, fail, renderView})');
     projects=replace(projects,"    for (const id of ['layout', 'fixtures', 'projects', 'compare']) ui(id).hidden = id !== view;","    if(!renderView?.(view))for (const id of ['layout', 'fixtures', 'projects', 'compare']) ui(id).hidden = id !== view;");
+    projects=replace(projects,"    if (view === 'compare') renderComparison();","    if (renderView || view === 'compare') renderComparison();");
     files.set('planner-project-client.mjs',Buffer.from(projects));
   }else{
     let adapter=files.get('catalogue-grid.mjs').toString();

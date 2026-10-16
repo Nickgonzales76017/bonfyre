@@ -2,7 +2,7 @@ import {WorkspaceSession} from './workspace-composition.mjs';
 
 /** Assemble live application bindings. Content nodes are moved, never cloned;
  * docking and presets cannot create another editor, record or command owner. */
-export function createWorkspaceHost(root, {scene, contributions, docking, report = () => {}}) {
+export function createWorkspaceHost(root, {scene, contributions, docking, before = null, report = () => {}}) {
   if(!root?.ownerDocument || typeof docking?.createDockview!=='function')throw Error('A workspace needs its content root and docking renderer.');
   const session = new WorkspaceSession(scene, contributions), doc = root.ownerDocument;
   const resolved=session.plan.panels.map(p=>({panel:p,node:p.adapter.element()})), seen=new Set();
@@ -16,7 +16,7 @@ export function createWorkspaceHost(root, {scene, contributions, docking, report
   views.add(new Option('Open a panel…',''));for(const panel of session.plan.panels)views.add(new Option(panel.label,panel.id));
   const paletteButton=el('button','Commands ⌘K'),reset=el('button','Reset arrangement'),note=el('span','','bf-workspace-note');
   for(const b of [paletteButton,reset])b.type='button';
-  bar.append(title,layout,views,paletteButton,reset,note);shell.append(bar,area,parking);root.append(shell);
+  bar.append(title,layout,views,paletteButton,reset,note);shell.append(bar,area,parking);if(before){if(!root.contains(before))throw Error('Workspace insertion point is outside its host.');before.before(shell);}else root.append(shell);
   const originals=new Map(), nodes=new Map(), mounts=new Map();
   for(const {panel,node}of resolved){
     const anchor=doc.createComment('binding:'+panel.id);node.before(anchor);originals.set(panel.id,{node,anchor,hidden:node.hidden});nodes.set(panel.id,node);}
