@@ -1,0 +1,33 @@
+diff --git a/planner-client.mjs b/planner-client.mjs
+--- a/planner-client.mjs
++++ b/planner-client.mjs
+@@ -1 +1,2 @@
++import {createEditHistory} from './renderers/edit-history.mjs';
+ import {createPlannerProductScene} from './planner-product-scene.mjs';
+@@ -13,3 +14,3 @@
+ let projectWorkspace, spatial, productScene, lastValid;
+-const undo=[],redo=[];
++const planHistory=createEditHistory({capture:()=>lastValid??plan,restore:value=>{plan=value;lastValid=structuredClone(value);},limit:60});
+ let plan,revision=0,saved=null,selected=null,receipt=null,busy=false,conflict=false,storageAvailable=true;
+@@ -24,3 +25,3 @@
+   ui('save').disabled=busy||conflict||!storageAvailable;
+-  ui('undo').disabled=busy||!undo.length;ui('redo').disabled=busy||!redo.length;
++  ui('undo').disabled=busy||!planHistory.canUndo;ui('redo').disabled=busy||!planHistory.canRedo;
+   spatial?.refresh();
+@@ -30,4 +31,4 @@
+ }
+-function changed() {receipt=null;error('');message('');if(valid()){if(lastValid&&JSON.stringify(lastValid)!==JSON.stringify(plan)){undo.push(structuredClone(lastValid));if(undo.length>60)undo.shift();redo.length=0;}render();}controls();}
+-function editHistory(direction){if(busy)return;const from=direction==='undo'?undo:redo,to=direction==='undo'?redo:undo;if(!from.length)return;try{validatePlan(plan,catalogue);to.push(structuredClone(plan));}catch{}plan=from.pop();receipt=null;error('');fields();render();positionEditor();}
++function changed() {receipt=null;error('');message('');if(valid()){if(lastValid)planHistory.transact(()=>{lastValid=structuredClone(plan);});render();}controls();}
++function editHistory(direction){if(busy)return;if(!planHistory[direction]())return;receipt=null;error('');fields();render();positionEditor();}
+ function spatialChange(next,primary=selected){if(busy)return;try{validatePlan(next,catalogue);plan=next;selected=primary;changed();positionEditor();}catch(e){error(e.message);}}
+@@ -119,3 +120,3 @@
+ function projectURL(){const url=new URL(location.href);url.searchParams.set('project',plan.id);return url;}
+-function replacePlan(next){undo.length=redo.length=0;lastValid=null;plan=next;revision=0;saved=null;receipt=null;conflict=false;selected=null;error('');fields();render();positionEditor();}
++function replacePlan(next){planHistory.clear();lastValid=null;plan=next;revision=0;saved=null;receipt=null;conflict=false;selected=null;error('');fields();render();positionEditor();}
+ async function boot() {
+@@ -131,3 +132,3 @@
+   projectWorkspace=bindProjects({root,catalogue,prefix,current:()=>({id:plan.id,unsaved:!unchanged()}),open:row=>{
+-    undo.length=redo.length=0;lastValid=null;plan=structuredClone(row.value.plan);revision=row.revision;saved=JSON.stringify(plan);receipt=/^lead:planner:[a-f0-9]{64}$/.test(row.value.receipt??'')?row.value.receipt:null;conflict=false;selected=null;error('');message('');fields();render();positionEditor();
++    planHistory.clear();lastValid=null;plan=structuredClone(row.value.plan);revision=row.revision;saved=JSON.stringify(plan);receipt=/^lead:planner:[a-f0-9]{64}$/.test(row.value.receipt??'')?row.value.receipt:null;conflict=false;selected=null;error('');message('');fields();render();positionEditor();
+   },create:()=>replacePlan(startingPlan(catalogue)),copy:()=>{if(!valid())throw Error('Correct the plan before making a copy.');replacePlan(copyPlan(plan,catalogue));message('This is a new option. Save it to keep both plans.');},
