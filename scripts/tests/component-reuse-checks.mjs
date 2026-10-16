@@ -20,6 +20,13 @@ export async function runReuseChecks({serve,browser,check,edit}) {
   check('destroying one component does not break its sibling',await page.evaluate(()=>componentFixture.owners[1].value===8));
  } finally {await context.close();server.close();}
  const report=await readFile('component-evidence/SHARED.tsv','utf8'),packageHash=report.split('\n')[0].split('\t')[1];assert.match(packageHash,/^[a-f0-9]{64}$/);
+ const shared='shared/interaction-'+packageHash.slice(0,20);
+ for(const name of ['record-grid.mjs','edit-history.mjs','review-sheet.mjs','collection-workbench.mjs','scene-workbench.mjs']){
+  const original=await readFile('cmd/BonfyreSurfaceScene/runtime/renderers/'+name);
+  assert.deepEqual(await readFile('site/spaces/'+shared+'/'+name),original);
+  assert.deepEqual(await readFile('component-donors/itad/site/'+shared+'/'+name),original);
+ }
+ check('all substituted consumers receive byte-identical canonical components',true);
  const mutant=await serve('after',{mutate:true}),mutationContext=await browser.newContext();
  try {
   for(const [name,path,selector]of [['catalogue','/bonfyre/spaces/catalogue/?store=wayfair-reference&workspace=inventory','[data-ui="inventory"]'],['ITAD','/itad-exchange/','#manifestGrid']]){
@@ -29,5 +36,4 @@ export async function runReuseChecks({serve,browser,check,edit}) {
    await page.close();
   }
  } finally {await mutationContext.close();mutant.server.close();}
- check('both donor substitutions use the same content-addressed component package',true);
 }
