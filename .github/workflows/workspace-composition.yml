@@ -20,22 +20,33 @@ jobs:
       - name: Retain pinned dependency and original release sources
         run: |
           mkdir -p workspace-inputs
-          npm pack dockview@8.5.1 --ignore-scripts --pack-destination workspace-inputs
-          npm pack dockview-core@8.5.1 --ignore-scripts --pack-destination workspace-inputs
+          npm pack dockview@8.5.1 --ignore-scripts --pack-destination workspace-inputs --quiet
+          npm pack dockview-core@8.5.1 --ignore-scripts --pack-destination workspace-inputs --quiet
           npm view dockview@8.5.1 dist.integrity > workspace-inputs/dockview.integrity
           npm view dockview-core@8.5.1 dist.integrity > workspace-inputs/dockview-core.integrity
           git archive --format=tar HEAD cmd/BonfyreSurfaceScene/runtime components/BonfyreServiceSite scripts site/spaces > workspace-inputs/source.tar
           git rev-parse HEAD > workspace-inputs/COMMIT.txt
           sha256sum workspace-inputs/* > workspace-inputs/SHA256SUMS
-      - name: Verify workspace composition
-        if: hashFiles('scripts/workspace-composition.mjs') != ''
+      - name: Build and test source contracts
+        id: build
         run: |
           node --test scripts/tests/workspace-composition.test.mjs
           node scripts/workspace-composition.mjs
           npm install --prefix .workspace-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Existing catalogue-to-room regression
+        if: steps.build.outcome == 'success'
+        env:
+          SPACES_STUDIO_REQUIRED: '1'
+          SPACES_EVIDENCE: workspace-evidence/regression
+        run: |
           export PLAYWRIGHT_MODULE="$PWD/.workspace-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
-          SPACES_STUDIO_REQUIRED=1 node scripts/tests/spaces-live-browser.mjs
+          node scripts/tests/spaces-live-browser.mjs
+      - name: Combined workspace interactions
+        if: always() && steps.build.outcome == 'success'
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.workspace-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
