@@ -28,7 +28,7 @@ jobs:
           node-version: '22'
       - name: Check application directory and retained release
         run: |
-          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs
+          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs
           test -f site/spaces/RELEASE.tsv
       - name: Detect retained helper dependencies
         id: helpers
@@ -73,6 +73,7 @@ jobs:
           node --check components/BonfyreServiceSite/product-scene-tools.mjs
           node --check scripts/upgrade-spaces.mjs
           node scripts/upgrade-spaces.mjs site/spaces studio-inputs
+          node scripts/component-release.mjs site/spaces
       - name: Install browser driver
         run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
       - name: Verify rendered product and room interactions before publication
