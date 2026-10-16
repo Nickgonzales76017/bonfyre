@@ -23,6 +23,9 @@ return import('/bonfyre/spaces/assets/workspace-docking/dockview-8.5.1.mjs');
     client=replace(client,'function select(key) {selected=key;render();positionEditor();}','function select(key) {selected=key;render();positionEditor();composition?.selected(key);}');
     client=replace(client,"isBusy:()=>busy,fail:error});","isBusy:()=>busy,fail:error,renderView:view=>composition?.renderView(view)});");
     client=replace(client,"  root.dataset.ready='true';",`  try{composition=await composePlannerWorkspace({root,catalogue,read:()=>({plan,selected,dirty:!unchanged()}),save,undo:()=>editHistory('undo'),redo:()=>editHistory('redo'),select,review:()=>ui('review').click(),fail:error});composition.renderView(root.dataset.workspaceView||'layout');}catch(e){message('The standard planner remains available. '+e.message);}
+  // Dockview mounts presentation overlays and ResizeObserver resolves their
+  // extents after layout. Readiness must not expose a temporarily parked panel.
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   root.dataset.ready='true';`);
     files.set('planner-client.mjs',Buffer.from(client));
     let projects=files.get('planner-project-client.mjs').toString();
