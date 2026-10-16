@@ -1,10 +1,19 @@
 name: Reusable component replacement
 on:
   push:
-    branches: [refactor/reusable-workbenches-20261015]
+    branches: [main, refactor/reusable-workbenches-20261015]
     paths:
       - '.github/workflows/reusable-component-checks.yml'
       - 'cmd/BonfyreSurfaceScene/runtime/**'
+      - 'integrations/browser/adapters/**'
+      - 'scripts/component-*.mjs'
+      - 'scripts/tests/component-*'
+      - 'components/BonfyreServiceSite/catalogue-grid.mjs'
+  pull_request:
+    paths:
+      - '.github/workflows/reusable-component-checks.yml'
+      - 'cmd/BonfyreSurfaceScene/runtime/**'
+      - 'integrations/browser/adapters/**'
       - 'scripts/component-*.mjs'
       - 'scripts/tests/component-*'
       - 'components/BonfyreServiceSite/catalogue-grid.mjs'
@@ -12,7 +21,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: reusable-component-replacement
+  group: reusable-component-replacement-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   verify:
@@ -52,15 +61,12 @@ jobs:
           if(failures.some(s=>/\/app.mjs\t|\/core.mjs\t|\/manifest-grid.mjs\t/.test(s)))throw Error('A required donor source was unavailable');
           JS
       - name: Verify reusable source and replace exact donor bundles
-        if: hashFiles('scripts/component-replacement.mjs') != ''
         run: |
-          node --test scripts/tests/component-contracts.test.mjs
+          node --test scripts/tests/component-contracts.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/showcase-directory.test.mjs
           node scripts/component-replacement.mjs
       - name: Install isolated browser test driver
-        if: hashFiles('scripts/tests/component-browser.mjs') != ''
         run: npm install --prefix .component-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
       - name: Verify original catalogue and room journey through shared components
-        if: hashFiles('scripts/component-replacement.mjs') != ''
         env:
           SPACES_STUDIO_REQUIRED: '1'
           SPACES_EVIDENCE: component-evidence/catalogue-room
@@ -69,7 +75,6 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
       - name: Verify both donor workflows and cross-instance reuse
-        if: hashFiles('scripts/tests/component-browser.mjs') != ''
         run: |
           export PLAYWRIGHT_MODULE="$PWD/.component-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
