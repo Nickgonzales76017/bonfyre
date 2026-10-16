@@ -15,7 +15,7 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
     throw new TypeError('Collection renderer requires a host, library and column presentation.');
   }
   let state, api, grid, scope, generation = 0, version = 0, active = false, busy = false,
-    filter = 'all', mode = presentation.modes[0].id, selected = null, review,
+    filter = 'all', mode = presentation.modes[0].id, selected = null, review, composition,
     lifetime, editing = false, currentRows = [], lastInspector;
   const $ = name => host.querySelector(`[data-grid="${name}"]`);
   const actionButton = (text, action, primary = false) => `<button type="button" class="cw-button ${primary ? 'cw-button-primary' : ''}" data-grid-action="${h(action)}">${h(text)}</button>`;
@@ -50,6 +50,7 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
     $('inspector').innerHTML = detail.html;
     inspectorCleanup = detail.mount?.($('inspector')) ?? null;
     $('inspector').querySelector('img')?.addEventListener('error', e => e.target.remove(), {once:true});
+    composition?.selected(row.key);
   }
   let inspectorCleanup = null;
   function cleanupInspector() { inspectorCleanup?.(); inspectorCleanup = null; }
@@ -71,7 +72,7 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
     for (const [name, disabled] of [['undo',!history.canUndo],['redo',!history.canRedo],['review',!binding.changes(state).length],['reset',!binding.changes(state).length]]) {
       host.querySelector(`[data-grid-action="${name}"]`).disabled = disabled || !editable();
     }
-    selection(); if (selected) inspect(rows.find(row => row.key === selected)); notify();
+    selection(); if (selected) inspect(rows.find(row => row.key === selected)); composition?.refresh(); notify();
   }
   function transact(change) {
     if (!editable()) throw Error('This working copy is read-only or a save is in progress.');
@@ -81,7 +82,7 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
   function edit(row, field, raw) {
     try { transact(() => {const next = binding.edit(state,row,field,raw); if(next !== undefined) state = next;}); notice(); }
     catch (error) {notice(error.message,true);}
-    return false; // AG Grid never becomes a second record owner.
+    return false;
   }
   function markup() {
     const words = presentation.words, titleId = `collection-review-${crypto.randomUUID()}`;
@@ -95,6 +96,7 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
   }
   function close() {
     active = false; generation++; lifetime?.abort(); review?.destroy(); cleanupInspector();
+    composition?.dispose();composition=null;
     grid?.destroy();grid=null;api = null; state = undefined; currentRows = []; history.clear();
     selected = null; lastInspector = null; editing = false; busy = false;
     delete host.dataset.ready;
@@ -144,6 +146,7 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
         $('bulk-value').value='';$('bulk-value').placeholder=presentation.bulk.find(value=>value.id===$('bulk-action').value)?.placeholder??'';
       },{signal});
       sync();notice();host.dataset.ready='true';
+      if(presentation.compose){try{const next=await presentation.compose({host,scope,state:()=>state,readRows:()=>currentRows,dirty,inspect,signal,command:action=>host.querySelector(`[data-grid-action="${action}"]`)?.click()});if(active&&ticket===generation)composition=next;else next?.dispose();}catch(error){if(active&&ticket===generation)notice('Standard editor remains available. '+error.message,true);}}
     } catch(error) {
       if(!active || ticket!==generation)return;
       notice(error.message,true);
@@ -204,7 +207,6 @@ export function createCollectionWorkbench(host, {binding, presentation, loadLibr
           if(!active || ticket!==generation)return;
           const next=binding.acceptSave(original,payload,result);if(next!==undefined)state=next;
           history.clear();version++;sheet.pending(false);sheet.close();notice(presentation.words.saved(result));
-          // A downstream refresh failure must not turn a confirmed write into an unsaved edit.
           try{await binding.afterSave?.(result);}catch(error){if(active&&ticket===generation)notice(`Saved; refresh needs attention: ${error.message}`,true);}
         } catch(error) {if(active&&ticket===generation){sheet.message(error.message);notice(error.message,true);}}
         finally {if(active&&ticket===generation){busy=false;sheet.pending(false);sync();}}

@@ -1,3 +1,4 @@
+import {assembleWorkspace} from './workspace-assembly.mjs';
 import {readFile,writeFile,readdir,mkdir,access} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {join,resolve,dirname,relative} from 'node:path';
@@ -5,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {execFileSync} from 'node:child_process';
 const repo=resolve(fileURLToPath(new URL('..',import.meta.url)));
 const hash=value=>createHash('sha256').update(value).digest('hex');
-const names=['edit-history.mjs','review-sheet.mjs','record-grid.mjs','collection-workbench.mjs','scene-workbench.mjs'];
+const names=['edit-history.mjs','review-sheet.mjs','record-grid.mjs','collection-workbench.mjs','scene-workbench.mjs','workspace-composition.mjs','workspace-host.mjs','workspace-host.css','collection-composition.mjs'];
 const exists=async path=>{try{await access(path);return true;}catch{return false;}};
 async function put(path,bytes){await mkdir(dirname(path),{recursive:true});if(await exists(path)){const before=await readFile(path);if(before.equals(Buffer.from(bytes)))return;}await writeFile(path,bytes);}
 async function walk(dir){const files=[];for(const entry of await readdir(dir,{withFileTypes:true})){const path=join(dir,entry.name);if(entry.isSymbolicLink())throw Error('Symlink in release material');if(entry.isDirectory())files.push(...await walk(path));else files.push(path);}return files;}
@@ -31,10 +32,10 @@ export async function replaceSpacesComponents(directory){
  const sceneAdapter=await readFile(join(repo,'integrations/browser/adapters/product-scene-tools.mjs'),'utf8');
  const rewritten=new Map();
  for(const[page,kind,entryName]of [['catalogue','catalogue','catalogue-client.mjs'],['product-room','planner','planner-client.mjs'],['red3-planner','planner','planner-client.mjs']]){
-  const htmlPath=join(spaces,page,'index.html'),html=await readFile(htmlPath,'utf8');
+  const htmlPath=join(spaces,page,'index.html'),html=(await readFile(htmlPath,'utf8')).replace(/<link data-workspace-skin[^>]+>/g,'');
   const shown=html.match(new RegExp('<script[^>]*src="([^"]*'+entryName.replace('.','\\.')+')"'))?.[1];entryPath(shown??'');
   const previous=prior.get(page),entry=previous&&shown===previous[2]?previous[1]:shown;
-  if(rewritten.has(entry)){const next=rewritten.get(entry);await put(htmlPath,html.replace(shown,next));nextPins.push([page,entry,next]);continue;}
+  if(rewritten.has(entry)){const next=rewritten.get(entry);await put(htmlPath,html.replace(shown,next).replace('</head>',`<link data-workspace-skin rel="stylesheet" href="${prefix}${pack.path}/workspace-host.css"></head>`));nextPins.push([page,entry,next]);continue;}
   const base=dirname(join(spaces,entryPath(entry))),files=new Map();
   for(const file of await walk(base))files.set(relative(base,file),await readFile(file));
   const prospective=join(spaces,'data/ui-component',kind);
@@ -47,8 +48,6 @@ export async function replaceSpacesComponents(directory){
   }else{
    const before=files.get('planner-client.mjs');
    if(hash(before)!=='9085817ad65f32b945470fd337d36951ae1d563c00c0177dcb75210767bec125')throw Error('Planner donor changed; reconcile before substituting history');
-   // Apply the reviewed patch in a bounded temporary source directory, never to
-   // an existing content-addressed package. Domain source references stay intact.
    const {mkdtemp,rm}=await import('node:fs/promises'),{tmpdir}=await import('node:os');
    const temp=await mkdtemp(join(tmpdir(),'component-plan-'));
    let text;try{
@@ -69,9 +68,10 @@ export async function replaceSpacesComponents(directory){
   const wrapper=bound(sceneAdapter,'product-scene-tools.mjs');files.set('product-scene-tools.mjs',Buffer.from(wrapper));
   files.set('product-scene.mjs',Buffer.from(scene.replace(old[0],"import {createStudioStage,studioCSS} from './product-scene-tools.mjs'")));
   report.push([kind+'-scene','product-scene-tools.mjs',hash(original),hash(wrapper),Buffer.byteLength(original),Buffer.byteLength(wrapper)]);
+  await assembleWorkspace(files,kind,pack);
   const id=hash([...files].sort(([a],[b])=>a.localeCompare(b)).map(([name,bytes])=>name+':'+hash(bytes)).join('\n'));
   const dest=join(spaces,'data/ui-'+id,kind);for(const[name,bytes]of files)await put(join(dest,name),bytes);
-  const next=prefix+'data/ui-'+id+'/'+kind+'/'+entryName;await put(htmlPath,html.replace(shown,next));rewritten.set(entry,next);nextPins.push([page,entry,next]);
+  const next=prefix+'data/ui-'+id+'/'+kind+'/'+entryName;await put(htmlPath,html.replace(shown,next).replace('</head>',`<link data-workspace-skin rel="stylesheet" href="${prefix}${pack.path}/workspace-host.css"></head>`));rewritten.set(entry,next);nextPins.push([page,entry,next]);
  }
  await put(pinsPath,'page\tsource_entry\trendered_entry\n'+nextPins.map(r=>r.join('\t')).join('\n')+'\n');
  const inventory=[];for(const file of await walk(spaces)){if(file.endsWith('/RELEASE.tsv'))continue;const body=await readFile(file);inventory.push(`${relative(spaces,file)}\t${hash(body)}\t${body.length}`);}
