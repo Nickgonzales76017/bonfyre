@@ -24,7 +24,7 @@ export function createWorkspaceHost(root, {scene, contributions, docking, before
   const restore=()=>{for(const {node,anchor,hidden}of originals.values()){anchor.replaceWith(node);node.hidden=hidden;}};
   try{api=docking.createDockview(area,{
     theme:scene.interaction?.desktop_posture?.theme==='dark'?docking.themeDark:docking.themeLight,
-    disableFloatingGroups:true,disableDnd:false,
+    disableFloatingGroups:true,disableDnd:false,dndStrategy:'pointer',
     createComponent({id}){const definition=session.plan.panels.find(p=>p.id===id),content=el('div','','bf-workspace-content');content.dataset.binding=id;
       return {element:content,init(){const node=nodes.get(id);content.append(node);node.hidden=false;definition.adapter.mounted?.({session,host:content});},layout(){definition.adapter.resize?.();},dispose(){const node=nodes.get(id);if(node)parking.append(node);}};}
   });}catch(error){restore();shell.remove();session.dispose();throw error;}
