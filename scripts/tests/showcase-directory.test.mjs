@@ -45,9 +45,10 @@ function setup(rows=sources(),{reduced=false,present=true}={}) {
   const context={document,window,URL};const run=()=>runInNewContext(script,context);run();
   return {parent,list,find,run};
 }
-test('nine unique authored application links include both current acquisition previews',()=>{
+test('thirteen unique authored application links include current acquisition and Work Samples previews',()=>{
   const rows=sources(),links=rows.map(row=>row.attrs.href);
-  assert.equal(rows.length,9);assert.equal(new Set(links).size,9);
+  assert.equal(rows.length,13);assert.equal(new Set(links).size,13);
+  for(const href of ['https://browser-workbench.aurekai-work-samples.pages.dev/',... ['red3-planner','catalogue','audio'].map(path=>`https://aurekai-work-samples.pages.dev/${path}/`)])assert.ok(links.includes(href),href);
   assert.equal(links[0],'https://itad-desk-upgrade.aurekai-work-samples.pages.dev/itad-exchange/');
   assert.equal(links[1],'https://brief-studio-upgrade.aurekai-work-samples.pages.dev/brief-studio/');
   assert.equal(links.filter(link=>link.includes('pages-shift-handoff')).length,1);
@@ -70,7 +71,7 @@ test('a changed source destination propagates without editing a second registry'
 });
 test('duplicate, active-scheme and credential-bearing links cannot enter the carousel',()=>{
   const rows=sources();for(const href of [rows[0].attrs.href,'javascript:alert(1)','https://user:secret@example.test/','http://example.test/']){const row=sources()[0];row.setAttribute('href',href);rows.push(row);}
-  assert.equal(setup(rows).find('demo-preview-track').children.length,9);
+  assert.equal(setup(rows).find('demo-preview-track').children.length,sources().length);
 });
 test('untrusted titles remain text and do not create elements',()=>{
   const rows=sources();rows[0].querySelector('strong').textContent='<img src=x onerror=alert(1)>';
@@ -79,9 +80,9 @@ test('untrusted titles remain text and do not create elements',()=>{
 });
 test('only explicitly described published captures are shown; missing images leave the link usable',()=>{
   const {find}=setup(),cards=find('demo-preview-track').children;
-  assert.equal(cards[0].children.filter(node=>node.tagName==='img').length,0);
+  assert.equal(cards[2].children.filter(node=>node.tagName==='img').length,0);
   const images=cards.flatMap(card=>card.children.filter(node=>node.tagName==='img'));
-  assert.equal(images.length,2);assert.ok(images.every(image=>image.alt&&image.src.endsWith('.png')));
+  assert.equal(images.length,8);assert.ok(images.every(image=>image.alt&&/\.(png|jpg)$/.test(image.src))); 
   const card=images[0].parentNode,href=card.href;images[0].emit('error');
   assert.equal(card.children.length,1);assert.equal(card.href,href);assert.equal(card.children[0].className,'card-body');
   const rows=sources();rows[5].dataset.shotAlt='';assert.equal(setup(rows).find('demo-preview-track').children[5].children.length,1);
