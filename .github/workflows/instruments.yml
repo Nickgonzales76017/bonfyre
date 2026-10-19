@@ -1,7 +1,7 @@
 name: Verify native instruments
 on:
   push:
-    branches: [native-instruments-20261019]
+    branches: [native-instruments-20261019, instrument-public-readiness-20261019]
   pull_request:
     paths:
       - 'components/BonfyreServiceSite/instruments/**'
@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: '22'
       - name: Execute calculations, actual SQLite and retained release regressions
-        run: node --test scripts/tests/instruments-core.test.mjs scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs
+        run: node --test scripts/tests/instruments-core.test.mjs scripts/tests/instruments-readiness.test.mjs scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs
       - name: Install pinned SQLite and browser driver without lifecycle scripts
         run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1 sql.js@1.13.0
       - name: Build from existing shared owners
