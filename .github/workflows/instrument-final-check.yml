@@ -1,0 +1,52 @@
+name: Verify released instruments and pointer interaction
+on:
+  push:
+    branches: [workspace-pointer-readiness-20261019]
+  pull_request:
+    paths:
+      - scripts/tests/workspace-docking-browser.mjs
+      - .github/workflows/instrument-final-check.yml
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1 sql.js@1.13.0
+      - name: Core operations and strict publication readiness
+        run: node --test scripts/tests/instruments-core.test.mjs scripts/tests/instruments-readiness.test.mjs scripts/tests/showcase-directory.test.mjs
+      - name: Exercise public instruments against exact retained release
+        env:
+          INSTRUMENT_ORIGIN: https://nickgonzales76017.github.io/bonfyre/instruments/
+          INSTRUMENT_EVIDENCE: instrument-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/instruments-browser.mjs
+      - name: Three independent local pointer cases, all must pass
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          for n in 1 2 3; do WORKSPACE_EVIDENCE="pointer-local-$n" node scripts/tests/workspace-docking-browser.mjs; done
+      - name: Actual public pointer interaction
+        env:
+          WORKSPACE_ORIGIN: https://nickgonzales76017.github.io
+          WORKSPACE_EVIDENCE: pointer-public
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/workspace-docking-browser.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: final-instrument-check
+          retention-days: 14
+          path: |
+            instrument-live-evidence
+            pointer-local-*
+            pointer-public
