@@ -28,7 +28,7 @@ jobs:
           node-version: '22'
       - name: Check application directory and retained release
         run: |
-          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs
+          node --test scripts/tests/showcase-directory.test.mjs scripts/tests/retain-tested-pages.test.mjs scripts/tests/component-contracts.test.mjs scripts/tests/workspace-composition.test.mjs scripts/tests/instruments-core.test.mjs
           test -f site/spaces/RELEASE.tsv
       - name: Detect retained helper dependencies
         id: helpers
@@ -74,8 +74,16 @@ jobs:
           node --check scripts/upgrade-spaces.mjs
           node scripts/upgrade-spaces.mjs site/spaces studio-inputs
           node scripts/component-release.mjs site/spaces
-      - name: Install browser driver
-        run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Install pinned browser driver and SQLite without lifecycle scripts
+        run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1 sql.js@1.13.0
+      - name: Build and verify the four working instruments
+        env:
+          INSTRUMENT_REQUIRE_SQLITE: '1'
+        run: |
+          node scripts/build-instruments.mjs
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/instruments-browser.mjs
       - name: Verify rendered product and room interactions before publication
         env:
           SPACES_STUDIO_REQUIRED: '1'
@@ -83,9 +91,10 @@ jobs:
           export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/spaces-live-browser.mjs
-      - name: Connect the existing showcase entries to the tested release
+      - name: Connect showcase entries to the tested releases
         run: |
           node scripts/prepare-spaces-discovery.mjs
+          node scripts/prepare-instruments-discovery.mjs
           node --test scripts/tests/showcase-directory.test.mjs
       - name: Retain tested release and helper licences
         shell: bash
@@ -133,6 +142,14 @@ jobs:
           export CHROME_PATH="$(command -v google-chrome)"
           node scripts/tests/workspace-composition-browser.mjs
           node scripts/tests/workspace-docking-browser.mjs
+      - name: Verify actual public instruments and downloaded results
+        env:
+          INSTRUMENT_ORIGIN: https://nickgonzales76017.github.io/bonfyre/instruments/
+          INSTRUMENT_EVIDENCE: instrument-live-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/instruments-browser.mjs
       - name: Keep local and live browser results
         if: always()
         uses: actions/upload-artifact@v4
@@ -144,3 +161,6 @@ jobs:
             spaces-live-evidence
             workspace-evidence
             workspace-live-evidence
+            instrument-evidence
+            instrument-live-evidence
+            site/instruments/SOURCE.tsv

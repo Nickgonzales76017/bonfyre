@@ -26,7 +26,7 @@ export function retainRelease({cwd, paths, verify, attempts = 3, beforePush = ()
     if (present.length) git(['add', '--', ...present]);
     guardIndex();
     const changed = git(['diff', '--cached', '--quiet'], true);
-    if (changed.status === 1) git(['commit', '-m', 'release(spaces): retain verified studio projection and discovery links']);
+    if (changed.status === 1) git(['commit', '-m', 'release(spaces): retain verified studio and instrument projections']);
     else if (changed.status !== 0) throw Error('Could not inspect the staged release.');
     if (git(['diff', '--name-only', '-z']).stdout) throw Error('Tracked changes remain outside the retained release.');
   };
@@ -65,13 +65,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1]
   const verify = () => {
     run(['--check', 'components/BonfyreServiceSite/product-scene-tools.mjs']);
     run(['--check', 'scripts/upgrade-spaces.mjs']);
-    run(['--test', 'scripts/tests/component-contracts.test.mjs']);
+    run(['--test', 'scripts/tests/component-contracts.test.mjs', 'scripts/tests/instruments-core.test.mjs']);
     run(['scripts/upgrade-spaces.mjs', 'site/spaces', 'studio-inputs']);
     run(['scripts/component-release.mjs', 'site/spaces']);
     run(['scripts/tests/spaces-live-browser.mjs']);
     run(['scripts/prepare-spaces-discovery.mjs']);
+    run(['scripts/build-instruments.mjs']);
+    run(['scripts/tests/instruments-browser.mjs']);
+    run(['scripts/prepare-instruments-discovery.mjs']);
     run(['--test', 'scripts/tests/showcase-directory.test.mjs']);
   };
-  const result = retainRelease({cwd, paths: ['site/spaces', 'site/index.html', 'vendor/spaces-helpers-20261015'], verify});
+  const result = retainRelease({cwd, paths: ['site/spaces', 'site/instruments', 'site/index.html', 'vendor/spaces-helpers-20261015'], verify});
   console.log('PAGES_RETENTION_PASS\t' + result.head + '\tattempts\t' + result.attempts + '\trecovered\t' + result.recovered);
 }
