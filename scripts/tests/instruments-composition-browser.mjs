@@ -36,6 +36,7 @@ try{
  const handoffRows=await records(),incoming=handoffRows.find(r=>r.key.startsWith('draft:instruments:incoming:'));
  check('the prepared candidate comes from the actual saved source revision',incoming?.value.sourceRevision===1&&handoffRows.some(r=>r.key===incoming.value.sourceRecord&&r.revision===1));
  await button(second,'Add prepared opportunity').click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-working-pane="companion"] .story-card').length===7||document.querySelector('.linked-status')?.classList.contains('error'));
  check('adoption adds one real story without replacing existing work',await second.locator('.story-card').count()===7);
  check('adopted story retains the source passage',(await second.locator('#companion-inspector blockquote').innerText()).startsWith(quote));
  check('reach and confidence are not fabricated',await second.getByLabel('Estimated reach').inputValue()==='0'&&await second.getByLabel('Confidence %').inputValue()==='0');
@@ -70,15 +71,16 @@ try{
  check('same host mounts real SQLite beside retained research',await second.locator('.schema-table').count()===3&&await primary.getByLabel('Finding text').inputValue()==='Uncommitted independent source edit.');
  await second.getByLabel('Operation',{exact:true}).selectOption('rename-column');await second.getByLabel('Source column',{exact:true}).selectOption('title');await second.getByLabel('New column, table or index name',{exact:true}).fill('linked_description');await button(second,'Run on isolated working copy').click();await button(second,'Use this tested database').waitFor();await button(second,'Use this tested database').click();check('companion SQLite performs a real reviewed migration',await second.locator('[data-table="tasks"]').getByRole('button',{name:'linked_description',exact:true}).count()===1);
  await button(second,'Save').click();await page.waitForFunction(()=>document.querySelector('.linked-status').textContent.startsWith('Saved in this browser'));
- check('binary database saves through the same record coordinator',(await records()).find(r=>r.value?.kind==='schema').value.bytes instanceof Uint8Array);
+ check('binary database saves through the same record coordinator',await page.evaluate(async()=>{const store=await import('./runtime/store.mjs'),row=(await store.readLocal('draft:instruments:schema:'))[0];return row?.value.bytes instanceof Uint8Array&&row.value.bytes.byteLength>0;}));
  await button(second,'Close connected editor').click();await page.getByLabel('Instrument to open alongside').selectOption('traces');await page.getByRole('button',{name:'Open alongside',exact:true}).click();await second.getByRole('heading',{name:'Process trace explorer',exact:true}).waitFor();
  check('trace worker mounts independently with its actual retained events',await second.locator('.trace-bar').count()===20);await button(second,'Replay timestamps').click();await button(second,'Close connected editor').click();
  check('closed worker and playback do not remove the first editor',await second.count()===0&&await primary.locator('#original-source').count()===1);
  await page.goto(origin+'?tool=research&record=draft:instruments:research:missing&revision=1',{waitUntil:'domcontentloaded'});await primary.locator('[data-open-failure]').waitFor();
  check('missing exact continuation does not show a substituted working example',await primary.locator('.workspace').isHidden()&&(await primary.locator('[data-open-failure]').innerText()).includes('No substitute'));
  await page.locator('#open').click();await page.getByRole('button',{name:'Review the upstream tool assumptions · revision 2',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent==='Opened exact saved revision 2.');
  check('missing continuation recovers only through explicit saved-record selection',await primary.locator('.workspace').isVisible()&&(await primary.getByLabel('Finding text').inputValue()).includes('do not infer availability'));
  check('no uncaught browser exceptions',errors.length===0);
  await writeFile(path.join(out,'composition-results.json'),JSON.stringify({origin,passed:checks.length,checks,errors,inputs:'isolated unfamiliar user text and existing observed examples',storage:'existing IndexedDB; no native-account claim'},null,2));
-}catch(error){await screen('composition-failure').catch(()=>{});await writeFile(path.join(out,'composition-failure.json'),JSON.stringify({error:error.stack,checks,errors},null,2));throw error;}
+}catch(error){const visible=await page?.locator('#status,.linked-status,[data-open-failure]').allTextContents().catch(()=>[])??[];await screen('composition-failure').catch(()=>{});await writeFile(path.join(out,'composition-failure.json'),JSON.stringify({error:error.stack,checks,errors,visible},null,2));throw error;}
 finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
