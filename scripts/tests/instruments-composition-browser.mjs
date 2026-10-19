@@ -1,0 +1,86 @@
+// Real browser journeys over the existing editors and IndexedDB transaction.
+// Synthetic user inputs are labeled; no account, provider or external effect runs.
+import {createServer} from 'node:http';
+import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+const root=process.cwd(),out=path.resolve(process.env.INSTRUMENT_EVIDENCE??'instrument-evidence');await mkdir(out,{recursive:true});
+const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_MODULE??path.join(root,'.spaces-tools/node_modules/playwright/index.mjs')).href);
+const mime={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.css':'text/css','.wasm':'application/wasm'};
+const server=createServer(async(req,res)=>{try{const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);let file=path.resolve(root,'site','.'+pathname);if(!file.startsWith(path.join(root,'site')+path.sep)){res.writeHead(403).end();return;}if(pathname.endsWith('/'))file=path.join(file,'index.html');const bytes=await readFile(file);res.writeHead(200,{'Content-Type':mime[path.extname(file)]??'application/octet-stream','Cache-Control':'no-store'}).end(bytes);}catch{res.writeHead(404).end('Not found');}});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const origin=process.env.INSTRUMENT_ORIGIN??`http://127.0.0.1:${server.address().port}/instruments/`;
+const checks=[],errors=[];let browser,page;
+const check=(label,ok)=>{assert(ok,label);checks.push(label);console.log('PASS composition: '+label);};
+const screen=name=>page.screenshot({path:path.join(out,name+'.png'),fullPage:true});
+const button=(scope,name)=>scope.getByRole('button',{name,exact:true});
+async function records(){return page.evaluate(async()=>{const s=await import('./runtime/store.mjs');return s.readLocal('draft:instruments:');});}
+try{
+ browser=await chromium.launch({headless:true,executablePath:process.env.CHROME_PATH||undefined,args:['--no-sandbox']});
+ const context=await browser.newContext({viewport:{width:1440,height:1000},acceptDownloads:true});page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+ await page.goto(origin+'?tool=research',{waitUntil:'domcontentloaded'});
+ const primary=page.locator('[data-working-pane="primary"]'),second=page.locator('[data-working-pane="companion"]');
+ await page.waitForFunction(()=>document.querySelector('#title')?.textContent==='Research synthesis editor');
+ check('companion editor is not eagerly mounted',await second.count()===0);
+ await button(primary,'Add source').click();await page.getByLabel('Title',{exact:true}).fill('Unfamiliar field report — composition test');
+ const body='The first batch contained twelve reusable units. A later inspection changed the second batch only.';
+ await page.getByLabel('Original text',{exact:true}).fill(body);await page.getByRole('button',{name:'Retain source',exact:true}).click();
+ const quote=await page.evaluate(()=>{const n=document.querySelector('#original-source').firstChild,r=document.createRange();r.setStart(n,0);r.setEnd(n,47);getSelection().removeAllRanges();getSelection().addRange(r);return r.toString();});
+ await button(primary,'Capture selection').click();await primary.locator('#finding-statement').fill('Compare the reusable equipment against the initial plan.');await primary.locator('#finding-theme').fill('Equipment reuse');await button(primary,'Create finding').click();
+ await button(primary,'Offer as product opportunity').click();
+ await second.getByRole('heading',{name:'Product story map',exact:true}).waitFor();
+ await button(second,'Add prepared opportunity').waitFor();
+ check('actual product editor opens beside the original research',await second.locator('.story-card').count()===6&&await primary.locator('#original-source').count()===1);
+ check('receiving preparation contains the exact selected source passage',(await second.locator('[data-incoming] blockquote').innerText())===quote);
+ const handoffRows=await records(),incoming=handoffRows.find(r=>r.key.startsWith('draft:instruments:incoming:'));
+ check('the prepared candidate comes from the actual saved source revision',incoming?.value.sourceRevision===1&&handoffRows.some(r=>r.key===incoming.value.sourceRecord&&r.revision===1));
+ await button(second,'Add prepared opportunity').click();
+ await page.waitForFunction(()=>document.querySelectorAll('[data-working-pane="companion"] .story-card').length===7||document.querySelector('.linked-status')?.classList.contains('error'));
+ check('adoption adds one real story without replacing existing work',await second.locator('.story-card').count()===7);
+ check('adopted story retains the source passage',(await second.locator('#companion-inspector blockquote').innerText()).startsWith(quote));
+ check('reach and confidence are not fabricated',await second.getByLabel('Estimated reach').inputValue()==='0'&&await second.getByLabel('Confidence %').inputValue()==='0');
+ await second.getByLabel('Estimated reach').fill('120');await second.getByLabel('Estimated reach').blur();
+ await primary.getByLabel('Finding text').fill('Compare twelve reusable units; do not infer availability from the report.');await primary.getByLabel('Finding text').blur();
+ await button(second,'Undo').click();
+ check('companion undo preserves independent research edits',await second.getByLabel('Estimated reach').inputValue()==='0'&&(await primary.getByLabel('Finding text').inputValue()).includes('do not infer availability'));
+ await button(second,'Redo').click();
+ check('companion redo restores only its own estimate',await second.getByLabel('Estimated reach').inputValue()==='120');
+ await page.getByRole('button',{name:'Save connected work',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#status').textContent.startsWith('Saved in this browser')&&document.querySelector('.linked-status').textContent.startsWith('Saved in this browser'));
+ const saved=await records(),source=saved.find(r=>r.key===incoming.value.sourceRecord),plan=saved.find(r=>r.value?.kind==='product');
+ check('joint save retains two independently revisioned records',source.revision===2&&plan.revision===1);
+ check('prepared adoption stores exact source and incoming identities',plan.value.stories.find(s=>s.id===incoming.value.candidate.id).origin.record===source.key&&plan.value.stories.find(s=>s.id===incoming.value.candidate.id).origin.incoming===incoming.key);
+ const continued=page.url();check('continuation URL identifies both exact saved records',new URL(continued).searchParams.get('record')===source.key&&new URL(continued).searchParams.get('withRecord')===plan.key);
+ await screen('connected-research-product-desktop');
+ await page.reload();await second.getByRole('heading',{name:'Product story map',exact:true}).waitFor();
+ await page.waitForFunction(()=>document.querySelector('.linked-status')?.textContent==='Opened exact saved revision 1.');
+ check('reload reopens the edited research, not the default sample',(await primary.getByLabel('Finding text').inputValue()).includes('do not infer availability'));
+ check('reload reopens the adopted product and its estimate',await second.locator('.story-card').count()===7&&await second.getByLabel('Estimated reach').inputValue()==='120');
+ await page.setViewportSize({width:390,height:844});await page.waitForTimeout(100);check('paired editors fit a phone without whole-page overflow',await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await screen('connected-research-product-mobile');await page.setViewportSize({width:1440,height:1000});
+ // Another real browser tab advances one record between local editing and joint save.
+ await primary.getByLabel('Finding text').fill('Uncommitted independent source edit.');await primary.getByLabel('Finding text').blur();await second.getByLabel('Estimated reach').fill('140');await second.getByLabel('Estimated reach').blur();
+ const other=await context.newPage();await other.goto(origin+'?tool=product',{waitUntil:'domcontentloaded'});
+ await other.evaluate(async key=>{const s=await import('./runtime/store.mjs');const row=(await s.readLocal(key)).find(r=>r.key===key);row.value.title='Concurrent saved map';await s.saveLocalBatch([{key:row.key,value:row.value,expectedRevision:row.revision}]);},plan.key);
+ await page.getByRole('button',{name:'Save connected work',exact:true}).click();await page.waitForFunction(()=>document.querySelector('#status').classList.contains('error'));
+ const conflicted=await records();check('stale companion aborts the entire real IndexedDB save',conflicted.find(r=>r.key===source.key).revision===2&&conflicted.find(r=>r.key===plan.key).revision===2);
+ check('failed joint save leaves both working edits available',await primary.getByLabel('Finding text').inputValue()==='Uncommitted independent source edit.'&&await second.getByLabel('Estimated reach').inputValue()==='140');
+ await other.close();
+ await button(second,'Close connected editor').click();check('closing companion leaves original research and its edits intact',await second.count()===0&&await primary.getByLabel('Finding text').inputValue()==='Uncommitted independent source edit.');
+ await page.getByLabel('Instrument to open alongside').selectOption('schema');await page.getByRole('button',{name:'Open alongside',exact:true}).click();await second.getByRole('heading',{name:'Schema migration studio',exact:true}).waitFor();
+ check('same host mounts real SQLite beside retained research',await second.locator('.schema-table').count()===3&&await primary.getByLabel('Finding text').inputValue()==='Uncommitted independent source edit.');
+ await second.getByLabel('Operation',{exact:true}).selectOption('rename-column');await second.getByLabel('Source column',{exact:true}).selectOption('title');await second.getByLabel('New column, table or index name',{exact:true}).fill('linked_description');await button(second,'Run on isolated working copy').click();await button(second,'Use this tested database').waitFor();await button(second,'Use this tested database').click();check('companion SQLite performs a real reviewed migration',await second.locator('[data-table="tasks"]').getByRole('button',{name:'linked_description',exact:true}).count()===1);
+ await button(second,'Save').click();await page.waitForFunction(()=>document.querySelector('.linked-status').textContent.startsWith('Saved in this browser'));
+ check('binary database saves through the same record coordinator',await page.evaluate(async()=>{const store=await import('./runtime/store.mjs'),row=(await store.readLocal('draft:instruments:schema:'))[0];return row?.value.bytes instanceof Uint8Array&&row.value.bytes.byteLength>0;}));
+ await button(second,'Close connected editor').click();await page.getByLabel('Instrument to open alongside').selectOption('traces');await page.getByRole('button',{name:'Open alongside',exact:true}).click();await second.getByRole('heading',{name:'Process trace explorer',exact:true}).waitFor();
+ check('trace worker mounts independently with its actual retained events',await second.locator('.trace-bar').count()===20);await button(second,'Replay timestamps').click();await button(second,'Close connected editor').click();
+ check('closed worker and playback do not remove the first editor',await second.count()===0&&await primary.locator('#original-source').count()===1);
+ await page.goto(origin+'?tool=research&record=draft:instruments:research:missing&revision=1',{waitUntil:'domcontentloaded'});await primary.locator('[data-open-failure]').waitFor();
+ check('missing exact continuation does not show a substituted working example',await primary.locator('.workspace').isHidden()&&(await primary.locator('[data-open-failure]').innerText()).includes('No substitute'));
+ await page.locator('#open').click();await page.getByRole('button',{name:'Review the upstream tool assumptions · revision 2',exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('#status')?.textContent==='Opened exact saved revision 2.');
+ check('missing continuation recovers only through explicit saved-record selection',await primary.locator('.workspace').isVisible()&&(await primary.getByLabel('Finding text').inputValue()).includes('do not infer availability'));
+ check('no uncaught browser exceptions',errors.length===0);
+ await writeFile(path.join(out,'composition-results.json'),JSON.stringify({origin,passed:checks.length,checks,errors,inputs:'isolated unfamiliar user text and existing observed examples',storage:'existing IndexedDB; no native-account claim'},null,2));
+}catch(error){const visible=await page?.locator('#status,.linked-status,[data-open-failure]').allTextContents().catch(()=>[])??[];await screen('composition-failure').catch(()=>{});await writeFile(path.join(out,'composition-failure.json'),JSON.stringify({error:error.stack,checks,errors,visible},null,2));throw error;}
+finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}
