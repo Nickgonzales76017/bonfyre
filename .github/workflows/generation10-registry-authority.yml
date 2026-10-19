@@ -1,0 +1,172 @@
+name: Generation-10 Registry Authority Lab
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/generation10-registry-authority.yml"
+      - "tools/actions/generation10_registry_authority.py"
+      - "tools/actions/generation10_contract.json"
+      - "estate/**"
+      - "schemas/**"
+      - "output/**"
+      - "integrations/**"
+      - "14_AUREKAI/**"
+      - "15_OPEN_WORLD/**"
+  push:
+    branches:
+      - "actions/generation10-system-lab-*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: generation10-registry-authority-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  BONFYRE_CI: "1"
+  BONFYRE_CI_NO_EXTERNAL_EFFECTS: "1"
+  BONFYRE_AUTHORITY: "observe"
+  BONFYRE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  resolve:
+    name: Authority / ${{ matrix.domain }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        domain:
+          - format_profiles
+          - partner_commons_profiles
+          - deep_promoted_specialties
+          - active_closure_projections
+    steps:
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Resolve exact machine registry authority
+        run: |
+          python3 tools/actions/generation10_registry_authority.py \
+            --domain "${{ matrix.domain }}" \
+            --output-dir .generation10/receipts/registry-authority
+
+      - name: Persist authority ReceiptEnvelope
+        uses: actions/upload-artifact@v7
+        with:
+          name: g10-registry-${{ matrix.domain }}-${{ github.run_attempt }}
+          path: .generation10/receipts/registry-authority/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  authority-proof:
+    name: Fold Commons registry authority proof
+    needs: resolve
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download authority receipts
+        uses: actions/download-artifact@v7
+        with:
+          pattern: g10-registry-*
+          path: .generation10/registries
+          merge-multiple: false
+
+      - name: Prove whether profile fan-out is authorized
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          expected = {
+              'format_profiles': 83,
+              'partner_commons_profiles': 112,
+              'deep_promoted_specialties': 82,
+              'active_closure_projections': 410,
+          }
+          receipts = []
+          for path in sorted(Path('.generation10/registries').rglob('*.json')):
+              payload = json.loads(path.read_text())
+              if payload.get('schema') != 'bonfyre.generation10.action-receipt.v1':
+                  raise SystemExit(f'wrong schema: {path}')
+              if payload.get('git_sha') != os.environ['SOURCE_SHA']:
+                  raise SystemExit(f'stale factor: {path}')
+              receipts.append({
+                  'domain': payload['subject'],
+                  'canonical_count': payload['canonical_count'],
+                  'matrix_authorized': payload['matrix_authorized'],
+                  'authorized_identity_count': payload['authorized_identity_count'],
+                  'outcome': payload['outcome'],
+                  'content_sha256': payload['content_sha256'],
+                  'receipt_file_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+              })
+
+          observed = {item['domain'] for item in receipts}
+          missing = sorted(set(expected) - observed)
+          wrong_counts = sorted(
+              item['domain'] for item in receipts
+              if expected.get(item['domain']) != item['canonical_count']
+          )
+          authorized = sorted(item['domain'] for item in receipts if item['matrix_authorized'])
+          debt = sorted(item['domain'] for item in receipts if not item['matrix_authorized'])
+          bundle = {
+              'schema': 'bonfyre.generation10.registry-authority-proof.v1',
+              'git_sha': os.environ['SOURCE_SHA'],
+              'expected_counts': expected,
+              'missing_domains': missing,
+              'wrong_canonical_counts': wrong_counts,
+              'authorized_domains': authorized,
+              'coverage_debt_domains': debt,
+              'fanout_law': 'no profile/projection identity may be synthesized from a canonical count alone',
+              'receipts': receipts,
+          }
+          canonical = lambda value: (json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False) + '\n').encode()
+          bundle['proof_sha256'] = hashlib.sha256(canonical(bundle)).hexdigest()
+          out = Path('.generation10/registry-authority-proof.json')
+          out.write_bytes(canonical(bundle))
+          summary = Path('.generation10/registry-authority-summary.md')
+          summary.write_text(
+              '# Generation-10 Registry Authority Proof\n\n'
+              f"- source: `{bundle['git_sha']}`\n"
+              f"- domains observed: **{len(receipts)}/4**\n"
+              f"- fan-out authorized: **{len(authorized)}/4**\n"
+              f"- coverage debt: **{len(debt)}/4**\n"
+              f"- proof: `{bundle['proof_sha256']}`\n\n"
+              'Dynamic profile matrices remain disabled wherever no exact unique machine registry exists.\n'
+          )
+          print(summary.read_text())
+          if missing or wrong_counts:
+              raise SystemExit(1)
+          PY
+
+      - name: Publish registry authority ProofBundle
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generation10-registry-authority-proof-${{ env.BONFYRE_SOURCE_SHA }}-${{ github.run_attempt }}
+          path: |
+            .generation10/registry-authority-proof.json
+            .generation10/registry-authority-summary.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render authority proof
+        if: always()
+        run: cat .generation10/registry-authority-summary.md >> "$GITHUB_STEP_SUMMARY"

@@ -1,0 +1,177 @@
+name: Generation-10 Frappe Lineage Lab
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/generation10-frappe-lineages.yml"
+      - "tools/actions/generation10_frappe_lineage.py"
+      - "tools/actions/generation10_contract.json"
+      - "cmd/BonfyreFrappeCompiler/**"
+      - "integrations/**"
+      - ".gitmodules"
+  push:
+    branches:
+      - "actions/generation10-system-lab-*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: generation10-frappe-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHONUNBUFFERED: "1"
+  BONFYRE_CI: "1"
+  BONFYRE_CI_NO_EXTERNAL_EFFECTS: "1"
+  BONFYRE_AUTHORITY: "observe"
+  BONFYRE_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+  CC: "cc -include stdint.h"
+
+jobs:
+  lineage:
+    name: Lineage / ${{ matrix.lineage }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        lineage: [Frappe, ERPNext, LMS, HRMS, CRM, Helpdesk, Insights, Wiki, Drive]
+    steps:
+      - name: Checkout exact source occurrence without Gitlink traversal
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch --no-tags --prune origin \
+            '+refs/heads/*:refs/remotes/origin/*'
+          git checkout --detach "$SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$SOURCE_SHA"
+
+      - name: Install lineage compiler substrate
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential pkg-config libssl-dev zlib1g-dev libsqlite3-dev jq
+
+      - name: Compile lineage into AppPack when materialized
+        id: probe
+        continue-on-error: true
+        run: |
+          python3 tools/actions/generation10_frappe_lineage.py \
+            --lineage "${{ matrix.lineage }}" \
+            --output-dir .generation10/receipts/frappe-lineage
+
+      - name: Persist lineage ReceiptEnvelope before verdict
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: g10-frappe-${{ matrix.lineage }}-${{ github.run_attempt }}
+          path: .generation10/receipts/frappe-lineage/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce only materialized-lineage failures
+        if: steps.probe.outcome == 'failure'
+        run: exit 1
+
+  lineage-proof:
+    name: Fold nine lineages into Projection ProofBundle
+    needs: lineage
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download all lineage ReceiptEnvelopes
+        uses: actions/download-artifact@v7
+        with:
+          pattern: g10-frappe-*
+          path: .generation10/lineages
+          merge-multiple: false
+
+      - name: Address lineage projection proof
+        env:
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          root = Path('.generation10/lineages')
+          receipts = []
+          for path in sorted(root.rglob('*.json')):
+              payload = json.loads(path.read_text())
+              if payload.get('schema') != 'bonfyre.generation10.action-receipt.v1':
+                  raise SystemExit(f'wrong receipt schema: {path}')
+              if payload.get('git_sha') != os.environ['SOURCE_SHA']:
+                  raise SystemExit(f'stale lineage factor: {path}')
+              receipts.append({
+                  'lineage': payload.get('lineage'),
+                  'subject': payload.get('subject'),
+                  'outcome': payload.get('outcome'),
+                  'materialized': payload.get('materialized'),
+                  'content_sha256': payload.get('content_sha256'),
+                  'receipt_file_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+              })
+
+          expected = ['Frappe','ERPNext','LMS','HRMS','CRM','Helpdesk','Insights','Wiki','Drive']
+          observed = [item['lineage'] for item in receipts]
+          missing = sorted(set(expected) - set(observed))
+          duplicate = sorted({name for name in observed if observed.count(name) > 1})
+          materialized = sorted(item['lineage'] for item in receipts if item['materialized'])
+          passed = sorted(item['lineage'] for item in receipts if item['outcome'] == 'passed')
+          debt = sorted(item['lineage'] for item in receipts if item['outcome'] == 'coverage_debt')
+          failed = sorted(item['lineage'] for item in receipts if item['outcome'] == 'failed')
+
+          bundle = {
+              'schema': 'bonfyre.generation10.frappe-projection-proof.v1',
+              'git_sha': os.environ['SOURCE_SHA'],
+              'expected_lineages': expected,
+              'observed_lineages': observed,
+              'missing_lineages': missing,
+              'duplicate_lineages': duplicate,
+              'materialized_lineages': materialized,
+              'passed_lineages': passed,
+              'coverage_debt_lineages': debt,
+              'failed_lineages': failed,
+              'receipts': receipts,
+          }
+          canonical = lambda value: (json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False) + '\n').encode()
+          bundle['proof_sha256'] = hashlib.sha256(canonical(bundle)).hexdigest()
+          out = Path('.generation10/frappe-projection-proof.json')
+          out.write_bytes(canonical(bundle))
+          summary = Path('.generation10/frappe-projection-summary.md')
+          summary.write_text(
+              '# Generation-10 Frappe Projection Proof\n\n'
+              f"- source: `{bundle['git_sha']}`\n"
+              f"- observed: **{len(observed)}/9**\n"
+              f"- materialized: **{len(materialized)}/9**\n"
+              f"- passed: **{len(passed)}/9**\n"
+              f"- coverage debt: **{len(debt)}/9**\n"
+              f"- failed: **{len(failed)}/9**\n"
+              f"- proof: `{bundle['proof_sha256']}`\n"
+          )
+          print(summary.read_text())
+          if missing or duplicate or failed:
+              raise SystemExit(1)
+          PY
+
+      - name: Publish Frappe Projection ProofBundle
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: generation10-frappe-proof-${{ env.BONFYRE_SOURCE_SHA }}-${{ github.run_attempt }}
+          path: |
+            .generation10/frappe-projection-proof.json
+            .generation10/frappe-projection-summary.md
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Render projection proof
+        if: always()
+        run: cat .generation10/frappe-projection-summary.md >> "$GITHUB_STEP_SUMMARY"
