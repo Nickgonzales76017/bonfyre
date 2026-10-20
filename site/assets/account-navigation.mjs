@@ -33,7 +33,15 @@ export function mountAccountNavigation({root,session,origin=root?.ownerDocument.
       if(routes.destinations){const p=sameOriginPath(routes.destinations,origin);if(p)panel.append(anchor('Switch workspace',p));}
       const logout=node('button','Sign out');logout.type='button';logout.className='ak-account-signout';
       const status=node('p',null,'ak-account-status');status.setAttribute('role','status');
-      logout.onclick=async()=>{logout.disabled=true;try{const result=await session.logout();if(!result.confirmed){const target=root.querySelector('.ak-account-status')||root.appendChild(node('p',null,'ak-account-status'));target.setAttribute('role','alert');target.textContent='Sign-out was not confirmed. Check your account before trying again.';}}catch{status.textContent='Sign-out could not be confirmed.';}finally{if(logout.isConnected)logout.disabled=false;}};
+      const reportLogout = text => {
+        if (stopped || !root.isConnected || (session.state.user && session.state.user.id !== state.user.id)) return;
+        const target = root.querySelector('.ak-account-status') || root.appendChild(node('p',null,'ak-account-status'));
+        target.setAttribute('role','alert'); target.textContent = text;
+        // Revalidation replaced the previous panel. Keep its actual refusal visible.
+        const currentMenu = root.querySelector('details');
+        if (currentMenu) {currentMenu.open = true; currentMenu.querySelector('summary').focus();}
+      };
+      logout.onclick=async()=>{logout.disabled=true;try{const result=await session.logout();if(!result.confirmed)reportLogout('Sign-out was not confirmed. Check your account before trying again.');}catch{reportLogout('Sign-out could not be confirmed.');}finally{if(logout.isConnected)logout.disabled=false;}};
       panel.append(logout,status);menu.append(summary,panel);root.append(menu);
       if(focused)summary.focus();
     }else if(state.kind==='anonymous'){
