@@ -1,0 +1,23 @@
+/* Local presentation only. These selectors do not dress other subjects or editors. */
+.shell .source-row{display:flex;align-items:stretch;border-bottom:1px solid var(--line);min-width:0}
+.shell .source-row>input{margin:0 0 0 12px;flex:none;align-self:center;accent-color:var(--green);width:18px;height:18px}
+.shell .source-row>.row{min-width:0;border-bottom:0}
+.shell .source-navigation{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px;padding:12px 0;border-block:1px solid var(--line)}
+.shell .source-navigation a{color:var(--text);padding:9px 12px;border-radius:9px;border:1px solid var(--line);text-decoration:none;background:var(--card);transition:transform .16s ease,background .16s ease}
+.shell .source-navigation a:hover,.shell .source-navigation a:focus-visible{background:var(--up);transform:translateY(-2px)}
+.shell .work{grid-template-columns:minmax(250px,.82fr) minmax(0,1.25fr) minmax(290px,1fr);align-items:start;overflow:visible}
+.shell .plan{display:block;position:sticky;top:18px;max-height:calc(100vh - 36px);scrollbar-gutter:stable;scroll-margin-top:20px}
+.shell .detail{scroll-margin-top:20px}
+.shell .source-comparison{margin:18px 0;border:1px solid var(--line);border-radius:13px;padding:18px;background:linear-gradient(145deg,var(--card),var(--bg));overflow:hidden}
+.shell .source-comparison h2{font-size:20px;margin:0 0 8px}
+.shell .source-comparison-scroll{overflow:auto;max-height:380px;scrollbar-gutter:stable}
+.shell .source-compare-table{border-collapse:collapse;width:100%;font-size:12px;min-width:620px}
+.shell .source-compare-table th{text-align:left;color:var(--muted);font:11px var(--mono);position:sticky;top:0;background:var(--card)}
+.shell .source-compare-table td,.shell .source-compare-table th{padding:12px;border-bottom:1px solid var(--line);overflow-wrap:anywhere;vertical-align:top;max-width:240px}
+.shell #source-selection-note{min-height:1.6em;color:var(--muted)}
+.shell button:focus-visible,.shell a:focus-visible,.shell input:focus-visible,.shell textarea:focus-visible,.shell select:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.shell .source-row:focus-within{background:var(--up)}
+.shell [hidden]{display:none!important}
+@media(max-width:1200px){.shell .work{grid-template-columns:minmax(240px,.8fr) minmax(0,1.2fr)}.shell .plan{display:block;grid-column:1/-1;position:static;max-height:none;border-top:1px solid var(--line)}.shell .plan .formation-draft{max-width:800px}}
+@media(max-width:700px){.shell .work{display:block}.shell .plan{display:block;padding:18px;max-height:none}.shell .list{max-height:310px}.shell .hero{grid-template-columns:minmax(0,1fr)}.shell .find input{min-width:0}.shell .source h2{overflow-wrap:anywhere}.shell .facts{grid-template-columns:repeat(3,minmax(0,1fr))}.shell .fact b{font-size:15px}.shell .source-navigation a{flex:1;min-width:135px}.shell .source-comparison{padding:14px}.shell .source-comparison-scroll{max-height:290px}}
+@media(prefers-reduced-motion:reduce){.shell .source-navigation a{transition:none;transform:none}}
