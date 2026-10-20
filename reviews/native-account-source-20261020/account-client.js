@@ -12,13 +12,16 @@
   const row = (label, value) => `<div><span class="label">${esc(label)}</span><strong>${esc(value ?? '—')}</strong></div>`;
   let epoch = 0, checkEpoch = 0, linksEpoch = 0, user = null, checking = null, posting = false, suspended = false, lastCheck = 0, checkTimer = 0;
   const reads = new Set(), profileRequests = new Map();
+  let heldDraft = null;
   function notice(root, message, failed = false) {
     let node = root.querySelector('[data-account-notice]');
     if (!node) { node = document.createElement('p'); node.dataset.accountNotice = ''; node.className = 'note'; root.append(node); }
     node.setAttribute('role', failed ? 'alert' : 'status'); node.textContent = message;
   }
   function cancelReads() { for (const controller of reads) controller.abort(); reads.clear(); }
-  function clearPrivate() {
+  function clearPrivate(forgetDraft = false) {
+    if (forgetDraft) heldDraft = null;
+    else if (user) heldDraft = {userId:user.id,fields:[...new FormData(connect)].filter(([name,value]) => ['provider','remote_account','profile_url','display_name'].includes(name) && typeof value === 'string' && value.length <= 4096)};
     epoch++; cancelReads(); linksEpoch++; user = null; signed.hidden = true;
     identity.replaceChildren(); connections.replaceChildren(); for (const root of privateRoots) root.replaceChildren();
     for (const [xhr, request] of profileRequests) if (request.method === 'get') xhr.abort(); profileRequests.clear();
@@ -31,7 +34,7 @@
     out.innerHTML = '<strong>Your account could not be checked.</strong><p>No sign-out has been confirmed.</p><button type="button" data-account-retry>Check again</button>';
   }
   function anonymous(message = 'Sign in to open your account.') {
-    clearPrivate(); out.hidden = false; document.documentElement.dataset.accountState = 'anonymous';
+    clearPrivate(true); out.hidden = false; document.documentElement.dataset.accountState = 'anonymous';
     const next = encodeURIComponent(location.pathname + location.search + location.hash);
     out.innerHTML = `<strong>${esc(message)}</strong><p><a href="/session/continue?next=${next}">Sign in</a> or <a href="/signup?next=${next}">create an account</a>.</p>`;
   }
@@ -96,6 +99,10 @@
         const changed = user?.id !== session.user.id;
         if (changed) clearPrivate();
         user = session.user;
+        if (changed && heldDraft) {
+          if (heldDraft.userId === user.id) for (const [name,value] of heldDraft.fields) { const input = connect.elements.namedItem(name); if (input instanceof HTMLInputElement) input.value = value; }
+          heldDraft = null;
+        }
         $('#welcome').textContent = `Welcome, ${user.name || 'friend'}.`;
         identity.innerHTML = row('Name', user.name) + row('Email', user.email) + row('Plan', user.tier) + row('Account', `#${user.id}`);
         document.documentElement.dataset.accountState = 'authenticated'; out.hidden = true; out.replaceChildren(); signed.hidden = false;
@@ -164,7 +171,7 @@
     text.textContent=detail.xhr?.status===403?'This account does not have access to these controls.':'This account section could not be loaded. Your verified account is still open.';
     const retry=document.createElement('button');retry.type='button';retry.textContent='Retry this section';retry.onclick=()=>{if(user&&!suspended)htmx.trigger(root,'account-ready');};root.append(text,retry);
   });
-  function suspend() { suspended = true; clearTimeout(checkTimer); checkEpoch++; checking = null; K.invalidateSession(); clearPrivate(); out.hidden = false; out.textContent = 'Checking your account…'; }
+  function suspend() { document.documentElement.dataset.accountState = 'checking'; suspended = true; clearTimeout(checkTimer); checkEpoch++; checking = null; K.invalidateSession(); clearPrivate(); out.hidden = false; out.textContent = 'Checking your account…'; }
   window.addEventListener('pagehide', suspend);
   window.addEventListener('pageshow', event => { suspended = false; if (event.persisted) void refresh(true); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) suspend(); else { suspended = false; void refresh(true); } });
