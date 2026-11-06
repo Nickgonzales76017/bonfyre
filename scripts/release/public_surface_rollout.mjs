@@ -186,7 +186,7 @@ async function stage(){
  const {configuration:candidate,runtimes}=configurePrograms(before,dir);candidate.ProgramArguments[0]=join(dir,'bin/bonfyre-web-address');
  {const w=candidate.ProgramArguments.indexOf('--workers'),want=Math.min(16,Math.max(+(process.env.BONFYRE_PUBLIC_WORKERS||6),w>=0?+candidate.ProgramArguments[w+1]||1:1));if(w>=0)candidate.ProgramArguments[w+1]=String(want);else candidate.ProgramArguments.push('--workers',String(want));}
  // Two workers queued every home behind crawler item pages; a cold release then failed its readback.
- candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--site-root')+1]=join(dir,'site');candidate.EnvironmentVariables.BONFYRE_WORKSPACE_CLIENT=join(dir,'browser');candidate.EnvironmentVariables.BONFYRE_BIN_DIR=join(dir,'bin');candidate.EnvironmentVariables.BONFYRE_PROCUREMENT_BINARY=join(dir,'bin/bonfyre-procurement');candidate.EnvironmentVariables.BONFYRE_CREDENTIALS_BINARY=join(dir,'bin/bonfyre-credentials');candidate.EnvironmentVariables.BONFYRE_PROVIDER_ESTATE_BINARY=join(dir,'bin/bonfyre-provider-estate');candidate.EnvironmentVariables.BONFYRE_DETAIL_DEPTH_DB??=join(process.env.HOME,'.bonfyre/estate-local/detail-depth.db');
+ candidate.ProgramArguments[candidate.ProgramArguments.indexOf('--site-root')+1]=join(dir,'site');candidate.EnvironmentVariables.BONFYRE_WORKSPACE_CLIENT=join(dir,'browser');candidate.EnvironmentVariables.BONFYRE_BIN_DIR=join(dir,'bin');candidate.EnvironmentVariables.BONFYRE_PROCUREMENT_BINARY=join(dir,'bin/bonfyre-procurement');candidate.EnvironmentVariables.BONFYRE_CREDENTIALS_BINARY=join(dir,'bin/bonfyre-credentials');candidate.EnvironmentVariables.BONFYRE_PROVIDER_ESTATE_BINARY=join(dir,'bin/bonfyre-provider-estate');candidate.EnvironmentVariables.BONFYRE_CMS_BINARY=join(dir,'native/cmd/BonfyreCMS/bonfyre-cms');// public CMS ships with the pages it serves; the database path stays pinnedcandidate.EnvironmentVariables.BONFYRE_DETAIL_DEPTH_DB??=join(process.env.HOME,'.bonfyre/estate-local/detail-depth.db');
  // plutil is the existing system format owner; the intermediate stays private.
  const temporary=join(dir,'.candidate');writeFileSync(temporary,JSON.stringify(candidate),{mode:0o600});run(['/usr/bin/plutil','-convert','xml1','-o',join(dir,'candidate-service.plist'),temporary]);rmSync(temporary);
  const material=[...filesUnder(join(dir,'site')).map(p=>'site/'+p),...filesUnder(join(dir,'browser')).map(p=>'browser/'+p),...filesUnder(join(dir,'native')).map(p=>'native/'+p),...filesUnder(join(dir,'runtime')).map(p=>'runtime/'+p),'bin/bonfyre-queue','bin/bonfyre-meter','bin/bonfyre-procurement','bin/bonfyre-web-address','bin/bonfyre-credentials','bin/bonfyre-provider-estate','candidate-service.plist','previous-service.plist'].map(path=>({path,sha256:hash(join(dir,path))})).concat(siteAlias);
@@ -238,6 +238,10 @@ export function acceptanceGroups(){
  for(const file of ['integrations/browser/tests/foreign-sign-in.test.mjs','integrations/browser/tests/foreign-sign-in.browser.test.mjs','integrations/browser/tests/foreign-sign-in-work.browser.test.mjs','integrations/browser/tests/connection-studio-signin.browser.test.mjs','integrations/browser/tests/aurekai-activity-interaction.browser.test.mjs','integrations/browser/tests/aurekai-activity.browser.test.mjs','integrations/browser/tests/provider-continuation.browser.test.mjs','integrations/browser/tests/enrollment-live.test.mjs'])groups.push([file]);
  return groups;
 }
+// Group receipts carry across candidates when the release content, the group's tests and their imports, and the BONFYRE_* environment are identical.
+const carryEnv=(env,dir)=>Object.fromEntries(Object.entries(env).filter(([k])=>k.startsWith('BONFYRE_')||k==='PATH').map(([k,v])=>[k,String(v).replaceAll(dir,'<release>')]));
+async function carryKeys(dir,stage,groups,env,runtimes){const content=digest(Buffer.from(JSON.stringify({inputs:stage.inputs,material:stage.material.filter(r=>!/candidate-service\.plist$/.test(r.path||'')),runtimes:stage.runtimes}).replaceAll(dir,'<release>')));return Promise.all(groups.map(async group=>digest(Buffer.from(content+await acceptanceIdentity({groups:[group],env:carryEnv(env,dir),runtimes})))));}
+function carriedLog(dir,carryKey){for(const name of readdirSync(releases)){const other=join(releases,name);if(other===dir||!name.startsWith('activity-public-')||!existsSync(join(other,'stage.mpk')))continue;for(const file of readdirSync(other).filter(n=>/^acceptance-[0-9]+\.mpk$/.test(n))){try{const r=load(join(other,file)),log=join(other,file.replace(/\.mpk$/,'.log'));if(r.carryKey===carryKey&&hash(log)===r.logSha256)return log;}catch{}}}return null;}
 async function verify(dir){
  const stage=inspectRelease(dir);verifyInputs(stage);await verifyBrowser(dir);
  const candidate=parsePlist(join(dir,'candidate-service.plist')),runtimeEnv={...candidate.EnvironmentVariables,HOME:home};
@@ -253,6 +257,7 @@ async function verify(dir){
  const groups=acceptanceGroups();
  const acceptanceKey=await acceptanceIdentity({groups,env,runtimes:[chromeBinary,env.BONFYRE_EXTENSION_CHROMIUM_BINARY,env.BONFYRE_TEST_BROWSER]}),stageHash=hash(join(dir,'stage.mpk')),onlyGroup=arguments.length>1&&Number.isInteger(arguments[1])?arguments[1]:null,logs=[];
  if(onlyGroup!==null)assert(onlyGroup>=0&&onlyGroup<groups.length,'Choose an existing acceptance group.');
+ const carry=await carryKeys(dir,stage,groups,env,[chromeBinary,env.BONFYRE_EXTENSION_CHROMIUM_BINARY,env.BONFYRE_TEST_BROWSER]);
  for(let i=0;i<groups.length;i++){
   const path='acceptance-'+i+'.log',logPath=join(dir,path),receiptPath=join(dir,'acceptance-'+i+'.mpk');
   const groupKey=digest(Buffer.from(JSON.stringify({stageHash,acceptanceKey,group:groups[i]})));
@@ -262,6 +267,7 @@ async function verify(dir){
   }
   if(onlyGroup!==null&&onlyGroup!==i)continue;
   rmSync(receiptPath,{force:true});rmSync(logPath,{force:true});
+  const carriedFrom=onlyGroup===null?carriedLog(dir,carry[i]):null;if(carriedFrom){copyFileSync(carriedFrom,logPath);const logSha256=hash(logPath);save(receiptPath,{stageHash,acceptanceKey,groupKey,carryKey:carry[i],carriedFrom,group:groups[i],logSha256,accepted:new Date().toISOString()});logs.push({path,sha256:logSha256});console.log('ACCEPTANCE_GROUP_CARRIED '+i+' '+carriedFrom);continue;}
   const fd=openSync(logPath,'w',0o600);let timer,code,timedOut=false;
   try{
    const command=groups[i][0]==='cmd/BonfyreCMS/tests/program_continuation_test.c'?['make','-B','-C','cmd/BonfyreCMS','-f','tests/program_continuation_test.mk','test']:[runtimeEnv.BONFYRE_BUN_BINARY,'test',...groups[i]];
@@ -269,7 +275,7 @@ async function verify(dir){
    timer=setTimeout(()=>{timedOut=true;child.kill();},180000);code=await child.exited;
   }finally{clearTimeout(timer);closeSync(fd);}
   console.log(readFileSync(logPath,'utf8').slice(-9000));assert(!timedOut,'Acceptance timed out; no activation.');assert.equal(code,0,'Acceptance failed; no activation.');
-  const logSha256=hash(logPath);save(receiptPath,{stageHash,acceptanceKey,groupKey,group:groups[i],logSha256,accepted:new Date().toISOString()});logs.push({path,sha256:logSha256});if(onlyGroup===i)console.log('ACCEPTANCE_GROUP '+i);
+  const logSha256=hash(logPath);save(receiptPath,{stageHash,acceptanceKey,groupKey,carryKey:carry[i],group:groups[i],logSha256,accepted:new Date().toISOString()});logs.push({path,sha256:logSha256});if(onlyGroup===i)console.log('ACCEPTANCE_GROUP '+i);
  }
  if(onlyGroup!==null)return;
  assert.equal(logs.length,groups.length,'Every acceptance group must have a current receipt.');
