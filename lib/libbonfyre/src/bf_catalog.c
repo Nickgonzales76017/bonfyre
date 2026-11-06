@@ -14,6 +14,7 @@
 #include "bf_jsonw.h"
 
 #include <dirent.h>
+#include <errno.h>
 #include <fnmatch.h>
 #include <limits.h>
 #include <sqlite3.h>
@@ -1036,7 +1037,9 @@ static int sync_yaml_dir(sqlite3 *db, const char *repo_root, const char *rel_dir
 
     join_path(dirpath, sizeof(dirpath), repo_root, rel_dir);
     dp = opendir(dirpath);
-    if (!dp) return 1;
+    /* Git keeps no empty directories: an absent recipe family is an empty one,
+     * not a failed sync that would discard every other projection. */
+    if (!dp) return errno == ENOENT ? 0 : 1;
 
     while ((de = readdir(dp)) != NULL) {
         char path[PATH_MAX];
