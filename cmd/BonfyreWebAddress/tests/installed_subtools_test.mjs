@@ -96,7 +96,7 @@ test('relationship intake preserves exact source evidence under current workspac
  const fields=html=>Object.fromEntries([...html.matchAll(/<input[^>]*name="([^"]*)"[^>]*value="([^"]*)"/g)].map(m=>[m[1],m[2]]));
  const save=(form,user=f.owner,headers={})=>f.request(path,{cookie:user.cookie,form,headers:{Origin:'https://aurekai.life',...headers}});
  const opened=await review(),form=fields(opened.body);expect(opened.status).toBe(200);expect(opened.body).toContain('Source credit: <strong>Alex');expect(form.snapshot).toMatch(/^[a-f0-9]{64}$/);
- const rel=await f.request('/relationships?context='+encodeURIComponent(context)+'&who=Alex&source=source-one',{cookie:f.owner.cookie});expect(rel.body).toContain('data-relationship-review');
+ const rel=await f.request('/relationships?context='+encodeURIComponent(context)+'&who=Alex&source=source-one',{cookie:f.owner.cookie});expect(rel.status).toBe(200);expect(rel.body).toContain('data-relationship-surface="crm"');expect(rel.body).toContain('class="relationship-context"');expect(rel.body).toContain('data-relationship-review');expect(rel.body).toContain('data-relationship-workspace');
  expect((await save({...form,who:'Someone else'})).status).toBe(400);expect((await save({...form,item:'source-one/cccccccccccccccccccccccc'})).status).toBe(404);
  expect((await save({...form,snapshot:'0'.repeat(64)})).status).toBe(409);expect((await save({...form,actor:'user:other'})).status).toBe(409);expect((await save({...form,release:'0'.repeat(64)})).status).toBe(409);
  expect((await save(form,f.other)).status).toBe(403);expect((await save(form,f.reader)).status).toBe(403);expect((await save(form,f.owner,{Origin:'https://foreign.test'})).status).toBe(403);
