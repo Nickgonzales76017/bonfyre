@@ -9,7 +9,7 @@ import { encode, decode } from '../browser/workspace-msgpack.mjs';
 import { createFabricPushStore } from './fabric_push_store.mjs';
 import { hookEvidence } from './hook_bridge.mjs';
 
-const MAX_BYTES = 8 * 1024 * 1024;
+const MAX_BYTES = 8 * 1024 * 1024, MAX_READ = 64 * 1024 * 1024; // agent streams may exceed the store's write bound
 const terminal = new Set(['completed', 'failed', 'cancelled', 'blocked', 'review_required', 'uncertain']);
 const taskKinds = new Set(['claude','codex','duel','relay','review','verify','resume-claude','resume-codex','pr','batch','model']);
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -244,7 +244,7 @@ export function createFabricStore({ home, projectRoot, worktreeRoot, now = () =>
     return path;
   }
   function readText(path,{maxBytes = MAX_BYTES,missing = false} = {}) {
-    integer(maxBytes,1,MAX_BYTES); path = confined(home,path);
+    integer(maxBytes,1,MAX_READ); path = confined(home,path);
     if (missing && !existsSync(path)) return '';
     return new TextDecoder('utf-8',{fatal:true}).decode(bytes(path,maxBytes));
   }

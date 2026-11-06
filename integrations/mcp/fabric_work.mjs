@@ -282,7 +282,7 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
     check(taskId);
     const { worktree, branch, base_commit, source_snapshot } = await store.createWorktree(taskId, { base: policy.default_base || 'HEAD', signal: taskAborts.get(taskId)?.signal });
     if (source_snapshot) prompt += `\n\nSOURCE BASELINE: ${base_commit}. ${source_snapshot.files.length} explicit current-source files were captured before execution. All other paths remain at the configured Git base. Source manifest: ${source_snapshot.receipt.path}. Review changes against ${base_commit}; never include the input snapshot itself as an implementation change.`;
-    const plan = ensureRun(await agent(taskId, 'claude', 'architect-plan',
+    const plan = ensureRun(await agent(taskId, policy?.stage_agents?.['architect-plan'] || 'claude', 'architect-plan',
       `Plan this change in the real Bonfyre repository. Map affected planes and exact files. Do not edit. Produce a constrained implementation plan, tests, live verification, and rollback contract.\n\nMISSION:\n${prompt}`,
       worktree), 'architect plan');
     const implementation = ensureRun(await agent(taskId, 'codex', 'implementation',
@@ -316,7 +316,7 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
       apply_result: { applied: false, reason: 'apply_preflight_refused', ...initialApplication },
       next_step: 'Resolve the reported Project constraint before requesting application; the isolated candidate is retained and has not completed review or tests.'
     }, 'review_required');
-    const review = ensureRun(await agent(taskId, 'claude', 'adversarial-review',
+    const review = ensureRun(await agent(taskId, policy?.stage_agents?.['adversarial-review'] || 'claude', 'adversarial-review',
       `Review the changes against Git baseline ${base_commit} in this worktree. Check correctness, integration, proof, concurrency, security, tests, and underuse of Bonfyre. Do not edit. Return ONLY JSON {"state":"resolved|retry|blocked","evidence":["specific evidence"],"blocking_findings":["severity, exact file and actionable finding"]}. Use resolved only when there are no findings requiring repair.\n\nMISSION:\n${prompt}\n\nIMPLEMENTATION SUMMARY:\n${trim(implementation.final, 80000)}\n\nDIFF STAT:\n${firstDiff.stat}`,
       worktree), 'adversarial review');
     const reviewVerdict = typedVerdict(review.final);
