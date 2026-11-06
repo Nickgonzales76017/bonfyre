@@ -14742,8 +14742,8 @@
       "views": [],
       "witnesses": [
         "cmd/BonfyreModel/tests/representation_passport_test.sh",
-        "cmd/BonfyreModel/tests/manifest_test.py",
-        "cmd/BonfyreModel/tests/file_verification_test.py verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
+        "cmd/BonfyreModel/tests/manifest_test.sh",
+        "cmd/BonfyreModel/tests/file_verification_test.sh verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure",
         "packs/no-simulation/model-hash-20261013/benchmark.json records five alternating native verify runs on 128 MiB plus 17 synthetic bytes with exact digests; median 0.718 to 0.127 seconds on this Mac",
         "packs/no-simulation/models-compression-guide-20261011.json",
         "cmd/BonfyreModel/tests/local_test.sh checks bonfyre-model local against a fixture ledger: a held checkpoint reads loaded, one larger than spendable memory reads waits"

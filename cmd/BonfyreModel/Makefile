@@ -14,9 +14,9 @@ SRC     = src/main.c
 all: $(TARGET)
 
 test: $(TARGET)
-	python3 ./tests/manifest_test.py ./$(TARGET)
+	sh ./tests/manifest_test.sh ./$(TARGET)
 	./tests/representation_passport_test.sh ./$(TARGET)
-	python3 ./tests/file_verification_test.py ./$(TARGET)
+	sh ./tests/file_verification_test.sh ./$(TARGET)
 	./tests/local_test.sh ./$(TARGET)
 
 $(LIB): force-library

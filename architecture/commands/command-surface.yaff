@@ -1183,8 +1183,8 @@ architecture cmd-model
   source_path cmd/BonfyreModel/src/main.c
   source_path cmd/BonfyreModel/Makefile
   witness cmd/BonfyreModel/tests/representation_passport_test.sh
-  witness cmd/BonfyreModel/tests/manifest_test.py
-  witness cmd/BonfyreModel/tests/file_verification_test.py verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure
+  witness cmd/BonfyreModel/tests/manifest_test.sh
+  witness cmd/BonfyreModel/tests/file_verification_test.sh verifies exact synthetic bytes, mutation and absent-cache refusal, directory read errors, unknown-hash persistence and database constraint failure
   witness packs/no-simulation/model-hash-20261013/benchmark.json records five alternating native verify runs on 128 MiB plus 17 synthetic bytes with exact digests; median 0.718 to 0.127 seconds on this Mac
   witness packs/no-simulation/models-compression-guide-20261011.json
   invariant manifest fields are decoded as JSON; source arrays accept URL strings and objects with a URL, without treating object keys as addresses
@@ -1507,7 +1507,7 @@ architecture cmd-quant
   source_lineage the 91-command capability surface
   source_path cmd/BonfyreQuant/tests/roundtrip_test.sh
   witness cmd/BonfyreQuant/tests/roundtrip_test.sh measures named tensors of a real safetensors model and refuses with no model, a text file, or a tensor that is not there
-  witness cmd/BonfyreQuant/tests/physical_roundtrip_test.py
+  witness cmd/BonfyreQuant/tests/physical_roundtrip_test.sh
   witness packs/no-simulation/models-compression-guide-20261011.json
   witness cmd/BonfyreQuant/tests/vectors/command_behavior.json + packs/no-simulation/command-behavior-20261029.tsv: behavior vectors on small real fixtures in fresh temp dirs, replayed by make -C tests/vectors check (2026-10-29): command.quant=fail
   invariant every reported cosine, error and bits-per-weight is of a tensor read from the model named on the command line
