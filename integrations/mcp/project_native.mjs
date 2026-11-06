@@ -593,6 +593,8 @@ export function createProjectNative({ root, home, env = process.env, run, reques
     if (!Array.isArray(args.args ?? []) || !(args.args ?? []).every((item) => typeof item === 'string')) throw new Error('args must be a list of strings');
     const candidate = await candidates(family);
     if (!candidate) throw new Error(`no native executable found for ${family}; interpreter launchers are refused`);
+    if (!nativeReadIntent(family, args.args || []))
+      throw new Error('native effect requires a destination-owned ActorClosure, PackGraph, and reviewed execution owner; generic argv is read-only');
     const resources = await nativeResourceEnvironment(family);
     const result = await execute(candidate.file, args.args || [], { cwd: candidate.source === 'managed' ? path.dirname(candidate.file) : home, timeoutMs: clamp(args.timeout_seconds, 60, 5, 600) * 1000, extraEnv: resources.extraEnv });
     const { list } = await capabilities(family);

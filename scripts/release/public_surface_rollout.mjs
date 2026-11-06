@@ -8,6 +8,9 @@ import {createHash} from 'node:crypto';
 import {encode,decode} from '../../integrations/browser/workspace-msgpack.mjs';import {frontIntegrity} from './front_integrity.mjs';
 const root=resolve(import.meta.dir,'../..'),home=homedir(),releases=join(home,'.bonfyre/releases');
 const label='com.bonfyre.public-web-address',domain='gui/'+process.getuid(),plist=join(home,'Library/LaunchAgents',label+'.plist');
+// A carried program whose link target was removed (a self-updating CLI such as
+// claude replaces its versioned file) is re-resolved from PATH, never dropped.
+export function carriedBin(path,name){try{return terminalBin(path);}catch(error){if(error?.code!=='ENOENT')throw error;const found=Bun.which(name);assert(found,'Carried program '+name+' no longer resolves and is not on PATH.');return terminalBin(found);}}
 const digest=bytes=>createHash('sha256').update(bytes).digest('hex'),hash=file=>digest(readFileSync(file));export function terminalBin(path){const seen=new Set();let p=path;while(lstatSync(p).isSymbolicLink()){assert(!seen.has(p)&&seen.size<1024,'Cyclic or excessive binary link chain.');seen.add(p);p=resolve(dirname(p),readlinkSync(p));}assert(lstatSync(p).isFile(),'Binary target is not a file.');return p;}
 function run(argv,{env=process.env,allowed=[0],timeout=180000}={}){
  const result=Bun.spawnSync(argv,{cwd:root,env,stdout:'pipe',stderr:'pipe',timeout});
@@ -176,7 +179,7 @@ async function stage(){
  cpSync(join(root,'site/matrix'),join(dir,'site'),{recursive:true,dereference:true,mode:fsConstants.COPYFILE_FICLONE,filter:p=>!p.split('/').includes('node_modules')}); // from the repo: the running release's site carried edits nowhere
  cpSync(env.BONFYRE_WORKSPACE_CLIENT,join(dir,'browser'),{recursive:true,dereference:true,mode:fsConstants.COPYFILE_FICLONE});mkdirSync(join(dir,'bin')); // APFS clones: releases share unchanged site/browser blocks
  const inputs=freezeBrowser(root,dir);
- for(const name of readdirSync(env.BONFYRE_BIN_DIR)){if(name==='bonfyre-site'||name==='bonfyre-meter'||name==='bonfyre-queue'||name==='bonfyre-web-address'||name==='bonfyre-procurement'||name==='bonfyre-credentials'||name==='bonfyre-provider-estate')continue;symlinkSync(terminalBin(join(env.BONFYRE_BIN_DIR,name)),join(dir,'bin',name));}
+ for(const name of readdirSync(env.BONFYRE_BIN_DIR)){if(name==='bonfyre-site'||name==='bonfyre-meter'||name==='bonfyre-queue'||name==='bonfyre-web-address'||name==='bonfyre-procurement'||name==='bonfyre-credentials'||name==='bonfyre-provider-estate')continue;symlinkSync(carriedBin(join(env.BONFYRE_BIN_DIR,name),name),join(dir,'bin',name));}
  for(const [family,name]of [['BonfyreQueue','bonfyre-queue'],['BonfyreMeter','bonfyre-meter'],['BonfyreProcurement','bonfyre-procurement'],['BonfyreWebAddress','bonfyre-web-address'],['BonfyreCredentials','bonfyre-credentials'],['BonfyreProviderEstate','bonfyre-provider-estate']])inputs.push(frozenInput(root,dir,join('cmd',family,name),join('bin',name),0o755));
  const siteAlias=freezeSiteAlias(dir);
  inputs.push(...freezePrograms(root,dir).inputs);
