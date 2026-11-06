@@ -385,6 +385,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      # make compiles the experience declarations into C headers with bun when a
+      # fresh checkout leaves their inputs newer than the generated output.
+      - uses: oven-sh/setup-bun@v2
 
       - name: Install native URL dependencies
         run: |
