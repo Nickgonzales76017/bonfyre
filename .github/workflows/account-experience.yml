@@ -1,0 +1,64 @@
+name: Account and application presentation
+on:
+  push:
+    branches: [account-discovery-convergence-20261019]
+  pull_request:
+    paths:
+      - 'components/BonfyreServiceSite/account-*'
+      - 'components/BonfyreServiceSite/application-previews.*'
+      - 'site/assets/account-*'
+      - 'site/assets/application-previews.css'
+      - 'site/assets/showcase.js'
+      - 'scripts/build-account-ui.mjs'
+      - 'scripts/tests/account-*.mjs'
+      - '.github/workflows/account-experience.yml'
+  workflow_dispatch:
+    inputs:
+      public_check:
+        description: 'Also read the currently deployed public GitHub gallery; never mutate accounts'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and verify the same published sources
+        run: |
+          node scripts/build-account-ui.mjs
+          node scripts/build-account-ui.mjs --check
+          git diff --exit-code -- site/assets/showcase.js site/assets/account-session.mjs site/assets/account-navigation.mjs site/assets/account-navigation.css site/assets/application-previews.css
+      - name: Existing gallery contracts and session-state regressions
+        run: node --test scripts/tests/showcase-directory.test.mjs scripts/tests/account-session.test.mjs
+      - name: Install pinned browser driver without lifecycle scripts
+        run: npm install --prefix .spaces-tools --ignore-scripts --no-audit --no-fund playwright@1.56.1
+      - name: Run actual browser against an explicitly isolated account fixture
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/account-ui-browser.mjs
+      - name: Optional read-only deployed-gallery verification
+        if: github.event_name == 'workflow_dispatch' && inputs.public_check
+        env:
+          ACCOUNT_UI_ORIGIN: https://nickgonzales76017.github.io/bonfyre/
+          ACCOUNT_UI_EVIDENCE: account-ui-public-evidence
+        run: |
+          export PLAYWRIGHT_MODULE="$PWD/.spaces-tools/node_modules/playwright/index.mjs"
+          export CHROME_PATH="$(command -v google-chrome)"
+          node scripts/tests/account-ui-browser.mjs
+      - name: Retain actual results and screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: account-application-presentation
+          retention-days: 30
+          path: |
+            account-ui-evidence
+            account-ui-public-evidence
+            site/assets/account-ui-SOURCE.tsv

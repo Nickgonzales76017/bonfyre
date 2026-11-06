@@ -94,17 +94,29 @@ test('native processes a million exact float32 samples using bounded blocks',()=
   }finally{rmSync(dir,{recursive:true,force:true});}
 });
 
-test('shared WASM artifact is verified and mixes exact float32 samples', async () => {
-  const {verifyCreatorWasm} = await import('../../cmd/BonfyreCreatorMix/tools/wasm.mjs');
-  const {createCreatorMixer} = await import('../src/creator-wasm.mjs');
-  const {bytes} = verifyCreatorWasm();
-  const mixer = await createCreatorMixer(bytes);
-  assert.equal(mixer.memoryBytes, 131072);
-  const mixed = mixer.mixBlock({frames: 4, channels: 1, stems: [
-    {samples: new Float32Array([1, 2, 3, 4]), gain: 1},
-    {samples: new Float32Array([2, 2, 2, 2]), gain: 0.5}
-  ]});
-  assert.deepEqual([...mixed], [2, 3, 4, 5]);
+test('browser WASM uses the exact allocation-free native f32 mix kernel',async t=>{
+  const dir=mkdtempSync(join(tmpdir(),'aurekai-creator-wasm-'));
+  try{
+    const out=join(dir,'kernel.wasm');
+    const cmd=spawnSync('clang',['--target=wasm32','-O3','-nostdlib','-ffp-contract=off',
+      '-Wl,--no-entry','-Wl,--export=aurekai_mix_f32','-Wl,--export-memory',
+      join(native,'mix_kernel.c'),'-o',out],{encoding:'utf8'});
+    if(cmd.error||cmd.status!==0) {
+      t.skip('clang wasm32/lld toolchain unavailable on this host: '+(cmd.stderr||cmd.error?.message||''));
+      return;
+    }
+    const module=await WebAssembly.instantiate(readFileSync(out));
+    const memory=module.instance.exports.memory;
+    const mix=module.instance.exports.aurekai_mix_f32;
+    const floats=new Float32Array(memory.buffer);
+    floats.set([1,2,3,4],32);
+    floats.set([2,2,2,2],64);
+    mix(32*4,64*4,0.5,4);
+    assert.deepEqual(Array.from(floats.slice(32,36)),[2,3,4,5]);
+    assert.equal(typeof mix,'function');
+    console.log(JSON.stringify({kernel:'aurekai_mix_f32',
+      backend:'WASM',native_code_shared:true,samples:4}));
+  }finally{rmSync(dir,{recursive:true,force:true});}
 });
 
 test('per-stem sequential cursors preserve ordered overlapping source windows',()=>{

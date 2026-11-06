@@ -1,133 +1,105 @@
 # Bonfÿre quickstart
 
-Choose the shortest path that answers your question. You do not need to build
-the whole estate to understand the machine.
+Choose the shortest path that answers your question. You don't need to build the
+entire development estate to see how Bonfÿre is used.
 
-To see finished work before building anything, open the
-[work samples](https://aurekai-work-samples.pages.dev/) or the
-[guides](https://docs.aurekai.work/).
+## 1. See the public work
 
-## Path A — inspect architecture and maturity
+The [work samples](https://aurekai-work-samples.pages.dev/) have browser tools
+you can try, including fixture planning, a product editor and an intake check.
+The [guides](https://docs.aurekai.work/) cover white-label sites, migrations,
+document workspaces and a studio app. These examples use public or fictional
+material; they are not receipts for paid customer deployments.
 
-This is the safest first path. The Architecture Atlas is the canonical live
-registry; its views are reversible and every nontrivial maturity claim points
-to source or a witness.
+## 2. Inspect the currently published source
 
-```bash
-git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
-cd bonfyre-oss
-
-bun architecture/atlas.mjs validate
-bun architecture/atlas.mjs expand ExecutionView
-bun architecture/atlas.mjs expand CapabilityView
-bun architecture/atlas.mjs expand EvidenceView
-bun architecture/atlas.mjs get work-graph
-bun architecture/atlas.mjs loss
+```sh
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
 ```
 
-Read maturity literally:
+Public `main` contains an earlier native source snapshot. The newer Architecture
+Atlas, ServiceSite and integrated institutional work are being reviewed separately
+before publication; do not assume their local development instructions are
+already executable from this checkout.
 
-- `architectural` or `declared` names a contract or intended organ.
-- `implemented` has a real source path.
-- `measured` or `proven` requires a witness.
-- A public capability identity is not necessarily installed, callable, or
-  workload-proven.
+The present source is organized under `cmd/`, `lib/`, `engine/` and
+`integrations/`. Historical notebook material is under
+[`evidence/origins/notebook-era/`](evidence/origins/notebook-era/), rather than
+being an alternative source root.
 
-## Path B — run the semantic evidence
+### Optional: work across the other repositories
 
-The Python control plane is frozen as a reference implementation and
-conformance oracle. Running it verifies WorkGraph, capability, authority,
-provider/resource, evidence, Frappe, and replay semantics without pretending it
-is the production runtime.
+The default clone does **not** fetch the 47 pinned public companion
+submodules. You can select only the repositories relevant to a job:
 
 ```bash
-cd components/BonfyreControlPlane
-python3 -m pytest tests/ -q
+bash scripts/federated_modules.sh list
+bash scripts/federated_modules.sh init products
+bash scripts/federated_modules.sh init extractions
+bash scripts/federated_modules.sh status products
 ```
 
-Useful focused checks:
+Profiles are `products`, `extractions`, `examples`, `aurekai`, `lineage`,
+`upstream`, `frappe`, `interfaces`, `one PATH`, and `all`. Run `init lineage` only
+for older source histories. The Frappe and interface donor families are large
+and source-only; fetch just one project when possible:
 
 ```bash
-python3 -m pytest tests/test_work_and_events.py -q
-python3 -m pytest tests/test_capability_closure.py -q
-python3 -m pytest tests/test_frappe_native_records.py -q
-python3 -m pytest tests/test_evidence_graphs.py -q
+bash scripts/federated_modules.sh init one integrations/federated/interfaces/opentui
 ```
 
-## Path C — build and inspect native powers
+To deliberately fetch an entire large family, set the opt-in explicitly:
 
 ```bash
+BONFYRE_ALLOW_LARGE_MODULES=1 bash scripts/federated_modules.sh init frappe
+```
+
+Avoid `init all` on a storage-constrained machine. No
+submodule contents are needed for the top-level native `make` target.
+
+The `extractions` group follows the reviewed nested `bonfyre-core` and
+Lambda Tensors gitlinks, so the extracted command sources have their shared
+library dependencies. All other profiles remain non-recursive by default.
+
+Submodule SHAs are pinned in Git, not pulled from `main` on every run. To
+change a pin, review the referenced repository and commit its new gitlink in
+a focused PR. Each companion retains its own license and build contract.
+
+## 3. Build and inspect a native command
+
+With a C toolchain and the dependencies specified by the [Makefile](Makefile):
+
+```sh
 make
-./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
-./cmd/BonfyreIndex/bonfyre-index layers --root layeros/state
+./cmd/BonfyreWire/bonfyre-wire --help
 ./cmd/BonfyreCLI/bonfyre list --health
-./cmd/BonfyreWorkflow/build/bonfyre-workflow list
-./cmd/BonfyreRecipe/build/bonfyre-recipe list
-./cmd/BonfyreLayer/bonfyre-layer registry --root layeros/state
 ```
 
-The health output matters more than a fixed binary count. Bonfÿre separates a
-defined Power from a built, resolvable, health-probed, or workload-proven
-realization.
+The result of a build is not proof of authority to perform an effect or of
+support on every operating system. If a command has its own README or Makefile,
+use that command's stated requirements.
 
-Two state surfaces are relevant:
+## 4. Turn an authorized capture into a reviewable recipe
 
-- `layeros/state` holds LayerArtifact, graph, queue, and wire operating state.
-- `~/.local/share/bonfyre/catalog.db` supports smaller workflow, recipe, family,
-  and model browsing projections.
+Only use a capture you own or are authorized to inspect:
 
-After `cmd/`, `lib/`, or registry changes, repeat the sync and index commands.
-
-## Path D — turn an authorized observation into a replayable plan
-
-Use a PCAP you own or are authorized to inspect:
-
-```bash
+```sh
 ./cmd/BonfyreWire/bonfyre-wire ingest-pcap capture.pcap --dumb-device --root layeros/state
 ./cmd/BonfyreWire/bonfyre-wire probe <capture_id> --root layeros/state
 ./cmd/BonfyreWire/bonfyre-wire artifacts <capture_id> --root layeros/state
 ./cmd/BonfyreWire/bonfyre-wire recipe <capture_id> --root layeros/state > recipe.json
-./cmd/BonfyreStitch/bonfyre-stitch compile recipe.json --output recipe-program
 ```
 
-This demonstrates a small but real observation-to-program path:
+This gives a reviewable chain: observation → typed artifacts → proposed recipe.
+Inspect the output before using a downstream compiler or executor. Generating a
+recipe is not authorization to execute it.
 
-```text
-observation → typed artifacts → recipe → compiled composition program
-```
+## 5. Continue with the right guide
 
-Inspect the recipe before compilation or execution. A generated program is not authority to
-perform an effect.
-
-## Path E — inspect institutional projections
-
-The nine Frappe products are installed under `integrations/frappe-bench/apps`.
-Their DocType grammars are extracted by `BonfyreFrappeCompiler` and witnessed
-against shared Bonfÿre semantics.
-
-```bash
-python3 components/BonfyreControlPlane/witness_frappe_apps.py
-cd components/BonfyreControlPlane
-python3 -m pytest tests/test_frappe_native_records.py tests/test_app_surface_witnesses.py -q
-```
-
-## Path F — inspect a model/runtime surface
-
-Model Commons is larger than one model or quantizer. Begin by inspecting the
-live Model view and a native command's contract:
-
-```bash
-bun architecture/atlas.mjs expand ModelView
-bun architecture/atlas.mjs get fpq-transform
-make -C cmd/BonfyreFPQ
-./cmd/BonfyreFPQ/bonfyre-fpq --help
-```
-
-## Next docs
-
-- [README](README.md)
+- [Bonfÿre overview](README.md)
 - [Architecture](docs/architecture.md)
-- [Architecture Atlas](architecture/README.md)
-- [Status and drift](docs/bonfyre_status_and_drift.md)
+- [Public client delivery portfolio](docs/client-operations-portfolio.md)
 - [Wire](docs/bonfyre_wire.md)
-- [Pages runtime](docs/pages-runtime.md)
+- [Published guides](https://docs.aurekai.work/)
+- [Work samples](https://aurekai-work-samples.pages.dev/)

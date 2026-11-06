@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, writeFileSync, readFileSync, lstatSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import { createHash } from "node:crypto";
 import { listIntegrationTargets } from "./integration-engine.mjs";
@@ -209,14 +209,14 @@ function readmeForTarget(targetInfo) {
   return `${lines.join("\n")}`;
 }
 
-function writeTargetScaffold(baseDir, targetInfo, mode = "materialize") {
+function writeTargetScaffold(baseDir, targetInfo, mode) {
   const repoDir = join(baseDir, targetInfo.slug);
-  const artifacts = [];
   if (mode === "materialize") {
     ensureDirectory(repoDir);
     ensureDirectory(join(repoDir, "src"));
     ensureDirectory(join(repoDir, "test-vectors"));
   }
+  const artifacts = [];
   const emit = (path, content) => {
     const bytes = Buffer.from(content, "utf8");
     const sha256 = createHash("sha256").update(bytes).digest("hex");
@@ -307,7 +307,7 @@ export function scaffoldIntegrationRepos(repoRoot, options = {}) {
     index.recipe_sha256 = createHash("sha256").update(JSON.stringify(
       repos.map(({ slug, artifacts }) => [slug, artifacts])
     )).digest("hex");
-    index.catalog_checked = false; // timestamped legacy index is not reproducible
+    index.catalog_checked = false; // timestamped catalog is not reproducible
   }
   return index;
 }

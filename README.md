@@ -10,9 +10,12 @@
 <p align="center">
   <a href="#see-it-running">See it running</a> ·
   <a href="#building-blocks">Building blocks</a> ·
+  <a href="#federated-workspace">Federated workspace</a> ·
+  <a href="https://nickgonzales76017.github.io/bonfyre/modules/">Source atlas (70)</a> ·
   <a href="#start-here">Start here</a> ·
   <a href="#the-whole-machine">Whole machine</a> ·
-  <a href="#what-is-live">What is live</a> ·
+  <a href="docs/client-operations-portfolio.md">Client work</a> ·
+  <a href="#whats-available-today">Available today</a> ·
   <a href="https://docs.aurekai.work/">Guides</a> ·
   <a href="https://aurekai-work-samples.pages.dev/">Work samples</a> ·
   <a href="docs/architecture.md">Architecture</a> ·
@@ -29,31 +32,109 @@ keep using, and the links between systems that already exist.
 |---|---|
 | Team tools you can use in the browser: a fixture planner, a product editor, a shipment-file check | [Work samples](https://aurekai-work-samples.pages.dev/) |
 | Three shop sites with their own looks, run from one installation | [Three businesses](https://docs.aurekai.work/three-businesses) |
-| A training app for a studio, for members and coaches | [Walk-through](https://aurekai-work-samples.pages.dev/training/) · [`components/BonfyreServiceSite`](components/BonfyreServiceSite/) |
-| Search over your own documents, on your own computer | [Walk-through](https://aurekai-work-samples.pages.dev/documents/) · [`components/BonfyreServiceSite`](components/BonfyreServiceSite/README.md) |
-| Step-by-step guides: white-label delivery, recordings, requests to books, migration | [Guides](https://docs.aurekai.work/) · [`docs/experiences`](docs/experiences/) |
+| A training app for a studio, for members and coaches | [Walk-through](https://aurekai-work-samples.pages.dev/training/) |
+| Search over your own documents, on your own computer | [Walk-through](https://aurekai-work-samples.pages.dev/documents/) |
+| Step-by-step guides: white-label delivery, recordings, requests to books, migration | [Guides](https://docs.aurekai.work/) |
+| Public calendar source → LIVE homepage and Stage, read-only receipt with preserved unknown costs | [Source-to-customer witness](.github/workflows/source-customer-closure.yml) |
 | What this looks like for a service network, a media business, a community project and others | [Product families](https://docs.aurekai.work/operating-products) |
 
 The samples use public or made-up data. Paid memberships and card payments are
 not part of the training sample.
 
+## Use a smaller piece
+
+You can also start without building the whole system:
+
+| Independently scoped source | The job it does | What to inspect |
+|---|---|---|
+| **[Statement Import](https://github.com/Nickgonzales76017/bonfyre-statement-import)** | Convert normalized bank-statement text into CSV and refuse a result when running balances fail to reconcile | [C source and pack fixtures](https://github.com/Nickgonzales76017/bonfyre-statement-import) |
+| **[Agent Trace Verifier](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier)** | Evaluate agent-execution evidence through a deterministic, source-addressed receipt with linear-time duplicate-event validation | [Standalone verifier and examples](https://github.com/Nickgonzales76017/bonfyre-agent-trace-verifier) |
+
+Those tools have their own repositories and licenses. For more involved deployments, [the client operations portfolio](docs/client-operations-portfolio.md) shows how local software and public applications fit WordPress, ERPNext, source documents, creator publishing, agency work and commerce. The [operating-products guide](https://docs.aurekai.work/operating-products) describes broader customer and partner applications.
+
+## Federated workspace
+
+The integrated native engine stays here. **69 public companion repositories are now
+pinned as real Git submodules**, alongside the existing HVM4 dependency. They
+are grouped under [`integrations/federated/`](integrations/federated/) and
+[`examples/federated/`](examples/federated/), not added as 69 new root
+directories.
+
+**[Explore the complete, searchable source atlas →](https://nickgonzales76017.github.io/bonfyre/modules/)**
+Every entry links to its owning GitHub repository and its exact pinned commit,
+and identifies whether it is a standalone tool, an older source extraction,
+an integration donor, or historical lineage. Gitlinks reference **other**
+repositories; GitHub does not index their files as code within this parent
+repository. Search within the linked owner repository when you need its source.
+
+| Profile | Modules | What lives there |
+|---|---:|---|
+| `products` | 2 | Independent Statement Import and Agent Trace Verifier |
+| `extractions` | 7 | Earlier native library/CLI extractions, including Lambda Tensors |
+| `examples` | 7 | Demonstrations, creator scaffold and the real recipe collection |
+| `aurekai` | 12 | The earlier Aurekai platform, native runtime, CI, IDE, data and workflow adapters |
+| `frappe` | 9 | Pinned source of Frappe, ERPNext, LMS, HRMS, CRM, Helpdesk, Insights, Wiki and archived Drive |
+| `interfaces` | 8 | OpenTUI, MCP Apps, A2UI, json-render, Bubble Tea, Lip Gloss, Ratatui and Ghost design/source references |
+| `performance` | 22 | Optional benchmark/reference donors: memory/Arrow, search, incremental engines, Linux edge I/O, model serving |
+| `lineage` | 2 | Historical bonfyre-oss and HCP work, deliberately not active runtime replacements |
+| `upstream` | 1 | Existing independently maintained HVM4 |
+
+A normal clone remains small and builds without these optional groups. To get
+only the separately usable tools:
+
+```bash
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
+bash scripts/federated_modules.sh list
+bash scripts/federated_modules.sh init products
+bash scripts/federated_modules.sh status products
+```
+
+Use `init extractions`, `init examples`, or `init aurekai` only for the work
+you need. For one specific donor, use `init one integrations/federated/interfaces/opentui`.
+The `frappe`, `interfaces`, `performance`, and `all` groups can pull **gigabytes** of source
+history and require `BONFYRE_ALLOW_LARGE_MODULES=1` before initializing.
+Neither the optional donors nor historical lineage is cloned by default. The script verifies the exact gitlink
+commit and public URL before fetching, **never advances to a remote branch
+without review**, and recurses only into the reviewed native extraction dependencies.
+
+For any proposed optimization, the [read-only performance equivalence reviewer](scripts/performance_equivalence.mjs) compares source digests, original functionality, exact final outcomes, authorization scope, observed resource effects, priced-provider costs and rollback evidence. A pass requires zero observed false prunes on the trial, exact final-result equality, and independent evidence; it means **eligible for human promotion review**, never deployed, and missing evidence retains the exact baseline. The optional [native physical receipt readback](scripts/performance_physical_receipts.mjs) verifies persisted BonfyreCompress CopyReceipt counters against a read-only SQLite registry (Node 22+), refuses missing records or unequal useful work, and then applies the existing review gate. This readback is **not** owner authority or proof that the upstream counter instrumentation is independently accurate. Owner receipts must still be independently read back; donor benchmarks are not production evidence.
+
+The 22 performance donors are *reference implementations* only: no automatic linking, runtime replacement, no copying third-party assets or new quantization claims. Some are large Rust/Python/C++ systems and some use platform-specific interfaces; `init one integrations/federated/performance/memory/nanoarrow` fetches only one exact pin. Promotion requires compatible licenses, independently measured behavior, full feature parity and a fallback route.
+
+The Frappe pins are source references, **not a tested nine-app compatible bench**;
+`frappe/drive` is archived upstream. The interface repos are source/design
+references, **not bundled components or an implicit right to reuse assets**.
+
+The CMS, Intake, Pipeline and Embed extraction repos now use pinned
+`bonfyre-core` dependencies rather than copying `libbonfyre`; CMS also pins
+Lambda Tensors. `init extractions` initializes these small nested dependencies,
+while larger donor and historical lineages do not recurse.
+
+These are *references to independently owned source histories*, not a second
+owner for Bonfÿre facts or an assertion that old extracted code matches the
+live `cmd/` implementation. No private client repository is included.
+Review the license in each companion repo separately. The three unusable
+archived gitlink coordinates remain documented in their evidence history
+rather than blocking normal submodule initialization.
+
 ## Building blocks
 
-Nine areas of the codebase are being cut into libraries a developer can use
-without the rest. Each one works from source today. None is published as a
-package yet, so there is no version to pin and no support promise.
+Nine areas of the development codebase are being cut into independently usable
+libraries. Some sources are not yet on public `main`; none is a versioned,
+supported package release.
 
 | Area | What it does | Where it lives |
 |---|---|---|
 | Data | Local SQL and vector search, with the source of every record kept | [`cmd/BonfyreVec`](cmd/BonfyreVec/), [`cmd/BonfyreEmbed`](cmd/BonfyreEmbed/), [`cmd/BonfyreCMS`](cmd/BonfyreCMS/) |
-| Contracts | Typed schemas and the code generated from them | [`schemas/control`](schemas/control/) |
+| Contracts | Typed schemas and the code generated from them | `schemas/control` (in release review) |
 | Models | Serving, quantization and embeddings | [`cmd/BonfyreQuant`](cmd/BonfyreQuant/), [`cmd/BonfyreModel`](cmd/BonfyreModel/) |
 | Work | Requests, commitments and who may act on them | [`cmd/BonfyreQueue`](cmd/BonfyreQueue/), [`cmd/BonfyreAuth`](cmd/BonfyreAuth/), [`cmd/BonfyreWorkflow`](cmd/BonfyreWorkflow/) |
 | Apps | Frappe and WordPress integration | [`integrations/`](integrations/) |
 | Media | Preparing and transcribing recordings | [`cmd/BonfyreMediaPrep`](cmd/BonfyreMediaPrep/), [`cmd/BonfyreTranscribe`](cmd/BonfyreTranscribe/) |
-| Commerce | Moving records between systems and checking them on arrival | [`cmd/BonfyreBridge`](cmd/BonfyreBridge/) |
+| Commerce | Moving records between systems and checking them on arrival | `cmd/BonfyreBridge` (in release review) |
 | Finance | Meters, invoices and recorded payments | [`cmd/BonfyreFinance`](cmd/BonfyreFinance/), [`cmd/BonfyrePay`](cmd/BonfyrePay/), [`cmd/BonfyreMeter`](cmd/BonfyreMeter/) |
-| Web | Sites, pages and the assistant endpoint for each | [`cmd/BonfyreWebAddress`](cmd/BonfyreWebAddress/), [`components/BonfyreServiceSite`](components/BonfyreServiceSite/) |
+| Web | Sites, pages and the assistant endpoint for each | `cmd/BonfyreWebAddress` (in release review), `components/BonfyreServiceSite` (in release review) |
 
 The [building blocks guide](https://docs.aurekai.work/building-blocks) says
 where to start with each, and the
@@ -76,7 +157,7 @@ checks before they can change how it runs.
 
 The Generation-10/V8.1 system map is the architectural basis. The live
 repository is the implementation truth. When they differ, the
-[Architecture Atlas](architecture/README.md) records the live maturity and
+development Architecture Atlas records the live maturity and
 witnesses; a declared or architectural organ is never presented as proven.
 
 ## The whole machine
@@ -119,7 +200,7 @@ Each part has a defined responsibility:
 
 ### Public capabilities
 
-Bonfÿre preserves **91 public Power identities**. Each identity moves through a
+The Generation-10 architecture preserves **91 Power identities**. Each identity moves through a
 maturity ladder—defined, implemented, built, resolvable, health-probed,
 workload-proven, quality-proven, promoted—so discovery never becomes a false
 claim of callability. Native commands, libraries, local models, agent carriers,
@@ -184,102 +265,53 @@ allocation and ERPNext accounting separately. It keeps quoted prices apart from
 payments, provider credits apart from cash, and dashboards apart from the
 accounting records they display.
 
-## What is live
+## What's available today
 
-The repository contains native C/Zig/Rust/Python/TypeScript surfaces, a frozen
-Python semantic reference and conformance oracle, installed Frappe products,
-model/runtime work, schemas, generated inventories, and an executable
-Architecture Atlas. Maturity is deliberately mixed:
+The public [work samples](https://aurekai-work-samples.pages.dev/) and
+[guides](https://docs.aurekai.work/) demonstrate current browser, publishing,
+document, integration and training workflows. Samples use fictional or public
+data. They are not proof of paid customer deployment, card processing or
+completed private-service contracts.
 
-- WorkGraph, Occurrence, capability composition, authority, and the nine Frappe
-  product grammars have implemented witnesses.
-- CapabilityClosure, transport, proof-frontier, ForeignTwin, and receipt paths
-  have measured witnesses in the live atlas.
-- Aurekai's full trace-to-candidate promotion loop and SurfaceIR renderer remain
-  architectural; partial learning organs do not justify claiming the loop is
-  complete.
-- The Generation-10 projection estate is frozen and validated as the semantic
-  destination while live absorption continues.
+**Source release boundary:** public `main` contains an earlier source snapshot
+alongside recently reviewed documentation. Newer native components, the
+Architecture Atlas, white-label ServiceSite source and cross-owner
+implementations are undergoing separate privacy, licensing and
+independent-install review. This README describes the design and available
+demonstrations; it does not imply every referenced development source
+directory is already in `main`.
 
-Inspect the truth directly:
-
-```bash
-bun architecture/atlas.mjs validate
-bun architecture/atlas.mjs expand ExecutionView
-bun architecture/atlas.mjs get work-graph
-bun architecture/atlas.mjs loss
-```
+Published source currently sits under [`cmd/`](cmd/), [`engine/`](engine/),
+[`lib/`](lib/) and [`integrations/`](integrations/).
+Historical notebook documents live under
+[`evidence/origins/notebook-era/`](evidence/origins/notebook-era/),
+not in competing root folders.
 
 ## Start here
 
-### 1. Inspect the machine without building it
+Customers and agencies can explore the [work samples](https://aurekai-work-samples.pages.dev/)
+and the [operating-products guide](https://docs.aurekai.work/operating-products).
+To inspect the current public source snapshot:
 
 ```bash
-git clone https://github.com/Nickgonzales76017/bonfyre-oss.git
-cd bonfyre-oss
-bun architecture/atlas.mjs validate
-bun architecture/atlas.mjs expand CapabilityView
-bun architecture/atlas.mjs expand EvidenceView
+git clone https://github.com/Nickgonzales76017/bonfyre.git
+cd bonfyre
 ```
 
-### 2. Run the semantic control-plane evidence
-
-```bash
-cd components/BonfyreControlPlane
-python3 -m pytest tests/ -q
-```
-
-This is the frozen reference and conformance oracle, not a second runtime.
-
-### 3. Build and inspect native capabilities
-
-```bash
-make
-./cmd/BonfyreCLI/bonfyre doctor sync-subcommands
-./cmd/BonfyreCLI/bonfyre list --health
-./cmd/BonfyreWorkflow/build/bonfyre-workflow list
-./cmd/BonfyreRecipe/build/bonfyre-recipe list
-```
-
-### 4. Run a practical observation-to-recipe path
-
-```bash
-./cmd/BonfyreWire/bonfyre-wire ingest-pcap capture.pcap --dumb-device --root layeros/state
-./cmd/BonfyreWire/bonfyre-wire probe <capture_id> --root layeros/state
-./cmd/BonfyreWire/bonfyre-wire artifacts <capture_id> --root layeros/state
-./cmd/BonfyreWire/bonfyre-wire recipe <capture_id> --root layeros/state > recipe.json
-./cmd/BonfyreStitch/bonfyre-stitch compile recipe.json --output recipe-program
-```
-
-Only use captures you own or are authorized to inspect.
-
-For a guided version, see [QUICKSTART.md](QUICKSTART.md).
-
-## Repository map
-
-| Path | Purpose |
-|---|---|
-| [`architecture/`](architecture/) | Canonical live architecture registry, generated views, maturity, witnesses, and loss reports. |
-| [`engine/`](engine/) | Native semantic kernels and conformance work. |
-| [`cmd/`](cmd/) | Native public command realizations. |
-| [`lib/`](lib/) | Shared native runtime and specialized libraries. |
-| [`schemas/`](schemas/) | Semantic and boundary contracts. |
-| [`components/BonfyreControlPlane/`](components/BonfyreControlPlane/) | Frozen Python reference/conformance oracle. |
-| [`integrations/`](integrations/) | Frappe and external-system realization work. |
-| [`docs/`](docs/) | Operator, architecture, product, model, media, and API guides. |
-| [`site/`](site/) | Public Pages projections. |
+Follow individual component requirements rather than assuming all the
+development estate is installable from `main`.
 
 ## Read next
 
+- [Client delivery and integration portfolio](docs/client-operations-portfolio.md)
+- [Guides](https://docs.aurekai.work/)
+- [Work samples](https://aurekai-work-samples.pages.dev/)
+- [Architecture overview](docs/architecture.md)
 - [Quickstart](QUICKSTART.md)
-- [Guides](https://docs.aurekai.work/): the pages in `docs/experiences`, published
-- [Work samples](https://aurekai-work-samples.pages.dev/): tools to try, and where to send a project brief
-- [Architecture](docs/architecture.md)
-- [Architecture Atlas](architecture/README.md)
-- [Operator status and drift](docs/bonfyre_status_and_drift.md)
-- [Pages runtime](docs/pages-runtime.md)
 - [Contributing](CONTRIBUTING.md)
 
 ## License
 
-[MIT](LICENSE)
+Covered Bonfÿre source is available under the
+[PolyForm Shield License 1.0.0](LICENSE). Separately licensed components and
+previously distributed versions retain their applicable terms.

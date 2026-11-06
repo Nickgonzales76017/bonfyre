@@ -1,4 +1,5 @@
 import {
+  compileIntegrationBatchCut,
   executeIntegration,
   executeStateMachineBatch,
   executeSurfaceBatch,
@@ -38,6 +39,12 @@ export const CONTINUITY_CORE_VERSION = "aurekai.continuity_core.v2";
 
 export function listKernelTargets(repoRoot, options = {}) {
   return listIntegrationTargets(repoRoot, options);
+}
+
+// A virtual, invocation-scoped policy/target cut for independent consumers.
+// It never represents authorization or a persistent materialized package.
+export function compileKernelIntegrationCut(repoRoot) {
+  return compileIntegrationBatchCut(repoRoot);
 }
 
 export function runKernelIntegration(repoRoot, input) {

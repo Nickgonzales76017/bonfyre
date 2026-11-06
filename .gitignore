@@ -100,6 +100,17 @@ integrations/frappe-bench/
 /output/
 
 # Generated projections are reproducible; explicitly added witnesses remain tracked.
+# Local operator state, hooks and run receipts are not source.
+# These patterns only cover untracked files; private release scanning is
+# still required, and existing Git history is not affected.
+/.bonfyre/
+/.run6/
+/.bonfyre-runtime/agent-sessions/
+/.bonfyre-runtime/patch-backups/
+/.bonfyre-runtime/connection-bin/
+.claude/settings.local.json
+
+# Rebuildable output and transient delivery artifacts.
 /generated/projections/**
 !/generated/projections/estate/
 !/generated/projections/estate/**
@@ -121,7 +132,6 @@ packs/fleming-equity-group/
 services/bonfyre-restate-native/target/
 
 # Personal Claude Code grants; shared config lives in .claude/settings.json
-.claude/settings.local.json
 
 # Host-origin AgentSession observations written by the Claude Code hooks.
 # Observations about a run, not repository source.
@@ -140,6 +150,12 @@ packs/upper90/
 # evidence, not repository history. The generated C headers in these same
 # directories are what the native organs compile against, so they stay: this
 # names the bulk, never the whole directory.
+services/*/target/
+deploy/fly/seed/*.tar.gz
+site/matrix/duckdb-eh.wasm
+
+# Retained external observation bodies and sampled pipeline bulk.
+# Source receipts belong in Git; bulk external bodies generally do not.
 cmd/*/generated/*.body
 cmd/*/generated/*.jsonl
 cmd/*/generated/*.tsv
@@ -148,15 +164,11 @@ cmd/*/generated/ingest_*/
 estate/generated/**/*.jsonl
 
 # Estate run state written beside the repository rather than under $HOME.
-/.bonfyre/
-/.run6/
 
 # The Fly seed image: a 28 MB tarball rebuilt from this tree.
-deploy/fly/seed/*.tar.gz
 
 # The DuckDB engine served to a reader's tab: 32.7 MB of WebAssembly, pinned by
 # version and digest. `scripts/fetch_web_assets.sh` puts it back.
-site/matrix/duckdb-eh.wasm
 
 # Runtime working files the hooks leave beside the repository: pre-edit backups
 # of source that is already tracked, and built helper binaries. Observations
@@ -175,3 +187,14 @@ deploy/worker/edge-assets/
 
 # W4 command-vector runner (built by tests/vectors/Makefile)
 tests/vectors/bonfyre-vectors
+
+# Local environment overrides and authentication settings.
+**/.env.local
+**/.env.development
+**/.env.production
+**/.env.test.local
+
+# May 2026 integration repo stubs are generated templates, never actual Gitlinks.
+# Regenerate them on demand from Aurekai/registry instead of tracking hundreds
+# of JSON manifests as pretend source repositories.
+Aurekai/generated/integration-repos/

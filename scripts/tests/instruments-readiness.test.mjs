@@ -1,0 +1,10 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+import {parseProjection,probeMember,waitForProjection} from '../instruments-readiness.mjs';
+const bytes=Buffer.from('export const actual=1;'),sha=createHash('sha256').update(bytes).digest('hex'),member={projection:'reader.mjs',sha256:sha,bytes:bytes.length};
+test('strict manifest retains exact module identity',()=>assert.deepEqual(parseProjection(`source\tprojection\tsha256\tbytes\na\treader.mjs\t${sha}\t${bytes.length}\n`),[member]));
+for(const name of ['../other.js','/absolute.js','x//reader.js','x/./reader.js'])test('reject unsafe member '+name,()=>assert.throws(()=>parseProjection(`source\tprojection\tsha256\tbytes\na\t${name}\t${sha}\t1\n`)));
+test('matching response is checked byte for byte',async()=>assert((await probeMember('https://example.org/instruments/',member,{request:async()=>new Response(bytes)})).ok));
+test('HTTP success with wrong content is not readiness',async()=>assert.equal((await probeMember('https://example.org/instruments/',member,{request:async()=>new Response(Buffer.from('export const actual=2;'))})).ok,false));
+test('oversized response is canceled and refused',async()=>assert.equal((await probeMember('https://example.org/instruments/',member,{request:async()=>new Response(Buffer.concat([bytes,bytes]))})).reason,'Body exceeds expected length'));
+test('only reads retry; a partial origin must supply all members',async()=>{let calls=0;const r=await waitForProjection('https://example.org/instruments/',[member],{delay:0,pause:async()=>{},request:async(url,options)=>{assert.equal(options.method,'GET');assert.equal(options.redirect,'error');return ++calls===1?new Response('not here',{status:404}):new Response(bytes);}});assert.equal(r.ok,true);assert.equal(r.rounds.length,2);});
+test('readiness failure is bounded and retained',async()=>{let n=0;const r=await waitForProjection('https://example.org/instruments/',[member],{pause:async()=>{},request:async()=>{n++;return new Response('missing',{status:404});}});assert.equal(n,3);assert.equal(r.ok,false);assert.equal(r.rounds.length,3);});

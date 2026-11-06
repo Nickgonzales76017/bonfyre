@@ -1,0 +1,24 @@
+/* Restricted to the account component. Never resets a donor page's grids, imagery or typography. */
+[data-ak-session]{position:relative;display:flex;align-items:center;gap:12px;font:500 13px/1.45 system-ui,sans-serif;color:inherit}
+[data-ak-session] [hidden], [data-ak-anonymous][hidden]{display:none!important}
+[data-ak-session] a{text-decoration:none;color:inherit}
+[data-ak-session] button{font:inherit;cursor:pointer;border:1px solid currentColor;border-radius:8px;background:transparent;color:inherit;padding:8px 12px}
+[data-ak-session] :is(a,button,summary):focus-visible{outline:3px solid #649ac2;outline-offset:4px}
+[data-ak-session] button:disabled{cursor:wait;opacity:.7}
+[data-ak-session] .ak-account-menu{position:relative;margin:0;padding:0;border:0;background:transparent}
+[data-ak-session] .ak-account-trigger{display:flex;align-items:center;gap:9px;cursor:pointer;list-style:none;border:1px solid #7b8d7d55;border-radius:999px;padding:5px 10px 5px 5px;min-height:38px;max-width:240px;transition:background .18s,box-shadow .18s}
+[data-ak-session] .ak-account-trigger::-webkit-details-marker{display:none}
+[data-ak-session] .ak-account-trigger:hover,[data-ak-session] details[open]>.ak-account-trigger{background:#a3b69824;box-shadow:0 2px 9px #0001}
+[data-ak-session] .ak-account-avatar{display:grid;place-items:center;flex:none;width:28px;height:28px;border-radius:50%;background:#d4e3ae;color:#283927;font-weight:750}
+[data-ak-session] .ak-account-name{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:150px}
+[data-ak-session] .ak-account-caret{font-size:15px;opacity:.65}
+[data-ak-session] .ak-account-panel{position:absolute;inset-inline-end:0;top:calc(100% + 10px);display:flex;flex-direction:column;width:min(275px,calc(100vw - 24px));padding:10px;background:#fffef8;color:#23342a;border:1px solid #d2dccc;border-radius:14px;box-shadow:0 18px 50px #152b2b26;z-index:10000;animation:ak-account-open .16s ease-out}
+[data-ak-session] .ak-account-panel a{padding:11px 12px;border-radius:7px;font-weight:550;transition:background .16s,transform .16s}
+[data-ak-session] .ak-account-panel a:hover{background:#eaf1df;transform:translateX(2px)}
+[data-ak-session] .ak-account-eyebrow{font-size:10px;letter-spacing:.16em;color:#667a65;padding:10px 12px}
+[data-ak-session] .ak-account-signout{text-align:start;border:0;border-top:1px solid #dce3d4;border-radius:0;margin-top:8px;padding:13px 12px;color:#674337}
+[data-ak-session] .ak-account-status{font-size:11px;max-width:255px;margin:0;line-height:1.5}
+[data-ak-session] .ak-account-status:not(:empty){padding:9px 12px;color:#754533}
+@keyframes ak-account-open{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media(max-width:460px){[data-ak-session] .ak-account-name{max-width:90px}}
+@media(prefers-reduced-motion:reduce){[data-ak-session] *,[data-ak-session] *::before,[data-ak-session] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

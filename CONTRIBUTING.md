@@ -92,4 +92,4 @@ For client tools and outreach, also use [client-sales](.agents/skills/client-sal
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+Review the repository [license](LICENSE) and any component-specific notices before contributing. This guide does not create a separate contributor license or override an existing license.
