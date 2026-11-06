@@ -1,0 +1,57 @@
+twin_id	source_url	policy_decision	http_status	body_bytes	observed_at	qualification
+acq-network-amadeus-dev-20261106	https://developers.amadeus.com/	allow	200	13858	2026-11-06T15:35:09Z	observable: review rights, terms and API before any listing
+acq-network-angi-20261106	https://www.angi.com/	allow	403	4544	2026-11-06T15:35:30Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-apartments-20261106	https://www.apartments.com/	robots_preflight_unavailable	0	0	2026-11-06T15:35:30Z	not fetched: robots_preflight_unavailable
+acq-network-attom-20261106	https://www.attomdata.com/	allow	200	366111	2026-11-06T15:35:31Z	observable: review rights, terms and API before any listing
+acq-network-beckett-grading-20261106	https://www.beckett.com/grading	robots_preflight_unavailable	0	0	2026-11-06T15:35:49Z	not fetched: robots_preflight_unavailable
+acq-network-biddr-20261106	https://www.biddr.com/	allow	429	15317	2026-11-06T15:35:49Z	rate limited: retry later at the source pace
+acq-network-bokun-20261106	https://www.bokun.io/	allow	200	498948	2026-11-06T15:35:50Z	observable: review rights, terms and API before any listing
+acq-network-ccg-group-companies-20261106	https://www.collectiblesgroup.com/companies/	allow	200	44015	2026-11-06T15:36:08Z	observable: review rights, terms and API before any listing
+acq-network-cgc-certification-home-20261106	https://www.cgccomics.com/	allow	200	60664	2026-11-06T15:36:25Z	observable: review rights, terms and API before any listing
+acq-network-ebay-browse-developer-20261106	https://developer.ebay.com/develop/api/buy/browse_api	allow	403	1832	2026-11-06T15:36:39Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-eventbrite-20261106	https://www.eventbrite.com/	allow	200	242564	2026-11-06T15:36:41Z	observable: review rights, terms and API before any listing
+acq-network-fareharbor-20261106	https://fareharbor.com/	allow	200	146342	2026-11-06T15:36:56Z	observable: review rights, terms and API before any listing
+acq-network-getyourguide-20261106	https://www.getyourguide.com/	robots_preflight_unavailable	0	0	2026-11-06T15:37:17Z	not fetched: robots_preflight_unavailable
+acq-network-greatcollections-20261106	https://www.greatcollections.com/	allow	200	216456	2026-11-06T15:37:17Z	observable: review rights, terms and API before any listing
+acq-network-heritage-auctions-20261106	https://www.ha.com/	allow	403	766	2026-11-06T15:37:33Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-hibid-20261106	https://hibid.com/	allow	200	247923	2026-11-06T15:37:34Z	observable: review rights, terms and API before any listing
+acq-network-homes-com-20261106	https://www.homes.com/	robots_preflight_unavailable	0	0	2026-11-06T15:37:50Z	not fetched: robots_preflight_unavailable
+acq-network-housecallpro-20261106	https://www.housecallpro.com/	allow	200	378222	2026-11-06T15:37:51Z	observable: review rights, terms and API before any listing
+acq-network-houzz-20261106	https://www.houzz.com/	allow	200	953519	2026-11-06T15:38:09Z	observable: review rights, terms and API before any listing
+acq-network-invaluable-20261106	https://www.invaluable.com/	allow	200	360645	2026-11-06T15:38:24Z	observable: review rights, terms and API before any listing
+acq-network-jobber-20261106	https://www.getjobber.com/	allow	403	5461	2026-11-06T15:38:39Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-liveauctioneers-20261106	https://www.liveauctioneers.com/	allow	200	958428	2026-11-06T15:38:39Z	observable: review rights, terms and API before any listing
+acq-network-ngc-certificate-lookup-20261106	https://www.ngccoin.com/certlookup/	allow	403	5513	2026-11-06T15:38:55Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-ngc-certification-home-20261106	https://www.ngccoin.com/	allow	200	64091	2026-11-06T15:38:55Z	observable: review rights, terms and API before any listing
+acq-network-numisbid-20261106	https://www.numisbids.com/	allow	403	5482	2026-11-06T15:39:12Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-numisbids-auction-network-20261106	https://www.numisbids.com/	allow	403	5482	2026-11-06T15:39:12Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-openrouter-model-catalog-20261106	https://openrouter.ai/api/v1/models	allow	200	813257	2026-11-06T15:39:13Z	observable: review rights, terms and API before any listing
+acq-network-openstreetmap-20261106	https://www.openstreetmap.org/	allow	200	31565	2026-11-06T15:39:30Z	observable: review rights, terms and API before any listing
+acq-network-pcgs-publicapi-20261106	https://www.pcgs.com/publicapi/documentation	robots_preflight_unavailable	0	0	2026-11-06T15:39:51Z	not fetched: robots_preflight_unavailable
+acq-network-pmg-certificate-lookup-20261106	https://www.pmgnotes.com/certlookup/	allow	403	5536	2026-11-06T15:39:51Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-pmg-certification-home-20261106	https://www.pmgnotes.com/	allow	200	56389	2026-11-06T15:39:52Z	observable: review rights, terms and API before any listing
+acq-network-pricecharting-20261106	https://www.pricecharting.com/	allow	200	57891	2026-11-06T15:40:08Z	observable: review rights, terms and API before any listing
+acq-network-proxibid-20261106	https://www.proxibid.com/	allow	200	1621001	2026-11-06T15:40:25Z	observable: review rights, terms and API before any listing
+acq-network-psa-certification-20261106	https://www.psacard.com/cert	robots_preflight_unavailable	0	0	2026-11-06T15:40:41Z	not fetched: robots_preflight_unavailable
+acq-network-realtor-20261106	https://www.realtor.com/	allow	429	19589	2026-11-06T15:40:41Z	rate limited: retry later at the source pace
+acq-network-rentcast-20261106	https://www.rentcast.io/	allow	200	27345	2026-11-06T15:40:42Z	observable: review rights, terms and API before any listing
+acq-network-reso-mcp-20261106	https://tools.reso.org/packages/reso-mcp-server/	allow	200	61822	2026-11-06T15:40:56Z	observable: review rights, terms and API before any listing
+acq-network-reso-web-api-20261106	https://www.reso.org/reso-web-api/	allow	200	135319	2026-11-06T15:41:18Z	observable: review rights, terms and API before any listing
+acq-network-servicetitan-developer-20261106	https://developer.servicetitan.io/	allow	200	452	2026-11-06T15:41:35Z	observable but thin: page body under 2 KB, verify the real entry point
+acq-network-simpleview-20261106	https://www.simpleviewinc.com/	allow	200	301017	2026-11-06T15:41:50Z	observable: review rights, terms and API before any listing
+acq-network-sixbid-auction-network-20261106	https://www.sixbid.com/	allow	200	13886	2026-11-06T15:42:06Z	observable: review rights, terms and API before any listing
+acq-network-stacksbowers-20261106	https://stacksbowers.com/	allow	403	5459	2026-11-06T15:42:23Z	refused by source: needs a permitted API or partnership; no bypass
+acq-network-stripe-agentic-commerce-docs-20261106	https://docs.stripe.com/agentic-commerce	allow	200	430556	2026-11-06T15:42:24Z	observable: review rights, terms and API before any listing
+acq-network-stripe-link-20261106	https://link.com/	allow	200	62125	2026-11-06T15:42:55Z	observable: review rights, terms and API before any listing
+acq-network-thumbtack-20261106	https://www.thumbtack.com/	allow	200	200110	2026-11-06T15:43:17Z	observable: review rights, terms and API before any listing
+acq-network-ticketmaster-dev-20261106	https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/	allow	200	1417566	2026-11-06T15:43:34Z	observable: review rights, terms and API before any listing
+acq-network-tourismexchangeusa-20261106	https://www.tourismexchangeusa.com/	allow	200	175411	2026-11-06T15:43:51Z	observable: review rights, terms and API before any listing
+acq-network-vcoins-20261106	https://www.vcoins.com/	allow	200	130687	2026-11-06T15:44:07Z	observable: review rights, terms and API before any listing
+acq-network-viator-20261106	https://www.viator.com/	robots_preflight_unavailable	0	0	2026-11-06T15:44:24Z	not fetched: robots_preflight_unavailable
+acq-network-visit-alexandria-official-20261106	https://www.visitalexandria.com/	allow	200	588488	2026-11-06T15:44:24Z	observable: review rights, terms and API before any listing
+acq-network-visit-group-open-apis-20261106	https://visit.com/open-apis	allow	200	249010	2026-11-06T15:44:43Z	observable: review rights, terms and API before any listing
+acq-network-visit-network-home-20261106	https://visit.network/	allow	200	97490	2026-11-06T15:44:57Z	observable: review rights, terms and API before any listing
+acq-network-visitdallas-20261106	https://www.visitdallas.com/	allow	200	533949	2026-11-06T15:45:14Z	observable: review rights, terms and API before any listing
+acq-network-visitfortworth-20261106	https://www.fortworth.com/	allow	200	4932603	2026-11-06T15:45:31Z	observable: review rights, terms and API before any listing
+acq-network-wavebid-20261106	https://www.wavebid.com/	allow	200	9316	2026-11-06T15:45:47Z	observable: review rights, terms and API before any listing
+acq-network-zillow-20261106	https://www.zillow.com/	allow	403	5776	2026-11-06T15:46:03Z	refused by source: needs a permitted API or partnership; no bypass
