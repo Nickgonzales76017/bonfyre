@@ -232,6 +232,7 @@ export function createFabricStore({ home, projectRoot, worktreeRoot, now = () =>
     });
   }
   function releaseTaskLocks(id) { identity(id); return write('DELETE FROM locks WHERE task_id=?',id).changes; }
+  function releaseLock(name,id) { identity(id); return write('DELETE FROM locks WHERE name=? AND task_id=?',repositoryLock(text(name,'lock',256)),id).changes; }
   function writeText(path,value) {
     text(value,'file body',MAX_BYTES,true); return writeBytes(path,Buffer.from(value));
   }
@@ -606,6 +607,6 @@ export function createFabricStore({ home, projectRoot, worktreeRoot, now = () =>
   const push=createFabricPushStore({get,all,write,atomic,clock,binding:fabricActivityBinding,fail:activityFail});
   function close() { if (connection) connection.close(); connection = null; closed = true; }
   return Object.freeze({home,projectRoot,worktreeRoot,dbPath,logDir,taskDir,receiptDir,createTask,task,claimTask,updateTask,cancelTask,isTaskCancelled,
-    recordEvent,events,safeEvents,acquireLock,releaseTaskLocks,writeText,readText,parseJsonLines,createRun,finishRun,session,saveReceipt,taskStatus,taskSummary,recentReceipts,summary,createWorktree,verifySourceSnapshot,diffPayload,close,
+    recordEvent,events,safeEvents,acquireLock,releaseLock,releaseTaskLocks,writeText,readText,parseJsonLines,createRun,finishRun,session,saveReceipt,taskStatus,taskSummary,recentReceipts,summary,createWorktree,verifySourceSnapshot,diffPayload,close,
     createScopedTask,taskScope,findScopedTask,readReceipt,completeModelUsage,activityRead,notificationAction,push});
 }

@@ -280,12 +280,14 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
     if (task.apply_to_project && typeof projectTool !== 'function') throw stopError('Project patch owner unavailable before relay execution');
     if (!store.acquireLock(task.apply_to_project ? 'worktree-write' : `worktree-write:${taskId}`, taskId, 10800)) throw fail('write relay lane is busy'); // isolated, non-applying relays run in parallel
     check(taskId);
-    const { worktree, branch, base_commit, source_snapshot } = await store.createWorktree(taskId, { base: policy.default_base || 'HEAD', signal: taskAborts.get(taskId)?.signal });
+    for (let waited = 0; !store.acquireLock(`worktree-create:${projectRoot}`, taskId, 900); waited += 2) { if (waited > 900) throw fail('worktree creation lane is busy'); check(taskId); await new Promise(r => setTimeout(r, 2000)); } // git worktree add is not concurrency-safe on one repository
+    let created; try { created = await store.createWorktree(taskId, { base: policy.default_base || 'HEAD', signal: taskAborts.get(taskId)?.signal }); } finally { store.releaseLock?.(`worktree-create:${projectRoot}`, taskId); }
+    const { worktree, branch, base_commit, source_snapshot } = created;
     if (source_snapshot) prompt += `\n\nSOURCE BASELINE: ${base_commit}. ${source_snapshot.files.length} explicit current-source files were captured before execution. All other paths remain at the configured Git base. Source manifest: ${source_snapshot.receipt.path}. Review changes against ${base_commit}; never include the input snapshot itself as an implementation change.`;
     const plan = ensureRun(await agent(taskId, policy?.stage_agents?.['architect-plan'] || 'claude', 'architect-plan',
       `Plan this change in the real Bonfyre repository. Map affected planes and exact files. Do not edit. Produce a constrained implementation plan, tests, live verification, and rollback contract.\n\nMISSION:\n${prompt}`,
       worktree), 'architect plan');
-    const implementation = ensureRun(await agent(taskId, 'codex', 'implementation',
+    const implementation = ensureRun(await agent(taskId, policy?.stage_agents?.['implementation'] || 'codex', 'implementation',
       `Implement the mission in this isolated Git worktree. Verify the plan against source, make the smallest coherent change, add tests, and leave a clean reviewable diff. Do not push.\n\nMISSION:\n${prompt}\n\nCLAUDE PLAN:\n${trim(plan.final, 120000)}`,
       worktree, { write: true }), 'implementation');
     check(taskId);
@@ -321,7 +323,7 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
       worktree), 'adversarial review');
     const reviewVerdict = typedVerdict(review.final);
     const cleanReview = reviewVerdict?.state === 'resolved' && reviewVerdict.evidence.length > 0 && reviewVerdict.blocking_findings.length === 0;
-    const repair = cleanReview ? { state: 'skipped', reason: 'structured_review_has_no_repair_findings' } : ensureRun(await agent(taskId, 'codex', 'review-repair',
+    const repair = cleanReview ? { state: 'skipped', reason: 'structured_review_has_no_repair_findings' } : ensureRun(await agent(taskId, policy?.stage_agents?.['review-repair'] || 'codex', 'review-repair',
       `Address every valid review finding in this worktree. Reject incorrect findings with source evidence. Run targeted tests and leave the final diff ready for independent verification. Do not push.\n\nMISSION:\n${prompt}\n\nCLAUDE REVIEW:\n${trim(review.final, 120000)}`,
       worktree, { write: true }), 'review repair');
     let tests = await testCommands(taskId, worktree, base_commit);
@@ -332,7 +334,7 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
     // A repeated failure terminates without spending final-review stages.
     if (!testsPassed && policy.repair_failed_tests !== false) {
       failedTestReceipt = receipt(taskId, 'relay-failed-tests', tests);
-      testRepair = ensureRun(await agent(taskId, 'codex', 'test-repair',
+      testRepair = ensureRun(await agent(taskId, policy?.stage_agents?.['test-repair'] || 'codex', 'test-repair',
         `Repair the implementation in this existing worktree using the failed test evidence. Preserve test requirements and existing tests; do not weaken or remove tests to get a pass. Do not push. This is the one bounded test-repair attempt before the owner reruns verification.\n\nMISSION:\n${prompt}\n\nFAILED TEST RESULTS:\n${trim(JSON.stringify(tests), 60000)}`,
         worktree, { write: true }), 'test repair');
       tests = await testCommands(taskId, worktree, base_commit);
