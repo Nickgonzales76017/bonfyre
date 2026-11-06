@@ -14,6 +14,7 @@ test: $(TARGET)
 	bun test ../../scripts/tests/warehouse_catalog_audit.test.mjs ../../scripts/tests/representation_manifold_warehouse_head.test.mjs tests/native_warehouse.test.mjs
 	bun test ../../integrations/browser/tests/warehouse-portfolio.test.mjs
 	bun test ../../integrations/browser/tests/repository-cuts.test.mjs
+	bun test ../../integrations/browser/tests/repository-pack-review.test.mjs
 	bun test ../../integrations/browser/tests/repository-cut-intake.test.mjs
 	bun test ../../integrations/browser/tests/repository-pack-intake.test.mjs
 	bun test ../../integrations/browser/tests/repository-fpq-review.test.mjs
