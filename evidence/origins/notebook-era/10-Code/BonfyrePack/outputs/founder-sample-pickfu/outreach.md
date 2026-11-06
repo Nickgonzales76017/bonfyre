@@ -1,0 +1,1 @@
+I packaged `Founder Sample - PickFu` into a local-first deliverable flow that returns a transcript, summary, and next steps without relying on a SaaS stack. If you have one messy recording, I can turn it into a decision-ready asset quickly.

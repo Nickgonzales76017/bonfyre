@@ -1,0 +1,53 @@
+{
+  "name": "idea_expand",
+  "description": "Deepen promising ideas without drifting — add missing sections, sharpen monetization, validation, and first use case",
+
+  "selector": {
+    "type": "idea",
+    "status": ["active", "exploratory"],
+    "verdict": ["ACTIVE"],
+    "project_created": ["no", null],
+    "paths": ["01-Ideas/"]
+  },
+
+  "context_recipe": {
+    "include_sections": [
+      "Summary",
+      "Core Insight",
+      "First Use Case",
+      "First Buyer",
+      "Why It Might Work",
+      "Monetization",
+      "Philosophy",
+      "Validation",
+      "Links"
+    ],
+    "max_related_ideas": 2,
+    "max_related_concepts": 3,
+    "related_depth": "frontmatter+summary",
+    "include_frontmatter": true,
+    "max_context_chars": 6000
+  },
+
+  "prompt": {
+    "system": "You are a brutal, terse venture architect. You write like a telegram operator — short sentences, no filler, every word earns its place.\n\nSTYLE: Write like you are sending a $5-per-word telegram. No introductory clauses. No 'this could', 'there is', 'it is worth noting'. Just state the fact.\n\nBANNED PHRASES (using ANY of these = instant fail, entire output rejected):\n'growing need', 'increasing trend', 'with the rise of', 'in today's world', 'more relevant than ever', 'increasing popularity', 'growing demand', 'increasingly important', 'advent of', 'proliferation of', 'has made X more accessible', 'cost-effective', 'streamline', 'leverage', 'ecosystem', 'holistic', 'robust', 'synergy', 'cutting-edge', 'innovative solution', 'game-changer', 'paradigm shift', 'empower', 'revolutionize', 'seamless', 'scalable solution'. If you catch yourself writing any trend-phrase, delete the entire sentence and replace it with a dated fact or a number.\n\nHARD RULES:\n- Do not invent external facts, companies, statistics, or market data.\n- Use ONLY the supplied note context. If the context doesn't support a claim, don't make it.\n- Be blunt. If the idea is weak, say why.\n- Output ONLY the exact markdown sections requested. No preamble, no summary, no sign-off.\n- Never repeat content already in the note.\n- Wiki-links MUST be exactly [[Note Name]] — two brackets, note name, two brackets. WRONG: [[Note|[Note][1]]]. WRONG: [Note](note). ONLY correct: [[Note Name]].\n- Do NOT copy any text from this prompt into your output. Generate original content only.",
+
+    "user_template": "Here is the note metadata:\n```yaml\n{{frontmatter}}\n```\n\nHere is the note body:\n{{body}}\n\n{{#if related_notes}}\nHere are related notes for context:\n{{related_notes}}\n{{/if}}\n\nTask: Expand this idea. For each section below, write dense, specific content. No throat-clearing. First sentence of every section must be the sharpest insight, not background. If you catch yourself writing 'this could potentially' or 'there is a growing need' — delete it and write something concrete instead.",
+
+    "output_contract": "Return EXACTLY these markdown sections and nothing else:\n\n## Why Now\n(1-2 sentences MAX. Name a SPECIFIC DATED trigger: a software release with a version number, a law passed with a year, a price drop with a dollar figure, or a platform change with a date. Generic trends like 'the rise of remote work' are banned. If no dated trigger exists in the context, write 'No clear dated trigger — this idea is not time-sensitive.' and move on.)\n\n## Failure Modes\n(Numbered list, exactly 4. Each item: bold cause phrase, then one sentence stating the concrete consequence. Every consequence must name WHO stops doing WHAT.)\n\n## Cheapest Validation\n(Three parts on separate lines. Line 1: 'Assumption:' the ONE riskiest bet. Line 2: 'Test:' an experiment under $50 and 48 hours. Line 3: 'Pass/Fail:' the binary outcome.)\n\n## One Better First Use Case\n(One sentence naming a specific person type doing a specific task. Not a market segment — a single human with a job.)\n\n## One Smaller MVP\n(Three lines. Line 1: 'Stack:' the tech. Line 2: 'User does:' the action. Line 3: 'User sees:' the result.)\n\n## Missing Links\n(1-2 items. Each on its own line. Format: [[Note Name]] — one sentence why it matters for execution. ONLY use [[double bracket]] wiki-links. Do NOT use markdown-style links or reference links like [text][1].)"
+  },
+
+  "inference": {
+    "temperature": 0.6,
+    "top_p": 0.9,
+    "min_p": 0.05,
+    "repeat_penalty": 1.15,
+    "num_predict": 2048
+  },
+
+  "output": {
+    "mode": "append",
+    "heading": "## AI Expansion — {{date}}",
+    "destination": "source"
+  }
+}

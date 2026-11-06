@@ -1,0 +1,202 @@
+#define _POSIX_C_SOURCE 200809L
+/*
+ * BonfyreWarehouse: native, read-only inspection of derived warehouse
+ * snapshot heads in the canonical Representation Manifold.
+ *
+ * Does not install/bind heads, execute arbitrary SQL, or open physical data.
+ * The existing manifold head owner is the only writer.
+ */
+#include <sqlite3.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <limits.h>
+
+static void json_string(const char *s) {
+  putchar('"');
+  if (!s) s = "";
+  for (const unsigned char *p = (const unsigned char *)s; *p; p++) {
+    if (*p == '"' || *p == '\\') { putchar('\\'); putchar((char)*p); }
+    else if (*p < 32) printf("\\u%04x", *p);
+    else putchar((char)*p);
+  }
+  putchar('"');
+}
+static int key(const char *s) {
+  size_t n = s ? strlen(s) : 0;
+  if (!n || n > 240) return 0;
+  for (size_t i = 0; i < n; i++) {
+    unsigned char c = (unsigned char)s[i];
+    if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+        (c >= '0' && c <= '9') || c == '_' || c == '.' || c == ':' ||
+        c == '/' || c == '-')) return 0;
+  }
+  return 1;
+}
+static int table_exists(sqlite3 *db, const char *table) {
+  sqlite3_stmt *stmt = NULL;
+  int exists = 0;
+  if (sqlite3_prepare_v2(db, "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", -1, &stmt, 0) != SQLITE_OK)
+    return -1;
+  sqlite3_bind_text(stmt, 1, table, -1, SQLITE_TRANSIENT);
+  int rc = sqlite3_step(stmt);
+  if (rc == SQLITE_ROW) exists = 1;
+  else if (rc != SQLITE_DONE) exists = -1;
+  sqlite3_finalize(stmt);
+  return exists;
+}
+static int count_rows(sqlite3 *db, const char *sql, sqlite3_int64 *value) {
+  sqlite3_stmt *stmt = NULL;
+  if (sqlite3_prepare_v2(db, sql, -1, &stmt, 0) != SQLITE_OK) return 0;
+  int rc = sqlite3_step(stmt);
+  if (rc == SQLITE_ROW) *value = sqlite3_column_int64(stmt, 0);
+  sqlite3_finalize(stmt);
+  return rc == SQLITE_ROW;
+}
+static int status(sqlite3 *db) {
+  sqlite3_int64 instances = 0, physical = 0, binding = 0, heads = 0;
+  int installed = table_exists(db, "warehouse_snapshot_head");
+  if (installed < 0 || table_exists(db, "representation_instance") != 1 ||
+      table_exists(db, "physical_realization") != 1 ||
+      table_exists(db, "source_binding") != 1) return 0;
+  if (!count_rows(db, "SELECT COUNT(*) FROM representation_instance", &instances) ||
+      !count_rows(db, "SELECT COUNT(*) FROM physical_realization WHERE available=1", &physical) ||
+      !count_rows(db, "SELECT COUNT(*) FROM source_binding", &binding)) return 0;
+  if (installed && !count_rows(db, "SELECT COUNT(*) FROM warehouse_snapshot_head", &heads)) return 0;
+  printf("{\"state\":\"READ_ONLY\",\"warehouse_heads_installed\":%s,"
+         "\"heads\":%lld,\"representation_instances\":%lld,"
+         "\"available_realizations\":%lld,\"source_bindings\":%lld,"
+         "\"physical_bytes_verified\":false,\"execution_authority\":false}\n",
+         installed ? "true" : "false", (long long)heads, (long long)instances,
+         (long long)physical, (long long)binding);
+  return 1;
+}
+/* Classify unreachable metadata, never delete it. Historical receipts and
+ * representations may legitimately outlive their materialized bodies. */
+static int integrity(sqlite3 *db) {
+  sqlite3_int64 dangling_body = 0, dangling_edge = 0, dangling_receipt = 0, stale_head = 0;
+  if (table_exists(db, "representation_instance") != 1 ||
+      table_exists(db, "physical_realization") != 1 ||
+      table_exists(db, "representation_edge") != 1 ||
+      table_exists(db, "eviction_receipt") != 1 ||
+      table_exists(db, "source_binding") != 1) return 0;
+  if (!count_rows(db, "SELECT COUNT(*) FROM physical_realization p "
+      "WHERE NOT EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=p.representation_id)", &dangling_body) ||
+      !count_rows(db, "SELECT COUNT(*) FROM representation_edge e WHERE "
+      "NOT EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=e.parent_representation_id) "
+      "OR NOT EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=e.child_representation_id)",
+      &dangling_edge) ||
+      !count_rows(db, "SELECT COUNT(*) FROM eviction_receipt er "
+      "WHERE NOT EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=er.representation_id)",
+      &dangling_receipt)) return 0;
+  if (table_exists(db, "warehouse_snapshot_head") == 1 &&
+      !count_rows(db, "SELECT COUNT(*) FROM warehouse_snapshot_head h "
+        "WHERE NOT EXISTS(SELECT 1 FROM source_binding sb WHERE "
+        "sb.semantic_kind=h.semantic_kind AND sb.representation_kind=h.representation_kind) "
+        "OR NOT EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=h.representation_id "
+        "AND ri.digest=h.digest AND ri.frontier=h.frontier AND ri.state='physical' "
+        "AND EXISTS(SELECT 1 FROM physical_realization pr WHERE pr.representation_id=ri.id "
+        "AND pr.available=1 AND pr.digest=ri.digest))", &stale_head)) return 0;
+  printf("{\"state\":\"METADATA_INTEGRITY_OBSERVED\",\"dangling_realizations\":%lld,"
+    "\"dangling_edges\":%lld,\"dangling_eviction_receipts\":%lld,"
+    "\"stale_heads\":%lld,\"deleted\":0,\"safe_to_delete_inferred\":false}\n",
+    (long long)dangling_body, (long long)dangling_edge,
+    (long long)dangling_receipt, (long long)stale_head);
+  return 1;
+}
+static int head(sqlite3 *db, const char *semantic, const char *kind, int explain) {
+  if (!key(semantic) || !key(kind)) return 0;
+  if (table_exists(db, "warehouse_snapshot_head") != 1) {
+    puts("{\"state\":\"NOT_INSTALLED\",\"head\":null}");
+    return 1;
+  }
+  const char *select_sql = "SELECT h.generation,h.representation_id,h.digest,h.frontier,h.created_at,"
+    "EXISTS(SELECT 1 FROM representation_instance ri WHERE ri.id=h.representation_id "
+    "AND ri.schema_ref=h.semantic_kind AND ri.kind=h.representation_kind "
+    "AND ri.digest=h.digest AND ri.frontier=h.frontier AND ri.created_at=h.created_at "
+    "AND ri.state='physical' AND EXISTS(SELECT 1 FROM physical_realization pr "
+    "WHERE pr.representation_id=ri.id AND pr.available=1 AND pr.digest=ri.digest)) "
+    "FROM warehouse_snapshot_head h WHERE h.semantic_kind=? AND h.representation_kind=?";
+  const char *plan_sql = "EXPLAIN QUERY PLAN SELECT generation FROM warehouse_snapshot_head "
+    "WHERE semantic_kind=? AND representation_kind=?";
+  sqlite3_stmt *stmt = NULL;
+  if (sqlite3_prepare_v2(db, explain ? plan_sql : select_sql, -1, &stmt, 0) != SQLITE_OK)
+    return 0;
+  sqlite3_bind_text(stmt, 1, semantic, -1, SQLITE_TRANSIENT);
+  sqlite3_bind_text(stmt, 2, kind, -1, SQLITE_TRANSIENT);
+  int rc = sqlite3_step(stmt);
+  if (explain) {
+    if (rc == SQLITE_ROW) {
+      const char *plan = (const char *)sqlite3_column_text(stmt, 3);
+      printf("{\"state\":\"QUERY_PLAN\",\"plan\":");
+      json_string(plan);
+      puts(",\"physical_bytes_verified\":false}");
+    }
+  } else if (rc == SQLITE_ROW) {
+    if (sqlite3_column_int(stmt, 5) != 1) {
+      puts("{\"state\":\"STALE_HEAD_REFUSED\",\"head\":null}");
+    } else {
+      printf("{\"state\":\"METADATA_HEAD_CURRENT\",\"generation\":%lld,\"representation_id\":",
+        (long long)sqlite3_column_int64(stmt, 0));
+      json_string((const char *)sqlite3_column_text(stmt, 1));
+      printf(",\"digest\":"); json_string((const char *)sqlite3_column_text(stmt, 2));
+      printf(",\"frontier\":"); json_string((const char *)sqlite3_column_text(stmt, 3));
+      puts(",\"physical_bytes_verified\":false,\"execution_authority\":false}");
+    }
+  } else if (rc == SQLITE_DONE) {
+    puts("{\"state\":\"NO_HEAD\",\"head\":null}");
+  }
+  int good = (rc == SQLITE_ROW || rc == SQLITE_DONE);
+  sqlite3_finalize(stmt);
+  return good;
+}
+static int usage(void) {
+  fputs("usage: bonfyre-warehouse status|integrity --estate ABSOLUTE_DIR\n"
+        "       bonfyre-warehouse head|plan --estate ABSOLUTE_DIR --semantic-kind NAME --kind FORMAT\n", stderr);
+  return 2;
+}
+int main(int argc, char **argv) {
+  const char *action = argc > 1 ? argv[1] : NULL;
+  const char *estate = NULL, *semantic = NULL, *kind = NULL;
+  if (!action || (strcmp(action, "status") && strcmp(action, "integrity") &&
+                  strcmp(action, "head") && strcmp(action, "plan")))
+    return usage();
+  for (int i = 2; i < argc; i += 2) {
+    if (i + 1 >= argc) return usage();
+    if (!strcmp(argv[i], "--estate") && !estate) estate = argv[i+1];
+    else if (!strcmp(argv[i], "--semantic-kind") && !semantic) semantic = argv[i+1];
+    else if (!strcmp(argv[i], "--kind") && !kind) kind = argv[i+1];
+    else return usage();
+  }
+  if (!estate || estate[0] != '/' || strlen(estate) >= PATH_MAX - 40) return usage();
+  if (!strcmp(action, "status") || !strcmp(action, "integrity")) {
+    if (semantic || kind) return usage();
+  }
+  else if (!semantic || !kind) return usage();
+  char path[PATH_MAX];
+  if (snprintf(path, sizeof(path), "%s/representation-manifold.db", estate) >= (int)sizeof(path))
+    return usage();
+  struct stat st;
+  if (lstat(path, &st) != 0 || !S_ISREG(st.st_mode)) {
+    fputs("manifold must be an existing regular file (not a symlink)\n", stderr);
+    return 1;
+  }
+  sqlite3 *db = NULL;
+  if (sqlite3_open_v2(path, &db, SQLITE_OPEN_READONLY | SQLITE_OPEN_NOMUTEX, NULL) != SQLITE_OK) {
+    if (db) sqlite3_close(db);
+    fputs("cannot open manifold read-only\n", stderr);
+    return 1;
+  }
+  if (sqlite3_exec(db, "BEGIN", NULL, NULL, NULL) != SQLITE_OK) {
+    sqlite3_close(db);
+    fputs("cannot begin read snapshot\n", stderr);
+    return 1;
+  }
+  int ok = !strcmp(action, "status") ? status(db) :
+    !strcmp(action, "integrity") ? integrity(db) : head(db, semantic, kind, !strcmp(action, "plan"));
+  if (sqlite3_exec(db, "ROLLBACK", NULL, NULL, NULL) != SQLITE_OK) ok = 0;
+  sqlite3_close(db);
+  if (!ok) fputs("invalid or unavailable manifold metadata\n", stderr);
+  return ok ? 0 : 1;
+}

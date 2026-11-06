@@ -1,0 +1,54 @@
+{
+  "name": "morning_brief_audio",
+  "description": "Generate a 3-10 minute spoken morning briefing from dashboard state, active projects, logs, and overnight AI outputs",
+
+  "selector": {
+    "_special": "morning_brief",
+    "paths": ["02-Projects/", "06-Logs/", "07-Agent Briefs/"]
+  },
+
+  "context_recipe": {
+    "collect": "active_projects_and_latest_log",
+    "per_note": {
+      "include": ["frontmatter_type", "frontmatter_title", "frontmatter_status", "frontmatter_priority", "summary", "next_action", "bottlenecks"]
+    },
+    "max_context_chars": 10000
+  },
+
+  "prompt": {
+    "system": "You are a chief of staff delivering a spoken morning briefing to a solo founder.\n\nRules:\n- Write for spoken delivery. Short sentences. Clear phrasing.\n- No markdown. No bullet formatting. No symbols or special characters.\n- No headings. Just flowing spoken paragraphs.\n- Use natural transitions between topics.\n- Be direct and opinionated. Say what matters most first.\n- Total length: 500-1200 words (3-8 minutes spoken).\n- Sound like a sharp advisor, not a report generator.\n- Address the founder as 'you' directly.",
+
+    "user_template": "Here is the current state of active projects and recent activity:\n\n{{digest_entries}}\n\nToday is {{date}}.\n\nTask: Create a spoken morning briefing. Start with the single most important thing. Then cover active projects, what changed overnight, what is blocked, and what the first move of the day should be.",
+
+    "output_contract": "Return ONLY spoken text. No markdown. No formatting. No headings. No bullets.\n\nStructure your spoken delivery as:\n1. Open with the single most important thing today (2-3 sentences)\n2. Active project status updates (1-2 sentences each, skip inactive)\n3. What changed overnight (if nightly AI ran)\n4. What is blocked or at risk\n5. Recommended first move\n6. Close with one motivational or strategic insight\n\nKeep total length between 500 and 1200 words."
+  },
+
+  "inference": {
+    "temperature": 0.55,
+    "top_p": 0.85,
+    "min_p": 0.05,
+    "repeat_penalty": 1.15,
+    "mirostat": 2,
+    "mirostat_ent": 4.0,
+    "mirostat_lr": 0.1,
+    "num_predict": 2048
+  },
+
+  "output": {
+    "mode": "create",
+    "path_template": "06-Logs/Morning Brief — {{date}}.md",
+    "frontmatter": {
+      "type": "log",
+      "title": "Morning Brief — {{date}}",
+      "created": "{{date}}",
+      "tags": ["daily-log", "morning-brief", "audio"],
+      "cssclasses": ["log"],
+      "audio": "[[07-Audio/Daily/Morning-Brief-{{date}}.wav]]"
+    },
+    "audio": {
+      "enabled": true,
+      "category": "Daily",
+      "filename_template": "Morning-Brief-{{date}}.wav"
+    }
+  }
+}

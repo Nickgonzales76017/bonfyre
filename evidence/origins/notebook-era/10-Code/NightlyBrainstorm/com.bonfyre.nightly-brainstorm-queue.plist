@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.bonfyre.nightly-brainstorm-queue</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/drain_queue.sh</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm</string>
+
+    <key>StartInterval</key>
+    <integer>1200</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/logs/queue-stdout.log</string>
+
+    <key>StandardErrorPath</key>
+    <string>/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/logs/queue-stderr.log</string>
+
+    <key>Nice</key>
+    <integer>10</integer>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+
+    <key>RunAtLoad</key>
+    <false/>
+</dict>
+</plist>

@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "brief-pickfu-20260405",
+  "artifact_type": "brief",
+  "created_at": "2026-04-05T10:05:00Z",
+  "source_system": "BonfyreBrief",
+  "tags": ["founder", "pickfu", "brief"],
+  "root_hash": "",
+  "atoms": [
+    {
+      "atom_id": "source-transcript",
+      "content_hash": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b200",
+      "media_type": "text/plain",
+      "path": "source/transcript.txt",
+      "byte_size": 12340,
+      "label": "Source transcript from LocalAITranscriptionService"
+    }
+  ],
+  "operators": [
+    {
+      "operator_id": "op-brief-extract",
+      "op": "BriefExtract",
+      "inputs": ["source-transcript"],
+      "output": "brief-md",
+      "params": {
+        "tool": "BonfyreBrief",
+        "top_sentences": 6,
+        "top_actions": 6
+      },
+      "version": "1.0.0",
+      "deterministic": true
+    },
+    {
+      "operator_id": "op-brief-meta",
+      "op": "MetadataEmit",
+      "inputs": ["brief-md"],
+      "output": "brief-meta",
+      "params": {},
+      "version": "1.0.0",
+      "deterministic": true
+    }
+  ],
+  "realizations": [
+    {
+      "realization_id": "brief-md",
+      "media_type": "text/markdown",
+      "path": "outputs/brief.md",
+      "content_hash": "e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b200112233",
+      "byte_size": 3200,
+      "pinned": true,
+      "produced_by": "op-brief-extract",
+      "label": "Brief markdown"
+    },
+    {
+      "realization_id": "brief-meta",
+      "media_type": "application/json",
+      "path": "outputs/brief-meta.json",
+      "content_hash": "f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b20011223344",
+      "byte_size": 480,
+      "pinned": true,
+      "produced_by": "op-brief-meta",
+      "label": "Brief metadata JSON"
+    }
+  ],
+  "realization_targets": [
+    {
+      "target_id": "narrated-brief",
+      "media_type": "audio/wav",
+      "op": "Narrate",
+      "params": {"profile": "operator_status", "voice": "en_US-lessac-medium"},
+      "description": "Spoken brief via BonfyreNarrate"
+    }
+  ],
+  "metadata": {
+    "title": "PickFu Founder Brief",
+    "sentence_count": 87
+  }
+}

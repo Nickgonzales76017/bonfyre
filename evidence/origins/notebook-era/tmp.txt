@@ -1,0 +1,1454 @@
+===== BONFYRE HELP =====
+bonfyre -- adaptive artifact pipeline toolkit
+
+Usage: bonfyre <command> [args...]
+
+Built-ins:
+  list [term] [--json] [--compact]  Show command surface, filtered search, JSON, or compact mode
+  completion [shell]    Emit shell completion for zsh, bash, or fish
+  version       Print version
+  help          Show this help
+
+Start here:
+  bonfyre doctor                 verify the installed surface
+  bonfyre list model            filter command surface by topic
+  bonfyre list --compact        compact one-line surface for fast scanning
+  bonfyre list --json           inspect the command surface programmatically
+  bonfyre completion zsh        generate shell completion
+  bonfyre workflow list         inspect workflow profiles
+  bonfyre family list           inspect conceptual family taxonomy
+  bonfyre model list            inspect local model registry
+  bonfyre recipe list           inspect recipe registry
+  bonfyre run history           inspect indexed execution history
+  bonfyre layer registry        inspect registered layer artifacts
+
+System surfaces:
+  Pipeline:  ingest -> mediaprep -> transcribe -> clean -> paragraph
+             -> brief -> proof -> offer -> narrate -> pack -> distribute
+  Workflows: workflow list / workflow show A3
+  Families:  family list / family show T_CASEOPS / family where T_SHARED_QK
+  Recipes:   recipe list / recipe show <name> / run <recipe-name> / run history / run show <id>
+  Capabilities: capabilities help / capabilities match <description>
+  Models:    model list / model family <family> / model route <stats.json>
+  AI:        embed . vec . segment . sli . quant . fpq . fpqx . layer
+  Infra:     hash . index . compress . graph . queue . sync . tel
+  Value:     gate . meter . ledger . economy . compete
+
+Run 'bonfyre list' for the full command surface, including discovered local extras.
+
+===== BONFYRE LIST =====
+bonfyre  command surface
+summary   81 commands  81 ready  0 missing
+next      bonfyre doctor   bonfyre workflow list   bonfyre run history
+
+Pipeline  20/20 ready
+  ready             ingest               Universal asset intake
+  ready             mediaprep            Media normalisation
+  ready             transcribe           Audio to text
+  ready             clean                Transcript cleaning
+  ready             paragraph            Transcript paragraphizer
+  ready             brief                Extract structured brief
+  ready             proof                Generate proof bundle
+  ready             offer                Generate offer document
+  ready             narrate              Text-to-speech narration
+  ready             pack                 Package artifact family
+  ready             distribute           Multi-channel distribution
+  ready             transcript-family    Speech to cleaned transcript family
+  ready             render               Universal artifact renderer
+  ready             repurpose            Repurpose transcripts to new formats
+  ready             clips                Extract short clips from media
+  ready             frame-extract        Extract frames from video
+  ready             scene-detect         Scene boundary detection
+  ready             video-demux          Demux video streams to tracks
+  ready             detect-objects       Object detection (vision pipeline stage)
+  ready             fragment             Fragment store — create / query / merge
+
+Workflow Profiles  1/1 ready
+  ready             workflow             Workflow profiles (operator suites, not recipes)
+
+Families & Concepts  1/1 ready
+  ready             family               Conceptual family browser (specialization taxonomy)
+
+AI / Models  19/19 ready
+  ready             model                Model registry (list / pull / verify)
+  ready             embed                Generate text embeddings (ONNX)
+  ready             vec                  Local vector search (FAISS)
+  ready             segment              Speaker / VAD segmentation
+  ready             speech-loop          Streaming RNNT + Whisper ASR loop
+  ready             mfa-dict             MFA forced-alignment dictionary
+  ready             tone                 Tone / sentiment analysis
+  ready             tag                  Auto-tagging pipeline
+  ready             entity               Named-entity recognition
+  ready             canon                Canonical form resolver
+  ready             gen                  Natural language generation
+  ready             sli                  Structured layer inference (E8 lattice)
+  ready             quant                BQFP model quantisation
+  ready             fpq                  Functional precision quantisation
+  ready             fpqx                 FPQx extended quantisation
+  ready             layer                Neural layer operations
+  ready             layer-c              Native C layer inspector and ONNX extraction surface
+  ready             learn                On-device fine-tuning / adapters
+  ready             weaviate             Weaviate vector index bridge
+
+Recipes & Runtime  14/14 ready
+  ready             recipe               Recipe registry (list / show / run / add)
+  ready             run                  Execute a recipe by name or path
+  ready             flow                 Coroutine-native pipeline flow graphs
+  ready             pipeline             Streaming pipeline execution
+  ready             runtime              Replayable pipeline runtime
+  ready             discipl              Recursive DisCIPL runtime substrate
+  ready             orchestrate          Machine-only orchestration planner
+  ready             control              Control-plane command gateway
+  ready             swarm                Distributed worker swarm
+  ready             project              Content graph projection engine
+  ready             space                Semantic space management
+  ready             proxy                OpenAI-compatible API proxy
+  ready             doctor               Runtime dependency diagnostics
+  ready             capabilities         Capability discovery and matching registry
+
+Infrastructure  17/17 ready
+  ready             hash                 Content-addressing (SHA-256)
+  ready             index                Artifact family indexer
+  ready             compress             Family-aware compression
+  ready             emit                 Multi-format output engine
+  ready             stitch               DAG materialiser
+  ready             queue                Job queue management
+  ready             sync                 Artifact synchronisation
+  ready             graph                Merkle-DAG artifact graph (SQLite)
+  ready             query                Structured artifact query
+  ready             surface              Optional client surface registry
+  ready             kvcache              KV-cache store
+  ready             auth                 Authentication and token management
+  ready             tel                  Telemetry / observability
+  ready             moq                  MoQ media-over-QUIC transport
+  ready             cms                  Content management store
+  ready             api                  REST API server
+  ready             time                 Temporal metadata and scheduling
+
+Value Capture  9/9 ready
+  ready             gate                 License enforcement
+  ready             meter                Usage metering and billing
+  ready             ledger               Value accounting
+  ready             economy              Economy / credits engine
+  ready             compete              Competitive benchmarking
+  ready             pay                  Payment processing
+  ready             finance              Financial reporting
+  ready             tier                 Feature / access tier management
+  ready             outreach             Campaign outreach automation
+
+Run 'bonfyre <command> --help' for command help, or 'bonfyre list <term>' to filter.
+
+===== COMMAND HELP TREE =====
+
+### bonfyre api
+BonfyreAPI v2.0.0 — Async HTTP gateway with SSE, search, webhooks
+
+Usage:
+  bonfyre-api serve [--port 8080] [--db FILE] [--static DIR] [--uploads DIR]
+  bonfyre-api status
+  bonfyre-api layer get <artifact_id> [--root DIR]
+  bonfyre-api layer lineage <artifact_id> [--root DIR]
+  bonfyre-api layer compat <artifact_a> <artifact_b> [--root DIR]
+  bonfyre-api layer compose <artifact_a> <artifact_b> [--dry-run] [--root DIR]
+
+Shares SQLite WAL database with BonfyreQueue (default: ~/.local/share/bonfyre/queue.db).
+Jobs are enqueued asynchronously — run `bonfyre-queue work` to process them.
+
+### bonfyre auth
+Unknown command: --help
+BonfyreAuth — user management & sessions
+
+Usage:
+  bonfyre-auth [--db FILE] signup --email E --name N --password P [--tier free|pro|enterprise]
+  bonfyre-auth [--db FILE] login --email E --password P
+  bonfyre-auth [--db FILE] verify --token T
+  bonfyre-auth [--db FILE] logout --token T
+  bonfyre-auth [--db FILE] users
+  bonfyre-auth [--db FILE] user --id ID
+  bonfyre-auth [--db FILE] update --id ID [--tier T] [--active 0|1]
+  bonfyre-auth [--db FILE] sessions --user-id ID
+  bonfyre-auth [--db FILE] status
+  bonfyre-auth layer-source <artifact_id> [--root DIR]
+
+### bonfyre brief
+Usage: bonfyre-brief <transcript-file> <output-dir> [--title TITLE]
+
+### bonfyre canon
+bonfyre-canon — structural canonicalization (Tree-sitter)
+
+Usage:
+  bonfyre-canon parse <file> [output-dir]
+  bonfyre-canon hash <file> [output-dir]
+  bonfyre-canon diff <file1> <file2> [output-dir]
+  bonfyre-canon normalize <file> <output-file>
+  bonfyre-canon status
+
+### bonfyre capabilities
+bonfyre-capability 1.1.0 - capability discovery and matching
+
+USAGE
+  bonfyre-capability <command> [args]
+
+COMMANDS
+  status              registry summary
+  list                all capabilities
+  search <query>      full-text search
+  show <cap-id>       full capability record
+  match <description> semantic match for a natural-language task
+  index               rebuild full-text search index
+  help                this message
+
+CAPABILITY FIELDS
+  id | name | description | binary | command | stage_class | artifact_out
+  model_id | hardware_tier | latency_tier | cost_estimate | keywords | source
+
+NOTES
+  match uses the native semantic registry salvaged from the old generator
+  project, but it stays inside Bonfyre's capability layer instead of emitting
+  stub recipes.
+
+ENVIRONMENT
+  BONFYRE_CAPABILITY_DB   override DB path (file or directory)
+
+### bonfyre clean
+Usage: bonfyre-transcript-clean --transcript <path> --out <path> [--status-out <path>] [--dry-run]
+
+### bonfyre clips
+
+### bonfyre cms
+BonfyreCMS v0.1.0 — stripped binary CMS
+
+Usage:
+  bonfyre-cms serve [--port PORT] [--db FILE] [--schemas DIR]
+  bonfyre-cms schema list [--db FILE]
+  bonfyre-cms schema apply <schema.json> [--db FILE]
+  bonfyre-cms schema migrate [--db FILE] [--schemas DIR]
+  bonfyre-cms entry create <type> [--ns NS] '<json>'
+  bonfyre-cms entry list <type> [--ns NS] [--status STATUS] [--limit N]
+  bonfyre-cms entry get <type> <id>
+  bonfyre-cms entry update <type> <id> '<json>'
+  bonfyre-cms entry delete <type> <id>
+  bonfyre-cms token issue [--scope NS] [--actions ACTS] [--label LABEL]
+  bonfyre-cms token list
+  bonfyre-cms ann build <type>
+  bonfyre-cms ann knn <type> '<json>' [k]
+  bonfyre-cms ann qknn <type> '<json>' [k]
+  bonfyre-cms ann qknn-entry <type> <id> [k]
+  bonfyre-cms ann qbench <type> [queries] [k]
+  bonfyre-cms ann stats <type>
+  bonfyre-cms bench-real <type> [--query-field F --query-op OP --query-value V]
+  bonfyre-cms publish-layer-report <artifact_id> [--root DIR]
+  bonfyre-cms publish-layer-family <T_FAMILY> [--root DIR]
+
+Options:
+  --port PORT     HTTP port (default: 8800)
+  --db FILE       SQLite database file (default: bonfyre_cms.db)
+  --schemas DIR   Content-type JSON directory (default: ./content-types)
+  --ns NAMESPACE  Namespace scope (default: root)
+
+
+### bonfyre compete
+bonfyre-compete 1.0.0 — stage/model A/B competition engine
+
+USAGE
+  bonfyre-compete <command> [args]
+
+COMMANDS
+  status                           active competitions + variant counts
+  pair <recipe> <stage>            create new competition for a pipeline stage
+  add-variant <comp> <label> <cfg> register a new variant (config as JSON string)
+  run <comp-id> <input>            record a scored run across all variants
+  score <comp-id>                  print rank table for all variants
+  promote <variant-id>             mark variant as production
+  demote  <variant-id>             remove production flag
+  list                             all competitions
+  history [comp-id]                recent results
+  help                             this message
+
+INTEGRATION
+  bonfyre-control uses compete wins/losses for route decisions
+  bonfyre-learn adjusts thresholds based on compete outcomes
+  bonfyre-economy applies budget constraints to variant selection
+
+ENVIRONMENT
+  BONFYRE_COMPETE_DB   override DB path
+
+### bonfyre compress
+BonfyreCompress — family-aware compression engine
+
+Usage:
+  bonfyre-compress train <dir> [--dict-out F]    Train zstd dictionary
+  bonfyre-compress pack <in> <out> [--dict D]    Compress file
+  bonfyre-compress unpack <in> <out> [--dict D]  Decompress file
+  bonfyre-compress family <dir> [--out F]        Pack entire family
+  bonfyre-compress savings <dir>                 Report savings
+  bonfyre-compress layer <artifact_id> <layer|layer-pack> [--fpq|--fpqx] [--root DIR]
+
+### bonfyre control
+bonfyre-control 1.0.0 — Bonfyre control plane
+
+USAGE
+  bonfyre-control <command> [args]
+
+COMMANDS
+  status                      system health + active policies
+  score <artifact>            score artifact via HE-SLI (relevance · completeness ·
+                              coherence · factuality · latency · cost)
+  route <recipe> <input>      resolve winning execution path under active policies
+  compete <recipe> <input>    run A/B competition, score both, promote winner
+  evict <model-id>            FIFO-evict model from cache (calls bonfyre-model rm --purge)
+  entropy-check <artifact> [threshold]  fast entropy pre-flight (<10ms); exits 2 if low
+  agp export <artifact> [out] export AGP-formatted signed decision log
+  inspect <run-id>            show full control trace for a pipeline run
+  history                     last 20 control decisions
+  watch <recipe>              stream live control events (poll)
+  policy list                 list all active policies
+  policy show <id>            show policy rule JSON
+  policy add <file.json>      register a new policy
+  policy rm <id>              delete a policy
+  ops                         operational dashboard: PSI pressure, CAS stats,
+                              BPF-Flux tier occupancy, HE-SLI rolling avg,
+                              entropy gate pass rate, auto-tune recommendations
+  help                        this message
+
+ENVIRONMENT
+  BONFYRE_CONTROL_DB          override DB path
+  BONFYRE_CONTROL_SKIP=1      bypass control routing in bonfyre-run
+
+HE-SLI DIMENSIONS
+  relevance · completeness · coherence · factuality · latency · cost
+  Composite = mean of the four semantic dimensions.
+
+### bonfyre detect-objects
+bonfyre-detect-objects — Object detection (YOLOv8 / fallback)
+
+Usage:
+  bonfyre-detect-objects --input <dir|image> --out <dir>
+    [--model NAME]       Model name (default: yolo-v8)
+    [--confidence FLOAT] Min confidence (default: 0.5)
+    [--batch N]          Parallel batch size (default: 4)
+
+Output:
+  <out>/<frame>.jpg.json  Per-frame detections
+  <out>/objects.json      Merged detections + unique labels
+
+Model resolving (first available):
+  1. BONFYRE_YOLO_BINARY env → external CLI
+  2. python3 + ultralytics installed
+  3. Stub (requires_model: true) — downstream can filter
+
+### bonfyre discipl
+BonfyreDiscipl — Recursive DisCIPL runtime substrate
+
+Usage:
+  bonfyre-discipl init [--root DIR]
+  bonfyre-discipl actors import [--root DIR]
+  bonfyre-discipl contracts import [--root DIR]
+  bonfyre-discipl chain-plan [--root DIR] <family-or-artifact> ...
+  bonfyre-discipl propose --from FAMILY --to FAMILY --depth N [--root DIR]
+  bonfyre-discipl recurse --goal TEXT [--root DIR]
+  bonfyre-discipl verify <chain_id|loop_id> [--root DIR]
+
+### bonfyre distribute
+Usage:
+  bonfyre-distribute offers <_generated-offers.json>
+  bonfyre-distribute snapshot <_distribution-pipeline-snapshot.json>
+  bonfyre-distribute message <_generated-offers.json> <offer-name> <channel>
+  bonfyre-distribute send <payload.json> --webhook <URL> [--webhook <URL> ...]
+
+### bonfyre doctor
+bonfyre-runtime doctor
+preflight: enabled=true strict=false
+catalog:   OK  /Users/nickgonzales/.local/share/bonfyre/catalog.db
+surfaces:  workflow=8 family=0 capability=37 model=15 layer=200 recipe=23
+registries:
+  capability  READY  /Users/nickgonzales/.local/share/bonfyre/capability.db
+  model       READY  /Users/nickgonzales/.local/share/bonfyre/models.db
+  layer       READY  /Users/nickgonzales/.local/share/bonfyre/layers.db
+binaries:
+  queue        /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreQueue/bonfyre-queue
+  pipeline     /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyrePipeline/bonfyre-pipeline
+  ledger       /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreLedger/bonfyre-ledger
+  gen          /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreGen/bonfyre-gen
+  swarm        /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreSwarm/bonfyre-swarm
+  control      /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreControl/bonfyre-control
+  moq          /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreMoQ/bonfyre-moq
+  run          /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreRun/build/bonfyre-run
+  recipe       /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreRecipe/build/bonfyre-recipe
+  model        /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreModel/bonfyre-model
+  stitch       /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreStitch/bonfyre-stitch
+  proxy        /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreProxy/bonfyre-proxy
+  sli          /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreSLI/bonfyre-sli
+  orchestrate  /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreOrchestrate/bonfyre-orchestrate
+  project      /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreProject/bonfyre-project
+  flow         /Users/nickgonzales/Documents/Bonfyre/cmd/BonfyreCLI/../BonfyreFlow/bonfyre-flow
+summary: 16/16 binaries resolvable
+
+### bonfyre economy
+bonfyre-economy 1.0.0 — cost-aware routing and budget enforcement
+
+USAGE
+  bonfyre-economy <command> [args]
+
+COMMANDS
+  status                        current spend vs caps
+  budget set <recipe> <usd>     set/update budget cap for a recipe
+  budget show [recipe]          show budget(s)
+  route <recipe>                recommend cheapest model within budget
+  cost estimate <recipe>        estimate cost based on history
+  cost record <recipe> <stage> <model> <usd>   record actual cost
+  report [--last N]             cost history (default: 50 rows)
+  reset <recipe>                zero the spent counter
+  layer <artifact_id> [--op verify|materialize|compose|run]
+  help                          this message
+
+COST MODEL
+  gpt-4o $5.00/1M · gpt-4o-mini $0.15/1M · claude-3-5 $15.00/1M
+  llama-3-8b $0.20/1M · whisper-large $0.006/min · local $0.000
+
+INTEGRATION
+  bonfyre-control calls: bonfyre-economy route <recipe>
+  bonfyre-run calls:     bonfyre-economy cost record ...
+
+ENVIRONMENT
+  BONFYRE_ECONOMY_DB   override DB path
+
+### bonfyre embed
+Usage: bonfyre-embed --text <path> --out <path> [--backend onnx|hash] [--model <name>] [--dims <n>] [--output-format json|binary] [--insert-db <db>] [--doc-id <id>] [--input-dir <dir>] [--meta-out <path>] [--dry-run]
+
+  --input-dir <dir>  Batch mode: embed all .txt files in <dir>
+                     (loads model once, amortizes startup)
+
+### bonfyre emit
+BonfyreEmit — multi-format output engine
+
+Usage:
+  bonfyre-emit <artifact-dir> --format html|pdf|epub|rss|txt|bundle [--out FILE]
+  bonfyre-emit layer-manifest <artifact_id> [--format json] [--root DIR]
+  bonfyre-emit layer-report <artifact_id> [--format md] [--root DIR]
+  bonfyre-emit layer-graph <artifact_id> [--format dot] [--root DIR]
+  bonfyre-emit layer-cookbook --family T_* [--root DIR]
+
+### bonfyre entity
+bonfyre-entity 1.0.0 — universal identity resolution layer
+
+USAGE
+  bonfyre-entity <command> [args]
+
+COMMANDS
+  status                        entity + observation + link counts
+  resolve <modal> <value>       map observation to entity (or create new)
+  show <entity-id>              full entity record + recent observations
+  link <e1> <e2> <conf>         manually link two entities
+  unlink <e1> <e2>              remove a link
+  merge <target> <source>       merge source into target
+  search <query>                search entities by name or id
+  history <entity-id>           full observation timeline
+  help                          this message
+
+MODALITIES
+  face · voice · text · email · location · tag · fingerprint
+
+INTEGRATION
+  bonfyre-transcribe feeds speaker labels → bonfyre-entity resolve voice <label>
+  bonfyre-tag feeds tag values → bonfyre-entity resolve text <value>
+  bonfyre-time fires entity_resolved trigger when confidence crosses threshold
+
+ENVIRONMENT
+  BONFYRE_ENTITY_DB   override DB path
+
+### bonfyre family
+bonfyre-family - conceptual family browser
+
+Families are Bonfyre's specialization taxonomy. They are not executable
+recipes or standalone workflows; they describe how steps, models, layers,
+and runtime policies can be specialized.
+
+Usage:
+  bonfyre-family list [term] [--json] [--compact]
+  bonfyre-family show <family>
+  bonfyre-family explain <family>
+  bonfyre-family related <family>
+  bonfyre-family where <family>
+  bonfyre-family help
+
+Examples:
+  bonfyre family list
+  bonfyre family list recur
+  bonfyre family show T_CASEOPS
+  bonfyre family explain T_SHARED_QK
+  bonfyre family where T_PARALLEL_RESIDUAL
+
+Related:
+  bonfyre workflow step A3 s02
+  bonfyre capabilities help
+  bonfyre model --help
+  bonfyre layer --help
+
+### bonfyre finance
+Unknown command: --help
+BonfyreFinance — service arbitrage, labor pipeline, and bundle pricing
+
+Usage:
+  bonfyre-finance [--db FILE] service add --name N --buy B --sell S --source SRC
+  bonfyre-finance [--db FILE] service list
+  bonfyre-finance [--db FILE] service opportunities
+  bonfyre-finance [--db FILE] job log --service S --cost C --sold S [--quality Q]
+  bonfyre-finance [--db FILE] job create --input FILE --type TYPE [--sell-price P]
+  bonfyre-finance [--db FILE] job list [--status S]
+  bonfyre-finance [--db FILE] job review --id ID --result pass|fail --reviewer R
+  bonfyre-finance [--db FILE] job handoff --id ID [--type T]
+  bonfyre-finance [--db FILE] margin
+  bonfyre-finance [--db FILE] bundle create --name N --components A,B --price P
+  bonfyre-finance [--db FILE] bundle list
+  bonfyre-finance [--db FILE] bundle compare --name N
+  bonfyre-finance [--db FILE] bundle export --name N
+  bonfyre-finance [--db FILE] components
+  bonfyre-finance [--db FILE] status
+  bonfyre-finance layer <artifact_id> [--root DIR]
+
+### bonfyre flow
+bonfyre-flow 1.0.0 — coroutine-native pipeline programming
+
+USAGE
+  bonfyre-flow <command> [args]
+
+COMMANDS
+  status                        show active runs + current stage
+  define <file.json>            import a flow definition
+  list                          list all flows
+  show <flow-id>                print full flow definition
+  run <flow-id> <input>         start a new flow run
+  inspect <run-id>              show execution state
+  branch <flow-id> <cond> <target>   add a conditional branch
+  merge <flow-id> <a> <b> <target>   add a merge node
+  export <flow-id>              print flow as JSON
+  rm <flow-id>                  delete a flow definition
+  help                          this message
+
+FLOW JSON FORMAT
+  {"id":"my-flow","name":"My Flow","entry":"ingest","stages":[{"id":"ingest","recipe":"intake"},...],"edges":[...]}
+
+INTEGRATION
+  bonfyre-run executes individual stages within a flow
+  bonfyre-control enforces policies per-stage
+  bonfyre-space holds intermediate state between stages
+
+ENVIRONMENT
+  BONFYRE_FLOW_DB   override DB path
+
+### bonfyre fpq
+Unknown command: --help
+bonfyre-fpq — Functional Polar Quantization
+Store seed programs, not weights.
+
+Usage:
+  bonfyre-fpq compress  <model.bin> <output.fpq> [opts]
+  bonfyre-fpq decompress <file.fpq> <output.bin>
+  bonfyre-fpq inspect   <file.fpq>
+  bonfyre-fpq roundtrip <model.bin> [opts]
+
+Options:
+  --max-nodes <N>    Max combinator nodes/block (default: 32)
+  --tolerance <f>    MSE tolerance (default: 0.01)
+  --report           Print per-tensor stats
+  --tensor <name>    Only process named tensor
+  --limit <N>        Only process first N tensors
+
+### bonfyre fpqx
+bonfyre-fpqx v1.1.0 — Cross-family FPQ alignment
+
+Usage:
+  bonfyre-fpqx align   <a.bqfp> <b.bqfp> --out DIR
+  bonfyre-fpqx eval    <a.bqfp> <fpqx_alignment.json>
+  bonfyre-fpqx inspect <fpqx_alignment.json>
+
+  align:   compute 16×16 linear alignment between two BQFP codebooks
+  eval:    apply alignment to a BQFP, report mean cosine preservation
+  inspect: print alignment manifest
+
+### bonfyre fragment
+unknown command: --help
+
+bonfyre-fragment — Fragment system CLI
+
+Commands:
+  create  --store DB --kind KIND --persp PERSP --conf FLOAT
+            [--start-ms N] [--end-ms N] [--payload JSON|--stdin]
+            [--parent ID ...]
+
+  get     --store DB --id ID
+
+  query   --store DB [--kind KIND] [--persp PERSP]
+            [--min-conf FLOAT] [--start-after-ms N] [--end-before-ms N]
+            [--limit N] [--offset N] [--format json|table]
+
+  merge   --dst DB --src DB
+
+  diff    --store-a DB --store-b DB [--kind KIND] [--format json|table]
+
+  stats   --store DB
+
+  ingest  --store DB --from-run-manifest PATH
+
+### bonfyre frame-extract
+Unknown option: --help
+bonfyre-frame-extract
+
+Usage:
+  bonfyre-frame-extract --input <video> --out <dir> [--fps N] [--format jpg|png]
+
+### bonfyre gate
+BonfyreGate — license enforcement
+
+Usage:
+  bonfyre-gate issue --tier free|pro|enterprise [--org NAME] [--out F]
+  bonfyre-gate check <key.json>
+  bonfyre-gate guard <key.json> --op OPERATION
+  bonfyre-gate layer <artifact_id> [--root DIR]
+  bonfyre-gate layer-op <operation> <artifact_id> [--root DIR]
+
+### bonfyre gen
+bonfyre-gen 1.0.0 -- natural language to recipe YAML
+
+USAGE
+  bonfyre-gen [options] "<description>"
+  bonfyre-gen [options] -     (read from stdin)
+
+OPTIONS
+  --list-capabilities    print capability registry and exit
+  --explain              annotate output YAML with latency/cost estimates
+  --threshold <f>        minimum TF match score to include a stage (default 0.01)
+  --help                 this message
+
+EXAMPLES
+  bonfyre-gen "transcribe audio extract action items"
+  bonfyre-gen "diarize speakers then summarize"
+  echo "score quality of transcript" | bonfyre-gen -
+  bonfyre-gen --explain "transcribe and proof quality"
+
+OUTPUT
+  Valid recipe YAML on stdout.  Pipe directly to bonfyre-run:
+    bonfyre-run --recipe <(bonfyre-gen "transcribe audio") --input file.mp3
+
+### bonfyre graph
+Unknown command: --help
+BonfyreGraph — Merkle-DAG artifact graph engine
+
+Usage:
+  bonfyre-graph sync-layers [--root DIR]
+  bonfyre-graph plan <plan.json> [--root DIR]
+  bonfyre-graph layer <artifact_id> [--root DIR]
+  bonfyre-graph lineage-layer <artifact_id> [--root DIR]
+  bonfyre-graph layer-neighbors <artifact_id> [--root DIR]
+  bonfyre-graph init <db>
+  bonfyre-graph add-atom <db> --id ID --hash HASH --type TYPE [--path PATH]
+  bonfyre-graph add-op <db> --id ID --op OP --inputs A,B --output OUT [--params '{}'] [--version V]
+  bonfyre-graph validate <manifest.json>
+  bonfyre-graph merkle <manifest.json>
+  bonfyre-graph lineage <db> --id ID
+  bonfyre-graph export <db> [--out artifact.json]
+  bonfyre-graph status <db>
+
+### bonfyre hash
+BonfyreHash — content-addressing engine
+
+Usage:
+  bonfyre-hash file <path>                              SHA-256 of file
+  bonfyre-hash node <op> <ver> <params_json> <h1,h2>    operator node hash
+  bonfyre-hash merkle <artifact.json>                    compute/update root_hash
+  bonfyre-hash verify <artifact.json>                    verify all hashes
+  bonfyre-hash dedup <dir>                               find duplicate files
+
+### bonfyre index
+BonfyreIndex — artifact family index & search
+
+Usage:
+  bonfyre-index layers [--root DIR]       Rebuild LayerArtifact index projection
+  bonfyre-index build <dir> [--db F]      Crawl & index artifact.json files
+  bonfyre-index search <q> [--type T]      Search families
+  bonfyre-index reuse [--db F]             Find shared atoms/operators
+  bonfyre-index equivalence [--db F]       Show canonical-equivalent families
+  bonfyre-index collapse-preview [--db F]  Preview safe equivalence collapse groups
+  bonfyre-index confidence-preview [--db F] Preview exact/probable/related family groups
+  bonfyre-index collapse-plan [--db F]     Choose deterministic keep/fold representatives
+  bonfyre-index collapse-ledger <out> [--db F] Write non-destructive collapse action ledger
+  bonfyre-index merge-manifest <out> [--db F] Write preview-only merge manifest artifact
+  bonfyre-index bundle-layout <merge> <out> Build preview-only canonical bundle layout
+  bonfyre-index validate-preview <path>    Validate preview-only merge/layout artifact
+  bonfyre-index bundle-diff <layout> <out> Compare current disk state to projected bundle layout
+  Add --json to the preview commands for machine-readable output
+  bonfyre-index stats [--db F]             Summary statistics
+
+### bonfyre ingest
+Usage: bonfyre-ingest <input> <output_dir> [--type audio|text|image|url]
+
+### bonfyre kvcache
+bonfyre-kvcache — v8 RLF KV cache compression
+
+Usage:
+  bonfyre-kvcache roundtrip  <input.bin> [--bits N]
+  bonfyre-kvcache benchmark  [--bits N]
+  bonfyre-kvcache --help
+
+KV cache compression using E8 lattice + μ-law + 16D RVQ.
+Error compounds across layers — use 4+ bits for production.
+
+Results (Qwen-0.5B, WikiText-2):
+  3-bit: PPL 17.89 (+49.7%), avg cos 0.9997
+  4-bit: PPL 14.77 (+23.6%), avg cos 0.9999
+
+Options:
+  --bits N     Quantization bits (3, 4, 5; default: 4)
+
+### bonfyre layer
+bonfyre-layer v1.0.0 — Shared LayerArtifact registry and ONNX inspection
+
+Usage:
+  bonfyre-layer inspect      <model.onnx>
+  bonfyre-layer layers       <model.onnx>
+  bonfyre-layer pull-layer   <model.onnx> --range START:END --out DIR
+  bonfyre-layer pull-head    <model.onnx> --name PREFIX --out DIR
+  bonfyre-layer pack-transform <name> <p1.onnx> [p2.onnx ...] --out DIR
+  bonfyre-layer registry     [--root DIR]
+  bonfyre-layer import-recipe <recipe.yaml> [--root DIR]
+  bonfyre-layer hash         <layer-manifest|layer-payload|layer-tree> <artifact_id> [--root DIR]
+  bonfyre-layer compat       <layer_a> <layer_b> [--root DIR]
+  bonfyre-layer compose      <layer_a> <layer_b> --dry-run [--root DIR]
+  bonfyre-layer bridge       <layer_a> <layer_b> --suggest [--root DIR]
+  bonfyre-layer graph        --families T_Q_PROJ,T_K_PROJ [--root DIR]
+  bonfyre-layer schema
+
+### bonfyre layer-c
+bonfyre-layer v1.0.0 — Layer-aware ONNX inspection and extraction
+
+Usage:
+  bonfyre-layer inspect      <model.onnx>
+  bonfyre-layer layers       <model.onnx>
+  bonfyre-layer pull-layer   <model.onnx> --range START:END --out DIR
+  bonfyre-layer pull-head    <model.onnx> --name PREFIX --out DIR
+  bonfyre-layer pack-transform <name> <p1.onnx> [p2.onnx ...] --out DIR
+  bonfyre-layer registry
+  bonfyre-layer schema
+
+### bonfyre learn
+bonfyre-learn 1.0.0 — artifact feedback and threshold tuning
+
+USAGE
+  bonfyre-learn <command> [args]
+
+COMMANDS
+  status                    current stage thresholds + 7-day averages
+  feedback <run> <score> [label]   record outcome (score 0.0–1.0)
+  tune <stage>              compute rolling avg and adjust threshold
+  list                      all tracked stages and thresholds
+  export                    dump thresholds as JSON
+  reset <stage>             restore default thresholds (0.75 quality)
+  history [stage]           recent feedback records
+  help                      this message
+
+LABELS
+  good · bad · neutral · repeat · escalate
+
+TUNING LOGIC
+  - Rolling 50-sample average compared to current threshold
+  - avg < threshold - 0.05 → lower gate by 0.05 (min 0.50)
+  - avg > threshold + 0.10 → raise gate by 0.02 (max 0.99)
+
+INTEGRATION
+  bonfyre-compete → bonfyre-learn feedback (win/loss signals)
+  bonfyre-control reads exported thresholds for routing gates
+
+ENVIRONMENT
+  BONFYRE_LEARN_DB   override DB path
+
+### bonfyre ledger
+BonfyreLedger — value accounting engine
+
+  bonfyre-ledger assess <artifact.json>          detailed family report
+  bonfyre-ledger assess-json <artifact.json>     JSON output
+  bonfyre-ledger portfolio <root_dir>             full portfolio roll-up
+  bonfyre-ledger delta <artifact.json>            value changes
+  bonfyre-ledger export <root_dir> [--format json|csv]
+  bonfyre-ledger layer <artifact_id> [--root DIR]
+
+### bonfyre mediaprep
+bonfyre-media-prep
+
+Usage:
+  bonfyre-media-prep inspect <input>
+  bonfyre-media-prep normalize <input> <output> [--sample-rate N] [--channels N] [--trim-silence] [--loudnorm]
+  bonfyre-media-prep denoise <input> <output>
+  bonfyre-media-prep chunk <input> <output-pattern> [--segment-seconds N]
+  bonfyre-media-prep split-speech <input> <output-pattern> [--noise-threshold DB] [--min-silence SEC] [--min-speech SEC] [--padding SEC]
+
+### bonfyre meter
+BonfyreMeter — usage metering & billing
+
+  bonfyre-meter record --key K --op OP [--bytes N] [--duration MS]
+  bonfyre-meter usage --key K [--since DATE]
+  bonfyre-meter invoice --key K [--period YYYY-MM]
+  bonfyre-meter top [--limit N]
+  bonfyre-meter layer <artifact_id> [--op verify|materialize|compose|run] [--root DIR]
+
+### bonfyre mfa-dict
+Usage: bonfyre-mfa-dict --transcript <path> --out <path> [--dry-run]
+
+### bonfyre model
+bonfyre-model 1.1.0 — AI model dependency manager
+
+COMMANDS
+  list                       list registered models
+  show <id>                  print full model record
+  pull <id>                  ensure model is in local cache
+  pull --recipe <code>       pull all models required by a recipe
+  add <manifest.json>        register a model from JSON manifest
+  verify <id>                re-check SHA-256 of cached file
+  path <id>                  print absolute cache path
+  rm <id>                    remove from registry
+  rm --purge <id>            remove from registry + delete cache
+  search <query>             full-text search over model names
+  sources <id>               list pull sources for a model
+  source add <id> <url>      add a pull source URL
+  source rm <id> <url>       remove a pull source URL
+  ls-cache                   list cached files with sizes
+  status                     registry + cache stats
+  family [<family>]          list models by transform family (e.g. T04, T15, T16)
+  route <corpus_stats.json>  select best transform family for given corpus stats
+  push <id> --repo <hf/repo> upload FPQ artifact to HuggingFace
+  help                       this message
+
+SOURCE SCHEMES (evaluated in priority order)
+  swarm://hash               bonfyre-swarm local peer
+  file:///abs/path           already on disk
+  s3://bucket/key            S3-compatible store (requires aws cli)
+  hf://owner/repo/file       huggingface.co (plain HTTPS, no SDK)
+  https://host/path          direct download
+
+ENVIRONMENT
+  BONFYRE_MODEL_DB           override model DB path
+  BONFYRE_MODEL_CACHE        override model cache dir
+  BONFYRE_MODEL_SKIP_CHECK   skip model checks in bonfyre-run (set to 1)
+
+EXAMPLES
+  bonfyre-model list
+  bonfyre-model pull whisper-large-v3
+  bonfyre-model pull --recipe A3
+  bonfyre-model source add whisper-large-v3 file:///data/models/whisper.gguf
+  bonfyre-model push bonfyre-topic-mapper-v1 --repo bonfyre-oss/topic-mapper-v1
+
+### bonfyre moq
+bonfyre-moq 1.0.0 — media relay
+
+USAGE
+  bonfyre-moq <command> [args]
+
+COMMANDS
+  video-relay [--ingest PORT] [--subscribe PORT]
+      start video frame relay with 30-frame ring buffer
+      default ingest=9450, subscribe=9451
+  layer <artifact_id> [--root DIR]
+      show metadata-first streaming plan for a layer artifact
+  help
+      show this message
+
+PRODUCER PROTOCOL
+  connect to ingest port and send: [u32_be length][raw frame bytes]
+  raw frame should be YUV420 or already browser-compatible payload
+
+SUBSCRIBER PROTOCOL
+  connect to subscribe port and receive the same frame packets
+  newest frame is replayed immediately when subscriber joins
+
+### bonfyre narrate
+bonfyre-narrate v3 — verified tone-aware text-to-speech synthesis
+
+Usage:
+  bonfyre-narrate <text-file> <output-dir> [options]
+  bonfyre-narrate verify <output.wav> <source-features.json>
+
+Options:
+  --voice-model PATH        Piper ONNX model path
+  --tone-profile PATH       Tone profile JSON (bonfyre-tone profile)
+  --source-features PATH    88-feature tone.json (bonfyre-tone extract)
+  --verify                  Run closed-loop fidelity verification
+  --refine [TARGET]         Iterative refinement (default: 0.85)
+  --audio-format FMT        Output format (default: wav)
+  --title TITLE             Artifact title
+  --ssml                    Generate SSML
+  --dry-run                 Print plan without generating audio
+  --no-pitch-shift          Skip PSOLA pitch correction
+  --no-envelope             Skip energy envelope transfer
+
+Verification pipeline:
+  bonfyre-tone extract audio.wav tone_out/
+  bonfyre-tone profile audio.wav tone_out/
+  bonfyre-narrate summary.md narrate_out/ \
+    --tone-profile tone_out/profile.json \
+    --source-features tone_out/tone.json \
+    --verify --refine
+
+6-layer fidelity scoring. Closed-loop quality verification.
+
+### bonfyre offer
+Usage:
+  bonfyre-offer generate <proof-bundle.json> <output-dir>
+
+### bonfyre orchestrate
+bonfyre-orchestrate
+
+Usage:
+  bonfyre-orchestrate status
+  bonfyre-orchestrate plan <request.json>
+  bonfyre-orchestrate feedback <request.json> <quality_gain> <latency_delta>
+  bonfyre-orchestrate feedback <request.json> <feedback.json>
+
+Environment:
+  BONFYRE_ORCHESTRATE_ENDPOINT  OpenAI-compatible Gemma endpoint
+  BONFYRE_ORCHESTRATE_MODEL     Model name (default: google/gemma-4-E4B)
+  BONFYRE_ORCHESTRATE_API_KEY   Optional bearer token
+  BONFYRE_ORCHESTRATE_POLICY_DB Optional SQLite policy path
+
+### bonfyre outreach
+Unknown command: --help
+BonfyreOutreach — quiet distribution engine
+
+Usage:
+  bonfyre-outreach [--db FILE] channels
+  bonfyre-outreach [--db FILE] templates --channel CH
+  bonfyre-outreach [--db FILE] send --channel CH --target WHO [--offer NAME] [--message TPL]
+  bonfyre-outreach [--db FILE] reply --id ID --type positive|negative|neutral [--notes N]
+  bonfyre-outreach [--db FILE] pending
+  bonfyre-outreach [--db FILE] followup [--id ID]
+  bonfyre-outreach [--db FILE] report
+  bonfyre-outreach [--db FILE] status
+
+### bonfyre pack
+Usage:
+  bonfyre-pack assemble <proof-dir> <offer-dir> <output-dir>
+  bonfyre-pack archive  <proof-dir> <offer-dir> <output.tar.gz>
+
+### bonfyre paragraph
+Usage: bonfyre-paragraph --input <file> --out <file> [--with-headers] [--dry-run]
+
+### bonfyre pay
+Unknown command: --help
+BonfyrePay — payment & invoice management
+
+Usage:
+  bonfyre-pay [--db FILE] invoice --user-id ID [--period YYYY-MM]
+  bonfyre-pay [--db FILE] invoices [--user-id ID] [--status pending|paid|overdue]
+  bonfyre-pay [--db FILE] pay --invoice-id ID --amount CENTS --method METHOD [--reference REF]
+  bonfyre-pay [--db FILE] credit --user-id ID --amount CENTS --reason REASON
+  bonfyre-pay [--db FILE] balance --user-id ID
+  bonfyre-pay [--db FILE] report [--period YYYY-MM]
+  bonfyre-pay [--db FILE] status
+  bonfyre-pay layer <artifact_id> [--op verify|materialize|compose|run] [--root DIR]
+
+### bonfyre pipeline
+BonfyrePipeline — unified single-process pipeline
+
+Usage:
+  bonfyre-pipeline run <input> --out DIR [--type TYPE] [--artifacts DIR]
+      [--key KEY] [--key-file F] [--tier TIER]
+
+Audio files (.wav/.mp3/.m4a/.flac/.ogg or --type audio):
+  Runs transcript pipeline: transcribe → clean → brief → proof → tag → offer → pack
+
+Other types:
+  Runs data pipeline: gate → ingest → index → compress → meter → stitch → ledger
+
+### bonfyre project
+bonfyre-project
+
+Usage:
+  bonfyre-project cms <cms args...>
+  bonfyre-project index <index args...>
+  bonfyre-project stitch <stitch args...>
+  bonfyre-project refresh <artifact-dir> [--db FILE]
+
+### bonfyre proof
+Usage:
+  bonfyre-proof score <brief-dir> <output-dir>
+  bonfyre-proof inspect <proof-dir>
+  bonfyre-proof bundle <proof-dir> <output-dir>
+
+### bonfyre proxy
+Unknown command: --help
+
+### bonfyre quant
+bonfyre-quant — v8 Recursive Lattice-Flow weight quantization
+
+Usage:
+  bonfyre-quant roundtrip MODEL [--bits N] [--limit N] [--tensor NAME]
+  bonfyre-quant benchmark MODEL [--bits N]
+  bonfyre-quant --help
+
+v8 RLF: E8 lattice + μ-law warp + 16D RVQ → 0.9999+ cosine @ 3-bit
+
+Options:
+  --bits N     Quantization bits (2, 3, 4; default: 3)
+  --limit N    Process only first N eligible tensors
+  --tensor S   Process only tensor matching S
+
+### bonfyre query
+bonfyre-query — local artifact analytics (DuckDB)
+
+Usage:
+  bonfyre-query layers [--family T_*] [--workflow A3.s03] [--source SRC] [--status STATUS] [--kind KIND] [--root DIR]
+  bonfyre-query bridges [--family T_*] [--root DIR]
+  bonfyre-query scan <dir> [db-path]
+  bonfyre-query sql <db> "<SQL>"
+  bonfyre-query stats <db> [output-dir]
+  bonfyre-query family <db> <family-key>
+  bonfyre-query status
+
+### bonfyre queue
+BonfyreQueue v2.0.0 — SQLite-backed job queue with worker daemon
+
+Usage:
+  bonfyre-queue layer-verify <artifact_id> [--priority N] [--root DIR]
+  bonfyre-queue layer-materialize <artifact_id> [--priority N] [--root DIR]
+  bonfyre-queue layer-compose <plan.json> [--priority N] [--root DIR]
+  bonfyre-queue layer-bridge <resolved-plan.json> [--priority N] [--root DIR]
+  bonfyre-queue layer-sync <artifact_id> [--priority N] [--root DIR]
+  bonfyre-queue enqueue <type> <input> [--priority N] [--source S] [--output DIR]
+  bonfyre-queue work [--workers N]
+  bonfyre-queue list [--status S] [--limit N]
+  bonfyre-queue stats
+  bonfyre-queue events [--since ID] [--follow]
+  bonfyre-queue webhook add|list|remove ...
+  bonfyre-queue retry <job-id>
+  bonfyre-queue purge [--older-than DAYS]
+
+Options:
+  --db FILE    SQLite database path (default: ~/.local/share/bonfyre/queue.db)
+
+Worker mode polls for queued jobs, forks bonfyre-<type> binaries,
+captures results, emits events, and dispatches webhooks.
+
+### bonfyre recipe
+Unknown command: --help
+BonfyreRecipe — Recipe Registry Management
+
+Usage:
+  bonfyre-recipe init [--db PATH]
+  bonfyre-recipe list [--category CAT] [--tag TAG]
+  bonfyre-recipe show <RECIPE_ID>
+  bonfyre-recipe add <RECIPE.json>
+  bonfyre-recipe validate <RECIPE.json>
+  bonfyre-recipe search <QUERY>
+  bonfyre-recipe hash <RECIPE.json>
+
+
+### bonfyre render
+bonfyre-render
+
+Usage:
+  bonfyre-render artifact <transcript-file> <output-dir> [--title TITLE]
+  bonfyre-render package <proof-dir> <offer-dir> <output-dir>
+
+### bonfyre repurpose
+bonfyre-repurpose — turn brief artifacts into social media formats
+
+Usage:
+  bonfyre-repurpose <format> <brief-dir> <output-dir>
+
+Formats:
+  tweet-thread   Twitter/X thread (5-7 tweets)
+  linkedin       LinkedIn post (hook → insight → CTA)
+  carousel       Instagram/LinkedIn carousel slides
+  youtube-desc   YouTube description + chapters + SEO
+  newsletter     Email newsletter edition
+  all            Generate all formats
+
+Example:
+  bonfyre-repurpose all ./output/brief ./output/social
+
+### bonfyre run
+BonfyreRun — Recipe Executor
+
+Usage:
+  bonfyre-run <RECIPE_ID> --input <FILE> --out <DIR> [OPTIONS]
+
+  bonfyre-run history [RECIPE_ID]
+  bonfyre-run show <RUN_ID>
+
+Options:
+  --dry-run           Show execution plan
+  --db PATH           Custom recipe database
+  --input-repo PATH   Optional repository input
+  --resume            Resume from failed stage (TODO)
+  --from-stage ID     Start from stage (TODO)
+  --to-stage ID       Stop at stage (TODO)
+  --batch             Batch mode (TODO)
+
+### bonfyre runtime
+bonfyre---help: No such file or directory
+bonfyre-runtime
+
+Usage:
+  bonfyre-runtime run <input> [pipeline args...]
+  bonfyre-runtime run-ledger <input> [pipeline args...]
+  bonfyre-runtime queue <queue args...>
+  bonfyre-runtime ledger <ledger args...>
+  bonfyre-runtime loop <N> <binary> [args...]
+  bonfyre-runtime parallel [-- cmd args...]...
+  bonfyre-runtime pipeline [-- cmd args...]...
+  bonfyre-runtime gen <gen args...>
+  bonfyre-runtime swarm <swarm args...>
+  bonfyre-runtime control <control args...>
+  bonfyre-runtime recipe <recipe args...>
+  bonfyre-runtime model <model args...>
+  bonfyre-runtime stitch <stitch args...>
+  bonfyre-runtime proxy <proxy args...>
+  bonfyre-runtime sli <sli args...>
+  bonfyre-runtime run-recipe <code> <input> [bonfyre-run args...]
+  bonfyre-runtime service <proxy|moq|swarm-worker> [args...]
+  bonfyre-runtime capabilities
+      print machine-readable cmd capability index (JSON)
+  bonfyre-runtime doctor [--json]
+      validate runtime dependency binaries and preflight toggles
+  bonfyre-runtime conference [video-relay args...]
+  bonfyre-runtime autowire <input> --intent <text> --out <dir> [--mode local|swarm] [--nodes N]
+  bonfyre-runtime <cmd> [args...]
+      dynamic pass-through to bonfyre-<cmd> for recovered/orphaned modules
+
+  loop:     runs <binary> N times; passes previous artifact.json as --in
+            to each subsequent iteration.
+  parallel: forks all '-- cmd args...' groups concurrently; waits for
+            all to finish; returns 0 only if every child exited 0.
+            Separate independent pipeline stages with '--'.
+  pipeline: chains '-- cmd args...' groups via OS pipes: stdout of
+            stage N is streamed directly into stdin of stage N+1.
+            Eliminates bonfyre-space round-trip I/O for intermediate data.
+            All stages run concurrently; waits for the final stage.
+  gen/swarm/control/recipe/model/stitch/proxy/sli: pass-through wrappers so
+            runtime can orchestrate broad cmd-tree capabilities from one entry point.
+  run-recipe: canonical bridge to bonfyre-run recipe execution semantics.
+  service: standard launcher for long-running infra (proxy, moq relay, swarm worker).
+  autowire: resolves existing recipe / workflow / capability matches from the
+            shared catalog first; optional generator fallback is disabled by default.
+
+### bonfyre scene-detect
+Unknown option: --help
+bonfyre-scene-detect
+
+Usage:
+  bonfyre-scene-detect --input <frames-dir> --out <dir> [--threshold N]
+
+### bonfyre segment
+
+### bonfyre sli
+bonfyre-sli v1.1.0 — Structured Layer Inference
+
+Usage:
+  bonfyre-sli run      --in vecs.bin --model m.bqfp --out out.bin
+  bonfyre-sli chain    --in vecs.bin --chain T04:T16 --models-dir DIR --out out.bin
+  bonfyre-sli route    --in vecs.bin --stats corpus_stats.json --models-dir DIR --out out.bin
+  bonfyre-sli auto-run --in vecs.bin --stats corpus_stats.json --out results/
+               [--loop 3] [--chain auto|T04:T16|none] [--fpqx auto|none]
+               [--thresh 0.001] [--models-dir DIR]
+  bonfyre-sli bench    --model m.bqfp [--n 1000]
+  bonfyre-sli inspect  --model m.bqfp
+
+Vector file format: [n_vecs:u32][dim:u32][float32 × n × d]
+
+  run:      apply single BQFP model transform to input vectors
+  chain:    apply T04 then T16 (or any family sequence) in order
+  route:    use bonfyre-model route to pick family, then run
+  auto-run: routing + transform + FPQx alignment + convergence loop
+  bench:    throughput benchmark
+  inspect:  print BQFP tensor structure
+
+### bonfyre space
+bonfyre-space 1.0.0 — shared memory substrate
+
+USAGE
+  bonfyre-space <command> [args]
+
+COMMANDS
+  status                        list all open spaces with size + access time
+  open <name>                   open (or create) a named space
+  put <space> <key> <value>     write a key to a space
+  get <space> <key>             read a key from a space
+  list [space]                  list keys (all, or within one space)
+  stats <space>                 key count, total size, timestamps
+  gc [--older-than <seconds>]   remove stale spaces (default: 86400)
+  attach <space> <stage>        record that a pipeline stage is attached
+  detach <space> <stage>        mark stage as detached
+  help                          this message
+
+INTEGRATION
+  bonfyre-run uses spaces for inter-stage artifact passing
+  bonfyre-flow reads branching state from named spaces
+  bonfyre-compete writes variant outputs to separate space keys
+
+ENVIRONMENT
+  BONFYRE_SPACE_DB    override DB path
+
+### bonfyre speech-loop
+bonfyre-speechloop — whisper → transform → piper speech engine
+
+Usage:
+  bonfyre-speechloop transform <input-audio> <out-dir>
+    [--voice-model PATH] [--model NAME] [--compress] [--brief]
+
+  bonfyre-speechloop narrate-brief <brief-dir> <out-dir>
+    [--voice-model PATH]
+
+The transform loop:
+  audio → transcribe → clean → [paragraph → brief] → narrate → new audio
+
+The narrate-brief shortcut:
+  existing brief.md → narrate → audio recap
+
+### bonfyre stitch
+BonfyreStitch — DAG materializer
+
+  bonfyre-stitch plan <artifact.json> --target ID
+  bonfyre-stitch materialize <artifact.json> --target ID [--cache DIR]
+  bonfyre-stitch prune <family_dir> [--keep-pinned]
+  bonfyre-stitch cache-stats [--cache DIR]
+  bonfyre-stitch compile <recipe.json> --output <binary> [--recipe-dir DIR]
+  bonfyre-stitch layer-plan <artifact_a> <artifact_b> [--root DIR]
+  bonfyre-stitch validate-layer-dag <plan.json> [--root DIR]
+  bonfyre-stitch resolve-bridges <plan.json> [--root DIR]
+  bonfyre-stitch layer-composite <virtual_composite_id> --out DIR [--root DIR]
+
+### bonfyre surface
+BonfyreSurface — optional client surface registry
+
+Usage:
+  bonfyre-surface list
+  bonfyre-surface show <surface_id>
+  bonfyre-surface validate <client_surface.yaml>
+
+### bonfyre swarm
+BonfyreSwarm — P2P artifact distribution
+
+Usage:
+  bonfyre-swarm seed <dir> [--port N] [--gate-key KEY] [--index DB]
+  bonfyre-swarm peers [--index DB]
+  bonfyre-swarm status [--index DB]
+
+### bonfyre sync
+Usage:
+  bonfyre-sync inspect-intake <path>
+  bonfyre-sync inspect-status <path>
+  bonfyre-sync push <local.json> <remote-url>
+  bonfyre-sync pull <remote-url> <local.json>
+  bonfyre-sync layer <artifact_id> [--manifest-only|--include-payload] [--root DIR]
+
+### bonfyre tag
+bonfyre-tag — instant topic/intent tagging (fastText, pure C)
+
+Usage:
+  bonfyre-tag predict <model.bin> <text-file> [output-dir] [--top N]
+  bonfyre-tag batch <model.bin> <dir> [output-dir]
+  bonfyre-tag train <training-data> <model-out>
+  bonfyre-tag detect-lang <text-file> [output-dir]
+  bonfyre-tag status
+
+### bonfyre tel
+tel: unknown command: --help
+BonfyreTel 1.0.0 — FreeSWITCH telephony adapter
+
+Production:
+  bonfyre-tel listen      [--host H] [--port P] [--password PW] [--dry-run]
+  bonfyre-tel send-sms    --from NUM --to NUM --body TEXT
+  bonfyre-tel send-mms    --from NUM --to NUM --body TEXT --media FILE
+  bonfyre-tel call        --from NUM --to NUM [--record]
+  bonfyre-tel hangup      --uuid UUID
+  bonfyre-tel status
+
+Testing (zero cost, no FreeSWITCH needed):
+  bonfyre-tel mock        [--port P] [--auto]     Start mock ESL server
+  bonfyre-tel sim-call    [--from N] [--to N]     Inject fake call event
+  bonfyre-tel sim-sms     [--from N] [--to N] [--body T]  Inject fake SMS
+
+Verify (Twilio Verify replacement):
+  bonfyre-tel verify-send  --to NUM               Send 6-digit code via SMS
+  bonfyre-tel verify-check --phone NUM --code NUM  Validate code
+  bonfyre-tel layer-trace <artifact_id> [--root DIR]
+
+  bonfyre-tel version
+
+Flags:
+  --dry-run    Log pipeline triggers without actually forking
+  --auto       (mock) Generate events every 5 seconds automatically
+  --db FILE    SQLite database path (default: ~/.local/share/bonfyre/tel.db)
+
+Zero-cost test flow:
+  Terminal 1:  bonfyre-tel mock
+  Terminal 2:  bonfyre-tel listen --dry-run
+  Terminal 3:  bonfyre-tel sim-call
+               bonfyre-tel sim-sms --body "hello world"
+               bonfyre-tel verify-send --to +15559876543 --dry-run
+               bonfyre-tel verify-check --phone +15559876543 --code 123456
+
+### bonfyre tier
+bonfyre-tier 1.0.0 — latency tier management and SLA enforcement
+
+USAGE
+  bonfyre-tier <command> [args]
+
+COMMANDS
+  status                        tier counts + SLA compliance
+  list                          all tier definitions
+  show <tier>                   tier SLA + assigned stages
+  set <recipe> <stage> <tier>   assign a stage to a tier
+  route <recipe> <stage>        get tier assignment for a stage
+  record <recipe> <stage> <ms>  log observed latency
+  violations [recipe]           show SLA violations
+  history [recipe]              recent latency records
+  layer <artifact_id>           recommended layer tier
+  help                          this message
+
+BUILT-IN TIERS
+  instant  <10ms    in-memory, cache, metadata ops
+  fast     <100ms   local inference, index reads
+  batch    <10s     cloud inference, file I/O
+  deep     <600s    large model, GPU batch jobs
+
+INTEGRATION
+  bonfyre-control reads tier assignments for SLA-aware routing
+  bonfyre-economy combines tier + cost for optimal dispatch
+  bonfyre-run records actual latency: bonfyre-tier record ...
+
+ENVIRONMENT
+  BONFYRE_TIER_DB   override DB path
+
+### bonfyre time
+bonfyre-time 1.0.0 — temporal pipeline manager
+
+USAGE
+  bonfyre-time <command> [args]
+
+COMMANDS
+  status                         queue depth + run counts + active triggers
+  schedule <artifact> <recipe>   queue artifact for (re)processing
+  rerun <artifact-id>            force immediate re-run via bonfyre-run
+  diff <artifact-id>             diff two most recent run outputs
+  history <artifact-id>          show all processing runs for an artifact
+  trigger add <event> <recipe>   register a re-interpretation trigger
+  trigger list                   list all triggers
+  trigger rm <id>                remove trigger
+  help                           this message
+
+TRIGGERS
+  entity_resolved  — re-run when bonfyre-entity identifies a previously unknown entity
+  model_updated    — re-run when bonfyre-model updates a model version
+  cron:HH:MM       — scheduled re-run at a given time (requires cron integration)
+  custom           — any string; fire via: bonfyre-time trigger fire <event>
+
+ENVIRONMENT
+  BONFYRE_TIME_DB   override DB path
+
+### bonfyre tone
+bonfyre-tone — speech tone/emotion/rhythm extraction (OpenSMILE)
+
+Usage:
+  bonfyre-tone extract <audio> [output-dir]
+  bonfyre-tone profile <audio> [output-dir]
+  bonfyre-tone compare <audio1> <audio2> [output-dir]
+  bonfyre-tone status
+
+### bonfyre transcribe
+bonfyre-transcribe — world-class libwhisper transcription engine
+
+Usage:
+  bonfyre-transcribe <input-audio> <output-dir> [--model NAME] [--language CODE|auto]
+                      [--media-prep-binary PATH]
+                      [--silero-vad] [--silero-script PATH]
+                      [--split-speech] [--noise-threshold DB] [--min-silence SEC]
+                      [--min-speech SEC] [--padding SEC]
+                      [--greedy] [--beam-size N] [--best-of N]
+                      [--vocab-db PATH] [--no-vocab]
+                      [--processors N] [--no-speech-thold N]
+
+Transcription engine:
+  Links libwhisper directly. Model loads ONCE. Zero fork+exec.
+  Metal GPU + flash attention. DTW forced-alignment timestamps.
+  Multi-processor parallel decode. TinyDiarize speaker turns.
+
+Quality (cutting-edge):
+  Geometric mean confidence (perplexity^-1 = exp(mean(log(p)))).
+  Compression ratio hallucination detection (zlib, rho > 2.4).
+  Token n-gram repetition detector. Repetition penalty logits filter.
+  Voice-length anomaly detection. Per-segment quality score.
+
+Output formats:
+  transcript.txt   — plain text
+  transcript.json  — structured segments with timestamps, confidence,
+                     logprob, compression ratio, hallucination flags
+  transcript.srt   — SubRip subtitles
+  transcript.vtt   — WebVTT subtitles with quality metadata
+
+Vocabulary learning:
+  Flat binary .bfvocab format (BFVD02). Zero SQLite, zero process spawns.
+  BM25-weighted terms injected as whisper initial_prompt.
+  Token-aware truncation to fit decoder context (112 token budget).
+  Shannon entropy + KL-divergence track convergence.
+
+  BM25(t,d) = IDF(t) * tf(t,d)*(k1+1) / (tf(t,d)+k1*(1-b+b*|d|/avgdl))
+  H = -sum(p_i * log2(p_i))           [Shannon entropy]
+  D_KL(P||U) = sum(p_i * log2(p_i/q)) [KL from uniform]
+
+  Disable with --no-vocab. Custom path with --vocab-db.
+
+### bonfyre transcript-family
+bonfyre-transcript-family
+
+Usage:
+  bonfyre-transcript-family <input-audio> <output-dir> [--with-headers] [transcribe flags...]
+
+### bonfyre vec
+bonfyre-vec — local vector search (sqlite-vec, pure C, SIMD cosine)
+
+Usage:
+  bonfyre-vec init <db>
+  bonfyre-vec insert <db> <embeddings.json>
+  bonfyre-vec search <db> <query.json> [--top N]
+  bonfyre-vec search <db> <query.json> --exact [--top N]
+  bonfyre-vec compare <db> <id1> <id2>
+  bonfyre-vec count <db>
+  bonfyre-vec status
+
+### bonfyre video-demux
+Unknown option: --help
+bonfyre-video-demux
+
+Usage:
+  bonfyre-video-demux --input <video> --out <dir>
+
+### bonfyre weaviate
+Usage: bonfyre-weaviate-index --emb <path> --meta <path> [--out <path>] [--class-name <name>] [--dry-run]
+
+### bonfyre workflow
+bonfyre-workflow - workflow profile browser
+
+Workflow profiles are operator-facing suites. They describe the shape
+of work Bonfyre should perform, but they are not concrete executable
+recipes or step capabilities.
+
+Usage:
+  bonfyre-workflow list [term] [--json] [--compact]
+  bonfyre-workflow show <WORKFLOW_ID | path/to/workflow.json>
+  bonfyre-workflow steps <WORKFLOW_ID | path/to/workflow.json>
+  bonfyre-workflow step <WORKFLOW_ID | path/to/workflow.json> <STEP_ID | name>
+  bonfyre-workflow help
+
+Examples:
+  bonfyre workflow list
+  bonfyre workflow list podcast
+  bonfyre workflow show A3
+  bonfyre workflow steps A3
+  bonfyre workflow step A3 s02
+
+Related surfaces:
+  bonfyre recipe list          concrete executable manifests
+  bonfyre capabilities help   step traits and matching registry
+  bonfyre model --help        model families and routing
+  bonfyre layer --help        layer bindings and pack operations
+saved: /tmp/bonfyre_command_tree.txt

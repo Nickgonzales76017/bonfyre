@@ -1,0 +1,11 @@
+{
+  "sourceSystem": "BonfyreEmbed",
+  "textPath": "/tmp/bonfyre-embed-smoke.txt",
+  "vectorPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreEmbed/outputs/smoke/transcript-embedding.json",
+  "vectorFormat": "json",
+  "dims": 768,
+  "model": "sentence_transformer.onnx",
+  "tokens": 5,
+  "deterministic": true,
+  "backend": "hashed-token-native"
+}

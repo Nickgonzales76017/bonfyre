@@ -466,7 +466,7 @@ static int emit_page_program_route_uncached(const char *root, const char *target
         }
         doc = (PageDocument){title, lede, character, "", cannot, sources,
                             NULL, "", program->route, territory, NULL, program->regions, program->region_count,
-                            from, stream, q, program, NULL, program->route, NULL, NULL, 0, query};
+                            from, stream, q, program, NULL, program->route, NULL, NULL, 0, query, NULL};
         doc.subject_address=projection.subject[0]?projection.subject:NULL;
         if (projected >= 0) {
             doc.prefilled = prefilled;
@@ -1332,7 +1332,7 @@ static int emit_saved_page(const char *root, const char *host, const char *beare
     {
         PageDocument doc = {"Saved", "What you kept. It stays here after its source moves on, and only you can see it.", "scrapbook", "",
                             "a saved item is a private reference to what a source published; it is not a copy, an endorsement or a claim",
-                            "", NULL, "", "/saved", NULL, NULL, sequence, 1, NULL, NULL, NULL, NULL, actor, "/saved", material, NULL, 0, NULL};
+                            "", NULL, "", "/saved", NULL, NULL, sequence, 1, NULL, NULL, NULL, NULL, actor, "/saved", material, NULL, 0, NULL, NULL};
         ok = db ? page_emit_document(db, path, &doc, NULL) : 0;
     }
     if (db) sqlite3_close(db);

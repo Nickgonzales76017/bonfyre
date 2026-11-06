@@ -1,0 +1,8 @@
+{
+  "sourceSystem": "AcousticClassifier",
+  "audioPath": "10-Code/LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+  "preprocessStatus": "dry-run",
+  "openSmileStatus": "dry-run",
+  "classifierStatus": "dry-run",
+  "simulated": 1
+}

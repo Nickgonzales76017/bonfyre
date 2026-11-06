@@ -1,0 +1,17 @@
+{
+   "date" : "2026-04-04",
+   "dry_run" : true,
+   "elapsed" : 0,
+   "entries" : [
+      {
+         "output_length" : 572,
+         "pass" : "agent_brief",
+         "path" : "(dry run â skipped write)",
+         "title" : "Local AI Transcription Service",
+         "type" : "project"
+      }
+   ],
+   "passes" : [
+      "agent_brief"
+   ]
+}

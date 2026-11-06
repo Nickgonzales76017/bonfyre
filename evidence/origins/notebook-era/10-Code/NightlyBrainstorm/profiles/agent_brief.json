@@ -1,0 +1,62 @@
+{
+  "name": "agent_brief",
+  "description": "Convert approved projects into coding-agent-ready implementation specs with file plans, constraints, and test criteria",
+
+  "selector": {
+    "type": "project",
+    "status": ["active"],
+    "stage": ["build", "launch"],
+    "paths": ["02-Projects/"]
+  },
+
+  "context_recipe": {
+    "include_sections": [
+      "Summary",
+      "Objective",
+      "Success Definition",
+      "Success Criteria",
+      "First Deliverable",
+      "First Action",
+      "Tooling",
+      "Constraints",
+      "Architecture",
+      "Execution",
+      "Stack",
+      "Milestones"
+    ],
+    "follow_links": {
+      "idea_link": { "depth": "frontmatter+summary", "max": 1 },
+      "system_links": { "depth": "frontmatter+purpose+core_mechanism", "max": 2 }
+    },
+    "include_frontmatter": true,
+    "max_context_chars": 10000
+  },
+
+  "prompt": {
+    "system": "You are a staff engineer and technical lead creating implementation briefs for AI coding agents.\n\nRules:\n- Do not invent APIs, libraries, or tools not mentioned in context.\n- Use only the supplied context.\n- Assume the coding agent is competent but has zero context about the project.\n- Every instruction must be unambiguous and testable.\n- Prefer smallest-possible scope per brief.\n- Output in exact markdown sections only.\n- The brief must be self-contained — a coding agent should be able to execute it without asking questions.",
+
+    "user_template": "Here is the project metadata:\n```yaml\n{{frontmatter}}\n```\n\nHere is the project body:\n{{body}}\n\n{{#if related_notes}}\nLinked context:\n{{related_notes}}\n{{/if}}\n\nTask: Create a coding-agent implementation brief for the highest-priority unfinished deliverable in this project. The brief should be specific enough that an AI coding agent can execute it without human clarification.",
+
+    "output_contract": "Return EXACTLY these markdown sections and nothing else:\n\n## Brief Title\n(One line: what this brief accomplishes)\n\n## Objective\n(2-3 sentences: what the agent should build and why)\n\n## Acceptance Criteria\n(Numbered list: specific, testable conditions that prove the task is done)\n\n## File Plan\n(Table: | File | Purpose | Key Contents |)\n\n## Implementation Steps\n(Numbered list: ordered steps the agent should follow. Each step must be concrete and specific.)\n\n## Constraints\n(Bullet list: language, framework, performance, security, or style constraints)\n\n## Test Criteria\n(Numbered list: specific tests the agent should write or run to verify correctness)\n\n## Context Files\n(List of vault or code files the agent should read before starting)\n\n## Out of Scope\n(Bullet list: things the agent should NOT do in this brief)"
+  },
+
+  "inference": {
+    "temperature": 0.35,
+    "top_p": 0.8,
+    "min_p": 0.05,
+    "repeat_penalty": 1.2,
+    "num_predict": 1536
+  },
+
+  "output": {
+    "mode": "create",
+    "path_template": "07-Agent Briefs/Brief - {{title}} - {{date}}.md",
+    "frontmatter": {
+      "type": "agent-brief",
+      "source_project": "{{source_path}}",
+      "created": "{{date}}",
+      "status": "pending",
+      "cssclasses": ["meta"]
+    }
+  }
+}

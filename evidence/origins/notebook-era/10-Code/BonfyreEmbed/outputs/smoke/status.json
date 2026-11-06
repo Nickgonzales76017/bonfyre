@@ -1,0 +1,8 @@
+{
+  "sourceSystem": "BonfyreEmbed",
+  "status": "completed",
+  "vectorPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreEmbed/outputs/smoke/transcript-embedding.json",
+  "metaPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/BonfyreEmbed/outputs/smoke/transcript-embedding.json.json",
+  "deterministic": true,
+  "backend": "hashed-token-native"
+}

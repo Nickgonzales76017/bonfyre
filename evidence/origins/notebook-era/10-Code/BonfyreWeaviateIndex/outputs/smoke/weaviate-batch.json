@@ -1,0 +1,15 @@
+{
+  "sourceSystem": "BonfyreWeaviateIndex",
+  "className": "BonfyreTranscript",
+  "documentId": "demo-job",
+  "embeddingPath": "/tmp/bonfyre-weaviate-vec.json",
+  "metadataPath": "/tmp/bonfyre-weaviate-meta.json",
+  "vectorLength": 3,
+  "properties": {
+    "jobSlug": ",
+    "jobName": demo-job,
+    "sourceKind": ",
+    "metaPath": "Demo Job"
+  },
+  "weaviateUpserted": false
+}

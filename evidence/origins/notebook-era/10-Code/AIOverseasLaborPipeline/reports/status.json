@@ -1,0 +1,18 @@
+{
+  "project": "AIOverseasLaborPipeline",
+  "total_jobs": 1,
+  "counts": {
+    "pending": 1,
+    "completed": 0,
+    "needs-rework": 0
+  },
+  "job_types": {
+    "full-deliverable": 1
+  },
+  "source_counts": {
+    "ServiceArbitrageHub": 1
+  },
+  "estimated_revenue": 35.0,
+  "estimated_cost": 5.25,
+  "estimated_margin": 29.75
+}

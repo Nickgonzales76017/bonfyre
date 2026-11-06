@@ -1,0 +1,35 @@
+{
+  "ca702b95b168": {
+    "jobId": "ca702b95b168",
+    "status": "queued",
+    "audioPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/DiarizationRESTService/../LocalAITranscriptionService/tmp/silence.wav",
+    "outputDir": "/Users/nickgonzales/Documents/Bonfyre/10-Code/DiarizationRESTService/tmp-job",
+    "dryRun": true
+  },
+  "aef22348d037": {
+    "jobId": "aef22348d037",
+    "status": "completed",
+    "audioPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+    "outputDir": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs-smoke-diar-rest/diar-rest-smoke/diarization",
+    "dryRun": false,
+    "command": [
+      "/Users/nickgonzales/Documents/Bonfyre/10-Code/SpeakerDiarization/bin/diarize_pyannote_resemblyzer.sh",
+      "--audio",
+      "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+      "--out",
+      "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs-smoke-diar-rest/diar-rest-smoke/diarization"
+    ],
+    "result": {
+      "exitCode": 0,
+      "stdout": "Running pyannote diarization -> /Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs-smoke-diar-rest/diar-rest-smoke/diarization/founder-01-pickfu-assumptions_diar\nRunning Resemblyzer embeddings -> /Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs-smoke-diar-rest/diar-rest-smoke/diarization/founder-01-pickfu-assumptions_resemblyzer\nRun resemblyzer embedding pipeline here\nDiarization pipeline complete. Check: /Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/outputs-smoke-diar-rest/diar-rest-smoke/diarization\n",
+      "stderr": "/Library/Developer/CommandLineTools/usr/bin/python3: Error while finding module specification for 'pyannote.audio.pipeline.diarization' (ModuleNotFoundError: No module named 'pyannote')\npyannote diarization failed or not installed. See printed command to run manually.\n"
+    },
+    "sidecarStatus": {
+      "sourceSystem": "SpeakerDiarization",
+      "audioPath": "/Users/nickgonzales/Documents/Bonfyre/10-Code/LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+      "diarizationStatus": "failed",
+      "resemblyzerStatus": "completed",
+      "simulated": 1
+    }
+  }
+}

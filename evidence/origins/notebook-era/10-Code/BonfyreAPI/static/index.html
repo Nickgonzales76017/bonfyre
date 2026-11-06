@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bonfyre — Powered by Static Binaries</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+<!-- Navigation -->
+<nav id="nav">
+  <div class="nav-brand">
+    <span class="logo">🔥</span>
+    <span class="brand">Bonfyre</span>
+  </div>
+  <div class="nav-links">
+    <a href="#" data-page="dashboard" class="active">Dashboard</a>
+    <a href="#" data-page="pipeline">Pipeline</a>
+    <a href="#" data-page="outreach">Outreach</a>
+    <a href="#" data-page="finance">Finance</a>
+    <a href="#" data-page="use-cases">Use Cases</a>
+    <a href="#" data-page="settings">Settings</a>
+  </div>
+  <div class="nav-user" id="nav-user">
+    <span id="user-name">Guest</span>
+  </div>
+</nav>
+
+<!-- Dashboard -->
+<section id="page-dashboard" class="page active">
+  <div class="page-header">
+    <h1>System Dashboard</h1>
+    <button class="btn btn-sm" onclick="refreshDashboard()">Refresh</button>
+  </div>
+
+  <div class="card-grid">
+    <div class="card stat-card">
+      <div class="stat-value" id="stat-jobs">—</div>
+      <div class="stat-label">Total Jobs</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="stat-completed">—</div>
+      <div class="stat-label">Completed</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="stat-uploads">—</div>
+      <div class="stat-label">Uploads</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="stat-binaries">—</div>
+      <div class="stat-label">Binaries</div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Quick Actions</h2>
+      <div class="action-grid">
+        <button class="action-btn" onclick="showPage('pipeline')">
+          <span class="action-icon">📥</span>
+          <span>Upload Audio</span>
+        </button>
+        <button class="action-btn" onclick="showPage('outreach')">
+          <span class="action-icon">📤</span>
+          <span>Track Outreach</span>
+        </button>
+        <button class="action-btn" onclick="showPage('finance')">
+          <span class="action-icon">💰</span>
+          <span>View Margins</span>
+        </button>
+        <button class="action-btn" onclick="showPage('use-cases')">
+          <span class="action-icon">🎯</span>
+          <span>Browse Use Cases</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Recent Jobs</h2>
+      <table class="data-table" id="recent-jobs-table">
+        <thead>
+          <tr><th>ID</th><th>Type</th><th>Status</th><th>Created</th></tr>
+        </thead>
+        <tbody id="recent-jobs"></tbody>
+      </table>
+      <p class="empty-state" id="no-jobs">No jobs yet. Upload an audio file to get started.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section id="page-pipeline" class="page">
+  <div class="page-header">
+    <h1>Audio Pipeline</h1>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Upload & Process</h2>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="file-input" accept="audio/*,.mp3,.wav,.m4a,.ogg,.flac" hidden>
+        <div class="upload-content" onclick="document.getElementById('file-input').click()">
+          <span class="upload-icon">📁</span>
+          <p>Click to upload or drag & drop</p>
+          <p class="upload-hint">MP3, WAV, M4A, OGG, FLAC — up to 4MB</p>
+        </div>
+      </div>
+      <div id="upload-status" class="upload-status hidden"></div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Pipeline Steps</h2>
+      <div class="pipeline-steps">
+        <div class="step" id="step-ingest"><span class="step-num">1</span> Ingest</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-media"><span class="step-num">2</span> Normalize</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-hash"><span class="step-num">3</span> Hash</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-transcribe"><span class="step-num">4</span> Transcribe</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-clean"><span class="step-num">5</span> Clean</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-paragraph"><span class="step-num">6</span> Paragraph</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-brief"><span class="step-num">7</span> Brief</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-proof"><span class="step-num">8</span> Proof</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-offer"><span class="step-num">9</span> Offer</div>
+        <div class="step-arrow">→</div>
+        <div class="step" id="step-pack"><span class="step-num">10</span> Pack</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>All Jobs</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Type</th><th>Status</th><th>Input</th><th>Created</th><th>Completed</th></tr>
+        </thead>
+        <tbody id="all-jobs"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- Outreach -->
+<section id="page-outreach" class="page">
+  <div class="page-header">
+    <h1>Outreach Tracker</h1>
+  </div>
+
+  <div class="card-grid four-col">
+    <div class="card stat-card">
+      <div class="stat-value" id="out-total">0</div>
+      <div class="stat-label">Total Sends</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="out-pending">0</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="out-positive">0</div>
+      <div class="stat-label">Positive</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="out-rate">0%</div>
+      <div class="stat-label">Response Rate</div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card">
+      <h2>Log New Send</h2>
+      <form id="send-form" onsubmit="logSend(event)">
+        <div class="form-row">
+          <label>Channel</label>
+          <select id="send-channel">
+            <option value="dm">DM</option>
+            <option value="listing">Listing</option>
+            <option value="post">Post</option>
+            <option value="landing">Landing</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <label>Target</label>
+          <input type="text" id="send-target" placeholder="Who are you reaching out to?" required>
+        </div>
+        <div class="form-row">
+          <label>Offer (optional)</label>
+          <input type="text" id="send-offer" placeholder="e.g. AI Transcription">
+        </div>
+        <button type="submit" class="btn">Log Send</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>Channels</h2>
+      <div class="channel-list">
+        <div class="channel-item">
+          <span class="channel-icon">💬</span>
+          <div><strong>DM</strong><br>Direct messages — Twitter, LinkedIn, email</div>
+        </div>
+        <div class="channel-item">
+          <span class="channel-icon">🏪</span>
+          <div><strong>Listing</strong><br>Marketplace — Fiverr, Upwork, etc.</div>
+        </div>
+        <div class="channel-item">
+          <span class="channel-icon">📝</span>
+          <div><strong>Post</strong><br>Content — Twitter, Reddit, Indie Hackers</div>
+        </div>
+        <div class="channel-item">
+          <span class="channel-icon">🌐</span>
+          <div><strong>Landing</strong><br>Landing page / link-in-bio</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Follow-Up Queue</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Target</th><th>Channel</th><th>Offer</th><th>Age</th><th>Next Move</th><th>Action</th></tr>
+        </thead>
+        <tbody id="followup-queue"></tbody>
+      </table>
+      <p class="empty-state" id="no-followups">No follow-ups pending.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Finance -->
+<section id="page-finance" class="page">
+  <div class="page-header">
+    <h1>Finance & Margins</h1>
+  </div>
+
+  <div class="card-grid four-col">
+    <div class="card stat-card">
+      <div class="stat-value" id="fin-revenue">$0</div>
+      <div class="stat-label">Revenue</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="fin-costs">$0</div>
+      <div class="stat-label">Costs</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="fin-margin">0%</div>
+      <div class="stat-label">Avg Margin</div>
+    </div>
+    <div class="card stat-card">
+      <div class="stat-value" id="fin-bundles">0</div>
+      <div class="stat-label">Bundles</div>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Service Components</h2>
+      <table class="data-table">
+        <thead>
+          <tr><th>Component</th><th>Your Cost</th><th>Client Price</th><th>Margin</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Transcription</td><td>$1.50</td><td>$12.00</td><td class="positive">87%</td></tr>
+          <tr><td>Summary</td><td>$0.50</td><td>$5.00</td><td class="positive">90%</td></tr>
+          <tr><td>Action Items</td><td>$0.25</td><td>$3.00</td><td class="positive">92%</td></tr>
+          <tr><td>Quality Review</td><td>$1.00</td><td>$8.00</td><td class="positive">88%</td></tr>
+          <tr><td>Speaker Tags</td><td>$0.50</td><td>$4.00</td><td class="positive">88%</td></tr>
+          <tr><td>Paragraphing</td><td>$0.10</td><td>$2.00</td><td class="positive">95%</td></tr>
+          <tr><td>Cleanup</td><td>$0.25</td><td>$3.00</td><td class="positive">92%</td></tr>
+          <tr><td>Packaging</td><td>$0.10</td><td>$1.00</td><td class="positive">90%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card">
+      <h2>Bundle Builder</h2>
+      <div class="bundle-builder">
+        <label><input type="checkbox" checked data-cost="1.50" data-price="12.00"> Transcription</label>
+        <label><input type="checkbox" checked data-cost="0.50" data-price="5.00"> Summary</label>
+        <label><input type="checkbox" checked data-cost="0.25" data-price="3.00"> Action Items</label>
+        <label><input type="checkbox" data-cost="1.00" data-price="8.00"> Quality Review</label>
+        <label><input type="checkbox" data-cost="0.50" data-price="4.00"> Speaker Tags</label>
+        <label><input type="checkbox" data-cost="0.10" data-price="2.00"> Paragraphing</label>
+        <label><input type="checkbox" data-cost="0.25" data-price="3.00"> Cleanup</label>
+        <label><input type="checkbox" data-cost="0.10" data-price="1.00"> Packaging</label>
+      </div>
+      <div class="bundle-summary" id="bundle-summary">
+        <div>Your cost: <strong id="bundle-cost">$2.25</strong></div>
+        <div>Client price: <strong id="bundle-price">$20.00</strong></div>
+        <div>Margin: <strong id="bundle-margin" class="positive">89%</strong></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Pricing Tiers</h2>
+      <div class="tier-list">
+        <div class="tier">
+          <h3>Standard</h3>
+          <div class="tier-price">$12</div>
+          <p>< 30 min audio<br>Transcript + Summary</p>
+        </div>
+        <div class="tier featured">
+          <h3>Extended</h3>
+          <div class="tier-price">$20</div>
+          <p>30–60 min audio<br>Full package + action items</p>
+        </div>
+        <div class="tier">
+          <h3>Deep</h3>
+          <div class="tier-price">$35</div>
+          <p>60+ min, multi-speaker<br>Everything + speaker tags</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Use Cases -->
+<section id="page-use-cases" class="page">
+  <div class="page-header">
+    <h1>30 Use Cases — Powered by Bonfyre</h1>
+    <p class="subtitle">Every use case runs on static C11 binaries. 38 binaries, 1.5MB total, zero cloud.</p>
+  </div>
+
+  <div class="use-case-filters">
+    <button class="filter-btn active" data-filter="all">All (30)</button>
+    <button class="filter-btn" data-filter="pipeline">Pipeline (5)</button>
+    <button class="filter-btn" data-filter="content">Content (5)</button>
+    <button class="filter-btn" data-filter="business">Business (5)</button>
+    <button class="filter-btn" data-filter="sales">Sales (5)</button>
+    <button class="filter-btn" data-filter="infra">Infrastructure (5)</button>
+    <button class="filter-btn" data-filter="platform">Platform (5)</button>
+  </div>
+
+  <div class="use-case-grid" id="use-case-grid"></div>
+</section>
+
+<!-- Settings -->
+<section id="page-settings" class="page">
+  <div class="page-header">
+    <h1>Settings</h1>
+  </div>
+
+  <div class="card-row">
+    <div class="card">
+      <h2>Account</h2>
+      <div id="login-form">
+        <div class="form-row">
+          <label>Email</label>
+          <input type="email" id="login-email" placeholder="you@example.com">
+        </div>
+        <div class="form-row">
+          <label>Password</label>
+          <input type="password" id="login-password" placeholder="••••••••">
+        </div>
+        <button class="btn" onclick="handleLogin()">Login</button>
+        <button class="btn btn-secondary" onclick="handleSignup()">Sign Up</button>
+      </div>
+      <div id="user-info" class="hidden">
+        <p>Email: <strong id="settings-email"></strong></p>
+        <p>Tier: <strong id="settings-tier"></strong></p>
+        <p>Gate Key: <code id="settings-key"></code></p>
+        <button class="btn btn-secondary" onclick="handleLogout()">Logout</button>
+      </div>
+    </div>
+    <div class="card">
+      <h2>System</h2>
+      <div id="system-info">
+        <p>API: <span id="sys-version">—</span></p>
+        <p>Status: <span id="sys-status">—</span></p>
+        <p>Available binaries:</p>
+        <ul id="sys-binaries"></ul>
+      </div>
+      <button class="btn btn-sm" onclick="checkSystem()">Check System</button>
+    </div>
+  </div>
+
+  <div class="card-row">
+    <div class="card wide">
+      <h2>Architecture</h2>
+      <pre class="arch-diagram">
+Audio File
+  ↓  bonfyre-ingest        Intake + validation
+  ↓  bonfyre-media-prep    Normalize (16kHz mono)
+  ↓  bonfyre-hash          SHA-256 content addressing
+  ↓  bonfyre-transcribe    Speech → text (Whisper)
+  ↓  bonfyre-transcript-clean  Remove filler
+  ↓  bonfyre-paragraph     Structure paragraphs
+  ↓  bonfyre-brief         Summary + action items
+  ↓  bonfyre-proof         Quality scoring
+  ↓  bonfyre-offer         Pricing + outreach copy
+  ↓  bonfyre-pack          Assemble deliverable
+  →  Delivered Offer ($18, same-day)
+
+Infrastructure: bonfyre-cms, bonfyre-api, bonfyre-gate, bonfyre-index, bonfyre-graph
+Orchestration:  bonfyre-pipeline, bonfyre-queue, bonfyre-sync, bonfyre-stitch
+Value:          bonfyre-offer, bonfyre-meter, bonfyre-ledger, bonfyre-finance, bonfyre-outreach, bonfyre-pay
+Auth:           bonfyre-auth (signup/login/sessions → gate keys)
+      </pre>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

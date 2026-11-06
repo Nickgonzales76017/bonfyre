@@ -1,0 +1,15 @@
+{
+  "sourceSystem": "BonfyreMediaPrep",
+  "sourceAudio": "/Users/nickgonzales/Documents/Bonfyre/10-Code/SileroVADCLI/../LocalAITranscriptionService/samples/incoming-audio/founder-01-pickfu-assumptions.mp3",
+  "noiseThreshold": "-35dB",
+  "minSilence": 0.350,
+  "minSpeech": 20.000,
+  "padding": 0.150,
+  "chunkCount": 1,
+  "chunks": [
+    {
+      "index": 0,
+      "path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/SileroVADCLI/tmp-out/chunk-000.wav"
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "proof-pickfu-20260405",
+  "artifact_type": "proof",
+  "created_at": "2026-04-05T10:10:00Z",
+  "source_system": "BonfyreProof",
+  "tags": ["founder", "pickfu", "proof"],
+  "root_hash": "",
+  "atoms": [
+    {
+      "atom_id": "deliverable-md",
+      "content_hash": "1100aabb2233445566778899aabbccddeeff00112233445566778899aabbccdd",
+      "media_type": "text/markdown",
+      "path": "source/deliverable.md",
+      "byte_size": 4200,
+      "label": "Deliverable markdown"
+    },
+    {
+      "atom_id": "source-transcript",
+      "content_hash": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b200",
+      "media_type": "text/plain",
+      "path": "source/transcript.txt",
+      "byte_size": 12340,
+      "label": "Source transcript"
+    },
+    {
+      "atom_id": "proof-summary-json",
+      "content_hash": "2200aabb3344556677889900aabbccddeeff11223344556677889900aabbccdd",
+      "media_type": "application/json",
+      "path": "source/proof-summary.json",
+      "byte_size": 620,
+      "label": "Upstream proof summary"
+    }
+  ],
+  "operators": [
+    {
+      "operator_id": "op-proof-bundle",
+      "op": "ProofBundle",
+      "inputs": ["deliverable-md", "source-transcript", "proof-summary-json"],
+      "output": "proof-bundle-json",
+      "params": {
+        "tool": "BonfyreProof"
+      },
+      "version": "1.0.0",
+      "deterministic": true
+    },
+    {
+      "operator_id": "op-proof-md",
+      "op": "ProofReadable",
+      "inputs": ["proof-bundle-json"],
+      "output": "proof-bundle-md",
+      "params": {},
+      "version": "1.0.0",
+      "deterministic": true
+    }
+  ],
+  "realizations": [
+    {
+      "realization_id": "proof-bundle-json",
+      "media_type": "application/json",
+      "path": "outputs/proof-bundle.json",
+      "content_hash": "3300aabb4455667788990011aabbccddeeff22334455667788990011aabbccdd",
+      "byte_size": 1800,
+      "pinned": true,
+      "produced_by": "op-proof-bundle",
+      "label": "Proof bundle JSON"
+    },
+    {
+      "realization_id": "proof-bundle-md",
+      "media_type": "text/markdown",
+      "path": "outputs/proof-bundle.md",
+      "content_hash": "4400aabb5566778899001122aabbccddeeff33445566778899001122aabbccdd",
+      "byte_size": 2400,
+      "pinned": true,
+      "produced_by": "op-proof-md",
+      "label": "Proof bundle readable"
+    }
+  ],
+  "realization_targets": [
+    {
+      "target_id": "narrated-proof",
+      "media_type": "audio/wav",
+      "op": "Narrate",
+      "params": {"profile": "proof_readout", "voice": "en_US-lessac-medium"},
+      "description": "Spoken proof readout"
+    }
+  ],
+  "metadata": {
+    "slug": "founder-sample-pickfu",
+    "quality_score": 85,
+    "recommendation": "ready"
+  }
+}

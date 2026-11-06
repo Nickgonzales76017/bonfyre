@@ -1,0 +1,104 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "pack-pickfu-20260405",
+  "artifact_type": "pack",
+  "created_at": "2026-04-05T10:20:00Z",
+  "source_system": "BonfyrePack",
+  "tags": ["founder", "pickfu", "pack"],
+  "root_hash": "",
+  "atoms": [
+    {
+      "atom_id": "proof-bundle-json",
+      "content_hash": "3300aabb4455667788990011aabbccddeeff22334455667788990011aabbccdd",
+      "media_type": "application/json",
+      "path": "source/proof-bundle.json",
+      "byte_size": 1800,
+      "label": "Proof bundle"
+    },
+    {
+      "atom_id": "deliverable-md",
+      "content_hash": "1100aabb2233445566778899aabbccddeeff00112233445566778899aabbccdd",
+      "media_type": "text/markdown",
+      "path": "source/deliverable.md",
+      "byte_size": 4200,
+      "label": "Deliverable"
+    },
+    {
+      "atom_id": "transcript-txt",
+      "content_hash": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b200",
+      "media_type": "text/plain",
+      "path": "source/transcript.txt",
+      "byte_size": 12340,
+      "label": "Transcript"
+    },
+    {
+      "atom_id": "offer-json",
+      "content_hash": "5500aabb6677889900112233aabbccddeeff44556677889900112233aabbccdd",
+      "media_type": "application/json",
+      "path": "source/offer.json",
+      "byte_size": 920,
+      "label": "Offer JSON"
+    },
+    {
+      "atom_id": "offer-md",
+      "content_hash": "6600aabb7788990011223344aabbccddeeff55667788990011223344aabbccdd",
+      "media_type": "text/markdown",
+      "path": "source/offer.md",
+      "byte_size": 1400,
+      "label": "Offer readable"
+    },
+    {
+      "atom_id": "outreach-md",
+      "content_hash": "7700aabb8899001122334455aabbccddeeff66778899001122334455aabbccdd",
+      "media_type": "text/markdown",
+      "path": "source/outreach.md",
+      "byte_size": 600,
+      "label": "Outreach message"
+    }
+  ],
+  "operators": [
+    {
+      "operator_id": "op-pack-assemble",
+      "op": "PackAssemble",
+      "inputs": ["proof-bundle-json", "deliverable-md", "transcript-txt", "offer-json", "offer-md", "outreach-md"],
+      "output": "package-manifest",
+      "params": {
+        "tool": "BonfyrePack"
+      },
+      "version": "1.0.0",
+      "deterministic": true
+    }
+  ],
+  "realizations": [
+    {
+      "realization_id": "package-manifest",
+      "media_type": "text/plain",
+      "path": "outputs/package-manifest.txt",
+      "content_hash": "8800aabb9900112233445566aabbccddeeff77889900112233445566aabbccdd",
+      "byte_size": 340,
+      "pinned": true,
+      "produced_by": "op-pack-assemble",
+      "label": "Package manifest"
+    }
+  ],
+  "realization_targets": [
+    {
+      "target_id": "narrated-pack-summary",
+      "media_type": "audio/wav",
+      "op": "Narrate",
+      "params": {"profile": "customer_summary", "voice": "en_US-lessac-medium"},
+      "description": "Spoken package summary for customer delivery"
+    },
+    {
+      "target_id": "distribution-clip",
+      "media_type": "audio/wav",
+      "op": "Narrate",
+      "params": {"profile": "distribution_clip", "voice": "en_US-lessac-medium"},
+      "description": "45-second distribution teaser"
+    }
+  ],
+  "metadata": {
+    "file_count": 7,
+    "slug": "founder-sample-pickfu"
+  }
+}

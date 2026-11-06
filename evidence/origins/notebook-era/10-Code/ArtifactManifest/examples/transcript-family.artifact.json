@@ -1,0 +1,107 @@
+{
+  "schema_version": "1.0.0",
+  "artifact_id": "transcript-pickfu-20260405",
+  "artifact_type": "transcript",
+  "created_at": "2026-04-05T10:00:00Z",
+  "source_system": "LocalAITranscriptionService",
+  "tags": ["founder", "pickfu", "sample"],
+  "root_hash": "",
+  "atoms": [
+    {
+      "atom_id": "raw-audio",
+      "content_hash": "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2",
+      "media_type": "audio/wav",
+      "path": "source/recording.wav",
+      "byte_size": 4800000,
+      "label": "Raw recording"
+    }
+  ],
+  "operators": [
+    {
+      "operator_id": "op-vad-whisper",
+      "op": "Transcribe",
+      "inputs": ["raw-audio"],
+      "output": "raw-transcript",
+      "params": {
+        "tool": "vad_rnnoise_whisper",
+        "model": "base.en"
+      },
+      "version": "1.0.0",
+      "deterministic": true
+    },
+    {
+      "operator_id": "op-clean",
+      "op": "Clean",
+      "inputs": ["raw-transcript"],
+      "output": "cleaned-transcript",
+      "params": {
+        "tool": "TranscriptCleanupLayer"
+      },
+      "version": "1.0.0",
+      "deterministic": true
+    },
+    {
+      "operator_id": "op-paragraphize",
+      "op": "Paragraphize",
+      "inputs": ["cleaned-transcript"],
+      "output": "paragraphized-transcript",
+      "params": {
+        "tool": "TranscriptParagraphizer"
+      },
+      "version": "1.0.0",
+      "deterministic": true
+    }
+  ],
+  "realizations": [
+    {
+      "realization_id": "raw-transcript",
+      "media_type": "text/plain",
+      "path": "outputs/transcript.txt",
+      "content_hash": "b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b200",
+      "byte_size": 12340,
+      "pinned": true,
+      "produced_by": "op-vad-whisper",
+      "label": "Raw transcript"
+    },
+    {
+      "realization_id": "cleaned-transcript",
+      "media_type": "text/plain",
+      "path": "outputs/transcript-clean.txt",
+      "content_hash": "c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b20011",
+      "byte_size": 11200,
+      "pinned": true,
+      "produced_by": "op-clean",
+      "label": "Cleaned transcript"
+    },
+    {
+      "realization_id": "paragraphized-transcript",
+      "media_type": "text/plain",
+      "path": "outputs/transcript-para.txt",
+      "content_hash": "d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2001122",
+      "byte_size": 11400,
+      "pinned": true,
+      "produced_by": "op-paragraphize",
+      "label": "Paragraphized transcript"
+    }
+  ],
+  "realization_targets": [
+    {
+      "target_id": "aligned-vtt",
+      "media_type": "text/vtt",
+      "op": "Align",
+      "params": {"tool": "whisperx_mfa"},
+      "description": "Word-level aligned WebVTT"
+    },
+    {
+      "target_id": "diarized-transcript",
+      "media_type": "application/json",
+      "op": "Diarize",
+      "params": {"tool": "pyannote_resemblyzer"},
+      "description": "Speaker-labeled transcript"
+    }
+  ],
+  "metadata": {
+    "sentence_count": 87,
+    "duration_seconds": 300
+  }
+}

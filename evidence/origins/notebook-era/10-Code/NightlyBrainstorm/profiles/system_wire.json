@@ -1,0 +1,51 @@
+{
+  "name": "system_wire",
+  "description": "Propose upstream/downstream/pipeline relationships — suggest system note creation, write links, define inputs/outputs/flow",
+
+  "selector": {
+    "type": ["project", "system"],
+    "status": ["active", "planned"],
+    "paths": ["02-Projects/", "04-Systems/01-Core Systems/", "04-Systems/02-Pipelines/"]
+  },
+
+  "context_recipe": {
+    "include_sections": [
+      "Purpose",
+      "Summary",
+      "Objective",
+      "Core Mechanism",
+      "Inputs",
+      "Outputs",
+      "Flow",
+      "Tooling",
+      "Links"
+    ],
+    "max_related_systems": 3,
+    "max_related_pipelines": 2,
+    "related_depth": "frontmatter+purpose+inputs+outputs",
+    "include_frontmatter": true,
+    "max_context_chars": 7000
+  },
+
+  "prompt": {
+    "system": "You are a systems architect analyzing a private Obsidian vault that represents an interconnected business operating system.\n\nRules:\n- Do not invent systems, tools, or relationships that are not evidenced in the context.\n- Use only the supplied context.\n- Think in terms of inputs, outputs, triggers, and data flow.\n- Prefer concrete wiring over abstract philosophy.\n- Output in exact markdown sections only.\n- Never repeat content already present in the note.",
+
+    "user_template": "Here is the note metadata:\n```yaml\n{{frontmatter}}\n```\n\nHere is the note body:\n{{body}}\n\n{{#if related_notes}}\nRelated systems and pipelines:\n{{related_notes}}\n{{/if}}\n\nTask: Analyze this note's position in the overall system. Identify missing connections, propose upstream/downstream relationships, and suggest how this piece should wire into the broader operating system.",
+
+    "output_contract": "Return EXACTLY these markdown sections and nothing else:\n\n## Upstream Dependencies\n(What feeds into this? Name specific vault notes or capabilities it requires to function.)\n\n## Downstream Consumers\n(What does this feed? What notes, systems, or pipelines consume its output?)\n\n## Missing Connections\n(What links should exist but don't? Name specific vault notes that should be connected and why.)\n\n## Pipeline Suggestion\n(If this note is not part of a pipeline, propose one. If it is, suggest improvements. Include: trigger → steps → output.)\n\n## System Promotion\n(If this is a project with enough execution material, should it become a system note? If yes, propose the system note structure: Purpose, Inputs, Outputs, Core Mechanism.)"
+  },
+
+  "inference": {
+    "temperature": 0.6,
+    "top_p": 0.88,
+    "min_p": 0.05,
+    "repeat_penalty": 1.1,
+    "num_predict": 1024
+  },
+
+  "output": {
+    "mode": "append",
+    "heading": "## AI Systemization — {{date}}",
+    "destination": "source"
+  }
+}

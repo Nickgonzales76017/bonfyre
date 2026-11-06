@@ -1,0 +1,47 @@
+{
+  "_comment": "Nightly Brainstorm — Global Configuration",
+
+  "vault_root": "../..",
+
+  "backend": "cli",
+
+  "llama_cli_path": "llama-completion",
+
+  "model_path": "/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/models/mistral-7b-instruct-v0.2.Q5_K_M.gguf",
+
+  "server_url": "http://127.0.0.1:8080",
+
+  "chat_template": "mistral",
+
+  "gpu_layers": 99,
+  "context_size": 8192,
+
+  "timeout": 300,
+
+  "dry_run": false,
+
+  "pass_order": [
+    "idea_expand",
+    "project_review",
+    "system_wire",
+    "agent_brief",
+    "morning_digest",
+    "morning_brief_audio",
+    "project_narrator",
+    "idea_playback",
+    "distribution_snippet"
+  ],
+
+  "piper_bin": "/Users/nickgonzales/Library/Python/3.9/bin/piper",
+  "piper_model": "/Users/nickgonzales/Documents/Bonfyre/10-Code/NightlyBrainstorm/models/piper/en_US-lessac-medium.onnx",
+  "sentence_silence": "0.3",
+  "volume": "1.0",
+
+  "safety": {
+    "max_notes_per_pass": 20,
+    "max_files_created_per_run": 10,
+    "max_total_appends_per_run": 30,
+    "_comment": "These caps prevent runaway if a selector matches too broadly",
+    "_comment_load": "Per-process load thresholds now live in .bonfyre-runtime/guardrails.json"
+  }
+}

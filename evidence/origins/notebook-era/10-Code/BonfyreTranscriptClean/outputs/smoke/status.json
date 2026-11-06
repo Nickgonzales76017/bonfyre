@@ -1,0 +1,11 @@
+{
+  "sourceSystem": "BonfyreTranscriptClean",
+  "status": "completed",
+  "transcriptPath": "/tmp/bonfyre-clean-smoke.txt",
+  "cleanedPath": "outputs/smoke/cleaned.txt",
+  "changed": true,
+  "fillerTokensRemoved": 1,
+  "hallucinationsRemoved": 2,
+  "repeatedWordsRemoved": 2,
+  "chunkHeadersRemoved": 1
+}

@@ -1,0 +1,13 @@
+{
+  "sourceSystem": "BonfyreProof",
+  "bundledAt": "2026-04-05T02:34:13Z",
+  "proofSlug": "founder-sample-pickfu",
+  "proofLabel": "Founder Sample - PickFu",
+  "proofDir": "../LocalAITranscriptionService/samples/proof-deliverables/founder-sample-pickfu",
+  "qualityScore": 95,
+  "qualityStatus": "strong",
+  "reviewScore": 100,
+  "recommendation": "promote",
+  "deliverablePath": "./outputs/founder-sample-pickfu/deliverable.md",
+  "transcriptPath": "./outputs/founder-sample-pickfu/transcript.txt"
+}

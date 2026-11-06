@@ -1,0 +1,14 @@
+{
+  "sourceSystem": "BonfyreNarrate",
+  "artifactType": "narrated-artifact",
+  "title": "PickFu Brief",
+  "createdAt": "2026-04-05T07:56:43Z",
+  "sourceTextPath": "../BonfyreBrief/outputs/pickfu-brief/brief.md",
+  "narrationTextPath": "outputs/smoke/narration.txt",
+  "audioPath": "outputs/smoke/artifact.wav",
+  "audioFormat": "wav",
+  "voiceModel": "",
+  "renderStatus": "skipped",
+  "renderReason": "piper_unavailable",
+  "renderLogPath": "outputs/smoke/render.log"
+}
