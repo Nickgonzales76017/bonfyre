@@ -9,7 +9,7 @@ import { basename, join, resolve } from 'node:path';
 import { projectRun } from './project_runtime.mjs';
 import { fabricGitEnvironment } from './fabric_store.mjs';
 
-const MAX_PROMPT = 512_000, MAX_FINAL = 200_000, MAX_STDOUT = 8 * 1024 * 1024, MAX_STDERR = 1024 * 1024;
+const MAX_PROMPT = 512_000, MAX_FINAL = 200_000, MAX_STDOUT = 64 * 1024 * 1024, MAX_STDERR = 1024 * 1024;
 const trim = (value, limit = MAX_FINAL) => String(value ?? '').slice(-limit);
 const runPassed = result => result?.state === 'passed' && result.exit_code === 0;
 const stopError = reason => Object.assign(new Error(reason), { fabric_state: 'blocked' });
@@ -278,7 +278,7 @@ export function createFabricWork({ store, policy, projectRoot, token = '',
   }
   async function relay(taskId, task, prompt = task.prompt) {
     if (task.apply_to_project && typeof projectTool !== 'function') throw stopError('Project patch owner unavailable before relay execution');
-    if (!store.acquireLock('worktree-write', taskId, 10800)) throw fail('write relay lane is busy');
+    if (!store.acquireLock(task.apply_to_project ? 'worktree-write' : `worktree-write:${taskId}`, taskId, 10800)) throw fail('write relay lane is busy'); // isolated, non-applying relays run in parallel
     check(taskId);
     const { worktree, branch, base_commit, source_snapshot } = await store.createWorktree(taskId, { base: policy.default_base || 'HEAD', signal: taskAborts.get(taskId)?.signal });
     if (source_snapshot) prompt += `\n\nSOURCE BASELINE: ${base_commit}. ${source_snapshot.files.length} explicit current-source files were captured before execution. All other paths remain at the configured Git base. Source manifest: ${source_snapshot.receipt.path}. Review changes against ${base_commit}; never include the input snapshot itself as an implementation change.`;
