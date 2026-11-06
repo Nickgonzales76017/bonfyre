@@ -66,6 +66,8 @@ jobs:
 
       - name: Verify observation, invalidation, packaging and argument boundaries
         run: |
+          # project reads query the Atlas through its native owner binary.
+          make -C cmd/BonfyreAtlas
           bun integrations/mcp/native/build_spines_wasm.mjs --verify
           bun test \
             integrations/mcp/tests/project_delta_watcher.test.mjs \
