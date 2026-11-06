@@ -10,7 +10,7 @@
 INSTALL sqlite; LOAD sqlite;
 ATTACH '__CMS_DB__' AS cms (TYPE sqlite, READ_ONLY);
 WITH designs AS (
-  SELECT fingerprint_id, template AS design_id, renderer_affinity AS pattern,
+  SELECT fingerprint_id, template AS design_id, renderer_affinity AS pattern, status,
          json_extract_string(visual_vector, '$.pattern_basis') AS pattern_basis,
          lower(json_extract_string(visual_vector, '$.tokens.ground')) AS ground,
          lower(json_extract_string(visual_vector, '$.tokens.accent')) AS accent,
@@ -27,7 +27,7 @@ templates AS (
          lower(json_extract_string(layout_tokens, '$.accent')) AS accent
   FROM cms.presentation_template WHERE status = 'published'
 )
-SELECT d.design_id, d.pattern, d.pattern_basis, d.archive,
+SELECT d.design_id, d.status, d.pattern, d.pattern_basis, d.archive,
        coalesce(len(r.candidate_routes), 0) AS route_count,
        array_to_string(r.candidate_routes[1:6], ' ') AS first_routes,
        coalesce(r.template, '') AS wears_template,
@@ -37,4 +37,4 @@ SELECT d.design_id, d.pattern, d.pattern_basis, d.archive,
 FROM designs d
 LEFT JOIN routes r ON r.pattern = d.pattern
 LEFT JOIN templates t ON t.template = r.template
-ORDER BY route_count = 0 DESC, d.pattern, d.design_id;
+ORDER BY d.status = 'observed_reference' DESC, route_count = 0 DESC, d.pattern, d.design_id;
